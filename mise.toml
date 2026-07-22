@@ -1,0 +1,21 @@
+[tasks.plugins]
+run = "echo '[bootstrap] plugins task is a noop for now'"
+
+[tasks.dev]
+depends = "plugins"
+dir = "docker"
+interactive = true
+env = { COMPOSE_BAKE = true }
+run = "docker compose -f ./docker-compose.dev.yml up --remove-orphans"
+depends_post = "dev-down"
+
+[tasks.dev-update]
+run = { task = "dev", args = ["--build", "-V"] }
+
+[tasks.dev-down]
+dir = "docker"
+run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
+
+[settings]
+pin = true
+lockfile = true

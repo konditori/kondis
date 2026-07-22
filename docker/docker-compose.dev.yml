@@ -1,0 +1,88 @@
+name: kondis-dev
+
+services:
+  kondis-app-base:
+    profiles: ['_base']
+    tmpfs:
+      - /tmp
+    volumes:
+      - ..:/usr/src/app
+      - build_cache:/buildcache
+      - server_node_modules:/usr/src/app/server/node_modules
+
+  kondis-init:
+    extends:
+      service: kondis-app-base
+    profiles: !reset []
+    container_name: kondis_init
+    build:
+      context: ../
+      dockerfile: server/Dockerfile.dev
+      target: dev
+    command:
+      - |
+        mise install
+        touch /tmp/init-complete
+        exec tail -f /dev/null
+    volumes:
+      - build_cache:/buildcache
+    restart: 'no'
+    healthcheck:
+      test: ['CMD', 'test', '-f', '/tmp/init-complete']
+      interval: 2s
+      timeout: 3s
+      retries: 300
+      start_period: 300s
+
+  kondis-server:
+    extends:
+      service: kondis-app-base
+    profiles: !reset []
+    container_name: kondis_server
+    command: ['kondis-dev']
+    build:
+      context: ../
+      dockerfile: server/Dockerfile.dev
+      target: dev
+    restart: unless-stopped
+    volumes:
+      - ${DATA_LOCATION}/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    ports:
+      - 2284:2284
+    depends_on:
+      kondis-init:
+        condition: service_healthy
+      database:
+        condition: service_started
+    healthcheck:
+      disable: false
+
+  database:
+    container_name: kondis_postgres
+    build:
+      context: ../packages/postgres
+      dockerfile: Dockerfile
+      args:
+        PG_MAJOR: 18
+        VECTORCHORD_TAG: 1.1.1
+    env_file:
+      - .env
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ${DATA_LOCATION}/postgres:/var/lib/postgresql
+    ports:
+      - 5432:5432
+    shm_size: 128mb
+    healthcheck:
+      disable: false
+
+volumes:
+  build_cache:
+  server_node_modules:

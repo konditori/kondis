@@ -1,0 +1,33 @@
+FROM debian:bookworm-slim AS dev
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        coreutils \
+        tini \
+    && rm -rf /var/lib/apt/lists/*
+
+# Bootstrap shim so `mise install` in compose works before toolchain setup exists.
+RUN cat > /usr/local/bin/mise <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "[bootstrap] mise $* (noop)"
+EOF
+RUN chmod +x /usr/local/bin/mise
+
+# Placeholder app command used by the kondis-server service.
+RUN cat > /usr/local/bin/kondis-dev <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "[bootstrap] kondis-dev placeholder is running on port 2284"
+exec tail -f /dev/null
+EOF
+RUN chmod +x /usr/local/bin/kondis-dev
+
+EXPOSE 2284
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/bin/bash", "-lc"]
+CMD ["kondis-dev"]
