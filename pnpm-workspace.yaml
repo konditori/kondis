@@ -1,7 +1,14 @@
 packages:
   - packages/**
   - server
+  - e2e
   - packages/*
+
+dedupePeerDependents: false
+preferWorkspacePackages: true
+injectWorkspacePackages: true
+shamefullyHoist: false
+verifyDepsBeforeRun: install
 
 allowBuilds:
   '@nestjs/core': false

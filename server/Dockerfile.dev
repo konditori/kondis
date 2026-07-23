@@ -28,7 +28,7 @@ exec pnpm start:dev
 EOF
 RUN chmod +x /usr/local/bin/kondis-dev
 
-EXPOSE 2284
+EXPOSE 2293
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/bin/bash", "-lc"]
 CMD ["kondis-dev"]

@@ -3,6 +3,7 @@ monorepo_root = true
 [monorepo]
 config_roots = [
   "server",
+  "e2e",
 ]
 
 [tools]
@@ -26,3 +27,17 @@ run = { task = "//:dev", args = ["--build", "-V"] }
 [tasks.dev-down]
 dir = "docker"
 run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
+
+[tasks.e2e]
+dir = "e2e"
+interactive = true
+env = { COMPOSE_BAKE = true }
+run = "docker compose -f ./docker-compose.yml up --remove-orphans"
+depends_post = "//:e2e-down"
+
+[tasks.e2e-update]
+run = { task = "//:e2e", args = ["--build", '-V'] }
+
+[tasks.e2e-down]
+dir = "e2e"
+run = "docker compose -f ./docker-compose.yml down --remove-orphans"

@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "description": "Minimal NestJS server for Kondis",
   "license": "AGPL-3.0-or-later",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "start": "node dist/main.js",
     "start:dev": "tsx watch src/main.ts",

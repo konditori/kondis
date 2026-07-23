@@ -51,7 +51,7 @@ services:
     env_file:
       - .env
     ports:
-      - 2284:2284
+      - 2293:2293
     depends_on:
       kondis-init:
         condition: service_healthy

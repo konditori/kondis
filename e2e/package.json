@@ -1,0 +1,17 @@
+{
+  "name": "kondis-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "index.js",
+
+  "scripts": {
+    "test": "vitest --run"
+  },
+  "devDependencies": {
+    "@types/supertest": "^7.0.0",
+    "supertest": "^7.1.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
