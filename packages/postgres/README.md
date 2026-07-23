@@ -1,7 +1,7 @@
 # Kondis PostgreSQL
 
 This folder contains the build for PostgreSQL images to be used by Kondis.
-They include the VectorChord extension.
+They include the VectorChord and PostGIS extensions.
 
 ## Building
 
