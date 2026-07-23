@@ -1,8 +1,19 @@
-[tasks.plugins]
-run = "echo '[bootstrap] plugins task is a noop for now'"
+monorepo_root = true
+
+[monorepo]
+config_roots = [
+  "server",
+]
+
+[tools]
+node = "24.15.0"
+pnpm = "11.16.0"
+
+[settings]
+pin = true
+lockfile = true
 
 [tasks.dev]
-depends = "plugins"
 dir = "docker"
 interactive = true
 env = { COMPOSE_BAKE = true }
@@ -10,12 +21,8 @@ run = "docker compose -f ./docker-compose.dev.yml up --remove-orphans"
 depends_post = "dev-down"
 
 [tasks.dev-update]
-run = { task = "dev", args = ["--build", "-V"] }
+run = { task = "//:dev", args = ["--build", "-V"] }
 
 [tasks.dev-down]
 dir = "docker"
 run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
-
-[settings]
-pin = true
-lockfile = true

@@ -1,6 +1,12 @@
-FROM debian:bookworm-slim AS dev
+ARG DEBIAN_RELEASE=trixie
+
+FROM node:24.14.1-${DEBIAN_RELEASE}-slim@sha256:9707cd4542f400df5078df04f9652a272429112f15202d22b5b8bdd148df494f AS dev
+
+ENV CI=1
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_RELEASE
+ENV DEBIAN_RELEASE=${DEBIAN_RELEASE}
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -10,20 +16,15 @@ RUN apt-get update \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Bootstrap shim so `mise install` in compose works before toolchain setup exists.
-RUN cat > /usr/local/bin/mise <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-echo "[bootstrap] mise $* (noop)"
-EOF
-RUN chmod +x /usr/local/bin/mise
+RUN npm install -g pnpm@11.16.0
 
-# Placeholder app command used by the kondis-server service.
+WORKDIR /usr/src/app
+
 RUN cat > /usr/local/bin/kondis-dev <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-echo "[bootstrap] kondis-dev placeholder is running on port 2284"
-exec tail -f /dev/null
+cd /usr/src/app/server
+exec pnpm start:dev
 EOF
 RUN chmod +x /usr/local/bin/kondis-dev
 
