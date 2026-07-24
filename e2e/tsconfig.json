@@ -20,7 +20,7 @@
       "src/*": ["./src/*"],
       "@kondis/sdk": ["../server/src/open-api/fetch-client.ts"]
     },
-    "esModuleInterop": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "vitest*.config.ts"],
   "exclude": ["dist", "node_modules"]

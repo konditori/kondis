@@ -10,7 +10,9 @@ const fixturePath = resolve(process.cwd(), 'test-assets', 'activities', 'running
 describe('POST /uploads/fit', () => {
   it('uploads a .fit file and stores it locally', async () => {
     const fileBuffer = await readFile(fixturePath);
-    const uploadFile = new File([fileBuffer], '2015-06-22-run.fit', { type: 'application/octet-stream' });
+    const uploadFile = new File([fileBuffer], '2015-06-22-run.fit', {
+      type: 'application/octet-stream',
+    });
     const response = await importControllerUploadFit({
       body: {
         file: uploadFile,
