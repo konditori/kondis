@@ -30,14 +30,17 @@ dir = "docker"
 run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 
 [tasks.e2e]
+run = { task = "//e2e:test" }
+
+[tasks.e2e-update]
+run = { task = "//e2e:test" }
+
+[tasks.e2e-env]
 dir = "e2e"
 interactive = true
 env = { COMPOSE_BAKE = true }
-run = "docker compose -f ./docker-compose.yml up --remove-orphans"
+run = "docker compose -f ./docker-compose.yml up --build -V --remove-orphans"
 depends_post = "//:e2e-down"
-
-[tasks.e2e-update]
-run = { task = "//:e2e", args = ["--build", '-V'] }
 
 [tasks.e2e-down]
 dir = "e2e"

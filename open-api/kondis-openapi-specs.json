@@ -3,7 +3,7 @@
   "paths": {
     "/ping": {
       "get": {
-        "operationId": "AppController_ping",
+        "operationId": "ServerController_ping",
         "parameters": [],
         "responses": {
           "200": {
@@ -19,7 +19,49 @@
         },
         "summary": "Health check endpoint",
         "tags": [
-          "app"
+          "server"
+        ]
+      }
+    },
+    "/uploads/fit": {
+      "post": {
+        "operationId": "ImportController_uploadFit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": ".fit activity file"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "FIT file uploaded and stored locally",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitUploadResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Upload a FIT activity file",
+        "tags": [
+          "imports"
         ]
       }
     }
@@ -44,6 +86,31 @@
         },
         "required": [
           "status"
+        ],
+        "additionalProperties": false
+      },
+      "FitUploadResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "Stored file name"
+          },
+          "byteSize": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Stored file size in bytes"
+          },
+          "path": {
+            "type": "string",
+            "description": "Absolute path to the stored file"
+          }
+        },
+        "required": [
+          "fileName",
+          "byteSize",
+          "path"
         ],
         "additionalProperties": false
       }

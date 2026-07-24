@@ -2,11 +2,14 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
-import { PingResponseDto } from './dtos/ping.dto';
+import { PingResponseDto } from 'src/dtos/ping.dto';
+import { ServerService } from 'src/services/server.service';
 
-@ApiTags('app')
+@ApiTags('server')
 @Controller()
-export class AppController {
+export class ServerController {
+  constructor(private readonly service: ServerService) {}
+
   @ApiOperation({ summary: 'Health check endpoint' })
   @ZodResponse({
     status: 200,
@@ -15,6 +18,6 @@ export class AppController {
   })
   @Get('ping')
   ping(): PingResponseDto {
-    return { status: 'pong' };
+    return this.service.ping();
   }
 }

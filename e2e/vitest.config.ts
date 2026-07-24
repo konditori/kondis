@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 const sdkPath = new URL('../server/src/open-api/fetch-client.ts', import.meta.url).pathname;
+const serverUrl = process.env.KONDIS_E2E_SERVER_URL ?? 'http://127.0.0.1:2295';
+
+process.env.KONDIS_E2E_SERVER_URL = serverUrl;
 
 const skipDockerSetup = process.env.VITEST_DISABLE_DOCKER_SETUP === 'true';
 
@@ -8,7 +11,7 @@ const skipDockerSetup = process.env.VITEST_DISABLE_DOCKER_SETUP === 'true';
 const globalSetup: string[] = [];
 if (!skipDockerSetup) {
   try {
-    await fetch('http://127.0.0.1:2295/ping');
+    await fetch(`${serverUrl}/ping`);
   } catch {
     globalSetup.push('src/docker-compose.ts');
   }
@@ -24,6 +27,7 @@ export default defineConfig({
     name: 'e2e:server',
     retry: process.env.CI ? 4 : 0,
     include: ['src/specs/server/**/*.e2e-spec.ts'],
+    setupFiles: ['src/specs/setup-sdk.ts'],
     globalSetup,
     testTimeout: 15_000,
     pool: 'threads',

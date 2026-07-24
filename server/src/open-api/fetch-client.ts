@@ -16,14 +16,40 @@ export type PingResponseDtoOutput = {
     /** Health status of the API */
     status: string;
 };
+export type FitUploadResponseDtoOutput = {
+    /** Stored file name */
+    fileName: string;
+    /** Stored file size in bytes */
+    byteSize: number;
+    /** Absolute path to the stored file */
+    path: string;
+};
 /**
  * Health check endpoint
  */
-export function appControllerPing(opts?: Oazapfts.RequestOpts) {
+export function serverControllerPing(opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
         data: PingResponseDtoOutput;
     }>("/ping", {
         ...opts
     }));
+}
+/**
+ * Upload a FIT activity file
+ */
+export function importControllerUploadFit({ body }: {
+    body: {
+        /** .fit activity file */
+        file: Blob;
+    };
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: FitUploadResponseDtoOutput;
+    }>("/uploads/fit", oazapfts.multipart({
+        ...opts,
+        method: "POST",
+        body
+    })));
 }

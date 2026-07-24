@@ -2,11 +2,15 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
-import { AppController } from './app.controller';
+import { controllers } from 'src/controllers';
+import { ImportService } from 'src/services/import.service';
+import { ServerService } from 'src/services/server.service';
 
 @Module({
-  controllers: [AppController],
+  controllers: controllers,
   providers: [
+    ImportService,
+    ServerService,
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,
