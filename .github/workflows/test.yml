@@ -25,11 +25,11 @@ jobs:
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Check what should run
         id: filter
-        uses: dorny/paths-filter@v3
+        uses: immich-app/devtools/actions/pre-job@91f342bb4477c4bc10c576ae739da875d85aa164 # pre-job-action-v2.0.4
         with:
           filters: |
             server:
@@ -53,10 +53,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Mise
-        uses: jdx/mise-action@v2
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
 
       - name: Install dependencies
         run: mise run //server:install
@@ -76,10 +76,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Setup Mise
-        uses: jdx/mise-action@v2
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
 
       - name: Install dependencies
         run: mise run //e2e:install
@@ -102,10 +102,12 @@ jobs:
         working-directory: ./e2e
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: 'recursive'
 
       - name: Setup Mise
-        uses: jdx/mise-action@v2
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
 
       - name: Run e2e tests
         run: mise run //e2e:test
@@ -119,4 +121,4 @@ jobs:
         if: always()
         with:
           name: e2e-docker-logs
-          path: e2e/docker-compose-logs.txt
+          path: docker-compose-logs.txt
