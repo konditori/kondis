@@ -7,7 +7,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 
-import { AppModule } from '../app.module';
+import { AppModule } from 'src/app.module';
 
 async function run(): Promise<void> {
   const app = await NestFactory.create(AppModule, {

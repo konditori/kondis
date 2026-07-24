@@ -22,7 +22,7 @@ export class ImportService {
     const uploadDir = process.env.KONDIS_UPLOAD_DIR ?? resolve(process.cwd(), 'uploads', 'fit');
     await mkdir(uploadDir, { recursive: true });
 
-    const safeName = basename(file.originalname, extension).replace(/[^a-zA-Z0-9._-]/g, '-');
+    const safeName = basename(file.originalname, extension).replaceAll(/[^a-zA-Z0-9._-]/g, '-');
     const storedFileName = `${Date.now()}-${safeName || randomUUID()}${extension}`;
     const outputPath = resolve(uploadDir, storedFileName);
 

@@ -7,7 +7,7 @@ import { ImportService } from 'src/services/import.service';
 import { ServerService } from 'src/services/server.service';
 
 @Module({
-  controllers: controllers,
+  controllers,
   providers: [
     ImportService,
     ServerService,
