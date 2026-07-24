@@ -12,4 +12,5 @@ verifyDepsBeforeRun: install
 
 allowBuilds:
   '@nestjs/core': false
+  '@scarf/scarf': false
   esbuild: false

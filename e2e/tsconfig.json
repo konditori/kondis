@@ -13,11 +13,12 @@
     "lib": ["dom", "ESNext"],
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "..",
     "incremental": true,
     "skipLibCheck": true,
     "paths": {
-      "src/*": ["./src/*"]
+      "src/*": ["./src/*"],
+      "@kondis/sdk": ["../server/src/open-api/fetch-client.ts"]
     },
     "esModuleInterop": true,
   },

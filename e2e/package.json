@@ -9,8 +9,7 @@
     "test": "vitest --run"
   },
   "devDependencies": {
-    "@types/supertest": "^7.0.0",
-    "supertest": "^7.1.4",
+    "@oazapfts/runtime": "^1.2.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }

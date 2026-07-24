@@ -1,13 +1,14 @@
-import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
+import { appControllerPing, defaults } from '@kondis/sdk';
+
 const serverUrl = process.env.KONDIS_E2E_SERVER_URL ?? 'http://127.0.0.1:2295';
+defaults.baseUrl = serverUrl;
 
 describe('GET /ping', () => {
   it('should return pong', async () => {
-    const { status, text } = await request(serverUrl).get('/ping');
+    const response = await appControllerPing();
 
-    expect(status).toBe(200);
-    expect(text).toBe('pong');
+    expect(response).toEqual({ status: 'pong' });
   });
 });

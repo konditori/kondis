@@ -1,0 +1,52 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/ping": {
+      "get": {
+        "operationId": "AppController_ping",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The API is reachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PingResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Health check endpoint",
+        "tags": [
+          "app"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Kondis API",
+    "description": "OpenAPI schema for the Kondis server",
+    "version": "0.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "PingResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Health status of the API"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
