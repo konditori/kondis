@@ -18,18 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
     outputs:
-      server: ${{ steps.filter.outputs.server }}
-      e2e: ${{ steps.filter.outputs.e2e }}
-      workflow: ${{ steps.filter.outputs.workflow }}
+      should_run: ${{ steps.check.outputs.should_run }}
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Check what should run
-        id: filter
-        uses: immich-app/devtools/actions/pre-job@91f342bb4477c4bc10c576ae739da875d85aa164 # pre-job-action-v2.0.4
+        id: check
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             server:
