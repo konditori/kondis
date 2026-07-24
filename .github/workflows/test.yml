@@ -44,7 +44,7 @@ jobs:
   server-check:
     name: Check Server
     needs: pre-job
-    if: ${{ needs.pre-job.outputs.server == 'true' || needs.pre-job.outputs.workflow == 'true' }}
+    # if: ${{ needs.pre-job.outputs.server == 'true' || needs.pre-job.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -67,7 +67,7 @@ jobs:
   e2e-check:
     name: Check E2E
     needs: pre-job
-    if: ${{ needs.pre-job.outputs.e2e == 'true' || needs.pre-job.outputs.workflow == 'true' }}
+    # if: ${{ needs.pre-job.outputs.e2e == 'true' || needs.pre-job.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -90,7 +90,7 @@ jobs:
   e2e-tests:
     name: End-to-End Tests
     needs: pre-job
-    if: ${{ needs.pre-job.outputs.e2e == 'true' || needs.pre-job.outputs.server == 'true' || needs.pre-job.outputs.workflow == 'true' }}
+    # if: ${{ needs.pre-job.outputs.e2e == 'true' || needs.pre-job.outputs.server == 'true' || needs.pre-job.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
