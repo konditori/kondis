@@ -1,5 +1,5 @@
 [tasks.install]
-run = "pnpm install --filter kondis --frozen-lockfile"
+run = "pnpm install --filter kondis-server --frozen-lockfile"
 
 [tasks.build]
 env._.path = "./node_modules/.bin"
