@@ -10,6 +10,15 @@ import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { AppModule } from 'src/app.module';
 
 async function run(): Promise<void> {
+  // The OpenAPI document is derived entirely from decorators; no query is ever issued and the
+  // connection pool is created lazily. Supply placeholders so ConfigService's fail-fast
+  // validation does not demand a real database just to emit a schema.
+  process.env.DB_USERNAME ??= 'openapi';
+  process.env.DB_PASSWORD ??= 'openapi';
+  process.env.DB_DATABASE_NAME ??= 'openapi';
+  process.env.KONDIS_WORKERS ??= 'api';
+  process.env.KONDIS_DB_AUTO_MIGRATE ??= 'false';
+
   const app = await NestFactory.create(AppModule, {
     logger: false,
   });

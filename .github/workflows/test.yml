@@ -63,6 +63,12 @@ jobs:
       - name: Run format check
         run: mise run //server:format
 
+      - name: Run typecheck
+        run: mise run //server:check
+
+      - name: Run unit tests
+        run: mise run //server:test
+
   e2e-check:
     name: Check E2E
     needs: pre-job

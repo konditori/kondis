@@ -4,18 +4,13 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
 import { FitUploadResponseDto } from 'src/dtos/fit-upload.dto';
-import { ImportService } from 'src/services/import.service';
-
-type UploadedFitFile = {
-  originalname: string;
-  buffer: Buffer;
-  size: number;
-};
+import { UploadService } from 'src/services/upload.service';
+import { UploadedFitFile } from 'src/types';
 
 @ApiTags('imports')
 @Controller()
 export class ImportController {
-  constructor(private readonly service: ImportService) {}
+  constructor(private readonly service: UploadService) {}
 
   @ApiOperation({ summary: 'Upload a FIT activity file' })
   @ApiConsumes('multipart/form-data')
@@ -34,7 +29,7 @@ export class ImportController {
   })
   @ZodResponse({
     status: 201,
-    description: 'FIT file uploaded and stored locally',
+    description: 'FIT file stored; parsing is queued and happens asynchronously',
     type: FitUploadResponseDto,
   })
   @Post('uploads/fit')
