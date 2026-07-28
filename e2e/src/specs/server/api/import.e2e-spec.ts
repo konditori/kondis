@@ -8,7 +8,9 @@ import { importControllerUploadFit } from '@kondis/sdk';
 const fixturePath = resolve(process.cwd(), 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit');
 
 describe('POST /uploads/fit', () => {
-  let fileBuffer: Buffer;
+  // Explicitly `Buffer<ArrayBuffer>`: a bare `Buffer` widens to `Buffer<ArrayBufferLike>`,
+  // which `BlobPart` does not accept because it could be backed by a SharedArrayBuffer.
+  let fileBuffer: Buffer<ArrayBuffer>;
 
   beforeAll(async () => {
     fileBuffer = await readFile(fixturePath);

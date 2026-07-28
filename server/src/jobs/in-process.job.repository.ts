@@ -40,13 +40,7 @@ export class InProcessJobRepository implements IJobRepository, OnApplicationShut
       return Promise.resolve();
     }
 
-    const handler = handlers[item.name];
-    const task = Promise.resolve()
-      .then(() => handler(item.data))
-      .catch((error: unknown) => {
-        this.logger.error(`Job ${item.name} failed: ${error instanceof Error ? error.message : String(error)}`);
-      });
-
+    const task = this.execute(item, handlers);
     this.inFlight.add(task);
     void task.finally(() => {
       this.inFlight.delete(task);
@@ -57,14 +51,29 @@ export class InProcessJobRepository implements IJobRepository, OnApplicationShut
 
   async drain(): Promise<void> {
     while (this.inFlight.size > 0) {
-      await Promise.all([...this.inFlight]);
+      await Promise.all(this.inFlight);
     }
   }
 
   async onApplicationShutdown(): Promise<void> {
-    if (this.inFlight.size > 0) {
-      this.logger.log(`Waiting for ${this.inFlight.size} in-flight job(s)`);
-      await this.drain();
+    if (this.inFlight.size === 0) {
+      return;
+    }
+
+    this.logger.log(`Waiting for ${this.inFlight.size} in-flight job(s)`);
+    await this.drain();
+  }
+
+  /** Never rejects: a failing job is logged, not propagated back to whoever enqueued it. */
+  private async execute(item: JobItem, handlers: JobHandlers): Promise<void> {
+    // Yield first so the producer's stack unwinds before any handler work starts, matching
+    // the semantics of a real out-of-process queue.
+    await Promise.resolve();
+
+    try {
+      await handlers[item.name](item.data);
+    } catch (error) {
+      this.logger.error(`Job ${item.name} failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

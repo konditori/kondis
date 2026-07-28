@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import eslintPluginImportX from 'eslint-plugin-import-x';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
@@ -178,11 +179,15 @@ export default typescriptEslint.config([
     files: ['src/**/*.ts'],
     plugins: { 'import-x': eslintPluginImportX },
     settings: {
-      'import-x/resolver': {
-        typescript: {
-          project: path.join(__dirname, 'tsconfig.json'),
-        },
+      // The resolver must understand the `src/*` path alias, otherwise every internal import
+      // is unresolvable and no-cycle silently reports nothing.
+      'import-x/resolver-next': [createTypeScriptImportResolver({ project: path.join(__dirname, 'tsconfig.json') })],
+      // Building the dependency graph means parsing *imported* files too, not just the one
+      // being linted. Without this, no-cycle cannot see through .ts files and never fires.
+      'import-x/parsers': {
+        '@typescript-eslint/parser': ['.ts', '.tsx', '.mts', '.cts'],
       },
+      'import-x/extensions': ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx'],
     },
     rules: {
       'import-x/no-cycle': ['error', { maxDepth: Infinity, ignoreExternal: true }],
@@ -204,6 +209,15 @@ export default typescriptEslint.config([
     files: ['src/**/*.spec.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [noRelativeImports] }],
+    },
+  },
+
+  // Declaration files describe the shape of third-party code we do not control, so design
+  // rules about how that code *should* have been written do not apply.
+  {
+    files: ['src/**/*.d.ts'],
+    rules: {
+      'unicorn/no-static-only-class': 'off',
     },
   },
 ]);

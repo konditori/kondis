@@ -22,8 +22,6 @@ type DefaultedTimestamp = ColumnType<Date, Date | string | undefined, Date | str
 type GeographyWrite = RawBuilder<unknown> | null | undefined;
 type Geography = ColumnType<string | null, GeographyWrite, GeographyWrite>;
 
-export type { StreamType, UploadStatus };
-
 export interface UploadTable {
   id: Defaulted<string>;
   /** Lowercase hex SHA-256 of the file bytes. Unique, so re-imports are idempotent. */
@@ -107,3 +105,5 @@ export type NewActivityStream = Insertable<ActivityStreamTable>;
 
 export type Lap = Selectable<LapTable>;
 export type NewLap = Insertable<LapTable>;
+
+export { type StreamType, type UploadStatus } from 'src/types';

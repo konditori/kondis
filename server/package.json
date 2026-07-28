@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "start": "node dist/main.js",
-    "start:dev": "tsx watch src/main.ts",
+    "start:dev": "node --watch -r @swc-node/register src/main.ts",
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "format": "prettier --cache --check .",
     "format:fix": "prettier --cache --write --list-different .",
@@ -18,9 +18,9 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "migrate": "tsx src/bin/migrate.ts",
+    "migrate": "node -r @swc-node/register src/bin/migrate.ts",
     "db:codegen": "kysely-codegen --dialect postgres --out-file src/db/schema.generated.ts",
-    "sync-open-api": "tsx src/bin/sync-open-api.ts"
+    "sync-open-api": "node -r @swc-node/register src/bin/sync-open-api.ts"
   },
   "dependencies": {
     "@garmin/fitsdk": "^21.158.0",
@@ -39,6 +39,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
+    "@swc-node/register": "^1.12.1",
+    "@swc/core": "^1.15.46",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.2.0",
     "@types/node": "^22.15.0",
@@ -54,9 +56,8 @@
     "prettier": "^3.7.4",
     "prettier-plugin-organize-imports": "^4.1.0",
     "tsc-alias": "^1.8.16",
-    "tsx": "^4.19.2",
-    "typescript-eslint": "^8.28.0",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.28.0",
     "vitest": "^3.2.4"
   },
   "engines": {

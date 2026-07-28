@@ -75,22 +75,34 @@ describe('parseFitMessages', () => {
   });
 
   it('derives summary values from streams when there is no session message', () => {
+    // Samples 30s apart, so the altitude smoothing window collapses to a single sample and the
+    // expected gain/loss is the raw delta.
     const parsed = parseFitMessages({
       recordMesgs: [
         { timestamp: at(0), altitude: 100, distance: 0, speed: 0, heartRate: 100 },
-        { timestamp: at(1), altitude: 110, distance: 3, speed: 3, heartRate: 140 },
-        { timestamp: at(2), altitude: 105, distance: 6, speed: 3, heartRate: 160 },
+        { timestamp: at(30), altitude: 110, distance: 3, speed: 3, heartRate: 140 },
+        { timestamp: at(60), altitude: 105, distance: 6, speed: 3, heartRate: 160 },
       ],
     });
 
     expect(parsed.sport).toBe('unknown');
     expect(parsed.startedAt.toISOString()).toBe(START.toISOString());
-    expect(parsed.elapsedTimeS).toBe(2);
+    expect(parsed.elapsedTimeS).toBe(60);
     expect(parsed.distanceM).toBe(6);
     expect(parsed.elevationGainM).toBe(10);
     expect(parsed.elevationLossM).toBe(5);
     expect(parsed.avgHr).toBe(133);
     expect(parsed.maxHr).toBe(160);
+  });
+
+  it('derives average speed from distance and time when the device recorded neither', () => {
+    // The Hindås fixture is exactly this shape: distance and timing, but no speed anywhere.
+    const parsed = parseFitMessages({
+      sessionMesgs: [{ startTime: START, totalElapsedTime: 100, totalTimerTime: 100, totalDistance: 250 }],
+      recordMesgs: [{ timestamp: at(0) }, { timestamp: at(100) }],
+    });
+
+    expect(parsed.avgSpeedMps).toBeCloseTo(2.5, 5);
   });
 
   it('builds a time stream in seconds relative to the start', () => {

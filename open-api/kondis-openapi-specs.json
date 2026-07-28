@@ -49,7 +49,7 @@
         },
         "responses": {
           "201": {
-            "description": "FIT file uploaded and stored locally",
+            "description": "FIT file stored; parsing is queued and happens asynchronously",
             "content": {
               "application/json": {
                 "schema": {
@@ -92,9 +92,13 @@
       "FitUploadResponseDto_Output": {
         "type": "object",
         "properties": {
-          "fileName": {
+          "id": {
             "type": "string",
-            "description": "Stored file name"
+            "description": "Upload identifier, used to correlate the resulting activity"
+          },
+          "checksum": {
+            "type": "string",
+            "description": "Lowercase hex SHA-256 of the file contents"
           },
           "byteSize": {
             "type": "integer",
@@ -102,15 +106,16 @@
             "maximum": 9007199254740991,
             "description": "Stored file size in bytes"
           },
-          "path": {
-            "type": "string",
-            "description": "Absolute path to the stored file"
+          "duplicate": {
+            "type": "boolean",
+            "description": "True when identical content was already stored"
           }
         },
         "required": [
-          "fileName",
+          "id",
+          "checksum",
           "byteSize",
-          "path"
+          "duplicate"
         ],
         "additionalProperties": false
       }

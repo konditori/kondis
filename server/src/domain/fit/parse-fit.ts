@@ -104,14 +104,14 @@ const buildStreams = (records: FitRecordMesg[], startedAt: Date): ParsedStream[]
 
   const time = records.map((record) => {
     const timestamp = toDate(record.timestamp);
-    return timestamp === null ? Number.NaN : (timestamp.getTime() - startedAt.getTime()) / 1000;
+    return timestamp === null ? NaN : (timestamp.getTime() - startedAt.getTime()) / 1000;
   });
   if (hasAnySample(time)) {
     streams.push({ type: 'time', data: time });
   }
 
   for (const { type, extract } of EXTRACTORS) {
-    const data = records.map((record) => extract(record) ?? Number.NaN);
+    const data = records.map((record) => extract(record) ?? NaN);
     if (hasAnySample(data)) {
       streams.push({ type, data });
     }
@@ -162,8 +162,17 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const distance = streamData('distance');
 
   const sampleIntervalS = inferSampleIntervalS(time);
-  const elevation = computeElevationChange(altitude);
+  const elevation = computeElevationChange(altitude, { sampleIntervalS });
   const finalTime = lastFinite(time);
+
+  const elapsedTimeS = int(session?.totalElapsedTime) ?? (finalTime === undefined ? 0 : Math.round(finalTime));
+  const movingTimeS = int(session?.totalTimerTime) ?? computeMovingTimeS(speed, time);
+  const distanceM = num(session?.totalDistance) ?? lastFinite(distance) ?? null;
+
+  // Older devices record neither an average speed nor a speed stream, but distance and time
+  // are nearly always present. The Hindås fixture is exactly this case.
+  const derivedAvgSpeedMps =
+    distanceM !== null && movingTimeS !== null && movingTimeS > 0 ? distanceM / movingTimeS : null;
 
   // Session summaries are authoritative when present: the device computed them with more
   // context than we have. Stream-derived values are the fallback.
@@ -173,12 +182,12 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
     name: null,
     startedAt,
     timezoneOffsetMinutes: null,
-    elapsedTimeS: int(session?.totalElapsedTime) ?? (finalTime === undefined ? 0 : Math.round(finalTime)),
-    movingTimeS: int(session?.totalTimerTime) ?? computeMovingTimeS(speed, time),
-    distanceM: num(session?.totalDistance) ?? lastFinite(distance) ?? null,
+    elapsedTimeS,
+    movingTimeS,
+    distanceM,
     elevationGainM: num(session?.totalAscent) ?? (altitude.length > 0 ? elevation.gainM : null),
     elevationLossM: num(session?.totalDescent) ?? (altitude.length > 0 ? elevation.lossM : null),
-    avgSpeedMps: num(session?.enhancedAvgSpeed ?? session?.avgSpeed) ?? mean(speed),
+    avgSpeedMps: num(session?.enhancedAvgSpeed ?? session?.avgSpeed) ?? mean(speed) ?? derivedAvgSpeedMps,
     maxSpeedMps: num(session?.enhancedMaxSpeed ?? session?.maxSpeed) ?? max(speed),
     avgHr: int(session?.avgHeartRate) ?? roundOrNull(mean(heartrate)),
     maxHr: int(session?.maxHeartRate) ?? roundOrNull(max(heartrate)),
@@ -189,6 +198,6 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
     normalizedPower: int(session?.normalizedPower) ?? computeNormalizedPower(power, sampleIntervalS),
     calories: int(session?.totalCalories),
     streams,
-    laps: (messages.lapMesgs ?? []).map(mapLap),
+    laps: (messages.lapMesgs ?? []).map((lap, index) => mapLap(lap, index)),
   };
 };

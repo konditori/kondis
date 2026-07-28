@@ -22,7 +22,7 @@ const configureTypeParsers = (): void => {
   if (typeParsersConfigured) {
     return;
   }
-  pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => Number(value));
+  pg.types.setTypeParser(pg.types.builtins.INT8, Number);
   typeParsersConfigured = true;
 };
 

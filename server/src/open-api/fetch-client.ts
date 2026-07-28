@@ -17,12 +17,14 @@ export type PingResponseDtoOutput = {
   status: string;
 };
 export type FitUploadResponseDtoOutput = {
-  /** Stored file name */
-  fileName: string;
+  /** Upload identifier, used to correlate the resulting activity */
+  id: string;
+  /** Lowercase hex SHA-256 of the file contents */
+  checksum: string;
   /** Stored file size in bytes */
   byteSize: number;
-  /** Absolute path to the stored file */
-  path: string;
+  /** True when identical content was already stored */
+  duplicate: boolean;
 };
 /**
  * Health check endpoint

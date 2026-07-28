@@ -21,6 +21,9 @@ async function run(): Promise<void> {
 
   const app = await NestFactory.create(AppModule, {
     logger: false,
+    // Without this Nest logs through the disabled logger and calls process.exit(1), so a
+    // bootstrap failure would surface as a silent non-zero exit.
+    abortOnError: false,
   });
 
   const config = new DocumentBuilder()
@@ -39,4 +42,9 @@ async function run(): Promise<void> {
   console.log(`OpenAPI schema written to ${outputPath}`);
 }
 
-void run();
+run().catch((error: unknown) => {
+  // Nest's logger is disabled above to keep the output clean, which would otherwise make a
+  // bootstrap failure exit silently with code 1.
+  console.error('Failed to generate the OpenAPI schema:', error);
+  process.exitCode = 1;
+});

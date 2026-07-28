@@ -118,20 +118,11 @@ export class ActivityRepository {
   }
 
   getByUploadId(uploadId: string) {
-    return this.db
-      .selectFrom('activity')
-      .select(ACTIVITY_COLUMNS)
-      .where('upload_id', '=', uploadId)
-      .executeTakeFirst();
+    return this.db.selectFrom('activity').select(ACTIVITY_COLUMNS).where('upload_id', '=', uploadId).executeTakeFirst();
   }
 
   listRecent(limit = 50) {
-    return this.db
-      .selectFrom('activity')
-      .select(ACTIVITY_COLUMNS)
-      .orderBy('started_at', 'desc')
-      .limit(limit)
-      .execute();
+    return this.db.selectFrom('activity').select(ACTIVITY_COLUMNS).orderBy('started_at', 'desc').limit(limit).execute();
   }
 
   getStreams(activityId: string): Promise<ActivityStream[]> {

@@ -19,10 +19,12 @@ export const mean = (values: number[]): number | null => {
   let total = 0;
   let count = 0;
   for (const value of values) {
-    if (Number.isFinite(value)) {
-      total += value;
-      count++;
+    if (!Number.isFinite(value)) {
+      continue;
     }
+
+    total += value;
+    count++;
   }
   return count === 0 ? null : total / count;
 };
@@ -91,25 +93,48 @@ export const computeNormalizedPower = (power: number[], sampleIntervalS = 1): nu
 
 export type ElevationChange = { gainM: number; lossM: number };
 
+export type ElevationOptions = {
+  /** Deltas smaller than this are treated as noise. */
+  thresholdM?: number;
+  /** Spacing between altitude samples, used to size the smoothing window in real time. */
+  sampleIntervalS?: number;
+};
+
+const ELEVATION_SMOOTHING_WINDOW_S = 30;
+const ELEVATION_THRESHOLD_M = 3;
+
 /**
- * Sums altitude deltas, ignoring movements below `thresholdM`. Barometric and GPS altitude
- * both jitter by a metre or two at rest; without a threshold a stationary ride accumulates
- * hundreds of metres of phantom climbing.
+ * Smooths altitude, then sums the deltas that exceed `thresholdM`.
+ *
+ * Both stages are necessary. GPS and barometric altitude jitter by metres at rest, and naive
+ * accumulation turns that noise into enormous phantom climbing: on the Hindås 10k fixture,
+ * whose altitude range is only 70m, raw accumulation reports 694m of gain. Smoothing over 30s
+ * before applying a 3m threshold brings that to roughly 200-285m.
+ *
+ * The smoothing window is expressed in seconds and converted using `sampleIntervalS`, so a
+ * device recording every 9 seconds and one recording every second get the same treatment.
+ *
+ * NOTE: these defaults are reasoned, not validated. Tuning them against activities with known
+ * elevation is worthwhile before anyone trusts the number.
  */
-export const computeElevationChange = (altitude: number[], thresholdM = 1): ElevationChange => {
+export const computeElevationChange = (altitude: number[], options: ElevationOptions = {}): ElevationChange => {
+  const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1 } = options;
+
+  // Non-finite samples are removed *before* smoothing. rollingAverage treats them as zero,
+  // which would otherwise read as an instantaneous drop to sea level.
+  const usable = altitude.filter((value) => Number.isFinite(value));
+  if (usable.length === 0) {
+    return { gainM: 0, lossM: 0 };
+  }
+
+  const windowSize = Math.max(1, Math.round(ELEVATION_SMOOTHING_WINDOW_S / Math.max(sampleIntervalS, 1)));
+  const smoothed = rollingAverage(usable, windowSize);
+
   let gainM = 0;
   let lossM = 0;
-  let reference: number | null = null;
+  let reference = smoothed[0];
 
-  for (const value of altitude) {
-    if (!Number.isFinite(value)) {
-      continue;
-    }
-    if (reference === null) {
-      reference = value;
-      continue;
-    }
-
+  for (const value of smoothed) {
     const delta = value - reference;
     if (Math.abs(delta) < thresholdM) {
       continue;

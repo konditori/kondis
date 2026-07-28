@@ -50,6 +50,9 @@ run = "docker compose -f ./docker-compose.yml down --remove-orphans"
 run = [
   "mkdir -p server/src/open-api",
   "oazapfts --optimistic --argumentStyle=object --useEnumType --allSchemas open-api/kondis-openapi-specs.json server/src/open-api/fetch-client.ts",
+  # The generated client is committed, so format it here. Otherwise every regeneration leaves
+  # the tree failing `prettier --check` and produces noisy diffs.
+  "cd server && ./node_modules/.bin/prettier --log-level warn --write src/open-api/fetch-client.ts",
 ]
 
 [tasks."open-api"]

@@ -12,14 +12,14 @@ import {
 
 describe('mean / max', () => {
   it('ignores non-finite samples so a sensor dropout cannot poison the result', () => {
-    expect(mean([10, Number.NaN, 20])).toBe(15);
-    expect(max([10, Number.NaN, 20])).toBe(20);
+    expect(mean([10, NaN, 20])).toBe(15);
+    expect(max([10, NaN, 20])).toBe(20);
   });
 
   it('returns null when nothing usable is present', () => {
     expect(mean([])).toBeNull();
-    expect(mean([Number.NaN])).toBeNull();
-    expect(max([Number.NaN])).toBeNull();
+    expect(mean([NaN])).toBeNull();
+    expect(max([NaN])).toBeNull();
   });
 });
 
@@ -51,17 +51,56 @@ describe('computeNormalizedPower', () => {
 
   it('scales the 30s window by the sample interval', () => {
     // At 5s sampling the window is 6 samples, not 30.
-    expect(computeNormalizedPower(Array.from({ length: 50 }, () => 150), 5)).toBe(150);
+    expect(
+      computeNormalizedPower(
+        Array.from({ length: 50 }, () => 150),
+        5,
+      ),
+    ).toBe(150);
   });
 });
 
 describe('computeElevationChange', () => {
+  // A large sampleIntervalS collapses the smoothing window to a single sample, isolating the
+  // threshold behaviour from the smoothing behaviour.
+  const unsmoothed = { sampleIntervalS: 60 };
+
+  it('sums deltas above the threshold', () => {
+    expect(computeElevationChange([0, 10, 20, 30], unsmoothed)).toEqual({ gainM: 30, lossM: 0 });
+    expect(computeElevationChange([30, 20, 10, 0], unsmoothed)).toEqual({ gainM: 0, lossM: 30 });
+  });
+
   it('ignores jitter below the threshold', () => {
-    expect(computeElevationChange([100, 100.5, 102, 101, 105], 1)).toEqual({ gainM: 6, lossM: 1 });
+    expect(computeElevationChange([100, 101, 102, 101, 100], unsmoothed)).toEqual({ gainM: 0, lossM: 0 });
   });
 
   it('reports nothing for a stationary barometric drift', () => {
-    expect(computeElevationChange([50, 50.2, 49.9, 50.1], 1)).toEqual({ gainM: 0, lossM: 0 });
+    expect(computeElevationChange([50, 50.2, 49.9, 50.1])).toEqual({ gainM: 0, lossM: 0 });
+  });
+
+  it('handles an empty stream', () => {
+    expect(computeElevationChange([])).toEqual({ gainM: 0, lossM: 0 });
+  });
+
+  it('smooths away oscillation that raw accumulation would report as climbing', () => {
+    // Alternating +/-5m around 100m. Nobody climbed anything.
+    const sawtooth = Array.from({ length: 200 }, (_, index) => (index % 2 === 0 ? 105 : 95));
+
+    expect(computeElevationChange(sawtooth, unsmoothed).gainM).toBeGreaterThan(500);
+    expect(computeElevationChange(sawtooth, { sampleIntervalS: 1 }).gainM).toBeLessThan(20);
+  });
+
+  it('sizes the smoothing window in seconds, not samples', () => {
+    // Period-4 square wave, which a 2-sample average still passes through but a 30-sample one
+    // flattens. An alternating +/- pattern would cancel exactly at window 2 and prove nothing.
+    const noisy = Array.from({ length: 120 }, (_, index) => (index % 4 < 2 ? 108 : 92));
+
+    // Same data, different recording rates: at 1s the window is 30 samples, at 15s only 2.
+    const dense = computeElevationChange(noisy, { sampleIntervalS: 1 }).gainM;
+    const sparse = computeElevationChange(noisy, { sampleIntervalS: 15 }).gainM;
+
+    expect(dense).toBeLessThan(20);
+    expect(sparse).toBeGreaterThan(100);
   });
 });
 
