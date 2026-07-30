@@ -1,0 +1,19 @@
+server/test/medium/specs/service/import.service.spec.ts
+  s_aaf7e03c187797::t_0b4ff391703640 5-6,21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7666ac0c8aa07d3849d86e268207a921680bbf0c",
+  "prompts": {},
+  "sessions": {
+    "s_aaf7e03c187797": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "07957c8b-fa8d-477b-a7bf-d1a640bb0331",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
