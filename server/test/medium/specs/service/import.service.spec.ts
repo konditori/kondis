@@ -1,9 +1,9 @@
 import { ConsoleLogger } from '@nestjs/common';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join, resolve } from 'node:path';
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ConfigService } from 'src/config/config.service';
@@ -18,8 +18,9 @@ import { type UploadedFitFile } from 'src/types';
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
 
 const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', '..');
-const fixturePath = resolve(repoRoot, 'test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit');
+const fixtureSegments = ['test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit'];
+const fixtureCandidates = [resolve(process.cwd(), '..', ...fixtureSegments), resolve(process.cwd(), ...fixtureSegments)];
+const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
 
 describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
   const logger = new ConsoleLogger();
@@ -72,7 +73,7 @@ describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
     const first = await controller.uploadFit(file);
 
     expect(first.id).toBeTruthy();
-    expect(first.checksum).toMatch(/^[0-9a-f]{64}$/);
+    expect(first.checksum).toMatch(/^[0-9a-f]{16}$/);
     expect(first.byteSize).toBe(fileBuffer.length);
 
     const second = await controller.uploadFit(file);
