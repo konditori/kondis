@@ -1,0 +1,21 @@
+.github/workflows/test.yml
+  s_ad71c5504f4a66::t_2acd4817337615 34,40
+server/test/medium/specs/service/import.service.spec.ts
+  s_ad71c5504f4a66::t_ab54da7e3d56af 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "930d240047b94efc13fde57ec71192a955a0c66c",
+  "prompts": {},
+  "sessions": {
+    "s_ad71c5504f4a66": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0bbaaa52-6c89-4883-96d3-ba7e4ea248f8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
