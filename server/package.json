@@ -28,6 +28,7 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.2.0",
+    "@node-rs/xxhash": "^1.7.6",
     "@oazapfts/runtime": "^1.2.0",
     "kysely": "^0.28.2",
     "multer": "^2.2.0",

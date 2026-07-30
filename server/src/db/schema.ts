@@ -24,7 +24,7 @@ type Geography = ColumnType<string | null, GeographyWrite, GeographyWrite>;
 
 export interface UploadTable {
   id: Defaulted<string>;
-  /** Lowercase hex SHA-256 of the file bytes. Unique, so re-imports are idempotent. */
+  /** Lowercase hex xxHash64 of the file bytes. Unique, so re-imports are idempotent. */
   checksum: string;
   original_name: string;
   byte_size: number;

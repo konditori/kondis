@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 import { ConfigService } from 'src/config/config.service';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 
 /**
  * Content-addressed file storage.
@@ -15,7 +15,10 @@ import { ConfigService } from 'src/config/config.service';
  */
 @Injectable()
 export class StorageRepository {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly crypto: CryptoRepository,
+  ) {}
 
   /** e.g. `ab/cd/abcd...ef.fit` — two levels of fan-out keeps directory sizes sane. */
   buildPath(checksum: string, extension: string): string {
@@ -35,7 +38,7 @@ export class StorageRepository {
     const target = this.absolutePath(relativePath);
     await mkdir(dirname(target), { recursive: true });
 
-    const temporary = `${target}.${randomUUID()}.tmp`;
+    const temporary = `${target}.${this.crypto.uuid()}.tmp`;
     try {
       await writeFile(temporary, contents);
       await rename(temporary, target);
