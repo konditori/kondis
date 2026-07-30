@@ -35,7 +35,7 @@ const globalSetup = async (): Promise<() => Promise<void>> => {
   const username = 'postgres';
   const password = 'postgres';
 
-  const postgresContainer = await new GenericContainer('postgis/postgis:18')
+  const postgresContainer = await new GenericContainer('postgis/postgis:18-3.6')
     .withExposedPorts(5432)
     .withEnvironment({
       POSTGRES_PASSWORD: password,
