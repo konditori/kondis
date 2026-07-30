@@ -10,13 +10,13 @@ import { parseFitMessages } from 'src/domain/fit/parse-fit';
  * Exercises the real Garmin SDK against a real device recording, which the unit tests in
  * parse-fit.spec.ts deliberately avoid.
  *
- * The fixture lives in the `e2e/test-assets` git submodule, so this suite skips itself when
- * the submodule has not been checked out (`git submodule update --init`).
+ * The fixture lives in the repo-root `test/test-assets` folder, so this suite skips itself when
+ * the fixture has not been checked out.
  */
 const fixturePath = resolve(
   process.cwd(),
   '..',
-  'e2e',
+  'test',
   'test-assets',
   'activities',
   'running',

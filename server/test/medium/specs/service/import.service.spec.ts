@@ -17,7 +17,7 @@ import { type UploadedFitFile } from 'src/types';
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
 
 const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
-const fixturePath = resolve(process.cwd(), '..', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit');
+const fixturePath = resolve(process.cwd(), '..', '..', 'test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit');
 
 describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
   const logger = new ConsoleLogger();
