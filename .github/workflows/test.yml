@@ -98,7 +98,6 @@ jobs:
   server-medium-tests:
     name: Medium Tests (Server)
     needs: pre-job
-    if: ${{ fromJSON(needs.pre-job.outputs.should_run).server == true || fromJSON(needs.pre-job.outputs.should_run).workflow == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
