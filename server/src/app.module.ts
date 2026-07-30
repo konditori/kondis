@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { ConsoleLogger, Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
@@ -13,6 +13,7 @@ import { services } from 'src/services';
   controllers,
   providers: [
     ConfigService,
+    ConsoleLogger,
     ...databaseProviders,
     ...repositories,
     ...services,
