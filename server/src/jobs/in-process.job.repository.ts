@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 
-import { IJobRepository } from 'src/jobs/job.repository';
+import { IJobRepository } from 'src/repositories/job.repository';
 import { JobHandlers, JobItem } from 'src/jobs/job.types';
 
 /**

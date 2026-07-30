@@ -4,13 +4,8 @@ import { sql } from 'kysely';
 import { KYSELY, KondisDatabase } from 'src/db/database';
 import { ActivityStream, NewActivity, NewLap, StreamType } from 'src/db/schema';
 
-/** ~2m in degrees. Enough detail for map rendering; full fidelity stays in activity_stream. */
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
-/**
- * Selected explicitly rather than via selectAll() because `track` is a PostGIS geography:
- * reading it directly yields WKB hex, so it is projected as GeoJSON instead.
- */
 const ACTIVITY_COLUMNS = [
   'id',
   'upload_id',
@@ -50,10 +45,6 @@ export type CreateActivityInput = {
 export class ActivityRepository {
   constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
 
-  /**
-   * Derives the map track from the latitude/longitude streams so the geometry can never
-   * drift out of sync with the samples it was built from.
-   */
   private buildTrack(streams: ActivityStreamInput[]) {
     const latitude = streams.find((stream) => stream.type === 'latitude')?.data;
     const longitude = streams.find((stream) => stream.type === 'longitude')?.data;
@@ -81,7 +72,6 @@ export class ActivityRepository {
     return sql`ST_Simplify(ST_SetSRID(ST_GeomFromGeoJSON(${geojson}), 4326), ${tolerance})::geography`;
   }
 
-  /** Activity, streams and laps are written together or not at all. Returns the new id. */
   async create(input: CreateActivityInput): Promise<string> {
     return this.db.transaction().execute(async (trx) => {
       const { id } = await trx

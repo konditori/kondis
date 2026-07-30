@@ -2,8 +2,8 @@ import { Provider } from '@nestjs/common';
 
 import { ParseActivityFileHandler } from 'src/jobs/handlers/parse-activity-file.handler';
 import { InProcessJobRepository } from 'src/jobs/in-process.job.repository';
-import { JOB_REPOSITORY } from 'src/jobs/job.repository';
-import { JobService } from 'src/jobs/job.service';
+import { JOB_REPOSITORY } from 'src/repositories/job.repository';
+import { JobService } from 'src/services/job.service';
 
 /**
  * Swapping the queue backend is a one-line change here: point `JOB_REPOSITORY` at a

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConsoleLogger, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { ParsedActivity } from 'src/domain/activity/parsed-activity';
 import { decodeFit } from 'src/domain/fit/fit-decoder';
@@ -9,52 +9,44 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 
 @Injectable()
 export class ActivityService {
-  private readonly logger = new Logger(ActivityService.name);
-
   constructor(
-    private readonly uploads: UploadRepository,
-    private readonly storage: StorageRepository,
-    private readonly activities: ActivityRepository,
-  ) {}
+    private readonly uploadRepository: UploadRepository,
+    private readonly storageRepository: StorageRepository,
+    private readonly activityRepository: ActivityRepository,
+    private readonly logger: ConsoleLogger,
+  ) {
+    this.logger.setContext(ActivityService.name);
+  }
 
-  /**
-   * Turns a stored upload into an activity.
-   *
-   * Idempotent: an upload that already produced an activity returns the existing id rather
-   * than inserting a duplicate. That matters because queues retry, and because `activity`
-   * has a unique constraint on `upload_id` that would otherwise surface as an error.
-   */
   async createFromUpload(uploadId: string): Promise<string> {
-    const upload = await this.uploads.getById(uploadId);
+    const upload = await this.uploadRepository.getById(uploadId);
     if (!upload) {
       throw new NotFoundException(`Upload ${uploadId} not found`);
     }
 
-    const existing = await this.activities.getByUploadId(uploadId);
+    const existing = await this.activityRepository.getByUploadId(uploadId);
     if (existing) {
       this.logger.log(`Upload ${uploadId} already parsed into activity ${existing.id}`);
       return existing.id;
     }
 
     try {
-      const contents = await this.storage.read(upload.storage_path);
+      const contents = await this.storageRepository.read(upload.storage_path);
       const parsed = parseFitMessages(decodeFit(contents));
-      const activityId = await this.activities.create(this.toCreateInput(uploadId, parsed));
+      const activityId = await this.activityRepository.create(this.toCreateInput(uploadId, parsed));
 
-      await this.uploads.setStatus(uploadId, 'parsed');
+      await this.uploadRepository.setStatus(uploadId, 'parsed');
       this.logger.log(`Parsed upload ${uploadId} into activity ${activityId} (${parsed.sport})`);
 
       return activityId;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      // Record why it failed so a corrupt file in a bulk import is diagnosable rather than
-      // just missing.
-      await this.uploads.setStatus(uploadId, 'failed', message);
+
+      await this.uploadRepository.setStatus(uploadId, 'failed', message);
       throw error;
     }
   }
 
-  /** Maps the format-agnostic domain shape onto database columns. */
   private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {
     return {
       activity: {

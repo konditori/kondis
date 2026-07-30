@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/comm
 
 import { ConfigService } from 'src/config/config.service';
 import { ParseActivityFileHandler } from 'src/jobs/handlers/parse-activity-file.handler';
-import { IJobRepository, JOB_REPOSITORY } from 'src/jobs/job.repository';
+import { IJobRepository, JOB_REPOSITORY } from 'src/repositories/job.repository';
 import { JobHandlers, JobName } from 'src/jobs/job.types';
 import { WorkerType } from 'src/types';
 
