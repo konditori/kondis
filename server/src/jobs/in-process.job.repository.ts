@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 
-import { IJobRepository } from 'src/repositories/job.repository';
 import { JobHandlers, JobItem } from 'src/jobs/job.types';
+import { IJobRepository } from 'src/repositories/job.repository';
 
 /**
  * In-process job runner.

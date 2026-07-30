@@ -95,6 +95,45 @@ jobs:
       - name: Run format check
         run: mise run //e2e:format
 
+  server-medium-tests:
+    name: Medium Tests (Server)
+    needs: pre-job
+    if: ${{ fromJSON(needs.pre-job.outputs.should_run).server == true || fromJSON(needs.pre-job.outputs.should_run).workflow == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./server
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: 'recursive'
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //server:install
+
+      - name: Run medium tests
+        run: mise exec -- pnpm run test:medium
+
+      - name: Capture Docker logs
+        if: failure()
+        run: |
+          docker ps -a
+          docker logs $(docker ps -aq --filter "name=testcontainers") || true
+
+      - name: Archive Docker logs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #v7.0.1
+        if: failure()
+        with:
+          name: server-medium-docker-logs
+          path: |
+            /tmp/testcontainers-nodejs/*.log
+
   e2e-tests:
     name: End-to-End Tests
     needs: pre-job

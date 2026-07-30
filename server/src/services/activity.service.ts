@@ -1,4 +1,4 @@
-import { ConsoleLogger, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConsoleLogger, Injectable, NotFoundException } from '@nestjs/common';
 
 import { ParsedActivity } from 'src/domain/activity/parsed-activity';
 import { decodeFit } from 'src/domain/fit/fit-decoder';

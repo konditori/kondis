@@ -3,9 +3,9 @@ import { extname } from 'node:path';
 
 import { Upload } from 'src/db/schema';
 import { FitUploadResponseDto } from 'src/dtos/upload.dto';
-import { IJobRepository, JOB_REPOSITORY } from 'src/repositories/job.repository';
 import { JobName } from 'src/jobs/job.types';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { IJobRepository, JOB_REPOSITORY } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadedFitFile } from 'src/types';
