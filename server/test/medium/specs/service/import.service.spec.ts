@@ -73,7 +73,7 @@ describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
     const first = await controller.uploadFit(file);
 
     expect(first.id).toBeTruthy();
-    expect(first.checksum).toMatch(/^[0-9a-f]{16}$/);
+    expect(first.checksum).toMatch(/^[0-9a-f]{32}$/);
     expect(first.byteSize).toBe(fileBuffer.length);
 
     const second = await controller.uploadFit(file);
