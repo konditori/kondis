@@ -38,10 +38,8 @@ run = { task = "lint --fix" }
 env._.path = "./node_modules/.bin"
 run = "tsc --noEmit"
 
-
 [tasks.ci-setup]
 run = { task = ":install" }
-
 
 [tasks.ci-unit]
 run = [
