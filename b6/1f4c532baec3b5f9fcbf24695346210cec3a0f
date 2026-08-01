@@ -1,0 +1,19 @@
+server/mise.toml
+  s_624bcb70733c20::t_4499fe71c62d29 10-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b61f4c532baec3b5f9fcbf24695346210cec3a0f",
+  "prompts": {},
+  "sessions": {
+    "s_624bcb70733c20": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0409da3e4ffeGnlTBDJZY4889B",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
