@@ -1,0 +1,19 @@
+.github/workflows/test.yml
+  s_30fa154a3f299f::t_4e220701e61784 190,200-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bca7ff075f67e181a55b8d75a2cb0898b3f4959e",
+  "prompts": {},
+  "sessions": {
+    "s_30fa154a3f299f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d139d548-327c-4e69-a9ac-32eab0b0f77b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
