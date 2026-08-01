@@ -187,7 +187,7 @@ jobs:
             github_token: ${{ steps.token.outputs.token }}
 
         - name: Install server dependencies
-          run: pnpm --filter immich install --frozen-lockfile
+          run: pnpm --filter kondis-server install --frozen-lockfile
         - name: Run API generation
           run: mise //:open-api
           working-directory: open-api
@@ -197,8 +197,8 @@ jobs:
           id: verify-changed-files
           with:
             files: |
-              packages/sdk
-              open-api/immich-openapi-specs.json
+              server/src/open-api/fetch-client.ts
+              open-api/kondis-openapi-specs.json
 
         - name: Verify files have not changed
           if: steps.verify-changed-files.outputs.files_changed == 'true'
