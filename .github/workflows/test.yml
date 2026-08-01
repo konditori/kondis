@@ -135,7 +135,6 @@ jobs:
     name: End-to-End Tests
     needs: pre-job
     runs-on: ubuntu-latest
-    if: false
     permissions:
       contents: read
     defaults:
