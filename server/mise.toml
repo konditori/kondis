@@ -7,6 +7,10 @@ env._.path = "./node_modules/.bin"
 # package. The tsc + tsc-alias pair in package.json is the build that actually works.
 run = "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json"
 
+[tasks."test-medium"]
+env._.path = "./node_modules/.bin"
+run = "vitest --config test/vitest.config.medium.mjs"
+
 [tasks.format]
 env._.path = "./node_modules/.bin"
 run = "prettier --check ."

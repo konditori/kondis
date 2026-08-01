@@ -35,7 +35,10 @@ const globalSetup = async (): Promise<() => Promise<void>> => {
   const username = 'postgres';
   const password = 'postgres';
 
-  const postgresContainer = await new GenericContainer('postgis/postgis:18-3.6')
+  // imresamu/postgis is the multi-arch (amd64 + arm64) publication of the same
+  // upstream PostGIS Dockerfiles. postgis/postgis only ships amd64, which fails
+  // on Apple Silicon with "no matching manifest for linux/arm64/v8".
+  const postgresContainer = await new GenericContainer('imresamu/postgis:18-3.6')
     .withExposedPorts(5432)
     .withEnvironment({
       POSTGRES_PASSWORD: password,
