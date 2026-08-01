@@ -36,7 +36,7 @@ export class UploadService {
 
     const existing = await this.uploadRepository.getByChecksum(checksum);
     if (existing) {
-      this.logger.log(`Upload ${checksum.slice(0, 12)} already exists as ${existing.id}`);
+      this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
       return { id: existing.id, checksum: existing.checksum, byteSize: existing.byte_size, duplicate: true };
     }
 

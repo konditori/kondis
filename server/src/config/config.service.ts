@@ -12,11 +12,7 @@ export type DatabaseConfig = {
   database: string;
 };
 
-/**
- * Reads `NAME` or, if `NAME_FILE` points at a non-empty file, the trimmed contents of
- * that file. This mirrors `packages/postgres/set-env.sh` so the server honours the same
- * Docker-secret convention the database container already supports.
- */
+
 const readSecret = (name: string): string | undefined => {
   const filePath = process.env[`${name}_FILE`];
   if (filePath) {
@@ -26,7 +22,7 @@ const readSecret = (name: string): string | undefined => {
         return contents;
       }
     } catch {
-      // Fall through to the plain env var below.
+      // Fall through to the plain env var below
     }
   }
 
@@ -80,8 +76,6 @@ export class ConfigService {
     this.port = Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293);
     this.workers = parseWorkers(process.env.KONDIS_WORKERS);
     this.storageDir = process.env.KONDIS_STORAGE_DIR ?? resolve(process.cwd(), 'uploads');
-    // Self-hosted installs should not have to run a migration step by hand. Opt out by
-    // setting KONDIS_DB_AUTO_MIGRATE=false if migrations are managed externally.
     this.autoMigrate = (process.env.KONDIS_DB_AUTO_MIGRATE ?? 'true').toLowerCase() !== 'false';
 
     this.database = {

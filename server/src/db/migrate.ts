@@ -5,13 +5,6 @@ import { createDatabase, createMigrator } from 'src/db/database';
 
 export type MigrateDirection = 'up' | 'down';
 
-/**
- * Runs migrations against a short-lived connection of its own.
- *
- * Called from `main.ts` before the Nest container is created, so schema changes are always
- * applied before anything can query or start consuming jobs. Kysely takes a Postgres advisory
- * lock for the duration, so an api and a jobs container starting simultaneously is safe.
- */
 export const runMigrations = async (config: DatabaseConfig, direction: MigrateDirection = 'up'): Promise<void> => {
   const logger = new Logger('Migrations');
   const db = createDatabase(config);

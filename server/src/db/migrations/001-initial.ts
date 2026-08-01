@@ -1,9 +1,5 @@
 import { Kysely, sql } from 'kysely';
 
-/**
- * Each statement runs as its own call: the driver uses the extended query protocol, which
- * permits exactly one statement per execute.
- */
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`CREATE EXTENSION IF NOT EXISTS postgis`.execute(db);
 
