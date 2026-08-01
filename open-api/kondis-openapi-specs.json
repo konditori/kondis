@@ -94,11 +94,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "description": "Upload identifier, used to correlate the resulting activity"
+            "description": "Upload id"
           },
           "checksum": {
             "type": "string",
-            "description": "Lowercase hex SHA-256 of the file contents"
+            "description": "Lowercase hash of file contents"
           },
           "byteSize": {
             "type": "integer",

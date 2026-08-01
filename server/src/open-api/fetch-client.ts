@@ -17,9 +17,9 @@ export type PingResponseDtoOutput = {
   status: string;
 };
 export type FitUploadResponseDtoOutput = {
-  /** Upload identifier, used to correlate the resulting activity */
+  /** Upload id */
   id: string;
-  /** Lowercase hex SHA-256 of the file contents */
+  /** Lowercase hash of file contents */
   checksum: string;
   /** Stored file size in bytes */
   byteSize: number;
