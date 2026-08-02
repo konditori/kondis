@@ -1,16 +1,5 @@
 import { StreamType } from 'src/types';
 
-/**
- * Canonical parsed-activity shape.
- *
- * Every input format targets this type. `.fit` today, `.gpx` next (README goal 3), and
- * anything after that. Persistence, metrics and jobs depend only on `ParsedActivity` and
- * never learn which format the data arrived in, so a second format is a new parser rather
- * than a second pipeline.
- *
- * All units are SI: metres, seconds, metres per second.
- */
-
 export type ParsedStream = {
   type: StreamType;
   data: number[];

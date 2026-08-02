@@ -3,35 +3,11 @@ import { sql } from 'kysely';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { ActivityStream, NewActivity, NewLap, StreamType } from 'src/db/schema';
+import type { ActivityTable } from 'src/schema/tables';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
-const ACTIVITY_COLUMNS = [
-  'id',
-  'upload_id',
-  'sport',
-  'sub_sport',
-  'name',
-  'started_at',
-  'timezone_offset_minutes',
-  'elapsed_time_s',
-  'moving_time_s',
-  'distance_m',
-  'elevation_gain_m',
-  'elevation_loss_m',
-  'avg_speed_mps',
-  'max_speed_mps',
-  'avg_hr',
-  'max_hr',
-  'avg_cadence',
-  'max_cadence',
-  'avg_power',
-  'max_power',
-  'normalized_power',
-  'calories',
-  'created_at',
-  'updated_at',
-] as const;
+const ACTIVITY_COLUMNS = Object.keys({} as ActivityTable) as Array<keyof ActivityTable>;
 
 export type ActivityStreamInput = { type: StreamType; data: number[] };
 
@@ -90,7 +66,13 @@ export class ActivityRepository {
       if (input.laps.length > 0) {
         await trx
           .insertInto('lap')
-          .values(input.laps.map((lap) => ({ ...lap, activity_id: id })))
+          .values(
+            input.laps.map((lap) => ({
+              id: crypto.randomUUID(),
+              ...lap,
+              activity_id: id,
+            })),
+          )
           .execute();
       }
 

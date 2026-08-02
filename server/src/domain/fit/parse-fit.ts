@@ -6,9 +6,8 @@ import {
   max,
   mean,
 } from 'src/domain/activity/metrics';
-import { ParsedActivity, ParsedLap, ParsedStream } from 'src/domain/activity/parsed-activity';
-import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/domain/fit/fit-messages';
-import { StreamType } from 'src/types';
+import { ParsedActivity, ParsedLap, ParsedStream } from 'src/dtos/activity.dto';
+import { FitLapMesg, FitMessages, FitRecordMesg, StreamType } from 'src/types';
 
 const SEMICIRCLE_TO_DEGREES = 180 / 2 ** 31;
 
@@ -52,11 +51,9 @@ const toDate = (value?: Date | number | null): Date | null => {
   return new Date((value + FIT_EPOCH_OFFSET_S) * 1000);
 };
 
-/**
- * FIT stores position in semicircles, but some decoders pre-convert to degrees. Any value
- * outside the valid degree range must therefore still be in semicircles.
- */
 const toDegrees = (value?: number | null): number | null => {
+  // Some .FIT converters pre-convert semicircles to degrees, but any value 
+  // outside the valid degree range must still be in semicircles
   const parsed = num(value);
   if (parsed === null) {
     return null;
@@ -160,8 +157,7 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const derivedAvgSpeedMps =
     distanceM !== null && movingTimeS !== null && movingTimeS > 0 ? distanceM / movingTimeS : null;
 
-  // Session summaries are authoritative when present: the device computed them with more
-  // context than we have. Stream-derived values are the fallback.
+  // If there is a session summary, use that. Otherwise derive this data from the streams.
   return {
     sport: toName(session?.sport) ?? 'unknown',
     subSport: toName(session?.subSport),

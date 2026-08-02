@@ -3,18 +3,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-/**
- * Regenerates THIRD-PARTY-LICENSES.md.
- *
- * Kondis is AGPL-3.0-or-later, and every dependency it ships is permissive (MIT, ISC,
- * Apache-2.0, BSD). Those licences are one-way compatible with the AGPL, so they may be
- * combined into this project, but each requires its copyright and permission notice to travel
- * with the copies we distribute. This file is that notice.
- *
- * Scope is the production dependency closure of `kondis-server`, which is exactly what
- * `pnpm --prod deploy` puts into the runtime image. Dev dependencies are never conveyed.
- */
-
 const OUTPUT_PATH = resolve(process.cwd(), '..', 'THIRD-PARTY-LICENSES.md');
 
 type PnpmLicensePackage = {
@@ -33,17 +21,11 @@ type Notice = {
   author?: string;
   homepage?: string;
   licenseTexts: string[];
-  /** Per-platform native builds attributed to this package. Empty for everything else. */
   platformVariants: string[];
 };
 
-/**
- * `LICENSE`, `LICENCE`, `COPYING`, `NOTICE` and suffixed forms such as `LICENSE.md` or
- * type-fest's `license-mit` / `license-cc0` pair.
- */
 const LICENSE_FILE = /^(licen[cs]e|copying|notice)([-._].*)?$/i;
 
-// Codepoint ordering, so the output cannot shift with the machine's locale.
 const byName = (a: { name: string }, b: { name: string }): number => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
 
 const readPackageManifest = (directory: string): Record<string, unknown> => {
@@ -76,12 +58,6 @@ const readLicenseTexts = (directory: string): string[] => {
     });
 };
 
-/**
- * Native addons ship one prebuilt package per platform and npm installs only the one matching
- * the current machine, so listing whichever happens to be present would make this file differ
- * between a developer's laptop and CI. The parent package names every variant in its
- * `optionalDependencies` regardless of platform, so attribute them there instead.
- */
 const isPlatformGated = (manifest: Record<string, unknown>): boolean =>
   Array.isArray(manifest.os) || Array.isArray(manifest.cpu);
 
@@ -111,10 +87,6 @@ const collectNotices = (packages: PnpmLicensePackage[]): { notices: Notice[]; mi
       missingText.push(`${pkg.name} (${pkg.license})`);
     }
 
-    // Only the variant matching this machine is installed, so `platformGated` sees just one of
-    // them. The parent's `optionalDependencies` names all of them on every platform, which is
-    // what keeps this file identical between a laptop and CI. Anything in there that earns its
-    // own entry below is excluded, so nothing is attributed twice.
     const hasNativeBuilds = optional.some((dependency) => platformGated.has(dependency));
     const platformVariants = hasNativeBuilds ? optional.filter((dependency) => !attributed.has(dependency)) : [];
 

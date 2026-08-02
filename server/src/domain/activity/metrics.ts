@@ -65,13 +65,6 @@ export const rollingAverage = (values: number[], windowSize: number): number[] =
   return result;
 };
 
-/**
- * Normalized Power: 30-second rolling average, then the fourth root of the mean of fourth
- * powers. Weights hard efforts more heavily than a plain average, which is the point.
- *
- * `sampleIntervalS` is the spacing between power samples, so the 30s window is expressed in
- * samples rather than assuming 1Hz recording.
- */
 export const computeNormalizedPower = (power: number[], sampleIntervalS = 1): number | null => {
   if (power.length === 0 || sampleIntervalS <= 0) {
     return null;
@@ -103,20 +96,6 @@ export type ElevationOptions = {
 const ELEVATION_SMOOTHING_WINDOW_S = 30;
 const ELEVATION_THRESHOLD_M = 3;
 
-/**
- * Smooths altitude, then sums the deltas that exceed `thresholdM`.
- *
- * Both stages are necessary. GPS and barometric altitude jitter by metres at rest, and naive
- * accumulation turns that noise into enormous phantom climbing: on the Hindås 10k fixture,
- * whose altitude range is only 70m, raw accumulation reports 694m of gain. Smoothing over 30s
- * before applying a 3m threshold brings that to roughly 200-285m.
- *
- * The smoothing window is expressed in seconds and converted using `sampleIntervalS`, so a
- * device recording every 9 seconds and one recording every second get the same treatment.
- *
- * NOTE: these defaults are reasoned, not validated. Tuning them against activities with known
- * elevation is worthwhile before anyone trusts the number.
- */
 export const computeElevationChange = (altitude: number[], options: ElevationOptions = {}): ElevationChange => {
   const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1 } = options;
 
@@ -151,10 +130,6 @@ export const computeElevationChange = (altitude: number[], options: ElevationOpt
   return { gainM, lossM };
 };
 
-/**
- * Time spent above a speed threshold, i.e. elapsed time minus stops. Falls back to counting
- * samples when no time stream is available.
- */
 export const computeMovingTimeS = (speed: number[], time: number[], thresholdMps = 0.5): number | null => {
   if (speed.length === 0) {
     return null;
@@ -175,7 +150,6 @@ export const computeMovingTimeS = (speed: number[], time: number[], thresholdMps
   return Math.round(movingS);
 };
 
-/** Median spacing between samples. Robust against gaps, unlike a mean. */
 export const inferSampleIntervalS = (time: number[]): number => {
   if (time.length < 2) {
     return 1;

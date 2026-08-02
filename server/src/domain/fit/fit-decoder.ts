@@ -1,6 +1,6 @@
 import FitParser from 'fit-file-parser';
 
-import { FitMessages } from 'src/domain/fit/fit-messages';
+import { FitMessages } from 'src/types';
 
 export class FitDecodeError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -9,16 +9,8 @@ export class FitDecodeError extends Error {
   }
 }
 
-/**
- * These all match the FIT defaults, but they are stated explicitly because the rest of the
- * codebase assumes SI units throughout. A change of default upstream would otherwise silently
- * rescale every stored activity.
- *
- * `force` keeps partially corrupt files: a truncated ride recorded when a device battery died
- * still contains usable data, and discarding it would be worse than keeping it.
- */
 const parser = new FitParser({
-  force: true,
+  force: true, // Keep partially corrupt files, for example when a device battery dies while recording
   speedUnit: 'm/s',
   lengthUnit: 'm',
   temperatureUnit: 'celsius',
@@ -27,11 +19,7 @@ const parser = new FitParser({
 
 type ParsedFit = Awaited<ReturnType<FitParser['parseAsync']>>;
 
-/**
- * Failures the parser raises before it has read a single message, i.e. the file was never a FIT
- * file to begin with. Anything else means the header was fine but the body could not be read.
- */
-const NOT_A_FIT_FILE = new Set(['File to small to be a FIT file', 'Incorrect header size', "Missing '.FIT' in header"]);
+const NOT_A_FIT_FILE = new Set(['File too small to be a FIT file', 'Incorrect header size', "Missing '.FIT' in header"]);
 
 const camelCaseKey = (key: string): string =>
   key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase());
@@ -48,10 +36,6 @@ const toCamelCase = (key: string): string => {
   return cached;
 };
 
-/**
- * fit-file-parser names fields as the FIT profile does, in snake_case. `FitMessages` uses the
- * camelCase spelling, so the two differ by nothing but this mechanical rename.
- */
 const camelCaseMessages = <T>(messages: object[] | undefined): T[] =>
   (messages ?? []).map((message) => {
     const renamed: Record<string, unknown> = {};
@@ -66,11 +50,6 @@ export const decodeFit = (contents: Buffer): FitMessages => {
   let failure: string | undefined;
 
   try {
-    // The parser rejects `Buffer<ArrayBufferLike>` because a SharedArrayBuffer-backed buffer
-    // would satisfy it, which Node never produces. It reads the buffer through its byteOffset
-    // and byteLength, so pooled buffers are sliced correctly and nothing is copied.
-    //
-    // The callback runs synchronously: parsing is pure computation over the buffer.
     parser.parse(contents as Buffer<ArrayBuffer>, (error, data) => {
       failure = error;
       decoded = data;

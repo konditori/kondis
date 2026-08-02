@@ -1,7 +1,7 @@
-import { ConsoleLogger, Injectable, NotFoundException } from '@nestjs/common';
+import { ConsoleLogger, Injectable } from '@nestjs/common';
 
 import { OnJob } from 'src/decorators';
-import { ParsedActivity } from 'src/domain/activity/parsed-activity';
+import { ParsedActivity } from 'src/dtos/activity.dto';
 import { decodeFit } from 'src/domain/fit/fit-decoder';
 import { parseFitMessages } from 'src/domain/fit/parse-fit';
 import { JobName, JobStatus, QueueName } from 'src/enum';
@@ -12,13 +12,6 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { JobItem, JobOf } from 'src/types';
 
-/**
- * How many upload ids a fan-out job reads and enqueues per round trip.
- *
- * Large enough that a hundred thousand uploads is a few hundred queries, small enough that a
- * single insert never approaches Postgres's bound-parameter limit or holds a long-lived
- * snapshot open.
- */
 const QUEUE_ALL_PAGE_SIZE = 1000;
 
 @Injectable()
@@ -34,18 +27,10 @@ export class ActivityService {
     this.logger.setContext(ActivityService.name);
   }
 
-  /**
-   * Turn one stored upload into an activity.
-   *
-   * Errors are thrown rather than swallowed, so pg-boss retries with backoff and eventually
-   * dead-letters. A corrupt FIT file will burn its three attempts, which costs milliseconds
-   * and is a fair price for a transient read error getting a second chance.
-   */
   @OnJob({ name: JobName.ActivityParse, queue: QueueName.ActivityParsing })
   async handleActivityParse({ id, force }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
-      // Deleted between enqueue and execution. Retrying cannot bring it back.
       this.logger.warn(`Skipping parse of upload ${id}: no longer exists`);
       return JobStatus.Skipped;
     }
@@ -56,12 +41,22 @@ export class ActivityService {
         return JobStatus.Skipped;
       }
 
-      // A forced re-parse replaces the activity rather than merging into it, so a change in
-      // how streams or laps are derived cannot leave a half-old, half-new row behind.
       await this.activityRepository.delete(existing.id);
     }
 
-    await this.createFromUpload(id);
+    try {
+      const contents = await this.storageRepository.read(upload.storage_path);
+      const parsed = parseFitMessages(decodeFit(contents));
+      const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
+
+      await this.uploadRepository.setStatus(id, 'parsed');
+      this.logger.log(`Parsed upload ${id} into activity ${activityId} (${parsed.sport})`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      await this.uploadRepository.setStatus(id, 'failed', message);
+      throw error;
+    }
 
     return JobStatus.Success;
   }
@@ -132,35 +127,6 @@ export class ActivityService {
     this.logger.log(`Deleted activity ${id}`);
 
     return JobStatus.Success;
-  }
-
-  async createFromUpload(uploadId: string): Promise<string> {
-    const upload = await this.uploadRepository.getById(uploadId);
-    if (!upload) {
-      throw new NotFoundException(`Upload ${uploadId} not found`);
-    }
-
-    const existing = await this.activityRepository.getByUploadId(uploadId);
-    if (existing) {
-      this.logger.log(`Upload ${uploadId} already parsed into activity ${existing.id}`);
-      return existing.id;
-    }
-
-    try {
-      const contents = await this.storageRepository.read(upload.storage_path);
-      const parsed = parseFitMessages(decodeFit(contents));
-      const activityId = await this.activityRepository.create(this.toCreateInput(uploadId, parsed));
-
-      await this.uploadRepository.setStatus(uploadId, 'parsed');
-      this.logger.log(`Parsed upload ${uploadId} into activity ${activityId} (${parsed.sport})`);
-
-      return activityId;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-
-      await this.uploadRepository.setStatus(uploadId, 'failed', message);
-      throw error;
-    }
   }
 
   private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {

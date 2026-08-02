@@ -42,8 +42,6 @@ export class UploadService {
       return { id: existing.id, checksum: existing.checksum, byteSize: existing.byte_size, duplicate: true };
     }
 
-    // Write the file before the row: a row pointing at a file that does not exist is a broken
-    // activity, whereas a file with no row is invisible and reclaimable.
     const storagePath = this.storageRepository.buildPath(checksum, extension);
     await this.storageRepository.write(storagePath, file.buffer);
 
@@ -60,9 +58,6 @@ export class UploadService {
           trx,
         );
 
-        // The parse job is inserted in the same transaction as the upload row, so the two are
-        // atomic. There is no window in which a committed upload has no job waiting for it,
-        // which is the failure a queue living outside the database cannot rule out.
         await this.jobRepository.queue(
           { name: JobName.ActivityParse, data: { id: created.id, source: 'upload' } },
           { transaction: trx },
@@ -71,8 +66,6 @@ export class UploadService {
         return created;
       });
     } catch (error) {
-      // A concurrent request for identical content lost the race on the checksum unique index,
-      // which aborts the transaction. Re-read outside it and report the winner's row.
       const raced = await this.uploadRepository.getByChecksum(checksum);
       if (raced) {
         return { id: raced.id, checksum: raced.checksum, byteSize: raced.byte_size, duplicate: true };
