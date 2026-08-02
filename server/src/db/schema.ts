@@ -1,7 +1,8 @@
 import type { Insertable, Selectable, Updateable } from 'kysely';
-
-import type { ActivityStreamTable, ActivityTable, LapTable, UploadTable } from 'src/schema/tables';
-import { StreamType, UploadStatus } from 'src/types';
+import { ActivityStreamTable } from 'src/schema/tables/activity-stream.table';
+import { ActivityTable } from 'src/schema/tables/activity.table';
+import { LapTable } from 'src/schema/tables/lap.table';
+import { UploadTable } from 'src/schema/tables/upload.table';
 
 export interface DB {
   upload: UploadTable;

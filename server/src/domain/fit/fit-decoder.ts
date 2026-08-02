@@ -19,7 +19,11 @@ const parser = new FitParser({
 
 type ParsedFit = Awaited<ReturnType<FitParser['parseAsync']>>;
 
-const NOT_A_FIT_FILE = new Set(['File too small to be a FIT file', 'Incorrect header size', "Missing '.FIT' in header"]);
+const NOT_A_FIT_FILE = new Set([
+  'File too small to be a FIT file',
+  'Incorrect header size',
+  "Missing '.FIT' in header",
+]);
 
 const camelCaseKey = (key: string): string =>
   key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase());

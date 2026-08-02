@@ -1,12 +1,17 @@
 import type { ColumnType, RawBuilder } from 'kysely';
 
-import { Column, CreateDateColumn, Generated, PrimaryGeneratedColumn, Table, Timestamp, UpdateDateColumn } from 'src/schema/decorators';
+import {
+  Column,
+  CreateDateColumn,
+  Generated,
+  PrimaryGeneratedColumn,
+  Table,
+  Timestamp,
+  UpdateDateColumn,
+} from 'src/schema/decorators';
 
-type Defaulted<T> = ColumnType<T, T | undefined, T>;
-type DefaultedTimestamp = ColumnType<Timestamp, Timestamp | undefined, Timestamp>;
 type GeographyWrite = RawBuilder<unknown> | null | undefined;
 type Geography = ColumnType<string | null, GeographyWrite, GeographyWrite>;
-
 
 @Table('activity')
 export class ActivityTable {

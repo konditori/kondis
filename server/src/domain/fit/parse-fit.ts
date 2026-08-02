@@ -52,7 +52,7 @@ const toDate = (value?: Date | number | null): Date | null => {
 };
 
 const toDegrees = (value?: number | null): number | null => {
-  // Some .FIT converters pre-convert semicircles to degrees, but any value 
+  // Some .FIT converters pre-convert semicircles to degrees, but any value
   // outside the valid degree range must still be in semicircles
   const parsed = num(value);
   if (parsed === null) {

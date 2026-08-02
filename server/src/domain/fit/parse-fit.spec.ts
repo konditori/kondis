@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { findStream } from 'src/dtos/activity.dto';
 import { FitParseError, parseFitMessages } from 'src/domain/fit/parse-fit';
+import { findStream } from 'src/dtos/activity.dto';
 import { FitMessages } from 'src/types';
 
 const START = new Date('2015-06-22T08:00:00.000Z');

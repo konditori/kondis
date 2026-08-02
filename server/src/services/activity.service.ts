@@ -1,9 +1,9 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 
 import { OnJob } from 'src/decorators';
-import { ParsedActivity } from 'src/dtos/activity.dto';
 import { decodeFit } from 'src/domain/fit/fit-decoder';
 import { parseFitMessages } from 'src/domain/fit/parse-fit';
+import { ParsedActivity } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';

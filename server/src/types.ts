@@ -1,5 +1,3 @@
-
-
 import { JobName, QueueName } from 'src/enum';
 
 export type FitRecordMesg = {

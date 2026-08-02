@@ -3,7 +3,7 @@ import { sql } from 'kysely';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { ActivityStream, NewActivity, NewLap, StreamType } from 'src/db/schema';
-import type { ActivityTable } from 'src/schema/tables';
+import { ActivityTable } from 'src/schema/tables/activity.table';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
@@ -101,7 +101,6 @@ export class ActivityRepository {
     return this.db.selectFrom('activity_stream').selectAll().where('activity_id', '=', activityId).execute();
   }
 
-  /** Streams and laps go with it, by cascade. The upload row is left alone. */
   async delete(id: string, executor: KondisExecutor = this.db): Promise<void> {
     await executor.deleteFrom('activity').where('id', '=', id).execute();
   }

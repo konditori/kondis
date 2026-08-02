@@ -1,21 +1,7 @@
 import { Column, CreateDateColumn, Generated, PrimaryGeneratedColumn, Table, Timestamp } from 'src/schema/decorators';
 
-export interface LapTable {
-  id: string;
-  activity_id: string;
-  lap_index: number;
-  started_at: Timestamp | null;
-  elapsed_time_s: number | null;
-  moving_time_s: number | null;
-  distance_m: number | null;
-  avg_hr: number | null;
-  max_hr: number | null;
-  avg_power: number | null;
-  avg_speed_mps: number | null;
-}
-
 @Table('lap')
-export class LapTableEntity {
+export class LapTable {
   @PrimaryGeneratedColumn()
   id!: Generated<string>;
 
