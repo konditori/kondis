@@ -207,6 +207,9 @@ jobs:
           run: |
             echo "ERROR: Generated files not up to date!"
             echo "Changed files: ${CHANGED_FILES}"
+            echo ""
+            echo "Diff:"
+            git --no-pager diff -- server/src/open-api/fetch-client.ts open-api/kondis-openapi-specs.json
             exit 1
 
   third-party-licenses-up-to-date:
@@ -242,4 +245,6 @@ jobs:
         run: |
           echo "ERROR: THIRD-PARTY-LICENSES.md is out of date."
           echo "Run 'mise run third-party-licenses' and commit the result."
+          echo "Diff:"
+          git --no-pager diff -- THIRD-PARTY-LICENSES.md
           exit 1
