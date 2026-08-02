@@ -1,0 +1,25 @@
+server/src/domain/fit/fit-decoder.ts
+  s_2a09fe904a6446::t_e04c7d5e7cabea 3,13,22
+server/src/domain/fit/parse-fit.spec.ts
+  s_2a09fe904a6446::t_e31ef25bd403de 3,5
+server/src/domain/fit/parse-fit.ts
+  s_2a09fe904a6446::t_31d50e57f93a1f 9-10,55-56,160
+server/src/types.ts
+  s_2a09fe904a6446::t_2b70a30273a6d9 1,5-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ad9cb648d2de7783c9cc45e4d64f2d4c2354b6e3",
+  "prompts": {},
+  "sessions": {
+    "s_2a09fe904a6446": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b60261b8-7d94-4293-8fd1-65901bfce5ff",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
