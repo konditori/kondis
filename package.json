@@ -4,6 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "description": "Monorepo for Kondis",
-  "license": "GNU Affero General Public License version 3",
+  "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@11.16.0"
 }

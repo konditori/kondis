@@ -47,3 +47,7 @@ env._.path = "./node_modules/.bin"
 # SWC rather than tsx: esbuild cannot emit decorator metadata, which silently reduces every
 # NestJS constructor injection to `undefined`. See the note in package.json.
 run = "node -r @swc-node/register src/bin/sync-open-api.ts"
+
+[tasks."third-party-licenses"]
+env._.path = "./node_modules/.bin"
+run = "node -r @swc-node/register src/bin/generate-third-party-notices.ts"

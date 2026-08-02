@@ -60,3 +60,8 @@ run = [
   { task = "//server:sync-open-api" },
   { task = ":open-api:typescript" },
 ]
+
+# Regenerates the attribution file the AGPL and our permissive dependencies both require.
+# Committed rather than built on demand, so the notices are readable from the repository.
+[tasks."third-party-licenses"]
+run = { task = "//server:third-party-licenses" }

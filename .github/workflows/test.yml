@@ -208,3 +208,38 @@ jobs:
             echo "ERROR: Generated files not up to date!"
             echo "Changed files: ${CHANGED_FILES}"
             exit 1
+
+  third-party-licenses-up-to-date:
+    name: Third-Party Licenses
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //server:install
+
+      # Adding or bumping a dependency changes what we redistribute, so the attribution file has
+      # to change with it. Regenerating here proves the committed copy still matches the tree.
+      - name: Regenerate third-party licenses
+        run: mise run third-party-licenses
+
+      - name: Find file changes
+        uses: tj-actions/verify-changed-files@a1c6acee9df209257a246f2cc6ae8cb6581c1edf # v20.0.4
+        id: verify-changed-files
+        with:
+          files: THIRD-PARTY-LICENSES.md
+
+      - name: Verify files have not changed
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        run: |
+          echo "ERROR: THIRD-PARTY-LICENSES.md is out of date."
+          echo "Run 'mise run third-party-licenses' and commit the result."
+          exit 1
