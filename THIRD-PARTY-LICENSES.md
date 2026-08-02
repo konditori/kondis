@@ -2441,7 +2441,7 @@ THE SOFTWARE.
 
 ## kysely
 
-- Version: 0.28.17
+- Version: 0.29.4
 - License: MIT
 - Author: Sami Koskimäki
 - Homepage: https://kysely.dev

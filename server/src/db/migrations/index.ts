@@ -1,4 +1,4 @@
-import type { Migration, MigrationProvider } from 'kysely';
+import type { Migration, MigrationProvider } from 'kysely/migration';
 
 import * as initial from 'src/db/migrations/001-initial';
 

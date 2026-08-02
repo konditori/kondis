@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, OnApplicationShutdown, Provider } from '@nestjs/common';
-import { Kysely, Migrator, PostgresDialect, Transaction } from 'kysely';
+import { Kysely, PostgresDialect, Transaction } from 'kysely';
+import { Migrator } from 'kysely/migration';
 import pg from 'pg';
 
 import { ConfigService, DatabaseConfig } from 'src/config/config.service';

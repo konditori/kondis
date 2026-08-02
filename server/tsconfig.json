@@ -13,7 +13,8 @@
     "types": ["node"],
     "paths": {
       "src/*": ["./src/*"],
-      "test/*": ["./test/*"]
+      "test/*": ["./test/*"],
+      "kysely/migration": ["./node_modules/kysely/dist/migration/index.d.ts"]
     },
     "incremental": true,
     "strict": true,
