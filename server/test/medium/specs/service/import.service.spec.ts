@@ -1,15 +1,16 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ConfigService } from 'src/config/config.service';
-import { type KondisDatabase } from 'src/db/database';
 import { ImportController } from 'src/controllers/import.controller';
+import { type KondisDatabase } from 'src/db/database';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { DatabaseRepository } from 'src/repositories/database.repository';
+import { type JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
@@ -19,17 +20,17 @@ import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db
 
 const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
 const fixtureSegments = ['test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit'];
-const fixtureCandidates = [resolve(process.cwd(), '..', ...fixtureSegments), resolve(process.cwd(), ...fixtureSegments)];
+const fixtureCandidates = [
+  resolve(process.cwd(), '..', ...fixtureSegments),
+  resolve(process.cwd(), ...fixtureSegments),
+];
 const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
 
 describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
-  const jobs = {
-    queue: async () => {},
-    startWorkers: async () => {},
-    drain: async () => {},
-  };
+  // The queue has its own suite; this one is about the HTTP-facing upload path.
+  const jobs = { queue: async () => {} } as unknown as JobRepository;
 
   let fileBuffer: Buffer<ArrayBuffer>;
   let storageDir = '';
@@ -47,7 +48,14 @@ describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
     const config = { storageDir } as unknown as ConfigService;
 
     storageRepository = new StorageRepository(config, crypto);
-    const service = new UploadService(uploadRepository, storageRepository, crypto, jobs, logger);
+    const service = new UploadService(
+      uploadRepository,
+      storageRepository,
+      crypto,
+      new DatabaseRepository(db),
+      jobs,
+      logger,
+    );
     controller = new ImportController(service);
   });
 

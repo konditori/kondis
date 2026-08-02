@@ -1,11 +1,25 @@
 import { ConsoleLogger, Injectable, NotFoundException } from '@nestjs/common';
 
+import { OnJob } from 'src/decorators';
 import { ParsedActivity } from 'src/domain/activity/parsed-activity';
 import { decodeFit } from 'src/domain/fit/fit-decoder';
 import { parseFitMessages } from 'src/domain/fit/parse-fit';
+import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput } from 'src/repositories/activity.repository';
+import { DatabaseRepository } from 'src/repositories/database.repository';
+import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { JobItem, JobOf } from 'src/types';
+
+/**
+ * How many upload ids a fan-out job reads and enqueues per round trip.
+ *
+ * Large enough that a hundred thousand uploads is a few hundred queries, small enough that a
+ * single insert never approaches Postgres's bound-parameter limit or holds a long-lived
+ * snapshot open.
+ */
+const QUEUE_ALL_PAGE_SIZE = 1000;
 
 @Injectable()
 export class ActivityService {
@@ -13,9 +27,111 @@ export class ActivityService {
     private readonly uploadRepository: UploadRepository,
     private readonly storageRepository: StorageRepository,
     private readonly activityRepository: ActivityRepository,
+    private readonly databaseRepository: DatabaseRepository,
+    private readonly jobRepository: JobRepository,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(ActivityService.name);
+  }
+
+  /**
+   * Turn one stored upload into an activity.
+   *
+   * Errors are thrown rather than swallowed, so pg-boss retries with backoff and eventually
+   * dead-letters. A corrupt FIT file will burn its three attempts, which costs milliseconds
+   * and is a fair price for a transient read error getting a second chance.
+   */
+  @OnJob({ name: JobName.ActivityParse, queue: QueueName.ActivityParsing })
+  async handleActivityParse({ id, force }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
+    const upload = await this.uploadRepository.getById(id);
+    if (!upload) {
+      // Deleted between enqueue and execution. Retrying cannot bring it back.
+      this.logger.warn(`Skipping parse of upload ${id}: no longer exists`);
+      return JobStatus.Skipped;
+    }
+
+    const existing = await this.activityRepository.getByUploadId(id);
+    if (existing) {
+      if (!force) {
+        return JobStatus.Skipped;
+      }
+
+      // A forced re-parse replaces the activity rather than merging into it, so a change in
+      // how streams or laps are derived cannot leave a half-old, half-new row behind.
+      await this.activityRepository.delete(existing.id);
+    }
+
+    await this.createFromUpload(id);
+
+    return JobStatus.Success;
+  }
+
+  /**
+   * Enqueue a parse for every upload that needs one.
+   *
+   * Runs nightly and on demand. Without `force` it only picks up uploads that never produced
+   * an activity, which makes it both the retry mechanism for failed imports and the backstop
+   * for an enqueue that was somehow lost.
+   */
+  @OnJob({ name: JobName.ActivityParseQueueAll, queue: QueueName.BackgroundTask })
+  async handleActivityParseQueueAll({ force = false }: JobOf<JobName.ActivityParseQueueAll>): Promise<JobStatus> {
+    let after: string | undefined;
+    let total = 0;
+
+    for (;;) {
+      const ids = await this.uploadRepository.getIdsToParse({ force, after, limit: QUEUE_ALL_PAGE_SIZE });
+      if (ids.length === 0) {
+        break;
+      }
+
+      const jobs: JobItem[] = ids.map((id) => ({
+        name: JobName.ActivityParse,
+        // Marked as backfill so a live upload arriving mid-scan is still served first.
+        data: { id, force, source: 'backfill' },
+      }));
+
+      await this.jobRepository.queueAll(jobs);
+
+      total += ids.length;
+      after = ids.at(-1);
+    }
+
+    this.logger.log(`Queued ${total} upload(s) for parsing (force=${force})`);
+
+    return JobStatus.Success;
+  }
+
+  /**
+   * Delete an activity, the upload it came from, and the file on disk.
+   *
+   * The row delete and the file-delete job commit together. If the transaction rolls back no
+   * file is removed; if the process dies immediately after the commit, the job survives and
+   * the file is still cleaned up. Doing the unlink inline would give neither guarantee.
+   */
+  @OnJob({ name: JobName.ActivityDelete, queue: QueueName.BackgroundTask })
+  async handleActivityDelete({ id }: JobOf<JobName.ActivityDelete>): Promise<JobStatus> {
+    const activity = await this.activityRepository.getById(id);
+    if (!activity) {
+      return JobStatus.Skipped;
+    }
+
+    const upload = await this.uploadRepository.getById(activity.upload_id);
+
+    await this.databaseRepository.withTransaction(async (trx) => {
+      // Cascades to the activity, its streams and its laps.
+      await this.uploadRepository.delete(activity.upload_id, trx);
+
+      if (upload) {
+        await this.jobRepository.queue(
+          { name: JobName.FileDelete, data: { paths: [upload.storage_path] } },
+          { transaction: trx },
+        );
+      }
+    });
+
+    this.logger.log(`Deleted activity ${id}`);
+
+    return JobStatus.Success;
   }
 
   async createFromUpload(uploadId: string): Promise<string> {

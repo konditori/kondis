@@ -6,9 +6,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { type ConfigService } from 'src/config/config.service';
 import { type KondisDatabase } from 'src/db/database';
-import { JobName } from 'src/jobs/job.types';
+import { JobName } from 'src/enum';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
-import { type IJobRepository } from 'src/repositories/job.repository';
+import { DatabaseRepository } from 'src/repositories/database.repository';
+import { type JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
@@ -21,11 +22,9 @@ const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
 describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
-  const jobs: IJobRepository = {
-    queue: vi.fn(async () => {}),
-    startWorkers: vi.fn(async () => {}),
-    drain: vi.fn(async () => {}),
-  };
+  const queue = vi.fn(async () => {});
+  // Only the producer side is under test here; the queue itself has its own suite.
+  const jobs = { queue } as unknown as JobRepository;
 
   let storageDir = '';
   let db: KondisDatabase;
@@ -41,10 +40,18 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
     const config = { storageDir } as unknown as ConfigService;
 
     storageRepository = new StorageRepository(config, crypto);
-    uploadService = new UploadService(uploadRepository, storageRepository, crypto, jobs, logger);
+    uploadService = new UploadService(
+      uploadRepository,
+      storageRepository,
+      crypto,
+      new DatabaseRepository(db),
+      jobs,
+      logger,
+    );
   });
 
   beforeEach(async () => {
+    queue.mockClear();
     await truncateAllTables(db);
   });
 
@@ -57,48 +64,40 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
     }
   });
 
-  it('persists a .fit upload and stores file bytes on disk', async () => {
-    const file = {
-      originalname: 'sample.fit',
-      buffer: Buffer.from('fit-bytes-1'),
-    } as UploadedFitFile;
+  it('stores a .fit file and queues a parse in the same transaction', async () => {
+    const buffer = Buffer.from('not really a fit file, but the bytes are never read here');
+    const file = { originalname: 'ride.fit', buffer, size: buffer.length } as UploadedFitFile;
 
     const result = await uploadService.uploadFit(file);
 
     expect(result.duplicate).toBe(false);
+    expect(result.byteSize).toBe(buffer.length);
 
-    const stored = await uploadRepository.getById(result.id);
-    expect(stored).toBeDefined();
-    expect(stored?.byte_size).toBe(file.buffer.length);
-    expect(jobs.queue).toHaveBeenCalledWith({
-      name: JobName.PARSE_ACTIVITY_FILE,
-      data: { uploadId: result.id },
-    });
-
-    const readBack = await storageRepository.read(stored!.storage_path);
-    expect(readBack.equals(file.buffer)).toBe(true);
+    expect(queue).toHaveBeenCalledTimes(1);
+    const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
+    expect(item).toEqual({ name: JobName.ActivityParse, data: { id: result.id, source: 'upload' } });
+    // The point of the transaction is that the row and its job commit together.
+    expect(options.transaction).toBeDefined();
   });
 
-  it('deduplicates by checksum and returns the existing upload id', async () => {
-    const file = {
-      originalname: 'same.fit',
-      buffer: Buffer.from('same-fit-bytes'),
-    } as UploadedFitFile;
+  it('deduplicates identical content without queueing again', async () => {
+    const buffer = Buffer.from('identical bytes');
+    const file = { originalname: 'ride.fit', buffer, size: buffer.length } as UploadedFitFile;
 
     const first = await uploadService.uploadFit(file);
+    queue.mockClear();
+
     const second = await uploadService.uploadFit(file);
 
-    expect(first.duplicate).toBe(false);
-    expect(second.duplicate).toBe(true);
     expect(second.id).toBe(first.id);
+    expect(second.duplicate).toBe(true);
+    expect(queue).not.toHaveBeenCalled();
   });
 
-  it('rejects non-fit uploads', async () => {
-    await expect(
-      uploadService.uploadFit({
-        originalname: 'not-allowed.txt',
-        buffer: Buffer.from('x'),
-      } as UploadedFitFile),
-    ).rejects.toThrow('Only .fit files are accepted');
+  it('rejects anything that is not a .fit file', async () => {
+    const buffer = Buffer.from('nope');
+    const file = { originalname: 'ride.gpx', buffer, size: buffer.length } as UploadedFitFile;
+
+    await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit files are accepted');
   });
 });

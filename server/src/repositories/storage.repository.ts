@@ -38,4 +38,14 @@ export class StorageRepository {
   read(relativePath: string): Promise<Buffer> {
     return readFile(this.absolutePath(relativePath));
   }
+
+  /**
+   * Remove a stored file.
+   *
+   * `force` so a missing file is not an error: the delete job is durable and may be retried
+   * after a partial run, and "the file is gone" is the outcome either way.
+   */
+  async delete(relativePath: string): Promise<void> {
+    await rm(this.absolutePath(relativePath), { force: true });
+  }
 }

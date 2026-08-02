@@ -24,15 +24,19 @@ const noRelativeImports = {
  * Architecture layers, highest to lowest. Dependencies may only point downward.
  *
  *   controllers  -> services
- *   services     -> repositories, domain, jobs/job.types, jobs/job.repository
- *   repositories -> db, domain
+ *   services     -> repositories, domain, decorators, enum, types
+ *   repositories -> db, config, domain, enum, types
  *   domain       -> (nothing: pure functions, no framework)
  *   db           -> (nothing)
  *
- * `jobs/` is deliberately split: `job.types.ts` and `job.repository.ts` are the
- * acyclic seam that producers import, while `jobs/handlers/**` and `job.service.ts`
- * sit ABOVE services and may import them. Services importing those would create the
- * cycle this whole layout exists to prevent, so it is banned explicitly.
+ * The job system would naturally violate this: `UploadService` triggers work that
+ * `ActivityService` performs, and the queue sits below both. It stays acyclic because
+ * `JobRepository` never imports a handler. It is handed the list of services by
+ * `app.module.ts` and finds handlers by reflecting over `@OnJob` metadata, so a producer
+ * depends on the job *name* and never on the code that services it.
+ *
+ * That only holds while `repositories/` cannot import `services/`, which is the rule
+ * below and the reason it matters more than the others.
  */
 const layerRules = [
   {
@@ -44,15 +48,15 @@ const layerRules = [
           'src/services/**',
           'src/repositories/**',
           'src/controllers/**',
-          'src/jobs/**',
           'src/db/**',
           'src/config/**',
           'src/dtos/**',
+          'src/decorators*',
           '@nestjs/*',
           '@nestjs/**',
         ],
         message:
-          'domain/ must be pure: no framework, no I/O, no upward imports. It may only import other domain/ modules and node builtins.',
+          'domain/ must be pure: no framework, no I/O, no upward imports. It may only import other domain/ modules, src/enum, src/types and node builtins.',
       },
     ],
   },
@@ -61,8 +65,9 @@ const layerRules = [
     files: ['src/repositories/**/*.ts'],
     banned: [
       {
-        group: ['src/services/**', 'src/controllers/**', 'src/jobs/handlers/**', 'src/jobs/job.service*'],
-        message: 'repositories/ is below services/. Depend on db/ and domain/ instead.',
+        group: ['src/services/**', 'src/controllers/**', 'src/dtos/**'],
+        message:
+          'repositories/ is below services/. Depend on db/, config/ and domain/ instead. JobRepository in particular must never import a service: handlers reach it through @OnJob discovery, and an import here would make the graph cyclic.',
       },
     ],
   },
@@ -71,19 +76,19 @@ const layerRules = [
     files: ['src/db/**/*.ts'],
     banned: [
       {
-        group: ['src/services/**', 'src/repositories/**', 'src/controllers/**', 'src/jobs/**', 'src/domain/**'],
+        group: ['src/services/**', 'src/repositories/**', 'src/controllers/**', 'src/domain/**'],
         message: 'db/ is the lowest layer and must not import anything above it.',
       },
     ],
   },
   {
-    name: 'services may not import job handlers',
+    name: 'services may not import controllers or each other through the barrel',
     files: ['src/services/**/*.ts'],
     banned: [
       {
-        group: ['src/jobs/handlers/**', 'src/jobs/job.service*', 'src/jobs/index*', 'src/controllers/**'],
+        group: ['src/controllers/**', 'src/services/index*'],
         message:
-          'services/ may only import the job seam (src/jobs/job.types, src/jobs/job.repository). Importing handlers or JobService creates a dependency cycle.',
+          'services/ sits below controllers/. Importing src/services/index from a service creates a cycle through the barrel; import the specific service instead.',
       },
     ],
   },

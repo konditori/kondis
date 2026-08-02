@@ -6,7 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from 'src/app.module';
 import { ConfigService } from 'src/config/config.service';
 import { runMigrations } from 'src/db/migrate';
-import { WorkerType } from 'src/types';
+import { WorkerType } from 'src/enum';
 
 /**
  * One entrypoint, one image, selectable roles.

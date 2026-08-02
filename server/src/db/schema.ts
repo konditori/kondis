@@ -2,7 +2,6 @@ import type { ColumnType, Insertable, RawBuilder, Selectable, Updateable } from 
 
 import { StreamType, UploadStatus } from 'src/types';
 
-
 type Defaulted<T> = ColumnType<T, T | undefined, T>;
 type DefaultedTimestamp = ColumnType<Date, Date | string | undefined, Date | string>;
 

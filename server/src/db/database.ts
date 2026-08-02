@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnApplicationShutdown, Provider } from '@nestjs/common';
-import { Kysely, Migrator, PostgresDialect } from 'kysely';
+import { Kysely, Migrator, PostgresDialect, Transaction } from 'kysely';
 import pg from 'pg';
 
 import { ConfigService, DatabaseConfig } from 'src/config/config.service';
@@ -9,6 +9,15 @@ import { DB } from 'src/db/schema';
 export const KYSELY = Symbol('KYSELY');
 
 export type KondisDatabase = Kysely<DB>;
+export type KondisTransaction = Transaction<DB>;
+
+/**
+ * Anything a query can run on.
+ *
+ * Repository methods take this so a caller can compose several of them, plus a job enqueue,
+ * into one atomic unit. Defaulting to the pool keeps every existing call site unchanged.
+ */
+export type KondisExecutor = KondisDatabase | KondisTransaction;
 
 let typeParsersConfigured = false;
 

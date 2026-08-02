@@ -64,6 +64,94 @@
           "imports"
         ]
       }
+    },
+    "/jobs": {
+      "get": {
+        "operationId": "JobController_getAllJobStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current counts and status for every queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllJobStatusResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Queue depths and worker status",
+        "tags": [
+          "jobs"
+        ]
+      },
+      "post": {
+        "description": "Most work is queued automatically. This triggers the handful of jobs that are useful to run on demand, such as re-parsing uploads that previously failed.",
+        "operationId": "JobController_createJob",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Run a job by hand",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/jobs/{name}": {
+      "put": {
+        "description": "Pause or resume consumption, discard queued jobs, or clear the failed and dead-lettered backlog. Pausing affects only the worker serving the request.",
+        "operationId": "JobController_runQueueCommand",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "$ref": "#/components/schemas/QueueName"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueueCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counts and status after the command",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Control a queue",
+        "tags": [
+          "jobs"
+        ]
+      }
     }
   },
   "info": {
@@ -118,6 +206,148 @@
           "duplicate"
         ],
         "additionalProperties": false
+      },
+      "QueueStatusReportDto_Output": {
+        "type": "object",
+        "properties": {
+          "jobCounts": {
+            "$ref": "#/components/schemas/JobCountsDto_Output"
+          },
+          "queueStatus": {
+            "$ref": "#/components/schemas/QueueStatusDto_Output"
+          }
+        },
+        "required": [
+          "jobCounts",
+          "queueStatus"
+        ],
+        "additionalProperties": false
+      },
+      "JobCountsDto_Output": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs currently executing"
+          },
+          "queued": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs waiting, including ones deferred to a future time"
+          },
+          "deferred": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs scheduled to start later and not yet runnable"
+          },
+          "ready": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs runnable right now: the true backlog"
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Recent failures, including the dead letter backlog"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "All retained jobs, including completed ones"
+          }
+        },
+        "required": [
+          "active",
+          "queued",
+          "deferred",
+          "ready",
+          "failed",
+          "total"
+        ],
+        "additionalProperties": false
+      },
+      "QueueStatusDto_Output": {
+        "type": "object",
+        "properties": {
+          "paused": {
+            "type": "boolean",
+            "description": "True when this worker has stopped consuming the queue"
+          }
+        },
+        "required": [
+          "paused"
+        ],
+        "additionalProperties": false
+      },
+      "AllJobStatusResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "activityParsing": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          },
+          "backgroundTask": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          },
+          "storage": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          }
+        },
+        "required": [
+          "activityParsing",
+          "backgroundTask",
+          "storage"
+        ],
+        "additionalProperties": false
+      },
+      "JobCreateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "reparse-failed-uploads",
+              "reparse-all-uploads"
+            ],
+            "description": "The job to run"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "QueueCommandDto": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "empty",
+              "clear-failed"
+            ],
+            "description": "Operation to perform on the queue"
+          }
+        },
+        "required": [
+          "command"
+        ]
+      },
+      "QueueName": {
+        "type": "string",
+        "enum": [
+          "activityParsing",
+          "backgroundTask",
+          "storage"
+        ],
+        "description": "Queue name"
       }
     }
   }

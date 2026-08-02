@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { WorkerType } from 'src/types';
+import { QueueName, WorkerType } from 'src/enum';
 
 export type DatabaseConfig = {
   host: string;
@@ -12,6 +12,39 @@ export type DatabaseConfig = {
   database: string;
 };
 
+export type JobsConfig = {
+  /**
+   * Postgres schema pg-boss owns. Separate from `public` so `pg_dump --schema=public` of the
+   * user's activities does not drag along a queue backlog, and so kondis's own Kysely
+   * migrations and pg-boss's internal migrations can never collide.
+   */
+  schema: string;
+  /** Jobs run in parallel per queue, per process. */
+  concurrency: Record<QueueName, number>;
+  /** Attempts after the first before a job is dead-lettered. */
+  retryLimit: number;
+  /** Seconds before the first retry. Doubles (with jitter) on each subsequent attempt. */
+  retryDelaySeconds: number;
+  /** A job still active after this long is assumed dead and retried. */
+  expireInSeconds: number;
+  /** How long completed jobs stay queryable before deletion. */
+  deleteAfterSeconds: number;
+  /** Register the recurring schedules. Off in tests, so a cron tick cannot race an assertion. */
+  cron: boolean;
+};
+
+/**
+ * Sensible for a self-hosted install on a normal machine.
+ *
+ * Parsing is CPU-bound and single-threaded per job, so its default is deliberately below a
+ * typical core count: the API shares the process by default and must stay responsive. The
+ * other two queues are I/O-bound and mostly idle.
+ */
+const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
+  [QueueName.ActivityParsing]: 2,
+  [QueueName.BackgroundTask]: 2,
+  [QueueName.Storage]: 2,
+};
 
 const readSecret = (name: string): string | undefined => {
   const filePath = process.env[`${name}_FILE`];
@@ -35,6 +68,28 @@ const required = (name: string): string => {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name} (or ${name}_FILE)`);
   }
+  return value;
+};
+
+const readBoolean = (name: string, fallback: boolean): boolean => {
+  const value = process.env[name];
+  if (value === undefined || value.length === 0) {
+    return fallback;
+  }
+  return !['0', 'false', 'no', 'off'].includes(value.trim().toLowerCase());
+};
+
+const readPositiveInteger = (name: string, fallback: number): number => {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim().length === 0) {
+    return fallback;
+  }
+
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`${name} must be a positive integer, got: ${raw}`);
+  }
+
   return value;
 };
 
@@ -62,6 +117,20 @@ const parseWorkers = (raw: string | undefined): WorkerType[] => {
   return requested as WorkerType[];
 };
 
+/** `activityParsing` -> `KONDIS_JOB_CONCURRENCY_ACTIVITY_PARSING` */
+export const concurrencyEnvVar = (queue: QueueName): string =>
+  `KONDIS_JOB_CONCURRENCY_${queue.replaceAll(/([a-z\d])([A-Z])/g, '$1_$2').toUpperCase()}`;
+
+const parseConcurrency = (): Record<QueueName, number> => {
+  const fallback = readPositiveInteger('KONDIS_JOB_CONCURRENCY', 0);
+  const entries = Object.values(QueueName).map((queue) => [
+    queue,
+    readPositiveInteger(concurrencyEnvVar(queue), fallback || DEFAULT_CONCURRENCY[queue]),
+  ]);
+
+  return Object.fromEntries(entries) as Record<QueueName, number>;
+};
+
 @Injectable()
 export class ConfigService {
   private readonly logger = new Logger(ConfigService.name);
@@ -71,12 +140,13 @@ export class ConfigService {
   readonly storageDir: string;
   readonly autoMigrate: boolean;
   readonly database: DatabaseConfig;
+  readonly jobs: JobsConfig;
 
   constructor() {
     this.port = Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293);
     this.workers = parseWorkers(process.env.KONDIS_WORKERS);
     this.storageDir = process.env.KONDIS_STORAGE_DIR ?? resolve(process.cwd(), 'uploads');
-    this.autoMigrate = (process.env.KONDIS_DB_AUTO_MIGRATE ?? 'true').toLowerCase() !== 'false';
+    this.autoMigrate = readBoolean('KONDIS_DB_AUTO_MIGRATE', true);
 
     this.database = {
       host: readSecret('DB_HOSTNAME') ?? 'localhost',
@@ -84,6 +154,18 @@ export class ConfigService {
       user: required('DB_USERNAME'),
       password: required('DB_PASSWORD'),
       database: required('DB_DATABASE_NAME'),
+    };
+
+    this.jobs = {
+      schema: process.env.KONDIS_JOB_SCHEMA ?? 'kondis_jobs',
+      concurrency: parseConcurrency(),
+      retryLimit: readPositiveInteger('KONDIS_JOB_RETRY_LIMIT', 3),
+      retryDelaySeconds: readPositiveInteger('KONDIS_JOB_RETRY_DELAY_SECONDS', 5),
+      // Fifteen minutes. A FIT file large enough to exceed that is a bug, not a slow disk.
+      expireInSeconds: readPositiveInteger('KONDIS_JOB_EXPIRE_SECONDS', 900),
+      // A week of history is enough to answer "why did that import fail on Tuesday".
+      deleteAfterSeconds: readPositiveInteger('KONDIS_JOB_RETENTION_SECONDS', 7 * 24 * 60 * 60),
+      cron: readBoolean('KONDIS_JOB_CRON', true),
     };
   }
 
@@ -94,5 +176,12 @@ export class ConfigService {
   logStartupSummary(): void {
     this.logger.log(`workers=${this.workers.join(',')} port=${this.port} storage=${this.storageDir}`);
     this.logger.log(`database=${this.database.host}:${this.database.port}/${this.database.database}`);
+
+    if (this.hasWorker(WorkerType.JOBS)) {
+      const concurrency = Object.entries(this.jobs.concurrency)
+        .map(([queue, value]) => `${queue}=${value}`)
+        .join(' ');
+      this.logger.log(`jobs schema=${this.jobs.schema} cron=${this.jobs.cron} concurrency: ${concurrency}`);
+    }
   }
 }
