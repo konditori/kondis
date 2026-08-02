@@ -1,14 +1,6 @@
-/**
- * Structural types for the messages a FIT decoder produces.
- *
- * Deliberately loose and all-optional: FIT is a sparse format and field presence varies by
- * device, firmware and sport. Declaring this shape ourselves means the mapping logic in
- * `parse-fit.ts` is testable with plain objects, with no decoder or fixture file involved.
- */
-
 export type FitRecordMesg = {
   timestamp?: Date | number;
-  /** Semicircles on most devices. `parse-fit` normalises to degrees. */
+  // Semicircles on most devices. `parse-fit` normalises to degrees
   positionLat?: number;
   positionLong?: number;
   altitude?: number;
@@ -27,7 +19,7 @@ export type FitSessionMesg = {
   subSport?: string | number;
   startTime?: Date | number;
   totalElapsedTime?: number;
-  /** FIT's "timer time", i.e. moving time with auto-pause excluded. */
+  // FIT's "timer time", i.e. moving time with auto-pause excluded.
   totalTimerTime?: number;
   totalDistance?: number;
   totalAscent?: number;

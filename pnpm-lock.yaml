@@ -50,9 +50,6 @@ importers:
 
   server:
     dependencies:
-      '@garmin/fitsdk':
-        specifier: ^21.158.0
-        version: 21.208.0
       '@nestjs/common':
         specifier: ^11.1.28
         version: 11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
@@ -71,6 +68,9 @@ importers:
       '@oazapfts/runtime':
         specifier: ^1.2.0
         version: 1.2.0
+      fit-file-parser:
+        specifier: ^4.1.0
+        version: 4.1.0
       kysely:
         specifier: ^0.28.2
         version: 0.28.17
@@ -398,9 +398,6 @@ packages:
   '@eslint/plugin-kit@0.7.2':
     resolution: {integrity: sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
-
-  '@garmin/fitsdk@21.208.0':
-    resolution: {integrity: sha512-mEmPHyzqaS3bb8n+yaOmgmBo/0CUrsLsN5J4viAUN5Kh6+YiwdvPh5OAzb2Jgy2IaI23q7mGtNr/8WRJC1+HoA==}
 
   '@grpc/grpc-js@1.14.4':
     resolution: {integrity: sha512-k9Dj3DV/itK9D06Y8f190Qgop7/Ui+D0njFV3LHMPwPT75DpXLQohE9Wmz0QElrJnzsjB7KPWiKJbOl7IPDArQ==}
@@ -1986,6 +1983,9 @@ packages:
     resolution: {integrity: sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng==}
     engines: {node: '>=10'}
 
+  fit-file-parser@4.1.0:
+    resolution: {integrity: sha512-nU0TCczwlg4d9XoDXBwxEZ+GpYUuOoewZRM57HTjJtNmOP62hxlINQsOf+UJE8/O86ZjwikUmXrOGbiH1fcYAA==}
+
   flat-cache@4.0.1:
     resolution: {integrity: sha512-f7ccFPK3SXFHpx15UIGyRJ/FJQctuKZ0zVuN3frBo4HnK3cay9VEW0R6yPYFHC0AgqhukPzKjq22t5DmAyqGyw==}
     engines: {node: '>=16'}
@@ -3354,8 +3354,6 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
-
-  '@garmin/fitsdk@21.208.0': {}
 
   '@grpc/grpc-js@1.14.4':
     dependencies:
@@ -4853,6 +4851,10 @@ snapshots:
     dependencies:
       locate-path: 6.0.0
       path-exists: 4.0.0
+
+  fit-file-parser@4.1.0:
+    dependencies:
+      buffer: 6.0.3
 
   flat-cache@4.0.1:
     dependencies:

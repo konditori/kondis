@@ -24,13 +24,13 @@
     "sync-open-api": "node -r @swc-node/register src/bin/sync-open-api.ts"
   },
   "dependencies": {
-    "@garmin/fitsdk": "^21.158.0",
     "@nestjs/common": "^11.1.28",
     "@nestjs/core": "^11.1.28",
     "@nestjs/platform-express": "^11.1.28",
     "@nestjs/swagger": "^11.2.0",
     "@node-rs/xxhash": "^1.7.6",
     "@oazapfts/runtime": "^1.2.0",
+    "fit-file-parser": "^4.1.0",
     "kysely": "^0.28.2",
     "multer": "^2.2.0",
     "nestjs-zod": "^5.0.1",

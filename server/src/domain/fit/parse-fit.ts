@@ -10,20 +10,9 @@ import { ParsedActivity, ParsedLap, ParsedStream } from 'src/domain/activity/par
 import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/domain/fit/fit-messages';
 import { StreamType } from 'src/types';
 
-/**
- * Pure mapping from decoded FIT messages to `ParsedActivity`.
- *
- * Contains no decoder import on purpose, so it is unit-testable with plain objects and does
- * not require the Garmin SDK to be installed or a fixture file to exist.
- *
- * Missing samples inside a stream are represented as NaN rather than dropped, so every
- * stream stays index-aligned with every other stream. Postgres `double precision[]` stores
- * NaN natively, and the metric helpers skip non-finite values.
- */
-
 const SEMICIRCLE_TO_DEGREES = 180 / 2 ** 31;
 
-/** FIT timestamps count seconds from 1989-12-31T00:00:00Z. */
+// FIT timestamps count seconds from 1989-12-31T00:00:00Z
 const FIT_EPOCH_OFFSET_S = 631_065_600;
 
 export class FitParseError extends Error {
@@ -43,15 +32,12 @@ const int = (value?: number | null): number | null => {
 
 const roundOrNull = (value: number | null): number | null => (value === null ? null : Math.round(value));
 
-/**
- * Decoders differ in whether they hand back `Date` objects, Unix time, or raw FIT epoch
- * seconds, so all three are accepted and normalised here.
- */
 const toDate = (value?: Date | number | null): Date | null => {
   if (value === undefined || value === null) {
     return null;
   }
   if (value instanceof Date) {
+    // Missing sample, return as NaN
     return Number.isNaN(value.getTime()) ? null : value;
   }
   if (!Number.isFinite(value)) {
@@ -170,7 +156,7 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const distanceM = num(session?.totalDistance) ?? lastFinite(distance) ?? null;
 
   // Older devices record neither an average speed nor a speed stream, but distance and time
-  // are nearly always present. The Hindås fixture is exactly this case.
+  // are nearly always present
   const derivedAvgSpeedMps =
     distanceM !== null && movingTimeS !== null && movingTimeS > 0 ? distanceM / movingTimeS : null;
 
