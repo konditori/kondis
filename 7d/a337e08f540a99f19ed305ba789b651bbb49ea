@@ -1,0 +1,25 @@
+open-api/kondis-openapi-specs.json
+  s_27bc8a09398bfa::t_8ec22535107fca 155-245,434-656
+server/src/controllers/index.ts
+  s_27bc8a09398bfa::t_428196f007e8a8 1,6
+server/src/repositories/activity.repository.ts
+  s_27bc8a09398bfa::t_df5d60624bfc04 5,17-18,103-106
+server/src/services/activity.service.ts
+  s_27bc8a09398bfa::t_12086691a2d492 5,11,118-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7da337e08f540a99f19ed305ba789b651bbb49ea",
+  "prompts": {},
+  "sessions": {
+    "s_27bc8a09398bfa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ce9c1cfc-f4bf-4999-9595-b7697daee3fc",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
