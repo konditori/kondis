@@ -18,6 +18,9 @@ const fixtureCandidates = [
 const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
+const UPDATED_NAME = 'e2e-updated-name';
+const UPDATED_SUB_SPORT = 'recovery';
+const UPDATED_STARTED_AT = '2024-01-02T03:04:05.000Z';
 
 type ActivityDto = {
   id: string;
@@ -49,6 +52,21 @@ const listActivities = async (): Promise<ActivityDto[]> => {
   return body.activities;
 };
 
+const updateActivity = async (
+  id: string,
+  payload: { name?: string; sport?: string; subSport?: string; startedAt?: string },
+): Promise<Response> =>
+  fetch(`${serverUrl}/activities/${id}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+const deleteActivity = async (id: string): Promise<Response> =>
+  fetch(`${serverUrl}/activities/${id}`, {
+    method: 'DELETE',
+  });
+
 const waitForActivity = async (uploadId: string, timeoutMs = 25_000): Promise<ActivityDto> => {
   const startedAt = Date.now();
   for (;;) {
@@ -66,50 +84,63 @@ const waitForActivity = async (uploadId: string, timeoutMs = 25_000): Promise<Ac
   }
 };
 
-describe('Activities API', () => {
-  it('lists, updates, and deletes a parsed activity', async () => {
+describe('GET /activities', () => {
+  it('lists a parsed activity after upload processing completes', async () => {
     const upload = await uploadFitFixture();
     const activity = await waitForActivity(upload.id);
 
-    const updatedAt = '2024-01-02T03:04:05.000Z';
-    const updateResponse = await fetch(`${serverUrl}/activities/${activity.id}`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: 'e2e-updated-name',
-        sport: 'running',
-        subSport: 'recovery',
-        startedAt: updatedAt,
-      }),
+    const listed = await listActivities();
+    expect(listed.find((candidate) => candidate.id === activity.id)).toBeDefined();
+  }, 30_000);
+});
+
+describe('PUT /activities/:id', () => {
+  it('updates the name field', async () => {
+    const upload = await uploadFitFixture();
+    const activity = await waitForActivity(upload.id);
+
+    const response = await updateActivity(activity.id, { name: UPDATED_NAME });
+
+    expect(response.status).toBe(200);
+    const updated = (await response.json()) as ActivityDto;
+    expect(updated.name).toBe(UPDATED_NAME);
+  }, 30_000);
+
+  it('updates the subSport and startedAt fields', async () => {
+    const upload = await uploadFitFixture();
+    const activity = await waitForActivity(upload.id);
+
+    const response = await updateActivity(activity.id, {
+      subSport: UPDATED_SUB_SPORT,
+      startedAt: UPDATED_STARTED_AT,
     });
 
-    expect(updateResponse.status).toBe(200);
-    const updated = (await updateResponse.json()) as ActivityDto;
-    expect(updated.id).toBe(activity.id);
-    expect(updated.name).toBe('e2e-updated-name');
-    expect(updated.subSport).toBe('recovery');
-    expect(updated.startedAt).toBe(updatedAt);
+    expect(response.status).toBe(200);
+    const updated = (await response.json()) as ActivityDto;
+    expect(updated.subSport).toBe(UPDATED_SUB_SPORT);
+    expect(updated.startedAt).toBe(UPDATED_STARTED_AT);
+  }, 30_000);
 
-    const deleteResponse = await fetch(`${serverUrl}/activities/${activity.id}`, { method: 'DELETE' });
-    expect(deleteResponse.status).toBe(204);
+  it('returns 404 for a missing activity id', async () => {
+    const response = await updateActivity(MISSING_UUID, { name: 'missing' });
+    expect(response.status).toBe(404);
+  });
+});
+
+describe('DELETE /activities/:id', () => {
+  it('deletes an existing activity', async () => {
+    const upload = await uploadFitFixture();
+    const activity = await waitForActivity(upload.id);
+
+    const response = await deleteActivity(activity.id);
+    expect(response.status).toBe(204);
 
     const remaining = await listActivities();
     expect(remaining.find((candidate) => candidate.id === activity.id)).toBeUndefined();
   }, 30_000);
 
-  it('returns 404 for update and delete of a missing activity', async () => {
-    const updateResponse = await fetch(`${serverUrl}/activities/${MISSING_UUID}`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: 'missing' }),
-    });
-
-    expect(updateResponse.status).toBe(404);
-
-    const deleteResponse = await fetch(`${serverUrl}/activities/${MISSING_UUID}`, {
-      method: 'DELETE',
-    });
-
-    expect(deleteResponse.status).toBe(404);
+  it('returns 404 for a missing activity id', async () => {
+    const response = await deleteActivity(MISSING_UUID);
+    expect(response.status).toBe(404);
   });
 });
