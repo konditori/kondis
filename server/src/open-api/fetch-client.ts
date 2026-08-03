@@ -61,6 +61,69 @@ export type QueueCommandDto = {
   /** Operation to perform on the queue */
   command: Command;
 };
+export type ActivityDtoOutput = {
+  /** Activity id */
+  id: string;
+  /** Source upload id */
+  uploadId: string;
+  /** Primary sport type */
+  sport: string;
+  /** Secondary sport type */
+  subSport: string | null;
+  /** Activity name */
+  name: string | null;
+  /** Start time in ISO-8601 format */
+  startedAt: string;
+  /** Minutes east of UTC */
+  timezoneOffsetMinutes: number | null;
+  /** Elapsed duration in seconds */
+  elapsedTime: number;
+  /** Moving duration in seconds */
+  movingTime: number | null;
+  /** Distance in meters */
+  distance: number | null;
+  /** Total elevation gain in meters */
+  elevationGain: number | null;
+  /** Total elevation loss in meters */
+  elevationLoss: number | null;
+  /** Average speed in meters per second */
+  avgSpeed: number | null;
+  /** Peak speed in meters per second */
+  maxSpeed: number | null;
+  /** Average heart rate in bpm */
+  avgHr: number | null;
+  /** Maximum heart rate in bpm */
+  maxHr: number | null;
+  /** Average cadence in rpm */
+  avgCadence: number | null;
+  /** Maximum cadence in rpm */
+  maxCadence: number | null;
+  /** Average power in watts */
+  avgPower: number | null;
+  /** Maximum power in watts */
+  maxPower: number | null;
+  /** Normalized power in watts */
+  normalizedPower: number | null;
+  /** Calories in kcal */
+  calories: number | null;
+  /** Creation timestamp in ISO-8601 format */
+  createdAt: string;
+  /** Last update timestamp in ISO-8601 format */
+  updatedAt: string;
+};
+export type ActivityListResponseDtoOutput = {
+  activities: ActivityDtoOutput[];
+};
+export type ActivityUpdateDto = {
+  /** Display name for the activity */
+  name?: string | null;
+  /** Primary sport type */
+  sport?: string;
+  /** Secondary sport type */
+  subSport?: string | null;
+  /** Updated start time in ISO-8601 format */
+  startedAt?: string;
+};
 /**
  * Health check endpoint
  */
@@ -162,6 +225,64 @@ export function jobControllerRunQueueCommand(
         body: queueCommandDto,
       }),
     ),
+  );
+}
+/**
+ * List recent activities
+ */
+export function activityControllerListRecent(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityListResponseDtoOutput;
+    }>('/activities', {
+      ...opts,
+    }),
+  );
+}
+/**
+ * Update one activity
+ */
+export function activityControllerUpdateById(
+  {
+    id,
+    activityUpdateDto,
+  }: {
+    id: string;
+    activityUpdateDto: ActivityUpdateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityDtoOutput;
+    }>(
+      `/activities/${encodeURIComponent(id)}`,
+      oazapfts.json({
+        ...opts,
+        method: 'PUT',
+        body: activityUpdateDto,
+      }),
+    ),
+  );
+}
+/**
+ * Delete one activity
+ */
+export function activityControllerDeleteById(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/activities/${encodeURIComponent(id)}`, {
+      ...opts,
+      method: 'DELETE',
+    }),
   );
 }
 export enum Name {
