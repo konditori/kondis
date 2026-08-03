@@ -179,9 +179,7 @@ describe('ActivityService', () => {
 
       await makeService().handleActivityParseQueueAll({ force: true });
 
-      expect(queueAll).toHaveBeenCalledWith([
-        { name: JobName.ActivityParse, data: { id: 'a', force: true } },
-      ]);
+      expect(queueAll).toHaveBeenCalledWith([{ name: JobName.ActivityParse, data: { id: 'a', force: true } }]);
       expect(getIdsToParse.mock.calls[0][0]).toMatchObject({ force: true });
     });
 
