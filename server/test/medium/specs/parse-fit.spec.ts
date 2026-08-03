@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { decodeFit } from 'src/domain/fit/fit-decoder';
-import { parseFitMessages } from 'src/domain/fit/parse-fit';
+import { parseFitMessages } from 'src/repositories/parsing.repository';
 import { findStream } from 'src/dtos/activity.dto';
 
 /**

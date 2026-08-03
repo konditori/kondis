@@ -66,12 +66,6 @@ export type UploadedFitFile = {
 
 export type UploadStatus = 'pending' | 'parsed' | 'failed';
 
-/**
- * Per-sample series recorded during an activity.
- *
- * Position is split into `latitude` / `longitude` rather than an interleaved array so every
- * stream is a flat, equal-length numeric series.
- */
 export type StreamType =
   | 'time'
   | 'latitude'

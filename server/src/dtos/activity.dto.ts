@@ -44,3 +44,12 @@ export type ParsedActivity = {
 
 export const findStream = (activity: ParsedActivity, type: StreamType): number[] | undefined =>
   activity.streams.find((stream) => stream.type === type)?.data;
+
+export type ElevationChange = { gainM: number; lossM: number };
+
+export type ElevationOptions = {
+  /** Deltas smaller than this are treated as noise. */
+  thresholdM?: number;
+  /** Spacing between altitude samples, used to size the smoothing window in real time. */
+  sampleIntervalS?: number;
+};

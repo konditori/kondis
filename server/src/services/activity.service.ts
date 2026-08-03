@@ -1,18 +1,160 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
+import { buildStreams, FitParseError, mapLap, toName } from 'src/utils/fit-parser';
 
 import { OnJob } from 'src/decorators';
-import { decodeFit } from 'src/domain/fit/fit-decoder';
-import { parseFitMessages } from 'src/domain/fit/parse-fit';
-import { ParsedActivity } from 'src/dtos/activity.dto';
+import { ElevationChange, ElevationOptions, ParsedActivity } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { JobItem, JobOf } from 'src/types';
-
+import { decodeFit, toDate } from 'src/utils/fit-parser';
+import { FitMessages, JobItem, JobOf, StreamType } from 'src/types';
+import { inferSampleIntervalS, int, lastFinite, max, mean, num, rollingAverage, roundOrNull } from 'src/utils/math';
+  
 const QUEUE_ALL_PAGE_SIZE = 1000;
+const NORMALIZED_POWER_WINDOW_S = 30;
+
+
+export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
+  const session = messages.sessionMesgs?.[0];
+  const records = messages.recordMesgs ?? [];
+
+  const startedAt = toDate(session?.startTime) ?? toDate(records[0]?.timestamp);
+  if (startedAt === null) {
+    throw new FitParseError('FIT file contains no session start time and no timestamped records');
+  }
+
+  const streams = buildStreams(records, startedAt);
+  const streamData = (type: StreamType): number[] => streams.find((stream) => stream.type === type)?.data ?? [];
+
+  const time = streamData('time');
+  const altitude = streamData('altitude');
+  const speed = streamData('speed');
+  const power = streamData('power');
+  const heartrate = streamData('heartrate');
+  const cadence = streamData('cadence');
+  const distance = streamData('distance');
+
+  const sampleIntervalS = inferSampleIntervalS(time);
+  const elevation = computeElevationChange(altitude, { sampleIntervalS });
+  const finalTime = lastFinite(time);
+
+  const elapsedTimeS = int(session?.totalElapsedTime) ?? (finalTime === undefined ? 0 : Math.round(finalTime));
+  const movingTimeS = int(session?.totalTimerTime) ?? computeMovingTimeS(speed, time);
+  const distanceM = num(session?.totalDistance) ?? lastFinite(distance) ?? null;
+
+  // Older devices record neither an average speed nor a speed stream, but distance and time
+  // are nearly always present
+  const derivedAvgSpeedMps =
+    distanceM !== null && movingTimeS !== null && movingTimeS > 0 ? distanceM / movingTimeS : null;
+
+  // If there is a session summary, use that. Otherwise derive this data from the streams.
+  return {
+    sport: toName(session?.sport) ?? 'unknown',
+    subSport: toName(session?.subSport),
+    name: null,
+    startedAt,
+    timezoneOffsetMinutes: null,
+    elapsedTimeS,
+    movingTimeS,
+    distanceM,
+    elevationGainM: num(session?.totalAscent) ?? (altitude.length > 0 ? elevation.gainM : null),
+    elevationLossM: num(session?.totalDescent) ?? (altitude.length > 0 ? elevation.lossM : null),
+    avgSpeedMps: num(session?.enhancedAvgSpeed ?? session?.avgSpeed) ?? mean(speed) ?? derivedAvgSpeedMps,
+    maxSpeedMps: num(session?.enhancedMaxSpeed ?? session?.maxSpeed) ?? max(speed),
+    avgHr: int(session?.avgHeartRate) ?? roundOrNull(mean(heartrate)),
+    maxHr: int(session?.maxHeartRate) ?? roundOrNull(max(heartrate)),
+    avgCadence: int(session?.avgCadence) ?? roundOrNull(mean(cadence)),
+    maxCadence: int(session?.maxCadence) ?? roundOrNull(max(cadence)),
+    avgPower: int(session?.avgPower) ?? roundOrNull(mean(power)),
+    maxPower: int(session?.maxPower) ?? roundOrNull(max(power)),
+    normalizedPower: int(session?.normalizedPower) ?? computeNormalizedPower(power, sampleIntervalS),
+    calories: int(session?.totalCalories),
+    streams,
+    laps: (messages.lapMesgs ?? []).map((lap, index) => mapLap(lap, index)),
+  };
+};
+
+ const computeMovingTimeS = (speed: number[], time: number[], thresholdMps = 0.5): number | null => {
+  if (speed.length === 0) {
+    return null;
+  }
+
+  let movingS = 0;
+  for (let index = 1; index < speed.length; index++) {
+    if (!Number.isFinite(speed[index]) || speed[index] < thresholdMps) {
+      continue;
+    }
+
+    const delta = time.length > index ? time[index] - time[index - 1] : 1;
+    if (Number.isFinite(delta) && delta > 0) {
+      movingS += delta;
+    }
+  }
+
+  return Math.round(movingS);
+};
+
+
+const ELEVATION_SMOOTHING_WINDOW_S = 30;
+const ELEVATION_THRESHOLD_M = 3;
+
+export const computeElevationChange = (altitude: number[], options: ElevationOptions = {}): ElevationChange => {
+  const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1 } = options;
+
+  // Non-finite samples are removed *before* smoothing. rollingAverage treats them as zero,
+  // which would otherwise read as an instantaneous drop to sea level.
+  const usable = altitude.filter((value) => Number.isFinite(value));
+  if (usable.length === 0) {
+    return { gainM: 0, lossM: 0 };
+  }
+
+  const windowSize = Math.max(1, Math.round(ELEVATION_SMOOTHING_WINDOW_S / Math.max(sampleIntervalS, 1)));
+  const smoothed = rollingAverage(usable, windowSize);
+
+  let gainM = 0;
+  let lossM = 0;
+  let reference = smoothed[0];
+
+  for (const value of smoothed) {
+    const delta = value - reference;
+    if (Math.abs(delta) < thresholdM) {
+      continue;
+    }
+
+    if (delta > 0) {
+      gainM += delta;
+    } else {
+      lossM -= delta;
+    }
+    reference = value;
+  }
+
+  return { gainM, lossM };
+};
+
+
+const computeNormalizedPower = (power: number[], sampleIntervalS = 1): number | null => {
+  if (power.length === 0 || sampleIntervalS <= 0) {
+    return null;
+  }
+
+  const windowSize = Math.max(1, Math.round(NORMALIZED_POWER_WINDOW_S / sampleIntervalS));
+  const smoothed = rollingAverage(power, windowSize);
+  if (smoothed.length === 0) {
+    return null;
+  }
+
+  let total = 0;
+  for (const value of smoothed) {
+    total += value ** 4;
+  }
+
+  return Math.round((total / smoothed.length) ** 0.25);
+};
+
 
 @Injectable()
 export class ActivityService {
