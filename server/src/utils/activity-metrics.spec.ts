@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   computeElevationChange,
-  computeMovingTimeS,
+  computeMovingTime,
   computeNormalizedPower,
-  inferSampleIntervalS,
+  inferSampleInterval,
 } from 'src/utils/activity-metrics';
 
 describe('computeNormalizedPower', () => {
@@ -35,8 +35,8 @@ describe('computeNormalizedPower', () => {
 });
 
 describe('computeElevationChange', () => {
-  // A large sampleIntervalS collapses the smoothing window to a single sample, isolating the
-  // threshold behaviour from the smoothing behaviour.
+  // A large sampleInterval collapses the smoothing window to a single sample, isolating the
+  // threshold behavior from the smoothing behavior.
   const unsmoothed = { sampleIntervalS: 60 };
 
   it('sums deltas above the threshold', () => {
@@ -78,23 +78,23 @@ describe('computeElevationChange', () => {
   });
 });
 
-describe('computeMovingTimeS', () => {
+describe('computeMovingTime', () => {
   it('excludes samples below the speed threshold', () => {
-    expect(computeMovingTimeS([0, 2, 2, 0, 3], [0, 1, 2, 3, 4])).toBe(3);
+    expect(computeMovingTime([0, 2, 2, 0, 3], [0, 1, 2, 3, 4])).toBe(3);
   });
 
   it('returns null without speed data', () => {
-    expect(computeMovingTimeS([], [])).toBeNull();
+    expect(computeMovingTime([], [])).toBeNull();
   });
 });
 
-describe('inferSampleIntervalS', () => {
+describe('inferSampleInterval', () => {
   it('takes the median so a recording gap does not skew it', () => {
-    expect(inferSampleIntervalS([0, 1, 2, 60, 61])).toBe(1);
+    expect(inferSampleInterval([0, 1, 2, 60, 61])).toBe(1);
   });
 
   it('defaults to one second when there is nothing to infer from', () => {
-    expect(inferSampleIntervalS([])).toBe(1);
-    expect(inferSampleIntervalS([5])).toBe(1);
+    expect(inferSampleInterval([])).toBe(1);
+    expect(inferSampleInterval([5])).toBe(1);
   });
 });

@@ -3,9 +3,7 @@ import { rollingAverage } from 'src/utils/math';
 export type ElevationChange = { gainM: number; lossM: number };
 
 export type ElevationOptions = {
-  /** Deltas smaller than this are treated as noise. */
   thresholdM?: number;
-  /** Spacing between altitude samples, used to size the smoothing window in real time. */
   sampleIntervalS?: number;
 };
 
@@ -13,13 +11,7 @@ const ELEVATION_SMOOTHING_WINDOW_S = 30;
 const ELEVATION_THRESHOLD_M = 3;
 const NORMALIZED_POWER_WINDOW_S = 30;
 
-/**
- * Spacing between samples, inferred from the time stream.
- *
- * Median rather than mean so a pause or a lost-signal gap does not skew it, which matters
- * because every window below is sized in seconds and converted using this.
- */
-export const inferSampleIntervalS = (time: number[]): number => {
+export const inferSampleInterval = (time: number[]): number => {
   if (time.length < 2) {
     return 1;
   }
@@ -40,7 +32,7 @@ export const inferSampleIntervalS = (time: number[]): number => {
   return deltas[Math.floor(deltas.length / 2)];
 };
 
-export const computeMovingTimeS = (speed: number[], time: number[], thresholdMps = 0.5): number | null => {
+export const computeMovingTime = (speed: number[], time: number[], thresholdMps = 0.5): number | null => {
   if (speed.length === 0) {
     return null;
   }

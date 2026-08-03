@@ -375,8 +375,6 @@ export class JobRepository implements OnApplicationShutdown {
       case JobName.ActivityParse: {
         return {
           singletonKey: `${item.name}:${item.data.id}`,
-          // An upload someone is waiting on jumps ahead of a backfill of ten thousand old files.
-          priority: item.data.source === 'upload' ? 10 : 0,
         };
       }
 

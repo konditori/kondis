@@ -2,9 +2,9 @@ import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.rep
 import { ParsedActivity, ParsedLap, ParsedStream, StreamType } from 'src/types';
 import {
   computeElevationChange,
-  computeMovingTimeS,
+  computeMovingTime,
   computeNormalizedPower,
-  inferSampleIntervalS,
+  inferSampleInterval,
 } from 'src/utils/activity-metrics';
 import { int, lastFinite, max, mean, num, roundOrNull } from 'src/utils/math';
 
@@ -127,12 +127,12 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const cadence = streamData('cadence');
   const distance = streamData('distance');
 
-  const sampleIntervalS = inferSampleIntervalS(time);
+  const sampleIntervalS = inferSampleInterval(time);
   const elevation = computeElevationChange(altitude, { sampleIntervalS });
   const finalTime = lastFinite(time);
 
   const elapsedTimeS = int(session?.totalElapsedTime) ?? (finalTime === undefined ? 0 : Math.round(finalTime));
-  const movingTimeS = int(session?.totalTimerTime) ?? computeMovingTimeS(speed, time);
+  const movingTimeS = int(session?.totalTimerTime) ?? computeMovingTime(speed, time);
   const distanceM = num(session?.totalDistance) ?? lastFinite(distance) ?? null;
 
   // Older devices record neither an average speed nor a speed stream, but distance and time
@@ -146,14 +146,14 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
     subSport: toName(session?.subSport),
     name: null,
     startedAt,
-    timezoneOffsetMinutes: null,
-    elapsedTimeS,
-    movingTimeS,
-    distanceM,
-    elevationGainM: num(session?.totalAscent) ?? (altitude.length > 0 ? elevation.gainM : null),
-    elevationLossM: num(session?.totalDescent) ?? (altitude.length > 0 ? elevation.lossM : null),
-    avgSpeedMps: num(session?.enhancedAvgSpeed ?? session?.avgSpeed) ?? mean(speed) ?? derivedAvgSpeedMps,
-    maxSpeedMps: num(session?.enhancedMaxSpeed ?? session?.maxSpeed) ?? max(speed),
+    timezoneOffset: null,
+    elapsedTime: elapsedTimeS,
+    movingTime: movingTimeS,
+    distance: distanceM,
+    elevationGain: num(session?.totalAscent) ?? (altitude.length > 0 ? elevation.gainM : null),
+    elevationLoss: num(session?.totalDescent) ?? (altitude.length > 0 ? elevation.lossM : null),
+    avgSpeed: num(session?.enhancedAvgSpeed ?? session?.avgSpeed) ?? mean(speed) ?? derivedAvgSpeedMps,
+    maxSpeed: num(session?.enhancedMaxSpeed ?? session?.maxSpeed) ?? max(speed),
     avgHr: int(session?.avgHeartRate) ?? roundOrNull(mean(heartrate)),
     maxHr: int(session?.maxHeartRate) ?? roundOrNull(max(heartrate)),
     avgCadence: int(session?.avgCadence) ?? roundOrNull(mean(cadence)),

@@ -58,10 +58,7 @@ export class UploadService {
           trx,
         );
 
-        await this.jobRepository.queue(
-          { name: JobName.ActivityParse, data: { id: created.id, source: 'upload' } },
-          { transaction: trx },
-        );
+        await this.jobRepository.queue({ name: JobName.ActivityParse, data: { id: created.id } }, { transaction: trx });
 
         return created;
       });

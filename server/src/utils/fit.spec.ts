@@ -3,14 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { FitMessages } from 'src/repositories/fit.repository';
 import { findStream, FitParseError, parseFitMessages } from 'src/utils/fit';
 
-/**
- * These operate on decoded `FitMessages` directly, so nothing here touches `fit-file-parser`.
- * Decoding a binary is covered by `src/repositories/fit.repository.spec.ts`.
- */
 const START = new Date('2015-06-22T08:00:00.000Z');
 const at = (offsetS: number) => new Date(START.getTime() + offsetS * 1000);
 
-/** ~58.67N, ~11.73E in semicircles, which is how FIT stores position. */
+// ~58.67N, ~11.73E in semicircles, which is how FIT stores position.
 const LAT_SEMICIRCLES = 700_000_000;
 const LON_SEMICIRCLES = 140_000_000;
 
@@ -45,12 +41,12 @@ describe('parseFitMessages', () => {
     expect(parsed.sport).toBe('running');
     expect(parsed.subSport).toBe('road');
     expect(parsed.startedAt.toISOString()).toBe(START.toISOString());
-    expect(parsed.elapsedTimeS).toBe(3600);
-    expect(parsed.movingTimeS).toBe(3500);
-    expect(parsed.distanceM).toBe(10_000);
+    expect(parsed.elapsedTime).toBe(3600);
+    expect(parsed.movingTime).toBe(3500);
+    expect(parsed.distance).toBe(10_000);
     expect(parsed.calories).toBe(700);
     expect(parsed.avgHr).toBe(150);
-    expect(parsed.elevationGainM).toBe(120);
+    expect(parsed.elevationGain).toBe(120);
   });
 
   it('converts position from semicircles to degrees', () => {
@@ -87,10 +83,10 @@ describe('parseFitMessages', () => {
 
     expect(parsed.sport).toBe('unknown');
     expect(parsed.startedAt.toISOString()).toBe(START.toISOString());
-    expect(parsed.elapsedTimeS).toBe(60);
-    expect(parsed.distanceM).toBe(6);
-    expect(parsed.elevationGainM).toBe(10);
-    expect(parsed.elevationLossM).toBe(5);
+    expect(parsed.elapsedTime).toBe(60);
+    expect(parsed.distance).toBe(6);
+    expect(parsed.elevationGain).toBe(10);
+    expect(parsed.elevationLoss).toBe(5);
     expect(parsed.avgHr).toBe(133);
     expect(parsed.maxHr).toBe(160);
   });
@@ -101,7 +97,7 @@ describe('parseFitMessages', () => {
       recordMesgs: [{ timestamp: at(0) }, { timestamp: at(100) }],
     });
 
-    expect(parsed.avgSpeedMps).toBeCloseTo(2.5, 5);
+    expect(parsed.avgSpeed).toBeCloseTo(2.5, 5);
   });
 
   it('builds a time stream in seconds relative to the start', () => {

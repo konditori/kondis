@@ -37,9 +37,9 @@ describe.skipIf(!hasFixture)('parseFitMessages against a real Garmin .fit record
 
     expect(activity.sport).toBe('running');
     expect(activity.startedAt.getUTCFullYear()).toBe(2015);
-    expect(activity.distanceM).toBeGreaterThan(10_000);
-    expect(activity.distanceM).toBeLessThan(10_100);
-    expect(activity.movingTimeS).toBeGreaterThan(4000);
+    expect(activity.distance).toBeGreaterThan(10_000);
+    expect(activity.distance).toBeLessThan(10_100);
+    expect(activity.movingTime).toBeGreaterThan(4000);
     expect(activity.calories).toBeGreaterThan(0);
     expect(activity.laps).toHaveLength(1);
   });
@@ -69,7 +69,7 @@ describe.skipIf(!hasFixture)('parseFitMessages against a real Garmin .fit record
 
     expect(findStream(activity, 'speed')).toBeUndefined();
     // ~7:19 per kilometre.
-    expect(activity.avgSpeedMps).toBeCloseTo(2.28, 1);
+    expect(activity.avgSpeed).toBeCloseTo(2.28, 1);
   });
 
   it('keeps elevation gain within a plausible range for a 70m altitude spread', () => {
@@ -78,11 +78,11 @@ describe.skipIf(!hasFixture)('parseFitMessages against a real Garmin .fit record
     // Raw accumulation of this stream reports 694m, which is GPS noise rather than climbing.
     // Smoothing brings it to roughly 285m. This bound is a regression guard, not ground truth:
     // the real figure has never been validated against a reference.
-    expect(activity.elevationGainM).toBeGreaterThan(100);
-    expect(activity.elevationGainM).toBeLessThan(400);
+    expect(activity.elevationGain).toBeGreaterThan(100);
+    expect(activity.elevationGain).toBeLessThan(400);
 
     // A loop should climb and descend roughly the same amount.
-    const asymmetry = Math.abs(activity.elevationGainM! - activity.elevationLossM!);
+    const asymmetry = Math.abs(activity.elevationGain! - activity.elevationLoss!);
     expect(asymmetry).toBeLessThan(50);
   });
 });

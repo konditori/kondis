@@ -37,49 +37,38 @@ export type ParsedLap = {
   avgSpeedMps: number | null;
 };
 
-/** A decoded FIT file, before it becomes database rows. */
 export type ParsedActivity = {
   sport: string;
   subSport: string | null;
   name: string | null;
   startedAt: Date;
-  timezoneOffsetMinutes: number | null;
-  elapsedTimeS: number;
-  movingTimeS: number | null;
-  distanceM: number | null;
-  elevationGainM: number | null;
-  elevationLossM: number | null;
-  avgSpeedMps: number | null;
-  maxSpeedMps: number | null;
-  avgHr: number | null;
-  maxHr: number | null;
-  avgCadence: number | null;
-  maxCadence: number | null;
-  avgPower: number | null;
-  maxPower: number | null;
-  normalizedPower: number | null;
-  calories: number | null;
-  streams: ParsedStream[];
-  laps: ParsedLap[];
+  timezoneOffset: number | null; // minutes east of UTC
+  elapsedTime: number; // seconds
+  movingTime: number | null; // seconds
+  distance: number | null; // meters
+  elevationGain: number | null; // meters
+  elevationLoss: number | null; // meters
+  avgSpeed: number | null; // meters per second
+  maxSpeed: number | null; // meters per second
+  avgHr: number | null; // beats per minute
+  maxHr: number | null; // beats per minute
+  avgCadence: number | null; // revolutions per minute
+  maxCadence: number | null; // revolutions per minute
+  avgPower: number | null; // watts
+  maxPower: number | null; // watts
+  normalizedPower: number | null; // watts
+  calories: number | null; // kilocalories
+  streams: ParsedStream[]; // index-aligned streams of samples
+  laps: ParsedLap[]; // lap summaries, if any
 };
 
-/** Common to every job payload. `force` means "redo work that already looks done". */
 export interface IBaseJob {
   force?: boolean;
 }
 
-/**
- * Where a job came from.
- *
- * The only reason this exists is priority: work someone is actively waiting on must not sit
- * behind a hundred thousand backfill jobs enqueued a second earlier.
- */
-export type JobSource = 'upload' | 'backfill';
-
 /** A job about one row. */
 export interface IEntityJob extends IBaseJob {
   id: string;
-  source?: JobSource;
 }
 
 export type JobItem =

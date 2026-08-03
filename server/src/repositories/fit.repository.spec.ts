@@ -4,10 +4,6 @@ import { describe, expect, it } from 'vitest';
 
 import { FitDecodeError, FitRepository } from 'src/repositories/fit.repository';
 
-/**
- * These build FIT binaries rather than reading a recording, so the suite stays runnable without
- * the `test/test-assets` submodule. Decoding a real device file is covered by the medium suite.
- */
 const MESG_FILE_ID = 0;
 const MESG_SESSION = 18;
 const MESG_LAP = 19;

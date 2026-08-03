@@ -75,13 +75,6 @@ const NOT_A_FIT_FILE = [
 
 type ParsedFit = Awaited<ReturnType<FitParser['parseAsync']>>;
 
-/**
- * The boundary to `fit-file-parser`.
- *
- * Everything that knows the third-party decoder exists lives here, so services depend on the
- * `FitMessages` shape rather than on the library. Turning the decoded messages into an activity
- * is pure and lives in `src/utils/fit.ts`.
- */
 @Injectable()
 export class FitRepository {
   private readonly fitParser = new FitParser({
