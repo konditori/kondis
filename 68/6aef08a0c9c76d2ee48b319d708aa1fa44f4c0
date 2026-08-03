@@ -1,0 +1,41 @@
+server/src/repositories/fit.repository.spec.ts
+  s_093f319e7df33d::t_27407551af0a5d 1,5,89,91,93-94,96,121,137,152,162,170-171
+server/src/repositories/fit.repository.ts
+  s_093f319e7df33d::t_4c69b89b14bcbd 1-155
+server/src/repositories/index.ts
+  s_093f319e7df33d::t_8d2ce09f028dc7 4,13
+server/src/services/activity.service.ts
+  s_093f319e7df33d::t_4cc1ca35383b65 7,11-12,14,24,49
+server/src/types.ts
+  s_093f319e7df33d::t_22afe4eabd3cd3 23-65
+server/src/utils/activity-metrics.spec.ts
+  s_093f319e7df33d::t_8b8d8f73972235 8
+server/src/utils/activity-metrics.ts
+  s_093f319e7df33d::t_a4d6bfd3b3e7ab 1,3-9,12-40,43-60,63-64,66-71,73-114
+server/src/utils/fit.spec.ts
+  s_093f319e7df33d::t_2fc09b92e8d101 1-171
+server/src/utils/fit.ts
+  s_093f319e7df33d::t_14d4fdb173c7fa 1-9,106-168
+server/src/utils/math.spec.ts
+  s_093f319e7df33d::t_b5fef5e0126c32 1-26
+server/src/utils/math.ts
+  s_093f319e7df33d::t_2f41d90cdf4795 75
+server/test/medium/specs/parse-fit.spec.ts
+  s_093f319e7df33d::t_0e9158f3aadfb9 5-8,12,30-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "686aef08a0c9c76d2ee48b319d708aa1fa44f4c0",
+  "prompts": {},
+  "sessions": {
+    "s_093f319e7df33d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_036b38c97ffenhfCZO1q1UBZTp",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
