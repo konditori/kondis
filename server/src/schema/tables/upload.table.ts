@@ -10,7 +10,7 @@ import {
 import { UploadStatus } from 'src/types';
 
 @Table('upload')
-export class UploadTableEntity {
+export class UploadTable {
   @PrimaryGeneratedColumn()
   id!: Generated<string>;
 
