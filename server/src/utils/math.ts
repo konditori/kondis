@@ -57,27 +57,6 @@ export const rollingAverage = (values: number[], windowSize: number): number[] =
 
 export const roundOrNull = (value: number | null): number | null => (value === null ? null : Math.round(value));
 
-export const inferSampleIntervalS = (time: number[]): number => {
-  if (time.length < 2) {
-    return 1;
-  }
-
-  const deltas: number[] = [];
-  for (let index = 1; index < time.length; index++) {
-    const delta = time[index] - time[index - 1];
-    if (Number.isFinite(delta) && delta > 0) {
-      deltas.push(delta);
-    }
-  }
-
-  if (deltas.length === 0) {
-    return 1;
-  }
-
-  deltas.sort((a, b) => a - b);
-  return deltas[Math.floor(deltas.length / 2)];
-};
-
 export const lastFinite = (values: number[]): number | undefined => {
   for (let index = values.length - 1; index >= 0; index--) {
     if (Number.isFinite(values[index])) {

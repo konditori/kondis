@@ -1,63 +1,5 @@
 import { JobName, QueueName } from 'src/enum';
 
-export type FitRecordMesg = {
-  timestamp?: Date | number;
-  // Semicircles on most devices. `parse-fit` normalises to degrees
-  positionLat?: number;
-  positionLong?: number;
-  altitude?: number;
-  enhancedAltitude?: number;
-  distance?: number;
-  speed?: number;
-  enhancedSpeed?: number;
-  heartRate?: number;
-  cadence?: number;
-  power?: number;
-  temperature?: number;
-};
-
-export type FitSessionMesg = {
-  sport?: string | number;
-  subSport?: string | number;
-  startTime?: Date | number;
-  totalElapsedTime?: number;
-  // FIT's "timer time", i.e. moving time with auto-pause excluded.
-  totalTimerTime?: number;
-  totalDistance?: number;
-  totalAscent?: number;
-  totalDescent?: number;
-  avgSpeed?: number;
-  enhancedAvgSpeed?: number;
-  maxSpeed?: number;
-  enhancedMaxSpeed?: number;
-  avgHeartRate?: number;
-  maxHeartRate?: number;
-  avgCadence?: number;
-  maxCadence?: number;
-  avgPower?: number;
-  maxPower?: number;
-  normalizedPower?: number;
-  totalCalories?: number;
-};
-
-export type FitLapMesg = {
-  startTime?: Date | number;
-  totalElapsedTime?: number;
-  totalTimerTime?: number;
-  totalDistance?: number;
-  avgHeartRate?: number;
-  maxHeartRate?: number;
-  avgPower?: number;
-  avgSpeed?: number;
-  enhancedAvgSpeed?: number;
-};
-
-export type FitMessages = {
-  sessionMesgs?: FitSessionMesg[];
-  recordMesgs?: FitRecordMesg[];
-  lapMesgs?: FitLapMesg[];
-};
-
 export type UploadedFitFile = {
   originalname: string;
   buffer: Buffer;
@@ -77,6 +19,49 @@ export type StreamType =
   | 'cadence'
   | 'power'
   | 'temperature';
+
+export type ParsedStream = {
+  type: StreamType;
+  data: number[];
+};
+
+export type ParsedLap = {
+  index: number;
+  startedAt: Date | null;
+  elapsedTimeS: number | null;
+  movingTimeS: number | null;
+  distanceM: number | null;
+  avgHr: number | null;
+  maxHr: number | null;
+  avgPower: number | null;
+  avgSpeedMps: number | null;
+};
+
+/** A decoded FIT file, before it becomes database rows. */
+export type ParsedActivity = {
+  sport: string;
+  subSport: string | null;
+  name: string | null;
+  startedAt: Date;
+  timezoneOffsetMinutes: number | null;
+  elapsedTimeS: number;
+  movingTimeS: number | null;
+  distanceM: number | null;
+  elevationGainM: number | null;
+  elevationLossM: number | null;
+  avgSpeedMps: number | null;
+  maxSpeedMps: number | null;
+  avgHr: number | null;
+  maxHr: number | null;
+  avgCadence: number | null;
+  maxCadence: number | null;
+  avgPower: number | null;
+  maxPower: number | null;
+  normalizedPower: number | null;
+  calories: number | null;
+  streams: ParsedStream[];
+  laps: ParsedLap[];
+};
 
 /** Common to every job payload. `force` means "redo work that already looks done". */
 export interface IBaseJob {
