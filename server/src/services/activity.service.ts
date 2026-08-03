@@ -2,12 +2,13 @@ import { ConsoleLogger, Injectable } from '@nestjs/common';
 
 import { OnJob } from 'src/decorators';
 import { JobName, JobStatus, QueueName } from 'src/enum';
-import { ActivityRepository, CreateActivityInput } from 'src/repositories/activity.repository';
+import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { Timestamp } from 'src/schema/decorators';
 import { JobItem, JobOf, ParsedActivity } from 'src/types';
 import { parseFitMessages } from 'src/utils/fit';
 
@@ -112,6 +113,163 @@ export class ActivityService {
     this.logger.log(`Deleted activity ${id}`);
 
     return JobStatus.Success;
+  }
+
+  async listRecent(): Promise<
+    {
+      id: string;
+      uploadId: string;
+      sport: string;
+      subSport: string | null;
+      name: string | null;
+      startedAt: string;
+      timezoneOffsetMinutes: number | null;
+      elapsedTime: number;
+      movingTime: number | null;
+      distance: number | null;
+      elevationGain: number | null;
+      elevationLoss: number | null;
+      avgSpeed: number | null;
+      maxSpeed: number | null;
+      avgHr: number | null;
+      maxHr: number | null;
+      avgCadence: number | null;
+      maxCadence: number | null;
+      avgPower: number | null;
+      maxPower: number | null;
+      normalizedPower: number | null;
+      calories: number | null;
+      createdAt: string;
+      updatedAt: string;
+    }[]
+  > {
+    const rows = await this.activityRepository.listRecent();
+    return rows.map((row) => this.toActivityDto(row));
+  }
+
+  async updateById(
+    id: string,
+    input: { name?: string | null; sport?: string; subSport?: string | null; startedAt?: Date },
+  ): Promise<
+    | {
+        id: string;
+        uploadId: string;
+        sport: string;
+        subSport: string | null;
+        name: string | null;
+        startedAt: string;
+        timezoneOffsetMinutes: number | null;
+        elapsedTime: number;
+        movingTime: number | null;
+        distance: number | null;
+        elevationGain: number | null;
+        elevationLoss: number | null;
+        avgSpeed: number | null;
+        maxSpeed: number | null;
+        avgHr: number | null;
+        maxHr: number | null;
+        avgCadence: number | null;
+        maxCadence: number | null;
+        avgPower: number | null;
+        maxPower: number | null;
+        normalizedPower: number | null;
+        calories: number | null;
+        createdAt: string;
+        updatedAt: string;
+      }
+    | undefined
+  > {
+    const mapped: UpdateActivityInput = {};
+
+    if (input.name === undefined) {
+      // no-op
+    } else {
+      mapped.name = input.name;
+    }
+
+    if (input.sport === undefined) {
+      // no-op
+    } else {
+      mapped.sport = input.sport;
+    }
+
+    if (input.subSport === undefined) {
+      // no-op
+    } else {
+      mapped.sub_sport = input.subSport;
+    }
+
+    if (input.startedAt === undefined) {
+      // no-op
+    } else {
+      mapped.started_at = input.startedAt;
+    }
+
+    const updated = await this.activityRepository.update(id, mapped);
+    return updated ? this.toActivityDto(updated) : undefined;
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    const status = await this.handleActivityDelete({ id });
+    return status !== JobStatus.Skipped;
+  }
+
+  private toActivityDto(activity: {
+    id: string;
+    upload_id: string;
+    sport: string;
+    sub_sport: string | null;
+    name: string | null;
+    started_at: Timestamp;
+    timezone_offset_minutes: number | null;
+    elapsed_time: number;
+    moving_time: number | null;
+    distance: number | null;
+    elevation_gain: number | null;
+    elevation_loss: number | null;
+    avg_speed: number | null;
+    max_speed: number | null;
+    avg_hr: number | null;
+    max_hr: number | null;
+    avg_cadence: number | null;
+    max_cadence: number | null;
+    avg_power: number | null;
+    max_power: number | null;
+    normalized_power: number | null;
+    calories: number | null;
+    created_at: Timestamp;
+    updated_at: Timestamp;
+  }) {
+    return {
+      id: activity.id,
+      uploadId: activity.upload_id,
+      sport: activity.sport,
+      subSport: activity.sub_sport,
+      name: activity.name,
+      startedAt: this.toIsoString(activity.started_at),
+      timezoneOffsetMinutes: activity.timezone_offset_minutes,
+      elapsedTime: activity.elapsed_time,
+      movingTime: activity.moving_time,
+      distance: activity.distance,
+      elevationGain: activity.elevation_gain,
+      elevationLoss: activity.elevation_loss,
+      avgSpeed: activity.avg_speed,
+      maxSpeed: activity.max_speed,
+      avgHr: activity.avg_hr,
+      maxHr: activity.max_hr,
+      avgCadence: activity.avg_cadence,
+      maxCadence: activity.max_cadence,
+      avgPower: activity.avg_power,
+      maxPower: activity.max_power,
+      normalizedPower: activity.normalized_power,
+      calories: activity.calories,
+      createdAt: this.toIsoString(activity.created_at),
+      updatedAt: this.toIsoString(activity.updated_at),
+    };
+  }
+
+  private toIsoString(value: Timestamp): string {
+    return (value instanceof Date ? value : new Date(value)).toISOString();
   }
 
   private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {

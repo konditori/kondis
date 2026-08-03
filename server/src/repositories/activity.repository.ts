@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
-import { ActivityStream, NewActivity, NewLap, StreamType } from 'src/db/schema';
+import { ActivityStream, ActivityUpdate, NewActivity, NewLap, StreamType } from 'src/db/schema';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
@@ -13,6 +13,8 @@ export type CreateActivityInput = {
   streams: ActivityStreamInput[];
   laps: Omit<NewLap, 'activity_id' | 'id'>[];
 };
+
+export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'sport' | 'sub_sport' | 'started_at'>;
 
 @Injectable()
 export class ActivityRepository {
@@ -96,6 +98,10 @@ export class ActivityRepository {
 
   getStreams(activityId: string): Promise<ActivityStream[]> {
     return this.db.selectFrom('activity_stream').selectAll().where('activity_id', '=', activityId).execute();
+  }
+
+  update(id: string, input: UpdateActivityInput) {
+    return this.db.updateTable('activity').set(input).where('id', '=', id).returningAll().executeTakeFirst();
   }
 
   async delete(id: string, executor: KondisExecutor = this.db): Promise<void> {
