@@ -3,11 +3,8 @@ import { sql } from 'kysely';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { ActivityStream, NewActivity, NewLap, StreamType } from 'src/db/schema';
-import { ActivityTable } from 'src/schema/tables/activity.table';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
-
-const ACTIVITY_COLUMNS = Object.keys({} as ActivityTable) as Array<keyof ActivityTable>;
 
 export type ActivityStreamInput = { type: StreamType; data: number[] };
 
@@ -83,18 +80,18 @@ export class ActivityRepository {
   getById(id: string) {
     return this.db
       .selectFrom('activity')
-      .select(ACTIVITY_COLUMNS)
+      .selectAll('activity')
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'))
       .where('id', '=', id)
       .executeTakeFirst();
   }
 
   getByUploadId(uploadId: string) {
-    return this.db.selectFrom('activity').select(ACTIVITY_COLUMNS).where('upload_id', '=', uploadId).executeTakeFirst();
+    return this.db.selectFrom('activity').selectAll('activity').where('upload_id', '=', uploadId).executeTakeFirst();
   }
 
   listRecent(limit = 50) {
-    return this.db.selectFrom('activity').select(ACTIVITY_COLUMNS).orderBy('started_at', 'desc').limit(limit).execute();
+    return this.db.selectFrom('activity').selectAll('activity').orderBy('started_at', 'desc').limit(limit).execute();
   }
 
   getStreams(activityId: string): Promise<ActivityStream[]> {
