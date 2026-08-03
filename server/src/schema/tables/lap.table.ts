@@ -15,13 +15,13 @@ export class LapTable {
   started_at!: Timestamp | null;
 
   @Column({ type: 'integer', nullable: true })
-  elapsed_time_s!: number | null;
+  elapsed_time!: number | null;
 
   @Column({ type: 'integer', nullable: true })
-  moving_time_s!: number | null;
+  moving_time!: number | null;
 
   @Column({ type: 'double precision', nullable: true })
-  distance_m!: number | null;
+  distance!: number | null;
 
   @Column({ type: 'integer', nullable: true })
   avg_hr!: number | null;

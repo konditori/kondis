@@ -29,7 +29,6 @@ const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtur
 describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
-  // The queue has its own suite; this one is about the HTTP-facing upload path.
   const jobs = { queue: async () => {} } as unknown as JobRepository;
 
   let fileBuffer: Buffer<ArrayBuffer>;

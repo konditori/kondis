@@ -23,7 +23,6 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
   const queue = vi.fn(async () => {});
-  // Only the producer side is under test here; the queue itself has its own suite.
   const jobs = { queue } as unknown as JobRepository;
 
   let storageDir = '';
@@ -75,8 +74,7 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
 
     expect(queue).toHaveBeenCalledTimes(1);
     const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
-    expect(item).toEqual({ name: JobName.ActivityParse, data: { id: result.id, source: 'upload' } });
-    // The point of the transaction is that the row and its job commit together.
+    expect(item).toEqual({ name: JobName.ActivityParse, data: { id: result.id } });
     expect(options.transaction).toBeDefined();
   });
 

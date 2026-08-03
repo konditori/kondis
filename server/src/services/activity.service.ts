@@ -61,13 +61,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  /**
-   * Enqueue a parse for every upload that needs one.
-   *
-   * Runs nightly and on demand. Without `force` it only picks up uploads that never produced
-   * an activity, which makes it both the retry mechanism for failed imports and the backstop
-   * for an enqueue that was somehow lost.
-   */
   @OnJob({ name: JobName.ActivityParseQueueAll, queue: QueueName.BackgroundTask })
   async handleActivityParseQueueAll({ force = false }: JobOf<JobName.ActivityParseQueueAll>): Promise<JobStatus> {
     let after: string | undefined;
@@ -81,8 +74,7 @@ export class ActivityService {
 
       const jobs: JobItem[] = ids.map((id) => ({
         name: JobName.ActivityParse,
-        // Marked as backfill so a live upload arriving mid-scan is still served first.
-        data: { id, force, source: 'backfill' },
+        data: { id, force },
       }));
 
       await this.jobRepository.queueAll(jobs);
@@ -96,13 +88,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  /**
-   * Delete an activity, the upload it came from, and the file on disk.
-   *
-   * The row delete and the file-delete job commit together. If the transaction rolls back no
-   * file is removed; if the process dies immediately after the commit, the job survives and
-   * the file is still cleaned up. Doing the unlink inline would give neither guarantee.
-   */
   @OnJob({ name: JobName.ActivityDelete, queue: QueueName.BackgroundTask })
   async handleActivityDelete({ id }: JobOf<JobName.ActivityDelete>): Promise<JobStatus> {
     const activity = await this.activityRepository.getById(id);
@@ -138,13 +123,13 @@ export class ActivityService {
         name: parsed.name,
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,
-        elapsed_time_s: parsed.elapsedTime,
-        moving_time_s: parsed.movingTime,
-        distance_m: parsed.distance,
-        elevation_gain_m: parsed.elevationGain,
-        elevation_loss_m: parsed.elevationLoss,
-        avg_speed_mps: parsed.avgSpeed,
-        max_speed_mps: parsed.maxSpeed,
+        elapsed_time: parsed.elapsedTime,
+        moving_time: parsed.movingTime,
+        distance: parsed.distance,
+        elevation_gain: parsed.elevationGain,
+        elevation_loss: parsed.elevationLoss,
+        avg_speed: parsed.avgSpeed,
+        max_speed: parsed.maxSpeed,
         avg_hr: parsed.avgHr,
         max_hr: parsed.maxHr,
         avg_cadence: parsed.avgCadence,
@@ -158,9 +143,9 @@ export class ActivityService {
       laps: parsed.laps.map((lap) => ({
         lap_index: lap.index,
         started_at: lap.startedAt,
-        elapsed_time_s: lap.elapsedTimeS,
-        moving_time_s: lap.movingTimeS,
-        distance_m: lap.distanceM,
+        elapsed_time: lap.elapsedTimeS,
+        moving_time: lap.movingTimeS,
+        distance: lap.distanceM,
         avg_hr: lap.avgHr,
         max_hr: lap.maxHr,
         avg_power: lap.avgPower,

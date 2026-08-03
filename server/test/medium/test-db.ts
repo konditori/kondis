@@ -35,17 +35,6 @@ export const truncateAllTables = async (db: KondisDatabase): Promise<void> => {
   await sql`TRUNCATE TABLE activity_stream, lap, activity, upload RESTART IDENTITY CASCADE`.execute(db);
 };
 
-/**
- * Empty pg-boss's job tables without dropping its schema.
- *
- * Deleting from the partitioned parent clears every per-queue partition while leaving the
- * queue definitions, schedules and migration history intact; recreating the schema between
- * tests would cost a full pg-boss migration each time.
- *
- * `DELETE` rather than `TRUNCATE` on purpose. Workers are still polling while this runs, and
- * TRUNCATE needs an ACCESS EXCLUSIVE lock, which deadlocks against a fetch that is midway
- * through its `SELECT ... FOR UPDATE SKIP LOCKED` and subsequent update.
- */
 export const truncateJobs = async (db: KondisDatabase): Promise<void> => {
   const { rows } = await sql<{ exists: boolean }>`
     SELECT EXISTS (

@@ -37,25 +37,25 @@ export class ActivityTable {
   timezone_offset_minutes!: number | null;
 
   @Column({ type: 'integer' })
-  elapsed_time_s!: number;
+  elapsed_time!: number;
 
   @Column({ type: 'integer', nullable: true })
-  moving_time_s!: number | null;
+  moving_time!: number | null;
 
   @Column({ type: 'double precision', nullable: true })
-  distance_m!: number | null;
+  distance!: number | null;
 
   @Column({ type: 'double precision', nullable: true })
-  elevation_gain_m!: number | null;
+  elevation_gain!: number | null;
 
   @Column({ type: 'double precision', nullable: true })
-  elevation_loss_m!: number | null;
+  elevation_loss!: number | null;
 
   @Column({ type: 'double precision', nullable: true })
-  avg_speed_mps!: number | null;
+  avg_speed!: number | null;
 
   @Column({ type: 'double precision', nullable: true })
-  max_speed_mps!: number | null;
+  max_speed!: number | null;
 
   @Column({ type: 'integer', nullable: true })
   avg_hr!: number | null;

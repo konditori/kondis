@@ -12,12 +12,6 @@ export const KYSELY = Symbol('KYSELY');
 export type KondisDatabase = Kysely<DB>;
 export type KondisTransaction = Transaction<DB>;
 
-/**
- * Anything a query can run on.
- *
- * Repository methods take this so a caller can compose several of them, plus a job enqueue,
- * into one atomic unit. Defaulting to the pool keeps every existing call site unchanged.
- */
 export type KondisExecutor = KondisDatabase | KondisTransaction;
 
 let typeParsersConfigured = false;

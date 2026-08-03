@@ -15,14 +15,6 @@ export type TestApp = {
   destroy: () => Promise<void>;
 };
 
-/**
- * Boot the real application container against the throwaway Postgres instance.
- *
- * Constructing services by hand is fine for testing one of them in isolation, but the job
- * system is mostly wiring: decorator discovery, queue creation, worker startup, the shape of
- * the payload as it round-trips through the database. None of that is exercised by a hand-built
- * object graph, so the parts most likely to break are the parts a unit test cannot see.
- */
 export const createTestApp = async (): Promise<TestApp> => {
   const database = getTestDatabaseConfig();
   const storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-app-'));
@@ -49,8 +41,6 @@ export const createTestApp = async (): Promise<TestApp> => {
     KONDIS_JOB_RETRY_DELAY_SECONDS: '1',
   });
 
-  // Without `abortOnError` Nest calls process.abort() on a bootstrap failure, which a vitest
-  // worker thread cannot do — the real error is replaced by "process.abort() is not supported".
   const app = await NestFactory.createApplicationContext(AppModule, { abortOnError: false });
 
   return {
