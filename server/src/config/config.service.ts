@@ -13,33 +13,15 @@ export type DatabaseConfig = {
 };
 
 export type JobsConfig = {
-  /**
-   * Postgres schema pg-boss owns. Separate from `public` so `pg_dump --schema=public` of the
-   * user's activities does not drag along a queue backlog, and so kondis's own Kysely
-   * migrations and pg-boss's internal migrations can never collide.
-   */
   schema: string;
-  /** Jobs run in parallel per queue, per process. */
   concurrency: Record<QueueName, number>;
-  /** Attempts after the first before a job is dead-lettered. */
   retryLimit: number;
-  /** Seconds before the first retry. Doubles (with jitter) on each subsequent attempt. */
   retryDelaySeconds: number;
-  /** A job still active after this long is assumed dead and retried. */
   expireInSeconds: number;
-  /** How long completed jobs stay queryable before deletion. */
   deleteAfterSeconds: number;
-  /** Register the recurring schedules. Off in tests, so a cron tick cannot race an assertion. */
   cron: boolean;
 };
 
-/**
- * Sensible for a self-hosted install on a normal machine.
- *
- * Parsing is CPU-bound and single-threaded per job, so its default is deliberately below a
- * typical core count: the API shares the process by default and must stay responsive. The
- * other two queues are I/O-bound and mostly idle.
- */
 const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QueueName.ActivityParsing]: 2,
   [QueueName.BackgroundTask]: 2,
@@ -117,7 +99,6 @@ const parseWorkers = (raw: string | undefined): WorkerType[] => {
   return requested as WorkerType[];
 };
 
-/** `activityParsing` -> `KONDIS_JOB_CONCURRENCY_ACTIVITY_PARSING` */
 export const concurrencyEnvVar = (queue: QueueName): string =>
   `KONDIS_JOB_CONCURRENCY_${queue.replaceAll(/([a-z\d])([A-Z])/g, '$1_$2').toUpperCase()}`;
 
@@ -161,9 +142,7 @@ export class ConfigService {
       concurrency: parseConcurrency(),
       retryLimit: readPositiveInteger('KONDIS_JOB_RETRY_LIMIT', 3),
       retryDelaySeconds: readPositiveInteger('KONDIS_JOB_RETRY_DELAY_SECONDS', 5),
-      // Fifteen minutes. A FIT file large enough to exceed that is a bug, not a slow disk.
       expireInSeconds: readPositiveInteger('KONDIS_JOB_EXPIRE_SECONDS', 900),
-      // A week of history is enough to answer "why did that import fail on Tuesday".
       deleteAfterSeconds: readPositiveInteger('KONDIS_JOB_RETENTION_SECONDS', 7 * 24 * 60 * 60),
       cron: readBoolean('KONDIS_JOB_CRON', true),
     };

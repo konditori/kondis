@@ -1,7 +1,6 @@
 import { ConfigService } from 'src/config/config.service';
 import { MigrateDirection, runMigrations } from 'src/db/migrate';
 
-/** Manual migration entrypoint: `pnpm migrate` or `pnpm migrate down`. */
 const main = async (): Promise<void> => {
   const direction = (process.argv[2] ?? 'up') as MigrateDirection;
   const config = new ConfigService();

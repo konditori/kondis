@@ -1,10 +1,3 @@
-/**
- * Non-finite samples are skipped throughout, so a sensor dropout cannot poison a result.
- *
- * Written as explicit loops rather than reduce/spread deliberately: a long activity can hold
- * tens of thousands of samples, and `Math.max(...values)` overflows the call stack well before
- * that. These also allocate nothing.
- */
 export const mean = (values: number[]): number | null => {
   let total = 0;
   let count = 0;
@@ -29,9 +22,6 @@ export const max = (values: number[]): number | null => {
   return result;
 };
 
-/**
- * Rolling average over a fixed sample count. Used as the first stage of normalized power.
- */
 export const rollingAverage = (values: number[], windowSize: number): number[] => {
   if (windowSize <= 1 || values.length === 0) {
     return [...values];

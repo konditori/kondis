@@ -26,7 +26,6 @@ const fixtureCandidates = [
 ];
 const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
 
-/** Well-formed but guaranteed absent, so a handler exercises its "nothing to do" path. */
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 
 describe.skipIf(!hasMediumDb)('job system (medium)', () => {
@@ -70,10 +69,6 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
   });
 
   describe('handler discovery', () => {
-    /**
-     * One well-formed item per job name. Typed as a total record, so adding a `JobName` without
-     * covering it here is a compile error rather than a gap in the test.
-     */
     const samples: Record<JobName, JobItem> = {
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
@@ -82,9 +77,6 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
     };
 
     it('binds a handler to every job name', async () => {
-      // Bootstrap already ran `setup`, which throws on a missing or duplicated handler, so
-      // reaching this point is itself part of the assertion. Invoking each handler proves the
-      // binding actually resolves rather than merely being recorded.
       for (const item of Object.values(samples)) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
@@ -210,7 +202,7 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
       try {
         for (let index = 0; index < 3; index++) {
           await uploadRepository.create({
-            checksum: `${index}`.repeat(32),
+            checksum: String(index).repeat(32),
             original_name: `${index}.fit`,
             byte_size: 1,
             storage_path: `${index}/${index}.fit`,
@@ -232,7 +224,7 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
     it('reports counts for every queue', async () => {
       const status = await jobService.getAllJobStatus();
 
-      expect(Object.keys(status).sort()).toEqual([...Object.values(QueueName)].sort());
+      expect(Object.keys(status).sort()).toEqual(Object.values(QueueName).sort());
       for (const queue of Object.values(QueueName)) {
         expect(status[queue].jobCounts.active).toBe(0);
         expect(status[queue].queueStatus.paused).toBe(false);

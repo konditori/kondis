@@ -10,11 +10,6 @@ import { type StorageRepository } from 'src/repositories/storage.repository';
 import { type UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 
-/**
- * The FIT decoder is injected, so these never build a FIT binary. Decoding is covered by
- * `src/repositories/fit.repository.spec.ts` and the messages-to-activity mapping by
- * `src/utils/fit.spec.ts`.
- */
 const UPLOAD_ID = 'upload-1';
 
 const anUpload = (overrides: Record<string, unknown> = {}) => ({
@@ -74,7 +69,6 @@ describe('ActivityService', () => {
       new ConsoleLogger({ logLevels: [] }),
     );
 
-  /** The smallest decoded file that `parseFitMessages` accepts, i.e. one timestamped record. */
   const decodesTo = (startedAt = new Date('2024-03-01T06:00:00.000Z')) => {
     decode.mockReturnValue({ recordMesgs: [{ timestamp: startedAt, heartRate: 120 }] });
   };

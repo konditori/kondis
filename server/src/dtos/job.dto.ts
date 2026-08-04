@@ -29,10 +29,6 @@ export const QueueStatusReportSchema = z
   })
   .meta({ id: 'QueueStatusReportDto' });
 
-/**
- * Built from the enum rather than hand-listed, so a new queue appears in the API and its
- * generated clients without anyone remembering to add it here.
- */
 export const AllJobStatusResponseSchema = z
   .object(Object.fromEntries(Object.values(QueueName).map((queue) => [queue, QueueStatusReportSchema])))
   .meta({ id: 'AllJobStatusResponseDto' });

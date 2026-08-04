@@ -66,7 +66,6 @@ export interface IBaseJob {
   force?: boolean;
 }
 
-/** A job about one row. */
 export interface IEntityJob extends IBaseJob {
   id: string;
 }
@@ -90,7 +89,6 @@ export interface JobCounts {
 }
 
 export interface QueueStatus {
-  /** True when this process has stopped consuming the queue. See `JobRepository.pause`. */
   paused: boolean;
 }
 

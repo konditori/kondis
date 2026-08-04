@@ -34,18 +34,6 @@ export class AppModule implements OnApplicationBootstrap {
     private readonly jobService: JobService,
   ) {}
 
-  /**
-   * The one place that knows both the queue and the services that feed it.
-   *
-   * Handler discovery happens here rather than inside `JobRepository` because the repository
-   * layer sits below `services/` and must not import it. Passing the array down keeps the
-   * dependency pointing the right way, which is what allows a producer and its consumer to
-   * live in two services that know nothing about each other.
-   *
-   * Discovery runs in every process, including api-only ones: a missing or duplicated handler
-   * is a programming error and should fail the same way everywhere. Only consumption is
-   * conditional, and `JobService.init` decides that.
-   */
   async onApplicationBootstrap(): Promise<void> {
     this.jobRepository.setup(services);
     await this.jobService.init();

@@ -38,7 +38,6 @@ describe('JobService', () => {
   const makeService = (workers = [WorkerType.API, WorkerType.JOBS]) =>
     new JobService(makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] }));
 
-  /** `init` hands the runner to the repository; grab it so the wrapper can be tested directly. */
   const captureRunner = async (): Promise<(item: JobItem) => Promise<void>> => {
     await makeService().init();
     return startWorkers.mock.calls.at(-1)![0];

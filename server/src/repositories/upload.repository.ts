@@ -4,9 +4,7 @@ import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { NewUpload, Upload, UploadStatus } from 'src/db/schema';
 
 export type UploadPageOptions = {
-  /** Include uploads that already produced an activity. */
   force: boolean;
-  /** Keyset cursor: the last id of the previous page. */
   after?: string;
   limit: number;
 };
@@ -31,19 +29,10 @@ export class UploadRepository {
     await this.db.updateTable('upload').set({ status, error }).where('id', '=', id).execute();
   }
 
-  /** Deleting an upload cascades to its activity, streams and laps. */
   async delete(id: string, executor: KondisExecutor = this.db): Promise<void> {
     await executor.deleteFrom('upload').where('id', '=', id).execute();
   }
 
-  /**
-   * One page of upload ids for the parse fan-out.
-   *
-   * Keyset pagination on the primary key rather than `OFFSET`: the fan-out enqueues jobs that
-   * concurrently mutate the rows it is scanning, and an offset walk over a shifting result set
-   * silently skips rows. Ordering by `id` is arbitrary but stable and unique, which is all a
-   * cursor needs.
-   */
   async getIdsToParse({ force, after, limit }: UploadPageOptions): Promise<string[]> {
     let query = this.db.selectFrom('upload').select('upload.id').orderBy('upload.id').limit(limit);
 

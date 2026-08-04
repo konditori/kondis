@@ -110,11 +110,9 @@ export class JobRepository implements OnApplicationShutdown {
     await this.applySchedules(boss);
   }
 
-  /** Dispatch to the handler bound to this job's name. Errors propagate: the caller decides. */
   run<T extends JobName>({ name, data }: JobItem): Promise<JobStatus> {
     const item = this.handlers[name];
     if (!item) {
-      // Reachable only for a job enqueued by an older or newer build of the server.
       this.logger.warn(`Skipping unknown job: "${name}"`);
       return Promise.resolve(JobStatus.Skipped);
     }

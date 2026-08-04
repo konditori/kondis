@@ -7,13 +7,6 @@ import { ConsoleLogger } from '@nestjs/common';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { findStream, parseFitMessages } from 'src/utils/fit';
 
-/**
- * Exercises the real FIT decoder against a real device recording, which the unit tests in
- * src/utils/fit.spec.ts deliberately avoid.
- *
- * The fixture lives in the repo-root `test/test-assets` folder, so this suite skips itself when
- * the fixture has not been checked out.
- */
 const fixturePath = resolve(
   process.cwd(),
   '..',
