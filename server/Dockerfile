@@ -29,7 +29,7 @@ RUN --mount=type=cache,id=pnpm-server,target=/buildcache/pnpm-store \
     --mount=type=bind,source=pnpm-workspace.yaml,target=pnpm-workspace.yaml \
     pnpm install --frozen-lockfile && \
     pnpm --filter ./server build && \
-    pnpm --filter ./server --prod --no-optional deploy /output/server-pruned
+    pnpm --filter ./server --prod deploy /output/server-pruned
 
 FROM builder AS server
 

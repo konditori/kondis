@@ -17,3 +17,6 @@ vite.config.js.timestamp-*
 .devcontainer/.env*
 *.tsbuildinfo
 *.tsbuildInfo
+
+mise.local.toml
+.mise.local.toml

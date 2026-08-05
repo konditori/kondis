@@ -1,3 +1,3 @@
-[submodule "e2e/test-assets"]
-	path = e2e/test-assets
-	url = https://github.com/konditori/test-assets.git
+[submodule "test/test-assets"]
+	path = test/test-assets
+	url = https://github.com/konditori/test-assets

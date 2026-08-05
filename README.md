@@ -19,3 +19,10 @@ The name is Nordic slang for "conditioning"
 ```bash
 mise run dev
 ```
+
+## License
+
+Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).
+
+Bundled third-party dependencies and their notices are listed in
+[THIRD-PARTY-LICENSES.md](./THIRD-PARTY-LICENSES.md).

@@ -49,7 +49,7 @@
         },
         "responses": {
           "201": {
-            "description": "FIT file uploaded and stored locally",
+            "description": "FIT file stored; parsing is queued and happens asynchronously",
             "content": {
               "application/json": {
                 "schema": {
@@ -62,6 +62,185 @@
         "summary": "Upload a FIT activity file",
         "tags": [
           "imports"
+        ]
+      }
+    },
+    "/jobs": {
+      "get": {
+        "operationId": "JobController_getAllJobStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current counts and status for every queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllJobStatusResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Queue depths and worker status",
+        "tags": [
+          "jobs"
+        ]
+      },
+      "post": {
+        "description": "Most work is queued automatically. This triggers the handful of jobs that are useful to run on demand, such as re-parsing uploads that previously failed.",
+        "operationId": "JobController_createJob",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Run a job by hand",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/jobs/{name}": {
+      "put": {
+        "description": "Pause or resume consumption, discard queued jobs, or clear the failed and dead-lettered backlog. Pausing affects only the worker serving the request.",
+        "operationId": "JobController_runQueueCommand",
+        "parameters": [
+          {
+            "name": "name",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "$ref": "#/components/schemas/QueueName"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueueCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Counts and status after the command",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Control a queue",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/activities": {
+      "get": {
+        "operationId": "ActivityController_listRecent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Recent activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List recent activities",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/activities/{id}": {
+      "put": {
+        "operationId": "ActivityController_updateById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Activity id",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update one activity",
+        "tags": [
+          "activities"
+        ]
+      },
+      "delete": {
+        "operationId": "ActivityController_deleteById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Activity id",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Delete one activity",
+        "tags": [
+          "activities"
         ]
       }
     }
@@ -92,9 +271,13 @@
       "FitUploadResponseDto_Output": {
         "type": "object",
         "properties": {
-          "fileName": {
+          "id": {
             "type": "string",
-            "description": "Stored file name"
+            "description": "Upload id"
+          },
+          "checksum": {
+            "type": "string",
+            "description": "Lowercase xxh128 hash of file contents"
           },
           "byteSize": {
             "type": "integer",
@@ -102,17 +285,383 @@
             "maximum": 9007199254740991,
             "description": "Stored file size in bytes"
           },
-          "path": {
-            "type": "string",
-            "description": "Absolute path to the stored file"
+          "duplicate": {
+            "type": "boolean",
+            "description": "True when identical content was already stored"
           }
         },
         "required": [
-          "fileName",
+          "id",
+          "checksum",
           "byteSize",
-          "path"
+          "duplicate"
         ],
         "additionalProperties": false
+      },
+      "QueueStatusReportDto_Output": {
+        "type": "object",
+        "properties": {
+          "jobCounts": {
+            "$ref": "#/components/schemas/JobCountsDto_Output"
+          },
+          "queueStatus": {
+            "$ref": "#/components/schemas/QueueStatusDto_Output"
+          }
+        },
+        "required": [
+          "jobCounts",
+          "queueStatus"
+        ],
+        "additionalProperties": false
+      },
+      "JobCountsDto_Output": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs currently executing"
+          },
+          "queued": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs waiting, including ones deferred to a future time"
+          },
+          "deferred": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs scheduled to start later and not yet runnable"
+          },
+          "ready": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Jobs runnable right now: the true backlog"
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Recent failures, including the dead letter backlog"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "All retained jobs, including completed ones"
+          }
+        },
+        "required": [
+          "active",
+          "queued",
+          "deferred",
+          "ready",
+          "failed",
+          "total"
+        ],
+        "additionalProperties": false
+      },
+      "QueueStatusDto_Output": {
+        "type": "object",
+        "properties": {
+          "paused": {
+            "type": "boolean",
+            "description": "True when this worker has stopped consuming the queue"
+          }
+        },
+        "required": [
+          "paused"
+        ],
+        "additionalProperties": false
+      },
+      "AllJobStatusResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "activityParsing": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          },
+          "backgroundTask": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          },
+          "storage": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          }
+        },
+        "required": [
+          "activityParsing",
+          "backgroundTask",
+          "storage"
+        ],
+        "additionalProperties": false
+      },
+      "JobCreateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "reparse-failed-uploads",
+              "reparse-all-uploads"
+            ],
+            "description": "The job to run"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "QueueCommandDto": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "empty",
+              "clear-failed"
+            ],
+            "description": "Operation to perform on the queue"
+          }
+        },
+        "required": [
+          "command"
+        ]
+      },
+      "ActivityDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Activity id"
+          },
+          "uploadId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Source upload id"
+          },
+          "sport": {
+            "type": "string",
+            "description": "Primary sport type"
+          },
+          "subSport": {
+            "type": "string",
+            "description": "Secondary sport type",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Activity name",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Start time in ISO-8601 format"
+          },
+          "timezoneOffsetMinutes": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Minutes east of UTC",
+            "nullable": true
+          },
+          "elapsedTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Elapsed duration in seconds"
+          },
+          "movingTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Moving duration in seconds",
+            "nullable": true
+          },
+          "distance": {
+            "type": "number",
+            "description": "Distance in meters",
+            "nullable": true
+          },
+          "elevationGain": {
+            "type": "number",
+            "description": "Total elevation gain in meters",
+            "nullable": true
+          },
+          "elevationLoss": {
+            "type": "number",
+            "description": "Total elevation loss in meters",
+            "nullable": true
+          },
+          "avgSpeed": {
+            "type": "number",
+            "description": "Average speed in meters per second",
+            "nullable": true
+          },
+          "maxSpeed": {
+            "type": "number",
+            "description": "Peak speed in meters per second",
+            "nullable": true
+          },
+          "avgHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average heart rate in bpm",
+            "nullable": true
+          },
+          "maxHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum heart rate in bpm",
+            "nullable": true
+          },
+          "avgCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average cadence in rpm",
+            "nullable": true
+          },
+          "maxCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum cadence in rpm",
+            "nullable": true
+          },
+          "avgPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average power in watts",
+            "nullable": true
+          },
+          "maxPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum power in watts",
+            "nullable": true
+          },
+          "normalizedPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Normalized power in watts",
+            "nullable": true
+          },
+          "calories": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Calories in kcal",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Creation timestamp in ISO-8601 format"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Last update timestamp in ISO-8601 format"
+          }
+        },
+        "required": [
+          "id",
+          "uploadId",
+          "sport",
+          "subSport",
+          "name",
+          "startedAt",
+          "timezoneOffsetMinutes",
+          "elapsedTime",
+          "movingTime",
+          "distance",
+          "elevationGain",
+          "elevationLoss",
+          "avgSpeed",
+          "maxSpeed",
+          "avgHr",
+          "maxHr",
+          "avgCadence",
+          "maxCadence",
+          "avgPower",
+          "maxPower",
+          "normalizedPower",
+          "calories",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ActivityListResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityDto_Output"
+            }
+          }
+        },
+        "required": [
+          "activities"
+        ],
+        "additionalProperties": false
+      },
+      "ActivityUpdateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Display name for the activity",
+            "nullable": true
+          },
+          "sport": {
+            "description": "Primary sport type",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "subSport": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Secondary sport type",
+            "nullable": true
+          },
+          "startedAt": {
+            "description": "Updated start time in ISO-8601 format",
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        }
+      },
+      "QueueName": {
+        "type": "string",
+        "enum": [
+          "activityParsing",
+          "backgroundTask",
+          "storage"
+        ],
+        "description": "Queue name"
       }
     }
   }

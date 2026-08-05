@@ -1,4 +1,6 @@
 import js from '@eslint/js';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import eslintPluginImportX from 'eslint-plugin-import-x';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
@@ -9,13 +11,18 @@ import typescriptEslint from 'typescript-eslint';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const noRelativeImports = {
+  group: ['.*'],
+  message: 'Relative imports are not allowed.',
+};
+
 export default typescriptEslint.config([
   eslintPluginUnicorn.configs.recommended,
   eslintPluginPrettierRecommended,
   js.configs.recommended,
   typescriptEslint.configs.recommended,
   {
-    ignores: ['eslint.config.mjs', 'src/open-api/**'],
+    ignores: ['eslint.config.mjs', 'vitest.config.ts', 'src/open-api/**'],
   },
   {
     languageOptions: {
@@ -72,17 +79,7 @@ export default typescriptEslint.config([
       curly: 2,
       'prettier/prettier': 0,
       'object-shorthand': ['error', 'always'],
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['.*'],
-              message: 'Relative imports are not allowed.',
-            },
-          ],
-        },
-      ],
+      'no-restricted-imports': ['error', { patterns: [noRelativeImports] }],
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {

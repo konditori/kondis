@@ -13,4 +13,13 @@ verifyDepsBeforeRun: install
 allowBuilds:
   '@nestjs/core': false
   '@scarf/scarf': false
+  # SWC compiles TypeScript for the dev server and CLI scripts. Unlike esbuild (tsx) it
+  # supports emitDecoratorMetadata, which NestJS constructor injection depends on.
+  '@swc/core': true
+  cpu-features: false
   esbuild: false
+  protobufjs: false
+  ssh2: false
+  # Native binary resolver behind eslint-import-resolver-typescript, which import-x/no-cycle
+  # needs in order to follow `src/*` path-alias imports.
+  unrs-resolver: true

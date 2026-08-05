@@ -10,8 +10,15 @@ import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { AppModule } from 'src/app.module';
 
 async function run(): Promise<void> {
+  process.env.DB_USERNAME ??= 'openapi';
+  process.env.DB_PASSWORD ??= 'openapi';
+  process.env.DB_DATABASE_NAME ??= 'openapi';
+  process.env.KONDIS_WORKERS ??= 'api';
+  process.env.KONDIS_DB_AUTO_MIGRATE ??= 'false';
+
   const app = await NestFactory.create(AppModule, {
     logger: false,
+    abortOnError: false,
   });
 
   const config = new DocumentBuilder()
@@ -30,4 +37,7 @@ async function run(): Promise<void> {
   console.log(`OpenAPI schema written to ${outputPath}`);
 }
 
-void run();
+run().catch((error: unknown) => {
+  console.error('Failed to generate the OpenAPI schema:', error);
+  process.exitCode = 1;
+});
