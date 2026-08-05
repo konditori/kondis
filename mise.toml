@@ -3,6 +3,7 @@ monorepo_root = true
 [monorepo]
 config_roots = [
   "server",
+  "web",
   "e2e",
 ]
 

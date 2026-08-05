@@ -2,7 +2,13 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException,
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
-import { ActivityDto, ActivityIdParamDto, ActivityListResponseDto, ActivityUpdateDto } from 'src/dtos/activity.dto';
+import {
+  ActivityDetailDto,
+  ActivityDto,
+  ActivityIdParamDto,
+  ActivityListResponseDto,
+  ActivityUpdateDto,
+} from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
 
 @ApiTags('activities')
@@ -16,6 +22,18 @@ export class ActivityController {
   async listRecent(): Promise<ActivityListResponseDto> {
     const activities = await this.service.listRecent();
     return { activities };
+  }
+
+  @ApiOperation({ summary: 'Get one activity and its route' })
+  @ZodResponse({ status: 200, description: 'Activity details', type: ActivityDetailDto })
+  @Get(':id')
+  async getById(@Param() { id }: ActivityIdParamDto): Promise<ActivityDetailDto> {
+    const activity = await this.service.getById(id);
+    if (!activity) {
+      throw new NotFoundException(`Activity ${id} does not exist`);
+    }
+
+    return activity;
   }
 
   @ApiOperation({ summary: 'Update one activity' })

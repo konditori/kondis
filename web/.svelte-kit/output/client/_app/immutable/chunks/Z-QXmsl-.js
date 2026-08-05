@@ -1,0 +1,1 @@
+import{s as r,r as a}from"./DZPN_XES.js";import{I as p}from"./Bev8-oX9.js";var n=new Set(["$$slots","$$events","$$legacy"]);function l(t,e){let o=a(e,n);const s=[["path",{d:"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"}]];p(t,r({name:"activity"},()=>o,{get iconNode(){return s}}))}export{l as A};

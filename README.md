@@ -20,6 +20,8 @@ The name is Nordic slang for "conditioning"
 mise run dev
 ```
 
+The web app is available at [http://localhost:3000](http://localhost:3000) and proxies API requests to the server container on port 2293.
+
 ## License
 
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).

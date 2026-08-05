@@ -1,0 +1,11 @@
+// @ts-nocheck
+import { error } from '@sveltejs/kit';
+import type { ActivityDetail } from '$lib/types';
+import type { PageServerLoad } from './$types';
+
+export const load = async ({ fetch, params }: Parameters<PageServerLoad>[0]) => {
+  const response = await fetch(`/api/activities/${params.id}`);
+  if (response.status === 404) error(404, 'Activity not found');
+  if (!response.ok) error(503, 'Could not load this activity');
+  return { activity: (await response.json()) as ActivityDetail };
+};

@@ -147,6 +147,20 @@ export class ActivityService {
     return rows.map((row) => this.toActivityDto(row));
   }
 
+  async getById(id: string) {
+    const row = await this.activityRepository.getById(id);
+    if (!row) {
+      return;
+    }
+
+    return {
+      ...this.toActivityDto(row),
+      track: row.track_geojson
+        ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
+        : null,
+    };
+  }
+
   async updateById(
     id: string,
     input: { name?: string | null; sport?: string; subSport?: string | null; startedAt?: Date },

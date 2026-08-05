@@ -176,6 +176,38 @@
       }
     },
     "/activities/{id}": {
+      "get": {
+        "operationId": "ActivityController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Activity id",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityDetailDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get one activity and its route",
+        "tags": [
+          "activities"
+        ]
+      },
       "put": {
         "operationId": "ActivityController_updateById",
         "parameters": [
@@ -620,6 +652,216 @@
         },
         "required": [
           "activities"
+        ],
+        "additionalProperties": false
+      },
+      "ActivityDetailDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Activity id"
+          },
+          "uploadId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Source upload id"
+          },
+          "sport": {
+            "type": "string",
+            "description": "Primary sport type"
+          },
+          "subSport": {
+            "type": "string",
+            "description": "Secondary sport type",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Activity name",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Start time in ISO-8601 format"
+          },
+          "timezoneOffsetMinutes": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Minutes east of UTC",
+            "nullable": true
+          },
+          "elapsedTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Elapsed duration in seconds"
+          },
+          "movingTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Moving duration in seconds",
+            "nullable": true
+          },
+          "distance": {
+            "type": "number",
+            "description": "Distance in meters",
+            "nullable": true
+          },
+          "elevationGain": {
+            "type": "number",
+            "description": "Total elevation gain in meters",
+            "nullable": true
+          },
+          "elevationLoss": {
+            "type": "number",
+            "description": "Total elevation loss in meters",
+            "nullable": true
+          },
+          "avgSpeed": {
+            "type": "number",
+            "description": "Average speed in meters per second",
+            "nullable": true
+          },
+          "maxSpeed": {
+            "type": "number",
+            "description": "Peak speed in meters per second",
+            "nullable": true
+          },
+          "avgHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average heart rate in bpm",
+            "nullable": true
+          },
+          "maxHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum heart rate in bpm",
+            "nullable": true
+          },
+          "avgCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average cadence in rpm",
+            "nullable": true
+          },
+          "maxCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum cadence in rpm",
+            "nullable": true
+          },
+          "avgPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average power in watts",
+            "nullable": true
+          },
+          "maxPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum power in watts",
+            "nullable": true
+          },
+          "normalizedPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Normalized power in watts",
+            "nullable": true
+          },
+          "calories": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Calories in kcal",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Creation timestamp in ISO-8601 format"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Last update timestamp in ISO-8601 format"
+          },
+          "track": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "LineString"
+                ]
+              },
+              "coordinates": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "type",
+              "coordinates"
+            ],
+            "additionalProperties": false,
+            "description": "Simplified GPS route as GeoJSON",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "uploadId",
+          "sport",
+          "subSport",
+          "name",
+          "startedAt",
+          "timezoneOffsetMinutes",
+          "elapsedTime",
+          "movingTime",
+          "distance",
+          "elevationGain",
+          "elevationLoss",
+          "avgSpeed",
+          "maxSpeed",
+          "avgHr",
+          "maxHr",
+          "avgCadence",
+          "maxCadence",
+          "avgPower",
+          "maxPower",
+          "normalizedPower",
+          "calories",
+          "createdAt",
+          "updatedAt",
+          "track"
         ],
         "additionalProperties": false
       },
