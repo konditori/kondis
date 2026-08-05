@@ -1,0 +1,19 @@
+# Keep docker build contexts small and stable
+.git
+.github
+.vscode
+.idea
+
+# Node / pnpm artifacts
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build/test artifacts
+dist
+coverage
+.tmp
+
+# Local runtime data
+**/.env
+**/.DS_Store

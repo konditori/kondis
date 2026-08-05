@@ -20,13 +20,13 @@ RUN npm install -g pnpm@11.16.0
 
 WORKDIR /usr/src/app
 
-RUN cat > /usr/local/bin/kondis-dev <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-cd /usr/src/app/server
-exec pnpm start:dev
-EOF
-RUN chmod +x /usr/local/bin/kondis-dev
+RUN printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    'cd /usr/src/app/server' \
+    'exec pnpm start:dev' \
+    > /usr/local/bin/kondis-dev \
+    && chmod +x /usr/local/bin/kondis-dev
 
 EXPOSE 2293
 

@@ -10,7 +10,8 @@ ENV DB_STORAGE_TYPE=SSD
 
 RUN apt-get update && \
     apt-get install -y wget && \
-    wget -nv -O /tmp/vchord.deb https://github.com/tensorchord/VectorChord/releases/download/$VECTORCHORD_TAG/postgresql-${PG_MAJOR%.*}-vchord_${VECTORCHORD_TAG#"v"}-1_${TARGETARCH}.deb && \
+    DEB_ARCH="${TARGETARCH:-$(dpkg --print-architecture)}" && \
+    wget -nv -O /tmp/vchord.deb https://github.com/supervc-stack/VectorChord/releases/download/${VECTORCHORD_TAG}/postgresql-${PG_MAJOR%.*}-vchord_${VECTORCHORD_TAG#"v"}-1_${DEB_ARCH}.deb && \
     apt-get install -y /tmp/vchord.deb postgresql-${PG_MAJOR}-postgis-3 postgresql-${PG_MAJOR}-postgis-3-scripts && \
     rm -f /tmp/vchord.deb && \
     apt-get remove -y wget && \
