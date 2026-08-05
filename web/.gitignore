@@ -1,0 +1,8 @@
+/.svelte-kit/
+/build/
+
+.env
+.env.*
+!.env.example
+
+vite.config.*.timestamp-*
