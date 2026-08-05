@@ -1,0 +1,23 @@
+.dockerignore
+  s_34ae936feb5a88::t_0b6786f3c59494 1-19
+packages/postgres/Dockerfile
+  s_34ae936feb5a88::t_3639460f560369 13-14
+packages/postgres/versions.yaml
+  s_34ae936feb5a88::t_2d39055825f1bb 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c9427762c5172f8a06e1726e36cc18c61b1202c8",
+  "prompts": {},
+  "sessions": {
+    "s_34ae936feb5a88": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "30d23463-1f86-4e23-8a66-830a1661651b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
