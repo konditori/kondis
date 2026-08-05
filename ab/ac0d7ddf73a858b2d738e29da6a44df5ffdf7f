@@ -1,0 +1,193 @@
+open-api/kondis-openapi-specs.json
+  s_ceb3d5bedec059::t_03885b7fdb42ef 179-210,658-867
+pnpm-lock.yaml
+  s_ceb3d5bedec059::t_8e0f7cfed13028 169-202,496-500,805-807,988-1032,1161-1163,1185-1187,1194-1196,1230-1232,1496-1499,1517-1520,1674-1677,1689-1692,1742-1745,1815-1817,2001-2003,2012-2019,2294-2296,2345-2348,2392-2394,2410-2412,2510-2517,2826-2829,2875-2878,2905-2907,2945-2948,3040-3051,3120-3123,3276-3283,3381-3383,3625-3628,3851-3852,3960-4006,4122-4123,4154-4155,4160-4163,4208-4209,4477-4478,4491-4492,4640-4643,4654-4655,4695-4696,4756-4757,4994-4995,5006-5011,5297-5300,5339-5340,5364-5365,5377-5378,5452-5455,5763-5764,5832-5835,5874-5875,5918-5923,6017-6050,6164-6165,6314-6317,6394-6395
+server/src/open-api/fetch-client.ts
+  s_ceb3d5bedec059::t_e375207e3c53b7 117-171,298-317,378-380
+web/.svelte-kit/ambient.d.ts
+  s_ceb3d5bedec059::t_6fa6e6f2371ea4 1-294
+web/.svelte-kit/env.d.ts
+  s_ceb3d5bedec059::t_0e82891f7afe39 1
+web/.svelte-kit/generated/client-optimized/app.js
+  s_ceb3d5bedec059::t_7c3821d6de68e9 1-41
+web/.svelte-kit/generated/client-optimized/matchers.js
+  s_ceb3d5bedec059::t_dab937fb98851f 1
+web/.svelte-kit/generated/client-optimized/nodes/0.js
+  s_ceb3d5bedec059::t_3c0ca2d6aba1a3 1
+web/.svelte-kit/generated/client-optimized/nodes/1.js
+  s_ceb3d5bedec059::t_ed6b895f926a35 1
+web/.svelte-kit/generated/client-optimized/nodes/2.js
+  s_ceb3d5bedec059::t_703b5b20d8f066 1
+web/.svelte-kit/generated/client-optimized/nodes/3.js
+  s_ceb3d5bedec059::t_86f80d70bc2454 1
+web/.svelte-kit/generated/client/app.js
+  s_ceb3d5bedec059::t_af2ac8f385f9b7 1-41
+web/.svelte-kit/generated/client/matchers.js
+  s_ceb3d5bedec059::t_dd81169ac16883 1
+web/.svelte-kit/generated/client/nodes/0.js
+  s_ceb3d5bedec059::t_e3a4f1f35670ac 1
+web/.svelte-kit/generated/client/nodes/1.js
+  s_ceb3d5bedec059::t_cdc71ded20da0e 1
+web/.svelte-kit/generated/client/nodes/2.js
+  s_ceb3d5bedec059::t_998eb1de714659 1
+web/.svelte-kit/generated/client/nodes/3.js
+  s_ceb3d5bedec059::t_75141e4f8084ea 1
+web/.svelte-kit/generated/root.js
+  s_ceb3d5bedec059::t_04c9373e6fbfcc 1-3
+web/.svelte-kit/generated/root.svelte
+  s_ceb3d5bedec059::t_531d569953a47b 1-68
+web/.svelte-kit/generated/server/internal.js
+  s_ceb3d5bedec059::t_3b9d64aa0654d0 1-55
+web/.svelte-kit/generated/shared/error-template.js
+  s_ceb3d5bedec059::t_62971d748d817f 1
+web/.svelte-kit/non-ambient.d.ts
+  s_ceb3d5bedec059::t_29b132dda53c64 1-48
+web/.svelte-kit/output/client/.vite/manifest.json
+  s_ceb3d5bedec059::t_91665c0145aa8e 1-217
+web/.svelte-kit/output/client/_app/immutable/assets/0.Baj69J7G.css
+  s_ceb3d5bedec059::t_54f919b142d19f 1
+web/.svelte-kit/output/client/_app/immutable/chunks/1P6JBUTA.js
+  s_ceb3d5bedec059::t_09fa7e3b179880 1-2
+web/.svelte-kit/output/client/_app/immutable/chunks/6m88CkHh.js
+  s_ceb3d5bedec059::t_5dfd1647f128db 1
+web/.svelte-kit/output/client/_app/immutable/chunks/BCdTP6ZO.js
+  s_ceb3d5bedec059::t_950c4a8af0b41d 1
+web/.svelte-kit/output/client/_app/immutable/chunks/BKfxLMX0.js
+  s_ceb3d5bedec059::t_12766552781a95 1
+web/.svelte-kit/output/client/_app/immutable/chunks/BZPeFR_U.js
+  s_ceb3d5bedec059::t_e2d14eb08f5879 1
+web/.svelte-kit/output/client/_app/immutable/chunks/Bev8-oX9.js
+  s_ceb3d5bedec059::t_b8ee6d10404a5a 1-2
+web/.svelte-kit/output/client/_app/immutable/chunks/Byf149Wh.js
+  s_ceb3d5bedec059::t_b950dfc7136ed1 1
+web/.svelte-kit/output/client/_app/immutable/chunks/CU2BsiG_.js
+  s_ceb3d5bedec059::t_ab95b7e0bd32aa 1
+web/.svelte-kit/output/client/_app/immutable/chunks/Cgkxwj0B.js
+  s_ceb3d5bedec059::t_1a02ac400df531 1
+web/.svelte-kit/output/client/_app/immutable/chunks/DU6zProp.js
+  s_ceb3d5bedec059::t_5145e41b8e3127 1
+web/.svelte-kit/output/client/_app/immutable/chunks/DZPN_XES.js
+  s_ceb3d5bedec059::t_421da5ec4aeb76 1-2
+web/.svelte-kit/output/client/_app/immutable/chunks/DeKr6iUq.js
+  s_ceb3d5bedec059::t_8b356f0a033db4 1
+web/.svelte-kit/output/client/_app/immutable/chunks/HqjlFIrg.js
+  s_ceb3d5bedec059::t_2b7ee94fbef2bf 1
+web/.svelte-kit/output/client/_app/immutable/chunks/PPVm8Dsz.js
+  s_ceb3d5bedec059::t_47a8bf92386ba9 1
+web/.svelte-kit/output/client/_app/immutable/chunks/Z-QXmsl-.js
+  s_ceb3d5bedec059::t_f17ff2f0624bd2 1
+web/.svelte-kit/output/client/_app/immutable/chunks/wbPk3Yxo.js
+  s_ceb3d5bedec059::t_c65253a37f9850 1-81
+web/.svelte-kit/output/client/_app/immutable/entry/app.IFtnDjN9.js
+  s_ceb3d5bedec059::t_f5f17b6a44e401 1-2
+web/.svelte-kit/output/client/_app/immutable/entry/start.CP9os34O.js
+  s_ceb3d5bedec059::t_f2c566c88bfd2c 1
+web/.svelte-kit/output/client/_app/immutable/nodes/0.oSejLSDC.js
+  s_ceb3d5bedec059::t_f5cdcbcc5f1b18 1
+web/.svelte-kit/output/client/_app/immutable/nodes/1.DKina2P-.js
+  s_ceb3d5bedec059::t_16ff6c00574312 1
+web/.svelte-kit/output/client/_app/immutable/nodes/2.BwMlCZIe.js
+  s_ceb3d5bedec059::t_4c56403421b5cd 1
+web/.svelte-kit/output/client/_app/immutable/nodes/3.Buc4VQCD.js
+  s_ceb3d5bedec059::t_e69a699a7c5b17 1
+web/.svelte-kit/output/client/_app/version.json
+  s_ceb3d5bedec059::t_98b5741b740299 1
+web/.svelte-kit/output/server/.vite/manifest.json
+  s_ceb3d5bedec059::t_6314fece485f8d 1-227
+web/.svelte-kit/output/server/_app/immutable/assets/_layout.BjyIdCER.css
+  s_ceb3d5bedec059::t_e0177dc8e3c64a 1
+web/.svelte-kit/output/server/chunks/Icon.js
+  s_ceb3d5bedec059::t_b936368c70be87 1-74
+web/.svelte-kit/output/server/chunks/activity.js
+  s_ceb3d5bedec059::t_6129cc6a4c1275 1-17
+web/.svelte-kit/output/server/chunks/arrow-left.js
+  s_ceb3d5bedec059::t_8580623b2eaf07 1-13
+web/.svelte-kit/output/server/chunks/exports.js
+  s_ceb3d5bedec059::t_b4616ec9c0700f 1-231
+web/.svelte-kit/output/server/chunks/format.js
+  s_ceb3d5bedec059::t_74731ab3c9c279 1-138
+web/.svelte-kit/output/server/chunks/heart-pulse.js
+  s_ceb3d5bedec059::t_83d6cc9498cb2e 1-18
+web/.svelte-kit/output/server/chunks/index.js
+  s_ceb3d5bedec059::t_7a01758bf959c0 1-1379
+web/.svelte-kit/output/server/chunks/index2.js
+  s_ceb3d5bedec059::t_b7d73461ba6663 1-54
+web/.svelte-kit/output/server/chunks/internal.js
+  s_ceb3d5bedec059::t_da04b6ec59d5c5 1-34
+web/.svelte-kit/output/server/chunks/internal2.js
+  s_ceb3d5bedec059::t_06113c05e46801 1-127
+web/.svelte-kit/output/server/chunks/root.js
+  s_ceb3d5bedec059::t_48ba659c1f15f1 1-2996
+web/.svelte-kit/output/server/chunks/shared-server.js
+  s_ceb3d5bedec059::t_ec6c975142e7ad 1-14
+web/.svelte-kit/output/server/chunks/uneval.js
+  s_ceb3d5bedec059::t_36f558822b4b72 1-539
+web/.svelte-kit/output/server/chunks/utils.js
+  s_ceb3d5bedec059::t_924dc484f846ff 1-1737
+web/.svelte-kit/output/server/chunks/utils2.js
+  s_ceb3d5bedec059::t_f0603eb49c76a8 1-41
+web/.svelte-kit/output/server/entries/endpoints/api/_...path_/_server.ts.js
+  s_ceb3d5bedec059::t_3987a230c30ef7 1-24
+web/.svelte-kit/output/server/entries/pages/_error.svelte.js
+  s_ceb3d5bedec059::t_14d11c87a50251 1-29
+web/.svelte-kit/output/server/entries/pages/_layout.svelte.js
+  s_ceb3d5bedec059::t_727c7821c72742 1-220
+web/.svelte-kit/output/server/entries/pages/_page.server.ts.js
+  s_ceb3d5bedec059::t_f714c7ead10feb 1-13
+web/.svelte-kit/output/server/entries/pages/_page.svelte.js
+  s_ceb3d5bedec059::t_97856cd51879ff 1-115
+web/.svelte-kit/output/server/entries/pages/activities/_id_/_page.server.ts.js
+  s_ceb3d5bedec059::t_49a388a580fec4 1-10
+web/.svelte-kit/output/server/entries/pages/activities/_id_/_page.svelte.js
+  s_ceb3d5bedec059::t_c72876e5b35166 1-190
+web/.svelte-kit/output/server/env.js
+  s_ceb3d5bedec059::t_c52ce08334d37b 1-13
+web/.svelte-kit/output/server/index.js
+  s_ceb3d5bedec059::t_5b7dd60f24a52c 1-4116
+web/.svelte-kit/output/server/internal.js
+  s_ceb3d5bedec059::t_0a5b4b360a41db 1-15
+web/.svelte-kit/output/server/manifest-full.js
+  s_ceb3d5bedec059::t_a8fad85371253e 1-54
+web/.svelte-kit/output/server/manifest.js
+  s_ceb3d5bedec059::t_8e1f75a1568247 1-54
+web/.svelte-kit/output/server/nodes/0.js
+  s_ceb3d5bedec059::t_9f3b779e03ed9e 1-8
+web/.svelte-kit/output/server/nodes/1.js
+  s_ceb3d5bedec059::t_ea5563c742884b 1-8
+web/.svelte-kit/output/server/nodes/2.js
+  s_ceb3d5bedec059::t_5c98805efd38ef 1-10
+web/.svelte-kit/output/server/nodes/3.js
+  s_ceb3d5bedec059::t_d6f819a72526aa 1-10
+web/.svelte-kit/output/server/remote-entry.js
+  s_ceb3d5bedec059::t_bcf913225f7155 1-1165
+web/.svelte-kit/tsconfig.json
+  s_ceb3d5bedec059::t_00e50008393767 1-56
+web/.svelte-kit/types/route_meta_data.json
+  s_ceb3d5bedec059::t_576f81ce72a9d6 1-11
+web/.svelte-kit/types/src/routes/$types.d.ts
+  s_ceb3d5bedec059::t_e519c298907f86 1-30
+web/.svelte-kit/types/src/routes/activities/[id]/$types.d.ts
+  s_ceb3d5bedec059::t_e1fad52547b77c 1-25
+web/.svelte-kit/types/src/routes/activities/[id]/proxy+page.server.ts
+  s_ceb3d5bedec059::t_8b1bb8ff0cfe8d 1-11
+web/.svelte-kit/types/src/routes/api/[...path]/$types.d.ts
+  s_ceb3d5bedec059::t_29511c67fedf04 1-10
+web/.svelte-kit/types/src/routes/proxy+page.server.ts
+  s_ceb3d5bedec059::t_e0fa712677240d 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "abac0d7ddf73a858b2d738e29da6a44df5ffdf7f",
+  "prompts": {},
+  "sessions": {
+    "s_ceb3d5bedec059": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_02c18d99affeirm3lp0y2m1Jew",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
