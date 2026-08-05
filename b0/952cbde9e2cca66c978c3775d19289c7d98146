@@ -1,0 +1,21 @@
+server/src/utils/fit.spec.ts
+  s_34853c4e0f6709::t_50d2323dfb20ea 88-89
+server/src/utils/fit.ts
+  s_34853c4e0f6709::t_7db8e49058b1cf 131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b0952cbde9e2cca66c978c3775d19289c7d98146",
+  "prompts": {},
+  "sessions": {
+    "s_34853c4e0f6709": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9e51f25e-f348-4458-9b3a-d2bcfcad6329",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
