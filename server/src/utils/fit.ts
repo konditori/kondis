@@ -128,7 +128,7 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const distance = streamData('distance');
 
   const sampleIntervalS = inferSampleInterval(time);
-  const elevation = computeElevationChange(altitude, { sampleIntervalS });
+  const elevation = computeElevationChange(altitude, { sampleIntervalS, smoothingWindowS: 90 });
   const finalTime = lastFinite(time);
 
   const elapsedTimeS = int(session?.totalElapsedTime) ?? (finalTime === undefined ? 0 : Math.round(finalTime));

@@ -67,10 +67,10 @@ describe.skipIf(!hasFixture)('parseFitMessages against a real Garmin .fit record
   it('keeps elevation gain within a plausible range for a 70m altitude spread', () => {
     const activity = parsed();
 
-    expect(activity.elevationGain).toBeGreaterThan(100);
-    expect(activity.elevationGain).toBeLessThan(400);
+    expect(activity.elevationGain).toBeGreaterThan(135);
+    expect(activity.elevationGain).toBeLessThan(160);
 
     const asymmetry = Math.abs(activity.elevationGain! - activity.elevationLoss!);
-    expect(asymmetry).toBeLessThan(50);
+    expect(asymmetry).toBeLessThan(20);
   });
 });

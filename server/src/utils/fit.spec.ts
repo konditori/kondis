@@ -85,8 +85,8 @@ describe('parseFitMessages', () => {
     expect(parsed.startedAt.toISOString()).toBe(START.toISOString());
     expect(parsed.elapsedTime).toBe(60);
     expect(parsed.distance).toBe(6);
-    expect(parsed.elevationGain).toBe(10);
-    expect(parsed.elevationLoss).toBe(5);
+    expect(parsed.elevationGain).toBe(5);
+    expect(parsed.elevationLoss).toBe(0);
     expect(parsed.avgHr).toBe(133);
     expect(parsed.maxHr).toBe(160);
   });

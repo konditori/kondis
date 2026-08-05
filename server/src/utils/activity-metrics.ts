@@ -5,6 +5,7 @@ export type ElevationChange = { gainM: number; lossM: number };
 export type ElevationOptions = {
   thresholdM?: number;
   sampleIntervalS?: number;
+  smoothingWindowS?: number;
 };
 
 const ELEVATION_SMOOTHING_WINDOW_S = 30;
@@ -53,14 +54,14 @@ export const computeMovingTime = (speed: number[], time: number[], thresholdMps 
 };
 
 export const computeElevationChange = (altitude: number[], options: ElevationOptions = {}): ElevationChange => {
-  const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1 } = options;
+  const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1, smoothingWindowS = ELEVATION_SMOOTHING_WINDOW_S } = options;
 
   const usable = altitude.filter((value) => Number.isFinite(value));
   if (usable.length === 0) {
     return { gainM: 0, lossM: 0 };
   }
 
-  const windowSize = Math.max(1, Math.round(ELEVATION_SMOOTHING_WINDOW_S / Math.max(sampleIntervalS, 1)));
+  const windowSize = Math.max(1, Math.round(smoothingWindowS / Math.max(sampleIntervalS, 1)));
   const smoothed = rollingAverage(usable, windowSize);
 
   let gainM = 0;
