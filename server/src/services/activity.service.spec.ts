@@ -122,8 +122,6 @@ describe('ActivityService', () => {
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
     });
 
-    // A silently-swallowed failure would mark the job complete and leave the upload pending
-    // forever, so the status write and the rethrow both matter.
     it('records the failure on the upload and rethrows so the queue can retry', async () => {
       decode.mockImplementation(() => {
         throw new FitDecodeError('File is not a valid FIT file: Incorrect header size');

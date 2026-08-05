@@ -55,8 +55,6 @@ export const computeMovingTime = (speed: number[], time: number[], thresholdMps 
 export const computeElevationChange = (altitude: number[], options: ElevationOptions = {}): ElevationChange => {
   const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1 } = options;
 
-  // Non-finite samples are removed *before* smoothing. rollingAverage treats them as zero,
-  // which would otherwise read as an instantaneous drop to sea level.
   const usable = altitude.filter((value) => Number.isFinite(value));
   if (usable.length === 0) {
     return { gainM: 0, lossM: 0 };

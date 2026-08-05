@@ -24,7 +24,6 @@ describe('computeNormalizedPower', () => {
   });
 
   it('scales the 30s window by the sample interval', () => {
-    // At 5s sampling the window is 6 samples, not 30.
     expect(
       computeNormalizedPower(
         Array.from({ length: 50 }, () => 150),
@@ -35,8 +34,6 @@ describe('computeNormalizedPower', () => {
 });
 
 describe('computeElevationChange', () => {
-  // A large sampleInterval collapses the smoothing window to a single sample, isolating the
-  // threshold behavior from the smoothing behavior.
   const unsmoothed = { sampleIntervalS: 60 };
 
   it('sums deltas above the threshold', () => {
@@ -57,7 +54,6 @@ describe('computeElevationChange', () => {
   });
 
   it('smooths away oscillation that raw accumulation would report as climbing', () => {
-    // Alternating +/-5m around 100m. Nobody climbed anything.
     const sawtooth = Array.from({ length: 200 }, (_, index) => (index % 2 === 0 ? 105 : 95));
 
     expect(computeElevationChange(sawtooth, unsmoothed).gainM).toBeGreaterThan(500);
@@ -65,11 +61,8 @@ describe('computeElevationChange', () => {
   });
 
   it('sizes the smoothing window in seconds, not samples', () => {
-    // Period-4 square wave, which a 2-sample average still passes through but a 30-sample one
-    // flattens. An alternating +/- pattern would cancel exactly at window 2 and prove nothing.
     const noisy = Array.from({ length: 120 }, (_, index) => (index % 4 < 2 ? 108 : 92));
 
-    // Same data, different recording rates: at 1s the window is 30 samples, at 15s only 2.
     const dense = computeElevationChange(noisy, { sampleIntervalS: 1 }).gainM;
     const sparse = computeElevationChange(noisy, { sampleIntervalS: 15 }).gainM;
 
