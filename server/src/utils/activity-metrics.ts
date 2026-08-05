@@ -54,7 +54,11 @@ export const computeMovingTime = (speed: number[], time: number[], thresholdMps 
 };
 
 export const computeElevationChange = (altitude: number[], options: ElevationOptions = {}): ElevationChange => {
-  const { thresholdM = ELEVATION_THRESHOLD_M, sampleIntervalS = 1, smoothingWindowS = ELEVATION_SMOOTHING_WINDOW_S } = options;
+  const {
+    thresholdM = ELEVATION_THRESHOLD_M,
+    sampleIntervalS = 1,
+    smoothingWindowS = ELEVATION_SMOOTHING_WINDOW_S,
+  } = options;
 
   const usable = altitude.filter((value) => Number.isFinite(value));
   if (usable.length === 0) {
