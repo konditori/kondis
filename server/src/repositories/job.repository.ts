@@ -27,7 +27,6 @@ export type QueueJobOptions = {
 const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
   [QueueName.ActivityParsing]: 'exclusive',
   [QueueName.BackgroundTask]: 'exclusive',
-  // File deletion is idempotent and keyless, so duplicate suppression would buy nothing.
   [QueueName.Storage]: 'standard',
 };
 
@@ -224,9 +223,6 @@ export class JobRepository implements OnApplicationShutdown {
 
     try {
       const boss = await this.bossPromise;
-      // Graceful: stop fetching, let in-flight handlers finish, then close the pool. A job that
-      // outlives the timeout is not lost, it is simply left active until `expireInSeconds`
-      // elapses and the supervisor hands it to another worker.
       await boss.stop({ graceful: true, close: true, timeout: 30_000 });
     } catch (error) {
       this.logger.error(`Failed to stop job workers cleanly: ${asErrorMessage(error)}`);
@@ -315,21 +311,12 @@ export class JobRepository implements OnApplicationShutdown {
       password: database.password,
       database: database.database,
       application_name: 'kondis-jobs',
-      // pg-boss keeps its own pool: a fetch loop that competes with request handlers for the
-      // application's connections turns a queue backlog into an API outage.
-      // Consumers need a connection per concurrent job plus headroom for maintenance.
       max: consuming ? totalConcurrency + 4 : 2,
       schema: jobs.schema,
-      // pg-boss owns its schema and its own migration history. Tying it to kondis's Kysely
-      // migrations would mean hand-porting upstream DDL on every upgrade.
       createSchema: true,
       migrate: true,
-      // Maintenance, expiry and cron only run where jobs are consumed. An api-only process
-      // should not be quietly responsible for reaping another machine's expired jobs.
       supervise: consuming,
       schedule: consuming && jobs.cron,
-      // Wake workers the instant a job is inserted instead of waiting out the poll interval.
-      // Holds one dedicated connection; polling continues underneath as the correctness floor.
       useListenNotify: consuming,
     });
 
@@ -356,8 +343,6 @@ export class JobRepository implements OnApplicationShutdown {
         deadLetter,
         retryLimit,
         retryDelay: retryDelaySeconds,
-        // Exponential rather than fixed: the usual cause of a burst of failures is a dependency
-        // that is down, and hammering it at a fixed interval is how a blip becomes an outage.
         retryBackoff: true,
         expireInSeconds,
         deleteAfterSeconds,
@@ -365,8 +350,6 @@ export class JobRepository implements OnApplicationShutdown {
       };
 
       await boss.createQueue(queue, { ...options, policy: QUEUE_POLICY[queue] });
-      // createQueue is a no-op on an existing queue, so configuration changes would otherwise
-      // never reach a queue created by a previous release. Policy is immutable and excluded.
       await boss.updateQueue(queue, options);
     }
   }
@@ -379,11 +362,8 @@ export class JobRepository implements OnApplicationShutdown {
     await boss.work<StoredJob>(
       queue,
       {
-        // One job per fetch, `localConcurrency` fetch loops. Batching would hand several jobs
-        // to one handler invocation and make a single failure fail all of them.
         batchSize: 1,
         localConcurrency: this.config.jobs.concurrency[queue],
-        // NOTIFY does the waking; this is only the backstop for a dropped listener.
         pollingIntervalSeconds: 2,
         notifyPollingIntervalSeconds: 30,
       },

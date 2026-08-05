@@ -3,7 +3,6 @@ import FitParser from 'fit-file-parser';
 
 export type FitRecordMesg = {
   timestamp?: Date | number;
-  // Semicircles on most devices. `toDegrees` in `src/utils/fit.ts` normalises to degrees.
   positionLat?: number;
   positionLong?: number;
   altitude?: number;

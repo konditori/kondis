@@ -19,7 +19,7 @@ export type PingResponseDtoOutput = {
 export type FitUploadResponseDtoOutput = {
   /** Upload id */
   id: string;
-  /** Lowercase hash of file contents */
+  /** Lowercase xxh128 hash of file contents */
   checksum: string;
   /** Stored file size in bytes */
   byteSize: number;

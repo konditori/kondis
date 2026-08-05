@@ -10,9 +10,6 @@ import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { AppModule } from 'src/app.module';
 
 async function run(): Promise<void> {
-  // The OpenAPI document is derived entirely from decorators; no query is ever issued and the
-  // connection pool is created lazily. Supply placeholders so ConfigService's fail-fast
-  // validation does not demand a real database just to emit a schema.
   process.env.DB_USERNAME ??= 'openapi';
   process.env.DB_PASSWORD ??= 'openapi';
   process.env.DB_DATABASE_NAME ??= 'openapi';
@@ -21,8 +18,6 @@ async function run(): Promise<void> {
 
   const app = await NestFactory.create(AppModule, {
     logger: false,
-    // Without this Nest logs through the disabled logger and calls process.exit(1), so a
-    // bootstrap failure would surface as a silent non-zero exit.
     abortOnError: false,
   });
 
@@ -43,8 +38,6 @@ async function run(): Promise<void> {
 }
 
 run().catch((error: unknown) => {
-  // Nest's logger is disabled above to keep the output clean, which would otherwise make a
-  // bootstrap failure exit silently with code 1.
   console.error('Failed to generate the OpenAPI schema:', error);
   process.exitCode = 1;
 });

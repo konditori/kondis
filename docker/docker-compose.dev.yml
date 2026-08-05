@@ -50,11 +50,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
-    environment:
-      # Set explicitly rather than left to .env: the hostname is a property of this compose
-      # network, and uploads must land on the mounted volume rather than inside the container.
-      DB_HOSTNAME: database
-      KONDIS_STORAGE_DIR: /data/uploads
     ports:
       - 2293:2293
     depends_on:
