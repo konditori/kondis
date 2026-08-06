@@ -1,0 +1,39 @@
+e2e/src/specs/server/api/activities.e2e-spec.ts
+  s_6dff2ddf89e610::t_8bb143b411382d 50
+open-api/kondis-openapi-specs.json
+  s_6dff2ddf89e610::t_f981d96dcd46d7 26,28,43,62
+server/src/controllers/import.controller.ts
+  s_6dff2ddf89e610::t_cb3f8bc0558e1b 15,25,35,37
+server/src/open-api/fetch-client.ts
+  s_6dff2ddf89e610::t_0650ba71b6e44c 196,198,203,214
+server/test/medium/specs/service/import.service.spec.ts
+  s_6dff2ddf89e610::t_9967e535bf2d3c 29,80,86
+server/test/medium/specs/service/upload.service.spec.ts
+  s_6dff2ddf89e610::t_c3ee701afd7208 95,99
+web/src/lib/components/UploadDialog.svelte
+  s_6dff2ddf89e610::t_8a002f508107e7 26
+server/src/repositories/index.ts
+  s_6dff2ddf89e610::t_0f25ba98c21bdc 5,16
+server/src/services/activity.service.spec.ts
+  s_6dff2ddf89e610::t_31e76c3ed9e21e 8,42,64,75,93,149-161
+server/src/services/activity.service.ts
+  s_6dff2ddf89e610::t_9367cf8c24d566 9,29,77-79
+server/src/services/upload.service.ts
+  s_6dff2ddf89e610::t_9601b55774a9ee 14,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d9d3c741d1ec7de388ee3c952da8bbaf460181e1",
+  "prompts": {},
+  "sessions": {
+    "s_6dff2ddf89e610": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1e48b4dc-a74c-49bb-8f52-8708ac093739",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
