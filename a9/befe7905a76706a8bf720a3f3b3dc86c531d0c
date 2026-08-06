@@ -1,0 +1,21 @@
+pnpm-lock.yaml
+  s_f12b5103118b15::t_34bb4f17b82ec1 193-195
+.github/workflows/test.yml
+  s_f12b5103118b15::t_91334f267619b9 100-101,131-133,135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a9befe7905a76706a8bf720a3f3b3dc86c531d0c",
+  "prompts": {},
+  "sessions": {
+    "s_f12b5103118b15": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f158796b-430b-4074-bb4f-c924d765c986",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
