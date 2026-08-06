@@ -12,7 +12,7 @@ import { UploadedFitFile } from 'src/types';
 export class ImportController {
   constructor(private readonly service: UploadService) {}
 
-  @ApiOperation({ summary: 'Upload a FIT activity file' })
+  @ApiOperation({ summary: 'Upload a FIT or TCX activity file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -22,14 +22,14 @@ export class ImportController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '.fit activity file',
+          description: '.fit or .tcx activity file',
         },
       },
     },
   })
   @ZodResponse({
     status: 201,
-    description: 'FIT file stored; parsing is queued and happens asynchronously',
+    description: 'Activity file stored; parsing is queued and happens asynchronously',
     type: FitUploadResponseDto,
   })
   @Post('uploads/fit')

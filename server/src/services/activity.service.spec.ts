@@ -7,6 +7,7 @@ import { type DatabaseRepository } from 'src/repositories/database.repository';
 import { FitDecodeError, type FitRepository } from 'src/repositories/fit.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { type StorageRepository } from 'src/repositories/storage.repository';
+import { type TcxRepository } from 'src/repositories/tcx.repository';
 import { type UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 
@@ -37,6 +38,7 @@ describe('ActivityService', () => {
   const queueAll = vi.fn(async () => {});
 
   const decode = vi.fn();
+  const decodeTcx = vi.fn();
 
   const uploadRepository = {
     getById: getUploadById,
@@ -57,6 +59,7 @@ describe('ActivityService', () => {
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
   const jobRepository = { queue, queueAll } as unknown as JobRepository;
   const fitRepository = { decode } as unknown as FitRepository;
+  const tcxRepository = { decode: decodeTcx } as unknown as TcxRepository;
 
   const makeService = () =>
     new ActivityService(
@@ -66,6 +69,7 @@ describe('ActivityService', () => {
       databaseRepository,
       jobRepository,
       fitRepository,
+      tcxRepository,
       new ConsoleLogger({ logLevels: [] }),
     );
 
@@ -82,6 +86,7 @@ describe('ActivityService', () => {
     createActivity.mockResolvedValue('activity-1');
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
+    decodeTcx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
   });
 
   describe('handleActivityParse', () => {
@@ -116,9 +121,23 @@ describe('ActivityService', () => {
 
       expect(read).toHaveBeenCalledWith('ab/cd/abcd.fit');
       expect(decode).toHaveBeenCalledWith(contents);
+      expect(decodeTcx).not.toHaveBeenCalled();
       expect(createActivity).toHaveBeenCalledWith(
         expect.objectContaining({ activity: expect.objectContaining({ upload_id: UPLOAD_ID }) }),
       );
+      expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
+    });
+
+    it('uses the TCX decoder for .tcx uploads', async () => {
+      getUploadById.mockResolvedValue(anUpload({ storage_path: 'ab/cd/abcd.tcx' }));
+      const contents = Buffer.from('<tcx />');
+      read.mockResolvedValue(contents);
+
+      await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Success);
+
+      expect(read).toHaveBeenCalledWith('ab/cd/abcd.tcx');
+      expect(decode).not.toHaveBeenCalled();
+      expect(decodeTcx).toHaveBeenCalledWith(contents);
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
     });
 

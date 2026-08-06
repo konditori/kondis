@@ -1,4 +1,5 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
+import { extname } from 'node:path';
 
 import { OnJob } from 'src/decorators';
 import { JobName, JobStatus, QueueName } from 'src/enum';
@@ -7,6 +8,7 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
+import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
 import { JobItem, JobOf, ParsedActivity } from 'src/types';
@@ -23,6 +25,7 @@ export class ActivityService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobRepository,
     private readonly fitRepository: FitRepository,
+    private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(ActivityService.name);
@@ -47,7 +50,7 @@ export class ActivityService {
 
     try {
       const contents = await this.storageRepository.read(upload.storage_path);
-      const parsed = parseFitMessages(this.fitRepository.decode(contents));
+      const parsed = this.parseActivityFile(upload.storage_path, contents);
       const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
 
       await this.uploadRepository.setStatus(id, 'parsed');
@@ -60,6 +63,19 @@ export class ActivityService {
     }
 
     return JobStatus.Success;
+  }
+
+  private parseActivityFile(path: string, contents: Buffer): ParsedActivity {
+    const extension = extname(path).toLowerCase();
+
+    switch (extension) {
+      case '.fit':
+        return parseFitMessages(this.fitRepository.decode(contents));
+      case '.tcx':
+        return parseFitMessages(this.tcxRepository.decode(contents));
+      default:
+        throw new Error(`Unsupported activity format: ${extension || 'unknown extension'}`);
+    }
   }
 
   @OnJob({ name: JobName.ActivityParseQueueAll, queue: QueueName.BackgroundTask })
