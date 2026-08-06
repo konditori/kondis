@@ -10,7 +10,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.28.0",
+    "@lucide/svelte": "^1.29.0",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {
