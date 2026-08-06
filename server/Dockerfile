@@ -22,13 +22,14 @@ FROM builder AS server-build
 
 WORKDIR /usr/src/app
 
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY server/package.json ./server/package.json
+COPY web/package.json ./web/package.json
+COPY e2e/package.json ./e2e/package.json
+RUN pnpm install --frozen-lockfile
+
 COPY ./server ./server/
-RUN --mount=type=cache,id=pnpm-server,target=/buildcache/pnpm-store \
-    --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=pnpm-lock.yaml,target=pnpm-lock.yaml \
-    --mount=type=bind,source=pnpm-workspace.yaml,target=pnpm-workspace.yaml \
-    pnpm install --frozen-lockfile && \
-    pnpm --filter ./server build && \
+RUN pnpm --filter ./server build && \
     pnpm --filter ./server --prod deploy /output/server-pruned
 
 FROM builder AS server

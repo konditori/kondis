@@ -69,12 +69,15 @@ export class ActivityService {
     const extension = extname(path).toLowerCase();
 
     switch (extension) {
-      case '.fit':
+      case '.fit': {
         return parseFitMessages(this.fitRepository.decode(contents));
-      case '.tcx':
+      }
+      case '.tcx': {
         return parseFitMessages(this.tcxRepository.decode(contents));
-      default:
+      }
+      default: {
         throw new Error(`Unsupported activity format: ${extension || 'unknown extension'}`);
+      }
     }
   }
 
