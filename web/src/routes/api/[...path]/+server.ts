@@ -1,19 +1,22 @@
-import { env } from '$env/dynamic/private';
-import type { RequestHandler } from './$types';
+import { env } from "$env/dynamic/private";
+import type { RequestHandler } from "./$types";
 
 const proxy: RequestHandler = async ({ request, params, url, fetch }) => {
-  const apiBase = env.KONDIS_API_URL ?? 'http://localhost:2293';
-  const target = new URL(params.path ?? '', `${apiBase.replace(/\/$/, '')}/`);
+  const apiBase = env.KONDIS_API_URL ?? "http://localhost:2293";
+  const target = new URL(params.path ?? "", `${apiBase.replace(/\/$/, "")}/`);
   target.search = url.search;
 
   const headers = new Headers(request.headers);
-  headers.delete('host');
+  headers.delete("host");
 
   return fetch(target, {
     method: request.method,
     headers,
-    body: request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.arrayBuffer(),
-    redirect: 'manual',
+    body:
+      request.method === "GET" || request.method === "HEAD"
+        ? undefined
+        : await request.arrayBuffer(),
+    redirect: "manual",
   });
 };
 

@@ -42,7 +42,11 @@ type ActivityDto = {
   calories: number | null;
 };
 
-const uploadFixture = async (path: string, fileName: string, contentType = 'application/octet-stream'): Promise<{ id: string }> => {
+const uploadFixture = async (
+  path: string,
+  fileName: string,
+  contentType = 'application/octet-stream',
+): Promise<{ id: string }> => {
   const formData = new FormData();
   const bytes = await readFile(path);
   formData.append('file', new Blob([bytes], { type: contentType }), fileName);

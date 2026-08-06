@@ -105,7 +105,7 @@ describe('GpxRepository', () => {
       expect(decoded.recordMesgs?.[0].timestamp).toEqual(new Date('2024-03-01T06:00:00.000Z'));
       expect(decoded.recordMesgs?.[1].distance).toBeGreaterThan(decoded.recordMesgs?.[0].distance ?? -1);
       expect(decoded.recordMesgs?.[1].speed).toBeGreaterThan(1.5);
-      expect(decoded.recordMesgs?.[1].speed).toBeLessThan(2.0);
+      expect(decoded.recordMesgs?.[1].speed).toBeLessThan(2);
     });
 
     it('keeps distance cumulative across multiple track segments', () => {

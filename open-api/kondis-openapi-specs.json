@@ -49,7 +49,7 @@
         },
         "responses": {
           "201": {
-            "description": "FIT file stored; parsing is queued and happens asynchronously",
+            "description": "Activity file stored; parsing is queued and happens asynchronously",
             "content": {
               "application/json": {
                 "schema": {
