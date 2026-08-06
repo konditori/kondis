@@ -1,0 +1,19 @@
+server/package.json
+  s_c477ebc89f99c3::t_c40ba2363508e3 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "acf3bb5c379252af8dc331024842e743855c30f4",
+  "prompts": {},
+  "sessions": {
+    "s_c477ebc89f99c3": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5db16136-ecf2-4176-84dd-d597ddaf130a",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
