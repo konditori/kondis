@@ -42,6 +42,16 @@ export const ActivityListResponseSchema = z
   })
   .meta({ id: 'ActivityListResponseDto' });
 
+export const ActivityDetailSchema = ActivitySchema.extend({
+  track: z
+    .object({
+      type: z.literal('LineString'),
+      coordinates: z.array(z.tuple([z.number(), z.number()])),
+    })
+    .nullable()
+    .describe('Simplified GPS route as GeoJSON'),
+}).meta({ id: 'ActivityDetailDto' });
+
 export const ActivityUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).nullable().optional().describe('Display name for the activity'),
@@ -56,5 +66,6 @@ export const ActivityUpdateSchema = z
 
 export class ActivityIdParamDto extends createZodDto(ActivityIdParamSchema) {}
 export class ActivityDto extends createZodDto(ActivitySchema) {}
+export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
 export class ActivityUpdateDto extends createZodDto(ActivityUpdateSchema) {}

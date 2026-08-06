@@ -8,7 +8,11 @@ services:
     volumes:
       - ..:/usr/src/app
       - build_cache:/buildcache
+      - app_node_modules:/usr/src/app/node_modules
+      - pnpm_store:/usr/src/app/.pnpm-store
       - server_node_modules:/usr/src/app/server/node_modules
+      - web_node_modules:/usr/src/app/web/node_modules
+      - sveltekit:/usr/src/app/web/.svelte-kit
 
   kondis-init:
     extends:
@@ -21,7 +25,7 @@ services:
       target: dev
     command:
       - |
-        mise install
+        pnpm install --frozen-lockfile
         touch /tmp/init-complete
         exec tail -f /dev/null
     volumes:
@@ -60,6 +64,39 @@ services:
     healthcheck:
       disable: false
 
+  kondis-web:
+    extends:
+      service: kondis-app-base
+    profiles: !reset []
+    container_name: kondis_web
+    command: ['kondis-web']
+    build:
+      context: ../
+      dockerfile: server/Dockerfile.dev
+      target: dev
+    restart: unless-stopped
+    environment:
+      KONDIS_API_URL: http://kondis-server:2293
+    ports:
+      - 3000:3000
+    depends_on:
+      kondis-init:
+        condition: service_healthy
+      kondis-server:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
   database:
     container_name: kondis_postgres
     build:
@@ -84,5 +121,9 @@ services:
       disable: false
 
 volumes:
+  app_node_modules:
   build_cache:
+  pnpm_store:
   server_node_modules:
+  web_node_modules:
+  sveltekit:

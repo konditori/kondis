@@ -26,9 +26,17 @@ RUN printf '%s\n' \
     'cd /usr/src/app/server' \
     'exec pnpm start:dev' \
     > /usr/local/bin/kondis-dev \
-    && chmod +x /usr/local/bin/kondis-dev
+    && chmod +x /usr/local/bin/kondis-dev \
+    && printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    'cd /usr/src/app/web' \
+    'pnpm exec svelte-kit sync' \
+    'exec pnpm dev --host 0.0.0.0 --port 3000' \
+    > /usr/local/bin/kondis-web \
+    && chmod +x /usr/local/bin/kondis-web
 
-EXPOSE 2293
+EXPOSE 2293 3000
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/bin/bash", "-lc"]
 CMD ["kondis-dev"]
