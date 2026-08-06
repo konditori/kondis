@@ -47,7 +47,7 @@ const uploadFixture = async (path: string, fileName: string, contentType = 'appl
   const bytes = await readFile(path);
   formData.append('file', new Blob([bytes], { type: contentType }), fileName);
 
-  const response = await fetch(`${serverUrl}/uploads/fit`, {
+  const response = await fetch(`${serverUrl}/uploads/activity`, {
     method: 'POST',
     body: formData,
   });

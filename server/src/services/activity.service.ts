@@ -6,6 +6,7 @@ import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
+import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
@@ -25,6 +26,7 @@ export class ActivityService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobRepository,
     private readonly fitRepository: FitRepository,
+    private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
   ) {
@@ -71,6 +73,9 @@ export class ActivityService {
     switch (extension) {
       case '.fit': {
         return parseFitMessages(this.fitRepository.decode(contents));
+      }
+      case '.gpx': {
+        return parseFitMessages(this.gpxRepository.decode(contents));
       }
       case '.tcx': {
         return parseFitMessages(this.tcxRepository.decode(contents));

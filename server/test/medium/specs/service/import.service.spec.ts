@@ -26,7 +26,7 @@ const fixtureCandidates = [
 ];
 const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
 
-describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
+describe.skipIf(!hasMediumDb)('POST /uploads/activity', () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
   const jobs = { queue: async () => {} } as unknown as JobRepository;
@@ -77,13 +77,13 @@ describe.skipIf(!hasMediumDb)('POST /uploads/fit', () => {
       buffer: fileBuffer,
     } as UploadedFitFile;
 
-    const first = await controller.uploadFit(file);
+    const first = await controller.uploadActivity(file);
 
     expect(first.id).toBeTruthy();
     expect(first.checksum).toMatch(/^[0-9a-f]{32}$/);
     expect(first.byteSize).toBe(fileBuffer.length);
 
-    const second = await controller.uploadFit(file);
+    const second = await controller.uploadActivity(file);
 
     expect(second.id).toBe(first.id);
     expect(second.checksum).toBe(first.checksum);

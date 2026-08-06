@@ -12,7 +12,7 @@ import { UploadedFitFile } from 'src/types';
 export class ImportController {
   constructor(private readonly service: UploadService) {}
 
-  @ApiOperation({ summary: 'Upload a FIT or TCX activity file' })
+  @ApiOperation({ summary: 'Upload a FIT, TCX, or GPX activity file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -22,7 +22,7 @@ export class ImportController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '.fit or .tcx activity file',
+          description: '.fit, .tcx, or .gpx activity file',
         },
       },
     },
@@ -32,9 +32,9 @@ export class ImportController {
     description: 'Activity file stored; parsing is queued and happens asynchronously',
     type: FitUploadResponseDto,
   })
-  @Post('uploads/fit')
+  @Post('uploads/activity')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFit(@UploadedFile() file?: UploadedFitFile): Promise<FitUploadResponseDto> {
+  async uploadActivity(@UploadedFile() file?: UploadedFitFile): Promise<FitUploadResponseDto> {
     return this.service.uploadFit(file);
   }
 }

@@ -23,7 +23,7 @@
       const form = new FormData();
       form.append('file', item.file);
       try {
-        const response = await fetch('/api/uploads/fit', { method: 'POST', body: form });
+        const response = await fetch('/api/uploads/activity', { method: 'POST', body: form });
         if (!response.ok) throw new Error((await response.text()) || `Upload failed (${response.status})`);
         const result = (await response.json()) as { id: string };
         item.uploadId = result.id;

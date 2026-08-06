@@ -11,7 +11,7 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadedFitFile } from 'src/types';
 
-const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx']);
+const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
 @Injectable()
 export class UploadService {
@@ -33,7 +33,7 @@ export class UploadService {
 
     const extension = extname(file.originalname).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
-      throw new BadRequestException('Only .fit and .tcx files are accepted');
+      throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
     }
 
     const checksum = this.cryptoRepository.xxHash(file.buffer);
