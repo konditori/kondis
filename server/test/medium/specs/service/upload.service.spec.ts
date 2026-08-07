@@ -1,7 +1,8 @@
 import { ConsoleLogger } from '@nestjs/common';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ConfigService } from 'src/config/config.service';
@@ -18,6 +19,12 @@ import { type UploadedFitFile } from 'src/types';
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
 
 const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
+const fixtureSegments = ['test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit'];
+const fixtureCandidates = [
+  resolve(process.cwd(), '..', ...fixtureSegments),
+  resolve(process.cwd(), ...fixtureSegments),
+];
+const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
 
 describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
   const logger = new ConsoleLogger();
@@ -88,6 +95,29 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
     const second = await uploadService.uploadFit(file);
 
     expect(second.id).toBe(first.id);
+    expect(second.duplicate).toBe(true);
+    expect(queue).not.toHaveBeenCalled();
+  });
+
+  it('stores a real .fit fixture and deduplicates identical content', async () => {
+    const buffer = await readFile(fixturePath);
+    const file = {
+      originalname: '2015-06-22-run.fit',
+      buffer,
+      size: buffer.length,
+    } as UploadedFitFile;
+
+    const first = await uploadService.uploadFit(file);
+
+    expect(first.id).toBeTruthy();
+    expect(first.checksum).toMatch(/^[0-9a-f]{32}$/);
+    expect(first.byteSize).toBe(file.buffer.length);
+
+    queue.mockClear();
+    const second = await uploadService.uploadFit(file);
+
+    expect(second.id).toBe(first.id);
+    expect(second.checksum).toBe(first.checksum);
     expect(second.duplicate).toBe(true);
     expect(queue).not.toHaveBeenCalled();
   });

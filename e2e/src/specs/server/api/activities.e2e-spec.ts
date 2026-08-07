@@ -111,7 +111,7 @@ describe('GET /activities', () => {
 
     const listed = await listActivities();
     expect(listed.find((candidate) => candidate.id === activity.id)).toBeDefined();
-  }, 30_000);
+  });
 
   it('parses the Orsa TCX fixture with expected summary values', async () => {
     const upload = await uploadOrsaTcxFixture();
@@ -123,7 +123,7 @@ describe('GET /activities', () => {
     expect(activity.movingTime).toBe(10_962);
     expect(activity.distance).toBeCloseTo(29_823.963165283203, 3);
     expect(activity.calories).toBe(1690);
-  }, 30_000);
+  });
 });
 
 describe('PUT /activities/:id', () => {
@@ -136,7 +136,7 @@ describe('PUT /activities/:id', () => {
     expect(response.status).toBe(200);
     const updated = (await response.json()) as ActivityDto;
     expect(updated.name).toBe(UPDATED_NAME);
-  }, 30_000);
+  });
 
   it('updates the subSport and startedAt fields', async () => {
     const upload = await uploadFitFixture();
@@ -151,7 +151,7 @@ describe('PUT /activities/:id', () => {
     const updated = (await response.json()) as ActivityDto;
     expect(updated.subSport).toBe(UPDATED_SUB_SPORT);
     expect(updated.startedAt).toBe(UPDATED_STARTED_AT);
-  }, 30_000);
+  });
 
   it('returns 404 for a missing activity id', async () => {
     const response = await updateActivity(MISSING_UUID, { name: 'missing' });
@@ -169,7 +169,7 @@ describe('DELETE /activities/:id', () => {
 
     const remaining = await listActivities();
     expect(remaining.find((candidate) => candidate.id === activity.id)).toBeUndefined();
-  }, 30_000);
+  });
 
   it('returns 404 for a missing activity id', async () => {
     const response = await deleteActivity(MISSING_UUID);

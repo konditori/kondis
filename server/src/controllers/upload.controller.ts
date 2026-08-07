@@ -7,9 +7,9 @@ import { FitUploadResponseDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
 import { UploadedFitFile } from 'src/types';
 
-@ApiTags('imports')
+@ApiTags('uploads')
 @Controller()
-export class ImportController {
+export class UploadController {
   constructor(private readonly service: UploadService) {}
 
   @ApiOperation({ summary: 'Upload a FIT, TCX, or GPX activity file' })
