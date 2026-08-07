@@ -1,0 +1,25 @@
+e2e/mise.toml
+  s_3c5ae8dd53a736::t_90164d93761a2c 50
+e2e/package.json
+  s_3c5ae8dd53a736::t_b31b2f68cb228c 26
+server/mise.toml
+  s_3c5ae8dd53a736::t_d7f0171106b35e 49
+web/package.json
+  s_3c5ae8dd53a736::t_4f9d5ed5a1efbc 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e8aa94a9bd5177bb197d0c130f06cdc52bf650f8",
+  "prompts": {},
+  "sessions": {
+    "s_3c5ae8dd53a736": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fddcd-dd92-7412-993e-03f51ac84690",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
