@@ -17,7 +17,7 @@ RUN apt-get update \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g pnpm@11.16.0
+RUN npm install -g pnpm@11.20.0
 FROM builder AS server-build
 
 WORKDIR /usr/src/app

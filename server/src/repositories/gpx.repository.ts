@@ -57,6 +57,14 @@ type ParsedPoint = {
   lon?: number;
 };
 
+type ParsedSegment = {
+  points: ParsedPoint[];
+  label?: string;
+  startTime?: Date;
+  totalElapsedTime?: number;
+  totalDistance?: number;
+};
+
 type GpxSegment = {
   points: GpxPoint[];
   label?: string;
@@ -111,7 +119,7 @@ export class GpxRepository {
       });
     }
 
-    const startedAt = this.firstTimestamp(recordMesgs) ?? toDate(gpx.metadata?.time) ?? segments[0]?.startTime;
+    const startedAt = this.firstTimestamp(recordMesgs) ?? toDate(gpx.metadata?.time);
     const totalDistance = lastFinite(recordMesgs.map((record) => record.distance));
 
     return {

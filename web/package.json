@@ -22,7 +22,7 @@
     "prettier": "^3.9.6",
     "svelte": "^5.38.0",
     "svelte-check": "^4.3.0",
-    "typescript": "^5.9.0",
+    "typescript": "^6.0.2",
     "vite": "^7.1.0"
   }
 }
