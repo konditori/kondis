@@ -8,7 +8,7 @@ config_roots = [
 ]
 
 [tools]
-node = "24.15.0"
+node = "24.19.0"
 pnpm = "11.20.0"
 "npm:oazapfts" = "7.5.0"
 

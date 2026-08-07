@@ -1,7 +1,7 @@
 ﻿# syntax=docker/dockerfile:1.4
 ARG DEBIAN_RELEASE=trixie
 
-FROM node:24.14.1-${DEBIAN_RELEASE}-slim@sha256:9707cd4542f400df5078df04f9652a272429112f15202d22b5b8bdd148df494f AS builder
+FROM node:24.19.0-${DEBIAN_RELEASE}-slim AS builder
 
 ENV CI=1
 

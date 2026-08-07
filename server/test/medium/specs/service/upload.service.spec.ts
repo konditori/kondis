@@ -94,7 +94,7 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
 
   it('rejects anything that is not a supported activity file', async () => {
     const buffer = Buffer.from('nope');
-    const file = { originalname: 'ride.gpx', buffer, size: buffer.length } as UploadedFitFile;
+    const file = { originalname: 'ride.lol', buffer, size: buffer.length } as UploadedFitFile;
 
     await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
