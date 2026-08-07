@@ -1,0 +1,25 @@
+mise.toml
+  s_3c5ae8dd53a736::t_1f1c551d6408b2 11
+server/Dockerfile
+  s_3c5ae8dd53a736::t_406a002e454cc9 4
+server/Dockerfile.dev
+  s_3c5ae8dd53a736::t_29683940409708 3
+server/test/medium/specs/service/upload.service.spec.ts
+  s_3c5ae8dd53a736::t_6fa45ae0c7e9e0 97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "71aa0ff48e0c163c105f9e6be929b434b55977f7",
+  "prompts": {},
+  "sessions": {
+    "s_3c5ae8dd53a736": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fddcd-dd92-7412-993e-03f51ac84690",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
