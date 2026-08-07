@@ -114,7 +114,7 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
 
       const upload = await uploadRepository.getById(result.id);
       expect(upload?.status).toBe('parsed');
-    }, 30_000);
+    });
 
     it('deletes the activity, the upload and the file', async () => {
       const { id: uploadId } = await uploads.uploadFit(asFile('2015-06-22-run.fit', fileBuffer));
@@ -135,7 +135,7 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
       expect(await uploadRepository.getById(uploadId)).toBeUndefined();
       expect(await activityRepository.getById(activity!.id)).toBeUndefined();
       expect(existsSync(storedFile)).toBe(false);
-    }, 30_000);
+    });
   });
 
   describe('transactional enqueue', () => {

@@ -9,13 +9,20 @@ if (!serverUrl) {
   throw new Error('KONDIS_E2E_SERVER_URL must be set');
 }
 
-const fixtureSegments = ['test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit'];
-const fixtureCandidates = [
-  resolve(process.cwd(), '..', ...fixtureSegments),
-  resolve(process.cwd(), ...fixtureSegments),
-  resolve(process.cwd(), '..', '..', ...fixtureSegments),
-];
-const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
+const fitFixtureSegments = ['test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit'];
+const orsaTcxFixtureSegments = ['test', 'test-assets', 'activities', 'alpine-ski', '2013-01-13-orsa.tcx'];
+
+const resolveFixturePath = (segments: string[]): string => {
+  const candidates = [
+    resolve(process.cwd(), '..', ...segments),
+    resolve(process.cwd(), ...segments),
+    resolve(process.cwd(), '..', '..', ...segments),
+  ];
+  return candidates.find((path) => existsSync(path)) ?? candidates[0];
+};
+
+const fitFixturePath = resolveFixturePath(fitFixtureSegments);
+const orsaTcxFixturePath = resolveFixturePath(orsaTcxFixtureSegments);
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 const UPDATED_NAME = 'e2e-updated-name';
@@ -29,14 +36,22 @@ type ActivityDto = {
   subSport: string | null;
   name: string | null;
   startedAt: string;
+  elapsedTime: number;
+  movingTime: number | null;
+  distance: number | null;
+  calories: number | null;
 };
 
-const uploadFitFixture = async (): Promise<{ id: string }> => {
+const uploadFixture = async (
+  path: string,
+  fileName: string,
+  contentType = 'application/octet-stream',
+): Promise<{ id: string }> => {
   const formData = new FormData();
-  const bytes = await readFile(fixturePath);
-  formData.append('file', new Blob([bytes], { type: 'application/octet-stream' }), '2015-06-22-run.fit');
+  const bytes = await readFile(path);
+  formData.append('file', new Blob([bytes], { type: contentType }), fileName);
 
-  const response = await fetch(`${serverUrl}/uploads/fit`, {
+  const response = await fetch(`${serverUrl}/uploads/activity`, {
     method: 'POST',
     body: formData,
   });
@@ -44,6 +59,11 @@ const uploadFitFixture = async (): Promise<{ id: string }> => {
   expect(response.status).toBe(201);
   return (await response.json()) as { id: string };
 };
+
+const uploadFitFixture = async (): Promise<{ id: string }> => uploadFixture(fitFixturePath, '2015-06-22-run.fit');
+
+const uploadOrsaTcxFixture = async (): Promise<{ id: string }> =>
+  uploadFixture(orsaTcxFixturePath, '2013-01-13-orsa.tcx', 'application/xml');
 
 const listActivities = async (): Promise<ActivityDto[]> => {
   const response = await fetch(`${serverUrl}/activities`);
@@ -91,7 +111,19 @@ describe('GET /activities', () => {
 
     const listed = await listActivities();
     expect(listed.find((candidate) => candidate.id === activity.id)).toBeDefined();
-  }, 30_000);
+  });
+
+  it('parses the Orsa TCX fixture with expected summary values', async () => {
+    const upload = await uploadOrsaTcxFixture();
+    const activity = await waitForActivity(upload.id);
+
+    expect(activity.sport).toBe('other');
+    expect(activity.startedAt).toBe('2013-01-13T09:17:34.000Z');
+    expect(activity.elapsedTime).toBe(10_962);
+    expect(activity.movingTime).toBe(10_962);
+    expect(activity.distance).toBeCloseTo(29_823.963165283203, 3);
+    expect(activity.calories).toBe(1690);
+  });
 });
 
 describe('PUT /activities/:id', () => {
@@ -104,7 +136,7 @@ describe('PUT /activities/:id', () => {
     expect(response.status).toBe(200);
     const updated = (await response.json()) as ActivityDto;
     expect(updated.name).toBe(UPDATED_NAME);
-  }, 30_000);
+  });
 
   it('updates the subSport and startedAt fields', async () => {
     const upload = await uploadFitFixture();
@@ -119,7 +151,7 @@ describe('PUT /activities/:id', () => {
     const updated = (await response.json()) as ActivityDto;
     expect(updated.subSport).toBe(UPDATED_SUB_SPORT);
     expect(updated.startedAt).toBe(UPDATED_STARTED_AT);
-  }, 30_000);
+  });
 
   it('returns 404 for a missing activity id', async () => {
     const response = await updateActivity(MISSING_UUID, { name: 'missing' });
@@ -137,7 +169,7 @@ describe('DELETE /activities/:id', () => {
 
     const remaining = await listActivities();
     expect(remaining.find((candidate) => candidate.id === activity.id)).toBeUndefined();
-  }, 30_000);
+  });
 
   it('returns 404 for a missing activity id', async () => {
     const response = await deleteActivity(MISSING_UUID);

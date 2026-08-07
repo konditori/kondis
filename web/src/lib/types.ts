@@ -26,5 +26,5 @@ export type Activity = {
 };
 
 export type ActivityDetail = Activity & {
-  track: { type: 'LineString'; coordinates: [number, number][] } | null;
+  track: { type: "LineString"; coordinates: [number, number][] } | null;
 };

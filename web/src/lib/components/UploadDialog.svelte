@@ -14,7 +14,8 @@
   }
 
   async function addFiles(files: FileList | File[]) {
-    const accepted = [...files].filter((file) => file.name.toLowerCase().endsWith('.fit'));
+    const acceptedExtensions = ['.fit', '.tcx', '.gpx'];
+    const accepted = [...files].filter((file) => acceptedExtensions.some((extension) => file.name.toLowerCase().endsWith(extension)));
     uploads = accepted.map((file) => ({ file, state: 'waiting' }));
 
     for (const item of uploads) {
@@ -22,7 +23,7 @@
       const form = new FormData();
       form.append('file', item.file);
       try {
-        const response = await fetch('/api/uploads/fit', { method: 'POST', body: form });
+        const response = await fetch('/api/uploads/activity', { method: 'POST', body: form });
         if (!response.ok) throw new Error((await response.text()) || `Upload failed (${response.status})`);
         const result = (await response.json()) as { id: string };
         item.uploadId = result.id;
@@ -71,11 +72,11 @@
         ondrop={(event) => { event.preventDefault(); dragging = false; void addFiles(event.dataTransfer?.files ?? []); }}
       >
         <span class="upload-icon"><FileUp size={28} /></span>
-        <strong>Drop your FIT files here</strong>
+        <strong>Drop your FIT, TCX, or GPX files here</strong>
         <span>or click to browse your device</span>
-        <small>.fit files only</small>
+        <small>.fit, .tcx, .gpx files only</small>
       </button>
-      <input bind:this={input} class="sr-only" type="file" accept=".fit,application/octet-stream" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
+      <input bind:this={input} class="sr-only" type="file" accept=".fit,.tcx,.gpx,application/octet-stream,application/gpx+xml" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
 
       {#if uploads.length}
         <div class="upload-list">
