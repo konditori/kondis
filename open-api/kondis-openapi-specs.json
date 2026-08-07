@@ -25,7 +25,7 @@
     },
     "/uploads/activity": {
       "post": {
-        "operationId": "ImportController_uploadActivity",
+        "operationId": "UploadController_uploadActivity",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -61,7 +61,7 @@
         },
         "summary": "Upload a FIT, TCX, or GPX activity file",
         "tags": [
-          "imports"
+          "uploads"
         ]
       }
     },

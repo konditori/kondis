@@ -195,7 +195,7 @@ export function serverControllerPing(opts?: Oazapfts.RequestOpts) {
 /**
  * Upload a FIT, TCX, or GPX activity file
  */
-export function importControllerUploadActivity(
+export function uploadControllerUploadActivity(
   {
     body,
   }: {
