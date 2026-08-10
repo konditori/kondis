@@ -238,7 +238,7 @@ export function uploadControllerUploadActivity(
       status: 201;
       data: FitUploadResponseDtoOutput;
     }>(
-      '/uploads/activity',
+      '/upload/activity',
       oazapfts.multipart({
         ...opts,
         method: 'POST',
@@ -248,14 +248,14 @@ export function uploadControllerUploadActivity(
   );
 }
 /**
- * Import activities from a Lagom takeout ZIP archive
+ * Import activities from a Strava takeout ZIP archive
  */
-export function uploadControllerUploadLagomTakeout(
+export function uploadControllerUploadStravaTakeout(
   {
     body,
   }: {
     body: {
-      /** Lagom takeout .zip file containing activities.csv and the activities folder */
+      /** Strava takeout .zip file */
       file: Blob;
     };
   },
@@ -266,7 +266,7 @@ export function uploadControllerUploadLagomTakeout(
       status: 201;
       data: LagomTakeoutUploadResponseDtoOutput;
     }>(
-      '/uploads/lagom',
+      '/upload/strava',
       oazapfts.multipart({
         ...opts,
         method: 'POST',

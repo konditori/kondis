@@ -23,7 +23,7 @@
         ]
       }
     },
-    "/uploads/activity": {
+    "/upload/activity": {
       "post": {
         "operationId": "UploadController_uploadActivity",
         "parameters": [],
@@ -65,9 +65,9 @@
         ]
       }
     },
-    "/uploads/lagom": {
+    "/upload/strava": {
       "post": {
-        "operationId": "UploadController_uploadLagomTakeout",
+        "operationId": "UploadController_uploadStravaTakeout",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -82,7 +82,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Lagom takeout .zip file containing activities.csv and the activities folder"
+                    "description": "Strava takeout .zip file"
                   }
                 }
               }
@@ -91,7 +91,7 @@
         },
         "responses": {
           "201": {
-            "description": "Activity files stored; parsing is queued and happens asynchronously",
+            "description": "Parsing is queued and happens asynchronously",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,7 +101,7 @@
             }
           }
         },
-        "summary": "Import activities from a Lagom takeout ZIP archive",
+        "summary": "Import activities from a Strava takeout ZIP archive",
         "tags": [
           "uploads"
         ]
