@@ -1,10 +1,10 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
-import { extractStravaTakeout } from 'src/utils/strava';
+import { extractLagomTakeout } from 'src/utils/lagom';
 import { createTestZip } from 'test/utils/zip';
 
-describe('extractStravaTakeout', () => {
+describe('extractLagomTakeout', () => {
   it('reads the manifest and decompresses supported activity files', () => {
     const archive = createTestZip({
       'export/activities.csv': {
@@ -25,7 +25,7 @@ describe('extractStravaTakeout', () => {
       'export/activities/data.json': Buffer.from('{}'),
     });
 
-    const result = extractStravaTakeout(archive);
+    const result = extractLagomTakeout(archive);
 
     expect(result.totalActivities).toBe(5);
     expect(result.skipped).toBe(2);
@@ -44,7 +44,7 @@ describe('extractStravaTakeout', () => {
   it('rejects archives without an activities manifest', () => {
     const archive = createTestZip({ 'profile.csv': Buffer.from('Name\nRunner') });
 
-    expect(() => extractStravaTakeout(archive)).toThrow('does not contain activities.csv');
+    expect(() => extractLagomTakeout(archive)).toThrow('does not contain activities.csv');
   });
 
   it('does not follow filenames outside the takeout root', () => {
@@ -53,7 +53,7 @@ describe('extractStravaTakeout', () => {
       '../secret.fit': Buffer.from('secret'),
     });
 
-    const result = extractStravaTakeout(archive);
+    const result = extractLagomTakeout(archive);
 
     expect(result.activities).toEqual([]);
     expect(result.errors).toEqual([{ row: 2, filename: '../secret.fit', message: 'Unsafe activity filename' }]);

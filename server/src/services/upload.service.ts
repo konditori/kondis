@@ -2,7 +2,7 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { Upload } from 'src/db/schema';
-import { FitUploadResponseDto, StravaTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
+import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { JobName } from 'src/enum';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -10,7 +10,7 @@ import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadedFitFile } from 'src/types';
-import { extractStravaTakeout } from 'src/utils/strava';
+import { extractLagomTakeout } from 'src/utils/lagom';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -76,20 +76,20 @@ export class UploadService {
     return { id: upload.id, checksum: upload.checksum, byteSize: upload.byte_size, duplicate: false };
   }
 
-  async uploadStravaTakeout(file?: UploadedFitFile): Promise<StravaTakeoutUploadResponseDto> {
+  async uploadLagomTakeout(file?: UploadedFitFile): Promise<LagomTakeoutUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
     if (extname(file.originalname).toLowerCase() !== '.zip') {
-      throw new BadRequestException('Only a Strava takeout .zip file is accepted');
+      throw new BadRequestException('Only a Lagom takeout .zip file is accepted');
     }
 
     let takeout;
     try {
-      takeout = extractStravaTakeout(file.buffer);
+      takeout = extractLagomTakeout(file.buffer);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new BadRequestException(`Invalid Strava takeout: ${message}`);
+      throw new BadRequestException(`Invalid Lagom takeout: ${message}`);
     }
 
     const uploads: FitUploadResponseDto[] = [];
@@ -116,7 +116,7 @@ export class UploadService {
     }
 
     this.logger.log(
-      `Imported Strava takeout ${file.originalname}: ${imported} new, ${duplicates} duplicate, ${takeout.skipped} skipped, ${errors.length} failed`,
+      `Imported Lagom takeout ${file.originalname}: ${imported} new, ${duplicates} duplicate, ${takeout.skipped} skipped, ${errors.length} failed`,
     );
 
     return {

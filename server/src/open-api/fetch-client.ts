@@ -26,7 +26,7 @@ export type FitUploadResponseDtoOutput = {
   /** True when identical content was already stored */
   duplicate: boolean;
 };
-export type StravaTakeoutUploadResponseDtoOutput = {
+export type LagomTakeoutUploadResponseDtoOutput = {
   /** Data rows found in activities.csv */
   totalActivities: number;
   /** New activity files stored and queued for parsing */
@@ -248,14 +248,14 @@ export function uploadControllerUploadActivity(
   );
 }
 /**
- * Import activities from a Strava takeout ZIP archive
+ * Import activities from a Lagom takeout ZIP archive
  */
-export function uploadControllerUploadStravaTakeout(
+export function uploadControllerUploadLagomTakeout(
   {
     body,
   }: {
     body: {
-      /** Strava takeout .zip file containing activities.csv and the activities folder */
+      /** Lagom takeout .zip file containing activities.csv and the activities folder */
       file: Blob;
     };
   },
@@ -264,9 +264,9 @@ export function uploadControllerUploadStravaTakeout(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: StravaTakeoutUploadResponseDtoOutput;
+      data: LagomTakeoutUploadResponseDtoOutput;
     }>(
-      '/uploads/strava',
+      '/uploads/lagom',
       oazapfts.multipart({
         ...opts,
         method: 'POST',

@@ -118,7 +118,7 @@ describe('UploadService (medium)', () => {
     await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
 
-  it('imports each supported activity listed in a Strava takeout', async () => {
+  it('imports each supported activity listed in a Lagom takeout', async () => {
     const fit = await readFile(activityFixtures.hindasRun.path);
     const gpx = await readFile(activityFixtures.sampleRun.path);
     const archive = createTestZip({
@@ -134,22 +134,22 @@ describe('UploadService (medium)', () => {
       'activities/ride.gpx': gpx,
     });
 
-    const first = await uploadService.uploadStravaTakeout(makeUploadedFile('export.zip', archive));
+    const first = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
     expect(first).toMatchObject({ totalActivities: 3, imported: 2, duplicates: 0, skipped: 1, failed: 0 });
     expect(first.uploads).toHaveLength(2);
     expect(queue).toHaveBeenCalledTimes(2);
 
     queue.mockClear();
-    const second = await uploadService.uploadStravaTakeout(makeUploadedFile('export.zip', archive));
+    const second = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
     expect(second).toMatchObject({ totalActivities: 3, imported: 0, duplicates: 2, skipped: 1, failed: 0 });
     expect(queue).not.toHaveBeenCalled();
   });
 
-  it('rejects a non-ZIP Strava takeout upload', async () => {
+  it('rejects a non-ZIP Lagom takeout upload', async () => {
     await expect(
-      uploadService.uploadStravaTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
-    ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
+      uploadService.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
+    ).rejects.toThrow('Only a Lagom takeout .zip file is accepted');
   });
 });

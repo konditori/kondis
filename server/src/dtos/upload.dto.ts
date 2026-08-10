@@ -12,13 +12,13 @@ export const FitUploadResponseSchema = z
 
 export class FitUploadResponseDto extends createZodDto(FitUploadResponseSchema) {}
 
-const StravaTakeoutErrorSchema = z.object({
+const LagomTakeoutErrorSchema = z.object({
   row: z.number().int().positive().describe('One-based row number in activities.csv'),
   filename: z.string().describe('Filename from activities.csv'),
   message: z.string().describe('Reason this activity could not be imported'),
 });
 
-export const StravaTakeoutUploadResponseSchema = z
+export const LagomTakeoutUploadResponseSchema = z
   .object({
     totalActivities: z.number().int().nonnegative().describe('Data rows found in activities.csv'),
     imported: z.number().int().nonnegative().describe('New activity files stored and queued for parsing'),
@@ -26,8 +26,8 @@ export const StravaTakeoutUploadResponseSchema = z
     skipped: z.number().int().nonnegative().describe('Rows without a supported activity file'),
     failed: z.number().int().nonnegative().describe('Activity files that could not be imported'),
     uploads: z.array(FitUploadResponseSchema).describe('Successfully resolved Kondis uploads'),
-    errors: z.array(StravaTakeoutErrorSchema).describe('Per-activity import errors'),
+    errors: z.array(LagomTakeoutErrorSchema).describe('Per-activity import errors'),
   })
-  .meta({ id: 'StravaTakeoutUploadResponseDto' });
+  .meta({ id: 'LagomTakeoutUploadResponseDto' });
 
-export class StravaTakeoutUploadResponseDto extends createZodDto(StravaTakeoutUploadResponseSchema) {}
+export class LagomTakeoutUploadResponseDto extends createZodDto(LagomTakeoutUploadResponseSchema) {}

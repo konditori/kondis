@@ -65,9 +65,9 @@
         ]
       }
     },
-    "/uploads/strava": {
+    "/uploads/lagom": {
       "post": {
-        "operationId": "UploadController_uploadStravaTakeout",
+        "operationId": "UploadController_uploadLagomTakeout",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -82,7 +82,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Strava takeout .zip file containing activities.csv and the activities folder"
+                    "description": "Lagom takeout .zip file containing activities.csv and the activities folder"
                   }
                 }
               }
@@ -95,13 +95,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StravaTakeoutUploadResponseDto_Output"
+                  "$ref": "#/components/schemas/LagomTakeoutUploadResponseDto_Output"
                 }
               }
             }
           }
         },
-        "summary": "Import activities from a Strava takeout ZIP archive",
+        "summary": "Import activities from a Lagom takeout ZIP archive",
         "tags": [
           "uploads"
         ]
@@ -395,7 +395,7 @@
         ],
         "additionalProperties": false
       },
-      "StravaTakeoutUploadResponseDto_Output": {
+      "LagomTakeoutUploadResponseDto_Output": {
         "type": "object",
         "properties": {
           "totalActivities": {

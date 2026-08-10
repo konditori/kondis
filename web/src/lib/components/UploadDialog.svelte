@@ -24,7 +24,7 @@
       form.append('file', item.file);
       try {
         const takeout = item.file.name.toLowerCase().endsWith('.zip');
-        const response = await fetch(takeout ? '/api/uploads/strava' : '/api/uploads/activity', { method: 'POST', body: form });
+        const response = await fetch(takeout ? '/api/uploads/lagom' : '/api/uploads/activity', { method: 'POST', body: form });
         if (!response.ok) throw new Error((await response.text()) || `Upload failed (${response.status})`);
         if (takeout) {
           const result = (await response.json()) as { imported: number; duplicates: number; skipped: number; failed: number };
@@ -79,9 +79,9 @@
         ondrop={(event) => { event.preventDefault(); dragging = false; void addFiles(event.dataTransfer?.files ?? []); }}
       >
         <span class="upload-icon"><FileUp size={28} /></span>
-        <strong>Drop activity files or a Strava takeout here</strong>
+        <strong>Drop activity files or an archive here</strong>
         <span>or click to browse your device</span>
-        <small>.fit, .tcx, .gpx, or Strava .zip</small>
+        <small>.fit, .tcx, .gpx, or a Strava takeout .zip</small>
       </button>
       <input bind:this={input} class="sr-only" type="file" accept=".fit,.tcx,.gpx,.zip,application/zip,application/octet-stream,application/gpx+xml" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
 

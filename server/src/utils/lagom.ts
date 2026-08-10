@@ -9,23 +9,23 @@ const CENTRAL_DIRECTORY_SIGNATURE = 0x02_01_4b_50;
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06_05_4b_50;
 const LOCAL_FILE_SIGNATURE = 0x04_03_4b_50;
 
-export type StravaTakeoutActivity = {
+export type LagomTakeoutActivity = {
   row: number;
   filename: string;
   file: UploadedFitFile;
 };
 
-export type StravaTakeoutError = {
+export type LagomTakeoutError = {
   row: number;
   filename: string;
   message: string;
 };
 
-export type StravaTakeoutContents = {
+export type LagomTakeoutContents = {
   totalActivities: number;
   skipped: number;
-  activities: StravaTakeoutActivity[];
-  errors: StravaTakeoutError[];
+  activities: LagomTakeoutActivity[];
+  errors: LagomTakeoutError[];
 };
 
 const assertRange = (contents: Buffer, offset: number, length: number): void => {
@@ -178,7 +178,7 @@ const normalizeReference = (filename: string): string | undefined => {
   return normalized === '.' ? undefined : normalized;
 };
 
-export const extractStravaTakeout = (contents: Buffer): StravaTakeoutContents => {
+export const extractLagomTakeout = (contents: Buffer): LagomTakeoutContents => {
   let entries: Record<string, Uint8Array>;
   try {
     entries = unzip(contents);
@@ -210,7 +210,7 @@ export const extractStravaTakeout = (contents: Buffer): StravaTakeoutContents =>
     throw new Error(`${MANIFEST_NAME} does not contain a Filename column`);
   }
 
-  const result: StravaTakeoutContents = {
+  const result: LagomTakeoutContents = {
     totalActivities: rows.length,
     skipped: 0,
     activities: [],
