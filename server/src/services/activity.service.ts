@@ -2,8 +2,8 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { OnJob } from 'src/decorators';
 import { Activity } from 'src/db/schema';
+import { OnJob } from 'src/decorators';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';

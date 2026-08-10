@@ -1,4 +1,3 @@
-import { apiUrl } from "$lib/server/api";
 import {
   activityControllerGetById,
   activityControllerListRecent,
@@ -8,7 +7,7 @@ import {
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
   return {
-    baseUrl: typeof window === "undefined" ? apiUrl("/").toString() : "/api",
+    baseUrl: "/api",
     fetch: fetchImpl,
   };
 }
