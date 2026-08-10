@@ -9,6 +9,8 @@ const CENTRAL_DIRECTORY_SIGNATURE = 0x02_01_4b_50;
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06_05_4b_50;
 const LOCAL_FILE_SIGNATURE = 0x04_03_4b_50;
 
+// Lagom is a codename for the commercial app that should not be named
+
 export type LagomTakeoutActivity = {
   row: number;
   filename: string;
