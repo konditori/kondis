@@ -1,0 +1,37 @@
+open-api/kondis-openapi-specs.json
+  s_01cda322bfe2c7::t_b6210c3ecccd53 52,375,377,379-382,387
+server/src/controllers/upload.controller.ts
+  s_01cda322bfe2c7::t_de016dbcf26840 32
+server/src/dtos/upload.dto.ts
+  s_01cda322bfe2c7::t_d14a9e79883eae 6-7
+server/src/enum.ts
+  s_01cda322bfe2c7::t_a6a46cb361848c 13
+server/src/open-api/fetch-client.ts
+  s_01cda322bfe2c7::t_a798c20eee31ac 20,22-23
+server/src/repositories/job.repository.ts
+  s_01cda322bfe2c7::t_11f96731e3611e 272-275
+server/src/types.ts
+  s_01cda322bfe2c7::t_b04ff0b8647366 73,79,83
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_01cda322bfe2c7::t_e014108a905e8b 62-65,106-108,110-113,115,140-145
+server/test/medium/specs/service/upload.service.spec.ts
+  s_01cda322bfe2c7::t_5e8432bd7e4afc 66,72,74-78,81,83,85-91,93-94,98,102-104,106-108
+web/src/lib/components/UploadDialog.svelte
+  s_01cda322bfe2c7::t_793ee10c6aed1e 9,29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "15a802417d24a0bf810d7112dbf42a565eb9b164",
+  "prompts": {},
+  "sessions": {
+    "s_01cda322bfe2c7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed68-8f21-7423-8889-77dacb7f9eae",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
