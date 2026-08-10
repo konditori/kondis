@@ -1,0 +1,27 @@
+server/src/repositories/job.repository.ts
+  s_5fabbbbf239de3::t_42583c164ae76f 277
+server/src/services/upload.service.ts
+  s_5fabbbbf239de3::t_4984cf98578537 40,46-50,56-61,68-69,78,107-113,125,135-145
+server/src/types.ts
+  s_5fabbbbf239de3::t_6399c5c3cf524d 73,75-76,85
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_5fabbbbf239de3::t_7f799396d494d8 26,68-72,89
+server/test/medium/specs/service/upload.service.spec.ts
+  s_5fabbbbf239de3::t_979001fe3636b1 66-67,74-77,79-83,85,91-93,111-112,115-119,127-140,148-159,196-202,204-208,210,212-216,218-219,238-239,242-244,247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9f96763b2c3a50c13f731fa05cf0c29503fe2a02",
+  "prompts": {},
+  "sessions": {
+    "s_5fabbbbf239de3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed84-1953-76b3-b0b0-e5df56ea2f1a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
