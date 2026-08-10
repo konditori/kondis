@@ -1,0 +1,41 @@
+pnpm-lock.yaml
+  s_5fabbbbf239de3::t_e102281638d15a 129-131,1249-1251,4258-4261
+server/package.json
+  s_5fabbbbf239de3::t_dbc6ab05ee5b6a 55
+server/src/config/upload-limits.ts
+  s_5fabbbbf239de3::t_baea3893019b50 1-15
+server/src/controllers/upload.controller.ts
+  s_5fabbbbf239de3::t_eee8ba621fc0c6 6,37-41,67-71
+server/src/repositories/storage.repository.spec.ts
+  s_5fabbbbf239de3::t_958c8beab428a3 25,28,33,35-37,39
+server/src/repositories/storage.repository.ts
+  s_5fabbbbf239de3::t_b07db2c3529eda 51-54,74-76
+server/src/services/activity.service.spec.ts
+  s_5fabbbbf239de3::t_9891e000f550d3 4,186-192
+server/src/services/activity.service.ts
+  s_5fabbbbf239de3::t_9ff11eb5acfa3e 4,9,56-58,76,80-81,84-85,88-89,95-109
+server/src/services/storage.service.spec.ts
+  s_5fabbbbf239de3::t_87da964834475e 1-23
+server/src/services/storage.service.ts
+  s_5fabbbbf239de3::t_a2ccde33bf4e91 5,15,34-35
+server/src/utils/lagom.spec.ts
+  s_5fabbbbf239de3::t_be36cd116bce4c 56-72,76-92
+server/src/utils/lagom.ts
+  s_5fabbbbf239de3::t_5f18a88ede7ca8 5,7,12-14,37,39-44,48-50,52,54-55,58-80,83,85,93-143,145-167,170-174,177-197,208-209,212,214-217,234-235,245,258-259,264-268,270,272-285,289,291-293,295-302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "430841409f3396fbb7b165b518b66c73c330711d",
+  "prompts": {},
+  "sessions": {
+    "s_5fabbbbf239de3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed84-1953-76b3-b0b0-e5df56ea2f1a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
