@@ -1,6 +1,7 @@
 import { basename, extname, posix } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 
+import { parse } from 'csv-parse/sync';
 import { Open } from 'unzipper';
 
 import type { UploadedFileData } from 'src/types';
@@ -49,54 +50,6 @@ const unzip = async (contents: Buffer): Promise<Record<string, Buffer>> => {
   return entries;
 };
 
-const parseCsv = (contents: string): string[][] => {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let value = '';
-  let quoted = false;
-
-  const finishValue = (): void => {
-    row.push(value);
-    value = '';
-  };
-  const finishRow = (): void => {
-    finishValue();
-    rows.push(row);
-    row = [];
-  };
-
-  for (let index = 0; index < contents.length; index += 1) {
-    const character = contents[index];
-
-    if (character === '"') {
-      if (quoted && contents[index + 1] === '"') {
-        value += '"';
-        index += 1;
-      } else {
-        quoted = !quoted;
-      }
-    } else if (character === ',' && !quoted) {
-      finishValue();
-    } else if ((character === '\n' || character === '\r') && !quoted) {
-      if (character === '\r' && contents[index + 1] === '\n') {
-        index += 1;
-      }
-      finishRow();
-    } else {
-      value += character;
-    }
-  }
-
-  if (quoted) {
-    throw new Error('activities.csv contains an unterminated quoted field');
-  }
-  if (value.length > 0 || row.length > 0) {
-    finishRow();
-  }
-
-  return rows;
-};
-
 const normalizeReference = (filename: string): string | undefined => {
   const slashPath = filename.replaceAll('\\', '/');
   if (slashPath.startsWith('/') || slashPath.split('/').includes('..')) {
@@ -127,13 +80,15 @@ export const extractLagomTakeout = async (contents: Buffer): Promise<LagomTakeou
 
   const manifestPath = manifests[0];
   const archiveRoot = manifestPath.slice(0, -MANIFEST_NAME.length);
-  const rows = parseCsv(Buffer.from(entries[manifestPath]).toString('utf8'));
+  const rows = parse(Buffer.from(entries[manifestPath]).toString('utf8'), {
+    bom: true,
+    relax_column_count: true,
+  }) as string[][];
   const headers = rows.shift();
   if (!headers) {
     throw new Error(`${MANIFEST_NAME} is empty`);
   }
 
-  headers[0] = headers[0].replace(/^\u{FEFF}/u, '');
   const filenameIndex = headers.indexOf('Filename');
   if (filenameIndex === -1) {
     throw new Error(`${MANIFEST_NAME} does not contain a Filename column`);
