@@ -1,0 +1,25 @@
+THIRD-PARTY-LICENSES.md
+  s_1419b09931e620::t_0c7371bd5d6d38 15,971-1003,1408-1438,1506-1538,1669-1706,2234-2260,2391-2416,2714-2725,2786-2812,3221-3251,3875-3904,4050,4423,4828,5555-5586,5621-5657
+pnpm-lock.yaml
+  s_1419b09931e620::t_069378dd1b621d 71-73,1806-1808,4788-4789
+server/package.json
+  s_1419b09931e620::t_bb84cf4563f823 34
+server/src/utils/lagom.ts
+  s_1419b09931e620::t_29a4a4ec5fb6ed 4,83-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a30392b0b03c78417f79f8b1b25d560282f354a4",
+  "prompts": {},
+  "sessions": {
+    "s_1419b09931e620": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed64-eea5-7c23-8db2-9205e0665981",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
