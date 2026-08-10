@@ -37,34 +37,36 @@ export class UploadService {
       throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
     }
 
-    await this.jobRepository.queue({
-      name: JobName.ActivityUpload,
-      data: {
-        originalName: file.originalname,
-        contents: file.buffer.toString('base64'),
-      },
-    });
+    await this.queueActivityUpload(file);
 
     return { byteSize: file.buffer.length, queued: true };
   }
 
   @OnJob({ name: JobName.ActivityUpload, queue: QueueName.BackgroundTask })
-  async handleActivityUpload({ originalName, contents }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
+  async handleActivityUpload({
+    originalName,
+    storagePath,
+    checksum,
+  }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
       throw new Error(`Unsupported activity upload extension: ${extension || 'none'}`);
     }
 
-    const buffer = Buffer.from(contents, 'base64');
-    const checksum = this.cryptoRepository.xxHash(buffer);
+    const buffer = await this.storageRepository.read(storagePath);
+    const actualChecksum = this.cryptoRepository.xxHash(buffer);
+    if (actualChecksum !== checksum) {
+      throw new Error(`Activity upload checksum mismatch: expected ${checksum}, got ${actualChecksum}`);
+    }
+
     const existing = await this.uploadRepository.getByChecksum(checksum);
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
       return JobStatus.Skipped;
     }
 
-    const storagePath = this.storageRepository.buildPath(checksum, extension);
-    await this.storageRepository.write(storagePath, buffer);
+    const permanentStoragePath = this.storageRepository.buildPath(checksum, extension);
+    await this.storageRepository.write(permanentStoragePath, buffer);
 
     try {
       await this.databaseRepository.withTransaction(async (trx) => {
@@ -73,7 +75,7 @@ export class UploadService {
             checksum,
             original_name: originalName,
             byte_size: buffer.length,
-            storage_path: storagePath,
+            storage_path: permanentStoragePath,
           },
           trx,
         );
@@ -102,18 +104,13 @@ export class UploadService {
     const storagePath = this.storageRepository.buildTemporaryPath('.zip');
     await this.storageRepository.write(storagePath, file.buffer);
 
-    try {
-      await this.jobRepository.queue({
-        name: JobName.LagomTakeoutImport,
-        data: {
-          originalName: file.originalname,
-          storagePath,
-        },
-      });
-    } catch (error) {
-      await this.storageRepository.delete(storagePath);
-      throw error;
-    }
+    await this.jobRepository.queue({
+      name: JobName.LagomTakeoutImport,
+      data: {
+        originalName: file.originalname,
+        storagePath,
+      },
+    });
 
     return { byteSize: file.buffer.length, queued: true };
   }
@@ -125,13 +122,7 @@ export class UploadService {
     let queued = 0;
 
     for (const activity of takeout.activities) {
-      await this.jobRepository.queue({
-        name: JobName.ActivityUpload,
-        data: {
-          originalName: activity.file.originalname,
-          contents: activity.file.buffer.toString('base64'),
-        },
-      });
+      await this.queueActivityUpload(activity.file);
       queued += 1;
     }
 
@@ -140,5 +131,16 @@ export class UploadService {
     );
 
     return JobStatus.Success;
+  }
+
+  private async queueActivityUpload(file: UploadedFileData): Promise<void> {
+    const checksum = this.cryptoRepository.xxHash(file.buffer);
+    const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
+    await this.storageRepository.write(storagePath, file.buffer);
+
+    await this.jobRepository.queue({
+      name: JobName.ActivityUpload,
+      data: { originalName: file.originalname, storagePath, checksum },
+    });
   }
 }

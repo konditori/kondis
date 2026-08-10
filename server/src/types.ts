@@ -70,9 +70,10 @@ export interface IEntityJob extends IBaseJob {
   id: string;
 }
 
-export interface IFileUploadJob {
+export interface IActivityUploadJob {
   originalName: string;
-  contents: string;
+  storagePath: string;
+  checksum: string;
 }
 
 export interface ILagomTakeoutImportJob {
@@ -81,7 +82,7 @@ export interface ILagomTakeoutImportJob {
 }
 
 export type JobItem =
-  | { name: JobName.ActivityUpload; data: IFileUploadJob }
+  | { name: JobName.ActivityUpload; data: IActivityUploadJob }
   | { name: JobName.ActivityParse; data: IEntityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }

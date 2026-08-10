@@ -23,6 +23,7 @@ import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
 import { createTestZip } from 'test/utils/zip';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
+const SAMPLE_GPX = Buffer.from('<gpx/>');
 
 describe('job system (medium)', () => {
   let testApp: TestApp;
@@ -64,7 +65,11 @@ describe('job system (medium)', () => {
     const samples: Record<JobName, JobItem> = {
       [JobName.ActivityUpload]: {
         name: JobName.ActivityUpload,
-        data: { originalName: 'sample.gpx', contents: Buffer.from('<gpx/>').toString('base64') },
+        data: {
+          originalName: 'sample.gpx',
+          storagePath: 'temporary/sample.gpx',
+          checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
+        },
       },
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
@@ -81,6 +86,7 @@ describe('job system (medium)', () => {
     };
 
     it('binds a handler to every job name', async () => {
+      await storageRepository.write('temporary/sample.gpx', SAMPLE_GPX);
       await storageRepository.write(
         'temporary/empty.zip',
         createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),

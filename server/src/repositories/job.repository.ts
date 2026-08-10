@@ -274,7 +274,7 @@ export class JobRepository implements OnApplicationShutdown {
   private getJobOptions(item: JobItem): Pick<SendOptions, 'singletonKey' | 'priority'> {
     switch (item.name) {
       case JobName.ActivityUpload: {
-        return {};
+        return { singletonKey: `${item.name}:${item.data.checksum}` };
       }
 
       case JobName.ActivityParse: {
