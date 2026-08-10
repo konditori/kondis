@@ -1,0 +1,19 @@
+e2e/src/specs/server/api/activities.e2e-spec.ts
+  s_47c848754964dd::t_07656424518625 1-2,4,6-7,14-15,19,21-22,26,39,41-44,50-57,65-67,73,75,77-78,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6a72b02737f586b502f5c032ba62116c03c42380",
+  "prompts": {},
+  "sessions": {
+    "s_47c848754964dd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fec75-459f-75e3-9426-74bfcb391570",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
