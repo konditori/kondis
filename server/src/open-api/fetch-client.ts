@@ -27,8 +27,6 @@ export type FitUploadResponseDtoOutput = {
   duplicate: boolean;
 };
 export type LagomTakeoutUploadResponseDtoOutput = {
-  /** Lowercase xxh128 hash of file contents */
-  checksum: string;
   /** Uploaded takeout size in bytes */
   byteSize: number;
   /** True when the takeout import was submitted to the queue */

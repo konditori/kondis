@@ -71,7 +71,6 @@ export interface IEntityJob extends IBaseJob {
 }
 
 export interface ILagomTakeoutImportJob {
-  checksum: string;
   originalName: string;
   contents: string;
 }

@@ -2,14 +2,16 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { Upload } from 'src/db/schema';
+import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
-import { JobName } from 'src/enum';
+import { JobName, JobStatus, QueueName } from 'src/enum';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { UploadedFileData } from 'src/types';
+import { JobOf, UploadedFileData } from 'src/types';
+import { extractLagomTakeout } from 'src/utils/lagom';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -83,16 +85,46 @@ export class UploadService {
       throw new BadRequestException('Only a Strava takeout .zip file is accepted');
     }
 
-    const checksum = this.cryptoRepository.xxHash(file.buffer);
     await this.jobRepository.queue({
       name: JobName.LagomTakeoutImport,
       data: {
-        checksum,
         originalName: file.originalname,
         contents: file.buffer.toString('base64'),
       },
     });
 
-    return { checksum, byteSize: file.buffer.length, queued: true };
+    return { byteSize: file.buffer.length, queued: true };
+  }
+
+  @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
+  async handleLagomTakeout({ originalName, contents }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
+    const takeout = await extractLagomTakeout(Buffer.from(contents, 'base64'));
+
+    const errors = [...takeout.errors];
+    let imported = 0;
+    let duplicates = 0;
+
+    for (const activity of takeout.activities) {
+      try {
+        const activityUpload = await this.uploadFit(activity.file);
+        if (activityUpload.duplicate) {
+          duplicates += 1;
+        } else {
+          imported += 1;
+        }
+      } catch (error) {
+        errors.push({
+          row: activity.row,
+          filename: activity.filename,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    this.logger.log(
+      `Imported Lagom takeout ${originalName}: ${imported} new, ${duplicates} duplicate, ${takeout.skipped} skipped, ${errors.length} failed`,
+    );
+
+    return JobStatus.Success;
   }
 }

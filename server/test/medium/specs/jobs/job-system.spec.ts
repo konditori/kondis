@@ -65,7 +65,6 @@ describe('job system (medium)', () => {
       [JobName.LagomTakeoutImport]: {
         name: JobName.LagomTakeoutImport,
         data: {
-          checksum: 'empty',
           originalName: 'empty.zip',
           contents: createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }).toString('base64'),
         },
@@ -122,7 +121,7 @@ describe('job system (medium)', () => {
 
       const result = await uploads.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
       expect(result.queued).toBe(true);
-      expect(await uploadRepository.getByChecksum(result.checksum)).toBeUndefined();
+      expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
 
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 

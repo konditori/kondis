@@ -280,7 +280,7 @@ export class JobRepository implements OnApplicationShutdown {
       }
 
       case JobName.LagomTakeoutImport: {
-        return { singletonKey: `${item.name}:${item.data.checksum}` };
+        return {};
       }
 
       case JobName.ActivityParseQueueAll: {

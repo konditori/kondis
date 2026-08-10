@@ -398,10 +398,6 @@
       "LagomTakeoutUploadResponseDto_Output": {
         "type": "object",
         "properties": {
-          "checksum": {
-            "type": "string",
-            "description": "Lowercase xxh128 hash of file contents"
-          },
           "byteSize": {
             "type": "integer",
             "minimum": 0,
@@ -417,7 +413,6 @@
           }
         },
         "required": [
-          "checksum",
           "byteSize",
           "queued"
         ],

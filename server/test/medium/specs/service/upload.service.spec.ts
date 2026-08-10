@@ -13,7 +13,6 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { LagomService } from 'src/services/lagom.service';
 import { UploadService } from 'src/services/upload.service';
 
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
@@ -29,7 +28,6 @@ describe('UploadService (medium)', () => {
   let storageDir = '';
   let db: KondisDatabase;
   let uploadService: UploadService;
-  let lagomService: LagomService;
   let uploadRepository: UploadRepository;
   let storageRepository: StorageRepository;
 
@@ -49,7 +47,6 @@ describe('UploadService (medium)', () => {
       jobs,
       logger,
     );
-    lagomService = new LagomService(uploadService, logger);
   });
 
   beforeEach(async () => {
@@ -139,23 +136,22 @@ describe('UploadService (medium)', () => {
 
     const first = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(first).toMatchObject({ byteSize: archive.length, queued: true });
+    expect(first).toEqual({ byteSize: archive.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { checksum: string; originalName: string; contents: string } },
+      { name: JobName; data: { originalName: string; contents: string } },
     ];
     expect(item).toEqual({
       name: JobName.LagomTakeoutImport,
       data: {
-        checksum: first.checksum,
         originalName: 'export.zip',
         contents: archive.toString('base64'),
       },
     });
-    expect(await uploadRepository.getByChecksum(first.checksum)).toBeUndefined();
+    expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
 
     queue.mockClear();
-    await expect(lagomService.handleTakeoutImport(item.data)).resolves.toBe('success');
+    await expect(uploadService.handleLagomTakeout(item.data)).resolves.toBe('success');
     expect(queue).toHaveBeenCalledTimes(2);
 
     queue.mockClear();
@@ -169,11 +165,9 @@ describe('UploadService (medium)', () => {
     const result = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', Buffer.from('nope')));
 
     expect(result.queued).toBe(true);
-    const [item] = queue.mock.calls[0] as unknown as [
-      { data: { checksum: string; originalName: string; contents: string } },
-    ];
-    await expect(lagomService.handleTakeoutImport(item.data)).rejects.toThrow();
-    expect(await uploadRepository.getByChecksum(result.checksum)).toBeUndefined();
+    const [item] = queue.mock.calls[0] as unknown as [{ data: { originalName: string; contents: string } }];
+    await expect(uploadService.handleLagomTakeout(item.data)).rejects.toThrow();
+    expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
   });
 
   it('rejects a non-ZIP Lagom takeout upload', async () => {
