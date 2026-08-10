@@ -5,7 +5,10 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ fetch, params }) => {
   try {
-    const activity = (await activityControllerGetById({ id: params.id }, getSdkRequestOptions(fetch))) as ActivityDetail;
+    const activity = (await activityControllerGetById(
+      { id: params.id },
+      getSdkRequestOptions(fetch),
+    )) as ActivityDetail;
     return { activity };
   } catch (requestError) {
     const status = (requestError as { status?: number }).status;

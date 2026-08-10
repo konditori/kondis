@@ -254,6 +254,6 @@ describe('UploadService (medium)', () => {
   it('rejects a non-ZIP Lagom takeout upload', async () => {
     await expect(
       uploadService.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
-    ).rejects.toThrow('Only a Lagom takeout .zip file is accepted');
+    ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
   });
 });
