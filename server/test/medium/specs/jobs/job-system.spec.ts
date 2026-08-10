@@ -23,7 +23,6 @@ const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 describe('job system (medium)', () => {
   let testApp: TestApp;
   let db: KondisDatabase;
-  let fileBuffer: Buffer;
 
   let jobs: JobRepository;
   let jobService: JobService;
@@ -34,7 +33,6 @@ describe('job system (medium)', () => {
   let databaseRepository: DatabaseRepository;
 
   beforeAll(async () => {
-    fileBuffer = await readFile(activityFixtures.hindasRun.path);
     db = createMediumTestDatabase();
     testApp = await createTestApp();
 
@@ -90,23 +88,24 @@ describe('job system (medium)', () => {
   });
 
   describe('end to end', () => {
-    it('parses an uploaded file through the real queue', async () => {
-      const result = await uploads.uploadFit(makeUploadedFile(activityFixtures.hindasRun.filename, fileBuffer));
+    it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
+      const result = await uploads.uploadFit(makeUploadedFile(fixture.filename, await readFile(fixture.path)));
       expect(result.duplicate).toBe(false);
 
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
       const activity = await activityRepository.getByUploadId(result.id);
       expect(activity).toBeDefined();
-      expect(activity?.sport).toBeTruthy();
+      expect(activity?.sport).toBe(fixture.expectedSport);
 
       const upload = await uploadRepository.getById(result.id);
       expect(upload?.status).toBe('parsed');
     });
 
     it('deletes the activity, the upload and the file', async () => {
+      const fixture = activityFixtures.hindasRun;
       const { id: uploadId } = await uploads.uploadFit(
-        makeUploadedFile(activityFixtures.hindasRun.filename, fileBuffer),
+        makeUploadedFile(fixture.filename, await readFile(fixture.path)),
       );
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
