@@ -1,0 +1,25 @@
+server/test/medium/specs/formats/gpx.spec.ts
+  s_47c848754964dd::t_b7b5da2898eb0c 1-50
+server/test/medium/specs/formats/tcx.spec.ts
+  s_47c848754964dd::t_183430a095d95b 1-39
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_47c848754964dd::t_135d99a09daa11 91-92,99,106,108
+server/test/medium/utils.ts
+  s_47c848754964dd::t_91818c81fe22f1 7,16,20-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6f3d4e584d968b49095098776c85158142ec1f19",
+  "prompts": {},
+  "sessions": {
+    "s_47c848754964dd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fec75-459f-75e3-9426-74bfcb391570",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
