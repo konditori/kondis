@@ -1,23 +1,9 @@
 import { Client } from 'pg';
 import { GenericContainer, Wait } from 'testcontainers';
 
-import { type DatabaseConfig } from 'src/config/config.service';
 import { runMigrations } from 'src/db/migrate';
 
-const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
-
-const toDatabaseConfig = (url: string): DatabaseConfig => {
-  const parsed = new URL(url);
-  const database = parsed.pathname.replace(/^\//, '');
-
-  return {
-    host: parsed.hostname,
-    port: parsed.port.length > 0 ? Number(parsed.port) : 5432,
-    user: decodeURIComponent(parsed.username),
-    password: decodeURIComponent(parsed.password),
-    database,
-  };
-};
+import { TEST_DB_URL_ENV, toDatabaseConfig } from 'test/medium/test-db';
 
 const ensureExtensions = async (url: string): Promise<void> => {
   const client = new Client({ connectionString: url });

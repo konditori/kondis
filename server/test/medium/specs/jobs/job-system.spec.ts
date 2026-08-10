@@ -12,23 +12,15 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { JobService } from 'src/services/job.service';
 import { UploadService } from 'src/services/upload.service';
-import { type JobItem, type UploadedFitFile } from 'src/types';
+import { type JobItem } from 'src/types';
 
 import { createTestApp, type TestApp } from 'test/medium/test-app';
-import { createMediumTestDatabase, truncateAllTables, truncateJobs } from 'test/medium/test-db';
-
-const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
-
-const fixtureSegments = ['test', 'test-assets', 'activities', 'running', '2015-hindas', '2015-06-22-run.fit'];
-const fixtureCandidates = [
-  resolve(process.cwd(), '..', ...fixtureSegments),
-  resolve(process.cwd(), ...fixtureSegments),
-];
-const fixturePath = fixtureCandidates.find((path) => existsSync(path)) ?? fixtureCandidates[0];
+import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 
-describe.skipIf(!hasMediumDb)('job system (medium)', () => {
+describe('job system (medium)', () => {
   let testApp: TestApp;
   let db: KondisDatabase;
   let fileBuffer: Buffer;
@@ -41,11 +33,8 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
   let activityRepository: ActivityRepository;
   let databaseRepository: DatabaseRepository;
 
-  const asFile = (name: string, buffer: Buffer): UploadedFitFile =>
-    ({ originalname: name, buffer, size: buffer.length }) as UploadedFitFile;
-
   beforeAll(async () => {
-    fileBuffer = await readFile(fixturePath);
+    fileBuffer = await readFile(activityFixtures.hindasRun.path);
     db = createMediumTestDatabase();
     testApp = await createTestApp();
 
@@ -59,8 +48,7 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
   }, 60_000);
 
   beforeEach(async () => {
-    await truncateJobs(db);
-    await truncateAllTables(db);
+    await resetMediumTestDatabase(db);
   });
 
   afterAll(async () => {
@@ -103,7 +91,7 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
 
   describe('end to end', () => {
     it('parses an uploaded file through the real queue', async () => {
-      const result = await uploads.uploadFit(asFile('2015-06-22-run.fit', fileBuffer));
+      const result = await uploads.uploadFit(makeUploadedFile(activityFixtures.hindasRun.filename, fileBuffer));
       expect(result.duplicate).toBe(false);
 
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
@@ -117,7 +105,9 @@ describe.skipIf(!hasMediumDb)('job system (medium)', () => {
     });
 
     it('deletes the activity, the upload and the file', async () => {
-      const { id: uploadId } = await uploads.uploadFit(asFile('2015-06-22-run.fit', fileBuffer));
+      const { id: uploadId } = await uploads.uploadFit(
+        makeUploadedFile(activityFixtures.hindasRun.filename, fileBuffer),
+      );
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
       const activity = await activityRepository.getByUploadId(uploadId);
