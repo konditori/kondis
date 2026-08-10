@@ -1,0 +1,23 @@
+server/src/repositories/job.repository.ts
+  s_01cda322bfe2c7::t_1601f76ec97b12 283
+server/src/services/index.ts
+  s_01cda322bfe2c7::t_aaf9f5b0bd959d 7
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_01cda322bfe2c7::t_2ced062b54e784 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3be948a653c8dd77c26858803a396d7c2782dedc",
+  "prompts": {},
+  "sessions": {
+    "s_01cda322bfe2c7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed68-8f21-7423-8889-77dacb7f9eae",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
