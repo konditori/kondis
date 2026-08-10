@@ -1,0 +1,25 @@
+web/src/lib/api.ts
+  s_bbc0006d321143::t_83d4c314f3c8e7 1-21
+web/src/lib/components/UploadDialog.svelte
+  s_bbc0006d321143::t_70310e3bc7b4fe 4,26-28
+web/src/routes/+page.server.ts
+  s_bbc0006d321143::t_338164ee403e99 1,7
+web/src/routes/activities/[id]/+page.server.ts
+  s_bbc0006d321143::t_47f080129cbf30 2,7-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f288f0f0a5814febe826de019e4b5f1bd0523514",
+  "prompts": {},
+  "sessions": {
+    "s_bbc0006d321143": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c7fce649-8c04-41af-85e4-9493ee4d496e",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
