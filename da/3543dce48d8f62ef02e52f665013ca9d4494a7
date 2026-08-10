@@ -1,0 +1,25 @@
+pnpm-lock.yaml
+  s_7365e43e51bc24::t_0bd1209aef7556 98-100,1011,1602-1604,1866-1868,1934,2008,2164-2167,2365-2367,2378,2583-2585,3071,3226-3229,3246-3248,3251,3272,3320,4582-4583,4843-4846,5216-5221,5401-5406,5559-5560,6319-6320,6366-6373
+server/package.json
+  s_7365e43e51bc24::t_8ab93ea5fbdf4c 43
+server/src/services/upload.service.ts
+  s_7365e43e51bc24::t_1a9e500638ba17 89
+server/src/utils/lagom.ts
+  s_7365e43e51bc24::t_9fffa6ab1af135 2-4,32-34,36-38,41,46,110-111,113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "da3543dce48d8f62ef02e52f665013ca9d4494a7",
+  "prompts": {},
+  "sessions": {
+    "s_7365e43e51bc24": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "261e97f0-1185-48ad-94e6-936c29ea0339",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
