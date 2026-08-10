@@ -36,7 +36,7 @@ export class UploadController {
   @Post('upload/activity')
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0, parts: 1 },
+      limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0 },
     }),
   )
   async uploadActivity(@UploadedFile() file?: UploadedFileData): Promise<FitUploadResponseDto> {
@@ -66,7 +66,7 @@ export class UploadController {
   @Post('upload/strava')
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0, parts: 1 },
+      limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0 },
     }),
   )
   async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {

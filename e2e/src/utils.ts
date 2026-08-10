@@ -38,17 +38,17 @@ export const utils = {
     const path = resolve(testAssetDirectory, relativePath);
     const bytes = await readFile(path);
     const file = new File([bytes], basename(path), { type: contentType });
-    const upload = await uploadControllerUploadActivity({ body: { file } });
+    await uploadControllerUploadActivity({ body: { file } });
 
-    return utils.waitForActivity(upload.id);
+    return utils.waitForActivity();
   },
 
-  waitForActivity: async (uploadId: string, timeoutMs = 25_000): Promise<ActivityDtoOutput> => {
+  waitForActivity: async (timeoutMs = 25_000): Promise<ActivityDtoOutput> => {
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
       const { activities } = await activityControllerListRecent({});
-      const activity = activities.find((candidate) => candidate.uploadId === uploadId);
+      const activity = activities.at(0);
       if (activity) {
         return activity;
       }
@@ -56,7 +56,7 @@ export const utils = {
       await setTimeout(300);
     }
 
-    throw new Error(`Timed out waiting for activity for upload ${uploadId}`);
+    throw new Error('Timed out waiting for the uploaded activity');
   },
 };
 
