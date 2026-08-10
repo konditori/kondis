@@ -1,6 +1,7 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
   import { Check, FileUp, LoaderCircle, X } from '@lucide/svelte';
+  import { getSdkRequestOptions, uploadControllerUploadActivity, uploadControllerUploadStravaTakeout } from '$lib/api';
 
   let { open = $bindable(false) }: { open: boolean } = $props();
   let input = $state<HTMLInputElement>();
@@ -20,12 +21,11 @@
 
     for (const item of uploads) {
       item.state = 'uploading';
-      const form = new FormData();
-      form.append('file', item.file);
       try {
         const takeout = item.file.name.toLowerCase().endsWith('.zip');
-        const response = await fetch(takeout ? '/api/uploads/lagom' : '/api/uploads/activity', { method: 'POST', body: form });
-        if (!response.ok) throw new Error((await response.text()) || `Upload failed (${response.status})`);
+        await (takeout
+          ? uploadControllerUploadStravaTakeout({ body: { file: item.file } }, getSdkRequestOptions())
+          : uploadControllerUploadActivity({ body: { file: item.file } }, getSdkRequestOptions()));
         item.message = 'Queued';
         item.state = 'done';
       } catch (error) {

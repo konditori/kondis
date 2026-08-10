@@ -3,6 +3,7 @@
   import { tick } from 'svelte';
   import type { Snapshot } from '@sveltejs/kit';
   import ActivityCard from '$lib/components/ActivityCard.svelte';
+  import { activityControllerListRecent, getSdkRequestOptions } from '$lib/api';
   import { localDate } from '$lib/format';
   import type { Activity, ActivityPage } from '$lib/types';
 
@@ -36,9 +37,7 @@
     loading = true;
     loadError = false;
     try {
-      const response = await fetch(`/api/activities?cursor=${encodeURIComponent(nextCursor)}`);
-      if (!response.ok) throw new Error(`API returned ${response.status}`);
-      const page = (await response.json()) as ActivityPage;
+      const page = (await activityControllerListRecent({ cursor: nextCursor }, getSdkRequestOptions())) as ActivityPage;
       const existing = new Set(activities.map(({ id }) => id));
       appendedActivities = [...appendedActivities, ...page.activities.filter(({ id }) => !existing.has(id))];
       cursorOverride = page.nextCursor;
@@ -121,7 +120,7 @@
     <div class="empty-state">
       <span class="empty-icon"><ActivityIcon size={28} /></span>
       <h2>{query ? 'No matching activities' : 'Your first activity starts here'}</h2>
-      <p>{query ? 'Try a different sport or activity name.' : 'Import a FIT file to build your private training archive.'}</p>
+      <p>{query ? 'Try a different sport or activity name.' : 'Import a file to build your private training archive.'}</p>
     </div>
   {/if}
 </div>
