@@ -165,6 +165,35 @@ export class JobRepository implements OnApplicationShutdown {
     };
   }
 
+  async getReferencedTemporaryPaths(): Promise<Set<string>> {
+    const boss = await this.getBoss();
+    const paths = new Set<string>();
+
+    for (const queueName of Object.values(QueueName)) {
+      const queue = await boss.getQueue(queueName);
+      if (!queue) {
+        continue;
+      }
+
+      const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+      const { rows } = await boss.getDb().executeSql(
+        `SELECT data #>> '{data,storagePath}' AS storage_path
+         FROM ${table}
+         WHERE state IN ('created', 'retry', 'active')
+           AND data #>> '{data,storagePath}' IS NOT NULL`,
+        [],
+      );
+
+      for (const row of rows as { storage_path: unknown }[]) {
+        if (typeof row.storage_path === 'string' && row.storage_path.startsWith('temporary/')) {
+          paths.add(row.storage_path);
+        }
+      }
+    }
+
+    return paths;
+  }
+
   async pause(queue: QueueName): Promise<void> {
     this.pausedQueues.add(queue);
 

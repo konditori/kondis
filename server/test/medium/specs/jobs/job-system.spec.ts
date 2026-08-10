@@ -209,6 +209,36 @@ describe('job system (medium)', () => {
     }, 20_000);
   });
 
+  describe('temporary file references', () => {
+    it('reports paths held by pending jobs so cleanup can preserve them', async () => {
+      await jobs.pause(QueueName.BackgroundTask);
+
+      try {
+        await jobs.queueAll([
+          {
+            name: JobName.ActivityUpload,
+            data: {
+              originalName: 'run.fit',
+              storagePath: 'temporary/run.fit',
+              checksum: 'a'.repeat(32),
+            },
+          },
+          {
+            name: JobName.LagomTakeoutImport,
+            data: { originalName: 'takeout.zip', storagePath: 'temporary/takeout.zip' },
+          },
+        ]);
+
+        await expect(jobs.getReferencedTemporaryPaths()).resolves.toEqual(
+          new Set(['temporary/run.fit', 'temporary/takeout.zip']),
+        );
+      } finally {
+        await jobs.empty(QueueName.BackgroundTask);
+        await jobs.resume(QueueName.BackgroundTask);
+      }
+    });
+  });
+
   describe('deduplication', () => {
     it('does not queue a second parse while one is pending', async () => {
       await jobs.pause(QueueName.ActivityParsing);

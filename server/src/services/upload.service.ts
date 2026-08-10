@@ -1,6 +1,7 @@
-import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable, PayloadTooLargeException } from '@nestjs/common';
 import { extname } from 'node:path';
 
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
@@ -35,6 +36,9 @@ export class UploadService {
     const extension = extname(file.originalname).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
       throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
+    }
+    if (file.buffer.length > UPLOAD_LIMITS.activityFileBytes) {
+      throw new PayloadTooLargeException(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
     }
 
     await this.queueActivityUpload(file);
@@ -100,6 +104,9 @@ export class UploadService {
     if (extname(file.originalname).toLowerCase() !== '.zip') {
       throw new BadRequestException('Only a Strava takeout .zip file is accepted');
     }
+    if (file.buffer.length > UPLOAD_LIMITS.takeoutFileBytes) {
+      throw new PayloadTooLargeException(`Takeout file exceeds ${UPLOAD_LIMITS.takeoutFileBytes} bytes`);
+    }
 
     const storagePath = this.storageRepository.buildTemporaryPath('.zip');
     await this.storageRepository.write(storagePath, file.buffer);
@@ -117,14 +124,11 @@ export class UploadService {
 
   @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
   async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
-    const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath));
-
     let queued = 0;
-
-    for (const activity of takeout.activities) {
+    const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
       await this.queueActivityUpload(activity.file);
       queued += 1;
-    }
+    });
 
     this.logger.log(
       `Processed Strava takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${takeout.errors.length} failed`,

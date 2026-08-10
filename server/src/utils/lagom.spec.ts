@@ -53,9 +53,42 @@ describe('extractLagomTakeout', () => {
       '../secret.fit': Buffer.from('secret'),
     });
 
+    await expect(extractLagomTakeout(archive)).rejects.toThrow('unsafe entry path');
+  });
+
+  it('rejects an excessive central-directory entry count before opening the archive', async () => {
+    const archive = createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') });
+    archive.writeUInt16LE(20_001, archive.length - 14);
+    archive.writeUInt16LE(20_001, archive.length - 12);
+
+    await expect(extractLagomTakeout(archive)).rejects.toThrow('too many entries');
+  });
+
+  it('does not expand ZIP entries with an excessive compression ratio', async () => {
+    const archive = createTestZip({
+      'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/large.gpx'),
+      'activities/large.gpx': { contents: Buffer.alloc(1024 * 1024), compress: true },
+    });
+
     const result = await extractLagomTakeout(archive);
 
     expect(result.activities).toEqual([]);
-    expect(result.errors).toEqual([{ row: 2, filename: '../secret.fit', message: 'Unsafe activity filename' }]);
+    expect(result.errors[0]?.message).toContain('compression ratio limit');
+  });
+
+  it('hands activities off as they are read instead of retaining their buffers', async () => {
+    const archive = createTestZip({
+      'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit'),
+      'activities/run.fit': Buffer.from('fit contents'),
+    });
+    const imported: string[] = [];
+
+    const result = await extractLagomTakeout(archive, ({ file }) => {
+      imported.push(file.buffer.toString());
+      return Promise.resolve();
+    });
+
+    expect(result.activities).toEqual([]);
+    expect(imported).toEqual(['fit contents']);
   });
 });

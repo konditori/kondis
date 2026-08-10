@@ -1,6 +1,7 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { JobName, JobStatus } from 'src/enum';
 import { type ActivityRepository } from 'src/repositories/activity.repository';
 import { type DatabaseRepository } from 'src/repositories/database.repository';
@@ -181,6 +182,13 @@ describe('ActivityService', () => {
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).rejects.toBe('kaboom');
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'failed', 'kaboom');
+    });
+
+    it('rejects decoded activities with too many records before writing them', async () => {
+      decode.mockReturnValue({ recordMesgs: { length: UPLOAD_LIMITS.activityRecords + 1 } });
+
+      await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).rejects.toThrow('too many records');
+      expect(createActivity).not.toHaveBeenCalled();
     });
   });
 

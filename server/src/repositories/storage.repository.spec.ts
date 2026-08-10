@@ -22,17 +22,21 @@ describe('StorageRepository', () => {
 
   it('deletes only expired temporary files', async () => {
     const expired = repository.buildTemporaryPath('.zip');
+    const referenced = repository.buildTemporaryPath('.zip');
     const current = repository.buildTemporaryPath('.zip');
     await repository.write(expired, Buffer.from('expired'));
+    await repository.write(referenced, Buffer.from('referenced'));
     await repository.write(current, Buffer.from('current'));
 
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     await utimes(repository.absolutePath(expired), twoDaysAgo, twoDaysAgo);
+    await utimes(repository.absolutePath(referenced), twoDaysAgo, twoDaysAgo);
 
-    await expect(repository.deleteTemporaryFilesOlderThan(new Date(Date.now() - 24 * 60 * 60 * 1000))).resolves.toEqual(
-      [expired],
-    );
+    await expect(
+      repository.deleteTemporaryFilesOlderThan(new Date(Date.now() - 24 * 60 * 60 * 1000), new Set([referenced])),
+    ).resolves.toEqual([expired]);
     await expect(repository.read(expired)).rejects.toThrow();
+    await expect(repository.read(referenced)).resolves.toEqual(Buffer.from('referenced'));
     await expect(repository.read(current)).resolves.toEqual(Buffer.from('current'));
   });
 

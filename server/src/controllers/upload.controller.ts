@@ -3,6 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
 import { UploadedFileData } from 'src/types';
@@ -33,7 +34,11 @@ export class UploadController {
     type: FitUploadResponseDto,
   })
   @Post('upload/activity')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0, parts: 1 },
+    }),
+  )
   async uploadActivity(@UploadedFile() file?: UploadedFileData): Promise<FitUploadResponseDto> {
     return this.service.uploadActivity(file);
   }
@@ -59,7 +64,11 @@ export class UploadController {
     type: LagomTakeoutUploadResponseDto,
   })
   @Post('upload/strava')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0, parts: 1 },
+    }),
+  )
   async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
     return this.service.uploadLagomTakeout(uploadedFile);
   }

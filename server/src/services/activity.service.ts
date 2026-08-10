@@ -1,11 +1,12 @@
 import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { FitRepository } from 'src/repositories/fit.repository';
+import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
@@ -52,6 +53,9 @@ export class ActivityService {
 
     try {
       const contents = await this.storageRepository.read(upload.storage_path);
+      if (contents.length > UPLOAD_LIMITS.activityFileBytes) {
+        throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
+      }
       const parsed = this.parseActivityFile(upload.storage_path, contents);
       const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
 
@@ -69,20 +73,39 @@ export class ActivityService {
 
   private parseActivityFile(path: string, contents: Buffer): ParsedActivity {
     const extension = extname(path).toLowerCase();
+    let messages: FitMessages;
 
     switch (extension) {
       case '.fit': {
-        return parseFitMessages(this.fitRepository.decode(contents));
+        messages = this.fitRepository.decode(contents);
+        break;
       }
       case '.gpx': {
-        return parseFitMessages(this.gpxRepository.decode(contents));
+        messages = this.gpxRepository.decode(contents);
+        break;
       }
       case '.tcx': {
-        return parseFitMessages(this.tcxRepository.decode(contents));
+        messages = this.tcxRepository.decode(contents);
+        break;
       }
       default: {
         throw new Error(`Unsupported activity format: ${extension || 'unknown extension'}`);
       }
+    }
+
+    this.assertActivityMessageLimits(messages);
+    return parseFitMessages(messages);
+  }
+
+  private assertActivityMessageLimits(messages: FitMessages): void {
+    const recordCount = messages.recordMesgs?.length ?? 0;
+    if (recordCount > UPLOAD_LIMITS.activityRecords) {
+      throw new Error(`Activity contains too many records (maximum ${UPLOAD_LIMITS.activityRecords})`);
+    }
+
+    const lapCount = messages.lapMesgs?.length ?? 0;
+    if (lapCount > UPLOAD_LIMITS.activityLaps) {
+      throw new Error(`Activity contains too many laps (maximum ${UPLOAD_LIMITS.activityLaps})`);
     }
   }
 

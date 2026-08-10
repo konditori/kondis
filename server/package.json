@@ -52,6 +52,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^22.15.0",
     "@types/pg": "^8.11.10",
+    "@types/unzipper": "^0.10.11",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^3.7.0",

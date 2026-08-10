@@ -90,7 +90,11 @@ describe('UploadService (medium)', () => {
     const buffer = Buffer.from('identical bytes');
     const storagePath = storageRepository.buildTemporaryPath('.fit');
     await storageRepository.write(storagePath, buffer);
-    const data = { originalName: 'ride.fit', storagePath, checksum: crypto.xxHash(buffer) };
+    const data = {
+      originalName: 'ride.fit',
+      storagePath,
+      checksum: crypto.xxHash(buffer),
+    };
 
     await expect(uploadService.handleActivityUpload(data)).resolves.toBe('success');
     const stored = await uploadRepository.getByChecksum(crypto.xxHash(buffer));

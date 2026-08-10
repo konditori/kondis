@@ -48,7 +48,10 @@ export class StorageRepository {
     await rm(this.absolutePath(relativePath), { force: true });
   }
 
-  async deleteTemporaryFilesOlderThan(cutoff: Date): Promise<string[]> {
+  async deleteTemporaryFilesOlderThan(
+    cutoff: Date,
+    protectedPaths: ReadonlySet<string> = new Set(),
+  ): Promise<string[]> {
     const directory = this.absolutePath('temporary');
     let entries;
 
@@ -68,6 +71,9 @@ export class StorageRepository {
       }
 
       const relativePath = join('temporary', entry.name);
+      if (protectedPaths.has(relativePath)) {
+        continue;
+      }
       const metadata = await stat(this.absolutePath(relativePath));
       if (metadata.mtime > cutoff) {
         continue;
