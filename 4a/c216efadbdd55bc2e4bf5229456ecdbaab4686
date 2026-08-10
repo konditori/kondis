@@ -1,0 +1,19 @@
+web/src/lib/api.ts
+  s_52557670174f80::t_c9554511dfa7cc 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4ac216efadbdd55bc2e4bf5229456ecdbaab4686",
+  "prompts": {},
+  "sessions": {
+    "s_52557670174f80": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fedb5-95b1-7d92-a03d-c80085cad411",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
