@@ -1,6 +1,6 @@
 import { JobName, QueueName } from 'src/enum';
 
-export type UploadedFitFile = {
+export type UploadedFileData = {
   originalname: string;
   buffer: Buffer;
   size: number;

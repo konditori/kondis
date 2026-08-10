@@ -5,7 +5,7 @@ import { ZodResponse } from 'nestjs-zod';
 
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
-import { UploadedFitFile } from 'src/types';
+import { UploadedFileData } from 'src/types';
 
 @ApiTags('uploads')
 @Controller()
@@ -32,13 +32,13 @@ export class UploadController {
     description: 'Activity file stored; parsing is queued and happens asynchronously',
     type: FitUploadResponseDto,
   })
-  @Post('uploads/activity')
+  @Post('upload/activity')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadActivity(@UploadedFile() file?: UploadedFitFile): Promise<FitUploadResponseDto> {
+  async uploadActivity(@UploadedFile() file?: UploadedFileData): Promise<FitUploadResponseDto> {
     return this.service.uploadFit(file);
   }
 
-  @ApiOperation({ summary: 'Import activities from a Lagom takeout ZIP archive' })
+  @ApiOperation({ summary: 'Import activities from a Strava takeout ZIP archive' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -48,19 +48,19 @@ export class UploadController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Lagom takeout .zip file containing activities.csv and the activities folder',
+          description: 'Strava takeout .zip file',
         },
       },
     },
   })
   @ZodResponse({
     status: 201,
-    description: 'Activity files stored; parsing is queued and happens asynchronously',
+    description: 'Parsing is queued and happens asynchronously',
     type: LagomTakeoutUploadResponseDto,
   })
-  @Post('uploads/lagom')
+  @Post('upload/strava')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadLagomTakeout(@UploadedFile() file?: UploadedFitFile): Promise<LagomTakeoutUploadResponseDto> {
-    return this.service.uploadLagomTakeout(file);
+  async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
+    return this.service.uploadLagomTakeout(uploadedFile);
   }
 }

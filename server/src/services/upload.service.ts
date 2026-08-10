@@ -9,7 +9,7 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { UploadedFitFile } from 'src/types';
+import { UploadedFileData } from 'src/types';
 import { extractLagomTakeout } from 'src/utils/lagom';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
@@ -27,7 +27,7 @@ export class UploadService {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadFit(file?: UploadedFitFile): Promise<FitUploadResponseDto> {
+  async uploadFit(file?: UploadedFileData): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -76,7 +76,7 @@ export class UploadService {
     return { id: upload.id, checksum: upload.checksum, byteSize: upload.byte_size, duplicate: false };
   }
 
-  async uploadLagomTakeout(file?: UploadedFitFile): Promise<LagomTakeoutUploadResponseDto> {
+  async uploadLagomTakeout(file?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }

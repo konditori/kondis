@@ -1,7 +1,7 @@
 import { basename, extname, posix } from 'node:path';
 import { gunzipSync, inflateRawSync } from 'node:zlib';
 
-import type { UploadedFitFile } from 'src/types';
+import type { UploadedFileData } from 'src/types';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 const MANIFEST_NAME = 'activities.csv';
@@ -12,7 +12,7 @@ const LOCAL_FILE_SIGNATURE = 0x04_03_4b_50;
 export type LagomTakeoutActivity = {
   row: number;
   filename: string;
-  file: UploadedFitFile;
+  file: UploadedFileData;
 };
 
 export type LagomTakeoutError = {
