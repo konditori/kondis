@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowLeft, CalendarDays, Clock3, Flame, Gauge, HeartPulse, Mountain, Timer, Zap } from '@lucide/svelte';
+  import { page } from '$app/state';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { activityName, distance, duration, localDate, localTime, speed, sportIcon } from '$lib/format';
 
@@ -16,13 +17,20 @@
     { label: 'Average power', value: activity.avgPower == null ? '—' : `${activity.avgPower} W`, icon: Zap },
     { label: 'Energy', value: activity.calories == null ? '—' : `${activity.calories} kcal`, icon: Flame },
   ]);
+
+  function backToActivities(event: MouseEvent) {
+    if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && page.state.fromActivityList) {
+      event.preventDefault();
+      history.back();
+    }
+  }
 </script>
 
 <svelte:head><title>{activityName(activity)} · Kondis</title></svelte:head>
 
 <div class="detail-page">
   <header class="detail-header">
-    <a class="back-link" href="/"><ArrowLeft size={18} /> All activities</a>
+    <a class="back-link" href="/" onclick={backToActivities}><ArrowLeft size={18} /> All activities</a>
     <div class="detail-heading">
       <span class="detail-sport"><Icon size={27} /></span>
       <div><span class="eyebrow">{activity.sport.replaceAll('_', ' ')}{activity.subSport ? ` · ${activity.subSport.replaceAll('_', ' ')}` : ''}</span><h1>{activityName(activity)}</h1></div>

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { Activity as ActivityIcon, CloudOff, LoaderCircle, Search } from '@lucide/svelte';
+  import { tick } from 'svelte';
+  import type { Snapshot } from '@sveltejs/kit';
   import ActivityCard from '$lib/components/ActivityCard.svelte';
   import { localDate } from '$lib/format';
   import type { Activity, ActivityPage } from '$lib/types';
@@ -55,6 +57,34 @@
     observer.observe(node);
     return { destroy: () => observer.disconnect() };
   }
+
+  type ActivityListSnapshot = {
+    appendedActivities: Activity[];
+    cursorOverride?: string | null;
+    totalOverride?: number;
+    query: string;
+    scrollY: number;
+  };
+
+  export const snapshot: Snapshot<ActivityListSnapshot> = {
+    capture: () => ({
+      appendedActivities,
+      cursorOverride,
+      totalOverride,
+      query,
+      scrollY: window.scrollY,
+    }),
+    restore: (value) => {
+      appendedActivities = value.appendedActivities;
+      cursorOverride = value.cursorOverride;
+      totalOverride = value.totalOverride;
+      query = value.query;
+
+      // SvelteKit restores its scroll position before snapshots. Wait until the
+      // restored activities have rebuilt the page height, then restore it again.
+      void tick().then(() => requestAnimationFrame(() => window.scrollTo({ top: value.scrollY })));
+    },
+  };
 </script>
 
 <svelte:head><title>Activities · Kondis</title></svelte:head>
