@@ -26,6 +26,29 @@ export type FitUploadResponseDtoOutput = {
   /** True when identical content was already stored */
   duplicate: boolean;
 };
+export type StravaTakeoutUploadResponseDtoOutput = {
+  /** Data rows found in activities.csv */
+  totalActivities: number;
+  /** New activity files stored and queued for parsing */
+  imported: number;
+  /** Activity files already present in Kondis */
+  duplicates: number;
+  /** Rows without a supported activity file */
+  skipped: number;
+  /** Activity files that could not be imported */
+  failed: number;
+  /** Successfully resolved Kondis uploads */
+  uploads: FitUploadResponseDtoOutput[];
+  /** Per-activity import errors */
+  errors: {
+    /** One-based row number in activities.csv */
+    row: number;
+    /** Filename from activities.csv */
+    filename: string;
+    /** Reason this activity could not be imported */
+    message: string;
+  }[];
+};
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */
   active: number;
@@ -113,6 +136,10 @@ export type ActivityDtoOutput = {
 };
 export type ActivityListResponseDtoOutput = {
   activities: ActivityDtoOutput[];
+  /** Cursor for the next page, or null at the end */
+  nextCursor: string | null;
+  /** Total number of activities */
+  total: number;
 };
 export type ActivityDetailDtoOutput = {
   /** Activity id */
@@ -221,6 +248,34 @@ export function uploadControllerUploadActivity(
   );
 }
 /**
+ * Import activities from a Strava takeout ZIP archive
+ */
+export function uploadControllerUploadStravaTakeout(
+  {
+    body,
+  }: {
+    body: {
+      /** Strava takeout .zip file containing activities.csv and the activities folder */
+      file: Blob;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: StravaTakeoutUploadResponseDtoOutput;
+    }>(
+      '/uploads/strava',
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+/**
  * Queue depths and worker status
  */
 export function jobControllerGetAllJobStatus(opts?: Oazapfts.RequestOpts) {
@@ -285,14 +340,31 @@ export function jobControllerRunQueueCommand(
 /**
  * List recent activities
  */
-export function activityControllerListRecent(opts?: Oazapfts.RequestOpts) {
+export function activityControllerListRecent(
+  {
+    cursor,
+    limit,
+  }: {
+    cursor?: string;
+    limit?: number;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
       data: ActivityListResponseDtoOutput;
-    }>('/activities', {
-      ...opts,
-    }),
+    }>(
+      `/activities${QS.query(
+        QS.explode({
+          cursor,
+          limit,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
   );
 }
 /**

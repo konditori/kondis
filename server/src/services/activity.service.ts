@@ -1,4 +1,4 @@
-import { ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { OnJob } from 'src/decorators';
@@ -139,36 +139,20 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent(): Promise<
-    {
-      id: string;
-      uploadId: string;
-      sport: string;
-      subSport: string | null;
-      name: string | null;
-      startedAt: string;
-      timezoneOffsetMinutes: number | null;
-      elapsedTime: number;
-      movingTime: number | null;
-      distance: number | null;
-      elevationGain: number | null;
-      elevationLoss: number | null;
-      avgSpeed: number | null;
-      maxSpeed: number | null;
-      avgHr: number | null;
-      maxHr: number | null;
-      avgCadence: number | null;
-      maxCadence: number | null;
-      avgPower: number | null;
-      maxPower: number | null;
-      normalizedPower: number | null;
-      calories: number | null;
-      createdAt: string;
-      updatedAt: string;
-    }[]
-  > {
-    const rows = await this.activityRepository.listRecent();
-    return rows.map((row) => this.toActivityDto(row));
+  async listRecent({ cursor, limit = 50 }: { cursor?: string; limit?: number }) {
+    const rows = await this.activityRepository.listRecentPage({
+      limit: limit + 1,
+      cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
+    });
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page.at(-1);
+
+    return {
+      activities: page.map((row) => this.toActivityDto(row)),
+      nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
+      total: await this.activityRepository.count(),
+    };
   }
 
   async getById(id: string) {
@@ -308,6 +292,27 @@ export class ActivityService {
 
   private toIsoString(value: Timestamp): string {
     return (value instanceof Date ? value : new Date(value)).toISOString();
+  }
+
+  private encodeActivityCursor(startedAt: Timestamp, id: string): string {
+    return Buffer.from(JSON.stringify([this.toIsoString(startedAt), id])).toString('base64url');
+  }
+
+  private decodeActivityCursor(cursor: string): { startedAt: Date; id: string } {
+    try {
+      const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+      if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== 'string' || typeof value[1] !== 'string') {
+        throw new Error('Unexpected cursor value');
+      }
+
+      const startedAt = new Date(value[0]);
+      if (Number.isNaN(startedAt.getTime()) || value[1].length === 0) {
+        throw new Error('Unexpected cursor value');
+      }
+      return { startedAt, id: value[1] };
+    } catch (error) {
+      throw new BadRequestException('Invalid activity cursor', { cause: error });
+    }
   }
 
   private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {

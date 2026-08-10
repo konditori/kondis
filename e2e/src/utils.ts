@@ -25,7 +25,7 @@ export const utils = {
 
   cleanup: async () => {
     for (;;) {
-      const { activities } = await activityControllerListRecent();
+      const { activities } = await activityControllerListRecent({});
       if (activities.length === 0) {
         return;
       }
@@ -47,7 +47,7 @@ export const utils = {
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
-      const { activities } = await activityControllerListRecent();
+      const { activities } = await activityControllerListRecent({});
       const activity = activities.find((candidate) => candidate.uploadId === uploadId);
       if (activity) {
         return activity;

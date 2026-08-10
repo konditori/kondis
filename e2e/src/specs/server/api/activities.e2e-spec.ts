@@ -18,7 +18,7 @@ describe('GET /activities', () => {
   it('lists a parsed activity after upload processing completes', async () => {
     const activity = await e2e.createActivity(fitFixturePath);
 
-    const { activities } = await activityControllerListRecent();
+    const { activities } = await activityControllerListRecent({});
     expect(activities.find((candidate) => candidate.id === activity.id)).toBeDefined();
   });
 
@@ -74,7 +74,7 @@ describe('DELETE /activities/:id', () => {
 
     await activityControllerDeleteById({ id: activity.id });
 
-    const { activities } = await activityControllerListRecent();
+    const { activities } = await activityControllerListRecent({});
     expect(activities.find((candidate) => candidate.id === activity.id)).toBeUndefined();
   });
 

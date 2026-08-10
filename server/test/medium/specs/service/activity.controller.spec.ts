@@ -77,18 +77,36 @@ describe('ActivityController (medium)', () => {
       await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'older');
       const newerId = await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'newer');
 
-      const response = await controller.listRecent();
+      const response = await controller.listRecent({ limit: 50 });
 
       expect(response.activities).toHaveLength(2);
       expect(response.activities[0].id).toBe(newerId);
       expect(response.activities[1].name).toBe('older');
+      expect(response.nextCursor).toBeNull();
+      expect(response.total).toBe(2);
     });
 
     it('serializes timestamps as ISO strings', async () => {
       await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'newer');
 
-      const response = await controller.listRecent();
+      const response = await controller.listRecent({ limit: 50 });
       expect(response.activities[0].startedAt).toBe('2024-01-01T09:00:00.000Z');
+    });
+
+    it('paginates through every activity without duplicates', async () => {
+      await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'oldest');
+      await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'middle');
+      await createActivity(new Date('2024-01-01T10:00:00.000Z'), 'newest');
+
+      const first = await controller.listRecent({ limit: 2 });
+      expect(first.activities.map(({ name }) => name)).toEqual(['newest', 'middle']);
+      expect(first.nextCursor).not.toBeNull();
+      expect(first.total).toBe(3);
+
+      const second = await controller.listRecent({ limit: 2, cursor: first.nextCursor ?? undefined });
+      expect(second.activities.map(({ name }) => name)).toEqual(['oldest']);
+      expect(second.nextCursor).toBeNull();
+      expect(second.total).toBe(3);
     });
   });
 

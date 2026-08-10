@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
@@ -6,6 +17,7 @@ import {
   ActivityDetailDto,
   ActivityDto,
   ActivityIdParamDto,
+  ActivityListQueryDto,
   ActivityListResponseDto,
   ActivityUpdateDto,
 } from 'src/dtos/activity.dto';
@@ -19,9 +31,8 @@ export class ActivityController {
   @ApiOperation({ summary: 'List recent activities' })
   @ZodResponse({ status: 200, description: 'Recent activities', type: ActivityListResponseDto })
   @Get()
-  async listRecent(): Promise<ActivityListResponseDto> {
-    const activities = await this.service.listRecent();
-    return { activities };
+  async listRecent(@Query() query: ActivityListQueryDto): Promise<ActivityListResponseDto> {
+    return this.service.listRecent(query);
   }
 
   @ApiOperation({ summary: 'Get one activity and its route' })

@@ -2,6 +2,7 @@ import { ConsoleLogger } from '@nestjs/common';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ConfigService } from 'src/config/config.service';
@@ -16,6 +17,7 @@ import { UploadService } from 'src/services/upload.service';
 
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
 import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
+import { createTestZip } from 'test/utils/zip';
 
 describe('UploadService (medium)', () => {
   const logger = new ConsoleLogger();
@@ -114,5 +116,40 @@ describe('UploadService (medium)', () => {
     const file = makeUploadedFile('ride.lol', buffer);
 
     await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
+  });
+
+  it('imports each supported activity listed in a Strava takeout', async () => {
+    const fit = await readFile(activityFixtures.hindasRun.path);
+    const gpx = await readFile(activityFixtures.sampleRun.path);
+    const archive = createTestZip({
+      'activities.csv': Buffer.from(
+        [
+          'Activity ID,Activity Name,Filename',
+          '1,Run,activities/run.fit.gz',
+          '2,Ride,activities/ride.gpx',
+          '3,Manual,',
+        ].join('\n'),
+      ),
+      'activities/run.fit.gz': gzipSync(fit),
+      'activities/ride.gpx': gpx,
+    });
+
+    const first = await uploadService.uploadStravaTakeout(makeUploadedFile('export.zip', archive));
+
+    expect(first).toMatchObject({ totalActivities: 3, imported: 2, duplicates: 0, skipped: 1, failed: 0 });
+    expect(first.uploads).toHaveLength(2);
+    expect(queue).toHaveBeenCalledTimes(2);
+
+    queue.mockClear();
+    const second = await uploadService.uploadStravaTakeout(makeUploadedFile('export.zip', archive));
+
+    expect(second).toMatchObject({ totalActivities: 3, imported: 0, duplicates: 2, skipped: 1, failed: 0 });
+    expect(queue).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-ZIP Strava takeout upload', async () => {
+    await expect(
+      uploadService.uploadStravaTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
+    ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
   });
 });

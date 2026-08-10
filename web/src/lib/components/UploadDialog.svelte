@@ -14,7 +14,7 @@
   }
 
   async function addFiles(files: FileList | File[]) {
-    const acceptedExtensions = ['.fit', '.tcx', '.gpx'];
+    const acceptedExtensions = ['.fit', '.tcx', '.gpx', '.zip'];
     const accepted = [...files].filter((file) => acceptedExtensions.some((extension) => file.name.toLowerCase().endsWith(extension)));
     uploads = accepted.map((file) => ({ file, state: 'waiting' }));
 
@@ -23,11 +23,18 @@
       const form = new FormData();
       form.append('file', item.file);
       try {
-        const response = await fetch('/api/uploads/activity', { method: 'POST', body: form });
+        const takeout = item.file.name.toLowerCase().endsWith('.zip');
+        const response = await fetch(takeout ? '/api/uploads/strava' : '/api/uploads/activity', { method: 'POST', body: form });
         if (!response.ok) throw new Error((await response.text()) || `Upload failed (${response.status})`);
-        const result = (await response.json()) as { id: string };
-        item.uploadId = result.id;
-        item.state = 'processing';
+        if (takeout) {
+          const result = (await response.json()) as { imported: number; duplicates: number; skipped: number; failed: number };
+          item.message = `${result.imported} queued, ${result.duplicates} duplicate, ${result.skipped} skipped${result.failed ? `, ${result.failed} failed` : ''}`;
+          item.state = result.failed ? 'error' : 'done';
+        } else {
+          const result = (await response.json()) as { id: string };
+          item.uploadId = result.id;
+          item.state = 'processing';
+        }
       } catch (error) {
         item.state = 'error';
         item.message = error instanceof Error ? error.message : 'Upload failed';
@@ -72,11 +79,11 @@
         ondrop={(event) => { event.preventDefault(); dragging = false; void addFiles(event.dataTransfer?.files ?? []); }}
       >
         <span class="upload-icon"><FileUp size={28} /></span>
-        <strong>Drop your FIT, TCX, or GPX files here</strong>
+        <strong>Drop activity files or a Strava takeout here</strong>
         <span>or click to browse your device</span>
-        <small>.fit, .tcx, .gpx files only</small>
+        <small>.fit, .tcx, .gpx, or Strava .zip</small>
       </button>
-      <input bind:this={input} class="sr-only" type="file" accept=".fit,.tcx,.gpx,application/octet-stream,application/gpx+xml" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
+      <input bind:this={input} class="sr-only" type="file" accept=".fit,.tcx,.gpx,.zip,application/zip,application/octet-stream,application/gpx+xml" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
 
       {#if uploads.length}
         <div class="upload-list">
@@ -85,8 +92,8 @@
               <span class="file-name">{item.file.name}<small>{(item.file.size / 1024).toFixed(0)} KB</small></span>
               {#if item.state === 'uploading'}<LoaderCircle class="spin" size={19} />
               {:else if item.state === 'processing'}<span class="processing"><LoaderCircle class="spin" size={16} /> Processing</span>
-              {:else if item.state === 'done'}<Check class="success" size={19} />
-              {:else if item.state === 'error'}<span class="error" title={item.message}>Failed</span>
+              {:else if item.state === 'done'}<span class="processing"><Check class="success" size={16} /> {item.message ?? 'Done'}</span>
+              {:else if item.state === 'error'}<span class="error" title={item.message}>{item.message ?? 'Failed'}</span>
               {/if}
             </div>
           {/each}

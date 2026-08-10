@@ -7,6 +7,7 @@ export default defineConfig({
       // Mirrors the `src/*` path alias in tsconfig.json so unit tests can use the
       // same absolute-style imports the rest of the server uses.
       src: fileURLToPath(new URL('./src', import.meta.url)),
+      test: fileURLToPath(new URL('./test', import.meta.url)),
     },
   },
   test: {
