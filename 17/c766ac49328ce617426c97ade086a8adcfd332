@@ -1,0 +1,37 @@
+open-api/kondis-openapi-specs.json
+  s_01cda322bfe2c7::t_328d3062d48ea5 94,409,411,413-416,422
+server/src/controllers/upload.controller.ts
+  s_01cda322bfe2c7::t_3081c5469147de 58
+server/src/dtos/upload.dto.ts
+  s_01cda322bfe2c7::t_852a8215cabf88 18-19
+server/src/open-api/fetch-client.ts
+  s_01cda322bfe2c7::t_28c7fb5d481ebd 32,34-35
+server/src/repositories/job.repository.ts
+  s_01cda322bfe2c7::t_7084a6a2816ded 283
+server/src/repositories/upload.repository.ts
+  s_01cda322bfe2c7::t_c7e855ebc3f739 37
+server/src/services/lagom.service.ts
+  s_01cda322bfe2c7::t_f4d24692aabe1b 19-20,44
+server/src/types.ts
+  s_01cda322bfe2c7::t_529f0aa448bed8 73-78,83
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_01cda322bfe2c7::t_fbed23e0075a8e 65-72,124-125
+server/test/medium/specs/service/upload.service.spec.ts
+  s_01cda322bfe2c7::t_ca6fb963f0bbc5 52,142,144-155,158,164-165,171-176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "17c766ac49328ce617426c97ade086a8adcfd332",
+  "prompts": {},
+  "sessions": {
+    "s_01cda322bfe2c7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed68-8f21-7423-8889-77dacb7f9eae",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
