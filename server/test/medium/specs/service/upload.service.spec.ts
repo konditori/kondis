@@ -67,7 +67,7 @@ describe('UploadService (medium)', () => {
     const buffer = Buffer.from('not really a fit file, but the bytes are never read here');
     const file = makeUploadedFile('ride.fit', buffer);
 
-    const result = await uploadService.uploadFit(file);
+    const result = await uploadService.uploadActivity(file);
 
     expect(result).toEqual({ byteSize: buffer.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
@@ -112,10 +112,10 @@ describe('UploadService (medium)', () => {
     const buffer = Buffer.from('nope');
     const file = makeUploadedFile('ride.lol', buffer);
 
-    await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
+    await expect(uploadService.uploadActivity(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
 
-  it('stores a Lagom takeout and queues its import without extracting it', async () => {
+  it('stages a Lagom takeout and queues its path without extracting it', async () => {
     const fit = await readFile(activityFixtures.hindasRun.path);
     const gpx = await readFile(activityFixtures.sampleRun.path);
     const archive = createTestZip({
@@ -136,21 +136,29 @@ describe('UploadService (medium)', () => {
     expect(first).toEqual({ byteSize: archive.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; contents: string } },
+      { name: JobName; data: { originalName: string; storagePath: string } },
     ];
     expect(item).toEqual({
       name: JobName.LagomTakeoutImport,
       data: {
         originalName: 'export.zip',
-        contents: archive.toString('base64'),
+        storagePath: expect.stringMatching(/^temporary\/.+\.zip$/),
       },
     });
+    await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
     expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
 
     queue.mockClear();
     await expect(uploadService.handleLagomTakeout(item.data)).resolves.toBe('success');
     expect(queue).toHaveBeenCalledTimes(2);
-
+    expect(queue).toHaveBeenNthCalledWith(1, {
+      name: JobName.ActivityUpload,
+      data: { originalName: 'run.fit', contents: fit.toString('base64') },
+    });
+    expect(queue).toHaveBeenNthCalledWith(2, {
+      name: JobName.ActivityUpload,
+      data: { originalName: 'ride.gpx', contents: gpx.toString('base64') },
+    });
     queue.mockClear();
     const second = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
@@ -159,12 +167,25 @@ describe('UploadService (medium)', () => {
   });
 
   it('defers validation of ZIP contents to the takeout import job', async () => {
-    const result = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', Buffer.from('nope')));
+    const archive = Buffer.from('nope');
+    const result = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
     expect(result.queued).toBe(true);
-    const [item] = queue.mock.calls[0] as unknown as [{ data: { originalName: string; contents: string } }];
+    const [item] = queue.mock.calls[0] as unknown as [{ data: { originalName: string; storagePath: string } }];
     await expect(uploadService.handleLagomTakeout(item.data)).rejects.toThrow();
+    await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
     expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
+  });
+
+  it('removes the staged takeout when queueing its import fails', async () => {
+    queue.mockRejectedValueOnce(new Error('queue unavailable'));
+
+    await expect(
+      uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', Buffer.from('archive'))),
+    ).rejects.toThrow('queue unavailable');
+
+    const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
+    await expect(storageRepository.read(item.data.storagePath)).rejects.toThrow();
   });
 
   it('rejects a non-ZIP Lagom takeout upload', async () => {

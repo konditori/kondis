@@ -75,13 +75,19 @@ export interface IFileUploadJob {
   contents: string;
 }
 
+export interface ILagomTakeoutImportJob {
+  originalName: string;
+  storagePath: string;
+}
+
 export type JobItem =
   | { name: JobName.ActivityUpload; data: IFileUploadJob }
   | { name: JobName.ActivityParse; data: IEntityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
-  | { name: JobName.LagomTakeoutImport; data: IFileUploadJob }
-  | { name: JobName.FileDelete; data: { paths: string[] } };
+  | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }
+  | { name: JobName.FileDelete; data: { paths: string[] } }
+  | { name: JobName.TemporaryFileCleanup; data: Record<string, never> };
 
 export type Jobs = { [K in JobItem['name']]: (JobItem & { name: K })['data'] };
 export type JobOf<T extends JobName> = Jobs[T];

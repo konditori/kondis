@@ -5,6 +5,8 @@ import { JobName, JobStatus, QueueName } from 'src/enum';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { JobOf } from 'src/types';
 
+const TEMPORARY_FILE_RETENTION_MS = 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class StorageService {
   constructor(
@@ -20,6 +22,15 @@ export class StorageService {
       await this.storageRepository.delete(path);
       this.logger.log(`Deleted file ${path}`);
     }
+
+    return JobStatus.Success;
+  }
+
+  @OnJob({ name: JobName.TemporaryFileCleanup, queue: QueueName.Storage })
+  async handleTemporaryFileCleanup(): Promise<JobStatus> {
+    const cutoff = new Date(Date.now() - TEMPORARY_FILE_RETENTION_MS);
+    const deleted = await this.storageRepository.deleteTemporaryFilesOlderThan(cutoff);
+    this.logger.log(`Deleted ${deleted.length} expired temporary file(s)`);
 
     return JobStatus.Success;
   }

@@ -10,6 +10,7 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
+import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { JobService } from 'src/services/job.service';
@@ -34,6 +35,7 @@ describe('job system (medium)', () => {
   let uploadRepository: UploadRepository;
   let activityRepository: ActivityRepository;
   let databaseRepository: DatabaseRepository;
+  let storageRepository: StorageRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -46,6 +48,7 @@ describe('job system (medium)', () => {
     uploadRepository = testApp.get(UploadRepository);
     activityRepository = testApp.get(ActivityRepository);
     databaseRepository = testApp.get(DatabaseRepository);
+    storageRepository = testApp.get(StorageRepository);
   }, 60_000);
 
   beforeEach(async () => {
@@ -70,13 +73,19 @@ describe('job system (medium)', () => {
         name: JobName.LagomTakeoutImport,
         data: {
           originalName: 'empty.zip',
-          contents: createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }).toString('base64'),
+          storagePath: 'temporary/empty.zip',
         },
       },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
+      [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },
     };
 
     it('binds a handler to every job name', async () => {
+      await storageRepository.write(
+        'temporary/empty.zip',
+        createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),
+      );
+
       for (const item of Object.values(samples)) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
@@ -104,7 +113,7 @@ describe('job system (medium)', () => {
   describe('end to end', () => {
     it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
       const contents = await readFile(fixture.path);
-      const result = await uploads.uploadFit(makeUploadedFile(fixture.filename, contents));
+      const result = await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents));
       expect(result.queued).toBe(true);
 
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
@@ -138,7 +147,7 @@ describe('job system (medium)', () => {
     it('deletes the activity, the upload and the file', async () => {
       const fixture = activityFixtures.hindasRun;
       const contents = await readFile(fixture.path);
-      await uploads.uploadFit(makeUploadedFile(fixture.filename, contents));
+      await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents));
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
       const uploaded = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));

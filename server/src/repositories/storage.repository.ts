@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 import { ConfigService } from 'src/config/config.service';
@@ -15,6 +15,11 @@ export class StorageRepository {
   buildPath(checksum: string, extension: string): string {
     const suffix = extension.startsWith('.') ? extension : `.${extension}`;
     return join(checksum.slice(0, 2), checksum.slice(2, 4), `${checksum}${suffix}`);
+  }
+
+  buildTemporaryPath(extension: string): string {
+    const suffix = extension.startsWith('.') ? extension : `.${extension}`;
+    return join('temporary', `${this.crypto.uuid()}${suffix}`);
   }
 
   absolutePath(relativePath: string): string {
@@ -41,5 +46,37 @@ export class StorageRepository {
 
   async delete(relativePath: string): Promise<void> {
     await rm(this.absolutePath(relativePath), { force: true });
+  }
+
+  async deleteTemporaryFilesOlderThan(cutoff: Date): Promise<string[]> {
+    const directory = this.absolutePath('temporary');
+    let entries;
+
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return [];
+      }
+      throw error;
+    }
+
+    const deleted: string[] = [];
+    for (const entry of entries) {
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      const relativePath = join('temporary', entry.name);
+      const metadata = await stat(this.absolutePath(relativePath));
+      if (metadata.mtime > cutoff) {
+        continue;
+      }
+
+      await this.delete(relativePath);
+      deleted.push(relativePath);
+    }
+
+    return deleted;
   }
 }

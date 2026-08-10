@@ -1,0 +1,42 @@
+import { mkdtemp, rm, utimes } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { type ConfigService } from 'src/config/config.service';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { StorageRepository } from 'src/repositories/storage.repository';
+
+describe('StorageRepository', () => {
+  let storageDir: string;
+  let repository: StorageRepository;
+
+  beforeEach(async () => {
+    storageDir = await mkdtemp(join(tmpdir(), 'kondis-storage-'));
+    repository = new StorageRepository({ storageDir } as ConfigService, new CryptoRepository());
+  });
+
+  afterEach(async () => {
+    await rm(storageDir, { recursive: true, force: true });
+  });
+
+  it('deletes only expired temporary files', async () => {
+    const expired = repository.buildTemporaryPath('.zip');
+    const current = repository.buildTemporaryPath('.zip');
+    await repository.write(expired, Buffer.from('expired'));
+    await repository.write(current, Buffer.from('current'));
+
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    await utimes(repository.absolutePath(expired), twoDaysAgo, twoDaysAgo);
+
+    await expect(repository.deleteTemporaryFilesOlderThan(new Date(Date.now() - 24 * 60 * 60 * 1000))).resolves.toEqual(
+      [expired],
+    );
+    await expect(repository.read(expired)).rejects.toThrow();
+    await expect(repository.read(current)).resolves.toEqual(Buffer.from('current'));
+  });
+
+  it('does nothing when the temporary directory does not exist', async () => {
+    await expect(repository.deleteTemporaryFilesOlderThan(new Date())).resolves.toEqual([]);
+  });
+});

@@ -16,6 +16,7 @@ export enum JobName {
   ActivityDelete = 'ActivityDelete',
   LagomTakeoutImport = 'LagomTakeoutImport',
   FileDelete = 'FileDelete',
+  TemporaryFileCleanup = 'TemporaryFileCleanup',
 }
 
 export enum JobStatus {

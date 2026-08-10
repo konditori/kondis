@@ -27,7 +27,7 @@ export class UploadService {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadFit(file?: UploadedFileData): Promise<FitUploadResponseDto> {
+  async uploadActivity(file?: UploadedFileData): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -99,39 +99,44 @@ export class UploadService {
       throw new BadRequestException('Only a Strava takeout .zip file is accepted');
     }
 
-    await this.jobRepository.queue({
-      name: JobName.LagomTakeoutImport,
-      data: {
-        originalName: file.originalname,
-        contents: file.buffer.toString('base64'),
-      },
-    });
+    const storagePath = this.storageRepository.buildTemporaryPath('.zip');
+    await this.storageRepository.write(storagePath, file.buffer);
+
+    try {
+      await this.jobRepository.queue({
+        name: JobName.LagomTakeoutImport,
+        data: {
+          originalName: file.originalname,
+          storagePath,
+        },
+      });
+    } catch (error) {
+      await this.storageRepository.delete(storagePath);
+      throw error;
+    }
 
     return { byteSize: file.buffer.length, queued: true };
   }
 
   @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
-  async handleLagomTakeout({ originalName, contents }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
-    const takeout = await extractLagomTakeout(Buffer.from(contents, 'base64'));
+  async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
+    const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath));
 
-    const errors = [...takeout.errors];
     let queued = 0;
 
     for (const activity of takeout.activities) {
-      try {
-        await this.uploadFit(activity.file);
-        queued += 1;
-      } catch (error) {
-        errors.push({
-          row: activity.row,
-          filename: activity.filename,
-          message: error instanceof Error ? error.message : String(error),
-        });
-      }
+      await this.jobRepository.queue({
+        name: JobName.ActivityUpload,
+        data: {
+          originalName: activity.file.originalname,
+          contents: activity.file.buffer.toString('base64'),
+        },
+      });
+      queued += 1;
     }
 
     this.logger.log(
-      `Processed Lagom takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${errors.length} failed`,
+      `Processed Strava takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${takeout.errors.length} failed`,
     );
 
     return JobStatus.Success;

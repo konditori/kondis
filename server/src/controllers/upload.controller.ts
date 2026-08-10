@@ -35,7 +35,7 @@ export class UploadController {
   @Post('upload/activity')
   @UseInterceptors(FileInterceptor('file'))
   async uploadActivity(@UploadedFile() file?: UploadedFileData): Promise<FitUploadResponseDto> {
-    return this.service.uploadFit(file);
+    return this.service.uploadActivity(file);
   }
 
   @ApiOperation({ summary: 'Import activities from a Strava takeout ZIP archive' })

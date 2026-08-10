@@ -35,6 +35,10 @@ const CRON_JOBS: { item: JobItem; cron: string }[] = [
     item: { name: JobName.ActivityParseQueueAll, data: { force: false } },
     cron: '30 3 * * *',
   },
+  {
+    item: { name: JobName.TemporaryFileCleanup, data: {} },
+    cron: '0 4 * * *',
+  },
 ];
 
 const COMPLETION_POLL_MS = 100;
@@ -294,6 +298,10 @@ export class JobRepository implements OnApplicationShutdown {
 
       case JobName.FileDelete: {
         return {};
+      }
+
+      case JobName.TemporaryFileCleanup: {
+        return { singletonKey: item.name };
       }
     }
   }
