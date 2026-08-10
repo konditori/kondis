@@ -1,0 +1,25 @@
+web/src/app.d.ts
+  s_4a8441c94e4873::t_952f505efaf85b 2-6
+web/src/lib/components/ActivityCard.svelte
+  s_4a8441c94e4873::t_84df30d0956355 3,9-15,18
+web/src/routes/+page.svelte
+  s_4a8441c94e4873::t_1048b4f8761a63 3-4,60-87
+web/src/routes/activities/[id]/+page.svelte
+  s_4a8441c94e4873::t_a2c829ef6c61f5 3,20-26,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3d3dfbeb3e21beeb615f94d2071e409f961c952c",
+  "prompts": {},
+  "sessions": {
+    "s_4a8441c94e4873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fecfe-d2bd-7f40-b7af-ebdf9fd6d833",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
