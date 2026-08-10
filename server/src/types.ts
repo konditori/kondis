@@ -74,6 +74,7 @@ export type JobItem =
   | { name: JobName.ActivityParse; data: IEntityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
+  | { name: JobName.LagomTakeoutImport; data: IEntityJob }
   | { name: JobName.FileDelete; data: { paths: string[] } };
 
 export type Jobs = { [K in JobItem['name']]: (JobItem & { name: K })['data'] };

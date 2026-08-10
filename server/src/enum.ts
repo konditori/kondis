@@ -13,6 +13,7 @@ export enum JobName {
   ActivityParse = 'ActivityParse',
   ActivityParseQueueAll = 'ActivityParseQueueAll',
   ActivityDelete = 'ActivityDelete',
+  LagomTakeoutImport = 'LagomTakeoutImport',
   FileDelete = 'FileDelete',
 }
 

@@ -279,6 +279,10 @@ export class JobRepository implements OnApplicationShutdown {
         return { singletonKey: `${item.name}:${item.data.id}` };
       }
 
+      case JobName.LagomTakeoutImport: {
+        return { singletonKey: `${item.name}:${item.data.id}` };
+      }
+
       case JobName.ActivityParseQueueAll: {
         // A constant key: one full scan at a time, however many times it is requested.
         return { singletonKey: item.name };

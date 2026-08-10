@@ -34,7 +34,12 @@ export class UploadRepository {
   }
 
   async getIdsToParse({ force, after, limit }: UploadPageOptions): Promise<string[]> {
-    let query = this.db.selectFrom('upload').select('upload.id').orderBy('upload.id').limit(limit);
+    let query = this.db
+      .selectFrom('upload')
+      .select('upload.id')
+      .where('storage_path', 'not like', '%.zip')
+      .orderBy('upload.id')
+      .limit(limit);
 
     if (after) {
       query = query.where('upload.id', '>', after);

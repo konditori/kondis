@@ -27,27 +27,14 @@ export type FitUploadResponseDtoOutput = {
   duplicate: boolean;
 };
 export type LagomTakeoutUploadResponseDtoOutput = {
-  /** Data rows found in activities.csv */
-  totalActivities: number;
-  /** New activity files stored and queued for parsing */
-  imported: number;
-  /** Activity files already present in Kondis */
-  duplicates: number;
-  /** Rows without a supported activity file */
-  skipped: number;
-  /** Activity files that could not be imported */
-  failed: number;
-  /** Successfully resolved Kondis uploads */
-  uploads: FitUploadResponseDtoOutput[];
-  /** Per-activity import errors */
-  errors: {
-    /** One-based row number in activities.csv */
-    row: number;
-    /** Filename from activities.csv */
-    filename: string;
-    /** Reason this activity could not be imported */
-    message: string;
-  }[];
+  /** Takeout upload id */
+  id: string;
+  /** Lowercase xxh128 hash of file contents */
+  checksum: string;
+  /** Stored file size in bytes */
+  byteSize: number;
+  /** True when identical content was already stored */
+  duplicate: boolean;
 };
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */

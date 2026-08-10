@@ -91,7 +91,7 @@
         },
         "responses": {
           "201": {
-            "description": "Parsing is queued and happens asynchronously",
+            "description": "Takeout stored; importing and activity parsing are queued and happen asynchronously",
             "content": {
               "application/json": {
                 "schema": {
@@ -398,82 +398,30 @@
       "LagomTakeoutUploadResponseDto_Output": {
         "type": "object",
         "properties": {
-          "totalActivities": {
+          "id": {
+            "type": "string",
+            "description": "Takeout upload id"
+          },
+          "checksum": {
+            "type": "string",
+            "description": "Lowercase xxh128 hash of file contents"
+          },
+          "byteSize": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991,
-            "description": "Data rows found in activities.csv"
+            "description": "Stored file size in bytes"
           },
-          "imported": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "New activity files stored and queued for parsing"
-          },
-          "duplicates": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Activity files already present in Kondis"
-          },
-          "skipped": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Rows without a supported activity file"
-          },
-          "failed": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Activity files that could not be imported"
-          },
-          "uploads": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FitUploadResponseDto_Output"
-            },
-            "description": "Successfully resolved Kondis uploads"
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "row": {
-                  "type": "integer",
-                  "exclusiveMinimum": true,
-                  "maximum": 9007199254740991,
-                  "description": "One-based row number in activities.csv",
-                  "minimum": 0
-                },
-                "filename": {
-                  "type": "string",
-                  "description": "Filename from activities.csv"
-                },
-                "message": {
-                  "type": "string",
-                  "description": "Reason this activity could not be imported"
-                }
-              },
-              "required": [
-                "row",
-                "filename",
-                "message"
-              ],
-              "additionalProperties": false
-            },
-            "description": "Per-activity import errors"
+          "duplicate": {
+            "type": "boolean",
+            "description": "True when identical content was already stored"
           }
         },
         "required": [
-          "totalActivities",
-          "imported",
-          "duplicates",
-          "skipped",
-          "failed",
-          "uploads",
-          "errors"
+          "id",
+          "checksum",
+          "byteSize",
+          "duplicate"
         ],
         "additionalProperties": false
       },

@@ -10,7 +10,6 @@ import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadedFileData } from 'src/types';
-import { extractLagomTakeout } from 'src/utils/lagom';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -84,49 +83,44 @@ export class UploadService {
       throw new BadRequestException('Only a Lagom takeout .zip file is accepted');
     }
 
-    let takeout;
+    const checksum = this.cryptoRepository.xxHash(file.buffer);
+    const existing = await this.uploadRepository.getByChecksum(checksum);
+    if (existing) {
+      this.logger.log(`Takeout upload ${checksum} already exists as ${existing.id}`);
+      return { id: existing.id, checksum: existing.checksum, byteSize: existing.byte_size, duplicate: true };
+    }
+
+    const storagePath = this.storageRepository.buildPath(checksum, '.zip');
+    await this.storageRepository.write(storagePath, file.buffer);
+
+    let upload: Upload;
     try {
-      takeout = await extractLagomTakeout(file.buffer);
+      upload = await this.databaseRepository.withTransaction(async (trx) => {
+        const created = await this.uploadRepository.create(
+          {
+            checksum,
+            original_name: file.originalname,
+            byte_size: file.buffer.length,
+            storage_path: storagePath,
+          },
+          trx,
+        );
+
+        await this.jobRepository.queue(
+          { name: JobName.LagomTakeoutImport, data: { id: created.id } },
+          { transaction: trx },
+        );
+
+        return created;
+      });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new BadRequestException(`Invalid Lagom takeout: ${message}`);
-    }
-
-    const uploads: FitUploadResponseDto[] = [];
-    const errors = [...takeout.errors];
-    let imported = 0;
-    let duplicates = 0;
-
-    for (const activity of takeout.activities) {
-      try {
-        const upload = await this.uploadFit(activity.file);
-        uploads.push(upload);
-        if (upload.duplicate) {
-          duplicates += 1;
-        } else {
-          imported += 1;
-        }
-      } catch (error) {
-        errors.push({
-          row: activity.row,
-          filename: activity.filename,
-          message: error instanceof Error ? error.message : String(error),
-        });
+      const raced = await this.uploadRepository.getByChecksum(checksum);
+      if (raced) {
+        return { id: raced.id, checksum: raced.checksum, byteSize: raced.byte_size, duplicate: true };
       }
+      throw error;
     }
 
-    this.logger.log(
-      `Imported Lagom takeout ${file.originalname}: ${imported} new, ${duplicates} duplicate, ${takeout.skipped} skipped, ${errors.length} failed`,
-    );
-
-    return {
-      totalActivities: takeout.totalActivities,
-      imported,
-      duplicates,
-      skipped: takeout.skipped,
-      failed: errors.length,
-      uploads,
-      errors,
-    };
+    return { id: upload.id, checksum: upload.checksum, byteSize: upload.byte_size, duplicate: false };
   }
 }

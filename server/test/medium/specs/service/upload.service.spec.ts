@@ -13,6 +13,7 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { LagomService } from 'src/services/lagom.service';
 import { UploadService } from 'src/services/upload.service';
 
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
@@ -28,6 +29,7 @@ describe('UploadService (medium)', () => {
   let storageDir = '';
   let db: KondisDatabase;
   let uploadService: UploadService;
+  let lagomService: LagomService;
   let uploadRepository: UploadRepository;
   let storageRepository: StorageRepository;
 
@@ -47,6 +49,7 @@ describe('UploadService (medium)', () => {
       jobs,
       logger,
     );
+    lagomService = new LagomService(uploadRepository, storageRepository, uploadService, logger);
   });
 
   beforeEach(async () => {
@@ -118,7 +121,7 @@ describe('UploadService (medium)', () => {
     await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
 
-  it('imports each supported activity listed in a Lagom takeout', async () => {
+  it('stores a Lagom takeout and queues its import without extracting it', async () => {
     const fit = await readFile(activityFixtures.hindasRun.path);
     const gpx = await readFile(activityFixtures.sampleRun.path);
     const archive = createTestZip({
@@ -136,15 +139,35 @@ describe('UploadService (medium)', () => {
 
     const first = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(first).toMatchObject({ totalActivities: 3, imported: 2, duplicates: 0, skipped: 1, failed: 0 });
-    expect(first.uploads).toHaveLength(2);
+    expect(first).toMatchObject({ byteSize: archive.length, duplicate: false });
+    expect(queue).toHaveBeenCalledTimes(1);
+    const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
+    expect(item).toEqual({ name: JobName.LagomTakeoutImport, data: { id: first.id } });
+    expect(options.transaction).toBeDefined();
+
+    queue.mockClear();
+    await expect(lagomService.handleTakeoutImport({ id: first.id })).resolves.toBe('success');
     expect(queue).toHaveBeenCalledTimes(2);
+    expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).not.toContain(first.id);
 
     queue.mockClear();
     const second = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(second).toMatchObject({ totalActivities: 3, imported: 0, duplicates: 2, skipped: 1, failed: 0 });
+    expect(second).toMatchObject({ id: first.id, duplicate: true });
     expect(queue).not.toHaveBeenCalled();
+  });
+
+  it('defers validation of ZIP contents to the takeout import job', async () => {
+    const result = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', Buffer.from('nope')));
+
+    expect(result.duplicate).toBe(false);
+    expect(queue).toHaveBeenCalledWith(
+      { name: JobName.LagomTakeoutImport, data: { id: result.id } },
+      expect.objectContaining({ transaction: expect.anything() }),
+    );
+    await expect(lagomService.handleTakeoutImport({ id: result.id })).rejects.toThrow();
+
+    expect((await uploadRepository.getById(result.id))?.status).toBe('failed');
   });
 
   it('rejects a non-ZIP Lagom takeout upload', async () => {

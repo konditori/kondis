@@ -1,11 +1,13 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -17,6 +19,7 @@ import { type JobItem } from 'src/types';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
+import { createTestZip } from 'test/utils/zip';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 
@@ -59,6 +62,7 @@ describe('job system (medium)', () => {
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
+      [JobName.LagomTakeoutImport]: { name: JobName.LagomTakeoutImport, data: { id: MISSING_UUID } },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
     };
 
@@ -100,6 +104,27 @@ describe('job system (medium)', () => {
 
       const upload = await uploadRepository.getById(result.id);
       expect(upload?.status).toBe('parsed');
+    });
+
+    it('imports a Lagom takeout and parses its activities through the real queues', async () => {
+      const fit = await readFile(activityFixtures.hindasRun.path);
+      const archive = createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit.gz'),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+
+      const result = await uploads.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+      expect(result.duplicate).toBe(false);
+      expect(await activityRepository.getByUploadId(result.id)).toBeUndefined();
+
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const takeout = await uploadRepository.getById(result.id);
+      expect(takeout?.status).toBe('parsed');
+
+      const imported = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(fit));
+      expect(imported?.status).toBe('parsed');
+      expect(await activityRepository.getByUploadId(imported!.id)).toBeDefined();
     });
 
     it('deletes the activity, the upload and the file', async () => {
