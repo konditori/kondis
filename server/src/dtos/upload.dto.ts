@@ -14,10 +14,9 @@ export class FitUploadResponseDto extends createZodDto(FitUploadResponseSchema) 
 
 export const LagomTakeoutUploadResponseSchema = z
   .object({
-    id: z.string().describe('Takeout upload id'),
     checksum: z.string().describe('Lowercase xxh128 hash of file contents'),
-    byteSize: z.number().int().nonnegative().describe('Stored file size in bytes'),
-    duplicate: z.boolean().describe('True when identical content was already stored'),
+    byteSize: z.number().int().nonnegative().describe('Uploaded takeout size in bytes'),
+    queued: z.literal(true).describe('True when the takeout import was submitted to the queue'),
   })
   .meta({ id: 'LagomTakeoutUploadResponseDto' });
 

@@ -91,7 +91,7 @@
         },
         "responses": {
           "201": {
-            "description": "Takeout stored; importing and activity parsing are queued and happen asynchronously",
+            "description": "Takeout importing and activity parsing are queued and happen asynchronously",
             "content": {
               "application/json": {
                 "schema": {
@@ -398,10 +398,6 @@
       "LagomTakeoutUploadResponseDto_Output": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "description": "Takeout upload id"
-          },
           "checksum": {
             "type": "string",
             "description": "Lowercase xxh128 hash of file contents"
@@ -410,18 +406,20 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991,
-            "description": "Stored file size in bytes"
+            "description": "Uploaded takeout size in bytes"
           },
-          "duplicate": {
+          "queued": {
             "type": "boolean",
-            "description": "True when identical content was already stored"
+            "description": "True when the takeout import was submitted to the queue",
+            "enum": [
+              true
+            ]
           }
         },
         "required": [
-          "id",
           "checksum",
           "byteSize",
-          "duplicate"
+          "queued"
         ],
         "additionalProperties": false
       },

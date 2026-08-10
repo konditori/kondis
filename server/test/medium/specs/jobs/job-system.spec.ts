@@ -62,7 +62,14 @@ describe('job system (medium)', () => {
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
-      [JobName.LagomTakeoutImport]: { name: JobName.LagomTakeoutImport, data: { id: MISSING_UUID } },
+      [JobName.LagomTakeoutImport]: {
+        name: JobName.LagomTakeoutImport,
+        data: {
+          checksum: 'empty',
+          originalName: 'empty.zip',
+          contents: createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }).toString('base64'),
+        },
+      },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
     };
 
@@ -114,13 +121,10 @@ describe('job system (medium)', () => {
       });
 
       const result = await uploads.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
-      expect(result.duplicate).toBe(false);
-      expect(await activityRepository.getByUploadId(result.id)).toBeUndefined();
+      expect(result.queued).toBe(true);
+      expect(await uploadRepository.getByChecksum(result.checksum)).toBeUndefined();
 
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-
-      const takeout = await uploadRepository.getById(result.id);
-      expect(takeout?.status).toBe('parsed');
 
       const imported = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(fit));
       expect(imported?.status).toBe('parsed');

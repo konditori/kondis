@@ -55,7 +55,7 @@ export class UploadController {
   })
   @ZodResponse({
     status: 201,
-    description: 'Takeout stored; importing and activity parsing are queued and happen asynchronously',
+    description: 'Takeout importing and activity parsing are queued and happen asynchronously',
     type: LagomTakeoutUploadResponseDto,
   })
   @Post('upload/strava')

@@ -49,7 +49,7 @@ describe('UploadService (medium)', () => {
       jobs,
       logger,
     );
-    lagomService = new LagomService(uploadRepository, storageRepository, uploadService, logger);
+    lagomService = new LagomService(uploadService, logger);
   });
 
   beforeEach(async () => {
@@ -139,35 +139,41 @@ describe('UploadService (medium)', () => {
 
     const first = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(first).toMatchObject({ byteSize: archive.length, duplicate: false });
+    expect(first).toMatchObject({ byteSize: archive.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
-    const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
-    expect(item).toEqual({ name: JobName.LagomTakeoutImport, data: { id: first.id } });
-    expect(options.transaction).toBeDefined();
+    const [item] = queue.mock.calls[0] as unknown as [
+      { name: JobName; data: { checksum: string; originalName: string; contents: string } },
+    ];
+    expect(item).toEqual({
+      name: JobName.LagomTakeoutImport,
+      data: {
+        checksum: first.checksum,
+        originalName: 'export.zip',
+        contents: archive.toString('base64'),
+      },
+    });
+    expect(await uploadRepository.getByChecksum(first.checksum)).toBeUndefined();
 
     queue.mockClear();
-    await expect(lagomService.handleTakeoutImport({ id: first.id })).resolves.toBe('success');
+    await expect(lagomService.handleTakeoutImport(item.data)).resolves.toBe('success');
     expect(queue).toHaveBeenCalledTimes(2);
-    expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).not.toContain(first.id);
 
     queue.mockClear();
     const second = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(second).toMatchObject({ id: first.id, duplicate: true });
-    expect(queue).not.toHaveBeenCalled();
+    expect(second).toEqual(first);
+    expect(queue).toHaveBeenCalledTimes(1);
   });
 
   it('defers validation of ZIP contents to the takeout import job', async () => {
     const result = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', Buffer.from('nope')));
 
-    expect(result.duplicate).toBe(false);
-    expect(queue).toHaveBeenCalledWith(
-      { name: JobName.LagomTakeoutImport, data: { id: result.id } },
-      expect.objectContaining({ transaction: expect.anything() }),
-    );
-    await expect(lagomService.handleTakeoutImport({ id: result.id })).rejects.toThrow();
-
-    expect((await uploadRepository.getById(result.id))?.status).toBe('failed');
+    expect(result.queued).toBe(true);
+    const [item] = queue.mock.calls[0] as unknown as [
+      { data: { checksum: string; originalName: string; contents: string } },
+    ];
+    await expect(lagomService.handleTakeoutImport(item.data)).rejects.toThrow();
+    expect(await uploadRepository.getByChecksum(result.checksum)).toBeUndefined();
   });
 
   it('rejects a non-ZIP Lagom takeout upload', async () => {

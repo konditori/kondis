@@ -27,14 +27,12 @@ export type FitUploadResponseDtoOutput = {
   duplicate: boolean;
 };
 export type LagomTakeoutUploadResponseDtoOutput = {
-  /** Takeout upload id */
-  id: string;
   /** Lowercase xxh128 hash of file contents */
   checksum: string;
-  /** Stored file size in bytes */
+  /** Uploaded takeout size in bytes */
   byteSize: number;
-  /** True when identical content was already stored */
-  duplicate: boolean;
+  /** True when the takeout import was submitted to the queue */
+  queued: true;
 };
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */

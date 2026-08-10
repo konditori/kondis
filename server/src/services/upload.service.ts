@@ -80,47 +80,19 @@ export class UploadService {
       throw new BadRequestException('Missing file upload');
     }
     if (extname(file.originalname).toLowerCase() !== '.zip') {
-      throw new BadRequestException('Only a Lagom takeout .zip file is accepted');
+      throw new BadRequestException('Only a Strava takeout .zip file is accepted');
     }
 
     const checksum = this.cryptoRepository.xxHash(file.buffer);
-    const existing = await this.uploadRepository.getByChecksum(checksum);
-    if (existing) {
-      this.logger.log(`Takeout upload ${checksum} already exists as ${existing.id}`);
-      return { id: existing.id, checksum: existing.checksum, byteSize: existing.byte_size, duplicate: true };
-    }
+    await this.jobRepository.queue({
+      name: JobName.LagomTakeoutImport,
+      data: {
+        checksum,
+        originalName: file.originalname,
+        contents: file.buffer.toString('base64'),
+      },
+    });
 
-    const storagePath = this.storageRepository.buildPath(checksum, '.zip');
-    await this.storageRepository.write(storagePath, file.buffer);
-
-    let upload: Upload;
-    try {
-      upload = await this.databaseRepository.withTransaction(async (trx) => {
-        const created = await this.uploadRepository.create(
-          {
-            checksum,
-            original_name: file.originalname,
-            byte_size: file.buffer.length,
-            storage_path: storagePath,
-          },
-          trx,
-        );
-
-        await this.jobRepository.queue(
-          { name: JobName.LagomTakeoutImport, data: { id: created.id } },
-          { transaction: trx },
-        );
-
-        return created;
-      });
-    } catch (error) {
-      const raced = await this.uploadRepository.getByChecksum(checksum);
-      if (raced) {
-        return { id: raced.id, checksum: raced.checksum, byteSize: raced.byte_size, duplicate: true };
-      }
-      throw error;
-    }
-
-    return { id: upload.id, checksum: upload.checksum, byteSize: upload.byte_size, duplicate: false };
+    return { checksum, byteSize: file.buffer.length, queued: true };
   }
 }
