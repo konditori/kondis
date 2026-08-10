@@ -3,6 +3,8 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
+import { Activity } from 'src/db/schema';
+import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -195,35 +197,7 @@ export class ActivityService {
   async updateById(
     id: string,
     input: { name?: string | null; sport?: string; subSport?: string | null; startedAt?: Date },
-  ): Promise<
-    | {
-        id: string;
-        uploadId: string;
-        sport: string;
-        subSport: string | null;
-        name: string | null;
-        startedAt: string;
-        timezoneOffsetMinutes: number | null;
-        elapsedTime: number;
-        movingTime: number | null;
-        distance: number | null;
-        elevationGain: number | null;
-        elevationLoss: number | null;
-        avgSpeed: number | null;
-        maxSpeed: number | null;
-        avgHr: number | null;
-        maxHr: number | null;
-        avgCadence: number | null;
-        maxCadence: number | null;
-        avgPower: number | null;
-        maxPower: number | null;
-        normalizedPower: number | null;
-        calories: number | null;
-        createdAt: string;
-        updatedAt: string;
-      }
-    | undefined
-  > {
+  ) {
     const mapped: UpdateActivityInput = {};
 
     if (input.name === undefined) {
@@ -259,58 +233,20 @@ export class ActivityService {
     return status !== JobStatus.Skipped;
   }
 
-  private toActivityDto(activity: {
-    id: string;
-    upload_id: string;
-    sport: string;
-    sub_sport: string | null;
-    name: string | null;
-    started_at: Timestamp;
-    timezone_offset_minutes: number | null;
-    elapsed_time: number;
-    moving_time: number | null;
-    distance: number | null;
-    elevation_gain: number | null;
-    elevation_loss: number | null;
-    avg_speed: number | null;
-    max_speed: number | null;
-    avg_hr: number | null;
-    max_hr: number | null;
-    avg_cadence: number | null;
-    max_cadence: number | null;
-    avg_power: number | null;
-    max_power: number | null;
-    normalized_power: number | null;
-    calories: number | null;
-    created_at: Timestamp;
-    updated_at: Timestamp;
-  }) {
-    return {
-      id: activity.id,
-      uploadId: activity.upload_id,
-      sport: activity.sport,
-      subSport: activity.sub_sport,
-      name: activity.name,
+  private toActivityDto(activity: Activity) {
+    const camelCased = Object.fromEntries(
+      Object.entries(activity).map(([key, value]) => [
+        key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase()),
+        value,
+      ]),
+    );
+
+    return ActivitySchema.parse({
+      ...camelCased,
       startedAt: this.toIsoString(activity.started_at),
-      timezoneOffsetMinutes: activity.timezone_offset_minutes,
-      elapsedTime: activity.elapsed_time,
-      movingTime: activity.moving_time,
-      distance: activity.distance,
-      elevationGain: activity.elevation_gain,
-      elevationLoss: activity.elevation_loss,
-      avgSpeed: activity.avg_speed,
-      maxSpeed: activity.max_speed,
-      avgHr: activity.avg_hr,
-      maxHr: activity.max_hr,
-      avgCadence: activity.avg_cadence,
-      maxCadence: activity.max_cadence,
-      avgPower: activity.avg_power,
-      maxPower: activity.max_power,
-      normalizedPower: activity.normalized_power,
-      calories: activity.calories,
       createdAt: this.toIsoString(activity.created_at),
       updatedAt: this.toIsoString(activity.updated_at),
-    };
+    });
   }
 
   private toIsoString(value: Timestamp): string {
