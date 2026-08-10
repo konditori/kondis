@@ -1,13 +1,12 @@
 import { basename, extname, posix } from 'node:path';
-import { gunzipSync, inflateRawSync } from 'node:zlib';
+import { gunzipSync } from 'node:zlib';
+
+import { Open } from 'unzipper';
 
 import type { UploadedFileData } from 'src/types';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 const MANIFEST_NAME = 'activities.csv';
-const CENTRAL_DIRECTORY_SIGNATURE = 0x02_01_4b_50;
-const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06_05_4b_50;
-const LOCAL_FILE_SIGNATURE = 0x04_03_4b_50;
 
 // Lagom is a codename for the commercial app that should not be named
 
@@ -30,93 +29,21 @@ export type LagomTakeoutContents = {
   errors: LagomTakeoutError[];
 };
 
-const assertRange = (contents: Buffer, offset: number, length: number): void => {
-  if (offset < 0 || length < 0 || offset + length > contents.length) {
-    throw new Error('ZIP archive contains an invalid entry offset or size');
-  }
-};
+const unzip = async (contents: Buffer): Promise<Record<string, Buffer>> => {
+  const directory = await Open.buffer(contents);
+  const entries: Record<string, Buffer> = {};
 
-const findEndOfCentralDirectory = (contents: Buffer): number => {
-  // The record is at least 22 bytes and may be followed by a comment of at most 65,535 bytes.
-  const firstCandidate = Math.max(0, contents.length - 22 - 65_535);
-  for (let offset = contents.length - 22; offset >= firstCandidate; offset -= 1) {
-    if (
-      contents.readUInt32LE(offset) === END_OF_CENTRAL_DIRECTORY_SIGNATURE &&
-      offset + 22 + contents.readUInt16LE(offset + 20) === contents.length
-    ) {
-      return offset;
-    }
-  }
-  throw new Error('ZIP end-of-directory record is missing');
-};
-
-const unzip = (contents: Buffer): Record<string, Uint8Array> => {
-  const endOffset = findEndOfCentralDirectory(contents);
-  const disk = contents.readUInt16LE(endOffset + 4);
-  const centralDirectoryDisk = contents.readUInt16LE(endOffset + 6);
-  const entryCount = contents.readUInt16LE(endOffset + 10);
-  const centralDirectorySize = contents.readUInt32LE(endOffset + 12);
-  const centralDirectoryOffset = contents.readUInt32LE(endOffset + 16);
-
-  if (disk !== 0 || centralDirectoryDisk !== 0) {
-    throw new Error('Multi-disk ZIP archives are not supported');
-  }
-  if (entryCount === 0xff_ff || centralDirectorySize === 0xff_ff_ff_ff || centralDirectoryOffset === 0xff_ff_ff_ff) {
-    throw new Error('ZIP64 archives are not supported');
-  }
-  assertRange(contents, centralDirectoryOffset, centralDirectorySize);
-
-  const entries: Record<string, Uint8Array> = {};
-  let offset = centralDirectoryOffset;
-  for (let index = 0; index < entryCount; index += 1) {
-    assertRange(contents, offset, 46);
-    if (contents.readUInt32LE(offset) !== CENTRAL_DIRECTORY_SIGNATURE) {
-      throw new Error('ZIP central directory is malformed');
+  for (const entry of directory.files) {
+    if (entry.type === 'Directory') {
+      continue;
     }
 
-    const flags = contents.readUInt16LE(offset + 8);
-    const method = contents.readUInt16LE(offset + 10);
-    const compressedSize = contents.readUInt32LE(offset + 20);
-    const uncompressedSize = contents.readUInt32LE(offset + 24);
-    const filenameLength = contents.readUInt16LE(offset + 28);
-    const extraLength = contents.readUInt16LE(offset + 30);
-    const commentLength = contents.readUInt16LE(offset + 32);
-    const localOffset = contents.readUInt32LE(offset + 42);
-    assertRange(contents, offset + 46, filenameLength + extraLength + commentLength);
-
-    if ((flags & 1) !== 0) {
-      throw new Error('Encrypted ZIP entries are not supported');
-    }
-
-    const filename = contents.subarray(offset + 46, offset + 46 + filenameLength).toString('utf8');
-    assertRange(contents, localOffset, 30);
-    if (contents.readUInt32LE(localOffset) !== LOCAL_FILE_SIGNATURE) {
-      throw new Error(`ZIP entry ${filename} has an invalid local header`);
-    }
-
-    const localFilenameLength = contents.readUInt16LE(localOffset + 26);
-    const localExtraLength = contents.readUInt16LE(localOffset + 28);
-    const dataOffset = localOffset + 30 + localFilenameLength + localExtraLength;
-    assertRange(contents, dataOffset, compressedSize);
-    const compressed = contents.subarray(dataOffset, dataOffset + compressedSize);
-
-    let uncompressed: Buffer;
-    if (method === 0) {
-      uncompressed = Buffer.from(compressed);
-    } else if (method === 8) {
-      uncompressed = inflateRawSync(compressed);
-    } else {
-      throw new Error(`ZIP entry ${filename} uses unsupported compression method ${method}`);
-    }
-    if (uncompressed.length !== uncompressedSize) {
-      throw new Error(`ZIP entry ${filename} has an invalid uncompressed size`);
-    }
+    const filename = entry.path;
     if (filename in entries) {
       throw new Error(`ZIP archive contains duplicate entry ${filename}`);
     }
 
-    entries[filename] = uncompressed;
-    offset += 46 + filenameLength + extraLength + commentLength;
+    entries[filename] = await entry.buffer();
   }
 
   return entries;
@@ -180,10 +107,10 @@ const normalizeReference = (filename: string): string | undefined => {
   return normalized === '.' ? undefined : normalized;
 };
 
-export const extractLagomTakeout = (contents: Buffer): LagomTakeoutContents => {
-  let entries: Record<string, Uint8Array>;
+export const extractLagomTakeout = async (contents: Buffer): Promise<LagomTakeoutContents> => {
+  let entries: Record<string, Buffer>;
   try {
-    entries = unzip(contents);
+    entries = await unzip(contents);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Could not uncompress ZIP archive: ${message}`, { cause: error });

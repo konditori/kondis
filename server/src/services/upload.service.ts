@@ -86,7 +86,7 @@ export class UploadService {
 
     let takeout;
     try {
-      takeout = extractLagomTakeout(file.buffer);
+      takeout = await extractLagomTakeout(file.buffer);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new BadRequestException(`Invalid Lagom takeout: ${message}`);

@@ -40,6 +40,7 @@
     "pg-boss": "^12.26.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "unzipper": "^0.12.5",
     "zod": "^4.1.5"
   },
   "devDependencies": {

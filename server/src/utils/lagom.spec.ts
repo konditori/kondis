@@ -5,7 +5,7 @@ import { extractLagomTakeout } from 'src/utils/lagom';
 import { createTestZip } from 'test/utils/zip';
 
 describe('extractLagomTakeout', () => {
-  it('reads the manifest and decompresses supported activity files', () => {
+  it('reads the manifest and decompresses supported activity files', async () => {
     const archive = createTestZip({
       'export/activities.csv': {
         contents: Buffer.from(
@@ -25,7 +25,7 @@ describe('extractLagomTakeout', () => {
       'export/activities/data.json': Buffer.from('{}'),
     });
 
-    const result = extractLagomTakeout(archive);
+    const result = await extractLagomTakeout(archive);
 
     expect(result.totalActivities).toBe(5);
     expect(result.skipped).toBe(2);
@@ -41,19 +41,19 @@ describe('extractLagomTakeout', () => {
     ]);
   });
 
-  it('rejects archives without an activities manifest', () => {
+  it('rejects archives without an activities manifest', async () => {
     const archive = createTestZip({ 'profile.csv': Buffer.from('Name\nRunner') });
 
-    expect(() => extractLagomTakeout(archive)).toThrow('does not contain activities.csv');
+    await expect(extractLagomTakeout(archive)).rejects.toThrow('does not contain activities.csv');
   });
 
-  it('does not follow filenames outside the takeout root', () => {
+  it('does not follow filenames outside the takeout root', async () => {
     const archive = createTestZip({
       'activities.csv': Buffer.from('Activity ID,Filename\n1,../secret.fit'),
       '../secret.fit': Buffer.from('secret'),
     });
 
-    const result = extractLagomTakeout(archive);
+    const result = await extractLagomTakeout(archive);
 
     expect(result.activities).toEqual([]);
     expect(result.errors).toEqual([{ row: 2, filename: '../secret.fit', message: 'Unsafe activity filename' }]);
