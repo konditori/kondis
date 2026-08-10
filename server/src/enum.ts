@@ -10,6 +10,7 @@ export enum QueueName {
 }
 
 export enum JobName {
+  ActivityUpload = 'ActivityUpload',
   ActivityParse = 'ActivityParse',
   ActivityParseQueueAll = 'ActivityParseQueueAll',
   ActivityDelete = 'ActivityDelete',

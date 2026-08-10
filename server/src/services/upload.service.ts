@@ -1,7 +1,6 @@
 import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
-import { Upload } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
@@ -38,43 +37,58 @@ export class UploadService {
       throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
     }
 
-    const checksum = this.cryptoRepository.xxHash(file.buffer);
+    await this.jobRepository.queue({
+      name: JobName.ActivityUpload,
+      data: {
+        originalName: file.originalname,
+        contents: file.buffer.toString('base64'),
+      },
+    });
 
+    return { byteSize: file.buffer.length, queued: true };
+  }
+
+  @OnJob({ name: JobName.ActivityUpload, queue: QueueName.BackgroundTask })
+  async handleActivityUpload({ originalName, contents }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
+    const extension = extname(originalName).toLowerCase();
+    if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
+      throw new Error(`Unsupported activity upload extension: ${extension || 'none'}`);
+    }
+
+    const buffer = Buffer.from(contents, 'base64');
+    const checksum = this.cryptoRepository.xxHash(buffer);
     const existing = await this.uploadRepository.getByChecksum(checksum);
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
-      return { id: existing.id, checksum: existing.checksum, byteSize: existing.byte_size, duplicate: true };
+      return JobStatus.Skipped;
     }
 
     const storagePath = this.storageRepository.buildPath(checksum, extension);
-    await this.storageRepository.write(storagePath, file.buffer);
+    await this.storageRepository.write(storagePath, buffer);
 
-    let upload: Upload;
     try {
-      upload = await this.databaseRepository.withTransaction(async (trx) => {
+      await this.databaseRepository.withTransaction(async (trx) => {
         const created = await this.uploadRepository.create(
           {
             checksum,
-            original_name: file.originalname,
-            byte_size: file.buffer.length,
+            original_name: originalName,
+            byte_size: buffer.length,
             storage_path: storagePath,
           },
           trx,
         );
 
         await this.jobRepository.queue({ name: JobName.ActivityParse, data: { id: created.id } }, { transaction: trx });
-
-        return created;
       });
     } catch (error) {
       const raced = await this.uploadRepository.getByChecksum(checksum);
       if (raced) {
-        return { id: raced.id, checksum: raced.checksum, byteSize: raced.byte_size, duplicate: true };
+        return JobStatus.Skipped;
       }
       throw error;
     }
 
-    return { id: upload.id, checksum: upload.checksum, byteSize: upload.byte_size, duplicate: false };
+    return JobStatus.Success;
   }
 
   async uploadLagomTakeout(file?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
@@ -101,17 +115,12 @@ export class UploadService {
     const takeout = await extractLagomTakeout(Buffer.from(contents, 'base64'));
 
     const errors = [...takeout.errors];
-    let imported = 0;
-    let duplicates = 0;
+    let queued = 0;
 
     for (const activity of takeout.activities) {
       try {
-        const activityUpload = await this.uploadFit(activity.file);
-        if (activityUpload.duplicate) {
-          duplicates += 1;
-        } else {
-          imported += 1;
-        }
+        await this.uploadFit(activity.file);
+        queued += 1;
       } catch (error) {
         errors.push({
           row: activity.row,
@@ -122,7 +131,7 @@ export class UploadService {
     }
 
     this.logger.log(
-      `Imported Lagom takeout ${originalName}: ${imported} new, ${duplicates} duplicate, ${takeout.skipped} skipped, ${errors.length} failed`,
+      `Processed Lagom takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${errors.length} failed`,
     );
 
     return JobStatus.Success;

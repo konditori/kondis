@@ -59,6 +59,10 @@ describe('job system (medium)', () => {
 
   describe('handler discovery', () => {
     const samples: Record<JobName, JobItem> = {
+      [JobName.ActivityUpload]: {
+        name: JobName.ActivityUpload,
+        data: { originalName: 'sample.gpx', contents: Buffer.from('<gpx/>').toString('base64') },
+      },
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
@@ -99,17 +103,18 @@ describe('job system (medium)', () => {
 
   describe('end to end', () => {
     it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
-      const result = await uploads.uploadFit(makeUploadedFile(fixture.filename, await readFile(fixture.path)));
-      expect(result.duplicate).toBe(false);
+      const contents = await readFile(fixture.path);
+      const result = await uploads.uploadFit(makeUploadedFile(fixture.filename, contents));
+      expect(result.queued).toBe(true);
 
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      const activity = await activityRepository.getByUploadId(result.id);
+      const upload = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
+      expect(upload?.status).toBe('parsed');
+
+      const activity = await activityRepository.getByUploadId(upload!.id);
       expect(activity).toBeDefined();
       expect(activity?.sport).toBe(fixture.expectedSport);
-
-      const upload = await uploadRepository.getById(result.id);
-      expect(upload?.status).toBe('parsed');
     });
 
     it('imports a Lagom takeout and parses its activities through the real queues', async () => {
@@ -132,10 +137,12 @@ describe('job system (medium)', () => {
 
     it('deletes the activity, the upload and the file', async () => {
       const fixture = activityFixtures.hindasRun;
-      const { id: uploadId } = await uploads.uploadFit(
-        makeUploadedFile(fixture.filename, await readFile(fixture.path)),
-      );
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      const contents = await readFile(fixture.path);
+      await uploads.uploadFit(makeUploadedFile(fixture.filename, contents));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const uploaded = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
+      const uploadId = uploaded!.id;
 
       const activity = await activityRepository.getByUploadId(uploadId);
       expect(activity).toBeDefined();

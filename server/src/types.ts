@@ -70,16 +70,17 @@ export interface IEntityJob extends IBaseJob {
   id: string;
 }
 
-export interface ILagomTakeoutImportJob {
+export interface IFileUploadJob {
   originalName: string;
   contents: string;
 }
 
 export type JobItem =
+  | { name: JobName.ActivityUpload; data: IFileUploadJob }
   | { name: JobName.ActivityParse; data: IEntityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
-  | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }
+  | { name: JobName.LagomTakeoutImport; data: IFileUploadJob }
   | { name: JobName.FileDelete; data: { paths: string[] } };
 
 export type Jobs = { [K in JobItem['name']]: (JobItem & { name: K })['data'] };

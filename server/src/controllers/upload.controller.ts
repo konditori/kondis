@@ -29,7 +29,7 @@ export class UploadController {
   })
   @ZodResponse({
     status: 201,
-    description: 'Activity file stored; parsing is queued and happens asynchronously',
+    description: 'Activity file processing is queued and happens asynchronously',
     type: FitUploadResponseDto,
   })
   @Post('upload/activity')

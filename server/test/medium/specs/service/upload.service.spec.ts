@@ -63,52 +63,49 @@ describe('UploadService (medium)', () => {
     }
   });
 
-  it('stores a .fit file and queues a parse in the same transaction', async () => {
+  it('queues a .fit upload without checksumming or storing it in the request', async () => {
     const buffer = Buffer.from('not really a fit file, but the bytes are never read here');
     const file = makeUploadedFile('ride.fit', buffer);
 
     const result = await uploadService.uploadFit(file);
 
-    expect(result.duplicate).toBe(false);
-    expect(result.byteSize).toBe(buffer.length);
-
+    expect(result).toEqual({ byteSize: buffer.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
-    const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
-    expect(item).toEqual({ name: JobName.ActivityParse, data: { id: result.id } });
-    expect(options.transaction).toBeDefined();
+    expect(queue).toHaveBeenCalledWith({
+      name: JobName.ActivityUpload,
+      data: { originalName: 'ride.fit', contents: buffer.toString('base64') },
+    });
+    expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
   });
 
-  it('deduplicates identical content without queueing again', async () => {
+  it('stores, deduplicates and queues parsing inside the activity upload job', async () => {
     const buffer = Buffer.from('identical bytes');
-    const file = makeUploadedFile('ride.fit', buffer);
+    const data = { originalName: 'ride.fit', contents: buffer.toString('base64') };
 
-    const first = await uploadService.uploadFit(file);
+    await expect(uploadService.handleActivityUpload(data)).resolves.toBe('success');
+    const stored = await uploadRepository.getByChecksum(crypto.xxHash(buffer));
+    expect(stored).toBeDefined();
+    expect(queue).toHaveBeenCalledTimes(1);
+    const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
+    expect(item).toEqual({ name: JobName.ActivityParse, data: { id: stored!.id } });
+    expect(options.transaction).toBeDefined();
+
     queue.mockClear();
-
-    const second = await uploadService.uploadFit(file);
-
-    expect(second.id).toBe(first.id);
-    expect(second.duplicate).toBe(true);
+    await expect(uploadService.handleActivityUpload(data)).resolves.toBe('skipped');
     expect(queue).not.toHaveBeenCalled();
   });
 
-  it('stores a real .fit fixture and deduplicates identical content', async () => {
+  it('stores a real .fit fixture from the queued activity upload', async () => {
     const fixture = activityFixtures.hindasRun;
     const file = makeUploadedFile(fixture.filename, await readFile(fixture.path));
 
-    const first = await uploadService.uploadFit(file);
+    await expect(
+      uploadService.handleActivityUpload({ originalName: file.originalname, contents: file.buffer.toString('base64') }),
+    ).resolves.toBe('success');
 
-    expect(first.id).toBeTruthy();
-    expect(first.checksum).toMatch(/^[0-9a-f]{32}$/);
-    expect(first.byteSize).toBe(file.buffer.length);
-
-    queue.mockClear();
-    const second = await uploadService.uploadFit(file);
-
-    expect(second.id).toBe(first.id);
-    expect(second.checksum).toBe(first.checksum);
-    expect(second.duplicate).toBe(true);
-    expect(queue).not.toHaveBeenCalled();
+    const stored = await uploadRepository.getByChecksum(crypto.xxHash(file.buffer));
+    expect(stored?.checksum).toMatch(/^[0-9a-f]{32}$/);
+    expect(stored?.byte_size).toBe(file.buffer.length);
   });
 
   it('rejects anything that is not a supported activity file', async () => {

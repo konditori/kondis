@@ -17,14 +17,10 @@ export type PingResponseDtoOutput = {
   status: string;
 };
 export type FitUploadResponseDtoOutput = {
-  /** Upload id */
-  id: string;
-  /** Lowercase xxh128 hash of file contents */
-  checksum: string;
-  /** Stored file size in bytes */
+  /** Uploaded activity file size in bytes */
   byteSize: number;
-  /** True when identical content was already stored */
-  duplicate: boolean;
+  /** True when activity processing was submitted to the queue */
+  queued: true;
 };
 export type LagomTakeoutUploadResponseDtoOutput = {
   /** Uploaded takeout size in bytes */
