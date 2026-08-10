@@ -193,14 +193,14 @@ export function serverControllerPing(opts?: Oazapfts.RequestOpts) {
   );
 }
 /**
- * Upload a FIT activity file
+ * Upload a FIT, TCX, or GPX activity file
  */
-export function importControllerUploadFit(
+export function uploadControllerUploadActivity(
   {
     body,
   }: {
     body: {
-      /** .fit activity file */
+      /** .fit, .tcx, or .gpx activity file */
       file: Blob;
     };
   },
@@ -211,7 +211,7 @@ export function importControllerUploadFit(
       status: 201;
       data: FitUploadResponseDtoOutput;
     }>(
-      '/uploads/fit',
+      '/uploads/activity',
       oazapfts.multipart({
         ...opts,
         method: 'POST',

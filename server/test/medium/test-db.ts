@@ -2,7 +2,7 @@ import { sql } from 'kysely';
 import { type DatabaseConfig } from 'src/config/config.service';
 import { createDatabase, type KondisDatabase } from 'src/db/database';
 
-const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
+export const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
 
 export const TEST_JOB_SCHEMA = 'kondis_jobs_test';
 
@@ -46,4 +46,9 @@ export const truncateJobs = async (db: KondisDatabase): Promise<void> => {
   if (rows[0]?.exists) {
     await sql`DELETE FROM ${sql.ref(`${TEST_JOB_SCHEMA}.job`)}`.execute(db);
   }
+};
+
+export const resetMediumTestDatabase = async (db: KondisDatabase): Promise<void> => {
+  await truncateJobs(db);
+  await truncateAllTables(db);
 };

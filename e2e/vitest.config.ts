@@ -23,7 +23,7 @@ export default defineConfig({
     name: 'e2e:server',
     retry: process.env.CI ? 4 : 0,
     include: ['src/specs/server/**/*.e2e-spec.ts'],
-    setupFiles: ['src/specs/setup-sdk.ts'],
+    setupFiles: ['src/utils.ts'],
     globalSetup,
     testTimeout: 15_000,
     pool: 'threads',

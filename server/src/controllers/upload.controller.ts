@@ -7,12 +7,12 @@ import { FitUploadResponseDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
 import { UploadedFitFile } from 'src/types';
 
-@ApiTags('imports')
+@ApiTags('uploads')
 @Controller()
-export class ImportController {
+export class UploadController {
   constructor(private readonly service: UploadService) {}
 
-  @ApiOperation({ summary: 'Upload a FIT activity file' })
+  @ApiOperation({ summary: 'Upload a FIT, TCX, or GPX activity file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -22,19 +22,19 @@ export class ImportController {
         file: {
           type: 'string',
           format: 'binary',
-          description: '.fit activity file',
+          description: '.fit, .tcx, or .gpx activity file',
         },
       },
     },
   })
   @ZodResponse({
     status: 201,
-    description: 'FIT file stored; parsing is queued and happens asynchronously',
+    description: 'Activity file stored; parsing is queued and happens asynchronously',
     type: FitUploadResponseDto,
   })
-  @Post('uploads/fit')
+  @Post('uploads/activity')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFit(@UploadedFile() file?: UploadedFitFile): Promise<FitUploadResponseDto> {
+  async uploadActivity(@UploadedFile() file?: UploadedFitFile): Promise<FitUploadResponseDto> {
     return this.service.uploadFit(file);
   }
 }

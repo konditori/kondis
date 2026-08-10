@@ -6,12 +6,11 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 
 import { createTestApp, type TestApp } from 'test/medium/test-app';
-import { createMediumTestDatabase, truncateAllTables, truncateJobs } from 'test/medium/test-db';
+import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
-const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 
-describe.skipIf(!hasMediumDb)('ActivityController (medium)', () => {
+describe('ActivityController (medium)', () => {
   let testApp: TestApp;
   let db: KondisDatabase;
   let controller: ActivityController;
@@ -65,8 +64,7 @@ describe.skipIf(!hasMediumDb)('ActivityController (medium)', () => {
   }, 60_000);
 
   beforeEach(async () => {
-    await truncateJobs(db);
-    await truncateAllTables(db);
+    await resetMediumTestDatabase(db);
   });
 
   afterAll(async () => {

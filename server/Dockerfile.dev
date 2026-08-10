@@ -1,6 +1,6 @@
 ARG DEBIAN_RELEASE=trixie
 
-FROM node:24.14.1-${DEBIAN_RELEASE}-slim@sha256:9707cd4542f400df5078df04f9652a272429112f15202d22b5b8bdd148df494f AS dev
+FROM node:24.19.0-${DEBIAN_RELEASE}-slim AS dev
 
 ENV CI=1
 
@@ -16,7 +16,7 @@ RUN apt-get update \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g pnpm@11.16.0
+RUN npm install -g pnpm@11.20.0
 
 WORKDIR /usr/src/app
 

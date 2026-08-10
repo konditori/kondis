@@ -1,5 +1,5 @@
 import { ConsoleLogger } from '@nestjs/common';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,13 +13,11 @@ import { type JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
-import { type UploadedFitFile } from 'src/types';
 
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
+import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
 
-const hasMediumDb = Boolean(process.env.KONDIS_TEST_POSTGRES_URL);
-
-describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
+describe('UploadService (medium)', () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
   const queue = vi.fn(async () => {});
@@ -65,7 +63,7 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
 
   it('stores a .fit file and queues a parse in the same transaction', async () => {
     const buffer = Buffer.from('not really a fit file, but the bytes are never read here');
-    const file = { originalname: 'ride.fit', buffer, size: buffer.length } as UploadedFitFile;
+    const file = makeUploadedFile('ride.fit', buffer);
 
     const result = await uploadService.uploadFit(file);
 
@@ -80,7 +78,7 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
 
   it('deduplicates identical content without queueing again', async () => {
     const buffer = Buffer.from('identical bytes');
-    const file = { originalname: 'ride.fit', buffer, size: buffer.length } as UploadedFitFile;
+    const file = makeUploadedFile('ride.fit', buffer);
 
     const first = await uploadService.uploadFit(file);
     queue.mockClear();
@@ -92,10 +90,29 @@ describe.skipIf(!hasMediumDb)('UploadService (medium)', () => {
     expect(queue).not.toHaveBeenCalled();
   });
 
-  it('rejects anything that is not a .fit file', async () => {
-    const buffer = Buffer.from('nope');
-    const file = { originalname: 'ride.gpx', buffer, size: buffer.length } as UploadedFitFile;
+  it('stores a real .fit fixture and deduplicates identical content', async () => {
+    const fixture = activityFixtures.hindasRun;
+    const file = makeUploadedFile(fixture.filename, await readFile(fixture.path));
 
-    await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit files are accepted');
+    const first = await uploadService.uploadFit(file);
+
+    expect(first.id).toBeTruthy();
+    expect(first.checksum).toMatch(/^[0-9a-f]{32}$/);
+    expect(first.byteSize).toBe(file.buffer.length);
+
+    queue.mockClear();
+    const second = await uploadService.uploadFit(file);
+
+    expect(second.id).toBe(first.id);
+    expect(second.checksum).toBe(first.checksum);
+    expect(second.duplicate).toBe(true);
+    expect(queue).not.toHaveBeenCalled();
+  });
+
+  it('rejects anything that is not a supported activity file', async () => {
+    const buffer = Buffer.from('nope');
+    const file = makeUploadedFile('ride.lol', buffer);
+
+    await expect(uploadService.uploadFit(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
 });
