@@ -1,0 +1,35 @@
+server/src/controllers/upload.controller.ts
+  s_4a8441c94e4873::t_e359cd52b2a790 6,40-65
+server/src/dtos/upload.dto.ts
+  s_4a8441c94e4873::t_210f808bd9f627 14-33
+server/src/services/upload.service.ts
+  s_4a8441c94e4873::t_d3f6a61f9f614e 5,13,78-131
+server/src/utils/strava.spec.ts
+  s_4a8441c94e4873::t_fa3f113163d65b 1-61
+server/src/utils/strava.ts
+  s_4a8441c94e4873::t_6e68c6dfce0504 1-261
+server/test/medium/specs/service/upload.service.spec.ts
+  s_4a8441c94e4873::t_869f1fb1a741eb 5,20,120-154
+server/test/utils/zip.ts
+  s_4a8441c94e4873::t_e3786cc52edaa6 1-48
+server/vitest.config.ts
+  s_4a8441c94e4873::t_ffda8ed0e32ed1 10
+web/src/lib/components/UploadDialog.svelte
+  s_4a8441c94e4873::t_83ab4bd0280141 17,26-27,29-37,82,84,86,95-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a4979722549305eba74bb66b87a045236c6821b9",
+  "prompts": {},
+  "sessions": {
+    "s_4a8441c94e4873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fecfe-d2bd-7f40-b7af-ebdf9fd6d833",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
