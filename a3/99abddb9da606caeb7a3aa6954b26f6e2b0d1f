@@ -1,0 +1,35 @@
+server/src/enum.ts
+  s_5fabbbbf239de3::t_fddefafe553cf3 19
+server/src/repositories/job.repository.ts
+  s_5fabbbbf239de3::t_2cd9bb3fe60b6d 38-41,302-305
+server/src/repositories/storage.repository.spec.ts
+  s_5fabbbbf239de3::t_6ffa11528a2fb6 1-42
+server/src/repositories/storage.repository.ts
+  s_5fabbbbf239de3::t_8cb9e0ea1d0a72 2,20-24,50-81
+server/src/services/storage.service.ts
+  s_5fabbbbf239de3::t_aeca31fd03f0e9 8-9,28-36
+server/src/services/upload.service.ts
+  s_5fabbbbf239de3::t_fd28dd5a2ac51c 30,102-116,122-123,128-135,139
+server/src/types.ts
+  s_5fabbbbf239de3::t_745121a4c7810e 78-82,88-90
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_5fabbbbf239de3::t_ff1a30ec993973 13,38,51,76,80,84-88,116,150
+server/test/medium/specs/service/upload.service.spec.ts
+  s_5fabbbbf239de3::t_0df14fff2e692a 70,115,118,139,145,148,154-161,170-171,174,176,180-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a399abddb9da606caeb7a3aa6954b26f6e2b0d1f",
+  "prompts": {},
+  "sessions": {
+    "s_5fabbbbf239de3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fed84-1953-76b3-b0b0-e5df56ea2f1a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
