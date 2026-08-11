@@ -1,0 +1,29 @@
+open-api/kondis-openapi-specs.json
+  s_afcaa92d23f846::t_c8507855e788f9 278
+server/src/controllers/activity.controller.ts
+  s_afcaa92d23f846::t_d110127dc85543 40
+server/src/open-api/fetch-client.ts
+  s_afcaa92d23f846::t_52655b27bfd9c5 387
+web/src/routes/activities/[id]/+page.svelte
+  s_afcaa92d23f846::t_196252358f060d 24,138,145
+web/src/routes/best-efforts/[sport]/[distance]/+page.server.ts
+  s_afcaa92d23f846::t_b4e513526cdb48 15,17,29-38
+web/src/routes/best-efforts/[sport]/[distance]/+page.svelte
+  s_afcaa92d23f846::t_e01b5de5e25e1b 70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6a955777a46e02a086925a27066208aa73a13e5a",
+  "prompts": {},
+  "sessions": {
+    "s_afcaa92d23f846": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff0cb-41ba-77e1-8377-960d08d72c6c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
