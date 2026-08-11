@@ -1,0 +1,47 @@
+server/src/repositories/job.repository.ts
+  s_0b3207ef52fef5::t_34183bd4413f00 45,411-412
+server/src/repositories/tcx.repository.spec.ts
+  s_b41688b7e0a47b::t_d40282be9b78fd 88-93
+server/src/repositories/tcx.repository.ts
+  s_b41688b7e0a47b::t_c6b681e1e10ba2 110-112
+server/src/services/activity.service.spec.ts
+  s_b41688b7e0a47b::t_309958a0844ae3 178,180,186-190
+server/src/services/activity.service.ts
+  s_b41688b7e0a47b::t_4985cb3e48080e 53,77,86,323,328
+server/src/services/upload.service.ts
+  s_b41688b7e0a47b::t_ab297f03328b66 56,71-84,111,157-162,177,191
+server/src/types.ts
+  s_b41688b7e0a47b::t_b09f6c741f719d 79,85
+server/src/utils/lagom.spec.ts
+  s_b41688b7e0a47b::t_52e893292e6941 13-18,34
+server/src/utils/lagom.ts
+  s_b41688b7e0a47b::t_c9a86fcee813e3 8,24,233,249-250,301
+server/test/medium/specs/formats/tcx.spec.ts
+  s_b41688b7e0a47b::t_3083fcb16b4ca7 22
+server/test/medium/specs/service/upload.service.spec.ts
+  s_b41688b7e0a47b::t_18e88cb51dd41b 110-126,187-190,231,241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fba71a1cac8bcf8371183e087a827e1ea09aa633",
+  "prompts": {},
+  "sessions": {
+    "s_0b3207ef52fef5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff05b-bb0e-77b3-b354-e0d114b3285e",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b41688b7e0a47b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff065-b206-76e0-b5db-16bee05d66a9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
