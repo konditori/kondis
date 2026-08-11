@@ -1,0 +1,29 @@
+server/src/repositories/gpx.repository.ts
+  s_4dabd4e42d85c3::t_efc35bfc70d2ce 5,206
+server/src/utils/fit.spec.ts
+  s_4dabd4e42d85c3::t_eb92169adfad08 3,75-108
+server/src/utils/fit.ts
+  s_4dabd4e42d85c3::t_5aff4b07bc0948 10,76-114,169-181,189
+server/src/utils/geo.ts
+  s_4dabd4e42d85c3::t_6904a26d7b5547 1-10
+server/test/medium/specs/formats/fit.spec.ts
+  s_4dabd4e42d85c3::t_d9a437dfbaf3a1 6,10,15-47
+web/src/lib/components/BestEffortChart.svelte
+  s_4dabd4e42d85c3::t_a00fef38f54906 30-35,43,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "56f6bdcf1f8c4b56950120fc9e9d4704d54b78da",
+  "prompts": {},
+  "sessions": {
+    "s_4dabd4e42d85c3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff216-d202-7b42-97ca-779a58817ce9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
