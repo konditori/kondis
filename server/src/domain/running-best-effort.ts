@@ -1,7 +1,7 @@
 export const RUNNING_BEST_EFFORTS = [
   { type: '400m', label: '400 m', distance: 400, valueKind: 'duration', higherIsBetter: false },
   { type: '1k', label: '1K', distance: 1000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_mile', label: '½ mile', distance: 804.672, valueKind: 'duration', higherIsBetter: false },
+  { type: 'half_mile', label: '1/2 mile', distance: 804.672, valueKind: 'duration', higherIsBetter: false },
   { type: '1_mile', label: '1 mile', distance: 1609.344, valueKind: 'duration', higherIsBetter: false },
   { type: '2_miles', label: '2 miles', distance: 3218.688, valueKind: 'duration', higherIsBetter: false },
   { type: '5k', label: '5K', distance: 5000, valueKind: 'duration', higherIsBetter: false },
