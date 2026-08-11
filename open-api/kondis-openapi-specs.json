@@ -275,7 +275,7 @@
             }
           }
         },
-        "summary": "List running best efforts over time",
+        "summary": "List best efforts over time for a sport",
         "tags": [
           "activities"
         ]

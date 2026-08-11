@@ -37,7 +37,7 @@ export class ActivityController {
     return this.service.listRecent(query);
   }
 
-  @ApiOperation({ summary: 'List running best efforts over time' })
+  @ApiOperation({ summary: 'List best efforts over time for a sport' })
   @ZodResponse({ status: 200, description: 'Best effort history', type: BestEffortListResponseDto })
   @Get('best-efforts/:sport/:type')
   async listBestEfforts(@Param() params: BestEffortListParamDto): Promise<BestEffortListResponseDto> {

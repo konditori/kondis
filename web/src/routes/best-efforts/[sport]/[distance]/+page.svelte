@@ -67,7 +67,7 @@
     <div class="notice"><CloudOff size={20} /><span><strong>Server unavailable</strong> Could not load your best efforts.</span></div>
   {:else if history && history.efforts.length > 0}
     <section class="effort-overview">
-      <div class="section-heading effort-section-heading"><div><span class="eyebrow">Progress over time</span><h2>{history.label} performance</h2></div><span class="chart-hint">Higher is faster</span></div>
+      <div class="section-heading effort-section-heading"><div><span class="eyebrow">Progress over time</span><h2>{history.label} performance</h2></div><span class="chart-hint">{history.higherIsBetter ? "Higher is better" : "Higher is faster"}</span></div>
       <BestEffortChart efforts={history.efforts} label={history.label} valueKind={history.valueKind} higherIsBetter={history.higherIsBetter} unitSystem={data.unitSystem} />
     </section>
 

@@ -21,6 +21,7 @@
   const activitySettings = $derived(activityTypeSettings(activity.sport));
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
+  const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -134,14 +135,14 @@
 
   {#if activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
-      <div class="section-heading"><div><span class="eyebrow">Running performance</span><h2>Best efforts</h2></div></div>
+      <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2></div></div>
       <div class="best-effort-list">
         {#each activity.bestEfforts as effort}
           <article class="best-effort">
             <span class="effort-icon"><Trophy size={18} /></span>
             <strong>{effort.label}</strong>
             <span>{effortDuration(effort.elapsedTime)}</span>
-            <small>{effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</small>
+            <small>{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</small>
           </article>
         {/each}
       </div>

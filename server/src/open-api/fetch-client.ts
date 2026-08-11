@@ -384,7 +384,7 @@ export function activityControllerListRecent(
   );
 }
 /**
- * List running best efforts over time
+ * List best efforts over time for a sport
  */
 export function activityControllerListBestEfforts(
   {
