@@ -579,6 +579,11 @@
             "description": "Activity name",
             "nullable": true
           },
+          "description": {
+            "type": "string",
+            "description": "Activity description",
+            "nullable": true
+          },
           "startedAt": {
             "type": "string",
             "format": "date-time",
@@ -704,6 +709,7 @@
           "uploadId",
           "sport",
           "name",
+          "description",
           "startedAt",
           "timezoneOffsetMinutes",
           "elapsedTime",
@@ -787,6 +793,11 @@
           "name": {
             "type": "string",
             "description": "Activity name",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Activity description",
             "nullable": true
           },
           "startedAt": {
@@ -1008,6 +1019,7 @@
           "uploadId",
           "sport",
           "name",
+          "description",
           "startedAt",
           "timezoneOffsetMinutes",
           "elapsedTime",
@@ -1040,6 +1052,12 @@
             "minLength": 1,
             "maxLength": 200,
             "description": "Display name for the activity",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000,
+            "description": "Description for the activity",
             "nullable": true
           },
           "sport": {

@@ -145,13 +145,14 @@ describe('ActivityController (medium)', () => {
   });
 
   describe('PUT /activities/:id', () => {
-    it('updates the activity name', async () => {
+    it('updates the activity name and description', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before');
 
-      const updated = await controller.updateById({ id: activityId }, { name: 'after' });
+      const updated = await controller.updateById({ id: activityId }, { name: 'after', description: 'A lovely run' });
 
       expect(updated.id).toBe(activityId);
       expect(updated.name).toBe('after');
+      expect(updated.description).toBe('A lovely run');
     });
 
     it('updates sport and startedAt', async () => {

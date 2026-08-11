@@ -18,6 +18,8 @@ const MAX_ZIP_COMMENT_BYTES = 0xff_ff;
 export type LagomTakeoutActivity = {
   row: number;
   filename: string;
+  name: string | null;
+  description: string | null;
   file: UploadedFileData;
 };
 
@@ -224,6 +226,8 @@ export const extractLagomTakeout = async (
   if (filenameIndex === -1) {
     throw new Error(`${MANIFEST_NAME} does not contain a Filename column`);
   }
+  const nameIndex = headers.indexOf('Activity Name');
+  const descriptionIndex = headers.indexOf('Activity Description');
 
   const result: LagomTakeoutContents = {
     totalActivities: rows.length,
@@ -237,6 +241,8 @@ export const extractLagomTakeout = async (
   for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2;
     const filename = row[filenameIndex]?.trim() ?? '';
+    const name = nameIndex === -1 ? null : row[nameIndex]?.trim() || null;
+    const description = descriptionIndex === -1 ? null : row[descriptionIndex]?.trim() || null;
     if (!filename) {
       result.skipped += 1;
       continue;
@@ -285,6 +291,8 @@ export const extractLagomTakeout = async (
       activity = {
         row: rowNumber,
         filename,
+        name,
+        description,
         file: { originalname, buffer, size: buffer.length },
       };
     } catch (error) {

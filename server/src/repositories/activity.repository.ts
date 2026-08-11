@@ -28,7 +28,7 @@ export type CreateActivityInput = {
 
 export type ActivityRecord = Activity & ActivityMetric;
 
-export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'sport' | 'started_at'>;
+export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at'>;
 
 export type ActivityCursor = {
   startedAt: Date;

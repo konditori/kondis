@@ -51,6 +51,8 @@ export class UploadService {
     originalName,
     storagePath,
     checksum,
+    activityName,
+    activityDescription,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
@@ -84,7 +86,17 @@ export class UploadService {
           trx,
         );
 
-        await this.jobRepository.queue({ name: JobName.ActivityParse, data: { id: created.id } }, { transaction: trx });
+        await this.jobRepository.queue(
+          {
+            name: JobName.ActivityParse,
+            data: {
+              id: created.id,
+              ...(activityName && { activityName }),
+              ...(activityDescription && { activityDescription }),
+            },
+          },
+          { transaction: trx },
+        );
       });
     } catch (error) {
       const raced = await this.uploadRepository.getByChecksum(checksum);
@@ -126,7 +138,7 @@ export class UploadService {
   async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
     const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
-      await this.queueActivityUpload(activity.file);
+      await this.queueActivityUpload(activity.file, activity.name ?? undefined, activity.description ?? undefined);
       queued += 1;
     });
 
@@ -137,14 +149,24 @@ export class UploadService {
     return JobStatus.Success;
   }
 
-  private async queueActivityUpload(file: UploadedFileData): Promise<void> {
+  private async queueActivityUpload(
+    file: UploadedFileData,
+    activityName?: string,
+    activityDescription?: string,
+  ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
     await this.storageRepository.write(storagePath, file.buffer);
 
     await this.jobRepository.queue({
       name: JobName.ActivityUpload,
-      data: { originalName: file.originalname, storagePath, checksum },
+      data: {
+        originalName: file.originalname,
+        storagePath,
+        checksum,
+        ...(activityName && { activityName }),
+        ...(activityDescription && { activityDescription }),
+      },
     });
   }
 }

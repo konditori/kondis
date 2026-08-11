@@ -22,7 +22,7 @@
   });
   const nextCursor = $derived(cursorOverride === undefined ? data.nextCursor : cursorOverride);
   const total = $derived(totalOverride ?? data.total);
-  const filtered = $derived(activities.filter((activity) => `${activity.name ?? ''} ${activity.sport}`.toLowerCase().includes(query.toLowerCase())));
+  const filtered = $derived(activities.filter((activity) => `${activity.name ?? ''} ${activity.description ?? ''} ${activity.sport}`.toLowerCase().includes(query.toLowerCase())));
   const groups = $derived(Object.entries(Object.groupBy(filtered, (activity) => localDate(activity.startedAt))));
 
   $effect(() => {

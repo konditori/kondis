@@ -72,7 +72,7 @@ describe('UploadService (medium)', () => {
     expect(result).toEqual({ byteSize: buffer.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
+      { name: JobName; data: { originalName: string; storagePath: string; checksum: string; activityName?: string } },
     ];
     expect(item).toEqual({
       name: JobName.ActivityUpload,
@@ -167,10 +167,10 @@ describe('UploadService (medium)', () => {
     const archive = createTestZip({
       'activities.csv': Buffer.from(
         [
-          'Activity ID,Activity Name,Filename',
-          '1,Run,activities/run.fit.gz',
-          '2,Ride,activities/ride.gpx',
-          '3,Manual,',
+          'Activity ID,Activity Name,Activity Description,Filename',
+          '1,Run,Forest loop,activities/run.fit.gz',
+          '2,Ride,,activities/ride.gpx',
+          '3,Manual,,',
         ].join('\n'),
       ),
       'activities/run.fit.gz': gzipSync(fit),
@@ -209,6 +209,8 @@ describe('UploadService (medium)', () => {
         originalName: 'run.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
         checksum: crypto.xxHash(fit),
+        activityName: 'Run',
+        activityDescription: 'Forest loop',
       },
     });
     expect(gpxJob).toEqual({
@@ -217,6 +219,7 @@ describe('UploadService (medium)', () => {
         originalName: 'ride.gpx',
         storagePath: expect.stringMatching(/^temporary\/.+\.gpx$/),
         checksum: crypto.xxHash(gpx),
+        activityName: 'Ride',
       },
     });
     await expect(storageRepository.read(fitJob.data.storagePath)).resolves.toEqual(fit);

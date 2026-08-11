@@ -98,6 +98,7 @@ describe('ActivityService', () => {
               upload_id: UPLOAD_ID,
               sport: 'run',
               name: null,
+              description: null,
               started_at: new Date('2024-03-01T06:00:00.000Z'),
               timezone_offset_minutes: null,
               elapsed_time: 1,
@@ -168,6 +169,22 @@ describe('ActivityService', () => {
       );
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
       expect(emitEvent).toHaveBeenCalledWith('ActivityCreate', expect.objectContaining({ id: ACTIVITY_ID }));
+    });
+
+    it('uses an activity name supplied by an import job', async () => {
+      await expect(
+        makeService().handleActivityParse({
+          id: UPLOAD_ID,
+          activityName: 'Trollskogen',
+          activityDescription: 'A walk in the woods',
+        }),
+      ).resolves.toBe(JobStatus.Success);
+
+      expect(createActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          activity: expect.objectContaining({ name: 'Trollskogen', description: 'A walk in the woods' }),
+        }),
+      );
     });
 
     it('uses the TCX decoder for .tcx uploads', async () => {

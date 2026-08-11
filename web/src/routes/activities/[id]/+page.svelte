@@ -15,6 +15,7 @@
   let saving = $state(false);
   let editError = $state('');
   let draftName = $state('');
+  let draftDescription = $state('');
   let draftSport = $state<Activity['sport']>(ACTIVITY_TYPE_OPTIONS.at(-1)!.value);
   const Icon = $derived(sportIcon(activity.sport));
   const stats = $derived([
@@ -37,6 +38,7 @@
 
   function startEditing() {
     draftName = activity.name ?? '';
+    draftDescription = activity.description ?? '';
     draftSport = activity.sport;
     editError = '';
     editing = true;
@@ -57,6 +59,7 @@
           id: activity.id,
           activityUpdateDto: {
             name: draftName.trim() || null,
+            description: draftDescription.trim() || null,
             sport: draftSport,
           },
         },
@@ -87,6 +90,7 @@
       <form class="metadata-editor" onsubmit={saveMetadata}>
         <label><span>Name</span><input bind:value={draftName} maxlength="200" placeholder="Activity name" /></label>
         <label><span>Activity type</span><select bind:value={draftSport}>{#each ACTIVITY_TYPE_OPTIONS as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+        <label class="metadata-description"><span>Description</span><textarea bind:value={draftDescription} maxlength="10000" placeholder="Activity description"></textarea></label>
         <div class="metadata-actions">
           <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving}><X size={16} /> Cancel</button>
           <button type="submit" class="metadata-save" disabled={saving}><Check size={16} /> {saving ? 'Saving…' : 'Save'}</button>
@@ -95,6 +99,7 @@
       </form>
     {/if}
     <div class="detail-date"><span><CalendarDays size={17} />{localDate(activity.startedAt)}</span><span><Clock3 size={17} />{localTime(activity.startedAt)}</span></div>
+    {#if activity.description}<p class="activity-description">{activity.description}</p>{/if}
   </header>
 
   <section class="map-panel">

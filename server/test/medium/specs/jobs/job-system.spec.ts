@@ -132,10 +132,12 @@ describe('job system (medium)', () => {
       expect(activity?.sport).toBe(fixture.expectedSport);
     });
 
-    it('imports a Lagom takeout and parses its activities through the real queues', async () => {
+    it('imports a Strava takeout and parses its activities through the real queues', async () => {
       const fit = await readFile(activityFixtures.hindasRun.path);
       const archive = createTestZip({
-        'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit.gz'),
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Filename\n1,Trollskogen,A walk in the woods,activities/run.fit.gz',
+        ),
         'activities/run.fit.gz': gzipSync(fit),
       });
 
@@ -147,7 +149,10 @@ describe('job system (medium)', () => {
 
       const imported = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(fit));
       expect(imported?.status).toBe('parsed');
-      expect(await activityRepository.getByUploadId(imported!.id)).toBeDefined();
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Trollskogen',
+        description: 'A walk in the woods',
+      });
     });
 
     it('deletes the activity, the upload and the file', async () => {

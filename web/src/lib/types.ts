@@ -7,6 +7,7 @@ export type Activity = {
   uploadId: string;
   sport: ActivityType;
   name: string | null;
+  description: string | null;
   startedAt: string;
   timezoneOffsetMinutes: number | null;
   elapsedTime: number;

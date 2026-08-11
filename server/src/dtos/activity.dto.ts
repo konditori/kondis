@@ -26,6 +26,7 @@ export const ActivitySchema = z
     uploadId: z.string().uuid().describe('Source upload id'),
     sport: ActivityTypeSchema,
     name: z.string().nullable().describe('Activity name'),
+    description: z.string().nullable().describe('Activity description'),
     startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
     timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
     elapsedTime: z.number().int().describe('Elapsed duration in seconds'),
@@ -79,6 +80,7 @@ export const ActivityDetailSchema = ActivitySchema.extend({
 export const ActivityUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).nullable().optional().describe('Display name for the activity'),
+    description: z.string().trim().max(10_000).nullable().optional().describe('Description for the activity'),
     sport: ActivityTypeSchema.optional(),
     startedAt: z.string().datetime().optional().describe('Updated start time in ISO-8601 format'),
   })

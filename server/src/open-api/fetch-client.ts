@@ -72,6 +72,8 @@ export type ActivityDtoOutput = {
   sport: Sport;
   /** Activity name */
   name: string | null;
+  /** Activity description */
+  description: string | null;
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -127,6 +129,8 @@ export type ActivityDetailDtoOutput = {
   sport: Sport;
   /** Activity name */
   name: string | null;
+  /** Activity description */
+  description: string | null;
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -186,6 +190,8 @@ export type ActivityDetailDtoOutput = {
 export type ActivityUpdateDto = {
   /** Display name for the activity */
   name?: string | null;
+  /** Description for the activity */
+  description?: string | null;
   /** Activity sport type */
   sport?: Sport;
   /** Updated start time in ISO-8601 format */

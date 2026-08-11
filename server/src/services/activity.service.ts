@@ -45,7 +45,12 @@ export class ActivityService {
   }
 
   @OnJob({ name: JobName.ActivityParse, queue: QueueName.ActivityParsing })
-  async handleActivityParse({ id, force }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
+  async handleActivityParse({
+    id,
+    force,
+    activityName,
+    activityDescription,
+  }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
       this.logger.warn(`Skipping parse of upload ${id}: no longer exists`);
@@ -67,7 +72,9 @@ export class ActivityService {
         throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
       }
       const parsed = this.parseActivityFile(upload.storage_path, contents);
-      const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
+      const activityId = await this.activityRepository.create(
+        this.toCreateInput(id, parsed, activityName, activityDescription),
+      );
 
       await this.uploadRepository.setStatus(id, 'parsed');
       const activity = await this.activityRepository.getByUploadId(id);
@@ -227,13 +234,22 @@ export class ActivityService {
     };
   }
 
-  async updateById(id: string, input: { name?: string | null; sport?: ActivityType; startedAt?: Date }) {
+  async updateById(
+    id: string,
+    input: { name?: string | null; description?: string | null; sport?: ActivityType; startedAt?: Date },
+  ) {
     const mapped: UpdateActivityInput = {};
 
     if (input.name === undefined) {
       // no-op
     } else {
       mapped.name = input.name;
+    }
+
+    if (input.description === undefined) {
+      // no-op
+    } else {
+      mapped.description = input.description;
     }
 
     if (input.sport === undefined) {
@@ -298,12 +314,18 @@ export class ActivityService {
     }
   }
 
-  private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {
+  private toCreateInput(
+    uploadId: string,
+    parsed: ParsedActivity,
+    activityName?: string,
+    activityDescription?: string,
+  ): CreateActivityInput {
     return {
       activity: {
         upload_id: uploadId,
         sport: parsed.sport,
-        name: parsed.name,
+        name: activityName ?? parsed.name,
+        description: activityDescription ?? null,
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,
       },

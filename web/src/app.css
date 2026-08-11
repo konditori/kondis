@@ -601,7 +601,8 @@ button {
   font-weight: 700;
 }
 .metadata-editor input,
-.metadata-editor select {
+.metadata-editor select,
+.metadata-editor textarea {
   width: 100%;
   min-width: 0;
   height: 39px;
@@ -613,9 +614,18 @@ button {
   outline: none;
 }
 .metadata-editor input:focus,
-.metadata-editor select:focus {
+.metadata-editor select:focus,
+.metadata-editor textarea:focus {
   border-color: #8bae94;
   box-shadow: 0 0 0 3px #16653413;
+}
+.metadata-description {
+  grid-column: 1 / -1;
+}
+.metadata-editor textarea {
+  height: 90px;
+  padding: 9px 10px;
+  resize: vertical;
 }
 .metadata-actions {
   display: flex;
@@ -666,6 +676,13 @@ button {
   display: flex;
   align-items: center;
   gap: 7px;
+}
+.activity-description {
+  max-width: 760px;
+  margin: 16px 0 0 71px;
+  color: var(--muted);
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 .map-panel {
   position: relative;
@@ -985,6 +1002,9 @@ button {
     justify-content: flex-end;
   }
   .detail-date {
+    margin-left: 0;
+  }
+  .activity-description {
     margin-left: 0;
     flex-wrap: wrap;
   }

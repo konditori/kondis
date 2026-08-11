@@ -28,6 +28,9 @@ export class ActivityTable {
   @Column({ type: 'text', nullable: true })
   name!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  description!: Generated<string | null>;
+
   @Column({ type: 'timestamp' })
   started_at!: Timestamp;
 
