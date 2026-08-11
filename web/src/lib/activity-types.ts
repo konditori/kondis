@@ -6,6 +6,7 @@ export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
   { value: Sport.Ride, label: "Ride" },
   { value: Sport.TrailRun, label: "Trail run" },
   { value: Sport.Walk, label: "Walk" },
+  { value: Sport.Hike, label: "Hike" },
   { value: Sport.Swim, label: "Swim" },
   { value: Sport.AlpineSki, label: "Alpine skiing" },
   { value: Sport.RollerSki, label: "Roller skiing" },
@@ -20,4 +21,6 @@ export const activityUsesPace = (type: ActivityType): boolean =>
   type === Sport.Run ||
   type === Sport.TrailRun ||
   type === Sport.Walk ||
-  type === Sport.Swim;
+  type === Sport.Hike ||
+  type === Sport.Swim ||
+  type === Sport.RollerSki;

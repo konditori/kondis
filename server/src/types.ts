@@ -76,11 +76,13 @@ export interface IActivityUploadJob {
   checksum: string;
   activityName?: string;
   activityDescription?: string;
+  activitySport?: ActivityType;
 }
 
 export interface IActivityParseJob extends IEntityJob {
   activityName?: string;
   activityDescription?: string;
+  activitySport?: ActivityType;
 }
 
 export interface ILagomTakeoutImportJob {

@@ -443,6 +443,7 @@ export enum Sport {
   Ride = 'ride',
   TrailRun = 'trail_run',
   Walk = 'walk',
+  Hike = 'hike',
   Swim = 'swim',
   AlpineSki = 'alpine_ski',
   RollerSki = 'roller_ski',

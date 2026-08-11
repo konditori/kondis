@@ -50,6 +50,7 @@ export class ActivityService {
     force,
     activityName,
     activityDescription,
+    activitySport,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
@@ -73,7 +74,7 @@ export class ActivityService {
       }
       const parsed = this.parseActivityFile(upload.storage_path, contents);
       const activityId = await this.activityRepository.create(
-        this.toCreateInput(id, parsed, activityName, activityDescription),
+        this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
       );
 
       await this.uploadRepository.setStatus(id, 'parsed');
@@ -82,7 +83,7 @@ export class ActivityService {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
-      this.logger.log(`Parsed upload ${id} into activity ${activityId} (${parsed.sport})`);
+      this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -319,11 +320,12 @@ export class ActivityService {
     parsed: ParsedActivity,
     activityName?: string,
     activityDescription?: string,
+    activitySport?: ActivityType,
   ): CreateActivityInput {
     return {
       activity: {
         upload_id: uploadId,
-        sport: parsed.sport,
+        sport: activitySport ?? parsed.sport,
         name: activityName ?? parsed.name,
         description: activityDescription ?? null,
         started_at: parsed.startedAt,

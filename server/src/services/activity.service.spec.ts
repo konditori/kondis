@@ -175,14 +175,19 @@ describe('ActivityService', () => {
       await expect(
         makeService().handleActivityParse({
           id: UPLOAD_ID,
-          activityName: 'Trollskogen',
+          activityName: 'Forest walk',
           activityDescription: 'A walk in the woods',
+          activitySport: 'roller_ski',
         }),
       ).resolves.toBe(JobStatus.Success);
 
       expect(createActivity).toHaveBeenCalledWith(
         expect.objectContaining({
-          activity: expect.objectContaining({ name: 'Trollskogen', description: 'A walk in the woods' }),
+          activity: expect.objectContaining({
+            name: 'Forest walk',
+            description: 'A walk in the woods',
+            sport: 'roller_ski',
+          }),
         }),
       );
     });

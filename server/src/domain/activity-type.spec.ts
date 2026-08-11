@@ -9,6 +9,7 @@ describe('toActivityType', () => {
     ['Trail Running', undefined, 'trail_run'],
     ['cycling', undefined, 'ride'],
     ['walking', undefined, 'walk'],
+    ['hiking', undefined, 'hike'],
     ['swimming', undefined, 'swim'],
     ['alpine skiing', undefined, 'alpine_ski'],
     ['roller_skiing', undefined, 'roller_ski'],

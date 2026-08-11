@@ -53,6 +53,7 @@ export class UploadService {
     checksum,
     activityName,
     activityDescription,
+    activitySport,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
@@ -67,6 +68,20 @@ export class UploadService {
 
     const existing = await this.uploadRepository.getByChecksum(checksum);
     if (existing) {
+      if (activityName || activityDescription || activitySport) {
+        await this.jobRepository.queue({
+          name: JobName.ActivityParse,
+          data: {
+            id: existing.id,
+            force: true,
+            ...(activityName && { activityName }),
+            ...(activityDescription && { activityDescription }),
+            ...(activitySport && { activitySport }),
+          },
+        });
+        return JobStatus.Success;
+      }
+
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
       return JobStatus.Skipped;
     }
@@ -93,6 +108,7 @@ export class UploadService {
               id: created.id,
               ...(activityName && { activityName }),
               ...(activityDescription && { activityDescription }),
+              ...(activitySport && { activitySport }),
             },
           },
           { transaction: trx },
@@ -138,7 +154,12 @@ export class UploadService {
   async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
     const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
-      await this.queueActivityUpload(activity.file, activity.name ?? undefined, activity.description ?? undefined);
+      await this.queueActivityUpload(
+        activity.file,
+        activity.name ?? undefined,
+        activity.description ?? undefined,
+        activity.sport ?? undefined,
+      );
       queued += 1;
     });
 
@@ -153,6 +174,7 @@ export class UploadService {
     file: UploadedFileData,
     activityName?: string,
     activityDescription?: string,
+    activitySport?: JobOf<JobName.ActivityUpload>['activitySport'],
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
@@ -166,6 +188,7 @@ export class UploadService {
         checksum,
         ...(activityName && { activityName }),
         ...(activityDescription && { activityDescription }),
+        ...(activitySport && { activitySport }),
       },
     });
   }

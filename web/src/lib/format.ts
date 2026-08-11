@@ -26,7 +26,12 @@ export function activityName(activity: {
 
 export function sportIcon(sport: ActivityType) {
   if (sport === "ride") return Bike;
-  if (sport === "run" || sport === "trail_run" || sport === "walk")
+  if (
+    sport === "run" ||
+    sport === "trail_run" ||
+    sport === "walk" ||
+    sport === "hike"
+  )
     return Footprints;
   if (sport === "swim") return Waves;
   if (["alpine_ski", "roller_ski", "cross_country_ski"].includes(sport))
