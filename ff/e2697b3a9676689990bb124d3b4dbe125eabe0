@@ -1,0 +1,23 @@
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_4dabd4e42d85c3::t_0fb95c8cf3a051 120,129,136-137,140-141,143
+web/src/lib/format.spec.ts
+  s_4dabd4e42d85c3::t_0238c3ce9234ab 3
+web/src/routes/activities/[id]/+page.svelte
+  s_4dabd4e42d85c3::t_6a486fed8a5169 9,186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ffe2697b3a9676689990bb124d3b4dbe125eabe0",
+  "prompts": {},
+  "sessions": {
+    "s_4dabd4e42d85c3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff216-d202-7b42-97ca-779a58817ce9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
