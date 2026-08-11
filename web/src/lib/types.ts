@@ -44,6 +44,8 @@ export type ActivityDetail = Activity & {
     elapsedTime: number;
     startTime: number;
     endTime: number;
+    year: number;
+    yearRank: number;
   }[];
 };
 

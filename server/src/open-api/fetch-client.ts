@@ -211,6 +211,10 @@ export type ActivityDetailDtoOutput = {
     startTime: number;
     /** End offset from activity start in seconds */
     endTime: number;
+    /** Local calendar year of the activity */
+    year: number;
+    /** Rank among matching efforts in that calendar year */
+    yearRank: number;
   }[];
 };
 export type ActivityUpdateDto = {

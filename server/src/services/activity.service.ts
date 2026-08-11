@@ -215,13 +215,7 @@ export class ActivityService {
 
   async listBestEfforts(sport: BestEffortSport, type: BestEffortType) {
     // Populate analysis rows for activities imported before best efforts were persisted.
-    const activities = await this.activityRepository.listActivitiesMissingBestEfforts();
-    for (const activity of activities) {
-      if (!supportsDistanceBestEfforts(activity.sport)) {
-        continue;
-      }
-      await this.activityRepository.ensureBestEfforts(activity.id, activity.sport);
-    }
+    await this.ensureBestEffortsPopulated();
 
     const definitions = sport === 'run' ? RUNNING_BEST_EFFORTS : CYCLING_BEST_EFFORTS;
     const selected = definitions.find((effort) => effort.type === type);
@@ -288,15 +282,48 @@ export class ActivityService {
 
     // Older activities predate persisted analysis rows. Fill those without
     // reparsing the upload, which would discard user-edited metadata.
-    await this.activityRepository.ensureBestEfforts(id, row.sport);
+    await this.ensureBestEffortsPopulated();
     const storedEfforts = await this.activityRepository.getBestEfforts(id);
-    const effortDefinitions = supportsRunningBestEfforts(row.sport)
-      ? RUNNING_BEST_EFFORTS
+    const effortSport = supportsRunningBestEfforts(row.sport)
+      ? 'run'
       : supportsCyclingBestEfforts(row.sport)
-        ? CYCLING_BEST_EFFORTS.filter(
-            (effort): effort is (typeof CYCLING_BEST_EFFORTS)[number] & { distance: number } => 'distance' in effort,
-          )
-        : [];
+        ? 'ride'
+        : null;
+    const effortDefinitions =
+      effortSport === 'run'
+        ? RUNNING_BEST_EFFORTS
+        : effortSport === 'ride'
+          ? CYCLING_BEST_EFFORTS.filter(
+              (effort): effort is (typeof CYCLING_BEST_EFFORTS)[number] & { distance: number } => 'distance' in effort,
+            )
+          : [];
+    const activityYear = this.activityYear(row);
+    const rankedEfforts = effortSport
+      ? await Promise.all(
+          effortDefinitions.map(async (definition) => {
+            const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
+            if (!effort) {
+              return null;
+            }
+
+            const peers = await this.activityRepository.listBestEfforts(definition.type, [
+              ...BEST_EFFORT_SPORTS[effortSport],
+            ]);
+            const rankedPeers = peers
+              .filter((candidate) => this.activityYear(candidate) === activityYear)
+              .sort((left, right) => {
+                const valueComparison = definition.higherIsBetter ? right.value - left.value : left.value - right.value;
+                return valueComparison || left.activity_id.localeCompare(right.activity_id);
+              });
+
+            return {
+              definition,
+              effort,
+              yearRank: rankedPeers.findIndex((candidate) => candidate.activity_id === id) + 1,
+            };
+          }),
+        )
+      : [];
     const simplifiedTrack = row.track_geojson
       ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
       : null;
@@ -310,17 +337,18 @@ export class ActivityService {
         heatmapCoordinates.length >= 2
           ? { type: 'LineString' as const, coordinates: heatmapCoordinates }
           : simplifiedTrack,
-      bestEfforts: effortDefinitions.flatMap(({ type, label }) => {
-        const effort = storedEfforts.find((candidate) => candidate.type === type);
-        return effort
+      bestEfforts: rankedEfforts.flatMap((rankedEffort) => {
+        return rankedEffort
           ? [
               {
-                type,
-                label,
-                distance: effort.distance,
-                elapsedTime: effort.elapsed_time,
-                startTime: effort.start_time,
-                endTime: effort.end_time,
+                type: rankedEffort.definition.type,
+                label: rankedEffort.definition.label,
+                distance: rankedEffort.effort.distance,
+                elapsedTime: rankedEffort.effort.elapsed_time,
+                startTime: rankedEffort.effort.start_time,
+                endTime: rankedEffort.effort.end_time,
+                year: activityYear,
+                yearRank: rankedEffort.yearRank,
               },
             ]
           : [];
@@ -394,6 +422,15 @@ export class ActivityService {
   private activityYear(activity: { started_at: Timestamp; timezone_offset_minutes: number | null }): number {
     const offset = activity.timezone_offset_minutes ?? 0;
     return new Date(this.toDate(activity.started_at).getTime() + offset * 60_000).getUTCFullYear();
+  }
+
+  private async ensureBestEffortsPopulated(): Promise<void> {
+    const activities = await this.activityRepository.listActivitiesMissingBestEfforts();
+    for (const activity of activities) {
+      if (supportsDistanceBestEfforts(activity.sport)) {
+        await this.activityRepository.ensureBestEfforts(activity.id, activity.sport);
+      }
+    }
   }
 
   private encodeActivityCursor(startedAt: Timestamp, id: string): string {

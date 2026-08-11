@@ -116,6 +116,8 @@ export const ActivityDetailSchema = ActivitySchema.extend({
       elapsedTime: z.number().positive().describe('Effort duration in seconds'),
       startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),
       endTime: z.number().positive().describe('End offset from activity start in seconds'),
+      year: z.number().int().describe('Local calendar year of the activity'),
+      yearRank: z.number().int().positive().describe('Rank among matching efforts in that calendar year'),
     }),
   ),
 }).meta({ id: 'ActivityDetailDto' });

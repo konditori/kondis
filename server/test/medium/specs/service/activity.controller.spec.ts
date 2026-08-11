@@ -175,6 +175,32 @@ describe('ActivityController (medium)', () => {
       expect(activity.bestEfforts.find(({ type }) => type === '1_mile')?.elapsedTime).toBeCloseTo(402.336);
     });
 
+    it('includes each effort ranking for the activity calendar year', async () => {
+      await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'fastest', [
+        { type: 'distance', data: [0, 1000] },
+        { type: 'time', data: [0, 230] },
+      ]);
+      await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'second', [
+        { type: 'distance', data: [0, 1000] },
+        { type: 'time', data: [0, 240] },
+      ]);
+      const activityId = await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'third', [
+        { type: 'distance', data: [0, 1000] },
+        { type: 'time', data: [0, 250] },
+      ]);
+      await createActivity(new Date('2023-04-01T08:00:00.000Z'), 'another year', [
+        { type: 'distance', data: [0, 1000] },
+        { type: 'time', data: [0, 220] },
+      ]);
+
+      const activity = await controller.getById({ id: activityId });
+
+      expect(activity.bestEfforts.find(({ type }) => type === '1k')).toMatchObject({
+        year: 2024,
+        yearRank: 3,
+      });
+    });
+
     it('backfills best efforts for existing running activities', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'older run', [
         { type: 'distance', data: [0, 400, 1000] },

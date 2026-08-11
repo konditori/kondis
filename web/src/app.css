@@ -933,11 +933,17 @@ button {
 .best-effort {
   min-height: 64px;
   display: grid;
-  grid-template-columns: 36px minmax(100px, 1fr) auto minmax(82px, auto);
+  grid-template-columns: 36px minmax(130px, 1fr) auto minmax(82px, auto) 18px;
   align-items: center;
   gap: 13px;
   padding: 13px 17px;
+  color: inherit;
   background: var(--surface);
+  text-decoration: none;
+  transition: background 140ms ease;
+}
+.best-effort:hover {
+  background: #fafbf9;
 }
 .effort-icon {
   width: 34px;
@@ -948,16 +954,44 @@ button {
   background: #fff2d8;
   border-radius: 9px;
 }
-.best-effort strong {
+.best-effort.year-rank-2 .effort-icon {
+  color: #65706e;
+  background: #edf0ef;
+}
+.best-effort.year-rank-3 .effort-icon {
+  color: #9a542d;
+  background: #fae8dc;
+}
+.best-effort.year-rank-4 .effort-icon {
+  color: var(--muted);
+  background: #f0f2ef;
+}
+.effort-title {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.effort-title strong {
   font-size: 14px;
 }
-.best-effort > span:not(.effort-icon) {
+.effort-title small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.best-effort > span:not(.effort-icon, .effort-title) {
   font-family: "Avenir Next", Inter, ui-sans-serif, system-ui, sans-serif;
   font-weight: 700;
 }
-.best-effort small {
+.effort-secondary {
   color: var(--muted);
   text-align: right;
+}
+.effort-chevron {
+  color: #a3aaa3;
 }
 .best-efforts-header {
   align-items: flex-end;
@@ -1526,6 +1560,13 @@ button {
   }
   .best-effort-list {
     grid-template-columns: 1fr;
+  }
+  .best-effort {
+    grid-template-columns: 34px minmax(0, 1fr) auto 17px;
+    gap: 10px;
+  }
+  .effort-secondary {
+    display: none;
   }
   .dialog {
     padding: 19px;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Mountain, Pencil, Timer, Trophy, X, Zap } from '@lucide/svelte';
+  import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, Flame, Gauge, HeartPulse, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions } from '$lib/api';
@@ -47,6 +47,19 @@
       event.preventDefault();
       history.back();
     }
+  }
+
+  function ordinal(rank: number): string {
+    const tens = rank % 100;
+    if (tens >= 11 && tens <= 13) return `${rank}th`;
+    return `${rank}${rank % 10 === 1 ? 'st' : rank % 10 === 2 ? 'nd' : rank % 10 === 3 ? 'rd' : 'th'}`;
+  }
+
+  function yearlyRankLabel(effort: ActivityDetail['bestEfforts'][number]): string {
+    const period = effort.year === new Date().getFullYear() ? 'this year' : `in ${effort.year}`;
+    return effort.yearRank === 1
+      ? `Your best ${period} · PR`
+      : `Your ${ordinal(effort.yearRank)} best ${period}`;
   }
 
   function startEditing() {
@@ -138,12 +151,13 @@
       <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2></div></div>
       <div class="best-effort-list">
         {#each activity.bestEfforts as effort}
-          <article class="best-effort">
-            <span class="effort-icon"><Trophy size={18} /></span>
-            <strong>{effort.label}</strong>
+          <a class={`best-effort year-rank-${Math.min(effort.yearRank, 4)}`} href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={effort.yearRank <= 3 ? `${effort.label}: ${yearlyRankLabel(effort)}. View best effort history` : `${effort.label}. View best effort history`}>
+            <span class="effort-icon"><Medal size={19} /></span>
+            <span class="effort-title"><strong>{effort.label}</strong>{#if effort.yearRank <= 3}<small>{yearlyRankLabel(effort)}</small>{/if}</span>
             <span>{effortDuration(effort.elapsedTime)}</span>
-            <small>{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</small>
-          </article>
+            <small class="effort-secondary">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</small>
+            <ChevronRight class="effort-chevron" size={17} />
+          </a>
         {/each}
       </div>
     </section>

@@ -1257,6 +1257,19 @@
                   "exclusiveMinimum": true,
                   "description": "End offset from activity start in seconds",
                   "minimum": 0
+                },
+                "year": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Local calendar year of the activity"
+                },
+                "yearRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "description": "Rank among matching efforts in that calendar year",
+                  "minimum": 0
                 }
               },
               "required": [
@@ -1265,7 +1278,9 @@
                 "distance",
                 "elapsedTime",
                 "startTime",
-                "endTime"
+                "endTime",
+                "year",
+                "yearRank"
               ],
               "additionalProperties": false
             }
