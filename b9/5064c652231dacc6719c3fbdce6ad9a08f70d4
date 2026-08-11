@@ -1,0 +1,29 @@
+server/src/main.ts
+  s_fc50a608df6df8::t_5303ee8e79c4ca 10,25
+server/src/repositories/event.repository.ts
+  s_fc50a608df6df8::t_e2f2e126891ba2 1-2,8-31,34-35,41-50,76,81,94
+server/src/repositories/index.ts
+  s_fc50a608df6df8::t_fac055bb95c0f9 4,16
+server/src/services/activity.service.spec.ts
+  s_fc50a608df6df8::t_a29d63cbd11a1c 8,40,65-66,78,171
+server/src/services/activity.service.ts
+  s_fc50a608df6df8::t_e8e8e478fc1adc 11,31,71
+server/src/services/index.ts
+  s_fc50a608df6df8::t_c2ba33d8e995e6 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b95064c652231dacc6719c3fbdce6ad9a08f70d4",
+  "prompts": {},
+  "sessions": {
+    "s_fc50a608df6df8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fedc2-9aae-7c03-a5d2-05530864bab4",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
