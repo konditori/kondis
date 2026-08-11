@@ -1,0 +1,39 @@
+server/src/enum.ts
+  s_4dabd4e42d85c3::t_834a0ab5a3f916 14-15
+server/src/repositories/activity.repository.ts
+  s_4dabd4e42d85c3::t_0991dac25e32fa 31-41,46,52,86,93-96,105-109,148-158,161,170,180,225-227,239,242-244,271-296
+server/src/repositories/job.repository.ts
+  s_4dabd4e42d85c3::t_74ff14a9272797 310,317-320
+server/src/schema/migrations/1786447000000-PersistedActivityAnalysis.ts
+  s_4dabd4e42d85c3::t_e1bd446ad891a4 1-112
+server/src/schema/tables/activity-best-effort.table.ts
+  s_4dabd4e42d85c3::t_8c83d1ecdd8aff 2,29-37
+server/src/schema/tables/activity.table.ts
+  s_4dabd4e42d85c3::t_fd054c4a4502ac 43-45
+server/src/services/activity.service.spec.ts
+  s_4dabd4e42d85c3::t_9358d064e9a7e1 38-39,65-66,132,175,296-316,346
+server/src/services/activity.service.ts
+  s_4dabd4e42d85c3::t_4a25acde333ae0 6,35-42,78,83,95,179-198,218-219,283-285,292,298-300,305-308,311-318,357-361,401-405,407-409
+server/src/types.ts
+  s_4dabd4e42d85c3::t_f4968b13b34988 95-96
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_4dabd4e42d85c3::t_53529f4d5a320e 75-79
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_4dabd4e42d85c3::t_3eef456cdc8710 5,7,9,22-23,37,65-66,76-77,189,239-247,250-268,277,280,305,320,325,330-348,375-397
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3014ebc1125913239234e6c2d63dd7b44cce6787",
+  "prompts": {},
+  "sessions": {
+    "s_4dabd4e42d85c3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff216-d202-7b42-97ca-779a58817ce9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
