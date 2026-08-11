@@ -1,0 +1,39 @@
+server/src/db/migrations/002-activity-metrics.ts
+  s_433709b89c77e4::t_bfeffc38a86dc0 1-85
+server/src/db/migrations/index.ts
+  s_433709b89c77e4::t_49d54766e0b5ca 4,8
+server/src/db/schema.ts
+  s_433709b89c77e4::t_080ebc509acde9 2,11,24-26
+server/src/repositories/activity.repository.ts
+  s_433709b89c77e4::t_6fb300a7c1be1e 5-14,22,27-28,75-79,107,109,111,116-122,126-130,135-136,141,156-163
+server/src/schema/tables/activity-metric.table.ts
+  s_433709b89c77e4::t_9124af60471af8 1-52
+server/src/services/activity.service.ts
+  s_433709b89c77e4::t_d7e75dfdbbdab0 8-13,247,297-298
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_433709b89c77e4::t_ec1c5f47865924 36-37
+server/test/medium/test-db.ts
+  s_433709b89c77e4::t_d4be9c97d08640 35-37
+web/src/app.css
+  s_433709b89c77e4::t_e12f0322033dce 561-649,930-939
+web/src/lib/api.ts
+  s_433709b89c77e4::t_8e72088615f34c 4,19
+web/src/routes/activities/[id]/+page.svelte
+  s_433709b89c77e4::t_028fd3d8eb9730 2-3,5,8,11-18,37-81,91-92,94-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e9d5b03df05064285afc69eb9e3de937bbda7877",
+  "prompts": {},
+  "sessions": {
+    "s_433709b89c77e4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff00c-5a8b-7aa1-9084-33a528412c32",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
