@@ -1,0 +1,31 @@
+open-api/kondis-openapi-specs.json
+  s_b41688b7e0a47b::t_91909c35620c40 574,792,1079
+server/src/domain/activity-type.spec.ts
+  s_b41688b7e0a47b::t_73ddfa21334013 17
+server/src/domain/activity-type.ts
+  s_b41688b7e0a47b::t_f2539d7226ce98 11,58-59
+server/src/open-api/fetch-client.ts
+  s_b41688b7e0a47b::t_c690a4b104d542 451
+server/src/schema/migrations/1786444000000-ActivityIceSkate.ts
+  s_b41688b7e0a47b::t_8f55c09c81cd3f 1-20
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_b41688b7e0a47b::t_88a82a1c451c98 173-187
+web/src/lib/components/ActivityCard.svelte
+  s_b41688b7e0a47b::t_ac48d45049b4c8 4,7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8776af38836cf3a36ab7064f7727ad74ef54474e",
+  "prompts": {},
+  "sessions": {
+    "s_b41688b7e0a47b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff065-b206-76e0-b5db-16bee05d66a9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
