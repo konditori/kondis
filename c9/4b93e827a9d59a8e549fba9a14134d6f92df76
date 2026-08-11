@@ -1,0 +1,19 @@
+web/src/app.css
+  s_4dabd4e42d85c3::t_34822c3ec27e70 959,983-985,999-1020,1023,1031,1034
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c94b93e827a9d59a8e549fba9a14134d6f92df76",
+  "prompts": {},
+  "sessions": {
+    "s_4dabd4e42d85c3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff216-d202-7b42-97ca-779a58817ce9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
