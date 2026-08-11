@@ -3,7 +3,7 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
-import { ActivityType } from 'src/domain/activity-type';
+import { ActivityType, usesActivityHeatmap } from 'src/domain/activity-type';
 import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
@@ -211,12 +211,19 @@ export class ActivityService {
     // reparsing the upload, which would discard user-edited metadata.
     await this.activityRepository.ensureBestEfforts(id, row.sport);
     const storedEfforts = await this.activityRepository.getBestEfforts(id);
+    const simplifiedTrack = row.track_geojson
+      ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
+      : null;
+    const heatmapCoordinates = usesActivityHeatmap(row.sport)
+      ? await this.activityRepository.getTrackCoordinates(id)
+      : [];
 
     return {
       ...this.toActivityDto(row),
-      track: row.track_geojson
-        ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
-        : null,
+      track:
+        heatmapCoordinates.length >= 2
+          ? { type: 'LineString' as const, coordinates: heatmapCoordinates }
+          : simplifiedTrack,
       bestEfforts: RUNNING_BEST_EFFORTS.flatMap(({ type, label }) => {
         const effort = storedEfforts.find((candidate) => candidate.type === type);
         return effort

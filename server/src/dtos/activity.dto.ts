@@ -64,7 +64,7 @@ export const ActivityDetailSchema = ActivitySchema.extend({
       coordinates: z.array(z.tuple([z.number(), z.number()])),
     })
     .nullable()
-    .describe('Simplified GPS route as GeoJSON'),
+    .describe('GPS route as GeoJSON'),
   bestEfforts: z.array(
     z.object({
       type: RunningBestEffortTypeSchema,

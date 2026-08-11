@@ -3,7 +3,7 @@
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, getSdkRequestOptions } from '$lib/api';
-  import { ACTIVITY_TYPE_OPTIONS, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
+  import { ACTIVITY_TYPE_OPTIONS, ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
@@ -20,6 +20,7 @@
   const Icon = $derived(sportIcon(activity.sport));
   const activitySettings = $derived(activityTypeSettings(activity.sport));
   const averageMetric = $derived(activitySettings.averageMetric);
+  const mapStyle = $derived(activitySettings.mapStyle);
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -114,8 +115,10 @@
   </header>
 
   <section class="map-panel">
-    <RouteMap coordinates={activity.track?.coordinates ?? null} />
-    {#if activity.track}
+    {#key mapStyle}
+      <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} />
+    {/key}
+    {#if activity.track && mapStyle === ActivityMapStyle.Route}
       <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span></div>
     {/if}
   </section>

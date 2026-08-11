@@ -39,11 +39,11 @@ export type ActivityCursor = {
 export class ActivityRepository {
   constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
 
-  private buildTrack(streams: ActivityStreamInput[]) {
+  private trackCoordinates(streams: ActivityStreamInput[]): [number, number][] {
     const latitude = streams.find((stream) => stream.type === 'latitude')?.data;
     const longitude = streams.find((stream) => stream.type === 'longitude')?.data;
     if (!latitude || !longitude) {
-      return null;
+      return [];
     }
 
     const coordinates: [number, number][] = [];
@@ -57,6 +57,11 @@ export class ActivityRepository {
       }
     }
 
+    return coordinates;
+  }
+
+  private buildTrack(streams: ActivityStreamInput[]) {
+    const coordinates = this.trackCoordinates(streams);
     if (coordinates.length < 2) {
       return null;
     }
@@ -155,6 +160,16 @@ export class ActivityRepository {
 
   getStreams(activityId: string): Promise<ActivityStream[]> {
     return this.db.selectFrom('activity_stream').selectAll().where('activity_id', '=', activityId).execute();
+  }
+
+  async getTrackCoordinates(activityId: string): Promise<[number, number][]> {
+    const streams = await this.db
+      .selectFrom('activity_stream')
+      .selectAll()
+      .where('activity_id', '=', activityId)
+      .where('type', 'in', ['latitude', 'longitude'])
+      .execute();
+    return this.trackCoordinates(streams);
   }
 
   getBestEfforts(activityId: string) {
