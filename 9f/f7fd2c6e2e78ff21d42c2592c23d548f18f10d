@@ -1,0 +1,45 @@
+README.md
+  s_fc50a608df6df8::t_d4566c2aa51b27 25-27
+pnpm-lock.yaml
+  s_fc50a608df6df8::t_b6250267f471ee 104-106,135-137,1258-1260,3408-3419,4283-4286,6507-6508
+server/package.json
+  s_fc50a608df6df8::t_9de8d16787e61e 45,57
+server/src/main.ts
+  s_fc50a608df6df8::t_c20d30ea637535 10,24-25
+server/src/repositories/database.repository.ts
+  s_fc50a608df6df8::t_c071205b2d7344 2,5-7,16-19
+server/src/services/activity.service.spec.ts
+  s_fc50a608df6df8::t_68ca53d6656777 16-17,39,64,90-121,124,148,168-170
+server/src/services/activity.service.ts
+  s_fc50a608df6df8::t_e2fbedc5b7aac9 65-72
+server/src/services/index.ts
+  s_fc50a608df6df8::t_59246bc23cf36d 3,8
+server/src/services/realtime.service.ts
+  s_fc50a608df6df8::t_fe8690a353bd7b 1-75
+server/src/types.ts
+  s_fc50a608df6df8::t_34ef34e8c6c22e 1,97-101
+web/src/lib/realtime.ts
+  s_fc50a608df6df8::t_246a99e6176085 1-43
+web/src/lib/server/api.ts
+  s_fc50a608df6df8::t_caa1d24b97db3d 2,8-20
+web/src/routes/+page.server.ts
+  s_fc50a608df6df8::t_6b32570895b0f6 2,6-7,13,15-21
+web/src/routes/+page.svelte
+  s_fc50a608df6df8::t_fd7cfac8c41149 8,19-21,36-55,66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9ff7fd2c6e2e78ff21d42c2592c23d548f18f10d",
+  "prompts": {},
+  "sessions": {
+    "s_fc50a608df6df8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fedc2-9aae-7c03-a5d2-05530864bab4",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
