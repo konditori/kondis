@@ -8,6 +8,7 @@ export const ACTIVITY_TYPES = [
   'alpine_ski',
   'roller_ski',
   'cross_country_ski',
+  'ice_skate',
   'other',
 ] as const;
 
@@ -54,6 +55,8 @@ export const toActivityType = (sport?: string | null, subSport?: string | null):
     cross_country_skiing: 'cross_country_ski',
     nordic_ski: 'cross_country_ski',
     nordic_skiing: 'cross_country_ski',
+    ice_skate: 'ice_skate',
+    ice_skating: 'ice_skate',
     other: 'other',
   };
 

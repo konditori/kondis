@@ -170,6 +170,21 @@ describe('job system (medium)', () => {
         description: 'Updated description',
         sport: 'hike',
       });
+
+      const iceSkateArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Evening skate,Frozen lake,Ice Skate,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      await uploads.uploadLagomTakeout(makeUploadedFile('ice-skate-export.zip', iceSkateArchive));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Evening skate',
+        description: 'Frozen lake',
+        sport: 'ice_skate',
+      });
     });
 
     it('deletes the activity, the upload and the file', async () => {

@@ -14,6 +14,7 @@ describe('toActivityType', () => {
     ['alpine skiing', undefined, 'alpine_ski'],
     ['roller_skiing', undefined, 'roller_ski'],
     ['nordic skiing', undefined, 'cross_country_ski'],
+    ['ice skating', undefined, 'ice_skate'],
   ])('maps %s / %s to %s', (sport, subSport, expected) => {
     expect(toActivityType(sport, subSport)).toBe(expected);
   });

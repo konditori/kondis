@@ -1,11 +1,3 @@
-import {
-  Bike,
-  Dumbbell,
-  Footprints,
-  Mountain,
-  PersonStanding,
-  Waves,
-} from "@lucide/svelte";
 import type { ActivityType } from "$lib/types";
 import type { UnitSystem } from "$lib/units";
 
@@ -22,22 +14,6 @@ export function activityName(activity: {
   return activity.sport
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-export function sportIcon(sport: ActivityType) {
-  if (sport === "ride") return Bike;
-  if (
-    sport === "run" ||
-    sport === "trail_run" ||
-    sport === "walk" ||
-    sport === "hike"
-  )
-    return Footprints;
-  if (sport === "swim") return Waves;
-  if (["alpine_ski", "roller_ski", "cross_country_ski"].includes(sport))
-    return Mountain;
-  if (sport === "other") return Dumbbell;
-  return PersonStanding;
 }
 
 export function distance(value: number | null, unitSystem: UnitSystem): string {

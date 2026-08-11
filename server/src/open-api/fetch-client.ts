@@ -448,6 +448,7 @@ export enum Sport {
   AlpineSki = 'alpine_ski',
   RollerSki = 'roller_ski',
   CrossCountrySki = 'cross_country_ski',
+  IceSkate = 'ice_skate',
   Other = 'other',
 }
 export enum Type {

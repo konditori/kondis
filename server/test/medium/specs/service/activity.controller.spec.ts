@@ -118,7 +118,7 @@ describe('ActivityController (medium)', () => {
   describe('GET /activities/:id', () => {
     it('returns persisted running best efforts in standard-distance order', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'run', [
-        { type: 'distance', data: [0, 400, 1_000, 1_700] },
+        { type: 'distance', data: [0, 400, 1000, 1700] },
         { type: 'time', data: [0, 100, 250, 425] },
       ]);
 
@@ -130,7 +130,7 @@ describe('ActivityController (medium)', () => {
 
     it('backfills best efforts for existing running activities', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'older run', [
-        { type: 'distance', data: [0, 400, 1_000] },
+        { type: 'distance', data: [0, 400, 1000] },
         { type: 'time', data: [0, 100, 250] },
       ]);
       await db.deleteFrom('activity_best_effort').where('activity_id', '=', activityId).execute();
@@ -172,16 +172,19 @@ describe('ActivityController (medium)', () => {
 
     it('removes and recomputes running best efforts when the activity type changes', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before', [
-        { type: 'distance', data: [0, 400, 1_000] },
+        { type: 'distance', data: [0, 400, 1000] },
         { type: 'time', data: [0, 100, 250] },
       ]);
-      expect((await controller.getById({ id: activityId })).bestEfforts).toHaveLength(3);
+      const initialActivity = await controller.getById({ id: activityId });
+      expect(initialActivity.bestEfforts).toHaveLength(3);
 
       await controller.updateById({ id: activityId }, { sport: 'ride' });
-      expect((await controller.getById({ id: activityId })).bestEfforts).toEqual([]);
+      const rideActivity = await controller.getById({ id: activityId });
+      expect(rideActivity.bestEfforts).toEqual([]);
 
       await controller.updateById({ id: activityId }, { sport: 'run' });
-      expect((await controller.getById({ id: activityId })).bestEfforts).toHaveLength(3);
+      const runActivity = await controller.getById({ id: activityId });
+      expect(runActivity.bestEfforts).toHaveLength(3);
     });
 
     it('throws for a missing activity id', async () => {

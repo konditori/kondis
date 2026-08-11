@@ -111,7 +111,7 @@ describe('UploadService (medium)', () => {
     await expect(
       uploadService.handleActivityUpload({
         ...data,
-        activityName: 'Technique practice',
+        activityName: 'A nice workout',
         activitySport: 'roller_ski',
       }),
     ).resolves.toBe('success');
@@ -120,7 +120,7 @@ describe('UploadService (medium)', () => {
       data: {
         id: stored!.id,
         force: true,
-        activityName: 'Technique practice',
+        activityName: 'A nice workout',
         activitySport: 'roller_ski',
       },
     });
@@ -178,7 +178,7 @@ describe('UploadService (medium)', () => {
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(contents);
   });
 
-  it('stages a Lagom takeout and queues its path without extracting it', async () => {
+  it('stages a Strava takeout and queues its path without extracting it', async () => {
     const fit = await readFile(activityFixtures.hindasRun.path);
     const gpx = await readFile(activityFixtures.sampleRun.path);
     const archive = createTestZip({
@@ -273,7 +273,7 @@ describe('UploadService (medium)', () => {
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
   });
 
-  it('rejects a non-ZIP Lagom takeout upload', async () => {
+  it('rejects a non-ZIP Strava takeout upload', async () => {
     await expect(
       uploadService.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
     ).rejects.toThrow('Only a Strava takeout .zip file is accepted');

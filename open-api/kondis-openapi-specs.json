@@ -571,6 +571,7 @@
               "alpine_ski",
               "roller_ski",
               "cross_country_ski",
+              "ice_skate",
               "other"
             ],
             "description": "Activity sport type"
@@ -788,6 +789,7 @@
               "alpine_ski",
               "roller_ski",
               "cross_country_ski",
+              "ice_skate",
               "other"
             ],
             "description": "Activity sport type"
@@ -1074,6 +1076,7 @@
               "alpine_ski",
               "roller_ski",
               "cross_country_ski",
+              "ice_skate",
               "other"
             ],
             "description": "Activity sport type"

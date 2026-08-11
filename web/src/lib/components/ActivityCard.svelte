@@ -1,10 +1,10 @@
 <script lang="ts">
   import { ArrowUpRight, Clock3, Gauge, Mountain } from '@lucide/svelte';
   import { goto } from '$app/navigation';
-  import { activityTypeLabel } from '$lib/activity-types';
+  import { activityTypeLabel, sportIcon } from '$lib/activity-types';
   import type { Activity } from '$lib/types';
   import type { UnitSystem } from '$lib/units';
-  import { activityName, distance, duration, elevation, localTime, sportIcon } from '$lib/format';
+  import { activityName, distance, duration, elevation, localTime } from '$lib/format';
 
   let { activity, unitSystem }: { activity: Activity; unitSystem: UnitSystem } = $props();
   const Icon = $derived(sportIcon(activity.sport));

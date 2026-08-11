@@ -3,9 +3,9 @@
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, getSdkRequestOptions } from '$lib/api';
-  import { ACTIVITY_TYPE_OPTIONS, activityTypeLabel, activityUsesPace } from '$lib/activity-types';
+  import { ACTIVITY_TYPE_OPTIONS, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import RouteMap from '$lib/components/RouteMap.svelte';
-  import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed, sportIcon } from '$lib/format';
+  import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
 
   let { data } = $props();
@@ -18,16 +18,25 @@
   let draftDescription = $state('');
   let draftSport = $state<Activity['sport']>(ACTIVITY_TYPE_OPTIONS.at(-1)!.value);
   const Icon = $derived(sportIcon(activity.sport));
+  const activitySettings = $derived(activityTypeSettings(activity.sport));
+  const averageMetric = $derived(activitySettings.averageMetric);
+  const averageMetricStats = $derived(
+    averageMetric === null
+      ? []
+      : averageMetric === 'speed'
+        ? [{ label: 'Average speed', value: speed(activity.avgSpeed, data.unitSystem), icon: Gauge }]
+        : [{ label: 'Average pace', value: pace(activity.avgSpeed, data.unitSystem, averageMetric === 'swimPace'), icon: Gauge }],
+  );
   const stats = $derived([
     { label: 'Distance', value: distance(activity.distance, data.unitSystem), icon: Gauge },
     { label: 'Moving time', value: duration(activity.movingTime ?? activity.elapsedTime), icon: Timer },
     { label: 'Elapsed time', value: duration(activity.elapsedTime), icon: Clock3 },
     { label: 'Elevation gain', value: elevation(activity.elevationGain, data.unitSystem), icon: Mountain },
-    activityUsesPace(activity.sport)
-      ? { label: 'Average pace', value: pace(activity.avgSpeed, data.unitSystem, activity.sport === 'swim'), icon: Gauge }
-      : { label: 'Average speed', value: speed(activity.avgSpeed, data.unitSystem), icon: Gauge },
+    ...averageMetricStats,
     { label: 'Average heart rate', value: activity.avgHr == null ? '—' : `${activity.avgHr} bpm`, icon: HeartPulse },
-    { label: 'Average power', value: activity.avgPower == null ? '—' : `${activity.avgPower} W`, icon: Zap },
+    ...(activitySettings.showAveragePower
+      ? [{ label: 'Average power', value: activity.avgPower == null ? '—' : `${activity.avgPower} W`, icon: Zap }]
+      : []),
     { label: 'Energy', value: activity.calories == null ? '—' : `${activity.calories} kcal`, icon: Flame },
   ]);
 
