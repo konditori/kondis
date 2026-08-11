@@ -191,6 +191,7 @@ export class ActivityService {
 
   @OnJob({ name: JobName.ActivityBestEffortRank, queue: QueueName.ActivityParsing })
   async handleActivityBestEffortRank(): Promise<JobStatus> {
+    await this.jobRepository.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
     await this.activityRepository.refreshBestEffortRankings();
     this.logger.log('Refreshed best-effort rankings');
     return JobStatus.Success;
@@ -314,6 +315,9 @@ export class ActivityService {
                 elapsedTime: effort.elapsed_time,
                 startTime: effort.start_time,
                 endTime: effort.end_time,
+                avgHr: effort.avg_hr,
+                elevationChange: effort.elevation_change,
+                overallRank: effort.overall_rank,
                 year: effort.year,
                 yearRank: effort.year_rank,
               },

@@ -43,6 +43,7 @@ describe('ActivityService', () => {
 
   const queue = vi.fn(async () => {});
   const queueAll = vi.fn(async () => {});
+  const discardQueuedDuplicates = vi.fn(async () => {});
 
   const decode = vi.fn();
   const decodeGpx = vi.fn();
@@ -68,7 +69,7 @@ describe('ActivityService', () => {
 
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
   const eventRepository = { emit: emitEvent } as unknown as EventRepository;
-  const jobRepository = { queue, queueAll } as unknown as JobRepository;
+  const jobRepository = { queue, queueAll, discardQueuedDuplicates } as unknown as JobRepository;
   const fitRepository = { decode } as unknown as FitRepository;
   const gpxRepository = { decode: decodeGpx } as unknown as GpxRepository;
   const tcxRepository = { decode: decodeTcx } as unknown as TcxRepository;
@@ -310,6 +311,7 @@ describe('ActivityService', () => {
   describe('handleActivityBestEffortRank', () => {
     it('refreshes persisted rankings in the activity parsing queue handler', async () => {
       await expect(makeService().handleActivityBestEffortRank()).resolves.toBe(JobStatus.Success);
+      expect(discardQueuedDuplicates).toHaveBeenCalledWith(JobName.ActivityBestEffortRank);
       expect(refreshBestEffortRankings).toHaveBeenCalledTimes(1);
     });
   });

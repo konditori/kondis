@@ -27,6 +27,12 @@ export class ActivityBestEffortTable {
   @Column({ type: 'text' })
   value_kind!: BestEffortValueKind;
 
+  @Column({ type: 'integer', nullable: true })
+  avg_hr!: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  elevation_change!: number | null;
+
   @Column({ type: 'integer', default: 1 })
   year!: Generated<number>;
 

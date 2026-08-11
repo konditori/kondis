@@ -6,7 +6,13 @@
 
   let { data } = $props();
   const history = $derived(data.history);
-  const podium = $derived(history ? [...history.efforts].sort((a, b) => a.overallRank - b.overallRank).slice(0, 3) : []);
+  const podium = $derived(
+    history
+      ? history.efforts
+          .filter((effort) => effort.overallRank <= 3)
+          .toSorted((a, b) => a.overallRank - b.overallRank)
+      : [],
+  );
   const recentEfforts = $derived(history ? [...history.efforts].reverse() : []);
   const medalNames = ["Gold", "Silver", "Bronze"];
   const sportName = $derived(history?.sport === "ride" ? "Cycling" : "Running");

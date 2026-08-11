@@ -120,6 +120,25 @@ describe('job system (medium)', () => {
         await Promise.all(Object.values(QueueName).map((queue) => jobs.resume(queue)));
       }
     });
+
+    it('accepts every ranking refresh request and coalesces queued duplicates', async () => {
+      await jobs.pause(QueueName.ActivityParsing);
+
+      try {
+        await jobs.queueAll([
+          { name: JobName.ActivityBestEffortRank, data: {} },
+          { name: JobName.ActivityBestEffortRank, data: {} },
+          { name: JobName.ActivityBestEffortRank, data: {} },
+        ]);
+
+        expect((await jobs.getJobCounts(QueueName.ActivityParsing)).queued).toBe(3);
+
+        await jobs.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
+        expect((await jobs.getJobCounts(QueueName.ActivityParsing)).queued).toBe(0);
+      } finally {
+        await jobs.resume(QueueName.ActivityParsing);
+      }
+    });
   });
 
   describe('end to end', () => {

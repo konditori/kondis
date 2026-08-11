@@ -1282,6 +1282,25 @@
                   "description": "End offset from activity start in seconds",
                   "minimum": 0
                 },
+                "avgHr": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Average heart rate during the effort",
+                  "nullable": true
+                },
+                "elevationChange": {
+                  "type": "number",
+                  "description": "Net elevation change during the effort in meters",
+                  "nullable": true
+                },
+                "overallRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "description": "Rank among all matching efforts",
+                  "minimum": 0
+                },
                 "year": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -1303,6 +1322,9 @@
                 "elapsedTime",
                 "startTime",
                 "endTime",
+                "avgHr",
+                "elevationChange",
+                "overallRank",
                 "year",
                 "yearRank"
               ],

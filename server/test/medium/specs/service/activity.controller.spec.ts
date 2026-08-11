@@ -204,12 +204,19 @@ describe('ActivityController (medium)', () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'run', [
         { type: 'distance', data: [0, 400, 1000, 1700] },
         { type: 'time', data: [0, 100, 250, 425] },
+        { type: 'heartrate', data: [100, 120, 140, 160] },
+        { type: 'altitude', data: [10, 15, 7, 20] },
       ]);
 
       const activity = await controller.getById({ id: activityId });
 
       expect(activity.bestEfforts.map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile', '1_mile']);
       expect(activity.bestEfforts.find(({ type }) => type === '1_mile')?.elapsedTime).toBeCloseTo(402.336);
+      expect(activity.bestEfforts.find(({ type }) => type === '1k')).toMatchObject({
+        avgHr: 120,
+        elevationChange: -3,
+        overallRank: 1,
+      });
     });
 
     it('includes each effort ranking for the activity calendar year', async () => {
@@ -233,6 +240,7 @@ describe('ActivityController (medium)', () => {
       const activity = await controller.getById({ id: activityId });
 
       expect(activity.bestEfforts.find(({ type }) => type === '1k')).toMatchObject({
+        overallRank: 4,
         year: 2024,
         yearRank: 3,
       });

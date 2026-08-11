@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, Flame, Gauge, HeartPulse, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
+  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions } from '$lib/api';
@@ -49,25 +49,17 @@
     }
   }
 
-  function ordinal(rank: number): string {
-    const tens = rank % 100;
-    if (tens >= 11 && tens <= 13) return `${rank}th`;
-    return `${rank}${rank % 10 === 1 ? 'st' : rank % 10 === 2 ? 'nd' : rank % 10 === 3 ? 'rd' : 'th'}`;
-  }
-
-  function yearlyRankLabel(effort: ActivityDetail['bestEfforts'][number]): string {
-    const period = effort.year === new Date().getFullYear() ? 'this year' : `in ${effort.year}`;
-    return effort.yearRank === 1
-      ? `Your best ${period} · PR`
-      : `Your ${ordinal(effort.yearRank)} best ${period}`;
-  }
-
   function startEditing() {
     draftName = activity.name ?? '';
     draftDescription = activity.description ?? '';
     draftSport = activity.sport;
     editError = '';
     editing = true;
+  }
+
+  function overallRankTooltip(rank: number): string {
+    if (rank === 1) return "New personal record!";
+    return `New ${rank === 2 ? "2nd" : "3rd"} best of all time!`;
   }
 
   function cancelEditing() {
@@ -149,16 +141,34 @@
   {#if activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
       <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2></div></div>
-      <div class="best-effort-list">
+      <div class="best-effort-table-wrap">
+        <div class="best-effort-table" role="table" aria-label="Distance best efforts">
+          <div class="best-effort-header" role="row">
+            <div role="columnheader" aria-label="Overall rank"></div>
+            <div role="columnheader"><strong>Distance</strong></div>
+            <div role="columnheader"><strong>Time</strong></div>
+            <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
+            <div role="columnheader"><strong>Heart Rate</strong></div>
+            <div role="columnheader"><strong>Elev</strong></div>
+          </div>
         {#each activity.bestEfforts as effort}
-          <a class={`best-effort year-rank-${Math.min(effort.yearRank, 4)}`} href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={effort.yearRank <= 3 ? `${effort.label}: ${yearlyRankLabel(effort)}. View best effort history` : `${effort.label}. View best effort history`}>
-            <span class="effort-icon"><Medal size={19} /></span>
-            <span class="effort-title"><strong>{effort.label}</strong>{#if effort.yearRank <= 3}<small>{yearlyRankLabel(effort)}</small>{/if}</span>
-            <span>{effortDuration(effort.elapsedTime)}</span>
-            <small class="effort-secondary">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</small>
-            <ChevronRight class="effort-chevron" size={17} />
+          <a class="best-effort-row" role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${effort.label}. View best effort history`}>
+            <div class="effort-rank" role="cell">
+              {#if effort.overallRank <= 3}
+                <span class={`effort-medal overall-rank-${effort.overallRank}`} title={overallRankTooltip(effort.overallRank)}>
+                  <Medal size={31} />
+                  <small>{effort.overallRank === 1 ? 'PR' : effort.overallRank}</small>
+                </span>
+              {/if}
+            </div>
+            <div role="cell"><strong>{effort.label}</strong></div>
+            <div role="cell">{effortDuration(effort.elapsedTime)}</div>
+            <div role="cell">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</div>
+            <div role="cell">{effort.avgHr == null ? '—' : `${effort.avgHr} bpm`}</div>
+            <div role="cell">{elevation(effort.elevationChange, data.unitSystem)}</div>
           </a>
         {/each}
+        </div>
       </div>
     </section>
   {/if}

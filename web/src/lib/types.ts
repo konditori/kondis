@@ -49,6 +49,9 @@ export type ActivityDetail = Activity & {
     elapsedTime: number;
     startTime: number;
     endTime: number;
+    avgHr: number | null;
+    elevationChange: number | null;
+    overallRank: number;
     year: number;
     yearRank: number;
   }[];

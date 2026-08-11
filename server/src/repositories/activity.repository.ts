@@ -58,6 +58,46 @@ export type ActivityCursor = {
   id: string;
 };
 
+type TimedValue = { time: number; value: number };
+
+const timedValues = (time: number[], values: number[], valid: (value: number) => boolean): TimedValue[] => {
+  const points: TimedValue[] = [];
+  for (let index = 0; index < Math.min(time.length, values.length); index++) {
+    const sampleTime = time[index];
+    const value = values[index];
+    if (
+      !Number.isFinite(sampleTime) ||
+      !Number.isFinite(value) ||
+      !valid(value) ||
+      (points.length > 0 && sampleTime <= points.at(-1)!.time)
+    ) {
+      continue;
+    }
+    points.push({ time: sampleTime, value });
+  }
+  return points;
+};
+
+const valueAtTime = (points: TimedValue[], targetTime: number): number | null => {
+  if (points.length === 0) {
+    return null;
+  }
+  if (targetTime <= points[0].time) {
+    return points[0].value;
+  }
+
+  for (let index = 1; index < points.length; index++) {
+    const after = points[index];
+    if (after.time < targetTime) {
+      continue;
+    }
+    const before = points[index - 1];
+    const ratio = (targetTime - before.time) / (after.time - before.time);
+    return before.value + ratio * (after.value - before.value);
+  }
+  return points.at(-1)!.value;
+};
+
 @Injectable()
 export class ActivityRepository {
   constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
@@ -327,19 +367,42 @@ export class ActivityRepository {
       return;
     }
 
+    const heartRate = timedValues(
+      time,
+      streams.find((stream) => stream.type === 'heartrate')?.data ?? [],
+      (value) => value >= 1 && value <= 300,
+    );
+    const altitude = timedValues(
+      time,
+      streams.find((stream) => stream.type === 'altitude')?.data ?? [],
+      (value) => value >= -1000 && value <= 10_000,
+    );
+
     await executor
       .insertInto('activity_best_effort')
       .values(
-        efforts.map((effort) => ({
-          activity_id: activityId,
-          type: effort.type,
-          distance: effort.distance,
-          elapsed_time: effort.elapsedTime,
-          start_time: effort.startTime,
-          end_time: effort.endTime,
-          value: effort.value,
-          value_kind: effort.valueKind,
-        })),
+        efforts.map((effort) => {
+          const effortHeartRate = heartRate.filter(
+            (point) => point.time >= effort.startTime && point.time <= effort.endTime,
+          );
+          const startAltitude = valueAtTime(altitude, effort.startTime);
+          const endAltitude = valueAtTime(altitude, effort.endTime);
+          return {
+            activity_id: activityId,
+            type: effort.type,
+            distance: effort.distance,
+            elapsed_time: effort.elapsedTime,
+            start_time: effort.startTime,
+            end_time: effort.endTime,
+            value: effort.value,
+            value_kind: effort.valueKind,
+            avg_hr:
+              effortHeartRate.length === 0
+                ? null
+                : Math.round(effortHeartRate.reduce((sum, point) => sum + point.value, 0) / effortHeartRate.length),
+            elevation_change: startAltitude === null || endAltitude === null ? null : endAltitude - startAltitude,
+          };
+        }),
       )
       .onConflict((conflict) => conflict.columns(['activity_id', 'type']).doNothing())
       .execute();

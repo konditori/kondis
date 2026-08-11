@@ -215,6 +215,12 @@ export type ActivityDetailDtoOutput = {
     startTime: number;
     /** End offset from activity start in seconds */
     endTime: number;
+    /** Average heart rate during the effort */
+    avgHr: number | null;
+    /** Net elevation change during the effort in meters */
+    elevationChange: number | null;
+    /** Rank among all matching efforts */
+    overallRank: number;
     /** Local calendar year of the activity */
     year: number;
     /** Rank among matching efforts in that calendar year */
