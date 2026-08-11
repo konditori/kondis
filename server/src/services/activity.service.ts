@@ -2,11 +2,15 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { Activity } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
-import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
+import {
+  ActivityRecord,
+  ActivityRepository,
+  CreateActivityInput,
+  UpdateActivityInput,
+} from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
@@ -240,7 +244,7 @@ export class ActivityService {
     return status !== JobStatus.Skipped;
   }
 
-  private toActivityDto(activity: Activity) {
+  private toActivityDto(activity: ActivityRecord) {
     const camelCased = Object.fromEntries(
       Object.entries(activity).map(([key, value]) => [
         key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase()),
@@ -290,6 +294,8 @@ export class ActivityService {
         name: parsed.name,
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,
+      },
+      metrics: {
         elapsed_time: parsed.elapsedTime,
         moving_time: parsed.movingTime,
         distance: parsed.distance,

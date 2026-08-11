@@ -32,7 +32,9 @@ export const getTestDatabaseConfig = (): DatabaseConfig => toDatabaseConfig(getR
 export const createMediumTestDatabase = (): KondisDatabase => createDatabase(getTestDatabaseConfig());
 
 export const truncateAllTables = async (db: KondisDatabase): Promise<void> => {
-  await sql`TRUNCATE TABLE activity_stream, lap, activity, upload RESTART IDENTITY CASCADE`.execute(db);
+  await sql`TRUNCATE TABLE activity_stream, activity_metric, lap, activity, upload RESTART IDENTITY CASCADE`.execute(
+    db,
+  );
 };
 
 export const truncateJobs = async (db: KondisDatabase): Promise<void> => {

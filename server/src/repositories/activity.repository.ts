@@ -2,7 +2,16 @@ import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
-import { ActivityStream, ActivityUpdate, NewActivity, NewLap, StreamType } from 'src/db/schema';
+import {
+  Activity,
+  ActivityMetric,
+  ActivityStream,
+  ActivityUpdate,
+  NewActivity,
+  NewActivityMetric,
+  NewLap,
+  StreamType,
+} from 'src/db/schema';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
@@ -10,9 +19,12 @@ export type ActivityStreamInput = { type: StreamType; data: number[] };
 
 export type CreateActivityInput = {
   activity: Omit<NewActivity, 'track'>;
+  metrics: Omit<NewActivityMetric, 'activity_id'>;
   streams: ActivityStreamInput[];
   laps: Omit<NewLap, 'activity_id' | 'id'>[];
 };
+
+export type ActivityRecord = Activity & ActivityMetric;
 
 export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'sport' | 'sub_sport' | 'started_at'>;
 
@@ -60,6 +72,11 @@ export class ActivityRepository {
         .returning('id')
         .executeTakeFirstOrThrow();
 
+      await trx
+        .insertInto('activity_metric')
+        .values({ activity_id: id, ...input.metrics })
+        .execute();
+
       if (input.streams.length > 0) {
         await trx
           .insertInto('activity_stream')
@@ -87,29 +104,41 @@ export class ActivityRepository {
   getById(id: string) {
     return this.db
       .selectFrom('activity')
+      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
       .selectAll('activity')
+      .selectAll('activity_metric')
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'))
-      .where('id', '=', id)
+      .where('activity.id', '=', id)
       .executeTakeFirst();
   }
 
   getByUploadId(uploadId: string) {
-    return this.db.selectFrom('activity').selectAll('activity').where('upload_id', '=', uploadId).executeTakeFirst();
+    return this.db
+      .selectFrom('activity')
+      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
+      .selectAll('activity')
+      .selectAll('activity_metric')
+      .where('upload_id', '=', uploadId)
+      .executeTakeFirst();
   }
 
   listRecentPage({ limit, cursor }: { limit: number; cursor?: ActivityCursor }) {
-    let query = this.db.selectFrom('activity').selectAll('activity');
+    let query = this.db
+      .selectFrom('activity')
+      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
+      .selectAll('activity')
+      .selectAll('activity_metric');
 
     if (cursor) {
       query = query.where(({ and, eb, or }) =>
         or([
-          eb('started_at', '<', cursor.startedAt),
-          and([eb('started_at', '=', cursor.startedAt), eb('id', '<', cursor.id)]),
+          eb('activity.started_at', '<', cursor.startedAt),
+          and([eb('activity.started_at', '=', cursor.startedAt), eb('activity.id', '<', cursor.id)]),
         ]),
       );
     }
 
-    return query.orderBy('started_at', 'desc').orderBy('id', 'desc').limit(limit).execute();
+    return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
   async count(): Promise<number> {
@@ -124,8 +153,14 @@ export class ActivityRepository {
     return this.db.selectFrom('activity_stream').selectAll().where('activity_id', '=', activityId).execute();
   }
 
-  update(id: string, input: UpdateActivityInput) {
-    return this.db.updateTable('activity').set(input).where('id', '=', id).returningAll().executeTakeFirst();
+  async update(id: string, input: UpdateActivityInput) {
+    const updated = await this.db
+      .updateTable('activity')
+      .set(input)
+      .where('id', '=', id)
+      .returning('id')
+      .executeTakeFirst();
+    return updated ? this.getById(updated.id) : undefined;
   }
 
   async delete(id: string, executor: KondisExecutor = this.db): Promise<void> {

@@ -558,6 +558,95 @@ button {
   gap: 16px;
   margin-top: 36px;
 }
+.detail-title {
+  min-width: 0;
+}
+.edit-metadata-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 9px 12px;
+  color: var(--green);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.edit-metadata-button:hover {
+  border-color: #9dae9e;
+  background: var(--green-soft);
+}
+.metadata-editor {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  align-items: end;
+  gap: 12px;
+  margin: 22px 0 0 71px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.metadata-editor label {
+  display: grid;
+  gap: 6px;
+}
+.metadata-editor label span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.metadata-editor input {
+  width: 100%;
+  min-width: 0;
+  height: 39px;
+  padding: 0 10px;
+  color: #1c211d;
+  background: #fbfcf9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+}
+.metadata-editor input:focus {
+  border-color: #8bae94;
+  box-shadow: 0 0 0 3px #16653413;
+}
+.metadata-actions {
+  display: flex;
+  gap: 7px;
+}
+.metadata-actions button {
+  height: 39px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.metadata-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.metadata-cancel {
+  background: white;
+  border: 1px solid var(--line);
+}
+.metadata-save {
+  color: white;
+  background: var(--green);
+  border: 1px solid var(--green);
+}
+.metadata-error {
+  grid-column: 1 / -1;
+  color: #a34227;
+  font-size: 12px;
+}
 .detail-sport {
   width: 55px;
   height: 55px;
@@ -837,6 +926,16 @@ button {
   }
   .detail-heading {
     margin-top: 29px;
+  }
+  .edit-metadata-button {
+    margin-left: auto;
+  }
+  .metadata-editor {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+  }
+  .metadata-actions {
+    justify-content: flex-end;
   }
   .detail-date {
     margin-left: 0;

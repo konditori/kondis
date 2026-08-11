@@ -33,6 +33,8 @@ describe('ActivityController (medium)', () => {
         name,
         started_at: startedAt,
         timezone_offset_minutes: 0,
+      },
+      metrics: {
         elapsed_time: 3600,
         moving_time: 3500,
         distance: 10_000,
