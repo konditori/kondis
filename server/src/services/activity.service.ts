@@ -205,9 +205,13 @@ export class ActivityService {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
     const last = page.at(-1);
+    const topBestEfforts = await this.topBestEffortsForActivities(page);
 
     return {
-      activities: page.map((row) => this.toActivityDto(row)),
+      activities: page.map((row) => ({
+        ...this.toActivityDto(row),
+        topBestEfforts: topBestEfforts.get(row.id) ?? [],
+      })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(),
     };
@@ -431,6 +435,51 @@ export class ActivityService {
         await this.activityRepository.ensureBestEfforts(activity.id, activity.sport);
       }
     }
+  }
+
+  private async topBestEffortsForActivities(activities: ActivityRecord[]) {
+    const activityIds = new Set(activities.map(({ id }) => id));
+    const result = new Map<string, { type: BestEffortType; label: string; yearRank: number }[]>();
+    if (activityIds.size === 0) {
+      return result;
+    }
+
+    await this.ensureBestEffortsPopulated();
+    const categories = [
+      { sport: 'run' as const, definitions: RUNNING_BEST_EFFORTS },
+      { sport: 'ride' as const, definitions: CYCLING_BEST_EFFORTS },
+    ].filter(({ sport }) =>
+      activities.some((activity) =>
+        sport === 'run' ? supportsRunningBestEfforts(activity.sport) : supportsCyclingBestEfforts(activity.sport),
+      ),
+    );
+
+    for (const { sport, definitions } of categories) {
+      const rows = await this.activityRepository.listBestEffortsForSports([...BEST_EFFORT_SPORTS[sport]]);
+      const rowsByType = Object.groupBy(rows, ({ type }) => type);
+      for (const definition of definitions) {
+        const rowsByYear = Object.groupBy(rowsByType[definition.type] ?? [], (row) => this.activityYear(row));
+        for (const yearRows of Object.values(rowsByYear)) {
+          const rankedRows = [...(yearRows ?? [])].sort((left, right) => {
+            const valueComparison = definition.higherIsBetter ? right.value - left.value : left.value - right.value;
+            return valueComparison || left.activity_id.localeCompare(right.activity_id);
+          });
+          for (const [index, rankedRow] of rankedRows.slice(0, 3).entries()) {
+            if (!activityIds.has(rankedRow.activity_id)) {
+              continue;
+            }
+            const efforts = result.get(rankedRow.activity_id) ?? [];
+            efforts.push({ type: definition.type, label: definition.label, yearRank: index + 1 });
+            result.set(rankedRow.activity_id, efforts);
+          }
+        }
+      }
+    }
+
+    for (const [activityId, efforts] of result) {
+      result.set(activityId, efforts.sort((left, right) => left.yearRank - right.yearRank).slice(0, 3));
+    }
+    return result;
   }
 
   private encodeActivityCursor(startedAt: Timestamp, id: string): string {

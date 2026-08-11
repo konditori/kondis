@@ -223,6 +223,21 @@ export class ActivityRepository {
       .execute();
   }
 
+  listBestEffortsForSports(sports: ActivityType[]) {
+    return this.db
+      .selectFrom('activity_best_effort')
+      .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
+      .select([
+        'activity_best_effort.activity_id',
+        'activity_best_effort.type',
+        'activity_best_effort.value',
+        'activity.started_at',
+        'activity.timezone_offset_minutes',
+      ])
+      .where('activity.sport', 'in', sports)
+      .execute();
+  }
+
   listAvailableBestEffortTypes(sports: ActivityType[]) {
     return this.db
       .selectFrom('activity_best_effort')

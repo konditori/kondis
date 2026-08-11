@@ -454,6 +454,29 @@ button {
   font-size: 12px;
   text-transform: capitalize;
 }
+.activity-achievements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.activity-achievement {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: #8a5905;
+  background: #fff2d5;
+  border-radius: 6px;
+}
+.activity-achievement.rank-2 {
+  color: #5d6866;
+  background: #edf0ef;
+}
+.activity-achievement.rank-3 {
+  color: #88502d;
+  background: #fae8dc;
+}
 .activity-stat {
   display: flex;
   align-items: center;

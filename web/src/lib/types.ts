@@ -27,6 +27,11 @@ export type Activity = {
   calories: number | null;
   createdAt: string;
   updatedAt: string;
+  topBestEfforts?: {
+    type: string;
+    label: string;
+    yearRank: number;
+  }[];
 };
 
 export type ActivityPage = {

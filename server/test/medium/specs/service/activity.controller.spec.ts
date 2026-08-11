@@ -113,6 +113,33 @@ describe('ActivityController (medium)', () => {
       expect(second.nextCursor).toBeNull();
       expect(second.total).toBe(3);
     });
+
+    it('includes up to three yearly podium efforts for each activity', async () => {
+      await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'fastest', [
+        { type: 'distance', data: [0, 400, 1000] },
+        { type: 'time', data: [0, 100, 250] },
+      ]);
+      const secondId = await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'second', [
+        { type: 'distance', data: [0, 400, 1000] },
+        { type: 'time', data: [0, 110, 270] },
+      ]);
+      await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'third', [
+        { type: 'distance', data: [0, 400, 1000] },
+        { type: 'time', data: [0, 120, 290] },
+      ]);
+      await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'fourth', [
+        { type: 'distance', data: [0, 400, 1000] },
+        { type: 'time', data: [0, 130, 310] },
+      ]);
+
+      const response = await controller.listRecent({ limit: 50 });
+      const second = response.activities.find(({ id }) => id === secondId);
+      const fourth = response.activities.find(({ name }) => name === 'fourth');
+
+      expect(second?.topBestEfforts).toHaveLength(3);
+      expect(second?.topBestEfforts.every(({ yearRank }) => yearRank === 2)).toBe(true);
+      expect(fourth?.topBestEfforts).toEqual([]);
+    });
   });
 
   describe('GET /activities/best-efforts', () => {

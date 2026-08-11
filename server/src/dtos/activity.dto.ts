@@ -62,7 +62,19 @@ export const ActivitySchema = z
 
 export const ActivityListResponseSchema = z
   .object({
-    activities: z.array(ActivitySchema),
+    activities: z.array(
+      ActivitySchema.extend({
+        topBestEfforts: z
+          .array(
+            z.object({
+              type: BestEffortTypeSchema,
+              label: z.string(),
+              yearRank: z.number().int().min(1).max(3),
+            }),
+          )
+          .max(3),
+      }),
+    ),
     nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
     total: z.number().int().nonnegative().describe('Total number of activities'),
   })

@@ -63,57 +63,61 @@ export type QueueCommandDto = {
   /** Operation to perform on the queue */
   command: Command;
 };
-export type ActivityDtoOutput = {
-  /** Activity id */
-  id: string;
-  /** Source upload id */
-  uploadId: string;
-  sport: ActivityType_Output;
-  /** Activity name */
-  name: string | null;
-  /** Activity description */
-  description: string | null;
-  /** Start time in ISO-8601 format */
-  startedAt: string;
-  /** Minutes east of UTC */
-  timezoneOffsetMinutes: number | null;
-  /** Elapsed duration in seconds */
-  elapsedTime: number;
-  /** Moving duration in seconds */
-  movingTime: number | null;
-  /** Distance in meters */
-  distance: number | null;
-  /** Total elevation gain in meters */
-  elevationGain: number | null;
-  /** Total elevation loss in meters */
-  elevationLoss: number | null;
-  /** Average speed in meters per second */
-  avgSpeed: number | null;
-  /** Peak speed in meters per second */
-  maxSpeed: number | null;
-  /** Average heart rate in bpm */
-  avgHr: number | null;
-  /** Maximum heart rate in bpm */
-  maxHr: number | null;
-  /** Average cadence in rpm */
-  avgCadence: number | null;
-  /** Maximum cadence in rpm */
-  maxCadence: number | null;
-  /** Average power in watts */
-  avgPower: number | null;
-  /** Maximum power in watts */
-  maxPower: number | null;
-  /** Normalized power in watts */
-  normalizedPower: number | null;
-  /** Calories in kcal */
-  calories: number | null;
-  /** Creation timestamp in ISO-8601 format */
-  createdAt: string;
-  /** Last update timestamp in ISO-8601 format */
-  updatedAt: string;
-};
 export type ActivityListResponseDtoOutput = {
-  activities: ActivityDtoOutput[];
+  activities: {
+    /** Activity id */
+    id: string;
+    /** Source upload id */
+    uploadId: string;
+    sport: ActivityType_Output;
+    /** Activity name */
+    name: string | null;
+    /** Activity description */
+    description: string | null;
+    /** Start time in ISO-8601 format */
+    startedAt: string;
+    /** Minutes east of UTC */
+    timezoneOffsetMinutes: number | null;
+    /** Elapsed duration in seconds */
+    elapsedTime: number;
+    /** Moving duration in seconds */
+    movingTime: number | null;
+    /** Distance in meters */
+    distance: number | null;
+    /** Total elevation gain in meters */
+    elevationGain: number | null;
+    /** Total elevation loss in meters */
+    elevationLoss: number | null;
+    /** Average speed in meters per second */
+    avgSpeed: number | null;
+    /** Peak speed in meters per second */
+    maxSpeed: number | null;
+    /** Average heart rate in bpm */
+    avgHr: number | null;
+    /** Maximum heart rate in bpm */
+    maxHr: number | null;
+    /** Average cadence in rpm */
+    avgCadence: number | null;
+    /** Maximum cadence in rpm */
+    maxCadence: number | null;
+    /** Average power in watts */
+    avgPower: number | null;
+    /** Maximum power in watts */
+    maxPower: number | null;
+    /** Normalized power in watts */
+    normalizedPower: number | null;
+    /** Calories in kcal */
+    calories: number | null;
+    /** Creation timestamp in ISO-8601 format */
+    createdAt: string;
+    /** Last update timestamp in ISO-8601 format */
+    updatedAt: string;
+    topBestEfforts: {
+      type: BestEffortType_Output;
+      label: string;
+      yearRank: number;
+    }[];
+  }[];
   /** Cursor for the next page, or null at the end */
   nextCursor: string | null;
   /** Total number of activities */
@@ -225,6 +229,55 @@ export type ActivityUpdateDto = {
   sport?: ActivityUpdateDtoActivityType;
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
+};
+export type ActivityDtoOutput = {
+  /** Activity id */
+  id: string;
+  /** Source upload id */
+  uploadId: string;
+  sport: ActivityType_Output;
+  /** Activity name */
+  name: string | null;
+  /** Activity description */
+  description: string | null;
+  /** Start time in ISO-8601 format */
+  startedAt: string;
+  /** Minutes east of UTC */
+  timezoneOffsetMinutes: number | null;
+  /** Elapsed duration in seconds */
+  elapsedTime: number;
+  /** Moving duration in seconds */
+  movingTime: number | null;
+  /** Distance in meters */
+  distance: number | null;
+  /** Total elevation gain in meters */
+  elevationGain: number | null;
+  /** Total elevation loss in meters */
+  elevationLoss: number | null;
+  /** Average speed in meters per second */
+  avgSpeed: number | null;
+  /** Peak speed in meters per second */
+  maxSpeed: number | null;
+  /** Average heart rate in bpm */
+  avgHr: number | null;
+  /** Maximum heart rate in bpm */
+  maxHr: number | null;
+  /** Average cadence in rpm */
+  avgCadence: number | null;
+  /** Maximum cadence in rpm */
+  maxCadence: number | null;
+  /** Average power in watts */
+  avgPower: number | null;
+  /** Maximum power in watts */
+  maxPower: number | null;
+  /** Normalized power in watts */
+  normalizedPower: number | null;
+  /** Calories in kcal */
+  calories: number | null;
+  /** Creation timestamp in ISO-8601 format */
+  createdAt: string;
+  /** Last update timestamp in ISO-8601 format */
+  updatedAt: string;
 };
 /**
  * Health check endpoint
@@ -548,6 +601,48 @@ export enum ActivityType_Output {
   Yoga = 'yoga',
   Other = 'other',
 }
+export enum BestEffortType_Output {
+  $400M = '400m',
+  $1K = '1k',
+  HalfMile = 'half_mile',
+  $1Mile = '1_mile',
+  $2Miles = '2_miles',
+  $5K = '5k',
+  $10K = '10k',
+  $15K = '15k',
+  $10Miles = '10_miles',
+  $20K = '20k',
+  HalfMarathon = 'half_marathon',
+  $30K = '30k',
+  Marathon = 'marathon',
+  $50K = '50k',
+  LongestRide = 'longest_ride',
+  BiggestClimb = 'biggest_climb',
+  ElevationGain = 'elevation_gain',
+  $5Miles = '5_miles',
+  $40K = '40k',
+  $80K = '80k',
+  $50Miles = '50_miles',
+  $90K = '90k',
+  $100K = '100k',
+  $100Miles = '100_miles',
+  $180K = '180k',
+  Power5S = 'power_5s',
+  Power15S = 'power_15s',
+  Power30S = 'power_30s',
+  Power1M = 'power_1m',
+  Power2M = 'power_2m',
+  Power3M = 'power_3m',
+  Power5M = 'power_5m',
+  Power8M = 'power_8m',
+  Power10M = 'power_10m',
+  Power15M = 'power_15m',
+  Power20M = 'power_20m',
+  Power30M = 'power_30m',
+  Power45M = 'power_45m',
+  Power1H = 'power_1h',
+  Power2H = 'power_2h',
+}
 export enum BestEffortSport {
   Run = 'run',
   Ride = 'ride',
@@ -597,48 +692,6 @@ export enum BestEffortType {
 export enum BestEffortSport_Output {
   Run = 'run',
   Ride = 'ride',
-}
-export enum BestEffortType_Output {
-  $400M = '400m',
-  $1K = '1k',
-  HalfMile = 'half_mile',
-  $1Mile = '1_mile',
-  $2Miles = '2_miles',
-  $5K = '5k',
-  $10K = '10k',
-  $15K = '15k',
-  $10Miles = '10_miles',
-  $20K = '20k',
-  HalfMarathon = 'half_marathon',
-  $30K = '30k',
-  Marathon = 'marathon',
-  $50K = '50k',
-  LongestRide = 'longest_ride',
-  BiggestClimb = 'biggest_climb',
-  ElevationGain = 'elevation_gain',
-  $5Miles = '5_miles',
-  $40K = '40k',
-  $80K = '80k',
-  $50Miles = '50_miles',
-  $90K = '90k',
-  $100K = '100k',
-  $100Miles = '100_miles',
-  $180K = '180k',
-  Power5S = 'power_5s',
-  Power15S = 'power_15s',
-  Power30S = 'power_30s',
-  Power1M = 'power_1m',
-  Power2M = 'power_2m',
-  Power3M = 'power_3m',
-  Power5M = 'power_5m',
-  Power8M = 'power_8m',
-  Power10M = 'power_10m',
-  Power15M = 'power_15m',
-  Power20M = 'power_20m',
-  Power30M = 'power_30m',
-  Power45M = 'power_45m',
-  Power1H = 'power_1h',
-  Power2H = 'power_2h',
 }
 export enum BestEffortValueKind_Output {
   Duration = 'duration',

@@ -37,6 +37,7 @@
     const isNew = !activities.some(({ uploadId }) => uploadId === activity.uploadId);
     appendedActivities = [...appendedActivities.filter(({ uploadId }) => uploadId !== activity.uploadId), activity];
     if (isNew) totalOverride = (totalOverride ?? data.total) + 1;
+    void refreshRecent();
   }, () => void refreshRecent()));
 
   async function refreshRecent() {
