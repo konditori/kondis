@@ -1,52 +1,52 @@
 export const RUNNING_BEST_EFFORTS = [
-  { type: '400m', label: '400 m', distance: 400, valueKind: 'duration', higherIsBetter: false },
-  { type: '1k', label: '1K', distance: 1000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_mile', label: '1/2 mile', distance: 804.672, valueKind: 'duration', higherIsBetter: false },
-  { type: '1_mile', label: '1 mile', distance: 1609.344, valueKind: 'duration', higherIsBetter: false },
-  { type: '2_miles', label: '2 miles', distance: 3218.688, valueKind: 'duration', higherIsBetter: false },
-  { type: '5k', label: '5K', distance: 5000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10k', label: '10K', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '15k', label: '15K', distance: 15_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10_miles', label: '10 miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', label: '20K', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_marathon', label: 'Half marathon', distance: 21_097.5, valueKind: 'duration', higherIsBetter: false },
-  { type: '30k', label: '30K', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'marathon', label: 'Marathon', distance: 42_195, valueKind: 'duration', higherIsBetter: false },
-  { type: '50k', label: '50K', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '400m', distance: 400, valueKind: 'duration', higherIsBetter: false },
+  { type: '1k', distance: 1000, valueKind: 'duration', higherIsBetter: false },
+  { type: 'half_mile', distance: 804.672, valueKind: 'duration', higherIsBetter: false },
+  { type: '1_mile', distance: 1609.344, valueKind: 'duration', higherIsBetter: false },
+  { type: '2_miles', distance: 3218.688, valueKind: 'duration', higherIsBetter: false },
+  { type: '5k', distance: 5000, valueKind: 'duration', higherIsBetter: false },
+  { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '15k', distance: 15_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
+  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
+  { type: 'half_marathon', distance: 21_097.5, valueKind: 'duration', higherIsBetter: false },
+  { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
+  { type: 'marathon', distance: 42_195, valueKind: 'duration', higherIsBetter: false },
+  { type: '50k', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
 ] as const;
 
 export const CYCLING_BEST_EFFORTS = [
-  { type: 'longest_ride', label: 'Longest ride', valueKind: 'distance', higherIsBetter: true },
-  { type: 'biggest_climb', label: 'Biggest climb', valueKind: 'elevation', higherIsBetter: true },
-  { type: 'elevation_gain', label: 'Elevation gain', valueKind: 'elevation', higherIsBetter: true },
-  { type: '5_miles', label: '5 miles', distance: 8046.72, valueKind: 'duration', higherIsBetter: false },
-  { type: '10k', label: '10K', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10_miles', label: '10 miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', label: '20K', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '30k', label: '30K', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '40k', label: '40K', distance: 40_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '50k', label: '50K', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '80k', label: '80K', distance: 80_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '50_miles', label: '50 miles', distance: 80_467.2, valueKind: 'duration', higherIsBetter: false },
-  { type: '90k', label: '90K', distance: 90_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '100k', label: '100K', distance: 100_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '100_miles', label: '100 miles', distance: 160_934.4, valueKind: 'duration', higherIsBetter: false },
-  { type: '180k', label: '180K', distance: 180_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'power_5s', label: '5 sec power', duration: 5, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_15s', label: '15 sec power', duration: 15, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_30s', label: '30 sec power', duration: 30, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_1m', label: '1 min power', duration: 60, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_2m', label: '2 min power', duration: 120, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_3m', label: '3 min power', duration: 180, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_5m', label: '5 min power', duration: 300, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_8m', label: '8 min power', duration: 480, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_10m', label: '10 min power', duration: 600, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_15m', label: '15 min power', duration: 900, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_20m', label: '20 min power', duration: 1200, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_30m', label: '30 min power', duration: 1800, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_45m', label: '45 min power', duration: 2700, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_1h', label: '1 hour power', duration: 3600, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_2h', label: '2 hour power', duration: 7200, valueKind: 'power', higherIsBetter: true },
+  { type: 'longest_ride', valueKind: 'distance', higherIsBetter: true },
+  { type: 'biggest_climb', valueKind: 'elevation', higherIsBetter: true },
+  { type: 'elevation_gain', valueKind: 'elevation', higherIsBetter: true },
+  { type: '5_miles', distance: 8046.72, valueKind: 'duration', higherIsBetter: false },
+  { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
+  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '40k', distance: 40_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '50k', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '80k', distance: 80_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '50_miles', distance: 80_467.2, valueKind: 'duration', higherIsBetter: false },
+  { type: '90k', distance: 90_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '100k', distance: 100_000, valueKind: 'duration', higherIsBetter: false },
+  { type: '100_miles', distance: 160_934.4, valueKind: 'duration', higherIsBetter: false },
+  { type: '180k', distance: 180_000, valueKind: 'duration', higherIsBetter: false },
+  { type: 'power_5s', duration: 5, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_15s', duration: 15, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_30s', duration: 30, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_1m', duration: 60, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_2m', duration: 120, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_3m', duration: 180, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_5m', duration: 300, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_8m', duration: 480, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_10m', duration: 600, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_15m', duration: 900, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_20m', duration: 1200, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_30m', duration: 1800, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_45m', duration: 2700, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_1h', duration: 3600, valueKind: 'power', higherIsBetter: true },
+  { type: 'power_2h', duration: 7200, valueKind: 'power', higherIsBetter: true },
 ] as const;
 
 export const BEST_EFFORT_TYPES = [
@@ -57,7 +57,7 @@ export type RunningBestEffortType = (typeof RUNNING_BEST_EFFORTS)[number]['type'
 export type CyclingBestEffortType = (typeof CYCLING_BEST_EFFORTS)[number]['type'];
 export type BestEffortType = RunningBestEffortType | CyclingBestEffortType;
 export type BestEffortValueKind = 'duration' | 'distance' | 'elevation' | 'power';
-export type DistanceBestEffortDefinition = { type: BestEffortType; label: string; distance: number };
+export type DistanceBestEffortDefinition = { type: BestEffortType; distance: number };
 
 export type RunningBestEffort = {
   type: BestEffortType;
@@ -346,6 +346,3 @@ export const computeCyclingPowerBestEfforts = (power: number[], time: number[]):
     return best ? [best] : [];
   });
 };
-
-export const runningBestEffortLabel = (type: RunningBestEffortType): string =>
-  RUNNING_BEST_EFFORTS.find((effort) => effort.type === type)?.label ?? type;

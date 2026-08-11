@@ -261,7 +261,6 @@ export class ActivityService {
     return {
       sport,
       type: selected.type,
-      label: selected.label,
       valueKind: selected.valueKind,
       higherIsBetter: selected.higherIsBetter,
       distance: 'distance' in selected ? selected.distance : null,
@@ -270,7 +269,6 @@ export class ActivityService {
         .filter((definition) => availableTypes.has(definition.type))
         .map((definition) => ({
           type: definition.type,
-          label: definition.label,
           valueKind: definition.valueKind,
         })),
       efforts: rows.map((row) => {
@@ -310,7 +308,6 @@ export class ActivityService {
           ? [
               {
                 type: definition.type,
-                label: definition.label,
                 distance: effort.distance,
                 elapsedTime: effort.elapsed_time,
                 startTime: effort.start_time,
@@ -397,7 +394,7 @@ export class ActivityService {
 
   private async topBestEffortsForActivities(activities: ActivityRecord[]) {
     const activityIds = new Set(activities.map(({ id }) => id));
-    const result = new Map<string, { type: BestEffortType; label: string; yearRank: number }[]>();
+    const result = new Map<string, { type: BestEffortType; yearRank: number }[]>();
     if (activityIds.size === 0) {
       return result;
     }
@@ -409,7 +406,7 @@ export class ActivityService {
         continue;
       }
       const efforts = result.get(row.activity_id) ?? [];
-      efforts.push({ type: definition.type, label: definition.label, yearRank: row.year_rank });
+      efforts.push({ type: definition.type, yearRank: row.year_rank });
       result.set(row.activity_id, efforts);
     }
 

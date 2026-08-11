@@ -168,7 +168,7 @@ describe('ActivityController (medium)', () => {
 
       const response = await controller.listBestEfforts({ sport: 'run', type: '5k' });
 
-      expect(response.label).toBe('5K');
+      expect(response.type).toBe('5k');
       expect(response.efforts.map(({ activityName }) => activityName)).toEqual(['first', 'yearly best', 'later']);
       expect(response.efforts.find(({ activityId }) => activityId === first)).toMatchObject({
         overallRank: 3,

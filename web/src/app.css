@@ -1354,21 +1354,17 @@ button {
   font-weight: 800;
   white-space: nowrap;
 }
-.overall-badge {
+.badge {
   color: #8a5905;
   background: #fff2d5;
 }
-.overall-badge.rank-2 {
+.badge.rank-2 {
   color: #5d6866;
   background: #edf0ef;
 }
-.overall-badge.rank-3 {
+.badge.rank-3 {
   color: #88502d;
   background: #fae8dc;
-}
-.year-badge {
-  color: var(--green);
-  background: var(--green-soft);
 }
 .history-chevron {
   color: #a3aaa3;

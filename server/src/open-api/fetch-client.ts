@@ -114,7 +114,6 @@ export type ActivityListResponseDtoOutput = {
     updatedAt: string;
     topBestEfforts: {
       type: BestEffortType_Output;
-      label: string;
       yearRank: number;
     }[];
   }[];
@@ -126,8 +125,6 @@ export type ActivityListResponseDtoOutput = {
 export type BestEffortListResponseDtoOutput = {
   sport: BestEffortSport_Output;
   type: BestEffortType_Output;
-  /** Display label for the selected distance */
-  label: string;
   valueKind: BestEffortValueKind_Output;
   higherIsBetter: boolean;
   /** Selected distance in meters, when applicable */
@@ -136,7 +133,6 @@ export type BestEffortListResponseDtoOutput = {
   duration: number | null;
   options: {
     type: BestEffortType_Output;
-    label: string;
     valueKind: BestEffortValueKind_Output;
   }[];
   efforts: {
@@ -206,7 +202,6 @@ export type ActivityDetailDtoOutput = {
   } | null;
   bestEfforts: {
     type: BestEffortType_Output;
-    label: string;
     /** Standard effort distance in meters */
     distance: number;
     /** Effort duration in seconds */

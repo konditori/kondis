@@ -1,11 +1,13 @@
 <script lang="ts">
   import { Award, CalendarCheck, ChevronRight, CloudOff, Medal, Timer, Trophy } from "@lucide/svelte";
   import { goto } from "$app/navigation";
+  import { bestEffortLabel } from "$lib/best-efforts";
   import BestEffortChart from "$lib/components/BestEffortChart.svelte";
   import { activityName, bestEffortValue, duration, effortPace } from "$lib/format";
 
   let { data } = $props();
   const history = $derived(data.history);
+  const label = $derived(history ? bestEffortLabel(history.type) : "");
   const podium = $derived(
     history
       ? history.efforts
@@ -61,7 +63,7 @@
         <select id="effort-distance" value={history.type} onchange={(event) => selectEffort(event.currentTarget.value)}>
           {#each optionGroups as [kind, options]}
             <optgroup label={optionGroupLabels[kind as keyof typeof optionGroupLabels]}>
-              {#each options ?? [] as option}<option value={option.type}>{option.label}</option>{/each}
+              {#each options ?? [] as option}<option value={option.type}>{bestEffortLabel(option.type)}</option>{/each}
             </optgroup>
           {/each}
         </select>
@@ -73,12 +75,12 @@
     <div class="notice"><CloudOff size={20} /><span><strong>Server unavailable</strong> Could not load your best efforts.</span></div>
   {:else if history && history.efforts.length > 0}
     <section class="effort-overview">
-      <div class="section-heading effort-section-heading"><div><span class="eyebrow">Progress over time</span><h2>{history.label} performance</h2></div><span class="chart-hint">{history.higherIsBetter ? "Higher is better" : "Higher is faster"}</span></div>
-      <BestEffortChart efforts={history.efforts} label={history.label} valueKind={history.valueKind} higherIsBetter={history.higherIsBetter} unitSystem={data.unitSystem} />
+      <div class="section-heading effort-section-heading"><div><span class="eyebrow">Progress over time</span><h2>{label} performance</h2></div><span class="chart-hint">{history.higherIsBetter ? "Higher is better" : "Higher is faster"}</span></div>
+      <BestEffortChart efforts={history.efforts} {label} valueKind={history.valueKind} higherIsBetter={history.higherIsBetter} unitSystem={data.unitSystem} />
     </section>
 
     <section class="podium-section">
-      <div class="section-heading"><div><span class="eyebrow">All-time ranking</span><h2>Your fastest {history.label} efforts</h2></div></div>
+      <div class="section-heading"><div><span class="eyebrow">All-time ranking</span><h2>Your fastest {label} efforts</h2></div></div>
       <div class="podium-grid">
         {#each podium as effort, index}
           <a class:gold={index === 0} class:silver={index === 1} class:bronze={index === 2} class="podium-card" href={`/activities/${effort.activityId}`}>
@@ -99,8 +101,8 @@
             <span class="history-date"><strong>{new Date(effort.startedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</strong><small>{activityName({ name: effort.activityName, sport: effort.sport })}</small></span>
             <span class="history-time"><Timer size={16} /><strong>{bestEffortValue(effort.value, history.valueKind, data.unitSystem)}</strong>{#if secondaryValue(effort)}<small>{secondaryValue(effort)}</small>{/if}</span>
             <span class="history-badges">
-              {#if effort.overallRank <= 3}<span class={`overall-badge rank-${effort.overallRank}`}><Trophy size={14} /> Overall #{effort.overallRank}</span>{/if}
-              {#if effort.yearRank === 1}<span class="year-badge"><CalendarCheck size={14} /> {effort.year} PR</span>{/if}
+              {#if effort.overallRank <= 3}<span class={`badge rank-${effort.overallRank}`}><Medal size={31} /> All time</span>{/if}
+              {#if effort.yearRank <= 3}<span class={`badge rank-${effort.yearRank}`}><Medal size={31} /> {effort.year}</span>{/if}
             </span>
             <ChevronRight class="history-chevron" size={18} />
           </a>
@@ -110,7 +112,7 @@
   {:else if history}
     <div class="empty-state best-efforts-empty">
       <span class="empty-icon"><Award size={28} /></span>
-      <h2>No {history.label} efforts yet</h2>
+      <h2>No {label} efforts yet</h2>
       <p>Import more {activityNoun} with the required data to start tracking this effort.</p>
     </div>
   {/if}

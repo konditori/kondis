@@ -854,9 +854,6 @@
                       "type": {
                         "$ref": "#/components/schemas/BestEffortType_Output"
                       },
-                      "label": {
-                        "type": "string"
-                      },
                       "yearRank": {
                         "type": "integer",
                         "minimum": 1,
@@ -865,7 +862,6 @@
                     },
                     "required": [
                       "type",
-                      "label",
                       "yearRank"
                     ],
                     "additionalProperties": false
@@ -946,10 +942,6 @@
           "type": {
             "$ref": "#/components/schemas/BestEffortType_Output"
           },
-          "label": {
-            "type": "string",
-            "description": "Display label for the selected distance"
-          },
           "valueKind": {
             "$ref": "#/components/schemas/BestEffortValueKind_Output"
           },
@@ -976,16 +968,12 @@
                 "type": {
                   "$ref": "#/components/schemas/BestEffortType_Output"
                 },
-                "label": {
-                  "type": "string"
-                },
                 "valueKind": {
                   "$ref": "#/components/schemas/BestEffortValueKind_Output"
                 }
               },
               "required": [
                 "type",
-                "label",
                 "valueKind"
               ],
               "additionalProperties": false
@@ -1059,7 +1047,6 @@
         "required": [
           "sport",
           "type",
-          "label",
           "valueKind",
           "higherIsBetter",
           "distance",
@@ -1256,9 +1243,6 @@
                 "type": {
                   "$ref": "#/components/schemas/BestEffortType_Output"
                 },
-                "label": {
-                  "type": "string"
-                },
                 "distance": {
                   "type": "number",
                   "exclusiveMinimum": true,
@@ -1317,7 +1301,6 @@
               },
               "required": [
                 "type",
-                "label",
                 "distance",
                 "elapsedTime",
                 "startTime",

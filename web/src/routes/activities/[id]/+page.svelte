@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions } from '$lib/api';
   import { ACTIVITY_TYPE_OPTIONS, ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
+  import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
@@ -57,24 +58,20 @@
     editing = true;
   }
 
-  function effortDisplayName(label: string): string {
-    return label === '1 mile' ? 'mile' : label;
-  }
-
   function rankOrdinal(rank: number): string {
     return rank === 2 ? '2nd' : '3rd';
   }
 
   function bestEffortAchievement(effort: ActivityDetail['bestEfforts'][number]): { rank: number; text: string } | null {
-    const name = effortDisplayName(effort.label);
+    const name = bestEffortRecordName(effort.type).toLowerCase();
     if (effort.overallRank === 1) {
-      return { rank: 1, text: `New best of all time` };
+      return { rank: 1, text: `Your best ${name} of all time` };
     }
     if (effort.overallRank <= 3) {
       return { rank: effort.overallRank, text: `New ${rankOrdinal(effort.overallRank)} best of all time` };
     }
     if (effort.yearRank === 1) {
-      return { rank: 1, text: `New best of ${effort.year}` };
+      return { rank: 1, text: `Your best ${name} of ${effort.year}` };
     }
     if (effort.yearRank <= 3) {
       return { rank: effort.yearRank, text: `New ${rankOrdinal(effort.yearRank)} best of ${effort.year}` };
@@ -172,7 +169,7 @@
         </div>
         {#each activity.bestEfforts as effort}
           {@const achievement = bestEffortAchievement(effort)}
-          <a class="best-effort-row" class:has-achievement={achievement !== null} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${effort.label}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
+          <a class="best-effort-row" class:has-achievement={achievement !== null} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
             <div class="effort-distance" role="cell">
               {#if achievement}
                 <span class={`effort-medal achievement-rank-${achievement.rank}`} aria-hidden="true">
@@ -181,7 +178,7 @@
                 </span>
               {/if}
               <span class="effort-distance-copy">
-                <strong>{effort.label}</strong>
+                <strong>{bestEffortLabel(effort.type)}</strong>
                 {#if achievement}<small>{achievement.text}</small>{/if}
               </span>
             </div>

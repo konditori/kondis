@@ -2,6 +2,7 @@
   import { ArrowUpRight, Clock3, Gauge, Medal, Mountain } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { activityTypeLabel, sportIcon } from '$lib/activity-types';
+  import { bestEffortLabel } from '$lib/best-efforts';
   import type { Activity } from '$lib/types';
   import type { UnitSystem } from '$lib/units';
   import { activityName, distance, duration, elevation, localTime } from '$lib/format';
@@ -25,7 +26,7 @@
     {#if activity.topBestEfforts?.length}
       <div class="activity-achievements">
         {#each activity.topBestEfforts as effort}
-          <span class={`activity-achievement rank-${effort.yearRank}`} title={`${effort.label}: ${effort.yearRank === 1 ? 'personal record for the year' : `#${effort.yearRank} for the year`}`} aria-label={`${effort.label}: ${effort.yearRank === 1 ? 'personal record for the year' : `number ${effort.yearRank} for the year`}`}><Medal size={15} /></span>
+          <span class={`activity-achievement rank-${effort.yearRank}`} title={`${bestEffortLabel(effort.type)}: ${effort.yearRank === 1 ? 'personal record for the year' : `#${effort.yearRank} for the year`}`} aria-label={`${bestEffortLabel(effort.type)}: ${effort.yearRank === 1 ? 'personal record for the year' : `number ${effort.yearRank} for the year`}`}><Medal size={15} /></span>
         {/each}
       </div>
     {/if}

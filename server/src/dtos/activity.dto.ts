@@ -68,7 +68,6 @@ export const ActivityListResponseSchema = z
           .array(
             z.object({
               type: BestEffortTypeSchema,
-              label: z.string(),
               yearRank: z.number().int().min(1).max(3),
             }),
           )
@@ -84,7 +83,6 @@ export const BestEffortListResponseSchema = z
   .object({
     sport: BestEffortSportSchema,
     type: BestEffortTypeSchema,
-    label: z.string().describe('Display label for the selected distance'),
     valueKind: BestEffortValueKindSchema,
     higherIsBetter: z.boolean(),
     distance: z.number().positive().nullable().describe('Selected distance in meters, when applicable'),
@@ -92,7 +90,6 @@ export const BestEffortListResponseSchema = z
     options: z.array(
       z.object({
         type: BestEffortTypeSchema,
-        label: z.string(),
         valueKind: BestEffortValueKindSchema,
       }),
     ),
@@ -123,7 +120,6 @@ export const ActivityDetailSchema = ActivitySchema.extend({
   bestEfforts: z.array(
     z.object({
       type: BestEffortTypeSchema,
-      label: z.string(),
       distance: z.number().positive().describe('Standard effort distance in meters'),
       elapsedTime: z.number().positive().describe('Effort duration in seconds'),
       startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),

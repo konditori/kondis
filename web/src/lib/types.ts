@@ -29,7 +29,6 @@ export type Activity = {
   updatedAt: string;
   topBestEfforts?: {
     type: string;
-    label: string;
     yearRank: number;
   }[];
 };
@@ -44,7 +43,6 @@ export type ActivityDetail = Activity & {
   track: { type: "LineString"; coordinates: [number, number][] } | null;
   bestEfforts: {
     type: string;
-    label: string;
     distance: number;
     elapsedTime: number;
     startTime: number;
@@ -64,12 +62,11 @@ export type BestEffortValueKind =
 export type RunningBestEffortHistory = {
   sport: BestEffortSport;
   type: string;
-  label: string;
   valueKind: BestEffortValueKind;
   higherIsBetter: boolean;
   distance: number | null;
   duration: number | null;
-  options: { type: string; label: string; valueKind: BestEffortValueKind }[];
+  options: { type: string; valueKind: BestEffortValueKind }[];
   efforts: {
     activityId: string;
     activityName: string | null;
