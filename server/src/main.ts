@@ -7,7 +7,7 @@ import { AppModule } from 'src/app.module';
 import { ConfigService } from 'src/config/config.service';
 import { runMigrations } from 'src/db/migrate';
 import { WorkerType } from 'src/enum';
-import { RealtimeService } from 'src/services/realtime.service';
+import { EventRepository } from 'src/repositories/event.repository';
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
@@ -22,7 +22,7 @@ async function bootstrap(): Promise<void> {
     const app = await NestFactory.create(AppModule, { cors: false });
     app.enableShutdownHooks();
     await app.init();
-    await app.get(RealtimeService).attach(app.getHttpServer());
+    await app.get(EventRepository).attach(app.getHttpServer());
     await app.listen(config.port, '0.0.0.0'); // TODO: make host configurable
     logger.log(`Kondis server listening on 0.0.0.0 on port ${config.port}`);
     return;

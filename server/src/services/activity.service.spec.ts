@@ -5,6 +5,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { JobName, JobStatus } from 'src/enum';
 import { type ActivityRepository } from 'src/repositories/activity.repository';
 import { type DatabaseRepository } from 'src/repositories/database.repository';
+import { type EventRepository } from 'src/repositories/event.repository';
 import { FitDecodeError, type FitRepository } from 'src/repositories/fit.repository';
 import { type GpxRepository } from 'src/repositories/gpx.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
@@ -36,7 +37,7 @@ describe('ActivityService', () => {
   const deleteActivity = vi.fn(async () => {});
 
   const withTransaction = vi.fn(async (fn: (trx: unknown) => Promise<unknown>) => fn('trx'));
-  const publishRealtimeEvent = vi.fn(async () => {});
+  const emitEvent = vi.fn(async () => {});
 
   const queue = vi.fn(async () => {});
   const queueAll = vi.fn(async () => {});
@@ -61,7 +62,8 @@ describe('ActivityService', () => {
     delete: deleteActivity,
   } as unknown as ActivityRepository;
 
-  const databaseRepository = { withTransaction, publishRealtimeEvent } as unknown as DatabaseRepository;
+  const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
+  const eventRepository = { emit: emitEvent } as unknown as EventRepository;
   const jobRepository = { queue, queueAll } as unknown as JobRepository;
   const fitRepository = { decode } as unknown as FitRepository;
   const gpxRepository = { decode: decodeGpx } as unknown as GpxRepository;
@@ -73,6 +75,7 @@ describe('ActivityService', () => {
       storageRepository,
       activityRepository,
       databaseRepository,
+      eventRepository,
       jobRepository,
       fitRepository,
       gpxRepository,
@@ -165,9 +168,7 @@ describe('ActivityService', () => {
         expect.objectContaining({ activity: expect.objectContaining({ upload_id: UPLOAD_ID }) }),
       );
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
-      expect(publishRealtimeEvent).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'activity.created', activity: expect.objectContaining({ id: ACTIVITY_ID }) }),
-      );
+      expect(emitEvent).toHaveBeenCalledWith('ActivityCreate', expect.objectContaining({ id: ACTIVITY_ID }));
     });
 
     it('uses the TCX decoder for .tcx uploads', async () => {

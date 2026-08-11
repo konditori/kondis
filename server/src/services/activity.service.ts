@@ -8,6 +8,7 @@ import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
+import { EventRepository } from 'src/repositories/event.repository';
 import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
@@ -27,6 +28,7 @@ export class ActivityService {
     private readonly storageRepository: StorageRepository,
     private readonly activityRepository: ActivityRepository,
     private readonly databaseRepository: DatabaseRepository,
+    private readonly eventRepository: EventRepository,
     private readonly jobRepository: JobRepository,
     private readonly fitRepository: FitRepository,
     private readonly gpxRepository: GpxRepository,
@@ -66,10 +68,7 @@ export class ActivityService {
       if (!activity) {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
-      await this.databaseRepository.publishRealtimeEvent({
-        type: 'activity.created',
-        activity: this.toActivityDto(activity),
-      });
+      await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

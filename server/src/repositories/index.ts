@@ -1,6 +1,7 @@
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
+import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
@@ -12,6 +13,7 @@ export const repositories = [
   ActivityRepository,
   CryptoRepository,
   DatabaseRepository,
+  EventRepository,
   FitRepository,
   GpxRepository,
   JobRepository,
