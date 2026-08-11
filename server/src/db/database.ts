@@ -1,10 +1,8 @@
 import { Inject, Injectable, Logger, OnApplicationShutdown, Provider } from '@nestjs/common';
 import { Kysely, PostgresDialect, Transaction } from 'kysely';
-import { Migrator } from 'kysely/migration';
 import pg from 'pg';
 
 import { ConfigService, DatabaseConfig } from 'src/config/config.service';
-import { StaticMigrationProvider } from 'src/db/migrations';
 import { DB } from 'src/db/schema';
 
 export const KYSELY = Symbol('KYSELY');
@@ -38,9 +36,6 @@ export const createDatabase = (config: DatabaseConfig): KondisDatabase => {
 
   return new Kysely<DB>({ dialect: new PostgresDialect({ pool }) });
 };
-
-export const createMigrator = (db: KondisDatabase): Migrator =>
-  new Migrator({ db, provider: new StaticMigrationProvider() });
 
 export const databaseProvider: Provider = {
   provide: KYSELY,

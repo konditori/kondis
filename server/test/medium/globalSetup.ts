@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 import { GenericContainer, Wait } from 'testcontainers';
 
-import { runMigrations } from 'src/db/migrate';
+import { migrateDatabase } from 'src/repositories/database.repository';
 
 import { TEST_DB_URL_ENV, toDatabaseConfig } from 'test/medium/test-db';
 
@@ -40,7 +40,7 @@ const globalSetup = async (): Promise<() => Promise<void>> => {
   process.env[TEST_DB_URL_ENV] = postgresUrl;
 
   await ensureExtensions(postgresUrl);
-  await runMigrations(toDatabaseConfig(postgresUrl));
+  await migrateDatabase(toDatabaseConfig(postgresUrl));
 
   return async () => {
     await postgresContainer.stop();

@@ -5,8 +5,8 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from 'src/app.module';
 import { ConfigService } from 'src/config/config.service';
-import { runMigrations } from 'src/db/migrate';
 import { WorkerType } from 'src/enum';
+import { migrateDatabase } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 
 async function bootstrap(): Promise<void> {
@@ -15,7 +15,7 @@ async function bootstrap(): Promise<void> {
   config.logStartupSummary();
 
   if (config.autoMigrate) {
-    await runMigrations(config.database);
+    await migrateDatabase(config.database);
   }
 
   if (config.hasWorker(WorkerType.API)) {

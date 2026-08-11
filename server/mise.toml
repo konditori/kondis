@@ -32,9 +32,18 @@ run = "tsc --noEmit"
 env._.path = "./node_modules/.bin"
 run = "vitest run"
 
-[tasks.migrate]
+[tasks.migrations]
 env._.path = "./node_modules/.bin"
-run = "node -r @swc-node/register src/bin/migrate.ts"
+usage = '''
+arg "<command>" help="Migration operation" {
+  choices "create" "run" "revert"
+}
+arg "[name]" help="Name for a new migration"
+'''
+run = 'node -r @swc-node/register src/bin/migrations.ts "${usage_command?}" "${usage_name:-}"'
+
+[tasks.migrate]
+run = { task = "migrations", args = ["run"] }
 
 [tasks."db-codegen"]
 env._.path = "./node_modules/.bin"
