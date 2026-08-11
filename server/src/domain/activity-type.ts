@@ -137,7 +137,16 @@ export const toActivityType = (sport?: string | null, subSport?: string | null):
 };
 
 const RUNNING_BEST_EFFORT_ACTIVITY_TYPES = new Set<ActivityType>(['run', 'trail_run', 'virtual_run']);
+const CYCLING_BEST_EFFORT_ACTIVITY_TYPES = new Set<ActivityType>([
+  'ride',
+  'gravel_ride',
+  'mountain_bike_ride',
+  'virtual_ride',
+]);
 const HEATMAP_ACTIVITY_TYPES = new Set<ActivityType>(['golf', 'sail', 'skateboard', 'soccer', 'surfing']);
 
 export const supportsRunningBestEfforts = (type: ActivityType): boolean => RUNNING_BEST_EFFORT_ACTIVITY_TYPES.has(type);
+export const supportsCyclingBestEfforts = (type: ActivityType): boolean => CYCLING_BEST_EFFORT_ACTIVITY_TYPES.has(type);
+export const supportsDistanceBestEfforts = (type: ActivityType): boolean =>
+  supportsRunningBestEfforts(type) || supportsCyclingBestEfforts(type);
 export const usesActivityHeatmap = (type: ActivityType): boolean => HEATMAP_ACTIVITY_TYPES.has(type);

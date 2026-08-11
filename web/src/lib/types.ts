@@ -46,3 +46,29 @@ export type ActivityDetail = Activity & {
     endTime: number;
   }[];
 };
+
+export type BestEffortSport = "run" | "ride";
+export type BestEffortValueKind =
+  "duration" | "distance" | "elevation" | "power";
+
+export type RunningBestEffortHistory = {
+  sport: BestEffortSport;
+  type: string;
+  label: string;
+  valueKind: BestEffortValueKind;
+  higherIsBetter: boolean;
+  distance: number | null;
+  duration: number | null;
+  options: { type: string; label: string; valueKind: BestEffortValueKind }[];
+  efforts: {
+    activityId: string;
+    activityName: string | null;
+    sport: ActivityType;
+    startedAt: string;
+    elapsedTime: number;
+    value: number;
+    overallRank: number;
+    year: number;
+    yearRank: number;
+  }[];
+};

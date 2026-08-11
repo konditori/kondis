@@ -68,8 +68,7 @@ export type ActivityDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
-  /** Activity sport type */
-  sport: Sport;
+  sport: ActivityType_Output;
   /** Activity name */
   name: string | null;
   /** Activity description */
@@ -120,13 +119,40 @@ export type ActivityListResponseDtoOutput = {
   /** Total number of activities */
   total: number;
 };
+export type BestEffortListResponseDtoOutput = {
+  sport: BestEffortSport_Output;
+  type: BestEffortType_Output;
+  /** Display label for the selected distance */
+  label: string;
+  valueKind: BestEffortValueKind_Output;
+  higherIsBetter: boolean;
+  /** Selected distance in meters, when applicable */
+  distance: number | null;
+  /** Selected duration in seconds, when applicable */
+  duration: number | null;
+  options: {
+    type: BestEffortType_Output;
+    label: string;
+    valueKind: BestEffortValueKind_Output;
+  }[];
+  efforts: {
+    activityId: string;
+    activityName: string | null;
+    sport: ActivityType_Output;
+    startedAt: string;
+    elapsedTime: number;
+    value: number;
+    overallRank: number;
+    year: number;
+    yearRank: number;
+  }[];
+};
 export type ActivityDetailDtoOutput = {
   /** Activity id */
   id: string;
   /** Source upload id */
   uploadId: string;
-  /** Activity sport type */
-  sport: Sport;
+  sport: ActivityType_Output;
   /** Activity name */
   name: string | null;
   /** Activity description */
@@ -175,7 +201,7 @@ export type ActivityDetailDtoOutput = {
     coordinates: [number, number][];
   } | null;
   bestEfforts: {
-    type: Type2;
+    type: BestEffortType_Output;
     label: string;
     /** Standard effort distance in meters */
     distance: number;
@@ -192,8 +218,7 @@ export type ActivityUpdateDto = {
   name?: string | null;
   /** Description for the activity */
   description?: string | null;
-  /** Activity sport type */
-  sport?: Sport;
+  sport?: ActivityUpdateDtoActivityType;
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
 };
@@ -359,6 +384,28 @@ export function activityControllerListRecent(
   );
 }
 /**
+ * List running best efforts over time
+ */
+export function activityControllerListBestEfforts(
+  {
+    sport,
+    $type,
+  }: {
+    sport: BestEffortSport;
+    $type: BestEffortType;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: BestEffortListResponseDtoOutput;
+    }>(`/activities/best-efforts/${encodeURIComponent(sport)}/${encodeURIComponent($type)}`, {
+      ...opts,
+    }),
+  );
+}
+/**
  * Get one activity and its route
  */
 export function activityControllerGetById(
@@ -438,7 +485,7 @@ export enum Command {
   Empty = 'empty',
   ClearFailed = 'clear-failed',
 }
-export enum Sport {
+export enum ActivityType_Output {
   AlpineSki = 'alpine_ski',
   BackcountrySki = 'backcountry_ski',
   Badminton = 'badminton',
@@ -497,10 +544,11 @@ export enum Sport {
   Yoga = 'yoga',
   Other = 'other',
 }
-export enum Type {
-  LineString = 'LineString',
+export enum BestEffortSport {
+  Run = 'run',
+  Ride = 'ride',
 }
-export enum Type2 {
+export enum BestEffortType {
   $400M = '400m',
   $1K = '1k',
   HalfMile = 'half_mile',
@@ -515,4 +563,144 @@ export enum Type2 {
   $30K = '30k',
   Marathon = 'marathon',
   $50K = '50k',
+  LongestRide = 'longest_ride',
+  BiggestClimb = 'biggest_climb',
+  ElevationGain = 'elevation_gain',
+  $5Miles = '5_miles',
+  $40K = '40k',
+  $80K = '80k',
+  $50Miles = '50_miles',
+  $90K = '90k',
+  $100K = '100k',
+  $100Miles = '100_miles',
+  $180K = '180k',
+  Power5S = 'power_5s',
+  Power15S = 'power_15s',
+  Power30S = 'power_30s',
+  Power1M = 'power_1m',
+  Power2M = 'power_2m',
+  Power3M = 'power_3m',
+  Power5M = 'power_5m',
+  Power8M = 'power_8m',
+  Power10M = 'power_10m',
+  Power15M = 'power_15m',
+  Power20M = 'power_20m',
+  Power30M = 'power_30m',
+  Power45M = 'power_45m',
+  Power1H = 'power_1h',
+  Power2H = 'power_2h',
+}
+export enum BestEffortSport_Output {
+  Run = 'run',
+  Ride = 'ride',
+}
+export enum BestEffortType_Output {
+  $400M = '400m',
+  $1K = '1k',
+  HalfMile = 'half_mile',
+  $1Mile = '1_mile',
+  $2Miles = '2_miles',
+  $5K = '5k',
+  $10K = '10k',
+  $15K = '15k',
+  $10Miles = '10_miles',
+  $20K = '20k',
+  HalfMarathon = 'half_marathon',
+  $30K = '30k',
+  Marathon = 'marathon',
+  $50K = '50k',
+  LongestRide = 'longest_ride',
+  BiggestClimb = 'biggest_climb',
+  ElevationGain = 'elevation_gain',
+  $5Miles = '5_miles',
+  $40K = '40k',
+  $80K = '80k',
+  $50Miles = '50_miles',
+  $90K = '90k',
+  $100K = '100k',
+  $100Miles = '100_miles',
+  $180K = '180k',
+  Power5S = 'power_5s',
+  Power15S = 'power_15s',
+  Power30S = 'power_30s',
+  Power1M = 'power_1m',
+  Power2M = 'power_2m',
+  Power3M = 'power_3m',
+  Power5M = 'power_5m',
+  Power8M = 'power_8m',
+  Power10M = 'power_10m',
+  Power15M = 'power_15m',
+  Power20M = 'power_20m',
+  Power30M = 'power_30m',
+  Power45M = 'power_45m',
+  Power1H = 'power_1h',
+  Power2H = 'power_2h',
+}
+export enum BestEffortValueKind_Output {
+  Duration = 'duration',
+  Distance = 'distance',
+  Elevation = 'elevation',
+  Power = 'power',
+}
+export enum Type {
+  LineString = 'LineString',
+}
+export enum ActivityUpdateDtoActivityType {
+  AlpineSki = 'alpine_ski',
+  BackcountrySki = 'backcountry_ski',
+  Badminton = 'badminton',
+  Basketball = 'basketball',
+  Canoeing = 'canoeing',
+  Cricket = 'cricket',
+  CrossCountrySki = 'cross_country_ski',
+  Crossfit = 'crossfit',
+  Dance = 'dance',
+  EBikeRide = 'e_bike_ride',
+  Elliptical = 'elliptical',
+  EMountainBikeRide = 'e_mountain_bike_ride',
+  Golf = 'golf',
+  GravelRide = 'gravel_ride',
+  Handcycle = 'handcycle',
+  HighIntensityIntervalTraining = 'high_intensity_interval_training',
+  Hike = 'hike',
+  IceSkate = 'ice_skate',
+  InlineSkate = 'inline_skate',
+  Kayaking = 'kayaking',
+  Kitesurf = 'kitesurf',
+  MountainBikeRide = 'mountain_bike_ride',
+  Padel = 'padel',
+  PhysicalTherapy = 'physical_therapy',
+  Pickleball = 'pickleball',
+  Pilates = 'pilates',
+  Racquetball = 'racquetball',
+  Ride = 'ride',
+  RockClimbing = 'rock_climbing',
+  RollerSki = 'roller_ski',
+  Rowing = 'rowing',
+  Run = 'run',
+  Sail = 'sail',
+  Skateboard = 'skateboard',
+  Snowboard = 'snowboard',
+  Snowshoe = 'snowshoe',
+  Soccer = 'soccer',
+  Squash = 'squash',
+  StairStepper = 'stair_stepper',
+  StandUpPaddling = 'stand_up_paddling',
+  Surfing = 'surfing',
+  Swim = 'swim',
+  TableTennis = 'table_tennis',
+  Tennis = 'tennis',
+  TrailRun = 'trail_run',
+  Velomobile = 'velomobile',
+  VirtualRide = 'virtual_ride',
+  VirtualRow = 'virtual_row',
+  VirtualRun = 'virtual_run',
+  Volleyball = 'volleyball',
+  Walk = 'walk',
+  WeightTraining = 'weight_training',
+  Wheelchair = 'wheelchair',
+  Windsurf = 'windsurf',
+  Workout = 'workout',
+  Yoga = 'yoga',
+  Other = 'other',
 }

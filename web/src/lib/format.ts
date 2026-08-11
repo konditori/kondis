@@ -1,4 +1,5 @@
 import type { ActivityType } from "$lib/types";
+import type { BestEffortValueKind } from "$lib/types";
 import type { UnitSystem } from "$lib/units";
 
 const METERS_PER_MILE = 1609.344;
@@ -92,6 +93,23 @@ export function effortPace(
   unitSystem: UnitSystem,
 ): string {
   return pace(distanceMeters / elapsedTime, unitSystem).replace(" min/", " /");
+}
+
+export function bestEffortValue(
+  value: number,
+  kind: BestEffortValueKind,
+  unitSystem: UnitSystem,
+): string {
+  switch (kind) {
+    case "duration":
+      return effortDuration(value);
+    case "distance":
+      return distance(value, unitSystem);
+    case "elevation":
+      return elevation(value, unitSystem);
+    case "power":
+      return `${Math.round(value)} W`;
+  }
 }
 
 export function localDate(value: string): string {

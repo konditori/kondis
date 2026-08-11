@@ -2,10 +2,21 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { ACTIVITY_TYPES } from 'src/domain/activity-type';
-import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
+import { BEST_EFFORT_TYPES } from 'src/domain/running-best-effort';
 
-export const ActivityTypeSchema = z.enum(ACTIVITY_TYPES).describe('Activity sport type');
-const RunningBestEffortTypeSchema = z.enum(RUNNING_BEST_EFFORTS.map(({ type }) => type));
+export const ActivityTypeSchema = z.enum(ACTIVITY_TYPES).describe('Activity sport type').meta({ id: 'ActivityType' });
+const BestEffortTypeSchema = z.enum(BEST_EFFORT_TYPES).meta({ id: 'BestEffortType' });
+const BestEffortValueKindSchema = z
+  .enum(['duration', 'distance', 'elevation', 'power'])
+  .meta({ id: 'BestEffortValueKind' });
+const BestEffortSportSchema = z.enum(['run', 'ride']).meta({ id: 'BestEffortSport' });
+
+export const BestEffortListParamSchema = z
+  .object({
+    sport: BestEffortSportSchema.describe('Best effort sport category'),
+    type: BestEffortTypeSchema.describe('Best effort type'),
+  })
+  .meta({ id: 'BestEffortListParamDto' });
 
 export const ActivityIdParamSchema = z
   .object({
@@ -57,6 +68,38 @@ export const ActivityListResponseSchema = z
   })
   .meta({ id: 'ActivityListResponseDto' });
 
+export const BestEffortListResponseSchema = z
+  .object({
+    sport: BestEffortSportSchema,
+    type: BestEffortTypeSchema,
+    label: z.string().describe('Display label for the selected distance'),
+    valueKind: BestEffortValueKindSchema,
+    higherIsBetter: z.boolean(),
+    distance: z.number().positive().nullable().describe('Selected distance in meters, when applicable'),
+    duration: z.number().positive().nullable().describe('Selected duration in seconds, when applicable'),
+    options: z.array(
+      z.object({
+        type: BestEffortTypeSchema,
+        label: z.string(),
+        valueKind: BestEffortValueKindSchema,
+      }),
+    ),
+    efforts: z.array(
+      z.object({
+        activityId: z.string().uuid(),
+        activityName: z.string().nullable(),
+        sport: ActivityTypeSchema,
+        startedAt: z.string().datetime(),
+        elapsedTime: z.number().positive(),
+        value: z.number().positive(),
+        overallRank: z.number().int().positive(),
+        year: z.number().int(),
+        yearRank: z.number().int().positive(),
+      }),
+    ),
+  })
+  .meta({ id: 'BestEffortListResponseDto' });
+
 export const ActivityDetailSchema = ActivitySchema.extend({
   track: z
     .object({
@@ -67,7 +110,7 @@ export const ActivityDetailSchema = ActivitySchema.extend({
     .describe('GPS route as GeoJSON'),
   bestEfforts: z.array(
     z.object({
-      type: RunningBestEffortTypeSchema,
+      type: BestEffortTypeSchema,
       label: z.string(),
       distance: z.number().positive().describe('Standard effort distance in meters'),
       elapsedTime: z.number().positive().describe('Effort duration in seconds'),
@@ -94,4 +137,6 @@ export class ActivityListQueryDto extends createZodDto(ActivityListQuerySchema) 
 export class ActivityDto extends createZodDto(ActivitySchema) {}
 export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
+export class BestEffortListParamDto extends createZodDto(BestEffortListParamSchema) {}
+export class BestEffortListResponseDto extends createZodDto(BestEffortListResponseSchema) {}
 export class ActivityUpdateDto extends createZodDto(ActivityUpdateSchema) {}

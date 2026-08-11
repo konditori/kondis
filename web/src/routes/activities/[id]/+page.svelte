@@ -2,7 +2,7 @@
   import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Mountain, Pencil, Timer, Trophy, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
-  import { activityControllerUpdateById, getSdkRequestOptions } from '$lib/api';
+  import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions } from '$lib/api';
   import { ACTIVITY_TYPE_OPTIONS, ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
@@ -72,7 +72,7 @@
           activityUpdateDto: {
             name: draftName.trim() || null,
             description: draftDescription.trim() || null,
-            sport: draftSport,
+            sport: draftSport as unknown as ActivityUpdateSport,
           },
         },
         getSdkRequestOptions(),

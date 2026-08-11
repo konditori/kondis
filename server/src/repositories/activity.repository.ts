@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 
-import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
+import { KondisDatabase, KondisExecutor, KYSELY } from 'src/db/database';
 import {
   Activity,
   ActivityMetric,
@@ -12,8 +12,20 @@ import {
   NewLap,
   StreamType,
 } from 'src/db/schema';
-import { ActivityType, supportsRunningBestEfforts } from 'src/domain/activity-type';
-import { computeRunningBestEfforts } from 'src/domain/running-best-effort';
+import {
+  ActivityType,
+  supportsCyclingBestEfforts,
+  supportsDistanceBestEfforts,
+  supportsRunningBestEfforts,
+} from 'src/domain/activity-type';
+import {
+  BestEffortType,
+  computeBiggestClimb,
+  computeCyclingBestEfforts,
+  computeCyclingPowerBestEfforts,
+  computeCyclingSummaryBestEfforts,
+  computeRunningBestEfforts,
+} from 'src/domain/running-best-effort';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
@@ -91,7 +103,7 @@ export class ActivityRepository {
           .execute();
       }
 
-      await this.insertBestEfforts(trx, id, input.activity.sport, input.streams);
+      await this.insertBestEfforts(trx, id, input.activity.sport, input.streams, input.metrics);
 
       if (input.laps.length > 0) {
         await trx
@@ -181,8 +193,48 @@ export class ActivityRepository {
       .execute();
   }
 
+  listActivitiesMissingBestEfforts() {
+    return this.db
+      .selectFrom('activity')
+      .leftJoin('activity_best_effort', 'activity_best_effort.activity_id', 'activity.id')
+      .select(['activity.id', 'activity.sport'])
+      .where('activity_best_effort.activity_id', 'is', null)
+      .execute();
+  }
+
+  listBestEfforts(type: BestEffortType, sports: ActivityType[]) {
+    return this.db
+      .selectFrom('activity_best_effort')
+      .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
+      .select([
+        'activity_best_effort.activity_id',
+        'activity_best_effort.elapsed_time',
+        'activity_best_effort.value',
+        'activity_best_effort.value_kind',
+        'activity.name',
+        'activity.sport',
+        'activity.started_at',
+        'activity.timezone_offset_minutes',
+      ])
+      .where('activity_best_effort.type', '=', type)
+      .where('activity.sport', 'in', sports)
+      .orderBy('activity.started_at', 'asc')
+      .orderBy('activity.id', 'asc')
+      .execute();
+  }
+
+  listAvailableBestEffortTypes(sports: ActivityType[]) {
+    return this.db
+      .selectFrom('activity_best_effort')
+      .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
+      .select('activity_best_effort.type')
+      .distinct()
+      .where('activity.sport', 'in', sports)
+      .execute();
+  }
+
   async ensureBestEfforts(activityId: string, sport: ActivityType): Promise<void> {
-    if (!supportsRunningBestEfforts(sport)) {
+    if (!supportsDistanceBestEfforts(sport)) {
       return;
     }
 
@@ -196,7 +248,12 @@ export class ActivityRepository {
       return;
     }
 
-    await this.insertBestEfforts(this.db, activityId, sport, await this.getStreams(activityId));
+    const metrics = await this.db
+      .selectFrom('activity_metric')
+      .select(['elapsed_time', 'distance', 'elevation_gain'])
+      .where('activity_id', '=', activityId)
+      .executeTakeFirstOrThrow();
+    await this.insertBestEfforts(this.db, activityId, sport, await this.getStreams(activityId), metrics);
   }
 
   async update(id: string, input: UpdateActivityInput) {
@@ -208,7 +265,12 @@ export class ActivityRepository {
 
       await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
       const streams = await trx.selectFrom('activity_stream').selectAll().where('activity_id', '=', id).execute();
-      await this.insertBestEfforts(trx, id, input.sport, streams);
+      const metrics = await trx
+        .selectFrom('activity_metric')
+        .select(['elapsed_time', 'distance', 'elevation_gain'])
+        .where('activity_id', '=', id)
+        .executeTakeFirstOrThrow();
+      await this.insertBestEfforts(trx, id, input.sport, streams, metrics);
       return row;
     });
     return updated ? this.getById(updated.id) : undefined;
@@ -219,14 +281,30 @@ export class ActivityRepository {
     activityId: string,
     sport: ActivityType,
     streams: ActivityStreamInput[],
+    metrics: { elapsed_time: number; distance?: number | null; elevation_gain?: number | null },
   ): Promise<void> {
-    if (!supportsRunningBestEfforts(sport)) {
+    if (!supportsDistanceBestEfforts(sport)) {
       return;
     }
 
     const distance = streams.find((stream) => stream.type === 'distance')?.data ?? [];
     const time = streams.find((stream) => stream.type === 'time')?.data ?? [];
-    const efforts = computeRunningBestEfforts(distance, time);
+    const efforts = supportsRunningBestEfforts(sport) ? computeRunningBestEfforts(distance, time) : [];
+    if (supportsCyclingBestEfforts(sport)) {
+      efforts.push(
+        ...computeCyclingBestEfforts(distance, time),
+        ...computeCyclingSummaryBestEfforts({
+          distance: metrics.distance ?? null,
+          elevationGain: metrics.elevation_gain ?? null,
+          elapsedTime: metrics.elapsed_time,
+        }),
+        ...computeCyclingPowerBestEfforts(streams.find((stream) => stream.type === 'power')?.data ?? [], time),
+      );
+      const biggestClimb = computeBiggestClimb(streams.find((stream) => stream.type === 'altitude')?.data ?? [], time);
+      if (biggestClimb) {
+        efforts.push(biggestClimb);
+      }
+    }
     if (efforts.length === 0) {
       return;
     }
@@ -241,6 +319,8 @@ export class ActivityRepository {
           elapsed_time: effort.elapsedTime,
           start_time: effort.startTime,
           end_time: effort.endTime,
+          value: effort.value,
+          value_kind: effort.valueKind,
         })),
       )
       .onConflict((conflict) => conflict.columns(['activity_id', 'type']).doNothing())

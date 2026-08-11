@@ -240,6 +240,47 @@
         ]
       }
     },
+    "/activities/best-efforts/{sport}/{type}": {
+      "get": {
+        "operationId": "ActivityController_listBestEfforts",
+        "parameters": [
+          {
+            "name": "sport",
+            "required": true,
+            "in": "path",
+            "description": "Best effort sport category",
+            "schema": {
+              "$ref": "#/components/schemas/BestEffortSport"
+            }
+          },
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "description": "Best effort type",
+            "schema": {
+              "$ref": "#/components/schemas/BestEffortType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Best effort history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BestEffortListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List running best efforts over time",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/activities/{id}": {
       "get": {
         "operationId": "ActivityController_getById",
@@ -560,67 +601,7 @@
             "description": "Source upload id"
           },
           "sport": {
-            "type": "string",
-            "enum": [
-              "alpine_ski",
-              "backcountry_ski",
-              "badminton",
-              "basketball",
-              "canoeing",
-              "cricket",
-              "cross_country_ski",
-              "crossfit",
-              "dance",
-              "e_bike_ride",
-              "elliptical",
-              "e_mountain_bike_ride",
-              "golf",
-              "gravel_ride",
-              "handcycle",
-              "high_intensity_interval_training",
-              "hike",
-              "ice_skate",
-              "inline_skate",
-              "kayaking",
-              "kitesurf",
-              "mountain_bike_ride",
-              "padel",
-              "physical_therapy",
-              "pickleball",
-              "pilates",
-              "racquetball",
-              "ride",
-              "rock_climbing",
-              "roller_ski",
-              "rowing",
-              "run",
-              "sail",
-              "skateboard",
-              "snowboard",
-              "snowshoe",
-              "soccer",
-              "squash",
-              "stair_stepper",
-              "stand_up_paddling",
-              "surfing",
-              "swim",
-              "table_tennis",
-              "tennis",
-              "trail_run",
-              "velomobile",
-              "virtual_ride",
-              "virtual_row",
-              "virtual_run",
-              "volleyball",
-              "walk",
-              "weight_training",
-              "wheelchair",
-              "windsurf",
-              "workout",
-              "yoga",
-              "other"
-            ],
-            "description": "Activity sport type"
+            "$ref": "#/components/schemas/ActivityType_Output"
           },
           "name": {
             "type": "string",
@@ -780,6 +761,69 @@
         ],
         "additionalProperties": false
       },
+      "ActivityType_Output": {
+        "type": "string",
+        "enum": [
+          "alpine_ski",
+          "backcountry_ski",
+          "badminton",
+          "basketball",
+          "canoeing",
+          "cricket",
+          "cross_country_ski",
+          "crossfit",
+          "dance",
+          "e_bike_ride",
+          "elliptical",
+          "e_mountain_bike_ride",
+          "golf",
+          "gravel_ride",
+          "handcycle",
+          "high_intensity_interval_training",
+          "hike",
+          "ice_skate",
+          "inline_skate",
+          "kayaking",
+          "kitesurf",
+          "mountain_bike_ride",
+          "padel",
+          "physical_therapy",
+          "pickleball",
+          "pilates",
+          "racquetball",
+          "ride",
+          "rock_climbing",
+          "roller_ski",
+          "rowing",
+          "run",
+          "sail",
+          "skateboard",
+          "snowboard",
+          "snowshoe",
+          "soccer",
+          "squash",
+          "stair_stepper",
+          "stand_up_paddling",
+          "surfing",
+          "swim",
+          "table_tennis",
+          "tennis",
+          "trail_run",
+          "velomobile",
+          "virtual_ride",
+          "virtual_row",
+          "virtual_run",
+          "volleyball",
+          "walk",
+          "weight_training",
+          "wheelchair",
+          "windsurf",
+          "workout",
+          "yoga",
+          "other"
+        ],
+        "description": "Activity sport type"
+      },
       "ActivityListResponseDto_Output": {
         "type": "object",
         "properties": {
@@ -808,6 +852,199 @@
         ],
         "additionalProperties": false
       },
+      "BestEffortSport_Output": {
+        "type": "string",
+        "enum": [
+          "run",
+          "ride"
+        ]
+      },
+      "BestEffortType_Output": {
+        "type": "string",
+        "enum": [
+          "400m",
+          "1k",
+          "half_mile",
+          "1_mile",
+          "2_miles",
+          "5k",
+          "10k",
+          "15k",
+          "10_miles",
+          "20k",
+          "half_marathon",
+          "30k",
+          "marathon",
+          "50k",
+          "longest_ride",
+          "biggest_climb",
+          "elevation_gain",
+          "5_miles",
+          "40k",
+          "80k",
+          "50_miles",
+          "90k",
+          "100k",
+          "100_miles",
+          "180k",
+          "power_5s",
+          "power_15s",
+          "power_30s",
+          "power_1m",
+          "power_2m",
+          "power_3m",
+          "power_5m",
+          "power_8m",
+          "power_10m",
+          "power_15m",
+          "power_20m",
+          "power_30m",
+          "power_45m",
+          "power_1h",
+          "power_2h"
+        ]
+      },
+      "BestEffortValueKind_Output": {
+        "type": "string",
+        "enum": [
+          "duration",
+          "distance",
+          "elevation",
+          "power"
+        ]
+      },
+      "BestEffortListResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/BestEffortSport_Output"
+          },
+          "type": {
+            "$ref": "#/components/schemas/BestEffortType_Output"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label for the selected distance"
+          },
+          "valueKind": {
+            "$ref": "#/components/schemas/BestEffortValueKind_Output"
+          },
+          "higherIsBetter": {
+            "type": "boolean"
+          },
+          "distance": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Selected distance in meters, when applicable",
+            "nullable": true
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Selected duration in seconds, when applicable",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "$ref": "#/components/schemas/BestEffortType_Output"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "valueKind": {
+                  "$ref": "#/components/schemas/BestEffortValueKind_Output"
+                }
+              },
+              "required": [
+                "type",
+                "label",
+                "valueKind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "efforts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "activityId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "activityName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "sport": {
+                  "$ref": "#/components/schemas/ActivityType_Output"
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "elapsedTime": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "minimum": 0
+                },
+                "value": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "minimum": 0
+                },
+                "overallRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "year": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "yearRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "activityId",
+                "activityName",
+                "sport",
+                "startedAt",
+                "elapsedTime",
+                "value",
+                "overallRank",
+                "year",
+                "yearRank"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "sport",
+          "type",
+          "label",
+          "valueKind",
+          "higherIsBetter",
+          "distance",
+          "duration",
+          "options",
+          "efforts"
+        ],
+        "additionalProperties": false
+      },
       "ActivityDetailDto_Output": {
         "type": "object",
         "properties": {
@@ -824,67 +1061,7 @@
             "description": "Source upload id"
           },
           "sport": {
-            "type": "string",
-            "enum": [
-              "alpine_ski",
-              "backcountry_ski",
-              "badminton",
-              "basketball",
-              "canoeing",
-              "cricket",
-              "cross_country_ski",
-              "crossfit",
-              "dance",
-              "e_bike_ride",
-              "elliptical",
-              "e_mountain_bike_ride",
-              "golf",
-              "gravel_ride",
-              "handcycle",
-              "high_intensity_interval_training",
-              "hike",
-              "ice_skate",
-              "inline_skate",
-              "kayaking",
-              "kitesurf",
-              "mountain_bike_ride",
-              "padel",
-              "physical_therapy",
-              "pickleball",
-              "pilates",
-              "racquetball",
-              "ride",
-              "rock_climbing",
-              "roller_ski",
-              "rowing",
-              "run",
-              "sail",
-              "skateboard",
-              "snowboard",
-              "snowshoe",
-              "soccer",
-              "squash",
-              "stair_stepper",
-              "stand_up_paddling",
-              "surfing",
-              "swim",
-              "table_tennis",
-              "tennis",
-              "trail_run",
-              "velomobile",
-              "virtual_ride",
-              "virtual_row",
-              "virtual_run",
-              "volleyball",
-              "walk",
-              "weight_training",
-              "wheelchair",
-              "windsurf",
-              "workout",
-              "yoga",
-              "other"
-            ],
-            "description": "Activity sport type"
+            "$ref": "#/components/schemas/ActivityType_Output"
           },
           "name": {
             "type": "string",
@@ -1053,23 +1230,7 @@
               "type": "object",
               "properties": {
                 "type": {
-                  "type": "string",
-                  "enum": [
-                    "400m",
-                    "1k",
-                    "half_mile",
-                    "1_mile",
-                    "2_miles",
-                    "5k",
-                    "10k",
-                    "15k",
-                    "10_miles",
-                    "20k",
-                    "half_marathon",
-                    "30k",
-                    "marathon",
-                    "50k"
-                  ]
+                  "$ref": "#/components/schemas/BestEffortType_Output"
                 },
                 "label": {
                   "type": "string"
@@ -1140,6 +1301,69 @@
         ],
         "additionalProperties": false
       },
+      "ActivityUpdateDtoActivityType": {
+        "type": "string",
+        "enum": [
+          "alpine_ski",
+          "backcountry_ski",
+          "badminton",
+          "basketball",
+          "canoeing",
+          "cricket",
+          "cross_country_ski",
+          "crossfit",
+          "dance",
+          "e_bike_ride",
+          "elliptical",
+          "e_mountain_bike_ride",
+          "golf",
+          "gravel_ride",
+          "handcycle",
+          "high_intensity_interval_training",
+          "hike",
+          "ice_skate",
+          "inline_skate",
+          "kayaking",
+          "kitesurf",
+          "mountain_bike_ride",
+          "padel",
+          "physical_therapy",
+          "pickleball",
+          "pilates",
+          "racquetball",
+          "ride",
+          "rock_climbing",
+          "roller_ski",
+          "rowing",
+          "run",
+          "sail",
+          "skateboard",
+          "snowboard",
+          "snowshoe",
+          "soccer",
+          "squash",
+          "stair_stepper",
+          "stand_up_paddling",
+          "surfing",
+          "swim",
+          "table_tennis",
+          "tennis",
+          "trail_run",
+          "velomobile",
+          "virtual_ride",
+          "virtual_row",
+          "virtual_run",
+          "volleyball",
+          "walk",
+          "weight_training",
+          "wheelchair",
+          "windsurf",
+          "workout",
+          "yoga",
+          "other"
+        ],
+        "description": "Activity sport type"
+      },
       "ActivityUpdateDto": {
         "type": "object",
         "properties": {
@@ -1157,67 +1381,7 @@
             "nullable": true
           },
           "sport": {
-            "type": "string",
-            "enum": [
-              "alpine_ski",
-              "backcountry_ski",
-              "badminton",
-              "basketball",
-              "canoeing",
-              "cricket",
-              "cross_country_ski",
-              "crossfit",
-              "dance",
-              "e_bike_ride",
-              "elliptical",
-              "e_mountain_bike_ride",
-              "golf",
-              "gravel_ride",
-              "handcycle",
-              "high_intensity_interval_training",
-              "hike",
-              "ice_skate",
-              "inline_skate",
-              "kayaking",
-              "kitesurf",
-              "mountain_bike_ride",
-              "padel",
-              "physical_therapy",
-              "pickleball",
-              "pilates",
-              "racquetball",
-              "ride",
-              "rock_climbing",
-              "roller_ski",
-              "rowing",
-              "run",
-              "sail",
-              "skateboard",
-              "snowboard",
-              "snowshoe",
-              "soccer",
-              "squash",
-              "stair_stepper",
-              "stand_up_paddling",
-              "surfing",
-              "swim",
-              "table_tennis",
-              "tennis",
-              "trail_run",
-              "velomobile",
-              "virtual_ride",
-              "virtual_row",
-              "virtual_run",
-              "volleyball",
-              "walk",
-              "weight_training",
-              "wheelchair",
-              "windsurf",
-              "workout",
-              "yoga",
-              "other"
-            ],
-            "description": "Activity sport type"
+            "$ref": "#/components/schemas/ActivityUpdateDtoActivityType"
           },
           "startedAt": {
             "description": "Updated start time in ISO-8601 format",
@@ -1235,6 +1399,58 @@
           "storage"
         ],
         "description": "Queue name"
+      },
+      "BestEffortSport": {
+        "type": "string",
+        "enum": [
+          "run",
+          "ride"
+        ]
+      },
+      "BestEffortType": {
+        "type": "string",
+        "enum": [
+          "400m",
+          "1k",
+          "half_mile",
+          "1_mile",
+          "2_miles",
+          "5k",
+          "10k",
+          "15k",
+          "10_miles",
+          "20k",
+          "half_marathon",
+          "30k",
+          "marathon",
+          "50k",
+          "longest_ride",
+          "biggest_climb",
+          "elevation_gain",
+          "5_miles",
+          "40k",
+          "80k",
+          "50_miles",
+          "90k",
+          "100k",
+          "100_miles",
+          "180k",
+          "power_5s",
+          "power_15s",
+          "power_30s",
+          "power_1m",
+          "power_2m",
+          "power_3m",
+          "power_5m",
+          "power_8m",
+          "power_10m",
+          "power_15m",
+          "power_20m",
+          "power_30m",
+          "power_45m",
+          "power_1h",
+          "power_2h"
+        ]
       }
     }
   }

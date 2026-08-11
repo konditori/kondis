@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeRunningBestEfforts } from 'src/domain/running-best-effort';
+import {
+  computeBiggestClimb,
+  computeCyclingBestEfforts,
+  computeCyclingPowerBestEfforts,
+  computeRunningBestEfforts,
+} from 'src/domain/running-best-effort';
 
 describe('computeRunningBestEfforts', () => {
   it('computes every attainable standard distance with interpolation', () => {
@@ -41,5 +46,40 @@ describe('computeRunningBestEfforts', () => {
   it('returns no efforts without aligned distance and time streams', () => {
     expect(computeRunningBestEfforts([], [])).toEqual([]);
     expect(computeRunningBestEfforts([0, 500], [])).toEqual([]);
+  });
+
+  it('computes cycling-specific standard distances', () => {
+    const distance = [0, 5000, 10_000, 20_000, 40_000, 50_000, 100_000];
+    const time = distance.map((meters) => meters / 10);
+
+    expect(computeCyclingBestEfforts(distance, time).map(({ type }) => type)).toEqual([
+      '5_miles',
+      '10k',
+      '10_miles',
+      '20k',
+      '30k',
+      '40k',
+      '50k',
+      '80k',
+      '50_miles',
+      '90k',
+      '100k',
+    ]);
+  });
+
+  it('finds biggest climb and duration-based average power', () => {
+    expect(computeBiggestClimb([100, 90, 110, 145, 130], [0, 10, 20, 30, 40])).toMatchObject({
+      value: 55,
+      startTime: 10,
+      endTime: 30,
+    });
+
+    const power = Array.from({ length: 31 }, (_, index) => (index >= 10 ? 300 : 100));
+    const time = power.map((_, index) => index);
+    expect(computeCyclingPowerBestEfforts(power, time).find(({ type }) => type === 'power_5s')).toMatchObject({
+      value: 300,
+      startTime: 10,
+      endTime: 15,
+    });
   });
 });

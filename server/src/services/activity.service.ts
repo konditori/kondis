@@ -3,8 +3,14 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
-import { ActivityType, usesActivityHeatmap } from 'src/domain/activity-type';
-import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
+import {
+  ActivityType,
+  supportsCyclingBestEfforts,
+  supportsDistanceBestEfforts,
+  supportsRunningBestEfforts,
+  usesActivityHeatmap,
+} from 'src/domain/activity-type';
+import { BestEffortType, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
@@ -26,6 +32,12 @@ import { JobItem, JobOf, ParsedActivity } from 'src/types';
 import { parseFitMessages } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
+export type BestEffortSport = 'run' | 'ride';
+
+const BEST_EFFORT_SPORTS = {
+  run: ['run', 'trail_run', 'virtual_run'],
+  ride: ['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'],
+} as const satisfies Record<BestEffortSport, readonly ActivityType[]>;
 
 @Injectable()
 export class ActivityService {
@@ -201,6 +213,73 @@ export class ActivityService {
     };
   }
 
+  async listBestEfforts(sport: BestEffortSport, type: BestEffortType) {
+    // Populate analysis rows for activities imported before best efforts were persisted.
+    const activities = await this.activityRepository.listActivitiesMissingBestEfforts();
+    for (const activity of activities) {
+      if (!supportsDistanceBestEfforts(activity.sport)) {
+        continue;
+      }
+      await this.activityRepository.ensureBestEfforts(activity.id, activity.sport);
+    }
+
+    const definitions = sport === 'run' ? RUNNING_BEST_EFFORTS : CYCLING_BEST_EFFORTS;
+    const selected = definitions.find((effort) => effort.type === type);
+    if (!selected) {
+      throw new BadRequestException(`${type} is not a supported ${sport} best-effort distance`);
+    }
+    const sports = [...BEST_EFFORT_SPORTS[sport]];
+    const [rows, availableRows] = await Promise.all([
+      this.activityRepository.listBestEfforts(type, sports),
+      this.activityRepository.listAvailableBestEffortTypes(sports),
+    ]);
+    const availableTypes = new Set(availableRows.map((row) => row.type));
+    const compareRows = (left: (typeof rows)[number], right: (typeof rows)[number]): number => {
+      const valueComparison = selected.higherIsBetter ? right.value - left.value : left.value - right.value;
+      return valueComparison || left.activity_id.localeCompare(right.activity_id);
+    };
+    const overallRanks = new Map([...rows].sort(compareRows).map((row, index) => [row.activity_id, index + 1]));
+    const rowsByYear = Object.groupBy(rows, (row) => this.activityYear(row));
+    const yearRanks = new Map<string, number>();
+    for (const yearRows of Object.values(rowsByYear)) {
+      const rankedRows = [...(yearRows ?? [])].sort(compareRows);
+      for (const [index, row] of rankedRows.entries()) {
+        yearRanks.set(row.activity_id, index + 1);
+      }
+    }
+
+    return {
+      sport,
+      type: selected.type,
+      label: selected.label,
+      valueKind: selected.valueKind,
+      higherIsBetter: selected.higherIsBetter,
+      distance: 'distance' in selected ? selected.distance : null,
+      duration: 'duration' in selected ? selected.duration : null,
+      options: definitions
+        .filter((definition) => availableTypes.has(definition.type))
+        .map((definition) => ({
+          type: definition.type,
+          label: definition.label,
+          valueKind: definition.valueKind,
+        })),
+      efforts: rows.map((row) => {
+        const year = this.activityYear(row);
+        return {
+          activityId: row.activity_id,
+          activityName: row.name,
+          sport: row.sport,
+          startedAt: this.toIsoString(row.started_at),
+          elapsedTime: row.elapsed_time,
+          value: row.value,
+          overallRank: overallRanks.get(row.activity_id)!,
+          year,
+          yearRank: yearRanks.get(row.activity_id)!,
+        };
+      }),
+    };
+  }
+
   async getById(id: string) {
     const row = await this.activityRepository.getById(id);
     if (!row) {
@@ -211,6 +290,13 @@ export class ActivityService {
     // reparsing the upload, which would discard user-edited metadata.
     await this.activityRepository.ensureBestEfforts(id, row.sport);
     const storedEfforts = await this.activityRepository.getBestEfforts(id);
+    const effortDefinitions = supportsRunningBestEfforts(row.sport)
+      ? RUNNING_BEST_EFFORTS
+      : supportsCyclingBestEfforts(row.sport)
+        ? CYCLING_BEST_EFFORTS.filter(
+            (effort): effort is (typeof CYCLING_BEST_EFFORTS)[number] & { distance: number } => 'distance' in effort,
+          )
+        : [];
     const simplifiedTrack = row.track_geojson
       ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
       : null;
@@ -224,7 +310,7 @@ export class ActivityService {
         heatmapCoordinates.length >= 2
           ? { type: 'LineString' as const, coordinates: heatmapCoordinates }
           : simplifiedTrack,
-      bestEfforts: RUNNING_BEST_EFFORTS.flatMap(({ type, label }) => {
+      bestEfforts: effortDefinitions.flatMap(({ type, label }) => {
         const effort = storedEfforts.find((candidate) => candidate.type === type);
         return effort
           ? [
@@ -298,7 +384,16 @@ export class ActivityService {
   }
 
   private toIsoString(value: Timestamp): string {
-    return (value instanceof Date ? value : new Date(value)).toISOString();
+    return this.toDate(value).toISOString();
+  }
+
+  private toDate(value: Timestamp): Date {
+    return value instanceof Date ? value : new Date(value);
+  }
+
+  private activityYear(activity: { started_at: Timestamp; timezone_offset_minutes: number | null }): number {
+    const offset = activity.timezone_offset_minutes ?? 0;
+    return new Date(this.toDate(activity.started_at).getTime() + offset * 60_000).getUTCFullYear();
   }
 
   private encodeActivityCursor(startedAt: Timestamp, id: string): string {

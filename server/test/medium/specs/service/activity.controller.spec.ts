@@ -115,6 +115,53 @@ describe('ActivityController (medium)', () => {
     });
   });
 
+  describe('GET /activities/best-efforts', () => {
+    it('ranks overall and yearly efforts while preserving chronological order', async () => {
+      const first = await createActivity(new Date('2023-06-01T08:00:00.000Z'), 'first', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1500] },
+      ]);
+      const yearlyBest = await createActivity(new Date('2024-05-01T08:00:00.000Z'), 'yearly best', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1400] },
+      ]);
+      await createActivity(new Date('2024-08-01T08:00:00.000Z'), 'later', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1450] },
+      ]);
+
+      const response = await controller.listBestEfforts({ sport: 'run', type: '5k' });
+
+      expect(response.label).toBe('5K');
+      expect(response.efforts.map(({ activityName }) => activityName)).toEqual(['first', 'yearly best', 'later']);
+      expect(response.efforts.find(({ activityId }) => activityId === first)).toMatchObject({
+        overallRank: 3,
+        yearRank: 1,
+      });
+      expect(response.efforts.find(({ activityId }) => activityId === yearlyBest)).toMatchObject({
+        overallRank: 1,
+        yearRank: 1,
+      });
+    });
+
+    it('returns cycling efforts separately from running efforts', async () => {
+      const rideId = await createActivity(new Date('2024-06-01T08:00:00.000Z'), 'fast ride', [
+        { type: 'distance', data: [0, 5000, 10_000, 20_000] },
+        { type: 'time', data: [0, 600, 1200, 2400] },
+      ]);
+      await activities.update(rideId, { sport: 'ride' });
+
+      const response = await controller.listBestEfforts({ sport: 'ride', type: '20k' });
+
+      expect(response.sport).toBe('ride');
+      expect(response.options.map(({ type }) => type)).toContain('longest_ride');
+      expect(response.options.map(({ type }) => type)).not.toContain('power_1h');
+      expect(response.options.map(({ type }) => type)).not.toContain('100k');
+      expect(response.efforts).toHaveLength(1);
+      expect(response.efforts[0]).toMatchObject({ activityId: rideId, value: 2400 });
+    });
+  });
+
   describe('GET /activities/:id', () => {
     it('returns persisted running best efforts in standard-distance order', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'run', [
