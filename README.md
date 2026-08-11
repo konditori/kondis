@@ -22,9 +22,6 @@ mise run dev
 
 The web app is available at [http://localhost:3000](http://localhost:3000) and proxies API requests to the server container on port 2293.
 
-The activity list receives completed imports over WebSockets from port 2293. Set
-`PUBLIC_KONDIS_EVENTS_URL` to the public `ws://` or `wss://` `/events` URL when the API is exposed through a reverse proxy.
-
 ## License
 
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).
