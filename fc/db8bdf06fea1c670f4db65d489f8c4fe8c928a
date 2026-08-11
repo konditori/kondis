@@ -1,0 +1,21 @@
+server/src/controllers/activity.controller.ts
+  s_afcaa92d23f846::t_a808d35f245b37 23-24,40-46
+server/src/domain/activity-type.ts
+  s_afcaa92d23f846::t_877aa020c1bcd0 140-145,149-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fcdb8bdf06fea1c670f4db65d489f8c4fe8c928a",
+  "prompts": {},
+  "sessions": {
+    "s_afcaa92d23f846": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff0cb-41ba-77e1-8377-960d08d72c6c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
