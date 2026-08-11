@@ -1,0 +1,49 @@
+web/mise.toml
+  s_1755f26300f48e::t_a240c2e8bcbe6c 23-26
+web/package.json
+  s_1755f26300f48e::t_ca2437b498b7f2 11-12,27-28
+web/src/app.css
+  s_1755f26300f48e::t_46d7205828d0ee 125-126,228-338,1061-1063
+web/src/lib/activity-types.ts
+  s_1755f26300f48e::t_b9e05bca6e178d 18-23
+web/src/lib/components/ActivityCard.svelte
+  s_1755f26300f48e::t_5b7a032288620b 6-7,9,26,28
+web/src/lib/components/Sidebar.svelte
+  s_1755f26300f48e::t_72809465d42503 34,45
+web/src/lib/format.spec.ts
+  s_1755f26300f48e::t_d5b75f6febc175 1-30
+web/src/lib/format.ts
+  s_1755f26300f48e::t_cf483b892a6021 10-15,38-53,65-95,111,113
+web/src/lib/units.spec.ts
+  s_1755f26300f48e::t_0bdfa3c2f98a9d 1-15
+web/src/lib/units.ts
+  s_1755f26300f48e::t_7955760e384175 1-9
+web/src/routes/+layout.server.ts
+  s_1755f26300f48e::t_7de78ae870cec8 1-11
+web/src/routes/+page.svelte
+  s_1755f26300f48e::t_6b06f4c65afa85 129
+web/src/routes/activities/[id]/+page.svelte
+  s_1755f26300f48e::t_04067dad2282ea 6,8,22,25-28,132
+web/src/routes/settings/+page.server.ts
+  s_1755f26300f48e::t_381bf6199f419c 1-25
+web/src/routes/settings/+page.svelte
+  s_1755f26300f48e::t_96070f2fb1c20a 1-43
+web/src/routes/settings/settings.spec.ts
+  s_1755f26300f48e::t_28c86743002996 1-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "096bb982b4d830aee95d51256fbfbb96098c7ad2",
+  "prompts": {},
+  "sessions": {
+    "s_1755f26300f48e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff03d-73fb-7123-a817-f4375d74a409",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
