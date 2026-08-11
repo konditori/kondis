@@ -92,7 +92,7 @@ export function effortPace(
   distanceMeters: number,
   unitSystem: UnitSystem,
 ): string {
-  return pace(distanceMeters / elapsedTime, unitSystem).replace(" min/", " /");
+  return pace(distanceMeters / elapsedTime, unitSystem);
 }
 
 export function bestEffortValue(

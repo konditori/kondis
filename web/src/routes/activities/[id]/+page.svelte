@@ -63,7 +63,7 @@
   }
 
   function bestEffortAchievement(effort: ActivityDetail['bestEfforts'][number]): { rank: number; text: string } | null {
-    const name = bestEffortRecordName(effort.type).toLowerCase();
+    const name = bestEffortRecordName(effort.type);
     if (effort.overallRank === 1) {
       return { rank: 1, text: `Your best ${name} of all time` };
     }

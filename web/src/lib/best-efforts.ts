@@ -1,7 +1,7 @@
 const BEST_EFFORT_LABELS: Readonly<Record<string, string>> = {
   "400m": "400 m",
   "1k": "1K",
-  half_mile: "Half mile",
+  half_mile: "1/2 mile",
   "1_mile": "1 mile",
   "2_miles": "2 miles",
   "5k": "5K",
