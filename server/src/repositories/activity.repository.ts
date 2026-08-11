@@ -16,6 +16,11 @@ export type CreateActivityInput = {
 
 export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'sport' | 'sub_sport' | 'started_at'>;
 
+export type ActivityCursor = {
+  startedAt: Date;
+  id: string;
+};
+
 @Injectable()
 export class ActivityRepository {
   constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
@@ -92,8 +97,27 @@ export class ActivityRepository {
     return this.db.selectFrom('activity').selectAll('activity').where('upload_id', '=', uploadId).executeTakeFirst();
   }
 
-  listRecent(limit = 50) {
-    return this.db.selectFrom('activity').selectAll('activity').orderBy('started_at', 'desc').limit(limit).execute();
+  listRecentPage({ limit, cursor }: { limit: number; cursor?: ActivityCursor }) {
+    let query = this.db.selectFrom('activity').selectAll('activity');
+
+    if (cursor) {
+      query = query.where(({ and, eb, or }) =>
+        or([
+          eb('started_at', '<', cursor.startedAt),
+          and([eb('started_at', '=', cursor.startedAt), eb('id', '<', cursor.id)]),
+        ]),
+      );
+    }
+
+    return query.orderBy('started_at', 'desc').orderBy('id', 'desc').limit(limit).execute();
+  }
+
+  async count(): Promise<number> {
+    const row = await this.db
+      .selectFrom('activity')
+      .select(({ fn }) => fn.countAll<number>().as('count'))
+      .executeTakeFirstOrThrow();
+    return Number(row.count);
   }
 
   getStreams(activityId: string): Promise<ActivityStream[]> {

@@ -7,6 +7,13 @@ export const ActivityIdParamSchema = z
   })
   .meta({ id: 'ActivityIdParamDto' });
 
+export const ActivityListQuerySchema = z
+  .object({
+    cursor: z.string().min(1).optional().describe('Opaque cursor returned by the previous page'),
+    limit: z.coerce.number().int().min(1).max(100).default(50).describe('Maximum activities to return'),
+  })
+  .meta({ id: 'ActivityListQueryDto' });
+
 export const ActivitySchema = z
   .object({
     id: z.string().uuid().describe('Activity id'),
@@ -39,6 +46,8 @@ export const ActivitySchema = z
 export const ActivityListResponseSchema = z
   .object({
     activities: z.array(ActivitySchema),
+    nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
+    total: z.number().int().nonnegative().describe('Total number of activities'),
   })
   .meta({ id: 'ActivityListResponseDto' });
 
@@ -65,6 +74,7 @@ export const ActivityUpdateSchema = z
   .meta({ id: 'ActivityUpdateDto' });
 
 export class ActivityIdParamDto extends createZodDto(ActivityIdParamSchema) {}
+export class ActivityListQueryDto extends createZodDto(ActivityListQuerySchema) {}
 export class ActivityDto extends createZodDto(ActivitySchema) {}
 export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}

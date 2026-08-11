@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { type UploadedFitFile } from 'src/types';
+import { type UploadedFileData } from 'src/types';
 
 export type TestAsset = {
   expectedSport: string;
@@ -31,5 +31,8 @@ export const activityFixtures = {
 
 export const hasTestAsset = ({ path }: TestAsset): boolean => existsSync(path);
 
-export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFitFile =>
-  ({ originalname: filename, buffer, size: buffer.length }) as UploadedFitFile;
+export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFileData => ({
+  originalname: filename,
+  buffer,
+  size: buffer.length,
+});

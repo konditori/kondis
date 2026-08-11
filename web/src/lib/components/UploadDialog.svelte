@@ -1,12 +1,13 @@
 <script lang="ts">
   import { invalidateAll } from '$app/navigation';
   import { Check, FileUp, LoaderCircle, X } from '@lucide/svelte';
+  import { getSdkRequestOptions, uploadControllerUploadActivity, uploadControllerUploadStravaTakeout } from '$lib/api';
 
   let { open = $bindable(false) }: { open: boolean } = $props();
   let input = $state<HTMLInputElement>();
   let dragging = $state(false);
   let uploads = $state<
-    { file: File; uploadId?: string; state: 'waiting' | 'uploading' | 'processing' | 'done' | 'error'; message?: string }[]
+    { file: File; state: 'waiting' | 'uploading' | 'done' | 'error'; message?: string }[]
   >([]);
 
   function close() {
@@ -14,37 +15,23 @@
   }
 
   async function addFiles(files: FileList | File[]) {
-    const acceptedExtensions = ['.fit', '.tcx', '.gpx'];
+    const acceptedExtensions = ['.fit', '.tcx', '.gpx', '.zip'];
     const accepted = [...files].filter((file) => acceptedExtensions.some((extension) => file.name.toLowerCase().endsWith(extension)));
     uploads = accepted.map((file) => ({ file, state: 'waiting' }));
 
     for (const item of uploads) {
       item.state = 'uploading';
-      const form = new FormData();
-      form.append('file', item.file);
       try {
-        const response = await fetch('/api/uploads/activity', { method: 'POST', body: form });
-        if (!response.ok) throw new Error((await response.text()) || `Upload failed (${response.status})`);
-        const result = (await response.json()) as { id: string };
-        item.uploadId = result.id;
-        item.state = 'processing';
+        const takeout = item.file.name.toLowerCase().endsWith('.zip');
+        await (takeout
+          ? uploadControllerUploadStravaTakeout({ body: { file: item.file } }, getSdkRequestOptions())
+          : uploadControllerUploadActivity({ body: { file: item.file } }, getSdkRequestOptions()));
+        item.message = 'Queued';
+        item.state = 'done';
       } catch (error) {
         item.state = 'error';
         item.message = error instanceof Error ? error.message : 'Upload failed';
       }
-    }
-
-    const pending = uploads.filter((item) => item.state === 'processing');
-    for (let attempt = 0; pending.length && attempt < 50; attempt++) {
-      const response = await fetch('/api/activities');
-      if (response.ok) {
-        const body = (await response.json()) as { activities: { uploadId: string }[] };
-        for (const item of pending) {
-          if (body.activities.some((activity) => activity.uploadId === item.uploadId)) item.state = 'done';
-        }
-        if (pending.every((item) => item.state === 'done')) break;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     await invalidateAll();
@@ -72,11 +59,11 @@
         ondrop={(event) => { event.preventDefault(); dragging = false; void addFiles(event.dataTransfer?.files ?? []); }}
       >
         <span class="upload-icon"><FileUp size={28} /></span>
-        <strong>Drop your FIT, TCX, or GPX files here</strong>
+        <strong>Drop activity files or an archive here</strong>
         <span>or click to browse your device</span>
-        <small>.fit, .tcx, .gpx files only</small>
+        <small>.fit, .tcx, .gpx, or a Strava takeout .zip</small>
       </button>
-      <input bind:this={input} class="sr-only" type="file" accept=".fit,.tcx,.gpx,application/octet-stream,application/gpx+xml" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
+      <input bind:this={input} class="sr-only" type="file" accept=".fit,.tcx,.gpx,.zip,application/zip,application/octet-stream,application/gpx+xml" multiple onchange={(event) => void addFiles(event.currentTarget.files ?? [])} />
 
       {#if uploads.length}
         <div class="upload-list">
@@ -84,9 +71,8 @@
             <div class="upload-row">
               <span class="file-name">{item.file.name}<small>{(item.file.size / 1024).toFixed(0)} KB</small></span>
               {#if item.state === 'uploading'}<LoaderCircle class="spin" size={19} />
-              {:else if item.state === 'processing'}<span class="processing"><LoaderCircle class="spin" size={16} /> Processing</span>
-              {:else if item.state === 'done'}<Check class="success" size={19} />
-              {:else if item.state === 'error'}<span class="error" title={item.message}>Failed</span>
+              {:else if item.state === 'done'}<span class="processing"><Check class="success" size={16} /> {item.message ?? 'Done'}</span>
+              {:else if item.state === 'error'}<span class="error" title={item.message}>{item.message ?? 'Failed'}</span>
               {/if}
             </div>
           {/each}

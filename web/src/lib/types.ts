@@ -25,6 +25,12 @@ export type Activity = {
   updatedAt: string;
 };
 
+export type ActivityPage = {
+  activities: Activity[];
+  nextCursor: string | null;
+  total: number;
+};
+
 export type ActivityDetail = Activity & {
   track: { type: "LineString"; coordinates: [number, number][] } | null;
 };

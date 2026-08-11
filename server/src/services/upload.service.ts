@@ -1,15 +1,17 @@
-import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable, PayloadTooLargeException } from '@nestjs/common';
 import { extname } from 'node:path';
 
-import { Upload } from 'src/db/schema';
-import { FitUploadResponseDto } from 'src/dtos/upload.dto';
-import { JobName } from 'src/enum';
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { OnJob } from 'src/decorators';
+import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
+import { JobName, JobStatus, QueueName } from 'src/enum';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { UploadedFitFile } from 'src/types';
+import { JobOf, UploadedFileData } from 'src/types';
+import { extractLagomTakeout } from 'src/utils/lagom';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -26,7 +28,7 @@ export class UploadService {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadFit(file?: UploadedFitFile): Promise<FitUploadResponseDto> {
+  async uploadActivity(file?: UploadedFileData): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -35,43 +37,114 @@ export class UploadService {
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
       throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
     }
+    if (file.buffer.length > UPLOAD_LIMITS.activityFileBytes) {
+      throw new PayloadTooLargeException(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
+    }
 
-    const checksum = this.cryptoRepository.xxHash(file.buffer);
+    await this.queueActivityUpload(file);
+
+    return { byteSize: file.buffer.length, queued: true };
+  }
+
+  @OnJob({ name: JobName.ActivityUpload, queue: QueueName.BackgroundTask })
+  async handleActivityUpload({
+    originalName,
+    storagePath,
+    checksum,
+  }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
+    const extension = extname(originalName).toLowerCase();
+    if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
+      throw new Error(`Unsupported activity upload extension: ${extension || 'none'}`);
+    }
+
+    const buffer = await this.storageRepository.read(storagePath);
+    const actualChecksum = this.cryptoRepository.xxHash(buffer);
+    if (actualChecksum !== checksum) {
+      throw new Error(`Activity upload checksum mismatch: expected ${checksum}, got ${actualChecksum}`);
+    }
 
     const existing = await this.uploadRepository.getByChecksum(checksum);
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
-      return { id: existing.id, checksum: existing.checksum, byteSize: existing.byte_size, duplicate: true };
+      return JobStatus.Skipped;
     }
 
-    const storagePath = this.storageRepository.buildPath(checksum, extension);
-    await this.storageRepository.write(storagePath, file.buffer);
+    const permanentStoragePath = this.storageRepository.buildPath(checksum, extension);
+    await this.storageRepository.write(permanentStoragePath, buffer);
 
-    let upload: Upload;
     try {
-      upload = await this.databaseRepository.withTransaction(async (trx) => {
+      await this.databaseRepository.withTransaction(async (trx) => {
         const created = await this.uploadRepository.create(
           {
             checksum,
-            original_name: file.originalname,
-            byte_size: file.buffer.length,
-            storage_path: storagePath,
+            original_name: originalName,
+            byte_size: buffer.length,
+            storage_path: permanentStoragePath,
           },
           trx,
         );
 
         await this.jobRepository.queue({ name: JobName.ActivityParse, data: { id: created.id } }, { transaction: trx });
-
-        return created;
       });
     } catch (error) {
       const raced = await this.uploadRepository.getByChecksum(checksum);
       if (raced) {
-        return { id: raced.id, checksum: raced.checksum, byteSize: raced.byte_size, duplicate: true };
+        return JobStatus.Skipped;
       }
       throw error;
     }
 
-    return { id: upload.id, checksum: upload.checksum, byteSize: upload.byte_size, duplicate: false };
+    return JobStatus.Success;
+  }
+
+  async uploadLagomTakeout(file?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
+    if (!file) {
+      throw new BadRequestException('Missing file upload');
+    }
+    if (extname(file.originalname).toLowerCase() !== '.zip') {
+      throw new BadRequestException('Only a Strava takeout .zip file is accepted');
+    }
+    if (file.buffer.length > UPLOAD_LIMITS.takeoutFileBytes) {
+      throw new PayloadTooLargeException(`Takeout file exceeds ${UPLOAD_LIMITS.takeoutFileBytes} bytes`);
+    }
+
+    const storagePath = this.storageRepository.buildTemporaryPath('.zip');
+    await this.storageRepository.write(storagePath, file.buffer);
+
+    await this.jobRepository.queue({
+      name: JobName.LagomTakeoutImport,
+      data: {
+        originalName: file.originalname,
+        storagePath,
+      },
+    });
+
+    return { byteSize: file.buffer.length, queued: true };
+  }
+
+  @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
+  async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
+    let queued = 0;
+    const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
+      await this.queueActivityUpload(activity.file);
+      queued += 1;
+    });
+
+    this.logger.log(
+      `Processed Strava takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${takeout.errors.length} failed`,
+    );
+
+    return JobStatus.Success;
+  }
+
+  private async queueActivityUpload(file: UploadedFileData): Promise<void> {
+    const checksum = this.cryptoRepository.xxHash(file.buffer);
+    const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
+    await this.storageRepository.write(storagePath, file.buffer);
+
+    await this.jobRepository.queue({
+      name: JobName.ActivityUpload,
+      data: { originalName: file.originalname, storagePath, checksum },
+    });
   }
 }

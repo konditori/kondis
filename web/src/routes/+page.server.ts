@@ -1,13 +1,23 @@
-import type { Activity } from "$lib/types";
+import { activityControllerListRecent, getSdkRequestOptions } from "$lib/api";
+import { activityEventsUrl } from "$lib/server/api";
+import type { ActivityPage } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async ({ fetch, url }) => {
+  const eventsUrl = activityEventsUrl(url);
   try {
-    const response = await fetch("/api/activities");
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-    const body = (await response.json()) as { activities: Activity[] };
-    return { activities: body.activities, unavailable: false };
+    const body = (await activityControllerListRecent(
+      {},
+      getSdkRequestOptions(fetch),
+    )) as ActivityPage;
+    return { ...body, unavailable: false, eventsUrl };
   } catch {
-    return { activities: [], unavailable: true };
+    return {
+      activities: [],
+      nextCursor: null,
+      total: 0,
+      unavailable: true,
+      eventsUrl,
+    };
   }
 };

@@ -1,13 +1,16 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
+import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { JobService } from 'src/services/job.service';
@@ -17,8 +20,10 @@ import { type JobItem } from 'src/types';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
+import { createTestZip } from 'test/utils/zip';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
+const SAMPLE_GPX = Buffer.from('<gpx/>');
 
 describe('job system (medium)', () => {
   let testApp: TestApp;
@@ -31,6 +36,7 @@ describe('job system (medium)', () => {
   let uploadRepository: UploadRepository;
   let activityRepository: ActivityRepository;
   let databaseRepository: DatabaseRepository;
+  let storageRepository: StorageRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -43,6 +49,7 @@ describe('job system (medium)', () => {
     uploadRepository = testApp.get(UploadRepository);
     activityRepository = testApp.get(ActivityRepository);
     databaseRepository = testApp.get(DatabaseRepository);
+    storageRepository = testApp.get(StorageRepository);
   }, 60_000);
 
   beforeEach(async () => {
@@ -56,13 +63,35 @@ describe('job system (medium)', () => {
 
   describe('handler discovery', () => {
     const samples: Record<JobName, JobItem> = {
+      [JobName.ActivityUpload]: {
+        name: JobName.ActivityUpload,
+        data: {
+          originalName: 'sample.gpx',
+          storagePath: 'temporary/sample.gpx',
+          checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
+        },
+      },
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
+      [JobName.LagomTakeoutImport]: {
+        name: JobName.LagomTakeoutImport,
+        data: {
+          originalName: 'empty.zip',
+          storagePath: 'temporary/empty.zip',
+        },
+      },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
+      [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },
     };
 
     it('binds a handler to every job name', async () => {
+      await storageRepository.write('temporary/sample.gpx', SAMPLE_GPX);
+      await storageRepository.write(
+        'temporary/empty.zip',
+        createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),
+      );
+
       for (const item of Object.values(samples)) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
@@ -89,25 +118,46 @@ describe('job system (medium)', () => {
 
   describe('end to end', () => {
     it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
-      const result = await uploads.uploadFit(makeUploadedFile(fixture.filename, await readFile(fixture.path)));
-      expect(result.duplicate).toBe(false);
+      const contents = await readFile(fixture.path);
+      const result = await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents));
+      expect(result.queued).toBe(true);
 
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      const activity = await activityRepository.getByUploadId(result.id);
+      const upload = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
+      expect(upload?.status).toBe('parsed');
+
+      const activity = await activityRepository.getByUploadId(upload!.id);
       expect(activity).toBeDefined();
       expect(activity?.sport).toBe(fixture.expectedSport);
+    });
 
-      const upload = await uploadRepository.getById(result.id);
-      expect(upload?.status).toBe('parsed');
+    it('imports a Lagom takeout and parses its activities through the real queues', async () => {
+      const fit = await readFile(activityFixtures.hindasRun.path);
+      const archive = createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit.gz'),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+
+      const result = await uploads.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+      expect(result.queued).toBe(true);
+      expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
+
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const imported = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(fit));
+      expect(imported?.status).toBe('parsed');
+      expect(await activityRepository.getByUploadId(imported!.id)).toBeDefined();
     });
 
     it('deletes the activity, the upload and the file', async () => {
       const fixture = activityFixtures.hindasRun;
-      const { id: uploadId } = await uploads.uploadFit(
-        makeUploadedFile(fixture.filename, await readFile(fixture.path)),
-      );
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      const contents = await readFile(fixture.path);
+      await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const uploaded = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
+      const uploadId = uploaded!.id;
 
       const activity = await activityRepository.getByUploadId(uploadId);
       expect(activity).toBeDefined();
@@ -157,6 +207,36 @@ describe('job system (medium)', () => {
       const after = await jobs.getJobCounts(QueueName.Storage);
       expect(after.total).toBe(before.total + 1);
     }, 20_000);
+  });
+
+  describe('temporary file references', () => {
+    it('reports paths held by pending jobs so cleanup can preserve them', async () => {
+      await jobs.pause(QueueName.BackgroundTask);
+
+      try {
+        await jobs.queueAll([
+          {
+            name: JobName.ActivityUpload,
+            data: {
+              originalName: 'run.fit',
+              storagePath: 'temporary/run.fit',
+              checksum: 'a'.repeat(32),
+            },
+          },
+          {
+            name: JobName.LagomTakeoutImport,
+            data: { originalName: 'takeout.zip', storagePath: 'temporary/takeout.zip' },
+          },
+        ]);
+
+        await expect(jobs.getReferencedTemporaryPaths()).resolves.toEqual(
+          new Set(['temporary/run.fit', 'temporary/takeout.zip']),
+        );
+      } finally {
+        await jobs.empty(QueueName.BackgroundTask);
+        await jobs.resume(QueueName.BackgroundTask);
+      }
+    });
   });
 
   describe('deduplication', () => {

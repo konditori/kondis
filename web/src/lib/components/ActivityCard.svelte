@@ -1,13 +1,21 @@
 <script lang="ts">
   import { ArrowUpRight, Clock3, Gauge, Mountain } from '@lucide/svelte';
+  import { goto } from '$app/navigation';
   import type { Activity } from '$lib/types';
   import { activityName, distance, duration, localTime, sportIcon } from '$lib/format';
 
   let { activity }: { activity: Activity } = $props();
   const Icon = $derived(sportIcon(activity.sport));
+
+  function openActivity(event: MouseEvent) {
+    if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      void goto(`/activities/${activity.id}`, { state: { fromActivityList: true } });
+    }
+  }
 </script>
 
-<a class="activity-card" href={`/activities/${activity.id}`}>
+<a class="activity-card" href={`/activities/${activity.id}`} onclick={openActivity}>
   <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
   <div class="activity-primary">
     <div class="activity-title"><h3>{activityName(activity)}</h3><ArrowUpRight size={17} /></div>

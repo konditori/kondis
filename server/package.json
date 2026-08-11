@@ -31,6 +31,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@node-rs/xxhash": "^1.7.6",
     "@oazapfts/runtime": "^1.2.0",
+    "csv-parse": "^7.0.2",
     "fast-xml-parser": "^5.10.1",
     "fit-file-parser": "^4.1.0",
     "kysely": "^0.29.4",
@@ -40,6 +41,8 @@
     "pg-boss": "^12.26.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "unzipper": "^0.12.5",
+    "ws": "^8.21.3",
     "zod": "^4.1.5"
   },
   "devDependencies": {
@@ -50,6 +53,8 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^22.15.0",
     "@types/pg": "^8.11.10",
+    "@types/unzipper": "^0.10.11",
+    "@types/ws": "^8.18.1",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^3.7.0",

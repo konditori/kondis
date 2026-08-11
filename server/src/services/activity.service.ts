@@ -1,11 +1,15 @@
-import { ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { Activity } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
+import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { FitRepository } from 'src/repositories/fit.repository';
+import { EventRepository } from 'src/repositories/event.repository';
+import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
@@ -24,6 +28,7 @@ export class ActivityService {
     private readonly storageRepository: StorageRepository,
     private readonly activityRepository: ActivityRepository,
     private readonly databaseRepository: DatabaseRepository,
+    private readonly eventRepository: EventRepository,
     private readonly jobRepository: JobRepository,
     private readonly fitRepository: FitRepository,
     private readonly gpxRepository: GpxRepository,
@@ -52,10 +57,18 @@ export class ActivityService {
 
     try {
       const contents = await this.storageRepository.read(upload.storage_path);
+      if (contents.length > UPLOAD_LIMITS.activityFileBytes) {
+        throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
+      }
       const parsed = this.parseActivityFile(upload.storage_path, contents);
       const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
 
       await this.uploadRepository.setStatus(id, 'parsed');
+      const activity = await this.activityRepository.getByUploadId(id);
+      if (!activity) {
+        throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
+      }
+      await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -69,20 +82,39 @@ export class ActivityService {
 
   private parseActivityFile(path: string, contents: Buffer): ParsedActivity {
     const extension = extname(path).toLowerCase();
+    let messages: FitMessages;
 
     switch (extension) {
       case '.fit': {
-        return parseFitMessages(this.fitRepository.decode(contents));
+        messages = this.fitRepository.decode(contents);
+        break;
       }
       case '.gpx': {
-        return parseFitMessages(this.gpxRepository.decode(contents));
+        messages = this.gpxRepository.decode(contents);
+        break;
       }
       case '.tcx': {
-        return parseFitMessages(this.tcxRepository.decode(contents));
+        messages = this.tcxRepository.decode(contents);
+        break;
       }
       default: {
         throw new Error(`Unsupported activity format: ${extension || 'unknown extension'}`);
       }
+    }
+
+    this.assertActivityMessageLimits(messages);
+    return parseFitMessages(messages);
+  }
+
+  private assertActivityMessageLimits(messages: FitMessages): void {
+    const recordCount = messages.recordMesgs?.length ?? 0;
+    if (recordCount > UPLOAD_LIMITS.activityRecords) {
+      throw new Error(`Activity contains too many records (maximum ${UPLOAD_LIMITS.activityRecords})`);
+    }
+
+    const lapCount = messages.lapMesgs?.length ?? 0;
+    if (lapCount > UPLOAD_LIMITS.activityLaps) {
+      throw new Error(`Activity contains too many laps (maximum ${UPLOAD_LIMITS.activityLaps})`);
     }
   }
 
@@ -139,36 +171,20 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent(): Promise<
-    {
-      id: string;
-      uploadId: string;
-      sport: string;
-      subSport: string | null;
-      name: string | null;
-      startedAt: string;
-      timezoneOffsetMinutes: number | null;
-      elapsedTime: number;
-      movingTime: number | null;
-      distance: number | null;
-      elevationGain: number | null;
-      elevationLoss: number | null;
-      avgSpeed: number | null;
-      maxSpeed: number | null;
-      avgHr: number | null;
-      maxHr: number | null;
-      avgCadence: number | null;
-      maxCadence: number | null;
-      avgPower: number | null;
-      maxPower: number | null;
-      normalizedPower: number | null;
-      calories: number | null;
-      createdAt: string;
-      updatedAt: string;
-    }[]
-  > {
-    const rows = await this.activityRepository.listRecent();
-    return rows.map((row) => this.toActivityDto(row));
+  async listRecent({ cursor, limit = 50 }: { cursor?: string; limit?: number }) {
+    const rows = await this.activityRepository.listRecentPage({
+      limit: limit + 1,
+      cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
+    });
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page.at(-1);
+
+    return {
+      activities: page.map((row) => this.toActivityDto(row)),
+      nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
+      total: await this.activityRepository.count(),
+    };
   }
 
   async getById(id: string) {
@@ -188,35 +204,7 @@ export class ActivityService {
   async updateById(
     id: string,
     input: { name?: string | null; sport?: string; subSport?: string | null; startedAt?: Date },
-  ): Promise<
-    | {
-        id: string;
-        uploadId: string;
-        sport: string;
-        subSport: string | null;
-        name: string | null;
-        startedAt: string;
-        timezoneOffsetMinutes: number | null;
-        elapsedTime: number;
-        movingTime: number | null;
-        distance: number | null;
-        elevationGain: number | null;
-        elevationLoss: number | null;
-        avgSpeed: number | null;
-        maxSpeed: number | null;
-        avgHr: number | null;
-        maxHr: number | null;
-        avgCadence: number | null;
-        maxCadence: number | null;
-        avgPower: number | null;
-        maxPower: number | null;
-        normalizedPower: number | null;
-        calories: number | null;
-        createdAt: string;
-        updatedAt: string;
-      }
-    | undefined
-  > {
+  ) {
     const mapped: UpdateActivityInput = {};
 
     if (input.name === undefined) {
@@ -252,62 +240,45 @@ export class ActivityService {
     return status !== JobStatus.Skipped;
   }
 
-  private toActivityDto(activity: {
-    id: string;
-    upload_id: string;
-    sport: string;
-    sub_sport: string | null;
-    name: string | null;
-    started_at: Timestamp;
-    timezone_offset_minutes: number | null;
-    elapsed_time: number;
-    moving_time: number | null;
-    distance: number | null;
-    elevation_gain: number | null;
-    elevation_loss: number | null;
-    avg_speed: number | null;
-    max_speed: number | null;
-    avg_hr: number | null;
-    max_hr: number | null;
-    avg_cadence: number | null;
-    max_cadence: number | null;
-    avg_power: number | null;
-    max_power: number | null;
-    normalized_power: number | null;
-    calories: number | null;
-    created_at: Timestamp;
-    updated_at: Timestamp;
-  }) {
-    return {
-      id: activity.id,
-      uploadId: activity.upload_id,
-      sport: activity.sport,
-      subSport: activity.sub_sport,
-      name: activity.name,
+  private toActivityDto(activity: Activity) {
+    const camelCased = Object.fromEntries(
+      Object.entries(activity).map(([key, value]) => [
+        key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase()),
+        value,
+      ]),
+    );
+
+    return ActivitySchema.parse({
+      ...camelCased,
       startedAt: this.toIsoString(activity.started_at),
-      timezoneOffsetMinutes: activity.timezone_offset_minutes,
-      elapsedTime: activity.elapsed_time,
-      movingTime: activity.moving_time,
-      distance: activity.distance,
-      elevationGain: activity.elevation_gain,
-      elevationLoss: activity.elevation_loss,
-      avgSpeed: activity.avg_speed,
-      maxSpeed: activity.max_speed,
-      avgHr: activity.avg_hr,
-      maxHr: activity.max_hr,
-      avgCadence: activity.avg_cadence,
-      maxCadence: activity.max_cadence,
-      avgPower: activity.avg_power,
-      maxPower: activity.max_power,
-      normalizedPower: activity.normalized_power,
-      calories: activity.calories,
       createdAt: this.toIsoString(activity.created_at),
       updatedAt: this.toIsoString(activity.updated_at),
-    };
+    });
   }
 
   private toIsoString(value: Timestamp): string {
     return (value instanceof Date ? value : new Date(value)).toISOString();
+  }
+
+  private encodeActivityCursor(startedAt: Timestamp, id: string): string {
+    return Buffer.from(JSON.stringify([this.toIsoString(startedAt), id])).toString('base64url');
+  }
+
+  private decodeActivityCursor(cursor: string): { startedAt: Date; id: string } {
+    try {
+      const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+      if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== 'string' || typeof value[1] !== 'string') {
+        throw new Error('Unexpected cursor value');
+      }
+
+      const startedAt = new Date(value[0]);
+      if (Number.isNaN(startedAt.getTime()) || value[1].length === 0) {
+        throw new Error('Unexpected cursor value');
+      }
+      return { startedAt, id: value[1] };
+    } catch (error) {
+      throw new BadRequestException('Invalid activity cursor', { cause: error });
+    }
   }
 
   private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {

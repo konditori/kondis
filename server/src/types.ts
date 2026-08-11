@@ -1,6 +1,6 @@
 import { JobName, QueueName } from 'src/enum';
 
-export type UploadedFitFile = {
+export type UploadedFileData = {
   originalname: string;
   buffer: Buffer;
   size: number;
@@ -70,11 +70,25 @@ export interface IEntityJob extends IBaseJob {
   id: string;
 }
 
+export interface IActivityUploadJob {
+  originalName: string;
+  storagePath: string;
+  checksum: string;
+}
+
+export interface ILagomTakeoutImportJob {
+  originalName: string;
+  storagePath: string;
+}
+
 export type JobItem =
+  | { name: JobName.ActivityUpload; data: IActivityUploadJob }
   | { name: JobName.ActivityParse; data: IEntityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
-  | { name: JobName.FileDelete; data: { paths: string[] } };
+  | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }
+  | { name: JobName.FileDelete; data: { paths: string[] } }
+  | { name: JobName.TemporaryFileCleanup; data: Record<string, never> };
 
 export type Jobs = { [K in JobItem['name']]: (JobItem & { name: K })['data'] };
 export type JobOf<T extends JobName> = Jobs[T];

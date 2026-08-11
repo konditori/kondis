@@ -17,14 +17,16 @@ export type PingResponseDtoOutput = {
   status: string;
 };
 export type FitUploadResponseDtoOutput = {
-  /** Upload id */
-  id: string;
-  /** Lowercase xxh128 hash of file contents */
-  checksum: string;
-  /** Stored file size in bytes */
+  /** Uploaded activity file size in bytes */
   byteSize: number;
-  /** True when identical content was already stored */
-  duplicate: boolean;
+  /** True when activity processing was submitted to the queue */
+  queued: true;
+};
+export type LagomTakeoutUploadResponseDtoOutput = {
+  /** Uploaded takeout size in bytes */
+  byteSize: number;
+  /** True when the takeout import was submitted to the queue */
+  queued: true;
 };
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */
@@ -113,6 +115,10 @@ export type ActivityDtoOutput = {
 };
 export type ActivityListResponseDtoOutput = {
   activities: ActivityDtoOutput[];
+  /** Cursor for the next page, or null at the end */
+  nextCursor: string | null;
+  /** Total number of activities */
+  total: number;
 };
 export type ActivityDetailDtoOutput = {
   /** Activity id */
@@ -211,7 +217,35 @@ export function uploadControllerUploadActivity(
       status: 201;
       data: FitUploadResponseDtoOutput;
     }>(
-      '/uploads/activity',
+      '/upload/activity',
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+/**
+ * Import activities from a Strava takeout ZIP archive
+ */
+export function uploadControllerUploadStravaTakeout(
+  {
+    body,
+  }: {
+    body: {
+      /** Strava takeout .zip file */
+      file: Blob;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: LagomTakeoutUploadResponseDtoOutput;
+    }>(
+      '/upload/strava',
       oazapfts.multipart({
         ...opts,
         method: 'POST',
@@ -285,14 +319,31 @@ export function jobControllerRunQueueCommand(
 /**
  * List recent activities
  */
-export function activityControllerListRecent(opts?: Oazapfts.RequestOpts) {
+export function activityControllerListRecent(
+  {
+    cursor,
+    limit,
+  }: {
+    cursor?: string;
+    limit?: number;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
       data: ActivityListResponseDtoOutput;
-    }>('/activities', {
-      ...opts,
-    }),
+    }>(
+      `/activities${QS.query(
+        QS.explode({
+          cursor,
+          limit,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
   );
 }
 /**

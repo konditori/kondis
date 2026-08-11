@@ -1,9 +1,8 @@
-import { env } from "$env/dynamic/private";
+import { apiUrl } from "$lib/server/api";
 import type { RequestHandler } from "./$types";
 
 const proxy: RequestHandler = async ({ request, params, url, fetch }) => {
-  const apiBase = env.KONDIS_API_URL ?? "http://localhost:2293";
-  const target = new URL(params.path ?? "", `${apiBase.replace(/\/$/, "")}/`);
+  const target = apiUrl(params.path ?? "");
   target.search = url.search;
 
   const headers = new Headers(request.headers);

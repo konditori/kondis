@@ -263,6 +263,22 @@ button {
   display: grid;
   gap: 10px;
 }
+.load-more {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.load-more button {
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  cursor: pointer;
+}
 .activity-card {
   min-height: 100px;
   display: grid;

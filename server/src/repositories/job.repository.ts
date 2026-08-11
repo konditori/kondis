@@ -35,6 +35,10 @@ const CRON_JOBS: { item: JobItem; cron: string }[] = [
     item: { name: JobName.ActivityParseQueueAll, data: { force: false } },
     cron: '30 3 * * *',
   },
+  {
+    item: { name: JobName.TemporaryFileCleanup, data: {} },
+    cron: '0 4 * * *',
+  },
 ];
 
 const COMPLETION_POLL_MS = 100;
@@ -161,6 +165,35 @@ export class JobRepository implements OnApplicationShutdown {
     };
   }
 
+  async getReferencedTemporaryPaths(): Promise<Set<string>> {
+    const boss = await this.getBoss();
+    const paths = new Set<string>();
+
+    for (const queueName of Object.values(QueueName)) {
+      const queue = await boss.getQueue(queueName);
+      if (!queue) {
+        continue;
+      }
+
+      const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+      const { rows } = await boss.getDb().executeSql(
+        `SELECT data #>> '{data,storagePath}' AS storage_path
+         FROM ${table}
+         WHERE state IN ('created', 'retry', 'active')
+           AND data #>> '{data,storagePath}' IS NOT NULL`,
+        [],
+      );
+
+      for (const row of rows as { storage_path: unknown }[]) {
+        if (typeof row.storage_path === 'string' && row.storage_path.startsWith('temporary/')) {
+          paths.add(row.storage_path);
+        }
+      }
+    }
+
+    return paths;
+  }
+
   async pause(queue: QueueName): Promise<void> {
     this.pausedQueues.add(queue);
 
@@ -269,6 +302,10 @@ export class JobRepository implements OnApplicationShutdown {
 
   private getJobOptions(item: JobItem): Pick<SendOptions, 'singletonKey' | 'priority'> {
     switch (item.name) {
+      case JobName.ActivityUpload: {
+        return { singletonKey: `${item.name}:${item.data.checksum}` };
+      }
+
       case JobName.ActivityParse: {
         return {
           singletonKey: `${item.name}:${item.data.id}`,
@@ -279,6 +316,10 @@ export class JobRepository implements OnApplicationShutdown {
         return { singletonKey: `${item.name}:${item.data.id}` };
       }
 
+      case JobName.LagomTakeoutImport: {
+        return {};
+      }
+
       case JobName.ActivityParseQueueAll: {
         // A constant key: one full scan at a time, however many times it is requested.
         return { singletonKey: item.name };
@@ -286,6 +327,10 @@ export class JobRepository implements OnApplicationShutdown {
 
       case JobName.FileDelete: {
         return {};
+      }
+
+      case JobName.TemporaryFileCleanup: {
+        return { singletonKey: item.name };
       }
     }
   }
