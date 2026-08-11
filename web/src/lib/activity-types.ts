@@ -11,7 +11,12 @@ import {
 import { Sport } from "$lib/api";
 import type { ActivityType } from "$lib/types";
 
-export type AverageMetric = "pace" | "swimPace" | "speed" | null;
+export enum AverageMetric {
+  None = "none",
+  Pace = "pace",
+  SwimPace = "swimPace",
+  Speed = "speed",
+}
 
 type ActivityTypeSettings = {
   label: string;
@@ -24,67 +29,67 @@ export const ACTIVITY_TYPE_SETTINGS = {
   [Sport.Run]: {
     label: "Run",
     icon: SportShoe,
-    averageMetric: "pace",
+    averageMetric: AverageMetric.Pace,
     showAveragePower: false,
   },
   [Sport.Ride]: {
     label: "Ride",
     icon: Bike,
-    averageMetric: "speed",
+    averageMetric: AverageMetric.Speed,
     showAveragePower: true,
   },
   [Sport.TrailRun]: {
     label: "Trail run",
     icon: SportShoe,
-    averageMetric: "pace",
+    averageMetric: AverageMetric.Pace,
     showAveragePower: false,
   },
   [Sport.Walk]: {
     label: "Walk",
     icon: Footprints,
-    averageMetric: "pace",
+    averageMetric: AverageMetric.Pace,
     showAveragePower: false,
   },
   [Sport.Hike]: {
     label: "Hike",
     icon: Footprints,
-    averageMetric: "pace",
+    averageMetric: AverageMetric.Pace,
     showAveragePower: false,
   },
   [Sport.Swim]: {
     label: "Swim",
     icon: WavesHorizontal,
-    averageMetric: "swimPace",
+    averageMetric: AverageMetric.SwimPace,
     showAveragePower: false,
   },
   [Sport.AlpineSki]: {
     label: "Alpine skiing",
     icon: Snowflake,
-    averageMetric: "speed",
+    averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   },
   [Sport.RollerSki]: {
     label: "Roller skiing",
     icon: Mountain,
-    averageMetric: "pace",
+    averageMetric: AverageMetric.Pace,
     showAveragePower: false,
   },
   [Sport.CrossCountrySki]: {
     label: "Cross-country skiing",
     icon: Snowflake,
-    averageMetric: "speed",
+    averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   },
   [Sport.IceSkate]: {
     label: "Ice skating",
     icon: Snowflake,
-    averageMetric: null,
+    averageMetric: AverageMetric.None,
     showAveragePower: false,
   },
   [Sport.Other]: {
     label: "Other",
     icon: HeartPulse,
-    averageMetric: "speed",
+    averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   },
 } satisfies Record<ActivityType, ActivityTypeSettings>;

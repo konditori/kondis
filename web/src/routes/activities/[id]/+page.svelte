@@ -3,7 +3,7 @@
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, getSdkRequestOptions } from '$lib/api';
-  import { ACTIVITY_TYPE_OPTIONS, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
+  import { ACTIVITY_TYPE_OPTIONS, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
@@ -21,11 +21,11 @@
   const activitySettings = $derived(activityTypeSettings(activity.sport));
   const averageMetric = $derived(activitySettings.averageMetric);
   const averageMetricStats = $derived(
-    averageMetric === null
+    averageMetric === AverageMetric.None
       ? []
-      : averageMetric === 'speed'
+      : averageMetric === AverageMetric.Speed
         ? [{ label: 'Average speed', value: speed(activity.avgSpeed, data.unitSystem), icon: Gauge }]
-        : [{ label: 'Average pace', value: pace(activity.avgSpeed, data.unitSystem, averageMetric === 'swimPace'), icon: Gauge }],
+        : [{ label: 'Average pace', value: pace(activity.avgSpeed, data.unitSystem, averageMetric === AverageMetric.SwimPace), icon: Gauge }],
   );
   const stats = $derived([
     { label: 'Distance', value: distance(activity.distance, data.unitSystem), icon: Gauge },
