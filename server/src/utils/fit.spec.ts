@@ -38,8 +38,7 @@ describe('parseFitMessages', () => {
 
     const parsed = parseFitMessages(messages);
 
-    expect(parsed.sport).toBe('running');
-    expect(parsed.subSport).toBe('road');
+    expect(parsed.sport).toBe('run');
     expect(parsed.startedAt.toISOString()).toBe(START.toISOString());
     expect(parsed.elapsedTime).toBe(3600);
     expect(parsed.movingTime).toBe(3500);
@@ -81,7 +80,7 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    expect(parsed.sport).toBe('unknown');
+    expect(parsed.sport).toBe('other');
     expect(parsed.startedAt.toISOString()).toBe(START.toISOString());
     expect(parsed.elapsedTime).toBe(60);
     expect(parsed.distance).toBe(6);

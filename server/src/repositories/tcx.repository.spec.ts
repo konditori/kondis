@@ -85,6 +85,12 @@ describe('TcxRepository', () => {
       expect(decoded.recordMesgs?.[0].timestamp).toEqual(new Date('2024-03-01T06:00:00.000Z'));
     });
 
+    it('prefers the lap start when the activity id contains an incorrect timestamp', () => {
+      const decoded = decode(SAMPLE_TCX.replace('2024-03-01T06:00:00.000Z</Id>', '2024-03-01T10:30:00.000Z</Id>'));
+
+      expect(decoded.sessionMesgs?.[0].startTime).toEqual(new Date('2024-03-01T06:00:00.000Z'));
+    });
+
     it('rejects empty input', () => {
       expect(() => makeRepository().decode(Buffer.alloc(0))).toThrow(TcxDecodeError);
       expect(() => makeRepository().decode(Buffer.alloc(0))).toThrow(/empty file/);

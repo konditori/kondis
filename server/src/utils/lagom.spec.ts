@@ -10,12 +10,12 @@ describe('extractLagomTakeout', () => {
       'export/activities.csv': {
         contents: Buffer.from(
           [
-            'Activity ID,Activity Name,Filename',
-            '1,"Run, easy",activities/one.fit.gz',
-            '2,No file,',
-            '3,Ride,activities/two.gpx',
-            '4,Unsupported,activities/data.json',
-            '5,Missing,activities/missing.tcx',
+            'Activity ID,Activity Name,Activity Description,Activity Type,Filename',
+            '1,"Run, easy","Easy morning run",Roller Ski,activities/one.fit.gz',
+            '2,No file,,,',
+            '3,Ride,,Ride,activities/two.gpx',
+            '4,Unsupported,,,activities/data.json',
+            '5,Missing,,,activities/missing.tcx',
           ].join('\r\n'),
         ),
         compress: true,
@@ -29,6 +29,9 @@ describe('extractLagomTakeout', () => {
 
     expect(result.totalActivities).toBe(5);
     expect(result.skipped).toBe(2);
+    expect(result.activities.map(({ name }) => name)).toEqual(['Run, easy', 'Ride']);
+    expect(result.activities.map(({ description }) => description)).toEqual(['Easy morning run', null]);
+    expect(result.activities.map(({ sport }) => sport)).toEqual(['roller_ski', 'ride']);
     expect(result.activities.map(({ file }) => file.originalname)).toEqual(['one.fit', 'two.gpx']);
     expect(result.activities[0].file.buffer.toString()).toBe('fit contents');
     expect(result.activities[1].file.buffer.toString()).toBe('gpx contents');

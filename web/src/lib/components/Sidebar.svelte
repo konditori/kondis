@@ -31,7 +31,7 @@
   </nav>
 
   <div class="sidebar-bottom">
-    <a href="/settings" aria-disabled="true" class="disabled"><Settings size={19} /> Settings</a>
+    <a href="/settings" class:active={page.url.pathname === '/settings'}><Settings size={19} /> Settings</a>
     <div class="profile">
       <CircleUserRound size={32} />
       <span><strong>Local athlete</strong><small>Self-hosted</small></span>
@@ -42,5 +42,5 @@
 <nav class="mobile-nav" aria-label="Mobile navigation">
   <a class:active={page.url.pathname === '/'} href="/"><Activity size={21} /><span>Activities</span></a>
   <button onclick={onUpload}><span class="mobile-upload"><Upload size={21} /></span><span>Import</span></button>
-  <a class="disabled" href="/insights"><ChartNoAxesColumnIncreasing size={21} /><span>Insights</span></a>
+  <a class:active={page.url.pathname === '/settings'} href="/settings"><Settings size={21} /><span>Settings</span></a>
 </nav>

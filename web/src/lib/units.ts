@@ -1,0 +1,9 @@
+export const UNIT_SYSTEMS = ["metric", "imperial"] as const;
+
+export type UnitSystem = (typeof UNIT_SYSTEMS)[number];
+
+export const DEFAULT_UNIT_SYSTEM: UnitSystem = "metric";
+export const UNIT_SYSTEM_COOKIE = "kondis_units";
+
+export const parseUnitSystem = (value: unknown): UnitSystem | undefined =>
+  UNIT_SYSTEMS.find((unitSystem) => unitSystem === value);

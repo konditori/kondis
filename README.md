@@ -22,6 +22,18 @@ mise run dev
 
 The web app is available at [http://localhost:3000](http://localhost:3000) and proxies API requests to the server container on port 2293.
 
+### Database migrations
+
+Migrations live in `server/src/schema/migrations` and are discovered automatically at runtime. Create a timestamped migration, apply pending migrations, or revert the latest migration with:
+
+```bash
+mise //server:migrations create AddActivityTags
+mise //server:migrations run
+mise //server:migrations revert
+```
+
+Review and implement both `up` and `down` in every generated migration before applying it.
+
 ## License
 
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).

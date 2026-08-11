@@ -1,3 +1,4 @@
+import { ActivityType } from 'src/domain/activity-type';
 import { JobName, QueueName } from 'src/enum';
 
 export type UploadedFileData = {
@@ -38,8 +39,7 @@ export type ParsedLap = {
 };
 
 export type ParsedActivity = {
-  sport: string;
-  subSport: string | null;
+  sport: ActivityType;
   name: string | null;
   startedAt: Date;
   timezoneOffset: number | null; // minutes east of UTC
@@ -74,6 +74,15 @@ export interface IActivityUploadJob {
   originalName: string;
   storagePath: string;
   checksum: string;
+  activityName?: string;
+  activityDescription?: string;
+  activitySport?: ActivityType;
+}
+
+export interface IActivityParseJob extends IEntityJob {
+  activityName?: string;
+  activityDescription?: string;
+  activitySport?: ActivityType;
 }
 
 export interface ILagomTakeoutImportJob {
@@ -83,7 +92,7 @@ export interface ILagomTakeoutImportJob {
 
 export type JobItem =
   | { name: JobName.ActivityUpload; data: IActivityUploadJob }
-  | { name: JobName.ActivityParse; data: IEntityJob }
+  | { name: JobName.ActivityParse; data: IActivityParseJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
   | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }

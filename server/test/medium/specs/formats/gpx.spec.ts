@@ -16,7 +16,7 @@ describe('parseFitMessages against a .gpx recording', () => {
   it('derives the activity summary from track points', () => {
     const activity = parsed();
 
-    expect(activity.sport).toBe('running');
+    expect(activity.sport).toBe('run');
     expect(activity.startedAt).toEqual(new Date('2024-03-01T14:00:00.000Z'));
     expect(activity.elapsedTime).toBe(1980);
     expect(activity.movingTime).toBe(1980);

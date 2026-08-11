@@ -561,16 +561,75 @@
           },
           "sport": {
             "type": "string",
-            "description": "Primary sport type"
-          },
-          "subSport": {
-            "type": "string",
-            "description": "Secondary sport type",
-            "nullable": true
+            "enum": [
+              "alpine_ski",
+              "backcountry_ski",
+              "badminton",
+              "basketball",
+              "canoeing",
+              "cricket",
+              "cross_country_ski",
+              "crossfit",
+              "dance",
+              "e_bike_ride",
+              "elliptical",
+              "e_mountain_bike_ride",
+              "golf",
+              "gravel_ride",
+              "handcycle",
+              "high_intensity_interval_training",
+              "hike",
+              "ice_skate",
+              "inline_skate",
+              "kayaking",
+              "kitesurf",
+              "mountain_bike_ride",
+              "padel",
+              "physical_therapy",
+              "pickleball",
+              "pilates",
+              "racquetball",
+              "ride",
+              "rock_climbing",
+              "roller_ski",
+              "rowing",
+              "run",
+              "sail",
+              "skateboard",
+              "snowboard",
+              "snowshoe",
+              "soccer",
+              "squash",
+              "stair_stepper",
+              "stand_up_paddling",
+              "surfing",
+              "swim",
+              "table_tennis",
+              "tennis",
+              "trail_run",
+              "velomobile",
+              "virtual_ride",
+              "virtual_row",
+              "virtual_run",
+              "volleyball",
+              "walk",
+              "weight_training",
+              "wheelchair",
+              "windsurf",
+              "workout",
+              "yoga",
+              "other"
+            ],
+            "description": "Activity sport type"
           },
           "name": {
             "type": "string",
             "description": "Activity name",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Activity description",
             "nullable": true
           },
           "startedAt": {
@@ -697,8 +756,8 @@
           "id",
           "uploadId",
           "sport",
-          "subSport",
           "name",
+          "description",
           "startedAt",
           "timezoneOffsetMinutes",
           "elapsedTime",
@@ -766,16 +825,75 @@
           },
           "sport": {
             "type": "string",
-            "description": "Primary sport type"
-          },
-          "subSport": {
-            "type": "string",
-            "description": "Secondary sport type",
-            "nullable": true
+            "enum": [
+              "alpine_ski",
+              "backcountry_ski",
+              "badminton",
+              "basketball",
+              "canoeing",
+              "cricket",
+              "cross_country_ski",
+              "crossfit",
+              "dance",
+              "e_bike_ride",
+              "elliptical",
+              "e_mountain_bike_ride",
+              "golf",
+              "gravel_ride",
+              "handcycle",
+              "high_intensity_interval_training",
+              "hike",
+              "ice_skate",
+              "inline_skate",
+              "kayaking",
+              "kitesurf",
+              "mountain_bike_ride",
+              "padel",
+              "physical_therapy",
+              "pickleball",
+              "pilates",
+              "racquetball",
+              "ride",
+              "rock_climbing",
+              "roller_ski",
+              "rowing",
+              "run",
+              "sail",
+              "skateboard",
+              "snowboard",
+              "snowshoe",
+              "soccer",
+              "squash",
+              "stair_stepper",
+              "stand_up_paddling",
+              "surfing",
+              "swim",
+              "table_tennis",
+              "tennis",
+              "trail_run",
+              "velomobile",
+              "virtual_ride",
+              "virtual_row",
+              "virtual_run",
+              "volleyball",
+              "walk",
+              "weight_training",
+              "wheelchair",
+              "windsurf",
+              "workout",
+              "yoga",
+              "other"
+            ],
+            "description": "Activity sport type"
           },
           "name": {
             "type": "string",
             "description": "Activity name",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Activity description",
             "nullable": true
           },
           "startedAt": {
@@ -926,16 +1044,78 @@
               "coordinates"
             ],
             "additionalProperties": false,
-            "description": "Simplified GPS route as GeoJSON",
+            "description": "GPS route as GeoJSON",
             "nullable": true
+          },
+          "bestEfforts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "400m",
+                    "1k",
+                    "half_mile",
+                    "1_mile",
+                    "2_miles",
+                    "5k",
+                    "10k",
+                    "15k",
+                    "10_miles",
+                    "20k",
+                    "half_marathon",
+                    "30k",
+                    "marathon",
+                    "50k"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "distance": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "description": "Standard effort distance in meters",
+                  "minimum": 0
+                },
+                "elapsedTime": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "description": "Effort duration in seconds",
+                  "minimum": 0
+                },
+                "startTime": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Start offset from activity start in seconds"
+                },
+                "endTime": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "description": "End offset from activity start in seconds",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "type",
+                "label",
+                "distance",
+                "elapsedTime",
+                "startTime",
+                "endTime"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
           "id",
           "uploadId",
           "sport",
-          "subSport",
           "name",
+          "description",
           "startedAt",
           "timezoneOffsetMinutes",
           "elapsedTime",
@@ -955,7 +1135,8 @@
           "calories",
           "createdAt",
           "updatedAt",
-          "track"
+          "track",
+          "bestEfforts"
         ],
         "additionalProperties": false
       },
@@ -969,18 +1150,74 @@
             "description": "Display name for the activity",
             "nullable": true
           },
-          "sport": {
-            "description": "Primary sport type",
+          "description": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "subSport": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100,
-            "description": "Secondary sport type",
+            "maxLength": 10000,
+            "description": "Description for the activity",
             "nullable": true
+          },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "alpine_ski",
+              "backcountry_ski",
+              "badminton",
+              "basketball",
+              "canoeing",
+              "cricket",
+              "cross_country_ski",
+              "crossfit",
+              "dance",
+              "e_bike_ride",
+              "elliptical",
+              "e_mountain_bike_ride",
+              "golf",
+              "gravel_ride",
+              "handcycle",
+              "high_intensity_interval_training",
+              "hike",
+              "ice_skate",
+              "inline_skate",
+              "kayaking",
+              "kitesurf",
+              "mountain_bike_ride",
+              "padel",
+              "physical_therapy",
+              "pickleball",
+              "pilates",
+              "racquetball",
+              "ride",
+              "rock_climbing",
+              "roller_ski",
+              "rowing",
+              "run",
+              "sail",
+              "skateboard",
+              "snowboard",
+              "snowshoe",
+              "soccer",
+              "squash",
+              "stair_stepper",
+              "stand_up_paddling",
+              "surfing",
+              "swim",
+              "table_tennis",
+              "tennis",
+              "trail_run",
+              "velomobile",
+              "virtual_ride",
+              "virtual_row",
+              "virtual_run",
+              "volleyball",
+              "walk",
+              "weight_training",
+              "wheelchair",
+              "windsurf",
+              "workout",
+              "yoga",
+              "other"
+            ],
+            "description": "Activity sport type"
           },
           "startedAt": {
             "description": "Updated start time in ISO-8601 format",

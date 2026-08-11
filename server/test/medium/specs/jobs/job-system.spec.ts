@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -132,10 +133,12 @@ describe('job system (medium)', () => {
       expect(activity?.sport).toBe(fixture.expectedSport);
     });
 
-    it('imports a Lagom takeout and parses its activities through the real queues', async () => {
+    it('imports a Strava takeout and parses its activities through the real queues', async () => {
       const fit = await readFile(activityFixtures.hindasRun.path);
       const archive = createTestZip({
-        'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit.gz'),
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Forest walk,A walk in the woods,Roller Ski,activities/run.fit.gz',
+        ),
         'activities/run.fit.gz': gzipSync(fit),
       });
 
@@ -147,7 +150,41 @@ describe('job system (medium)', () => {
 
       const imported = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(fit));
       expect(imported?.status).toBe('parsed');
-      expect(await activityRepository.getByUploadId(imported!.id)).toBeDefined();
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+
+      const updatedArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Updated hike,Updated description,Hike,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      await uploads.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Updated hike',
+        description: 'Updated description',
+        sport: 'hike',
+      });
+
+      const iceSkateArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Evening skate,Frozen lake,Ice Skate,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      await uploads.uploadLagomTakeout(makeUploadedFile('ice-skate-export.zip', iceSkateArchive));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Evening skate',
+        description: 'Frozen lake',
+        sport: 'ice_skate',
+      });
     });
 
     it('deletes the activity, the upload and the file', async () => {
@@ -265,6 +302,33 @@ describe('job system (medium)', () => {
   });
 
   describe('fan-out', () => {
+    it('drains an existing backlog without waiting for another notification', async () => {
+      await jobs.pause(QueueName.Storage);
+
+      try {
+        await jobs.queueAll(
+          Array.from({ length: 26 }, () => ({
+            name: JobName.FileDelete,
+            data: { paths: [] },
+          })),
+        );
+
+        const counts = await jobs.getJobCounts(QueueName.Storage);
+        expect(counts.queued).toBe(26);
+        await jobs.resume(QueueName.Storage);
+
+        await Promise.race([
+          jobs.waitForQueueCompletion(QueueName.Storage),
+          delay(5000).then(() => {
+            throw new Error('Storage queue did not drain its existing backlog within 5 seconds');
+          }),
+        ]);
+      } finally {
+        await jobs.empty(QueueName.Storage);
+        await jobs.resume(QueueName.Storage);
+      }
+    });
+
     it('queues a parse for every upload that never produced an activity', async () => {
       await jobs.pause(QueueName.ActivityParsing);
 

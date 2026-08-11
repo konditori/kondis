@@ -1,10 +1,12 @@
 <script lang="ts">
   import { ArrowUpRight, Clock3, Gauge, Mountain } from '@lucide/svelte';
   import { goto } from '$app/navigation';
+  import { activityTypeLabel, sportIcon } from '$lib/activity-types';
   import type { Activity } from '$lib/types';
-  import { activityName, distance, duration, localTime, sportIcon } from '$lib/format';
+  import type { UnitSystem } from '$lib/units';
+  import { activityName, distance, duration, elevation, localTime } from '$lib/format';
 
-  let { activity }: { activity: Activity } = $props();
+  let { activity, unitSystem }: { activity: Activity; unitSystem: UnitSystem } = $props();
   const Icon = $derived(sportIcon(activity.sport));
 
   function openActivity(event: MouseEvent) {
@@ -19,9 +21,9 @@
   <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
   <div class="activity-primary">
     <div class="activity-title"><h3>{activityName(activity)}</h3><ArrowUpRight size={17} /></div>
-    <p><span>{localTime(activity.startedAt)}</span>{activity.subSport ? ` · ${activity.subSport.replaceAll('_', ' ')}` : ''}</p>
+    <p><span>{localTime(activity.startedAt)} · {activityTypeLabel(activity.sport)}</span></p>
   </div>
-  <div class="activity-stat"><Gauge size={16} /><span><strong>{distance(activity.distance)}</strong><small>Distance</small></span></div>
+  <div class="activity-stat"><Gauge size={16} /><span><strong>{distance(activity.distance, unitSystem)}</strong><small>Distance</small></span></div>
   <div class="activity-stat"><Clock3 size={16} /><span><strong>{duration(activity.movingTime ?? activity.elapsedTime)}</strong><small>Moving time</small></span></div>
-  <div class="activity-stat optional"><Mountain size={16} /><span><strong>{activity.elevationGain == null ? '—' : `${Math.round(activity.elevationGain)} m`}</strong><small>Elevation</small></span></div>
+  <div class="activity-stat optional"><Mountain size={16} /><span><strong>{elevation(activity.elevationGain, unitSystem)}</strong><small>Elevation</small></span></div>
 </a>

@@ -42,21 +42,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       name text,
       started_at timestamptz NOT NULL,
       timezone_offset_minutes integer,
-      elapsed_time integer NOT NULL,
-      moving_time integer,
-      distance double precision,
-      elevation_gain double precision,
-      elevation_loss double precision,
-      avg_speed double precision,
-      max_speed double precision,
-      avg_hr integer,
-      max_hr integer,
-      avg_cadence integer,
-      max_cadence integer,
-      avg_power integer,
-      max_power integer,
-      normalized_power integer,
-      calories integer,
       track geography(LineString, 4326),
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
@@ -72,6 +57,27 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`CREATE INDEX activity_started_at_idx ON activity (started_at DESC)`.execute(db);
   await sql`CREATE INDEX activity_sport_idx ON activity (sport)`.execute(db);
   await sql`CREATE INDEX activity_track_idx ON activity USING GIST (track)`.execute(db);
+
+  await sql`
+    CREATE TABLE activity_metric (
+      activity_id uuid PRIMARY KEY REFERENCES activity (id) ON DELETE CASCADE,
+      elapsed_time integer NOT NULL,
+      moving_time integer,
+      distance double precision,
+      elevation_gain double precision,
+      elevation_loss double precision,
+      avg_speed double precision,
+      max_speed double precision,
+      avg_hr integer,
+      max_hr integer,
+      avg_cadence integer,
+      max_cadence integer,
+      avg_power integer,
+      max_power integer,
+      normalized_power integer,
+      calories integer
+    )
+  `.execute(db);
 
   await sql`
     CREATE TABLE activity_stream (
@@ -103,6 +109,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 export async function down(db: Kysely<unknown>): Promise<void> {
   await sql`DROP TABLE IF EXISTS lap`.execute(db);
   await sql`DROP TABLE IF EXISTS activity_stream`.execute(db);
+  await sql`DROP TABLE IF EXISTS activity_metric`.execute(db);
   await sql`DROP TABLE IF EXISTS activity`.execute(db);
   await sql`DROP TABLE IF EXISTS upload`.execute(db);
   await sql`DROP FUNCTION IF EXISTS kondis_set_updated_at`.execute(db);

@@ -22,7 +22,7 @@
   });
   const nextCursor = $derived(cursorOverride === undefined ? data.nextCursor : cursorOverride);
   const total = $derived(totalOverride ?? data.total);
-  const filtered = $derived(activities.filter((activity) => `${activity.name ?? ''} ${activity.sport} ${activity.subSport ?? ''}`.toLowerCase().includes(query.toLowerCase())));
+  const filtered = $derived(activities.filter((activity) => `${activity.name ?? ''} ${activity.description ?? ''} ${activity.sport}`.toLowerCase().includes(query.toLowerCase())));
   const groups = $derived(Object.entries(Object.groupBy(filtered, (activity) => localDate(activity.startedAt))));
 
   $effect(() => {
@@ -126,7 +126,7 @@
         <section class="day-group">
           <div class="date-rail"><span></span><h2>{date}</h2><small>{activities?.length}</small></div>
           <div class="activity-list">
-            {#each activities ?? [] as activity (activity.id)}<ActivityCard {activity} />{/each}
+            {#each activities ?? [] as activity (activity.id)}<ActivityCard {activity} unitSystem={data.unitSystem} />{/each}
           </div>
         </section>
       {/each}

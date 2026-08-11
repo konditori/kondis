@@ -1,10 +1,11 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { type ActivityType } from 'src/domain/activity-type';
 import { type UploadedFileData } from 'src/types';
 
 export type TestAsset = {
-  expectedSport: string;
+  expectedSport: ActivityType;
   filename: string;
   path: string;
 };
@@ -13,7 +14,7 @@ export const testAssetDirectory = resolve(__dirname, '../../../test/test-assets'
 
 export const activityFixtures = {
   hindasRun: {
-    expectedSport: 'running',
+    expectedSport: 'run',
     filename: '2015-06-22-run.fit',
     path: resolve(testAssetDirectory, 'activities/running/2015-hindas/2015-06-22-run.fit'),
   },
@@ -23,7 +24,7 @@ export const activityFixtures = {
     path: resolve(testAssetDirectory, 'activities/alpine-ski/2013-01-13-orsa.tcx'),
   },
   sampleRun: {
-    expectedSport: 'running',
+    expectedSport: 'run',
     filename: '2024-03-01-run.gpx',
     path: resolve(testAssetDirectory, 'activities/running/2024-san-francisco/2024-03-01-run.gpx'),
   },

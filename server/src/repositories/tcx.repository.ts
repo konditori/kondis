@@ -107,7 +107,9 @@ export class TcxRepository {
       });
     }
 
-    const startedAt = toDate(activity.Id) ?? toDate(laps[0]?.StartTime) ?? toDate(recordMesgs[0]?.timestamp);
+    // Some Strava takeouts contain a stale or otherwise incorrect Activity Id,
+    // while the lap and trackpoint timestamps still describe the actual activity.
+    const startedAt = toDate(laps[0]?.StartTime) ?? toDate(recordMesgs[0]?.timestamp) ?? toDate(activity.Id);
     const totalElapsedTime = sumNumbers(laps.map((lap) => toNumber(lap.TotalTimeSeconds)));
     const totalDistance = sumNumbers(laps.map((lap) => toNumber(lap.DistanceMeters)));
     const totalCalories = sumIntegers(laps.map((lap) => toInteger(lap.Calories)));

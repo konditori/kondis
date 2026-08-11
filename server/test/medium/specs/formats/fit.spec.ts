@@ -18,7 +18,7 @@ describe.skipIf(!hasTestAsset(activityFixtures.hindasRun))(
     it('reads the session summary', () => {
       const activity = parsed();
 
-      expect(activity.sport).toBe('running');
+      expect(activity.sport).toBe('run');
       expect(activity.startedAt.getUTCFullYear()).toBe(2015);
       expect(activity.distance).toBeGreaterThan(10_000);
       expect(activity.distance).toBeLessThan(10_100);

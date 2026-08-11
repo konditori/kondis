@@ -2,11 +2,17 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { Activity } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
+import { ActivityType, usesActivityHeatmap } from 'src/domain/activity-type';
+import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
-import { ActivityRepository, CreateActivityInput, UpdateActivityInput } from 'src/repositories/activity.repository';
+import {
+  ActivityRecord,
+  ActivityRepository,
+  CreateActivityInput,
+  UpdateActivityInput,
+} from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
@@ -39,7 +45,13 @@ export class ActivityService {
   }
 
   @OnJob({ name: JobName.ActivityParse, queue: QueueName.ActivityParsing })
-  async handleActivityParse({ id, force }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
+  async handleActivityParse({
+    id,
+    force,
+    activityName,
+    activityDescription,
+    activitySport,
+  }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
       this.logger.warn(`Skipping parse of upload ${id}: no longer exists`);
@@ -61,7 +73,9 @@ export class ActivityService {
         throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
       }
       const parsed = this.parseActivityFile(upload.storage_path, contents);
-      const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
+      const activityId = await this.activityRepository.create(
+        this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
+      );
 
       await this.uploadRepository.setStatus(id, 'parsed');
       const activity = await this.activityRepository.getByUploadId(id);
@@ -69,7 +83,7 @@ export class ActivityService {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
-      this.logger.log(`Parsed upload ${id} into activity ${activityId} (${parsed.sport})`);
+      this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
@@ -193,17 +207,44 @@ export class ActivityService {
       return;
     }
 
+    // Older activities predate persisted analysis rows. Fill those without
+    // reparsing the upload, which would discard user-edited metadata.
+    await this.activityRepository.ensureBestEfforts(id, row.sport);
+    const storedEfforts = await this.activityRepository.getBestEfforts(id);
+    const simplifiedTrack = row.track_geojson
+      ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
+      : null;
+    const heatmapCoordinates = usesActivityHeatmap(row.sport)
+      ? await this.activityRepository.getTrackCoordinates(id)
+      : [];
+
     return {
       ...this.toActivityDto(row),
-      track: row.track_geojson
-        ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
-        : null,
+      track:
+        heatmapCoordinates.length >= 2
+          ? { type: 'LineString' as const, coordinates: heatmapCoordinates }
+          : simplifiedTrack,
+      bestEfforts: RUNNING_BEST_EFFORTS.flatMap(({ type, label }) => {
+        const effort = storedEfforts.find((candidate) => candidate.type === type);
+        return effort
+          ? [
+              {
+                type,
+                label,
+                distance: effort.distance,
+                elapsedTime: effort.elapsed_time,
+                startTime: effort.start_time,
+                endTime: effort.end_time,
+              },
+            ]
+          : [];
+      }),
     };
   }
 
   async updateById(
     id: string,
-    input: { name?: string | null; sport?: string; subSport?: string | null; startedAt?: Date },
+    input: { name?: string | null; description?: string | null; sport?: ActivityType; startedAt?: Date },
   ) {
     const mapped: UpdateActivityInput = {};
 
@@ -213,16 +254,16 @@ export class ActivityService {
       mapped.name = input.name;
     }
 
+    if (input.description === undefined) {
+      // no-op
+    } else {
+      mapped.description = input.description;
+    }
+
     if (input.sport === undefined) {
       // no-op
     } else {
       mapped.sport = input.sport;
-    }
-
-    if (input.subSport === undefined) {
-      // no-op
-    } else {
-      mapped.sub_sport = input.subSport;
     }
 
     if (input.startedAt === undefined) {
@@ -240,7 +281,7 @@ export class ActivityService {
     return status !== JobStatus.Skipped;
   }
 
-  private toActivityDto(activity: Activity) {
+  private toActivityDto(activity: ActivityRecord) {
     const camelCased = Object.fromEntries(
       Object.entries(activity).map(([key, value]) => [
         key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase()),
@@ -281,15 +322,23 @@ export class ActivityService {
     }
   }
 
-  private toCreateInput(uploadId: string, parsed: ParsedActivity): CreateActivityInput {
+  private toCreateInput(
+    uploadId: string,
+    parsed: ParsedActivity,
+    activityName?: string,
+    activityDescription?: string,
+    activitySport?: ActivityType,
+  ): CreateActivityInput {
     return {
       activity: {
         upload_id: uploadId,
-        sport: parsed.sport,
-        sub_sport: parsed.subSport,
-        name: parsed.name,
+        sport: activitySport ?? parsed.sport,
+        name: activityName ?? parsed.name,
+        description: activityDescription ?? null,
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,
+      },
+      metrics: {
         elapsed_time: parsed.elapsedTime,
         moving_time: parsed.movingTime,
         distance: parsed.distance,

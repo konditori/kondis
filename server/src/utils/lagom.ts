@@ -5,6 +5,7 @@ import { parse } from 'csv-parse/sync';
 import { Open, type File as ZipEntry } from 'unzipper';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { ActivityType, toActivityType } from 'src/domain/activity-type';
 import type { UploadedFileData } from 'src/types';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
@@ -18,6 +19,9 @@ const MAX_ZIP_COMMENT_BYTES = 0xff_ff;
 export type LagomTakeoutActivity = {
   row: number;
   filename: string;
+  name: string | null;
+  description: string | null;
+  sport: ActivityType | null;
   file: UploadedFileData;
 };
 
@@ -224,6 +228,9 @@ export const extractLagomTakeout = async (
   if (filenameIndex === -1) {
     throw new Error(`${MANIFEST_NAME} does not contain a Filename column`);
   }
+  const nameIndex = headers.indexOf('Activity Name');
+  const descriptionIndex = headers.indexOf('Activity Description');
+  const sportIndex = headers.indexOf('Activity Type');
 
   const result: LagomTakeoutContents = {
     totalActivities: rows.length,
@@ -237,6 +244,10 @@ export const extractLagomTakeout = async (
   for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2;
     const filename = row[filenameIndex]?.trim() ?? '';
+    const name = nameIndex === -1 ? null : row[nameIndex]?.trim() || null;
+    const description = descriptionIndex === -1 ? null : row[descriptionIndex]?.trim() || null;
+    const manifestSport = sportIndex === -1 ? '' : (row[sportIndex]?.trim() ?? '');
+    const sport = manifestSport ? toActivityType(manifestSport) : null;
     if (!filename) {
       result.skipped += 1;
       continue;
@@ -285,6 +296,9 @@ export const extractLagomTakeout = async (
       activity = {
         row: rowNumber,
         filename,
+        name,
+        description,
+        sport,
         file: { originalname, buffer, size: buffer.length },
       };
     } catch (error) {

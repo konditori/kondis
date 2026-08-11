@@ -1,9 +1,13 @@
+import type { Sport } from "$lib/api";
+
+export type ActivityType = Sport;
+
 export type Activity = {
   id: string;
   uploadId: string;
-  sport: string;
-  subSport: string | null;
+  sport: ActivityType;
   name: string | null;
+  description: string | null;
   startedAt: string;
   timezoneOffsetMinutes: number | null;
   elapsedTime: number;
@@ -33,4 +37,12 @@ export type ActivityPage = {
 
 export type ActivityDetail = Activity & {
   track: { type: "LineString"; coordinates: [number, number][] } | null;
+  bestEfforts: {
+    type: string;
+    label: string;
+    distance: number;
+    elapsedTime: number;
+    startTime: number;
+    endTime: number;
+  }[];
 };

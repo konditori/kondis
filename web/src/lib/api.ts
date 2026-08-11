@@ -1,6 +1,8 @@
 import {
   activityControllerGetById,
   activityControllerListRecent,
+  activityControllerUpdateById,
+  Sport,
   uploadControllerUploadActivity,
   uploadControllerUploadStravaTakeout,
 } from "../../../server/src/open-api/fetch-client";
@@ -15,6 +17,8 @@ export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
 export {
   activityControllerGetById,
   activityControllerListRecent,
+  activityControllerUpdateById,
+  Sport,
   uploadControllerUploadActivity,
   uploadControllerUploadStravaTakeout,
 };

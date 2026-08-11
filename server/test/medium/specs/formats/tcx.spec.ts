@@ -19,7 +19,7 @@ describe.skipIf(!hasTestAsset(activityFixtures.orsaAlpineSki))(
       const activity = parsed();
 
       expect(activity.sport).toBe('other');
-      expect(activity.startedAt).toEqual(new Date('2013-01-13T09:17:34.000Z'));
+      expect(activity.startedAt).toEqual(new Date('2013-01-13T09:16:35.000Z'));
       expect(activity.elapsedTime).toBe(10_962);
       expect(activity.movingTime).toBe(10_962);
       expect(activity.distance).toBeCloseTo(29_823.963, 3);

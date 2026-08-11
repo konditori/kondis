@@ -72,7 +72,7 @@ describe('UploadService (medium)', () => {
     expect(result).toEqual({ byteSize: buffer.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
+      { name: JobName; data: { originalName: string; storagePath: string; checksum: string; activityName?: string } },
     ];
     expect(item).toEqual({
       name: JobName.ActivityUpload,
@@ -107,6 +107,23 @@ describe('UploadService (medium)', () => {
     queue.mockClear();
     await expect(uploadService.handleActivityUpload(data)).resolves.toBe('skipped');
     expect(queue).not.toHaveBeenCalled();
+
+    await expect(
+      uploadService.handleActivityUpload({
+        ...data,
+        activityName: 'A nice workout',
+        activitySport: 'roller_ski',
+      }),
+    ).resolves.toBe('success');
+    expect(queue).toHaveBeenCalledWith({
+      name: JobName.ActivityParse,
+      data: {
+        id: stored!.id,
+        force: true,
+        activityName: 'A nice workout',
+        activitySport: 'roller_ski',
+      },
+    });
   });
 
   it('stores a real .fit fixture from the queued activity upload', async () => {
@@ -161,16 +178,16 @@ describe('UploadService (medium)', () => {
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(contents);
   });
 
-  it('stages a Lagom takeout and queues its path without extracting it', async () => {
+  it('stages a Strava takeout and queues its path without extracting it', async () => {
     const fit = await readFile(activityFixtures.hindasRun.path);
     const gpx = await readFile(activityFixtures.sampleRun.path);
     const archive = createTestZip({
       'activities.csv': Buffer.from(
         [
-          'Activity ID,Activity Name,Filename',
-          '1,Run,activities/run.fit.gz',
-          '2,Ride,activities/ride.gpx',
-          '3,Manual,',
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename',
+          '1,Run,Forest loop,Roller Ski,activities/run.fit.gz',
+          '2,Ride,,Ride,activities/ride.gpx',
+          '3,Manual,,,',
         ].join('\n'),
       ),
       'activities/run.fit.gz': gzipSync(fit),
@@ -209,6 +226,9 @@ describe('UploadService (medium)', () => {
         originalName: 'run.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
         checksum: crypto.xxHash(fit),
+        activityName: 'Run',
+        activityDescription: 'Forest loop',
+        activitySport: 'roller_ski',
       },
     });
     expect(gpxJob).toEqual({
@@ -217,6 +237,8 @@ describe('UploadService (medium)', () => {
         originalName: 'ride.gpx',
         storagePath: expect.stringMatching(/^temporary\/.+\.gpx$/),
         checksum: crypto.xxHash(gpx),
+        activityName: 'Ride',
+        activitySport: 'ride',
       },
     });
     await expect(storageRepository.read(fitJob.data.storagePath)).resolves.toEqual(fit);
@@ -251,7 +273,7 @@ describe('UploadService (medium)', () => {
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
   });
 
-  it('rejects a non-ZIP Lagom takeout upload', async () => {
+  it('rejects a non-ZIP Strava takeout upload', async () => {
     await expect(
       uploadService.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
     ).rejects.toThrow('Only a Strava takeout .zip file is accepted');

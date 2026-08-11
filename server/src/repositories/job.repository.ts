@@ -42,6 +42,7 @@ const CRON_JOBS: { item: JobItem; cron: string }[] = [
 ];
 
 const COMPLETION_POLL_MS = 100;
+const WORKER_BATCH_SIZE = 25;
 
 const deadLetterName = (queue: QueueName): string => `${queue}.deadLetter`;
 
@@ -407,7 +408,8 @@ export class JobRepository implements OnApplicationShutdown {
     await boss.work<StoredJob>(
       queue,
       {
-        batchSize: 1,
+        batchSize: WORKER_BATCH_SIZE,
+        burstWhenBatchFull: true,
         localConcurrency: this.config.jobs.concurrency[queue],
         pollingIntervalSeconds: 2,
         notifyPollingIntervalSeconds: 30,
