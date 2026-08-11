@@ -65,13 +65,13 @@
   function bestEffortAchievement(effort: ActivityDetail['bestEfforts'][number]): { rank: number; text: string } | null {
     const name = bestEffortRecordName(effort.type);
     if (effort.overallRank === 1) {
-      return { rank: 1, text: `Your best ${name} of all time` };
+      return { rank: 1, text: `New best of all time` };
     }
     if (effort.overallRank <= 3) {
       return { rank: effort.overallRank, text: `New ${rankOrdinal(effort.overallRank)} best of all time` };
     }
     if (effort.yearRank === 1) {
-      return { rank: 1, text: `Your best ${name} of ${effort.year}` };
+      return { rank: 1, text: `New best of ${effort.year}` };
     }
     if (effort.yearRank <= 3) {
       return { rank: effort.yearRank, text: `New ${rankOrdinal(effort.yearRank)} best of ${effort.year}` };

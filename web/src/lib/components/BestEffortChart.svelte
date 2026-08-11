@@ -27,11 +27,12 @@
   const values = $derived(efforts.map((effort) => effort.value));
   const minDate = $derived(Math.min(...dates));
   const maxDate = $derived(Math.max(...dates));
-  const minimum = $derived(Math.min(...values));
-  const maximum = $derived(Math.max(...values));
-  const valuePadding = $derived(Math.max((maximum - minimum) * 0.12, valueKind === "power" ? 5 : 1));
-  const yMin = $derived(Math.max(0, minimum - valuePadding));
-  const yMax = $derived(maximum + valuePadding);
+  const logarithmicValues = $derived(values.map((value) => Math.log(value)));
+  const logarithmicMinimum = $derived(Math.min(...logarithmicValues));
+  const logarithmicMaximum = $derived(Math.max(...logarithmicValues));
+  const logarithmicPadding = $derived(Math.max((logarithmicMaximum - logarithmicMinimum) * 0.12, 0.04));
+  const yMin = $derived(logarithmicMinimum - logarithmicPadding);
+  const yMax = $derived(logarithmicMaximum + logarithmicPadding);
 
   function x(index: number): number {
     if (minDate === maxDate) return width / 2;
@@ -39,7 +40,7 @@
   }
 
   function y(value: number): number {
-    const ratio = (value - yMin) / (yMax - yMin);
+    const ratio = (Math.log(value) - yMin) / (yMax - yMin);
     return padding.top + (higherIsBetter ? 1 - ratio : ratio) * (height - padding.top - padding.bottom);
   }
 
@@ -53,7 +54,7 @@
   }
 
   const points = $derived(efforts.map((effort, index) => `${x(index)},${y(effort.value)}`).join(" "));
-  const yTicks = $derived([yMin, (yMin + yMax) / 2, yMax]);
+  const yTicks = $derived([yMin, (yMin + yMax) / 2, yMax].map((value) => Math.exp(value)));
   const firstYear = $derived(new Date(minDate).getFullYear());
   const lastYear = $derived(new Date(maxDate).getFullYear());
 </script>

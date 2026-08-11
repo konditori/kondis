@@ -30,6 +30,14 @@ export const activityFixtures = {
   },
 } as const satisfies Record<string, TestAsset>;
 
+export const syntheticActivityFixtures = {
+  missingRecordDistanceFit: {
+    expectedSport: 'run',
+    filename: 'synthetic-missing-record-distance.fit',
+    path: resolve(testAssetDirectory, 'activities/running/missing-distance-stream/synthetic-missing-record-distance.fit'),
+  },
+} as const satisfies Record<string, TestAsset>;
+
 export const hasTestAsset = ({ path }: TestAsset): boolean => existsSync(path);
 
 export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFileData => ({

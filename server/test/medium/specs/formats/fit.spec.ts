@@ -3,14 +3,48 @@ import { describe, expect, it } from 'vitest';
 
 import { ConsoleLogger } from '@nestjs/common';
 
+import { computeRunningBestEfforts } from 'src/domain/running-best-effort';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { findStream, parseFitMessages } from 'src/utils/fit';
 
-import { activityFixtures, hasTestAsset } from 'test/medium/utils';
+import { activityFixtures, hasTestAsset, syntheticActivityFixtures } from 'test/medium/utils';
 
 const fitRepository = new FitRepository(new ConsoleLogger({ logLevels: [] }));
 
 const parsed = () => parseFitMessages(fitRepository.decode(readFileSync(activityFixtures.hindasRun.path)));
+const parsedSyntheticMissingDistance = () => {
+  const messages = fitRepository.decode(readFileSync(syntheticActivityFixtures.missingRecordDistanceFit.path));
+  return { activity: parseFitMessages(messages), messages };
+};
+
+describe('parseFitMessages against a synthetic .fit recording without record distances', () => {
+  it('exercises the missing-distance shape without containing a real route', () => {
+    const { messages } = parsedSyntheticMissingDistance();
+
+    expect(messages.sessionMesgs?.[0]?.totalDistance).toBe(1000);
+    expect(messages.recordMesgs).toHaveLength(6);
+    expect(messages.recordMesgs?.every(({ distance }) => distance === undefined)).toBe(true);
+    expect(messages.recordMesgs?.[0]?.positionLat).toBeCloseTo(0, 5);
+    expect(messages.recordMesgs?.[0]?.positionLong).toBeCloseTo(-140, 5);
+  });
+
+  it('generates aligned streams and a usable cumulative distance stream', () => {
+    const { activity } = parsedSyntheticMissingDistance();
+    const lengths = new Set(activity.streams.map((stream) => stream.data.length));
+    const distance = findStream(activity, 'distance');
+    const time = findStream(activity, 'time');
+
+    expect(activity.sport).toBe('run');
+    expect(lengths).toEqual(new Set([6]));
+    expect(findStream(activity, 'latitude')).toHaveLength(6);
+    expect(findStream(activity, 'longitude')).toHaveLength(6);
+    expect(distance).toHaveLength(6);
+    expect(distance?.[0]).toBe(0);
+    expect(distance?.at(-1)).toBeCloseTo(1000, 5);
+    expect(distance?.every((value, index) => index === 0 || value >= distance[index - 1])).toBe(true);
+    expect(computeRunningBestEfforts(distance!, time!).map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile']);
+  });
+});
 
 describe.skipIf(!hasTestAsset(activityFixtures.hindasRun))(
   'parseFitMessages against a real Garmin .fit recording',
