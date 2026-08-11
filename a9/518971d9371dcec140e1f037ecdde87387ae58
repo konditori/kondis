@@ -1,0 +1,65 @@
+e2e/src/specs/server/api/activities.e2e-spec.ts
+  s_433709b89c77e4::t_1039723eeffd47 1-6,53,59,64
+open-api/kondis-openapi-specs.json
+  s_433709b89c77e4::t_6990e78a56ba83 564-575,774-785,942-1003,1030-1031,1047-1058
+server/src/db/schema.ts
+  s_433709b89c77e4::t_73acdd197841e4 2,12,26-28
+server/src/domain/activity-type.spec.ts
+  s_433709b89c77e4::t_581aed9f774736 1-24
+server/src/domain/activity-type.ts
+  s_433709b89c77e4::t_0779ac7b01f15c 1-60
+server/src/domain/running-best-effort.spec.ts
+  s_433709b89c77e4::t_f319761cfac70f 1-45
+server/src/dtos/activity.dto.ts
+  s_433709b89c77e4::t_d97497b61cfe75 4-9,27,67-76,82
+server/src/open-api/fetch-client.ts
+  s_433709b89c77e4::t_4eb7f62769137d 71-72,126-127,173-184,189-190,435-445,449-464
+server/src/schema/migrations/1786441205441-ActivityTypesAndRunningBestEfforts.ts
+  s_433709b89c77e4::t_d59b9055fe946a 1-50
+server/src/schema/tables/activity-best-effort.table.ts
+  s_433709b89c77e4::t_d97cd5ad38f14c 1-23
+server/src/schema/tables/activity.table.ts
+  s_433709b89c77e4::t_29bfcace73ac90 3,26
+server/src/services/activity.service.spec.ts
+  s_433709b89c77e4::t_76fe359260f162 99
+server/src/types.ts
+  s_433709b89c77e4::t_99422cafad9570 1,42
+server/src/utils/fit.spec.ts
+  s_433709b89c77e4::t_01c4cf279de53c 41,83
+server/src/utils/fit.ts
+  s_433709b89c77e4::t_6f2503b445e68f 1,146
+server/test/medium/test-db.ts
+  s_433709b89c77e4::t_bd5564e81d4edd 35-38
+web/src/app.css
+  s_433709b89c77e4::t_617cee6a4c9c65 35-36,585,603-604,615-616,790-832,914-915,1013-1015
+web/src/lib/activity-types.ts
+  s_433709b89c77e4::t_836df5c07f7f6c 1-17
+web/src/lib/api.ts
+  s_433709b89c77e4::t_2527dbf7e79c14 5,21
+web/src/lib/components/ActivityCard.svelte
+  s_433709b89c77e4::t_29baef67f41a54 4,23
+web/src/lib/format.ts
+  s_433709b89c77e4::t_96c04309376ba2 9,13,21-23,25-26,28,51-70
+web/src/lib/types.ts
+  s_433709b89c77e4::t_e92a7bb8f36d7a 1-4,8,39-46
+web/src/routes/+page.svelte
+  s_433709b89c77e4::t_40ff8f86be3edb 25
+web/src/routes/activities/[id]/+page.svelte
+  s_433709b89c77e4::t_5fe1bf5a02ebd7 2,6,8,18,60,83,89,115-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a9518971d9371dcec140e1f037ecdde87387ae58",
+  "prompts": {},
+  "sessions": {
+    "s_433709b89c77e4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff00c-5a8b-7aa1-9084-33a528412c32",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
