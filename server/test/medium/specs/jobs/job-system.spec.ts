@@ -72,6 +72,11 @@ describe('job system (medium)', () => {
           checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
         },
       },
+      [JobName.ActivityBestEffortCompute]: {
+        name: JobName.ActivityBestEffortCompute,
+        data: { id: MISSING_UUID },
+      },
+      [JobName.ActivityBestEffortRank]: { name: JobName.ActivityBestEffortRank, data: {} },
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },

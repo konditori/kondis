@@ -35,6 +35,8 @@ describe('ActivityService', () => {
   const getByUploadId = vi.fn();
   const createActivity = vi.fn<(input: unknown) => Promise<string>>();
   const deleteActivity = vi.fn(async () => {});
+  const recomputeBestEfforts = vi.fn<(id: string) => Promise<boolean>>();
+  const refreshBestEffortRankings = vi.fn(async () => {});
 
   const withTransaction = vi.fn(async (fn: (trx: unknown) => Promise<unknown>) => fn('trx'));
   const emitEvent = vi.fn(async () => {});
@@ -60,6 +62,8 @@ describe('ActivityService', () => {
     getByUploadId,
     create: createActivity,
     delete: deleteActivity,
+    recomputeBestEfforts,
+    refreshBestEffortRankings,
   } as unknown as ActivityRepository;
 
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
@@ -125,6 +129,7 @@ describe('ActivityService', () => {
     getActivityById.mockResolvedValue(undefined);
     getIdsToParse.mockResolvedValue([]);
     createActivity.mockResolvedValue(ACTIVITY_ID);
+    recomputeBestEfforts.mockResolvedValue(true);
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
@@ -167,6 +172,7 @@ describe('ActivityService', () => {
       expect(createActivity).toHaveBeenCalledWith(
         expect.objectContaining({ activity: expect.objectContaining({ upload_id: UPLOAD_ID }) }),
       );
+      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} });
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
       expect(emitEvent).toHaveBeenCalledWith('ActivityCreate', expect.objectContaining({ id: ACTIVITY_ID }));
     });
@@ -287,6 +293,27 @@ describe('ActivityService', () => {
     });
   });
 
+  describe('handleActivityBestEffortCompute', () => {
+    it('computes persisted efforts in the activity parsing queue handler', async () => {
+      await expect(makeService().handleActivityBestEffortCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
+      expect(recomputeBestEfforts).toHaveBeenCalledWith(ACTIVITY_ID);
+      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} });
+    });
+
+    it('skips an activity that no longer exists', async () => {
+      recomputeBestEfforts.mockResolvedValue(false);
+
+      await expect(makeService().handleActivityBestEffortCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Skipped);
+    });
+  });
+
+  describe('handleActivityBestEffortRank', () => {
+    it('refreshes persisted rankings in the activity parsing queue handler', async () => {
+      await expect(makeService().handleActivityBestEffortRank()).resolves.toBe(JobStatus.Success);
+      expect(refreshBestEffortRankings).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('handleActivityDelete', () => {
     it('skips an activity that no longer exists', async () => {
       await expect(makeService().handleActivityDelete({ id: 'activity-1' })).resolves.toBe(JobStatus.Skipped);
@@ -316,7 +343,7 @@ describe('ActivityService', () => {
       await expect(makeService().handleActivityDelete({ id: 'activity-1' })).resolves.toBe(JobStatus.Success);
 
       expect(deleteUpload).toHaveBeenCalledWith(UPLOAD_ID, 'trx');
-      expect(queue).not.toHaveBeenCalled();
+      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} }, { transaction: 'trx' });
     });
   });
 });

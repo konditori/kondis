@@ -307,10 +307,15 @@ export class JobRepository implements OnApplicationShutdown {
         return { singletonKey: `${item.name}:${item.data.checksum}` };
       }
 
+      case JobName.ActivityBestEffortCompute:
       case JobName.ActivityParse: {
         return {
           singletonKey: `${item.name}:${item.data.id}`,
         };
+      }
+
+      case JobName.ActivityBestEffortRank: {
+        return {};
       }
 
       case JobName.ActivityDelete: {

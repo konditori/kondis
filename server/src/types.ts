@@ -92,6 +92,8 @@ export interface ILagomTakeoutImportJob {
 
 export type JobItem =
   | { name: JobName.ActivityUpload; data: IActivityUploadJob }
+  | { name: JobName.ActivityBestEffortCompute; data: IEntityJob }
+  | { name: JobName.ActivityBestEffortRank; data: Record<string, never> }
   | { name: JobName.ActivityParse; data: IActivityParseJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }

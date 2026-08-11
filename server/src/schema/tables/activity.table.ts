@@ -40,6 +40,9 @@ export class ActivityTable {
   @Column({ type: 'geography', nullable: true })
   track!: Geography;
 
+  @Column({ type: 'geography', nullable: true })
+  detail_track!: Geography;
+
   @CreateDateColumn()
   created_at!: Generated<Timestamp>;
 
