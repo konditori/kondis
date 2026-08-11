@@ -87,14 +87,6 @@ export function effortDuration(seconds: number): string {
     : `${minutes}:${remainder.toString().padStart(2, "0")}`;
 }
 
-export function effortPace(
-  elapsedTime: number,
-  distanceMeters: number,
-  unitSystem: UnitSystem,
-): string {
-  return pace(distanceMeters / elapsedTime, unitSystem);
-}
-
 export function bestEffortValue(
   value: number,
   kind: BestEffortValueKind,

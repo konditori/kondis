@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import { bestEffortLabel } from "$lib/best-efforts";
   import BestEffortChart from "$lib/components/BestEffortChart.svelte";
-  import { activityName, bestEffortValue, duration, effortPace } from "$lib/format";
+  import { activityName, bestEffortValue, duration, pace } from "$lib/format";
 
   let { data } = $props();
   const history = $derived(data.history);
@@ -38,7 +38,7 @@
   function secondaryValue(effort: NonNullable<typeof history>["efforts"][number]): string {
     if (!history) return "";
     if (history.valueKind === "duration" && history.distance) {
-      return effortPace(effort.value, history.distance, data.unitSystem);
+      return pace(history.distance / effort.value, data.unitSystem);
     }
     if (history.valueKind === "distance") return duration(effort.elapsedTime);
     return "";

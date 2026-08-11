@@ -956,10 +956,7 @@ button {
 .best-effort-header,
 .best-effort-row {
   display: grid;
-  grid-template-columns: minmax(230px, 1.5fr) repeat(
-      4,
-      minmax(105px, 1fr)
-    );
+  grid-template-columns: minmax(230px, 1.5fr) repeat(4, minmax(105px, 1fr));
   align-items: center;
   column-gap: 18px;
   padding: 0 22px;

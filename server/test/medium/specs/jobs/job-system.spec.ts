@@ -117,6 +117,7 @@ describe('job system (medium)', () => {
 
         expect(queued).toBe(Object.values(JobName).length);
       } finally {
+        await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
         await Promise.all(Object.values(QueueName).map((queue) => jobs.resume(queue)));
       }
     });
@@ -125,17 +126,21 @@ describe('job system (medium)', () => {
       await jobs.pause(QueueName.ActivityParsing);
 
       try {
+        await jobs.empty(QueueName.ActivityParsing);
         await jobs.queueAll([
           { name: JobName.ActivityBestEffortRank, data: {} },
           { name: JobName.ActivityBestEffortRank, data: {} },
           { name: JobName.ActivityBestEffortRank, data: {} },
         ]);
 
-        expect((await jobs.getJobCounts(QueueName.ActivityParsing)).queued).toBe(3);
+        const initialCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
+        expect(initialCounts.queued).toBe(3);
 
         await jobs.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
-        expect((await jobs.getJobCounts(QueueName.ActivityParsing)).queued).toBe(0);
+        const finalCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
+        expect(finalCounts.queued).toBe(0);
       } finally {
+        await jobs.empty(QueueName.ActivityParsing);
         await jobs.resume(QueueName.ActivityParsing);
       }
     });

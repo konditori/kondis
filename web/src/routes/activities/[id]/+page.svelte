@@ -6,7 +6,7 @@
   import { ACTIVITY_TYPE_OPTIONS, ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
-  import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
+  import { activityName, distance, duration, effortDuration, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
 
   let { data } = $props();
@@ -183,7 +183,7 @@
               </span>
             </div>
             <div role="cell">{effortDuration(effort.elapsedTime)}</div>
-            <div role="cell">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</div>
+            <div role="cell">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : pace(effort.distance / effort.elapsedTime, data.unitSystem)}</div>
             <div role="cell">{effort.avgHr == null ? '—' : `${effort.avgHr} bpm`}</div>
             <div role="cell">{elevation(effort.elevationChange, data.unitSystem)}</div>
           </a>
