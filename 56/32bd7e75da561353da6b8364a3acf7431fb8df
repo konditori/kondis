@@ -1,0 +1,37 @@
+open-api/kondis-openapi-specs.json
+  s_91bb1b92f6fd49::t_de912babb55092 651-695,702-902,1433-1608
+server/src/dtos/activity.dto.ts
+  s_91bb1b92f6fd49::t_c6406b2661ef57 65-77
+server/src/open-api/fetch-client.ts
+  s_91bb1b92f6fd49::t_f32430ab846c29 67-120,233-281,604,646,650,692-695
+server/src/repositories/activity.repository.ts
+  s_91bb1b92f6fd49::t_b63058fd1324ce 226-240
+server/src/services/activity.service.ts
+  s_91bb1b92f6fd49::t_bdefcfcbb9fbe1 208,211-214,440-484
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_91bb1b92f6fd49::t_861a0c6e9fa6f5 116-142
+web/src/app.css
+  s_91bb1b92f6fd49::t_be2dd83bbad103 457-479
+web/src/lib/components/ActivityCard.svelte
+  s_91bb1b92f6fd49::t_bf352b600e7ce4 2,25-31
+web/src/lib/types.ts
+  s_91bb1b92f6fd49::t_86e47bd6253f93 30-34
+web/src/routes/+page.svelte
+  s_91bb1b92f6fd49::t_eac24cc81fccb9 40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5632bd7e75da561353da6b8364a3acf7431fb8df",
+  "prompts": {},
+  "sessions": {
+    "s_91bb1b92f6fd49": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff0ff-957f-7ae3-91e8-13acd3b4d7c5",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
