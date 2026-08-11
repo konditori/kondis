@@ -1,0 +1,70 @@
+web/src/routes/+page.svelte
+  s_433709b89c77e4::t_40ff8f86be3edb 25
+server/src/types.ts
+  s_1755f26300f48e::t_c58d693f484127 77-83,93
+web/src/app.css
+  s_1755f26300f48e::t_dd2459cecf7159 604-605,617-618,622-629,680-686
+  s_1755f26300f48e::t_9487b29865984f 1006-1008
+server/test/medium/utils.ts
+  s_433709b89c77e4::t_94ba17fd46769e 4,8,17,27
+server/src/services/activity.service.ts
+  s_1755f26300f48e::t_7a48910b9ae7f6 48-53,75-77,237-240,249-254,317-322,327-328
+server/src/services/activity.service.spec.ts
+  s_1755f26300f48e::t_b13e58eca2bd63 101,174-189
+server/src/repositories/activity.repository.ts
+  s_1755f26300f48e::t_95eaef63aea5eb 31
+web/src/lib/types.ts
+  s_1755f26300f48e::t_8bcf9353ccfe67 10
+open-api/kondis-openapi-specs.json
+  s_1755f26300f48e::t_5d0b3a67763f3b 582-586,712,798-802,1022,1057-1062
+server/src/utils/lagom.spec.ts
+  s_1755f26300f48e::t_58b08dee04a7ef 13-18,32-33
+server/test/medium/specs/formats/fit.spec.ts
+  s_433709b89c77e4::t_c9061c8a85b012 21
+server/src/schema/tables/activity.table.ts
+  s_1755f26300f48e::t_a7f4cd58d99bdd 31-33
+server/test/medium/specs/service/upload.service.spec.ts
+  s_1755f26300f48e::t_72d11759937375 75,170-173,212-213,222
+server/src/services/upload.service.ts
+  s_1755f26300f48e::t_1c384ad60fdbec 54-55,89-99,141,152-156,163-169
+web/src/routes/activities/[id]/+page.svelte
+  s_1755f26300f48e::t_86685acbd9d986 18,41,62,93,102
+server/src/utils/lagom.ts
+  s_1755f26300f48e::t_8848d8a7452f6b 21-22,229-230,244-245,294-295
+server/src/open-api/fetch-client.ts
+  s_1755f26300f48e::t_7ddfd95fa10ce3 75-76,132-133,193-194
+server/src/dtos/activity.dto.ts
+  s_1755f26300f48e::t_44958d2c703730 29,83
+server/src/schema/migrations/1786442000000-ActivityDescription.ts
+  s_1755f26300f48e::t_9bc2991196e4fc 1-9
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_1755f26300f48e::t_0afe4902666f7a 135,138-140,152-155
+server/test/medium/specs/formats/gpx.spec.ts
+  s_433709b89c77e4::t_6553f0ecc7a947 19
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_1755f26300f48e::t_7581f41f87e477 148,151,155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4b7fd16d6d4075e3abde5d32aa7611b62e7997f6",
+  "prompts": {},
+  "sessions": {
+    "s_1755f26300f48e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff03d-73fb-7123-a817-f4375d74a409",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_433709b89c77e4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff00c-5a8b-7aa1-9084-33a528412c32",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
