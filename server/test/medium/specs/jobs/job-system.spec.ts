@@ -136,7 +136,7 @@ describe('job system (medium)', () => {
       const fit = await readFile(activityFixtures.hindasRun.path);
       const archive = createTestZip({
         'activities.csv': Buffer.from(
-          'Activity ID,Activity Name,Activity Description,Filename\n1,Trollskogen,A walk in the woods,activities/run.fit.gz',
+          'Activity ID,Activity Name,Activity Description,Filename\n1,Forest walk,A walk in the woods,activities/run.fit.gz',
         ),
         'activities/run.fit.gz': gzipSync(fit),
       });

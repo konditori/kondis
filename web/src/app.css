@@ -122,7 +122,8 @@ button {
   font-size: 14px;
   font-weight: 600;
 }
-.sidebar nav a.active {
+.sidebar nav a.active,
+.sidebar-bottom > a.active {
   color: var(--green);
   background: #dfe8df;
 }
@@ -223,6 +224,117 @@ button {
   border: 1px solid #f0d0c1;
   border-radius: 10px;
   font-size: 14px;
+}
+.settings-page .page-header {
+  margin-bottom: 30px;
+}
+.settings-panel {
+  max-width: 720px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.settings-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+.settings-heading h2 {
+  font-size: 19px;
+}
+.settings-heading p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.settings-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 10px;
+}
+.unit-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+}
+.unit-options legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.unit-options label {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  cursor: pointer;
+}
+.unit-options label:hover,
+.unit-options label.selected {
+  border-color: #8bae94;
+  background: var(--green-soft);
+}
+.unit-options input {
+  accent-color: var(--green);
+}
+.unit-options label span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.unit-options label svg {
+  margin-left: auto;
+  color: var(--green);
+}
+.unit-options small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 18px;
+}
+.settings-actions button {
+  height: 41px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  color: white;
+  background: var(--green);
+  border: 0;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.settings-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+.settings-error {
+  color: #a34227;
+  font-size: 13px;
 }
 .notice span {
   display: flex;
@@ -945,6 +1057,9 @@ button {
   .search {
     width: 100%;
     margin-top: 22px;
+  }
+  .unit-options {
+    grid-template-columns: 1fr;
   }
   .day-group {
     display: block;

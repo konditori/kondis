@@ -15,3 +15,9 @@ export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
 
 export const activityTypeLabel = (type: ActivityType): string =>
   ACTIVITY_TYPE_OPTIONS.find(({ value }) => value === type)?.label ?? "Other";
+
+export const activityUsesPace = (type: ActivityType): boolean =>
+  type === Sport.Run ||
+  type === Sport.TrailRun ||
+  type === Sport.Walk ||
+  type === Sport.Swim;
