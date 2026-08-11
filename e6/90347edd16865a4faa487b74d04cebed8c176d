@@ -1,0 +1,27 @@
+server/src/domain/running-best-effort.ts
+  s_4dabd4e42d85c3::t_9ef703d95cbb60 2-15,19-49,60
+server/src/services/activity.service.ts
+  s_4dabd4e42d85c3::t_8913ab5ea6d254 397,409
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_4dabd4e42d85c3::t_758e7bd6ecf44a 171
+web/src/lib/components/ActivityCard.svelte
+  s_4dabd4e42d85c3::t_721755adcdc251 5,29
+web/src/lib/types.ts
+  s_4dabd4e42d85c3::t_59562d49c81e92 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e690347edd16865a4faa487b74d04cebed8c176d",
+  "prompts": {},
+  "sessions": {
+    "s_4dabd4e42d85c3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff216-d202-7b42-97ca-779a58817ce9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
