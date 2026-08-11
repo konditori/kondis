@@ -1,0 +1,25 @@
+server/src/schema/migrations/1786445000000-StravaActivityTypes.ts
+  s_960b28852990e7::t_7ddeb5f78e0d07 1-39
+web/src/lib/activity-types.spec.ts
+  s_960b28852990e7::t_55e3a7006c4ca8 6,30-38,41,51-68
+web/src/lib/activity-types.ts
+  s_960b28852990e7::t_5abf6537a687fe 21-25,31,34-47,49-177
+web/src/routes/activities/[id]/+page.svelte
+  s_960b28852990e7::t_e5631fe0c964bc 6,23,118-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3efeaf05cf00b01ca8cc49eecc780265d191864e",
+  "prompts": {},
+  "sessions": {
+    "s_960b28852990e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff0b6-3b0c-7193-88fd-a42bf958ba18",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
