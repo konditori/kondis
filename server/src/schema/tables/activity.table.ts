@@ -1,5 +1,6 @@
 import type { ColumnType, RawBuilder } from 'kysely';
 
+import { ActivityType } from 'src/domain/activity-type';
 import {
   Column,
   CreateDateColumn,
@@ -22,10 +23,7 @@ export class ActivityTable {
   upload_id!: string;
 
   @Column({ type: 'text' })
-  sport!: string;
-
-  @Column({ type: 'text', nullable: true })
-  sub_sport!: string | null;
+  sport!: ActivityType;
 
   @Column({ type: 'text', nullable: true })
   name!: string | null;

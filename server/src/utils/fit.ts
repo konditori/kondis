@@ -1,3 +1,4 @@
+import { toActivityType } from 'src/domain/activity-type';
 import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
 import { ParsedActivity, ParsedLap, ParsedStream, StreamType } from 'src/types';
 import {
@@ -142,8 +143,7 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
 
   // If there is a session summary, use that. Otherwise derive this data from the streams.
   return {
-    sport: toName(session?.sport) ?? 'unknown',
-    subSport: toName(session?.subSport),
+    sport: toActivityType(toName(session?.sport), toName(session?.subSport)),
     name: null,
     startedAt,
     timezoneOffset: null,

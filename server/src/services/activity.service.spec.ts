@@ -96,8 +96,7 @@ describe('ActivityService', () => {
           ? {
               id: ACTIVITY_ID,
               upload_id: UPLOAD_ID,
-              sport: 'running',
-              sub_sport: null,
+              sport: 'run',
               name: null,
               started_at: new Date('2024-03-01T06:00:00.000Z'),
               timezone_offset_minutes: null,

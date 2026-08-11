@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ActivityController } from 'src/controllers/activity.controller';
 import { type KondisDatabase } from 'src/db/database';
-import { ActivityRepository } from 'src/repositories/activity.repository';
+import { ActivityRepository, ActivityStreamInput } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -17,7 +17,11 @@ describe('ActivityController (medium)', () => {
   let uploads: UploadRepository;
   let activities: ActivityRepository;
 
-  const createActivity = async (startedAt: Date, name: string): Promise<string> => {
+  const createActivity = async (
+    startedAt: Date,
+    name: string,
+    streams: ActivityStreamInput[] = [],
+  ): Promise<string> => {
     const upload = await uploads.create({
       checksum: crypto.randomUUID().replaceAll('-', ''),
       original_name: `${name}.fit`,
@@ -28,8 +32,7 @@ describe('ActivityController (medium)', () => {
     return activities.create({
       activity: {
         upload_id: upload.id,
-        sport: 'running',
-        sub_sport: null,
+        sport: 'run',
         name,
         started_at: startedAt,
         timezone_offset_minutes: 0,
@@ -51,7 +54,7 @@ describe('ActivityController (medium)', () => {
         normalized_power: 230,
         calories: 700,
       },
-      streams: [],
+      streams,
       laps: [],
     });
   };
@@ -112,6 +115,35 @@ describe('ActivityController (medium)', () => {
     });
   });
 
+  describe('GET /activities/:id', () => {
+    it('returns persisted running best efforts in standard-distance order', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'run', [
+        { type: 'distance', data: [0, 400, 1_000, 1_700] },
+        { type: 'time', data: [0, 100, 250, 425] },
+      ]);
+
+      const activity = await controller.getById({ id: activityId });
+
+      expect(activity.bestEfforts.map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile', '1_mile']);
+      expect(activity.bestEfforts.find(({ type }) => type === '1_mile')?.elapsedTime).toBeCloseTo(402.336);
+    });
+
+    it('backfills best efforts for existing running activities', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'older run', [
+        { type: 'distance', data: [0, 400, 1_000] },
+        { type: 'time', data: [0, 100, 250] },
+      ]);
+      await db.deleteFrom('activity_best_effort').where('activity_id', '=', activityId).execute();
+
+      const activity = await controller.getById({ id: activityId });
+
+      expect(activity.bestEfforts.map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile']);
+      await expect(
+        db.selectFrom('activity_best_effort').selectAll().where('activity_id', '=', activityId).execute(),
+      ).resolves.toHaveLength(3);
+    });
+  });
+
   describe('PUT /activities/:id', () => {
     it('updates the activity name', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before');
@@ -122,21 +154,33 @@ describe('ActivityController (medium)', () => {
       expect(updated.name).toBe('after');
     });
 
-    it('updates sport, subSport and startedAt', async () => {
+    it('updates sport and startedAt', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before');
 
       const updated = await controller.updateById(
         { id: activityId },
         {
-          sport: 'trail-running',
-          subSport: 'uphill',
+          sport: 'trail_run',
           startedAt: '2024-01-01T10:15:00.000Z',
         },
       );
 
-      expect(updated.sport).toBe('trail-running');
-      expect(updated.subSport).toBe('uphill');
+      expect(updated.sport).toBe('trail_run');
       expect(updated.startedAt).toBe('2024-01-01T10:15:00.000Z');
+    });
+
+    it('removes and recomputes running best efforts when the activity type changes', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before', [
+        { type: 'distance', data: [0, 400, 1_000] },
+        { type: 'time', data: [0, 100, 250] },
+      ]);
+      expect((await controller.getById({ id: activityId })).bestEfforts).toHaveLength(3);
+
+      await controller.updateById({ id: activityId }, { sport: 'ride' });
+      expect((await controller.getById({ id: activityId })).bestEfforts).toEqual([]);
+
+      await controller.updateById({ id: activityId }, { sport: 'run' });
+      expect((await controller.getById({ id: activityId })).bestEfforts).toHaveLength(3);
     });
 
     it('throws for a missing activity id', async () => {

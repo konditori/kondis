@@ -2,6 +2,7 @@ import {
   activityControllerGetById,
   activityControllerListRecent,
   activityControllerUpdateById,
+  Sport,
   uploadControllerUploadActivity,
   uploadControllerUploadStravaTakeout,
 } from "../../../server/src/open-api/fetch-client";
@@ -17,6 +18,7 @@ export {
   activityControllerGetById,
   activityControllerListRecent,
   activityControllerUpdateById,
+  Sport,
   uploadControllerUploadActivity,
   uploadControllerUploadStravaTakeout,
 };

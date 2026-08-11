@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
+  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Mountain, Pencil, Timer, Trophy, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, getSdkRequestOptions } from '$lib/api';
+  import { ACTIVITY_TYPE_OPTIONS, activityTypeLabel } from '$lib/activity-types';
   import RouteMap from '$lib/components/RouteMap.svelte';
-  import { activityName, distance, duration, localDate, localTime, speed, sportIcon } from '$lib/format';
+  import { activityName, distance, duration, effortDuration, effortPace, localDate, localTime, speed, sportIcon } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
 
   let { data } = $props();
@@ -14,8 +15,7 @@
   let saving = $state(false);
   let editError = $state('');
   let draftName = $state('');
-  let draftSport = $state('');
-  let draftSubSport = $state('');
+  let draftSport = $state<Activity['sport']>(ACTIVITY_TYPE_OPTIONS.at(-1)!.value);
   const Icon = $derived(sportIcon(activity.sport));
   const stats = $derived([
     { label: 'Distance', value: distance(activity.distance), icon: Gauge },
@@ -38,7 +38,6 @@
   function startEditing() {
     draftName = activity.name ?? '';
     draftSport = activity.sport;
-    draftSubSport = activity.subSport ?? '';
     editError = '';
     editing = true;
   }
@@ -50,12 +49,6 @@
 
   async function saveMetadata(event: SubmitEvent) {
     event.preventDefault();
-    const sport = draftSport.trim();
-    if (!sport) {
-      editError = 'Activity type is required.';
-      return;
-    }
-
     saving = true;
     editError = '';
     try {
@@ -64,8 +57,7 @@
           id: activity.id,
           activityUpdateDto: {
             name: draftName.trim() || null,
-            sport,
-            subSport: draftSubSport.trim() || null,
+            sport: draftSport,
           },
         },
         getSdkRequestOptions(),
@@ -88,14 +80,13 @@
     <a class="back-link" href="/" onclick={backToActivities}><ArrowLeft size={18} /> All activities</a>
     <div class="detail-heading">
       <span class="detail-sport"><Icon size={27} /></span>
-      <div class="detail-title"><span class="eyebrow">{activity.sport.replaceAll('_', ' ')}{activity.subSport ? ` · ${activity.subSport.replaceAll('_', ' ')}` : ''}</span><h1>{activityName(activity)}</h1></div>
+      <div class="detail-title"><span class="eyebrow">{activityTypeLabel(activity.sport)}</span><h1>{activityName(activity)}</h1></div>
       <button class="edit-metadata-button" type="button" onclick={startEditing} aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button>
     </div>
     {#if editing}
       <form class="metadata-editor" onsubmit={saveMetadata}>
         <label><span>Name</span><input bind:value={draftName} maxlength="200" placeholder="Activity name" /></label>
-        <label><span>Activity type</span><input bind:value={draftSport} maxlength="100" required placeholder="running" /></label>
-        <label><span>Subtype</span><input bind:value={draftSubSport} maxlength="100" placeholder="Optional" /></label>
+        <label><span>Activity type</span><select bind:value={draftSport}>{#each ACTIVITY_TYPE_OPTIONS as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
         <div class="metadata-actions">
           <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving}><X size={16} /> Cancel</button>
           <button type="submit" class="metadata-save" disabled={saving}><Check size={16} /> {saving ? 'Saving…' : 'Save'}</button>
@@ -121,4 +112,20 @@
       {/each}
     </div>
   </section>
+
+  {#if activity.bestEfforts.length > 0}
+    <section class="best-efforts-section">
+      <div class="section-heading"><div><span class="eyebrow">Running performance</span><h2>Best efforts</h2></div></div>
+      <div class="best-effort-list">
+        {#each activity.bestEfforts as effort}
+          <article class="best-effort">
+            <span class="effort-icon"><Trophy size={18} /></span>
+            <strong>{effort.label}</strong>
+            <span>{effortDuration(effort.elapsedTime)}</span>
+            <small>{effortPace(effort.elapsedTime, effort.distance)}</small>
+          </article>
+        {/each}
+      </div>
+    </section>
+  {/if}
 </div>

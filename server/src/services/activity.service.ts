@@ -3,6 +3,8 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
+import { ActivityType } from 'src/domain/activity-type';
+import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
@@ -197,18 +199,35 @@ export class ActivityService {
       return;
     }
 
+    // Older activities predate persisted analysis rows. Fill those without
+    // reparsing the upload, which would discard user-edited metadata.
+    await this.activityRepository.ensureBestEfforts(id, row.sport);
+    const storedEfforts = await this.activityRepository.getBestEfforts(id);
+
     return {
       ...this.toActivityDto(row),
       track: row.track_geojson
         ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
         : null,
+      bestEfforts: RUNNING_BEST_EFFORTS.flatMap(({ type, label }) => {
+        const effort = storedEfforts.find((candidate) => candidate.type === type);
+        return effort
+          ? [
+              {
+                type,
+                label,
+                distance: effort.distance,
+                elapsedTime: effort.elapsed_time,
+                startTime: effort.start_time,
+                endTime: effort.end_time,
+              },
+            ]
+          : [];
+      }),
     };
   }
 
-  async updateById(
-    id: string,
-    input: { name?: string | null; sport?: string; subSport?: string | null; startedAt?: Date },
-  ) {
+  async updateById(id: string, input: { name?: string | null; sport?: ActivityType; startedAt?: Date }) {
     const mapped: UpdateActivityInput = {};
 
     if (input.name === undefined) {
@@ -221,12 +240,6 @@ export class ActivityService {
       // no-op
     } else {
       mapped.sport = input.sport;
-    }
-
-    if (input.subSport === undefined) {
-      // no-op
-    } else {
-      mapped.sub_sport = input.subSport;
     }
 
     if (input.startedAt === undefined) {
@@ -290,7 +303,6 @@ export class ActivityService {
       activity: {
         upload_id: uploadId,
         sport: parsed.sport,
-        sub_sport: parsed.subSport,
         name: parsed.name,
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,

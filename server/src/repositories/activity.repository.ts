@@ -12,6 +12,8 @@ import {
   NewLap,
   StreamType,
 } from 'src/db/schema';
+import { ActivityType, supportsRunningBestEfforts } from 'src/domain/activity-type';
+import { computeRunningBestEfforts } from 'src/domain/running-best-effort';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 
@@ -26,7 +28,7 @@ export type CreateActivityInput = {
 
 export type ActivityRecord = Activity & ActivityMetric;
 
-export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'sport' | 'sub_sport' | 'started_at'>;
+export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'sport' | 'started_at'>;
 
 export type ActivityCursor = {
   startedAt: Date;
@@ -83,6 +85,8 @@ export class ActivityRepository {
           .values(input.streams.map((stream) => ({ activity_id: id, type: stream.type, data: stream.data })))
           .execute();
       }
+
+      await this.insertBestEfforts(trx, id, input.activity.sport, input.streams);
 
       if (input.laps.length > 0) {
         await trx
@@ -153,14 +157,79 @@ export class ActivityRepository {
     return this.db.selectFrom('activity_stream').selectAll().where('activity_id', '=', activityId).execute();
   }
 
-  async update(id: string, input: UpdateActivityInput) {
-    const updated = await this.db
-      .updateTable('activity')
-      .set(input)
-      .where('id', '=', id)
-      .returning('id')
+  getBestEfforts(activityId: string) {
+    return this.db
+      .selectFrom('activity_best_effort')
+      .selectAll()
+      .where('activity_id', '=', activityId)
+      .orderBy('distance', 'asc')
+      .execute();
+  }
+
+  async ensureBestEfforts(activityId: string, sport: ActivityType): Promise<void> {
+    if (!supportsRunningBestEfforts(sport)) {
+      return;
+    }
+
+    const existing = await this.db
+      .selectFrom('activity_best_effort')
+      .select('type')
+      .where('activity_id', '=', activityId)
+      .limit(1)
       .executeTakeFirst();
+    if (existing) {
+      return;
+    }
+
+    await this.insertBestEfforts(this.db, activityId, sport, await this.getStreams(activityId));
+  }
+
+  async update(id: string, input: UpdateActivityInput) {
+    const updated = await this.db.transaction().execute(async (trx) => {
+      const row = await trx.updateTable('activity').set(input).where('id', '=', id).returning('id').executeTakeFirst();
+      if (!row || input.sport === undefined) {
+        return row;
+      }
+
+      await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
+      const streams = await trx.selectFrom('activity_stream').selectAll().where('activity_id', '=', id).execute();
+      await this.insertBestEfforts(trx, id, input.sport, streams);
+      return row;
+    });
     return updated ? this.getById(updated.id) : undefined;
+  }
+
+  private async insertBestEfforts(
+    executor: KondisExecutor,
+    activityId: string,
+    sport: ActivityType,
+    streams: ActivityStreamInput[],
+  ): Promise<void> {
+    if (!supportsRunningBestEfforts(sport)) {
+      return;
+    }
+
+    const distance = streams.find((stream) => stream.type === 'distance')?.data ?? [];
+    const time = streams.find((stream) => stream.type === 'time')?.data ?? [];
+    const efforts = computeRunningBestEfforts(distance, time);
+    if (efforts.length === 0) {
+      return;
+    }
+
+    await executor
+      .insertInto('activity_best_effort')
+      .values(
+        efforts.map((effort) => ({
+          activity_id: activityId,
+          type: effort.type,
+          distance: effort.distance,
+          elapsed_time: effort.elapsedTime,
+          start_time: effort.startTime,
+          end_time: effort.endTime,
+        })),
+      )
+      .onConflict((conflict) => conflict.columns(['activity_id', 'type']).doNothing())
+      .execute();
   }
 
   async delete(id: string, executor: KondisExecutor = this.db): Promise<void> {

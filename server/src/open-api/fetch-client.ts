@@ -68,10 +68,8 @@ export type ActivityDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
-  /** Primary sport type */
-  sport: string;
-  /** Secondary sport type */
-  subSport: string | null;
+  /** Activity sport type */
+  sport: Sport;
   /** Activity name */
   name: string | null;
   /** Start time in ISO-8601 format */
@@ -125,10 +123,8 @@ export type ActivityDetailDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
-  /** Primary sport type */
-  sport: string;
-  /** Secondary sport type */
-  subSport: string | null;
+  /** Activity sport type */
+  sport: Sport;
   /** Activity name */
   name: string | null;
   /** Start time in ISO-8601 format */
@@ -174,14 +170,24 @@ export type ActivityDetailDtoOutput = {
     type: Type;
     coordinates: [number, number][];
   } | null;
+  bestEfforts: {
+    type: Type2;
+    label: string;
+    /** Standard effort distance in meters */
+    distance: number;
+    /** Effort duration in seconds */
+    elapsedTime: number;
+    /** Start offset from activity start in seconds */
+    startTime: number;
+    /** End offset from activity start in seconds */
+    endTime: number;
+  }[];
 };
 export type ActivityUpdateDto = {
   /** Display name for the activity */
   name?: string | null;
-  /** Primary sport type */
-  sport?: string;
-  /** Secondary sport type */
-  subSport?: string | null;
+  /** Activity sport type */
+  sport?: Sport;
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
 };
@@ -426,6 +432,33 @@ export enum Command {
   Empty = 'empty',
   ClearFailed = 'clear-failed',
 }
+export enum Sport {
+  Run = 'run',
+  Ride = 'ride',
+  TrailRun = 'trail_run',
+  Walk = 'walk',
+  Swim = 'swim',
+  AlpineSki = 'alpine_ski',
+  RollerSki = 'roller_ski',
+  CrossCountrySki = 'cross_country_ski',
+  Other = 'other',
+}
 export enum Type {
   LineString = 'LineString',
+}
+export enum Type2 {
+  $400M = '400m',
+  $1K = '1k',
+  HalfMile = 'half_mile',
+  $1Mile = '1_mile',
+  $2Miles = '2_miles',
+  $5K = '5k',
+  $10K = '10k',
+  $15K = '15k',
+  $10Miles = '10_miles',
+  $20K = '20k',
+  HalfMarathon = 'half_marathon',
+  $30K = '30k',
+  Marathon = 'marathon',
+  $50K = '50k',
 }

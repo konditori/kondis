@@ -561,12 +561,18 @@
           },
           "sport": {
             "type": "string",
-            "description": "Primary sport type"
-          },
-          "subSport": {
-            "type": "string",
-            "description": "Secondary sport type",
-            "nullable": true
+            "enum": [
+              "run",
+              "ride",
+              "trail_run",
+              "walk",
+              "swim",
+              "alpine_ski",
+              "roller_ski",
+              "cross_country_ski",
+              "other"
+            ],
+            "description": "Activity sport type"
           },
           "name": {
             "type": "string",
@@ -697,7 +703,6 @@
           "id",
           "uploadId",
           "sport",
-          "subSport",
           "name",
           "startedAt",
           "timezoneOffsetMinutes",
@@ -766,12 +771,18 @@
           },
           "sport": {
             "type": "string",
-            "description": "Primary sport type"
-          },
-          "subSport": {
-            "type": "string",
-            "description": "Secondary sport type",
-            "nullable": true
+            "enum": [
+              "run",
+              "ride",
+              "trail_run",
+              "walk",
+              "swim",
+              "alpine_ski",
+              "roller_ski",
+              "cross_country_ski",
+              "other"
+            ],
+            "description": "Activity sport type"
           },
           "name": {
             "type": "string",
@@ -928,13 +939,74 @@
             "additionalProperties": false,
             "description": "Simplified GPS route as GeoJSON",
             "nullable": true
+          },
+          "bestEfforts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "400m",
+                    "1k",
+                    "half_mile",
+                    "1_mile",
+                    "2_miles",
+                    "5k",
+                    "10k",
+                    "15k",
+                    "10_miles",
+                    "20k",
+                    "half_marathon",
+                    "30k",
+                    "marathon",
+                    "50k"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "distance": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "description": "Standard effort distance in meters",
+                  "minimum": 0
+                },
+                "elapsedTime": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "description": "Effort duration in seconds",
+                  "minimum": 0
+                },
+                "startTime": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Start offset from activity start in seconds"
+                },
+                "endTime": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "description": "End offset from activity start in seconds",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "type",
+                "label",
+                "distance",
+                "elapsedTime",
+                "startTime",
+                "endTime"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
           "id",
           "uploadId",
           "sport",
-          "subSport",
           "name",
           "startedAt",
           "timezoneOffsetMinutes",
@@ -955,7 +1027,8 @@
           "calories",
           "createdAt",
           "updatedAt",
-          "track"
+          "track",
+          "bestEfforts"
         ],
         "additionalProperties": false
       },
@@ -970,17 +1043,19 @@
             "nullable": true
           },
           "sport": {
-            "description": "Primary sport type",
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "subSport": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100,
-            "description": "Secondary sport type",
-            "nullable": true
+            "enum": [
+              "run",
+              "ride",
+              "trail_run",
+              "walk",
+              "swim",
+              "alpine_ski",
+              "roller_ski",
+              "cross_country_ski",
+              "other"
+            ],
+            "description": "Activity sport type"
           },
           "startedAt": {
             "description": "Updated start time in ISO-8601 format",

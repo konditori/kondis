@@ -6,10 +6,11 @@ import {
   PersonStanding,
   Waves,
 } from "@lucide/svelte";
+import type { ActivityType } from "$lib/types";
 
 export function activityName(activity: {
   name: string | null;
-  sport: string;
+  sport: ActivityType;
 }): string {
   if (activity.name) return activity.name;
   return activity.sport
@@ -17,16 +18,14 @@ export function activityName(activity: {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function sportIcon(sport: string) {
-  const normalized = sport.toLowerCase();
-  if (normalized.includes("cycl") || normalized.includes("bike")) return Bike;
-  if (normalized.includes("run") || normalized.includes("walk"))
+export function sportIcon(sport: ActivityType) {
+  if (sport === "ride") return Bike;
+  if (sport === "run" || sport === "trail_run" || sport === "walk")
     return Footprints;
-  if (normalized.includes("swim")) return Waves;
-  if (normalized.includes("hike") || normalized.includes("mountain"))
+  if (sport === "swim") return Waves;
+  if (["alpine_ski", "roller_ski", "cross_country_ski"].includes(sport))
     return Mountain;
-  if (normalized.includes("strength") || normalized.includes("training"))
-    return Dumbbell;
+  if (sport === "other") return Dumbbell;
   return PersonStanding;
 }
 
@@ -47,6 +46,26 @@ export function duration(seconds: number | null): string {
 
 export function speed(value: number | null): string {
   return value == null ? "—" : `${(value * 3.6).toFixed(1)} km/h`;
+}
+
+export function effortDuration(seconds: number): string {
+  const rounded = Math.round(seconds);
+  const hours = Math.floor(rounded / 3600);
+  const minutes = Math.floor((rounded % 3600) / 60);
+  const remainder = rounded % 60;
+  return hours
+    ? `${hours}:${minutes.toString().padStart(2, "0")}:${remainder.toString().padStart(2, "0")}`
+    : `${minutes}:${remainder.toString().padStart(2, "0")}`;
+}
+
+export function effortPace(
+  elapsedTime: number,
+  distanceMeters: number,
+): string {
+  const secondsPerKm = Math.round((elapsedTime / distanceMeters) * 1000);
+  const minutes = Math.floor(secondsPerKm / 60);
+  const seconds = secondsPerKm % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")} /km`;
 }
 
 export function localDate(value: string): string {

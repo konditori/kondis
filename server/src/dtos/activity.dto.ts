@@ -1,6 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { ACTIVITY_TYPES } from 'src/domain/activity-type';
+import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
+
+export const ActivityTypeSchema = z.enum(ACTIVITY_TYPES).describe('Activity sport type');
+const RunningBestEffortTypeSchema = z.enum(RUNNING_BEST_EFFORTS.map(({ type }) => type));
+
 export const ActivityIdParamSchema = z
   .object({
     id: z.string().uuid().describe('Activity id'),
@@ -18,8 +24,7 @@ export const ActivitySchema = z
   .object({
     id: z.string().uuid().describe('Activity id'),
     uploadId: z.string().uuid().describe('Source upload id'),
-    sport: z.string().describe('Primary sport type'),
-    subSport: z.string().nullable().describe('Secondary sport type'),
+    sport: ActivityTypeSchema,
     name: z.string().nullable().describe('Activity name'),
     startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
     timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
@@ -59,13 +64,22 @@ export const ActivityDetailSchema = ActivitySchema.extend({
     })
     .nullable()
     .describe('Simplified GPS route as GeoJSON'),
+  bestEfforts: z.array(
+    z.object({
+      type: RunningBestEffortTypeSchema,
+      label: z.string(),
+      distance: z.number().positive().describe('Standard effort distance in meters'),
+      elapsedTime: z.number().positive().describe('Effort duration in seconds'),
+      startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),
+      endTime: z.number().positive().describe('End offset from activity start in seconds'),
+    }),
+  ),
 }).meta({ id: 'ActivityDetailDto' });
 
 export const ActivityUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).nullable().optional().describe('Display name for the activity'),
-    sport: z.string().trim().min(1).max(100).optional().describe('Primary sport type'),
-    subSport: z.string().trim().min(1).max(100).nullable().optional().describe('Secondary sport type'),
+    sport: ActivityTypeSchema.optional(),
     startedAt: z.string().datetime().optional().describe('Updated start time in ISO-8601 format'),
   })
   .refine((value) => Object.keys(value).length > 0, {

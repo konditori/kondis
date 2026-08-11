@@ -1,3 +1,4 @@
+import { ActivityType } from 'src/domain/activity-type';
 import { JobName, QueueName } from 'src/enum';
 
 export type UploadedFileData = {
@@ -38,8 +39,7 @@ export type ParsedLap = {
 };
 
 export type ParsedActivity = {
-  sport: string;
-  subSport: string | null;
+  sport: ActivityType;
   name: string | null;
   startedAt: Date;
   timezoneOffset: number | null; // minutes east of UTC

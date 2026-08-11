@@ -32,7 +32,8 @@ body {
   min-height: 100vh;
 }
 button,
-input {
+input,
+select {
   font: inherit;
 }
 button,
@@ -581,7 +582,7 @@ button {
 }
 .metadata-editor {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr auto;
+  grid-template-columns: 1.4fr 1fr auto;
   align-items: end;
   gap: 12px;
   margin: 22px 0 0 71px;
@@ -599,7 +600,8 @@ button {
   font-size: 11px;
   font-weight: 700;
 }
-.metadata-editor input {
+.metadata-editor input,
+.metadata-editor select {
   width: 100%;
   min-width: 0;
   height: 39px;
@@ -610,7 +612,8 @@ button {
   border-radius: 8px;
   outline: none;
 }
-.metadata-editor input:focus {
+.metadata-editor input:focus,
+.metadata-editor select:focus {
   border-color: #8bae94;
   box-shadow: 0 0 0 3px #16653413;
 }
@@ -784,6 +787,49 @@ button {
   font-family: "Avenir Next", Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 17px;
 }
+.best-efforts-section {
+  width: min(1120px, calc(100% - 72px));
+  margin: 45px auto 0;
+}
+.best-effort-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 19px;
+  overflow: hidden;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.best-effort {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 36px minmax(100px, 1fr) auto minmax(82px, auto);
+  align-items: center;
+  gap: 13px;
+  padding: 13px 17px;
+  background: var(--surface);
+}
+.effort-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #a45f08;
+  background: #fff2d8;
+  border-radius: 9px;
+}
+.best-effort strong {
+  font-size: 14px;
+}
+.best-effort > span:not(.effort-icon) {
+  font-family: "Avenir Next", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+.best-effort small {
+  color: var(--muted);
+  text-align: right;
+}
 .error-page {
   min-height: 100vh;
 }
@@ -865,7 +911,8 @@ button {
   .page-shell,
   .detail-header,
   .map-panel,
-  .metrics-section {
+  .metrics-section,
+  .best-efforts-section {
     width: calc(100% - 32px);
   }
   .page-shell {
@@ -962,6 +1009,9 @@ button {
   }
   .metric strong {
     font-size: 15px;
+  }
+  .best-effort-list {
+    grid-template-columns: 1fr;
   }
   .dialog {
     padding: 19px;
