@@ -5,6 +5,7 @@
   import ActivityCard from '$lib/components/ActivityCard.svelte';
   import { activityControllerListRecent, getSdkRequestOptions } from '$lib/api';
   import { localDate } from '$lib/format';
+  import { subscribeToActivityEvents } from '$lib/realtime';
   import type { Activity, ActivityPage } from '$lib/types';
 
   let { data } = $props();
@@ -15,8 +16,9 @@
   let loading = $state(false);
   let loadError = $state(false);
   const activities = $derived.by(() => {
-    const initialIds = new Set(data.activities.map(({ id }) => id));
-    return [...data.activities, ...appendedActivities.filter(({ id }) => !initialIds.has(id))];
+    const byUpload = new Map(data.activities.map((activity) => [activity.uploadId, activity]));
+    for (const activity of appendedActivities) byUpload.set(activity.uploadId, activity);
+    return [...byUpload.values()].sort((a, b) => b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id));
   });
   const nextCursor = $derived(cursorOverride === undefined ? data.nextCursor : cursorOverride);
   const total = $derived(totalOverride ?? data.total);
@@ -31,6 +33,26 @@
     }
   });
 
+  $effect(() => subscribeToActivityEvents(data.eventsUrl, (activity) => {
+    const isNew = !activities.some(({ uploadId }) => uploadId === activity.uploadId);
+    appendedActivities = [...appendedActivities.filter(({ uploadId }) => uploadId !== activity.uploadId), activity];
+    if (isNew) totalOverride = (totalOverride ?? data.total) + 1;
+  }, () => void refreshRecent()));
+
+  async function refreshRecent() {
+    try {
+      const page = (await activityControllerListRecent({}, getSdkRequestOptions())) as ActivityPage;
+      const refreshedUploads = new Set(page.activities.map(({ uploadId }) => uploadId));
+      appendedActivities = [
+        ...appendedActivities.filter(({ uploadId }) => !refreshedUploads.has(uploadId)),
+        ...page.activities,
+      ];
+      totalOverride = Math.max(totalOverride ?? data.total, page.total);
+    } catch {
+      // The socket will retry and reconcile again after reconnecting.
+    }
+  }
+
   async function loadMore() {
     if (!nextCursor || loading) return;
 
@@ -41,7 +63,7 @@
       const existing = new Set(activities.map(({ id }) => id));
       appendedActivities = [...appendedActivities, ...page.activities.filter(({ id }) => !existing.has(id))];
       cursorOverride = page.nextCursor;
-      totalOverride = page.total;
+      totalOverride = Math.max(totalOverride ?? data.total, page.total);
     } catch {
       loadError = true;
     } finally {

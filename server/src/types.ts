@@ -1,3 +1,4 @@
+import type { ActivityDto } from 'src/dtos/activity.dto';
 import { JobName, QueueName } from 'src/enum';
 
 export type UploadedFileData = {
@@ -92,6 +93,11 @@ export type JobItem =
 
 export type Jobs = { [K in JobItem['name']]: (JobItem & { name: K })['data'] };
 export type JobOf<T extends JobName> = Jobs[T];
+
+export type RealtimeEvent = {
+  type: 'activity.created';
+  activity: ActivityDto;
+};
 
 export interface JobCounts {
   active: number;

@@ -13,7 +13,8 @@ import { type TcxRepository } from 'src/repositories/tcx.repository';
 import { type UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 
-const UPLOAD_ID = 'upload-1';
+const UPLOAD_ID = '00000000-0000-4000-8000-000000000001';
+const ACTIVITY_ID = '00000000-0000-4000-8000-000000000002';
 
 const anUpload = (overrides: Record<string, unknown> = {}) => ({
   id: UPLOAD_ID,
@@ -35,6 +36,7 @@ describe('ActivityService', () => {
   const deleteActivity = vi.fn(async () => {});
 
   const withTransaction = vi.fn(async (fn: (trx: unknown) => Promise<unknown>) => fn('trx'));
+  const publishRealtimeEvent = vi.fn(async () => {});
 
   const queue = vi.fn(async () => {});
   const queueAll = vi.fn(async () => {});
@@ -59,7 +61,7 @@ describe('ActivityService', () => {
     delete: deleteActivity,
   } as unknown as ActivityRepository;
 
-  const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
+  const databaseRepository = { withTransaction, publishRealtimeEvent } as unknown as DatabaseRepository;
   const jobRepository = { queue, queueAll } as unknown as JobRepository;
   const fitRepository = { decode } as unknown as FitRepository;
   const gpxRepository = { decode: decodeGpx } as unknown as GpxRepository;
@@ -85,10 +87,41 @@ describe('ActivityService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getUploadById.mockResolvedValue(anUpload());
-    getByUploadId.mockResolvedValue(undefined);
+    getByUploadId.mockImplementation(() =>
+      Promise.resolve(
+        createActivity.mock.calls.length > 0
+          ? {
+              id: ACTIVITY_ID,
+              upload_id: UPLOAD_ID,
+              sport: 'running',
+              sub_sport: null,
+              name: null,
+              started_at: new Date('2024-03-01T06:00:00.000Z'),
+              timezone_offset_minutes: null,
+              elapsed_time: 1,
+              moving_time: 1,
+              distance: 1,
+              elevation_gain: null,
+              elevation_loss: null,
+              avg_speed: null,
+              max_speed: null,
+              avg_hr: null,
+              max_hr: null,
+              avg_cadence: null,
+              max_cadence: null,
+              avg_power: null,
+              max_power: null,
+              normalized_power: null,
+              calories: null,
+              created_at: new Date('2024-03-01T06:00:01.000Z'),
+              updated_at: new Date('2024-03-01T06:00:01.000Z'),
+            }
+          : undefined,
+      ),
+    );
     getActivityById.mockResolvedValue(undefined);
     getIdsToParse.mockResolvedValue([]);
-    createActivity.mockResolvedValue('activity-1');
+    createActivity.mockResolvedValue(ACTIVITY_ID);
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
@@ -112,7 +145,7 @@ describe('ActivityService', () => {
     });
 
     it('replaces the existing activity when forced', async () => {
-      getByUploadId.mockResolvedValue({ id: 'stale-activity' });
+      getByUploadId.mockResolvedValueOnce({ id: 'stale-activity' });
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID, force: true })).resolves.toBe(JobStatus.Success);
       expect(deleteActivity).toHaveBeenCalledWith('stale-activity');
@@ -132,6 +165,9 @@ describe('ActivityService', () => {
         expect.objectContaining({ activity: expect.objectContaining({ upload_id: UPLOAD_ID }) }),
       );
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
+      expect(publishRealtimeEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'activity.created', activity: expect.objectContaining({ id: ACTIVITY_ID }) }),
+      );
     });
 
     it('uses the TCX decoder for .tcx uploads', async () => {

@@ -62,6 +62,14 @@ export class ActivityService {
       const activityId = await this.activityRepository.create(this.toCreateInput(id, parsed));
 
       await this.uploadRepository.setStatus(id, 'parsed');
+      const activity = await this.activityRepository.getByUploadId(id);
+      if (!activity) {
+        throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
+      }
+      await this.databaseRepository.publishRealtimeEvent({
+        type: 'activity.created',
+        activity: this.toActivityDto(activity),
+      });
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
