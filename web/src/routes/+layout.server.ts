@@ -3,9 +3,25 @@ import {
   parseUnitSystem,
   UNIT_SYSTEM_COOKIE,
 } from "$lib/units";
+import {
+  activityControllerListTypes,
+  getSdkRequestOptions,
+  type ActivityTypeSettingsOutput,
+} from "$lib/api";
 import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = ({ cookies }) => ({
-  unitSystem:
-    parseUnitSystem(cookies.get(UNIT_SYSTEM_COOKIE)) ?? DEFAULT_UNIT_SYSTEM,
-});
+export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
+  let activityTypes: ActivityTypeSettingsOutput[] = [];
+  try {
+    activityTypes = await activityControllerListTypes(
+      getSdkRequestOptions(fetch),
+    );
+  } catch {
+    // Activity pages already surface API availability; keep settings usable.
+  }
+  return {
+    unitSystem:
+      parseUnitSystem(cookies.get(UNIT_SYSTEM_COOKIE)) ?? DEFAULT_UNIT_SYSTEM,
+    activityTypes,
+  };
+};

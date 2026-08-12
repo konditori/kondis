@@ -3,11 +3,12 @@
   import { goto } from '$app/navigation';
   import { activityTypeLabel, sportIcon } from '$lib/activity-types';
   import { bestEffortLabel } from '$lib/best-efforts';
+  import type { ActivityTypeSettingsOutput } from '$lib/api';
   import type { Activity } from '$lib/types';
   import type { UnitSystem } from '$lib/units';
   import { activityName, distance, duration, elevation, localTime } from '$lib/format';
 
-  let { activity, unitSystem }: { activity: Activity; unitSystem: UnitSystem } = $props();
+  let { activity, activityTypes, unitSystem }: { activity: Activity; activityTypes: ActivityTypeSettingsOutput[]; unitSystem: UnitSystem } = $props();
   const Icon = $derived(sportIcon(activity.sport));
 
   function openActivity(event: MouseEvent) {
@@ -22,7 +23,7 @@
   <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
   <div class="activity-primary">
     <div class="activity-title"><h3>{activityName(activity)}</h3><ArrowUpRight size={17} /></div>
-    <p><span>{localTime(activity.startedAt)} · {activityTypeLabel(activity.sport)}</span></p>
+    <p><span>{localTime(activity.startedAt)} · {activityTypeLabel(activityTypes, activity.sport)}</span></p>
     {#if activity.topBestEfforts?.length}
       <div class="activity-achievements">
         {#each activity.topBestEfforts as effort}

@@ -2,8 +2,8 @@
   import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
-  import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions } from '$lib/api';
-  import { ACTIVITY_TYPE_OPTIONS, ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
+  import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions, Sport } from '$lib/api';
+  import { ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeOptions, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { activityName, distance, duration, effortDuration, elevation, localDate, localTime, pace, speed } from '$lib/format';
@@ -17,9 +17,10 @@
   let editError = $state('');
   let draftName = $state('');
   let draftDescription = $state('');
-  let draftSport = $state<Activity['sport']>(ACTIVITY_TYPE_OPTIONS.at(-1)!.value);
+  const activityTypeOptionsList = $derived(activityTypeOptions(data.activityTypes));
+  let draftSport = $state<Activity['sport']>(Sport.Other);
   const Icon = $derived(sportIcon(activity.sport));
-  const activitySettings = $derived(activityTypeSettings(activity.sport));
+  const activitySettings = $derived(activityTypeSettings(data.activityTypes, activity.sport));
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
   const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
@@ -119,13 +120,13 @@
     <a class="back-link" href="/" onclick={backToActivities}><ArrowLeft size={18} /> All activities</a>
     <div class="detail-heading">
       <span class="detail-sport"><Icon size={27} /></span>
-      <div class="detail-title"><span class="eyebrow">{activityTypeLabel(activity.sport)}</span><h1>{activityName(activity)}</h1></div>
+      <div class="detail-title"><span class="eyebrow">{activityTypeLabel(data.activityTypes, activity.sport)}</span><h1>{activityName(activity)}</h1></div>
       <button class="edit-metadata-button" type="button" onclick={startEditing} aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button>
     </div>
     {#if editing}
       <form class="metadata-editor" onsubmit={saveMetadata}>
         <label><span>Name</span><input bind:value={draftName} maxlength="200" placeholder="Activity name" /></label>
-        <label><span>Activity type</span><select bind:value={draftSport}>{#each ACTIVITY_TYPE_OPTIONS as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+        <label><span>Activity type</span><select bind:value={draftSport}>{#each activityTypeOptionsList as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
         <label class="metadata-description"><span>Description</span><textarea bind:value={draftDescription} maxlength="10000" placeholder="Activity description"></textarea></label>
         <div class="metadata-actions">
           <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving}><X size={16} /> Cancel</button>

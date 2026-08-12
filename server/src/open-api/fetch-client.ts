@@ -122,6 +122,13 @@ export type ActivityListResponseDtoOutput = {
   /** Total number of activities */
   total: number;
 };
+export type ActivityTypeSettingsOutput = {
+  type: ActivityType_Output;
+  averageMetric: AverageMetric;
+  showAveragePower: boolean;
+  bestEffortGroup: BestEffortGroup;
+};
+export type ActivityTypeListResponseDtoOutput = ActivityTypeSettingsOutput[];
 export type BestEffortListResponseDtoOutput = {
   sport: BestEffortSport_Output;
   type: BestEffortType_Output;
@@ -442,6 +449,19 @@ export function activityControllerListRecent(
   );
 }
 /**
+ * List activity types and their behavior
+ */
+export function activityControllerListTypes(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityTypeListResponseDtoOutput;
+    }>('/activities/types', {
+      ...opts,
+    }),
+  );
+}
+/**
  * List best efforts over time for a sport
  */
 export function activityControllerListBestEfforts(
@@ -643,6 +663,17 @@ export enum BestEffortType_Output {
   Power45M = 'power_45m',
   Power1H = 'power_1h',
   Power2H = 'power_2h',
+}
+export enum AverageMetric {
+  None = 'none',
+  Pace = 'pace',
+  SwimPace = 'swim_pace',
+  Speed = 'speed',
+}
+export enum BestEffortGroup {
+  None = 'none',
+  Run = 'run',
+  Ride = 'ride',
 }
 export enum BestEffortSport {
   Run = 'run',

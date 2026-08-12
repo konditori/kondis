@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { ACTIVITY_TYPES, toActivityType, usesActivityHeatmap } from 'src/domain/activity-type';
+import {
+  ACTIVITY_TYPES,
+  ACTIVITY_TYPE_SETTINGS,
+  AverageMetric,
+  BestEffortGroup,
+  activityTypeSettings,
+  toActivityType,
+} from 'src/domain/activity-type';
 
 describe('toActivityType', () => {
   it.each([
@@ -31,11 +38,64 @@ describe('toActivityType', () => {
     expect(toActivityType()).toBe('other');
   });
 
-  it('uses density maps for Strava heatmap sports', () => {
-    const heatmapTypes = new Set(['golf', 'sail', 'skateboard', 'soccer', 'surfing']);
+  it('accepts every canonical activity type without an alias', () => {
+    for (const type of ACTIVITY_TYPES) {
+      expect(toActivityType(type)).toBe(type);
+    }
+  });
+
+  it('maps every declared alias to its activity type', () => {
+    for (const { type, aliases } of ACTIVITY_TYPE_SETTINGS) {
+      for (const alias of aliases) {
+        expect(toActivityType(alias)).toBe(type);
+      }
+    }
+  });
+
+  it('does not declare the same canonical name or alias twice', () => {
+    const names = ACTIVITY_TYPE_SETTINGS.flatMap(({ type, aliases }) => [type, ...aliases]);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('defines settings for every activity type', () => {
+    expect(ACTIVITY_TYPE_SETTINGS.map(({ type }) => type)).toEqual(ACTIVITY_TYPES);
+  });
+
+  it.each([
+    ['roller_ski', AverageMetric.Pace],
+    ['hike', AverageMetric.Pace],
+    ['ice_skate', AverageMetric.None],
+    ['swim', AverageMetric.SwimPace],
+  ] as const)('defines the average metric for %s', (type, averageMetric) => {
+    expect(activityTypeSettings(type).averageMetric).toBe(averageMetric);
+  });
+
+  it('groups all running and cycling best-effort activity types', () => {
+    const running = new Set(['run', 'trail_run', 'virtual_run']);
+    const cycling = new Set(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride']);
 
     for (const type of ACTIVITY_TYPES) {
-      expect(usesActivityHeatmap(type)).toBe(heatmapTypes.has(type));
+      const expected = running.has(type)
+        ? BestEffortGroup.Run
+        : cycling.has(type)
+          ? BestEffortGroup.Ride
+          : BestEffortGroup.None;
+      expect(activityTypeSettings(type).bestEffortGroup).toBe(expected);
+    }
+  });
+
+  it('enables average power for pedal-powered cycling types', () => {
+    const powerTypes = new Set([
+      'gravel_ride',
+      'handcycle',
+      'mountain_bike_ride',
+      'ride',
+      'velomobile',
+      'virtual_ride',
+    ]);
+
+    for (const type of ACTIVITY_TYPES) {
+      expect(activityTypeSettings(type).showAveragePower).toBe(powerTypes.has(type));
     }
   });
 });

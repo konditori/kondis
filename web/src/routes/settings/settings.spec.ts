@@ -13,9 +13,11 @@ describe("unit preference settings", () => {
 
     expect(await load({ cookies: { get } } as never)).toEqual({
       unitSystem: "metric",
+      activityTypes: [],
     });
     expect(await load({ cookies: { get } } as never)).toEqual({
       unitSystem: "imperial",
+      activityTypes: [],
     });
   });
 

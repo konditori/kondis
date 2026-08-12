@@ -240,6 +240,28 @@
         ]
       }
     },
+    "/activities/types": {
+      "get": {
+        "operationId": "ActivityController_listTypes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Activity type settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTypeListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List activity types and their behavior",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/activities/best-efforts/{sport}/{type}": {
       "get": {
         "operationId": "ActivityController_listBestEfforts",
@@ -916,6 +938,47 @@
           "total"
         ],
         "additionalProperties": false
+      },
+      "ActivityTypeSettings_Output": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ActivityType_Output"
+          },
+          "averageMetric": {
+            "type": "string",
+            "enum": [
+              "none",
+              "pace",
+              "swim_pace",
+              "speed"
+            ]
+          },
+          "showAveragePower": {
+            "type": "boolean"
+          },
+          "bestEffortGroup": {
+            "type": "string",
+            "enum": [
+              "none",
+              "run",
+              "ride"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "averageMetric",
+          "showAveragePower",
+          "bestEffortGroup"
+        ],
+        "additionalProperties": false
+      },
+      "ActivityTypeListResponseDto_Output": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ActivityTypeSettings_Output"
+        }
       },
       "BestEffortSport_Output": {
         "type": "string",

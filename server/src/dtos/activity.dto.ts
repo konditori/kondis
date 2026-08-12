@@ -1,10 +1,19 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { ACTIVITY_TYPES } from 'src/domain/activity-type';
+import { ACTIVITY_TYPES, AverageMetric, BestEffortGroup } from 'src/domain/activity-type';
 import { BEST_EFFORT_TYPES } from 'src/domain/running-best-effort';
 
 export const ActivityTypeSchema = z.enum(ACTIVITY_TYPES).describe('Activity sport type').meta({ id: 'ActivityType' });
+export const ActivityTypeSettingsSchema = z
+  .object({
+    type: ActivityTypeSchema,
+    averageMetric: z.enum(AverageMetric),
+    showAveragePower: z.boolean(),
+    bestEffortGroup: z.enum(BestEffortGroup),
+  })
+  .meta({ id: 'ActivityTypeSettings' });
+export const ActivityTypeListResponseSchema = z.array(ActivityTypeSettingsSchema);
 const BestEffortTypeSchema = z.enum(BEST_EFFORT_TYPES).meta({ id: 'BestEffortType' });
 const BestEffortValueKindSchema = z
   .enum(['duration', 'distance', 'elevation', 'power'])
@@ -150,6 +159,7 @@ export class ActivityListQueryDto extends createZodDto(ActivityListQuerySchema) 
 export class ActivityDto extends createZodDto(ActivitySchema) {}
 export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
+export class ActivityTypeListResponseDto extends createZodDto(ActivityTypeListResponseSchema) {}
 export class BestEffortListParamDto extends createZodDto(BestEffortListParamSchema) {}
 export class BestEffortListResponseDto extends createZodDto(BestEffortListResponseSchema) {}
 export class ActivityUpdateDto extends createZodDto(ActivityUpdateSchema) {}

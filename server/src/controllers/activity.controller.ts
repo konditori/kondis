@@ -13,12 +13,14 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { ACTIVITY_TYPE_SETTINGS } from 'src/domain/activity-type';
 import {
   ActivityDetailDto,
   ActivityDto,
   ActivityIdParamDto,
   ActivityListQueryDto,
   ActivityListResponseDto,
+  ActivityTypeListResponseDto,
   ActivityUpdateDto,
   BestEffortListParamDto,
   BestEffortListResponseDto,
@@ -35,6 +37,13 @@ export class ActivityController {
   @Get()
   async listRecent(@Query() query: ActivityListQueryDto): Promise<ActivityListResponseDto> {
     return this.service.listRecent(query);
+  }
+
+  @ApiOperation({ summary: 'List activity types and their behavior' })
+  @ZodResponse({ status: 200, description: 'Activity type settings', type: ActivityTypeListResponseDto })
+  @Get('types')
+  listTypes(): ActivityTypeListResponseDto {
+    return [...ACTIVITY_TYPE_SETTINGS];
   }
 
   @ApiOperation({ summary: 'List best efforts over time for a sport' })

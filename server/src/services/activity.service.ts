@@ -3,7 +3,7 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
-import { ActivityType } from 'src/domain/activity-type';
+import { ActivityType, BestEffortGroup, activityTypesForBestEffortGroup } from 'src/domain/activity-type';
 import { BestEffortType, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
@@ -29,9 +29,9 @@ const QUEUE_ALL_PAGE_SIZE = 1000;
 export type BestEffortSport = 'run' | 'ride';
 
 const BEST_EFFORT_SPORTS = {
-  run: ['run', 'trail_run', 'virtual_run'],
-  ride: ['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'],
-} as const satisfies Record<BestEffortSport, readonly ActivityType[]>;
+  run: activityTypesForBestEffortGroup(BestEffortGroup.Run),
+  ride: activityTypesForBestEffortGroup(BestEffortGroup.Ride),
+} satisfies Record<BestEffortSport, readonly ActivityType[]>;
 const BEST_EFFORT_DEFINITIONS = new Map(
   [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),
 );
