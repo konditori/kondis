@@ -1,0 +1,19 @@
+web/src/routes/+layout.server.ts
+  s_f21b11295d946a::t_152399f735c3d9 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "22fcc36c1712e9fbdc9335c078cc7eb945e0a04a",
+  "prompts": {},
+  "sessions": {
+    "s_f21b11295d946a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff81e-286e-74c0-bc83-a894651b75dd",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
