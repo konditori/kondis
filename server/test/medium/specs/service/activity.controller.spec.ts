@@ -257,8 +257,8 @@ describe('ActivityController (medium)', () => {
 
     it('returns the persisted full-resolution detail track', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'mapped run', [
-        { type: 'latitude', data: [59, 59.000_001, 59.000_002] },
-        { type: 'longitude', data: [18, 18.000_001, 18.000_002] },
+        { type: 'latitude', data: [59, 59.000001, 59.000002] },
+        { type: 'longitude', data: [18, 18.000001, 18.000002] },
       ]);
 
       const activity = await controller.getById({ id: activityId });

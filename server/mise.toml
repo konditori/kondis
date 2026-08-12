@@ -19,7 +19,7 @@ run = "prettier --write ."
 
 [tasks.lint]
 env._.path = "./node_modules/.bin"
-run = "eslint \"src/**/*.ts\" --max-warnings 0"
+run = "eslint \"{src,test}/**/*.ts\" --max-warnings 0"
 
 [tasks."lint-fix"]
 run = { task = "lint --fix" }

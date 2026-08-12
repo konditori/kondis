@@ -14,7 +14,7 @@
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "format": "prettier --cache --check .",
     "format:fix": "prettier --cache --write --list-different .",
-    "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
+    "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
     "lint:fix": "pnpm run lint --fix",
     "check": "tsc --noEmit",
     "test": "vitest run",
