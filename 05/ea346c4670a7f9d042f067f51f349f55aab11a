@@ -1,0 +1,35 @@
+packages/postgres/Dockerfile
+  s_13a30a0a8901df::t_7af28b5854bfc4 1
+server/eslint.config.mjs
+  s_13a30a0a8901df::t_74565ea5569257 25
+server/mise.toml
+  s_13a30a0a8901df::t_08230aa73d8094 43,54,58
+server/package.json
+  s_13a30a0a8901df::t_3df3a7ec5e3250 13,23-24,26-27
+server/src/bin/migrations.ts
+  s_13a30a0a8901df::t_e83ee071570b7b 22
+server/src/config/config.service.ts
+  s_13a30a0a8901df::t_ef6780bfcb2e24 128
+server/src/repositories/database.repository.ts
+  s_13a30a0a8901df::t_8ef527425e5e15 10
+server/test/medium/utils.ts
+  s_13a30a0a8901df::t_8929bc3ffba184 40-43
+server/tsconfig.build.json
+  s_13a30a0a8901df::t_2778003b37d78f 8-11,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "05ea346c4670a7f9d042f067f51f349f55aab11a",
+  "prompts": {},
+  "sessions": {
+    "s_13a30a0a8901df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff52b-7358-7163-8df0-b69934917ea8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
