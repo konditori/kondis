@@ -1,5 +1,5 @@
-import { RunningBestEffortType } from 'src/domain/running-best-effort';
-import { Column, Table } from 'src/schema/decorators';
+import { Column, Generated, Table } from 'src/schema/decorators';
+import { BestEffortType, BestEffortValueKind } from 'src/types';
 
 @Table('activity_best_effort')
 export class ActivityBestEffortTable {
@@ -7,7 +7,7 @@ export class ActivityBestEffortTable {
   activity_id!: string;
 
   @Column({ type: 'text' })
-  type!: RunningBestEffortType;
+  type!: BestEffortType;
 
   @Column({ type: 'double precision' })
   distance!: number;
@@ -20,4 +20,25 @@ export class ActivityBestEffortTable {
 
   @Column({ type: 'double precision' })
   end_time!: number;
+
+  @Column({ type: 'double precision' })
+  value!: number;
+
+  @Column({ type: 'text' })
+  value_kind!: BestEffortValueKind;
+
+  @Column({ type: 'integer', nullable: true })
+  avg_hr!: number | null;
+
+  @Column({ type: 'double precision', nullable: true })
+  elevation_change!: number | null;
+
+  @Column({ type: 'integer', default: 1 })
+  year!: Generated<number>;
+
+  @Column({ type: 'integer', default: 1 })
+  overall_rank!: Generated<number>;
+
+  @Column({ type: 'integer', default: 1 })
+  year_rank!: Generated<number>;
 }

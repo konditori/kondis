@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { Activity, ChartNoAxesColumnIncreasing, CircleUserRound, HeartPulse, Settings, Upload } from '@lucide/svelte';
+  import { Activity, CircleUserRound, HeartPulse, Settings, Trophy, Upload } from '@lucide/svelte';
   import { page } from '$app/state';
 
   let { onUpload }: { onUpload: () => void } = $props();
 
   const items = [
-    { href: '/', label: 'Activities', icon: Activity },
-    { href: '/insights', label: 'Insights', icon: ChartNoAxesColumnIncreasing, disabled: true },
+    { href: '/', label: 'Activities', icon: Activity, section: null },
+    { href: '/best-efforts/run/5k', label: 'Best efforts', icon: Trophy, section: '/best-efforts' },
   ];
 </script>
 
@@ -23,7 +23,7 @@
 
   <nav aria-label="Primary navigation">
     {#each items as item}
-      <a class:active={page.url.pathname === item.href} class:disabled={item.disabled} href={item.href} aria-disabled={item.disabled}>
+      <a class:active={item.section ? page.url.pathname.startsWith(item.section) : page.url.pathname === item.href} href={item.href}>
         <item.icon size={19} />
         {item.label}
       </a>
@@ -41,6 +41,7 @@
 
 <nav class="mobile-nav" aria-label="Mobile navigation">
   <a class:active={page.url.pathname === '/'} href="/"><Activity size={21} /><span>Activities</span></a>
+  <a class:active={page.url.pathname.startsWith('/best-efforts')} href="/best-efforts/run/5k"><Trophy size={21} /><span>Best efforts</span></a>
   <button onclick={onUpload}><span class="mobile-upload"><Upload size={21} /></span><span>Import</span></button>
   <a class:active={page.url.pathname === '/settings'} href="/settings"><Settings size={21} /><span>Settings</span></a>
 </nav>

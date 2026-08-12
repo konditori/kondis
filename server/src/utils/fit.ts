@@ -1,12 +1,13 @@
-import { toActivityType } from 'src/domain/activity-type';
 import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
 import { ParsedActivity, ParsedLap, ParsedStream, StreamType } from 'src/types';
+import { toActivityType } from 'src/utils/activity';
 import {
   computeElevationChange,
   computeMovingTime,
   computeNormalizedPower,
   inferSampleInterval,
 } from 'src/utils/activity-metrics';
+import { haversineDistance } from 'src/utils/geo';
 import { int, lastFinite, max, mean, num, roundOrNull } from 'src/utils/math';
 
 const SEMICIRCLE_TO_DEGREES = 180 / 2 ** 31;
@@ -72,6 +73,45 @@ const EXTRACTORS: { type: StreamType; extract: (record: FitRecordMesg) => number
 
 const hasAnySample = (data: number[]): boolean => data.some((value) => Number.isFinite(value));
 
+const isValidPosition = (latitude: number, longitude: number): boolean =>
+  Number.isFinite(latitude) &&
+  Number.isFinite(longitude) &&
+  latitude >= -90 &&
+  latitude <= 90 &&
+  longitude >= -180 &&
+  longitude <= 180;
+
+const deriveDistanceFromPosition = (
+  latitude: number[],
+  longitude: number[],
+  sessionDistance: number | null,
+): number[] | undefined => {
+  let previous: { latitude: number; longitude: number } | undefined;
+  let totalDistance = 0;
+  const distance = latitude.map((currentLatitude, index) => {
+    const currentLongitude = longitude[index];
+    if (!isValidPosition(currentLatitude, currentLongitude)) {
+      return NaN;
+    }
+
+    if (previous) {
+      totalDistance += haversineDistance(previous.latitude, previous.longitude, currentLatitude, currentLongitude);
+    }
+    previous = { latitude: currentLatitude, longitude: currentLongitude };
+    return totalDistance;
+  });
+
+  if (!Number.isFinite(totalDistance) || totalDistance <= 0) {
+    return;
+  }
+
+  // Device summaries are usually more accurate than a distance reconstructed from rounded
+  // coordinates. Reconcile small GPS drift while refusing to stretch a partial or corrupt track.
+  const reconciliationRatio = sessionDistance === null ? 1 : sessionDistance / totalDistance;
+  const scale = reconciliationRatio >= 0.8 && reconciliationRatio <= 1.25 ? reconciliationRatio : 1;
+  return distance.map((value) => (Number.isFinite(value) ? value * scale : NaN));
+};
+
 export const buildStreams = (records: FitRecordMesg[], startedAt: Date): ParsedStream[] => {
   const streams: ParsedStream[] = [];
 
@@ -126,7 +166,19 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const power = streamData('power');
   const heartrate = streamData('heartrate');
   const cadence = streamData('cadence');
-  const distance = streamData('distance');
+  const sessionDistance = num(session?.totalDistance);
+  let distance = streamData('distance');
+  if (!hasAnySample(distance)) {
+    const derivedDistance = deriveDistanceFromPosition(
+      streamData('latitude'),
+      streamData('longitude'),
+      sessionDistance,
+    );
+    if (derivedDistance) {
+      streams.push({ type: 'distance', data: derivedDistance });
+      distance = derivedDistance;
+    }
+  }
 
   const sampleIntervalS = inferSampleInterval(time);
   const elevation = computeElevationChange(altitude, { sampleIntervalS, smoothingWindowS: 90 });
@@ -134,7 +186,7 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
 
   const elapsedTimeS = int(session?.totalElapsedTime) ?? (finalTime === undefined ? 0 : Math.round(finalTime));
   const movingTimeS = int(session?.totalTimerTime) ?? computeMovingTime(speed, time);
-  const distanceM = num(session?.totalDistance) ?? lastFinite(distance) ?? null;
+  const distanceM = sessionDistance ?? lastFinite(distance) ?? null;
 
   // Older devices record neither an average speed nor a speed stream, but distance and time
   // are nearly always present

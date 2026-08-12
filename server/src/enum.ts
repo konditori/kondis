@@ -11,6 +11,8 @@ export enum QueueName {
 
 export enum JobName {
   ActivityUpload = 'ActivityUpload',
+  ActivityBestEffortCompute = 'ActivityBestEffortCompute',
+  ActivityBestEffortRank = 'ActivityBestEffortRank',
   ActivityParse = 'ActivityParse',
   ActivityParseQueueAll = 'ActivityParseQueueAll',
   ActivityDelete = 'ActivityDelete',

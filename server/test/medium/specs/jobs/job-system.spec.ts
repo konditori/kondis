@@ -72,6 +72,11 @@ describe('job system (medium)', () => {
           checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
         },
       },
+      [JobName.ActivityBestEffortCompute]: {
+        name: JobName.ActivityBestEffortCompute,
+        data: { id: MISSING_UUID },
+      },
+      [JobName.ActivityBestEffortRank]: { name: JobName.ActivityBestEffortRank, data: {} },
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
@@ -112,7 +117,31 @@ describe('job system (medium)', () => {
 
         expect(queued).toBe(Object.values(JobName).length);
       } finally {
+        await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
         await Promise.all(Object.values(QueueName).map((queue) => jobs.resume(queue)));
+      }
+    });
+
+    it('accepts every ranking refresh request and coalesces queued duplicates', async () => {
+      await jobs.pause(QueueName.ActivityParsing);
+
+      try {
+        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.queueAll([
+          { name: JobName.ActivityBestEffortRank, data: {} },
+          { name: JobName.ActivityBestEffortRank, data: {} },
+          { name: JobName.ActivityBestEffortRank, data: {} },
+        ]);
+
+        const initialCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
+        expect(initialCounts.queued).toBe(3);
+
+        await jobs.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
+        const finalCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
+        expect(finalCounts.queued).toBe(0);
+      } finally {
+        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.resume(QueueName.ActivityParsing);
       }
     });
   });

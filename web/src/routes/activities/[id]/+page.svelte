@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Mountain, Pencil, Timer, Trophy, X, Zap } from '@lucide/svelte';
+  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
-  import { activityControllerUpdateById, getSdkRequestOptions } from '$lib/api';
-  import { ACTIVITY_TYPE_OPTIONS, ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
+  import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions, Sport } from '$lib/api';
+  import { ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeOptions, activityTypeSettings, sportIcon } from '$lib/activity-types';
+  import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
-  import { activityName, distance, duration, effortDuration, effortPace, elevation, localDate, localTime, pace, speed } from '$lib/format';
+  import { activityName, distance, duration, effortDuration, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
 
   let { data } = $props();
@@ -16,11 +17,14 @@
   let editError = $state('');
   let draftName = $state('');
   let draftDescription = $state('');
-  let draftSport = $state<Activity['sport']>(ACTIVITY_TYPE_OPTIONS.at(-1)!.value);
+  const activityTypeOptionsList = $derived(activityTypeOptions(data.activityTypes));
+  let draftSport = $state<Activity['sport']>(Sport.Other);
   const Icon = $derived(sportIcon(activity.sport));
-  const activitySettings = $derived(activityTypeSettings(activity.sport));
+  const activitySettings = $derived(activityTypeSettings(data.activityTypes, activity.sport));
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
+  const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
+  const hasBestEffortAchievements = $derived(activity.bestEfforts.some((effort) => bestEffortAchievement(effort) !== null));
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -56,6 +60,27 @@
     editing = true;
   }
 
+  function rankOrdinal(rank: number): string {
+    return rank === 2 ? '2nd' : '3rd';
+  }
+
+  function bestEffortAchievement(effort: ActivityDetail['bestEfforts'][number]): { rank: number; text: string } | null {
+    const name = bestEffortRecordName(effort.type);
+    if (effort.overallRank === 1) {
+      return { rank: 1, text: `New best of all time` };
+    }
+    if (effort.overallRank <= 3) {
+      return { rank: effort.overallRank, text: `New ${rankOrdinal(effort.overallRank)} best of all time` };
+    }
+    if (effort.yearRank === 1) {
+      return { rank: 1, text: `New best of ${effort.year}` };
+    }
+    if (effort.yearRank <= 3) {
+      return { rank: effort.yearRank, text: `New ${rankOrdinal(effort.yearRank)} best of ${effort.year}` };
+    }
+    return null;
+  }
+
   function cancelEditing() {
     editing = false;
     editError = '';
@@ -72,7 +97,7 @@
           activityUpdateDto: {
             name: draftName.trim() || null,
             description: draftDescription.trim() || null,
-            sport: draftSport,
+            sport: draftSport as unknown as ActivityUpdateSport,
           },
         },
         getSdkRequestOptions(),
@@ -95,13 +120,13 @@
     <a class="back-link" href="/" onclick={backToActivities}><ArrowLeft size={18} /> All activities</a>
     <div class="detail-heading">
       <span class="detail-sport"><Icon size={27} /></span>
-      <div class="detail-title"><span class="eyebrow">{activityTypeLabel(activity.sport)}</span><h1>{activityName(activity)}</h1></div>
+      <div class="detail-title"><span class="eyebrow">{activityTypeLabel(data.activityTypes, activity.sport)}</span><h1>{activityName(activity)}</h1></div>
       <button class="edit-metadata-button" type="button" onclick={startEditing} aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button>
     </div>
     {#if editing}
       <form class="metadata-editor" onsubmit={saveMetadata}>
         <label><span>Name</span><input bind:value={draftName} maxlength="200" placeholder="Activity name" /></label>
-        <label><span>Activity type</span><select bind:value={draftSport}>{#each ACTIVITY_TYPE_OPTIONS as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+        <label><span>Activity type</span><select bind:value={draftSport}>{#each activityTypeOptionsList as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
         <label class="metadata-description"><span>Description</span><textarea bind:value={draftDescription} maxlength="10000" placeholder="Activity description"></textarea></label>
         <div class="metadata-actions">
           <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving}><X size={16} /> Cancel</button>
@@ -134,16 +159,40 @@
 
   {#if activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
-      <div class="section-heading"><div><span class="eyebrow">Running performance</span><h2>Best efforts</h2></div></div>
-      <div class="best-effort-list">
+      <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2></div></div>
+      <div class="best-effort-table-wrap">
+        <div class="best-effort-table" role="table" aria-label="Distance best efforts">
+          <div class="best-effort-header" role="row">
+            <div role="columnheader"><strong>Distance</strong></div>
+            <div role="columnheader"><strong>Time</strong></div>
+            <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
+            <div role="columnheader"><strong>Heart Rate</strong></div>
+            <div role="columnheader"><strong>Elev</strong></div>
+        </div>
         {#each activity.bestEfforts as effort}
-          <article class="best-effort">
-            <span class="effort-icon"><Trophy size={18} /></span>
-            <strong>{effort.label}</strong>
-            <span>{effortDuration(effort.elapsedTime)}</span>
-            <small>{effortPace(effort.elapsedTime, effort.distance, data.unitSystem)}</small>
-          </article>
+          {@const achievement = bestEffortAchievement(effort)}
+          <a class="best-effort-row" role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
+            <div class="effort-distance" role="cell">
+              {#if achievement}
+                <span class={`effort-medal achievement-rank-${achievement.rank}`} aria-hidden="true">
+                  <Medal size={31} />
+                  <small>{achievement.rank === 1 ? 'PR' : achievement.rank}</small>
+                </span>
+              {:else if hasBestEffortAchievements}
+                <span class="effort-medal-placeholder" aria-hidden="true"></span>
+              {/if}
+              <span class="effort-distance-copy">
+                <strong>{bestEffortLabel(effort.type)}</strong>
+                {#if achievement}<small>{achievement.text}</small>{/if}
+              </span>
+            </div>
+            <div role="cell">{effortDuration(effort.elapsedTime)}</div>
+            <div role="cell">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : pace(effort.distance / effort.elapsedTime, data.unitSystem)}</div>
+            <div role="cell">{effort.avgHr == null ? '—' : `${effort.avgHr} bpm`}</div>
+            <div role="cell">{elevation(effort.elevationChange, data.unitSystem)}</div>
+          </a>
         {/each}
+        </div>
       </div>
     </section>
   {/if}

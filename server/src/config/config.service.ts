@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 import { QueueName, WorkerType } from 'src/enum';
 
@@ -126,7 +125,7 @@ export class ConfigService {
   constructor() {
     this.port = Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293);
     this.workers = parseWorkers(process.env.KONDIS_WORKERS);
-    this.storageDir = process.env.KONDIS_STORAGE_DIR ?? resolve(process.cwd(), 'uploads');
+    this.storageDir = process.env.KONDIS_STORAGE_DIR ?? '/data';
     this.autoMigrate = readBoolean('KONDIS_DB_AUTO_MIGRATE', true);
 
     this.database = {

@@ -1,6 +1,5 @@
 import type { ColumnType, RawBuilder } from 'kysely';
 
-import { ActivityType } from 'src/domain/activity-type';
 import {
   Column,
   CreateDateColumn,
@@ -10,6 +9,7 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from 'src/schema/decorators';
+import { ActivityType } from 'src/types';
 
 type GeographyWrite = RawBuilder<unknown> | null | undefined;
 type Geography = ColumnType<string | null, GeographyWrite, GeographyWrite>;
@@ -39,6 +39,9 @@ export class ActivityTable {
 
   @Column({ type: 'geography', nullable: true })
   track!: Geography;
+
+  @Column({ type: 'geography', nullable: true })
+  detail_track!: Geography;
 
   @CreateDateColumn()
   created_at!: Generated<Timestamp>;

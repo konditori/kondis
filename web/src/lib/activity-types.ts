@@ -8,187 +8,133 @@ import {
   SportShoe,
   WavesHorizontal,
 } from "@lucide/svelte";
-import { Sport } from "$lib/api";
+import type { Component } from "svelte";
+import {
+  AverageMetric,
+  type ActivityTypeSettingsOutput,
+  Sport,
+} from "$lib/api";
 import type { ActivityType } from "$lib/types";
 
-export enum AverageMetric {
-  None = "none",
-  Pace = "pace",
-  SwimPace = "swimPace",
-  Speed = "speed",
-}
+export { AverageMetric };
 
 export enum ActivityMapStyle {
   Route = "route",
   Heatmap = "heatmap",
 }
 
-type ActivityTypeSettings = {
+type ActivityTypePresentation = {
   label: string;
-  icon: typeof Bike;
-  averageMetric: AverageMetric;
-  showAveragePower: boolean;
+  icon: Component;
   mapStyle: ActivityMapStyle;
 };
 
-const settings = (
+const presentation = (
   label: string,
-  icon: typeof Bike,
-  averageMetric = AverageMetric.None,
-  showAveragePower = false,
+  icon: Component,
   mapStyle = ActivityMapStyle.Route,
-): ActivityTypeSettings => ({
-  label,
-  icon,
-  averageMetric,
-  showAveragePower,
-  mapStyle,
-});
+): ActivityTypePresentation => ({ label, icon, mapStyle });
 
-export const ACTIVITY_TYPE_SETTINGS = {
-  [Sport.AlpineSki]: settings("Alpine skiing", Snowflake, AverageMetric.Speed),
-  [Sport.BackcountrySki]: settings(
-    "Backcountry skiing",
-    Snowflake,
-    AverageMetric.Speed,
-  ),
-  [Sport.Badminton]: settings("Badminton", HeartPulse),
-  [Sport.Basketball]: settings("Basketball", HeartPulse),
-  [Sport.Canoeing]: settings("Canoeing", WavesHorizontal, AverageMetric.Speed),
-  [Sport.Cricket]: settings("Cricket", HeartPulse),
-  [Sport.CrossCountrySki]: settings(
-    "Cross-country skiing",
-    Snowflake,
-    AverageMetric.Speed,
-  ),
-  [Sport.Crossfit]: settings("CrossFit", Dumbbell),
-  [Sport.Dance]: settings("Dance", HeartPulse),
-  [Sport.EBikeRide]: settings("E-bike ride", Bike, AverageMetric.Speed),
-  [Sport.Elliptical]: settings("Elliptical", HeartPulse),
-  [Sport.EMountainBikeRide]: settings(
-    "E-mountain bike ride",
-    Bike,
-    AverageMetric.Speed,
-  ),
-  [Sport.Golf]: settings(
-    "Golf",
-    HeartPulse,
-    AverageMetric.None,
-    false,
-    ActivityMapStyle.Heatmap,
-  ),
-  [Sport.GravelRide]: settings("Gravel ride", Bike, AverageMetric.Speed, true),
-  [Sport.Handcycle]: settings("Handcycle", Bike, AverageMetric.Speed, true),
-  [Sport.HighIntensityIntervalTraining]: settings("HIIT", Dumbbell),
-  [Sport.Hike]: settings("Hike", Footprints, AverageMetric.Pace),
-  [Sport.IceSkate]: settings("Ice skating", Snowflake),
-  [Sport.InlineSkate]: settings(
-    "Inline skating",
-    SportShoe,
-    AverageMetric.Speed,
-  ),
-  [Sport.Kayaking]: settings("Kayaking", WavesHorizontal, AverageMetric.Speed),
-  [Sport.Kitesurf]: settings(
-    "Kitesurfing",
-    WavesHorizontal,
-    AverageMetric.Speed,
-  ),
-  [Sport.MountainBikeRide]: settings(
-    "Mountain bike ride",
-    Bike,
-    AverageMetric.Speed,
-    true,
-  ),
-  [Sport.Padel]: settings("Padel", HeartPulse),
-  [Sport.PhysicalTherapy]: settings("Physical therapy", HeartPulse),
-  [Sport.Pickleball]: settings("Pickleball", HeartPulse),
-  [Sport.Pilates]: settings("Pilates", HeartPulse),
-  [Sport.Racquetball]: settings("Racquetball", HeartPulse),
-  [Sport.Ride]: settings("Ride", Bike, AverageMetric.Speed, true),
-  [Sport.RockClimbing]: settings("Rock climbing", Mountain),
-  [Sport.RollerSki]: settings("Roller skiing", Mountain, AverageMetric.Pace),
-  [Sport.Rowing]: settings("Rowing", WavesHorizontal, AverageMetric.Speed),
-  [Sport.Run]: settings("Run", SportShoe, AverageMetric.Pace),
-  [Sport.Sail]: settings(
+export const ACTIVITY_TYPE_PRESENTATION = {
+  [Sport.AlpineSki]: presentation("Alpine skiing", Snowflake),
+  [Sport.BackcountrySki]: presentation("Backcountry skiing", Snowflake),
+  [Sport.Badminton]: presentation("Badminton", HeartPulse),
+  [Sport.Basketball]: presentation("Basketball", HeartPulse),
+  [Sport.Canoeing]: presentation("Canoeing", WavesHorizontal),
+  [Sport.Cricket]: presentation("Cricket", HeartPulse),
+  [Sport.CrossCountrySki]: presentation("Cross-country skiing", Snowflake),
+  [Sport.Crossfit]: presentation("CrossFit", Dumbbell),
+  [Sport.Dance]: presentation("Dance", HeartPulse),
+  [Sport.EBikeRide]: presentation("E-bike ride", Bike),
+  [Sport.Elliptical]: presentation("Elliptical", HeartPulse),
+  [Sport.EMountainBikeRide]: presentation("E-mountain bike ride", Bike),
+  [Sport.Golf]: presentation("Golf", HeartPulse, ActivityMapStyle.Heatmap),
+  [Sport.GravelRide]: presentation("Gravel ride", Bike),
+  [Sport.Handcycle]: presentation("Handcycle", Bike),
+  [Sport.HighIntensityIntervalTraining]: presentation("HIIT", Dumbbell),
+  [Sport.Hike]: presentation("Hike", Footprints),
+  [Sport.IceSkate]: presentation("Ice skating", Snowflake),
+  [Sport.InlineSkate]: presentation("Inline skating", SportShoe),
+  [Sport.Kayaking]: presentation("Kayaking", WavesHorizontal),
+  [Sport.Kitesurf]: presentation("Kitesurfing", WavesHorizontal),
+  [Sport.MountainBikeRide]: presentation("Mountain bike ride", Bike),
+  [Sport.Padel]: presentation("Padel", HeartPulse),
+  [Sport.PhysicalTherapy]: presentation("Physical therapy", HeartPulse),
+  [Sport.Pickleball]: presentation("Pickleball", HeartPulse),
+  [Sport.Pilates]: presentation("Pilates", HeartPulse),
+  [Sport.Racquetball]: presentation("Racquetball", HeartPulse),
+  [Sport.Ride]: presentation("Ride", Bike),
+  [Sport.RockClimbing]: presentation("Rock climbing", Mountain),
+  [Sport.RollerSki]: presentation("Roller skiing", Mountain),
+  [Sport.Rowing]: presentation("Rowing", WavesHorizontal),
+  [Sport.Run]: presentation("Run", SportShoe),
+  [Sport.Sail]: presentation(
     "Sailing",
     WavesHorizontal,
-    AverageMetric.Speed,
-    false,
     ActivityMapStyle.Heatmap,
   ),
-  [Sport.Skateboard]: settings(
+  [Sport.Skateboard]: presentation(
     "Skateboarding",
     SportShoe,
-    AverageMetric.Speed,
-    false,
     ActivityMapStyle.Heatmap,
   ),
-  [Sport.Snowboard]: settings("Snowboarding", Snowflake, AverageMetric.Speed),
-  [Sport.Snowshoe]: settings("Snowshoeing", Snowflake, AverageMetric.Pace),
-  [Sport.Soccer]: settings(
+  [Sport.Snowboard]: presentation("Snowboarding", Snowflake),
+  [Sport.Snowshoe]: presentation("Snowshoeing", Snowflake),
+  [Sport.Soccer]: presentation(
     "Football (soccer)",
     HeartPulse,
-    AverageMetric.None,
-    false,
     ActivityMapStyle.Heatmap,
   ),
-  [Sport.Squash]: settings("Squash", HeartPulse),
-  [Sport.StairStepper]: settings("Stair stepper", HeartPulse),
-  [Sport.StandUpPaddling]: settings(
-    "Stand-up paddling",
-    WavesHorizontal,
-    AverageMetric.Speed,
-  ),
-  [Sport.Surfing]: settings(
+  [Sport.Squash]: presentation("Squash", HeartPulse),
+  [Sport.StairStepper]: presentation("Stair stepper", HeartPulse),
+  [Sport.StandUpPaddling]: presentation("Stand-up paddling", WavesHorizontal),
+  [Sport.Surfing]: presentation(
     "Surfing",
     WavesHorizontal,
-    AverageMetric.Speed,
-    false,
     ActivityMapStyle.Heatmap,
   ),
-  [Sport.Swim]: settings("Swim", WavesHorizontal, AverageMetric.SwimPace),
-  [Sport.TableTennis]: settings("Table tennis", HeartPulse),
-  [Sport.Tennis]: settings("Tennis", HeartPulse),
-  [Sport.TrailRun]: settings("Trail run", SportShoe, AverageMetric.Pace),
-  [Sport.Velomobile]: settings("Velomobile", Bike, AverageMetric.Speed, true),
-  [Sport.VirtualRide]: settings(
-    "Virtual ride",
-    Bike,
-    AverageMetric.Speed,
-    true,
-  ),
-  [Sport.VirtualRow]: settings(
-    "Virtual row",
-    WavesHorizontal,
-    AverageMetric.Speed,
-  ),
-  [Sport.VirtualRun]: settings("Virtual run", SportShoe, AverageMetric.Pace),
-  [Sport.Volleyball]: settings("Volleyball", HeartPulse),
-  [Sport.Walk]: settings("Walk", Footprints, AverageMetric.Pace),
-  [Sport.WeightTraining]: settings("Weight training", Dumbbell),
-  [Sport.Wheelchair]: settings("Wheelchair", Footprints, AverageMetric.Pace),
-  [Sport.Windsurf]: settings(
-    "Windsurfing",
-    WavesHorizontal,
-    AverageMetric.Speed,
-  ),
-  [Sport.Workout]: settings("Workout", HeartPulse),
-  [Sport.Yoga]: settings("Yoga", HeartPulse),
-  [Sport.Other]: settings("Other", HeartPulse, AverageMetric.Speed),
-} satisfies Record<ActivityType, ActivityTypeSettings>;
+  [Sport.Swim]: presentation("Swim", WavesHorizontal),
+  [Sport.TableTennis]: presentation("Table tennis", HeartPulse),
+  [Sport.Tennis]: presentation("Tennis", HeartPulse),
+  [Sport.TrailRun]: presentation("Trail run", SportShoe),
+  [Sport.Velomobile]: presentation("Velomobile", Bike),
+  [Sport.VirtualRide]: presentation("Virtual ride", Bike),
+  [Sport.VirtualRow]: presentation("Virtual row", WavesHorizontal),
+  [Sport.VirtualRun]: presentation("Virtual run", SportShoe),
+  [Sport.Volleyball]: presentation("Volleyball", HeartPulse),
+  [Sport.Walk]: presentation("Walk", Footprints),
+  [Sport.WeightTraining]: presentation("Weight training", Dumbbell),
+  [Sport.Wheelchair]: presentation("Wheelchair", Footprints),
+  [Sport.Windsurf]: presentation("Windsurfing", WavesHorizontal),
+  [Sport.Workout]: presentation("Workout", HeartPulse),
+  [Sport.Yoga]: presentation("Yoga", HeartPulse),
+  [Sport.Other]: presentation("Other", HeartPulse),
+} satisfies Record<ActivityType, ActivityTypePresentation>;
 
-export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] =
-  Object.entries(ACTIVITY_TYPE_SETTINGS).map(([value, { label }]) => ({
-    value: value as ActivityType,
-    label,
-  }));
+export type ActivityTypeSettings = ActivityTypeSettingsOutput &
+  ActivityTypePresentation;
 
 export const activityTypeSettings = (
+  types: ActivityTypeSettingsOutput[],
   type: ActivityType,
-): ActivityTypeSettings => ACTIVITY_TYPE_SETTINGS[type];
+): ActivityTypeSettings => {
+  const settings = types.find((candidate) => candidate.type === type);
+  if (!settings) throw new Error(`Missing backend settings for ${type}`);
+  return { ...settings, ...ACTIVITY_TYPE_PRESENTATION[type] };
+};
 
-export const activityTypeLabel = (type: ActivityType): string =>
-  activityTypeSettings(type).label;
+export const activityTypeOptions = (
+  types: ActivityTypeSettingsOutput[],
+): { value: ActivityType; label: string }[] =>
+  types.map(({ type }) => ({
+    value: type,
+    label: ACTIVITY_TYPE_PRESENTATION[type].label,
+  }));
 
-export const sportIcon = (type: ActivityType): typeof Bike =>
-  activityTypeSettings(type).icon;
+export const activityTypeLabel = (
+  types: ActivityTypeSettingsOutput[],
+  type: ActivityType,
+): string => activityTypeSettings(types, type).label;
+
+export const sportIcon = (type: ActivityType): Component =>
+  ACTIVITY_TYPE_PRESENTATION[type].icon;

@@ -27,6 +27,10 @@ export type Activity = {
   calories: number | null;
   createdAt: string;
   updatedAt: string;
+  topBestEfforts?: {
+    type: string;
+    yearRank: number;
+  }[];
 };
 
 export type ActivityPage = {
@@ -39,10 +43,39 @@ export type ActivityDetail = Activity & {
   track: { type: "LineString"; coordinates: [number, number][] } | null;
   bestEfforts: {
     type: string;
-    label: string;
     distance: number;
     elapsedTime: number;
     startTime: number;
     endTime: number;
+    avgHr: number | null;
+    elevationChange: number | null;
+    overallRank: number;
+    year: number;
+    yearRank: number;
+  }[];
+};
+
+export type BestEffortSport = "run" | "ride";
+export type BestEffortValueKind =
+  "duration" | "distance" | "elevation" | "power";
+
+export type BestEffortHistory = {
+  sport: BestEffortSport;
+  type: string;
+  valueKind: BestEffortValueKind;
+  higherIsBetter: boolean;
+  distance: number | null;
+  duration: number | null;
+  options: { type: string; valueKind: BestEffortValueKind }[];
+  efforts: {
+    activityId: string;
+    activityName: string | null;
+    sport: ActivityType;
+    startedAt: string;
+    elapsedTime: number;
+    value: number;
+    overallRank: number;
+    year: number;
+    yearRank: number;
   }[];
 };

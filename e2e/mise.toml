@@ -1,5 +1,5 @@
 [tasks.install]
-run = "pnpm install --filter kondis-e2e --frozen-lockfile"
+run = "pnpm install --filter kondis-e2e --frozen-lockfile --config.confirmModulesPurge=false"
 
 [tasks.build]
 dir = "{{ config_root }}"

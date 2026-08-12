@@ -37,6 +37,7 @@
     const isNew = !activities.some(({ uploadId }) => uploadId === activity.uploadId);
     appendedActivities = [...appendedActivities.filter(({ uploadId }) => uploadId !== activity.uploadId), activity];
     if (isNew) totalOverride = (totalOverride ?? data.total) + 1;
+    void refreshRecent();
   }, () => void refreshRecent()));
 
   async function refreshRecent() {
@@ -126,7 +127,7 @@
         <section class="day-group">
           <div class="date-rail"><span></span><h2>{date}</h2><small>{activities?.length}</small></div>
           <div class="activity-list">
-            {#each activities ?? [] as activity (activity.id)}<ActivityCard {activity} unitSystem={data.unitSystem} />{/each}
+            {#each activities ?? [] as activity (activity.id)}<ActivityCard {activity} activityTypes={data.activityTypes} unitSystem={data.unitSystem} />{/each}
           </div>
         </section>
       {/each}

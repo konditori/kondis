@@ -240,6 +240,69 @@
         ]
       }
     },
+    "/activities/types": {
+      "get": {
+        "operationId": "ActivityController_listTypes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Activity type settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTypeListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List activity types and their behavior",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/activities/best-efforts/{sport}/{type}": {
+      "get": {
+        "operationId": "ActivityController_listBestEfforts",
+        "parameters": [
+          {
+            "name": "sport",
+            "required": true,
+            "in": "path",
+            "description": "Best effort sport category",
+            "schema": {
+              "$ref": "#/components/schemas/BestEffortSport"
+            }
+          },
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "description": "Best effort type",
+            "schema": {
+              "$ref": "#/components/schemas/BestEffortType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Best effort history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BestEffortListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List best efforts over time for a sport",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/activities/{id}": {
       "get": {
         "operationId": "ActivityController_getById",
@@ -544,241 +607,113 @@
           "command"
         ]
       },
-      "ActivityDto_Output": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-            "description": "Activity id"
-          },
-          "uploadId": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-            "description": "Source upload id"
-          },
-          "sport": {
-            "type": "string",
-            "enum": [
-              "alpine_ski",
-              "backcountry_ski",
-              "badminton",
-              "basketball",
-              "canoeing",
-              "cricket",
-              "cross_country_ski",
-              "crossfit",
-              "dance",
-              "e_bike_ride",
-              "elliptical",
-              "e_mountain_bike_ride",
-              "golf",
-              "gravel_ride",
-              "handcycle",
-              "high_intensity_interval_training",
-              "hike",
-              "ice_skate",
-              "inline_skate",
-              "kayaking",
-              "kitesurf",
-              "mountain_bike_ride",
-              "padel",
-              "physical_therapy",
-              "pickleball",
-              "pilates",
-              "racquetball",
-              "ride",
-              "rock_climbing",
-              "roller_ski",
-              "rowing",
-              "run",
-              "sail",
-              "skateboard",
-              "snowboard",
-              "snowshoe",
-              "soccer",
-              "squash",
-              "stair_stepper",
-              "stand_up_paddling",
-              "surfing",
-              "swim",
-              "table_tennis",
-              "tennis",
-              "trail_run",
-              "velomobile",
-              "virtual_ride",
-              "virtual_row",
-              "virtual_run",
-              "volleyball",
-              "walk",
-              "weight_training",
-              "wheelchair",
-              "windsurf",
-              "workout",
-              "yoga",
-              "other"
-            ],
-            "description": "Activity sport type"
-          },
-          "name": {
-            "type": "string",
-            "description": "Activity name",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "description": "Activity description",
-            "nullable": true
-          },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            "description": "Start time in ISO-8601 format"
-          },
-          "timezoneOffsetMinutes": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Minutes east of UTC",
-            "nullable": true
-          },
-          "elapsedTime": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Elapsed duration in seconds"
-          },
-          "movingTime": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Moving duration in seconds",
-            "nullable": true
-          },
-          "distance": {
-            "type": "number",
-            "description": "Distance in meters",
-            "nullable": true
-          },
-          "elevationGain": {
-            "type": "number",
-            "description": "Total elevation gain in meters",
-            "nullable": true
-          },
-          "elevationLoss": {
-            "type": "number",
-            "description": "Total elevation loss in meters",
-            "nullable": true
-          },
-          "avgSpeed": {
-            "type": "number",
-            "description": "Average speed in meters per second",
-            "nullable": true
-          },
-          "maxSpeed": {
-            "type": "number",
-            "description": "Peak speed in meters per second",
-            "nullable": true
-          },
-          "avgHr": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average heart rate in bpm",
-            "nullable": true
-          },
-          "maxHr": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum heart rate in bpm",
-            "nullable": true
-          },
-          "avgCadence": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average cadence in rpm",
-            "nullable": true
-          },
-          "maxCadence": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum cadence in rpm",
-            "nullable": true
-          },
-          "avgPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average power in watts",
-            "nullable": true
-          },
-          "maxPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum power in watts",
-            "nullable": true
-          },
-          "normalizedPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Normalized power in watts",
-            "nullable": true
-          },
-          "calories": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Calories in kcal",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            "description": "Creation timestamp in ISO-8601 format"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-            "description": "Last update timestamp in ISO-8601 format"
-          }
-        },
-        "required": [
-          "id",
-          "uploadId",
-          "sport",
-          "name",
-          "description",
-          "startedAt",
-          "timezoneOffsetMinutes",
-          "elapsedTime",
-          "movingTime",
-          "distance",
-          "elevationGain",
-          "elevationLoss",
-          "avgSpeed",
-          "maxSpeed",
-          "avgHr",
-          "maxHr",
-          "avgCadence",
-          "maxCadence",
-          "avgPower",
-          "maxPower",
-          "normalizedPower",
-          "calories",
-          "createdAt",
-          "updatedAt"
+      "ActivityType_Output": {
+        "type": "string",
+        "enum": [
+          "alpine_ski",
+          "backcountry_ski",
+          "badminton",
+          "basketball",
+          "canoeing",
+          "cricket",
+          "cross_country_ski",
+          "crossfit",
+          "dance",
+          "e_bike_ride",
+          "elliptical",
+          "e_mountain_bike_ride",
+          "golf",
+          "gravel_ride",
+          "handcycle",
+          "high_intensity_interval_training",
+          "hike",
+          "ice_skate",
+          "inline_skate",
+          "kayaking",
+          "kitesurf",
+          "mountain_bike_ride",
+          "padel",
+          "physical_therapy",
+          "pickleball",
+          "pilates",
+          "racquetball",
+          "ride",
+          "rock_climbing",
+          "roller_ski",
+          "rowing",
+          "run",
+          "sail",
+          "skateboard",
+          "snowboard",
+          "snowshoe",
+          "soccer",
+          "squash",
+          "stair_stepper",
+          "stand_up_paddling",
+          "surfing",
+          "swim",
+          "table_tennis",
+          "tennis",
+          "trail_run",
+          "velomobile",
+          "virtual_ride",
+          "virtual_row",
+          "virtual_run",
+          "volleyball",
+          "walk",
+          "weight_training",
+          "wheelchair",
+          "windsurf",
+          "workout",
+          "yoga",
+          "other"
         ],
-        "additionalProperties": false
+        "description": "Activity sport type"
+      },
+      "BestEffortType_Output": {
+        "type": "string",
+        "enum": [
+          "400m",
+          "1k",
+          "half_mile",
+          "1_mile",
+          "2_miles",
+          "5k",
+          "10k",
+          "15k",
+          "10_miles",
+          "20k",
+          "half_marathon",
+          "30k",
+          "marathon",
+          "50k",
+          "longest_ride",
+          "biggest_climb",
+          "elevation_gain",
+          "5_miles",
+          "40k",
+          "80k",
+          "50_miles",
+          "90k",
+          "100k",
+          "100_miles",
+          "180k",
+          "power_5s",
+          "power_15s",
+          "power_30s",
+          "power_1m",
+          "power_2m",
+          "power_3m",
+          "power_5m",
+          "power_8m",
+          "power_10m",
+          "power_15m",
+          "power_20m",
+          "power_30m",
+          "power_45m",
+          "power_1h",
+          "power_2h"
+        ]
       },
       "ActivityListResponseDto_Output": {
         "type": "object",
@@ -786,7 +721,203 @@
           "activities": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ActivityDto_Output"
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "description": "Activity id"
+                },
+                "uploadId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "description": "Source upload id"
+                },
+                "sport": {
+                  "$ref": "#/components/schemas/ActivityType_Output"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Activity name",
+                  "nullable": true
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Activity description",
+                  "nullable": true
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  "description": "Start time in ISO-8601 format"
+                },
+                "timezoneOffsetMinutes": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Minutes east of UTC",
+                  "nullable": true
+                },
+                "elapsedTime": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Elapsed duration in seconds"
+                },
+                "movingTime": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Moving duration in seconds",
+                  "nullable": true
+                },
+                "distance": {
+                  "type": "number",
+                  "description": "Distance in meters",
+                  "nullable": true
+                },
+                "elevationGain": {
+                  "type": "number",
+                  "description": "Total elevation gain in meters",
+                  "nullable": true
+                },
+                "elevationLoss": {
+                  "type": "number",
+                  "description": "Total elevation loss in meters",
+                  "nullable": true
+                },
+                "avgSpeed": {
+                  "type": "number",
+                  "description": "Average speed in meters per second",
+                  "nullable": true
+                },
+                "maxSpeed": {
+                  "type": "number",
+                  "description": "Peak speed in meters per second",
+                  "nullable": true
+                },
+                "avgHr": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Average heart rate in bpm",
+                  "nullable": true
+                },
+                "maxHr": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Maximum heart rate in bpm",
+                  "nullable": true
+                },
+                "avgCadence": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Average cadence in rpm",
+                  "nullable": true
+                },
+                "maxCadence": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Maximum cadence in rpm",
+                  "nullable": true
+                },
+                "avgPower": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Average power in watts",
+                  "nullable": true
+                },
+                "maxPower": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Maximum power in watts",
+                  "nullable": true
+                },
+                "normalizedPower": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Normalized power in watts",
+                  "nullable": true
+                },
+                "calories": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Calories in kcal",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  "description": "Creation timestamp in ISO-8601 format"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  "description": "Last update timestamp in ISO-8601 format"
+                },
+                "topBestEfforts": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "$ref": "#/components/schemas/BestEffortType_Output"
+                      },
+                      "yearRank": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 3
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "yearRank"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "uploadId",
+                "sport",
+                "name",
+                "description",
+                "startedAt",
+                "timezoneOffsetMinutes",
+                "elapsedTime",
+                "movingTime",
+                "distance",
+                "elevationGain",
+                "elevationLoss",
+                "avgSpeed",
+                "maxSpeed",
+                "avgHr",
+                "maxHr",
+                "avgCadence",
+                "maxCadence",
+                "avgPower",
+                "maxPower",
+                "normalizedPower",
+                "calories",
+                "createdAt",
+                "updatedAt",
+                "topBestEfforts"
+              ],
+              "additionalProperties": false
             }
           },
           "nextCursor": {
@@ -808,6 +939,186 @@
         ],
         "additionalProperties": false
       },
+      "ActivityTypeSettings_Output": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ActivityType_Output"
+          },
+          "averageMetric": {
+            "type": "string",
+            "enum": [
+              "none",
+              "pace",
+              "swim_pace",
+              "speed"
+            ]
+          },
+          "showAveragePower": {
+            "type": "boolean"
+          },
+          "bestEffortGroup": {
+            "type": "string",
+            "enum": [
+              "none",
+              "run",
+              "ride"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "averageMetric",
+          "showAveragePower",
+          "bestEffortGroup"
+        ],
+        "additionalProperties": false
+      },
+      "ActivityTypeListResponseDto_Output": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ActivityTypeSettings_Output"
+        }
+      },
+      "BestEffortSport_Output": {
+        "type": "string",
+        "enum": [
+          "run",
+          "ride"
+        ]
+      },
+      "BestEffortValueKind_Output": {
+        "type": "string",
+        "enum": [
+          "duration",
+          "distance",
+          "elevation",
+          "power"
+        ]
+      },
+      "BestEffortListResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "sport": {
+            "$ref": "#/components/schemas/BestEffortSport_Output"
+          },
+          "type": {
+            "$ref": "#/components/schemas/BestEffortType_Output"
+          },
+          "valueKind": {
+            "$ref": "#/components/schemas/BestEffortValueKind_Output"
+          },
+          "higherIsBetter": {
+            "type": "boolean"
+          },
+          "distance": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Selected distance in meters, when applicable",
+            "nullable": true
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Selected duration in seconds, when applicable",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "$ref": "#/components/schemas/BestEffortType_Output"
+                },
+                "valueKind": {
+                  "$ref": "#/components/schemas/BestEffortValueKind_Output"
+                }
+              },
+              "required": [
+                "type",
+                "valueKind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "efforts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "activityId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "activityName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "sport": {
+                  "$ref": "#/components/schemas/ActivityType_Output"
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "elapsedTime": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "minimum": 0
+                },
+                "value": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "minimum": 0
+                },
+                "overallRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "year": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "yearRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "activityId",
+                "activityName",
+                "sport",
+                "startedAt",
+                "elapsedTime",
+                "value",
+                "overallRank",
+                "year",
+                "yearRank"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "sport",
+          "type",
+          "valueKind",
+          "higherIsBetter",
+          "distance",
+          "duration",
+          "options",
+          "efforts"
+        ],
+        "additionalProperties": false
+      },
       "ActivityDetailDto_Output": {
         "type": "object",
         "properties": {
@@ -824,67 +1135,7 @@
             "description": "Source upload id"
           },
           "sport": {
-            "type": "string",
-            "enum": [
-              "alpine_ski",
-              "backcountry_ski",
-              "badminton",
-              "basketball",
-              "canoeing",
-              "cricket",
-              "cross_country_ski",
-              "crossfit",
-              "dance",
-              "e_bike_ride",
-              "elliptical",
-              "e_mountain_bike_ride",
-              "golf",
-              "gravel_ride",
-              "handcycle",
-              "high_intensity_interval_training",
-              "hike",
-              "ice_skate",
-              "inline_skate",
-              "kayaking",
-              "kitesurf",
-              "mountain_bike_ride",
-              "padel",
-              "physical_therapy",
-              "pickleball",
-              "pilates",
-              "racquetball",
-              "ride",
-              "rock_climbing",
-              "roller_ski",
-              "rowing",
-              "run",
-              "sail",
-              "skateboard",
-              "snowboard",
-              "snowshoe",
-              "soccer",
-              "squash",
-              "stair_stepper",
-              "stand_up_paddling",
-              "surfing",
-              "swim",
-              "table_tennis",
-              "tennis",
-              "trail_run",
-              "velomobile",
-              "virtual_ride",
-              "virtual_row",
-              "virtual_run",
-              "volleyball",
-              "walk",
-              "weight_training",
-              "wheelchair",
-              "windsurf",
-              "workout",
-              "yoga",
-              "other"
-            ],
-            "description": "Activity sport type"
+            "$ref": "#/components/schemas/ActivityType_Output"
           },
           "name": {
             "type": "string",
@@ -1053,26 +1304,7 @@
               "type": "object",
               "properties": {
                 "type": {
-                  "type": "string",
-                  "enum": [
-                    "400m",
-                    "1k",
-                    "half_mile",
-                    "1_mile",
-                    "2_miles",
-                    "5k",
-                    "10k",
-                    "15k",
-                    "10_miles",
-                    "20k",
-                    "half_marathon",
-                    "30k",
-                    "marathon",
-                    "50k"
-                  ]
-                },
-                "label": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/BestEffortType_Output"
                 },
                 "distance": {
                   "type": "number",
@@ -1096,15 +1328,51 @@
                   "exclusiveMinimum": true,
                   "description": "End offset from activity start in seconds",
                   "minimum": 0
+                },
+                "avgHr": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Average heart rate during the effort",
+                  "nullable": true
+                },
+                "elevationChange": {
+                  "type": "number",
+                  "description": "Net elevation change during the effort in meters",
+                  "nullable": true
+                },
+                "overallRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "description": "Rank among all matching efforts",
+                  "minimum": 0
+                },
+                "year": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Local calendar year of the activity"
+                },
+                "yearRank": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "description": "Rank among matching efforts in that calendar year",
+                  "minimum": 0
                 }
               },
               "required": [
                 "type",
-                "label",
                 "distance",
                 "elapsedTime",
                 "startTime",
-                "endTime"
+                "endTime",
+                "avgHr",
+                "elevationChange",
+                "overallRank",
+                "year",
+                "yearRank"
               ],
               "additionalProperties": false
             }
@@ -1140,6 +1408,69 @@
         ],
         "additionalProperties": false
       },
+      "ActivityUpdateDtoActivityType": {
+        "type": "string",
+        "enum": [
+          "alpine_ski",
+          "backcountry_ski",
+          "badminton",
+          "basketball",
+          "canoeing",
+          "cricket",
+          "cross_country_ski",
+          "crossfit",
+          "dance",
+          "e_bike_ride",
+          "elliptical",
+          "e_mountain_bike_ride",
+          "golf",
+          "gravel_ride",
+          "handcycle",
+          "high_intensity_interval_training",
+          "hike",
+          "ice_skate",
+          "inline_skate",
+          "kayaking",
+          "kitesurf",
+          "mountain_bike_ride",
+          "padel",
+          "physical_therapy",
+          "pickleball",
+          "pilates",
+          "racquetball",
+          "ride",
+          "rock_climbing",
+          "roller_ski",
+          "rowing",
+          "run",
+          "sail",
+          "skateboard",
+          "snowboard",
+          "snowshoe",
+          "soccer",
+          "squash",
+          "stair_stepper",
+          "stand_up_paddling",
+          "surfing",
+          "swim",
+          "table_tennis",
+          "tennis",
+          "trail_run",
+          "velomobile",
+          "virtual_ride",
+          "virtual_row",
+          "virtual_run",
+          "volleyball",
+          "walk",
+          "weight_training",
+          "wheelchair",
+          "windsurf",
+          "workout",
+          "yoga",
+          "other"
+        ],
+        "description": "Activity sport type"
+      },
       "ActivityUpdateDto": {
         "type": "object",
         "properties": {
@@ -1157,67 +1488,7 @@
             "nullable": true
           },
           "sport": {
-            "type": "string",
-            "enum": [
-              "alpine_ski",
-              "backcountry_ski",
-              "badminton",
-              "basketball",
-              "canoeing",
-              "cricket",
-              "cross_country_ski",
-              "crossfit",
-              "dance",
-              "e_bike_ride",
-              "elliptical",
-              "e_mountain_bike_ride",
-              "golf",
-              "gravel_ride",
-              "handcycle",
-              "high_intensity_interval_training",
-              "hike",
-              "ice_skate",
-              "inline_skate",
-              "kayaking",
-              "kitesurf",
-              "mountain_bike_ride",
-              "padel",
-              "physical_therapy",
-              "pickleball",
-              "pilates",
-              "racquetball",
-              "ride",
-              "rock_climbing",
-              "roller_ski",
-              "rowing",
-              "run",
-              "sail",
-              "skateboard",
-              "snowboard",
-              "snowshoe",
-              "soccer",
-              "squash",
-              "stair_stepper",
-              "stand_up_paddling",
-              "surfing",
-              "swim",
-              "table_tennis",
-              "tennis",
-              "trail_run",
-              "velomobile",
-              "virtual_ride",
-              "virtual_row",
-              "virtual_run",
-              "volleyball",
-              "walk",
-              "weight_training",
-              "wheelchair",
-              "windsurf",
-              "workout",
-              "yoga",
-              "other"
-            ],
-            "description": "Activity sport type"
+            "$ref": "#/components/schemas/ActivityUpdateDtoActivityType"
           },
           "startedAt": {
             "description": "Updated start time in ISO-8601 format",
@@ -1227,6 +1498,182 @@
           }
         }
       },
+      "ActivityDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Activity id"
+          },
+          "uploadId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Source upload id"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/ActivityType_Output"
+          },
+          "name": {
+            "type": "string",
+            "description": "Activity name",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Activity description",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Start time in ISO-8601 format"
+          },
+          "timezoneOffsetMinutes": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Minutes east of UTC",
+            "nullable": true
+          },
+          "elapsedTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Elapsed duration in seconds"
+          },
+          "movingTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Moving duration in seconds",
+            "nullable": true
+          },
+          "distance": {
+            "type": "number",
+            "description": "Distance in meters",
+            "nullable": true
+          },
+          "elevationGain": {
+            "type": "number",
+            "description": "Total elevation gain in meters",
+            "nullable": true
+          },
+          "elevationLoss": {
+            "type": "number",
+            "description": "Total elevation loss in meters",
+            "nullable": true
+          },
+          "avgSpeed": {
+            "type": "number",
+            "description": "Average speed in meters per second",
+            "nullable": true
+          },
+          "maxSpeed": {
+            "type": "number",
+            "description": "Peak speed in meters per second",
+            "nullable": true
+          },
+          "avgHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average heart rate in bpm",
+            "nullable": true
+          },
+          "maxHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum heart rate in bpm",
+            "nullable": true
+          },
+          "avgCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average cadence in rpm",
+            "nullable": true
+          },
+          "maxCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum cadence in rpm",
+            "nullable": true
+          },
+          "avgPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average power in watts",
+            "nullable": true
+          },
+          "maxPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum power in watts",
+            "nullable": true
+          },
+          "normalizedPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Normalized power in watts",
+            "nullable": true
+          },
+          "calories": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Calories in kcal",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Creation timestamp in ISO-8601 format"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "description": "Last update timestamp in ISO-8601 format"
+          }
+        },
+        "required": [
+          "id",
+          "uploadId",
+          "sport",
+          "name",
+          "description",
+          "startedAt",
+          "timezoneOffsetMinutes",
+          "elapsedTime",
+          "movingTime",
+          "distance",
+          "elevationGain",
+          "elevationLoss",
+          "avgSpeed",
+          "maxSpeed",
+          "avgHr",
+          "maxHr",
+          "avgCadence",
+          "maxCadence",
+          "avgPower",
+          "maxPower",
+          "normalizedPower",
+          "calories",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
       "QueueName": {
         "type": "string",
         "enum": [
@@ -1235,6 +1682,58 @@
           "storage"
         ],
         "description": "Queue name"
+      },
+      "BestEffortSport": {
+        "type": "string",
+        "enum": [
+          "run",
+          "ride"
+        ]
+      },
+      "BestEffortType": {
+        "type": "string",
+        "enum": [
+          "400m",
+          "1k",
+          "half_mile",
+          "1_mile",
+          "2_miles",
+          "5k",
+          "10k",
+          "15k",
+          "10_miles",
+          "20k",
+          "half_marathon",
+          "30k",
+          "marathon",
+          "50k",
+          "longest_ride",
+          "biggest_climb",
+          "elevation_gain",
+          "5_miles",
+          "40k",
+          "80k",
+          "50_miles",
+          "90k",
+          "100k",
+          "100_miles",
+          "180k",
+          "power_5s",
+          "power_15s",
+          "power_30s",
+          "power_1m",
+          "power_2m",
+          "power_3m",
+          "power_5m",
+          "power_8m",
+          "power_10m",
+          "power_15m",
+          "power_20m",
+          "power_30m",
+          "power_45m",
+          "power_1h",
+          "power_2h"
+        ]
       }
     }
   }

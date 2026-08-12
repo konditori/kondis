@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FitMessages } from 'src/repositories/fit.repository';
+import { computeRunningBestEfforts } from 'src/utils/best-effort';
 import { findStream, FitParseError, parseFitMessages } from 'src/utils/fit';
 
 const START = new Date('2015-06-22T08:00:00.000Z');
@@ -69,6 +70,40 @@ describe('parseFitMessages', () => {
     });
 
     expect(findStream(parsed, 'latitude')?.[0]).toBeCloseTo(58.673, 3);
+  });
+
+  it('derives a cumulative distance stream from positions when FIT records omit distance', () => {
+    const parsed = parseFitMessages({
+      sessionMesgs: [{ startTime: START, totalElapsedTime: 100, totalDistance: 1000 }],
+      recordMesgs: [
+        { timestamp: at(0), positionLat: 0, positionLong: 0 },
+        { timestamp: at(50), positionLat: 0, positionLong: 0.0045 },
+        { timestamp: at(100), positionLat: 0, positionLong: 0.009 },
+      ],
+    });
+
+    const distance = findStream(parsed, 'distance');
+    expect(distance).toHaveLength(3);
+    expect(distance?.[0]).toBe(0);
+    expect(distance?.[1]).toBeCloseTo(500, 5);
+    expect(distance?.[2]).toBeCloseTo(1000, 5);
+    expect(computeRunningBestEfforts(distance!, findStream(parsed, 'time')!).map(({ type }) => type)).toEqual([
+      '400m',
+      '1k',
+      'half_mile',
+    ]);
+  });
+
+  it('keeps a device-recorded distance stream instead of deriving one from positions', () => {
+    const parsed = parseFitMessages({
+      sessionMesgs: [{ startTime: START, totalElapsedTime: 100, totalDistance: 250 }],
+      recordMesgs: [
+        { timestamp: at(0), positionLat: 0, positionLong: 0, distance: 0 },
+        { timestamp: at(100), positionLat: 0, positionLong: 0.002, distance: 200 },
+      ],
+    });
+
+    expect(findStream(parsed, 'distance')).toEqual([0, 200]);
   });
 
   it('derives summary values from streams when there is no session message', () => {

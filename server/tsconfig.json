@@ -12,8 +12,8 @@
     "rootDir": ".",
     "types": ["node"],
     "paths": {
-      "src/*": ["./src/*"],
-      "test/*": ["./test/*"],
+      "src/*": ["./src/*.ts", "./src/*/index.ts"],
+      "test/*": ["./test/*.ts", "./test/*/index.ts"],
       "kysely/migration": ["./node_modules/kysely/dist/migration/index.d.ts"]
     },
     "incremental": true,

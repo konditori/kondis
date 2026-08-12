@@ -2,6 +2,7 @@ import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
 import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
+import { haversineDistance } from 'src/utils/geo';
 
 export class GpxDecodeError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -69,8 +70,6 @@ type GpxSegment = {
   points: GpxPoint[];
   label?: string;
 };
-
-const EARTH_RADIUS_M = 6_371_000;
 
 @Injectable()
 export class GpxRepository {
@@ -204,7 +203,7 @@ export class GpxRepository {
       let speed: number | undefined;
 
       if (previous?.lat !== undefined && previous.lon !== undefined && lat !== undefined && lon !== undefined) {
-        const step = haversine(previous.lat, previous.lon, lat, lon);
+        const step = haversineDistance(previous.lat, previous.lon, lat, lon);
         if (Number.isFinite(step)) {
           totalDistance += step;
           distance = totalDistance;
@@ -360,15 +359,6 @@ const normalizeSport = (value: unknown): string => {
   }
 
   return value.trim().toLowerCase() || 'unknown';
-};
-
-const haversine = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
-
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
 };
 
 const lastFinite = (values: Array<number | undefined>): number | undefined => {

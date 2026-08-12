@@ -3,8 +3,6 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
-import { ActivityType, usesActivityHeatmap } from 'src/domain/activity-type';
-import { RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
@@ -22,10 +20,36 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
-import { JobItem, JobOf, ParsedActivity } from 'src/types';
+import {
+  ACTIVITY_TYPES,
+  ActivityType,
+  BestEffortGroup,
+  BestEffortType,
+  CYCLING_BEST_EFFORTS,
+  JobItem,
+  JobOf,
+  ParsedActivity,
+  RUNNING_BEST_EFFORTS,
+} from 'src/types';
 import { parseFitMessages } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
+export type BestEffortSport = 'run' | 'ride';
+
+const BEST_EFFORT_SPORTS = {
+  run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(({ type }) => type),
+  ride: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Ride).map(
+    ({ type }) => type,
+  ),
+} satisfies Record<BestEffortSport, readonly ActivityType[]>;
+const BEST_EFFORT_DEFINITIONS = new Map(
+  [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),
+);
+// Materialize once at module load; TypeScript's configured lib does not expose Iterator#toArray yet.
+// eslint-disable-next-line unicorn/prefer-iterator-to-array
+const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].filter(
+  (definition): definition is typeof definition & { distance: number } => 'distance' in definition,
+);
 
 @Injectable()
 export class ActivityService {
@@ -61,10 +85,12 @@ export class ActivityService {
     const existing = await this.activityRepository.getByUploadId(id);
     if (existing) {
       if (!force) {
+        await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
         return JobStatus.Skipped;
       }
 
       await this.activityRepository.delete(existing.id);
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
     }
 
     try {
@@ -76,6 +102,7 @@ export class ActivityService {
       const activityId = await this.activityRepository.create(
         this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
       );
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
 
       await this.uploadRepository.setStatus(id, 'parsed');
       const activity = await this.activityRepository.getByUploadId(id);
@@ -159,6 +186,27 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
+  @OnJob({ name: JobName.ActivityBestEffortCompute, queue: QueueName.ActivityParsing })
+  async handleActivityBestEffortCompute({ id }: JobOf<JobName.ActivityBestEffortCompute>): Promise<JobStatus> {
+    const found = await this.activityRepository.recomputeBestEfforts(id);
+    if (!found) {
+      this.logger.warn(`Skipping best-effort computation for activity ${id}: no longer exists`);
+      return JobStatus.Skipped;
+    }
+
+    await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+    this.logger.log(`Computed best efforts for activity ${id}`);
+    return JobStatus.Success;
+  }
+
+  @OnJob({ name: JobName.ActivityBestEffortRank, queue: QueueName.ActivityParsing })
+  async handleActivityBestEffortRank(): Promise<JobStatus> {
+    await this.jobRepository.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
+    await this.activityRepository.refreshBestEffortRankings();
+    this.logger.log('Refreshed best-effort rankings');
+    return JobStatus.Success;
+  }
+
   @OnJob({ name: JobName.ActivityDelete, queue: QueueName.BackgroundTask })
   async handleActivityDelete({ id }: JobOf<JobName.ActivityDelete>): Promise<JobStatus> {
     const activity = await this.activityRepository.getById(id);
@@ -178,6 +226,8 @@ export class ActivityService {
           { transaction: trx },
         );
       }
+
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} }, { transaction: trx });
     });
 
     this.logger.log(`Deleted activity ${id}`);
@@ -193,48 +243,90 @@ export class ActivityService {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
     const last = page.at(-1);
+    const topBestEfforts = await this.topBestEffortsForActivities(page);
 
     return {
-      activities: page.map((row) => this.toActivityDto(row)),
+      activities: page.map((row) => ({
+        ...this.toActivityDto(row),
+        topBestEfforts: topBestEfforts.get(row.id) ?? [],
+      })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(),
     };
   }
 
+  async listBestEfforts(sport: BestEffortSport, type: BestEffortType) {
+    const definitions = sport === 'run' ? RUNNING_BEST_EFFORTS : CYCLING_BEST_EFFORTS;
+    const selected = definitions.find((effort) => effort.type === type);
+    if (!selected) {
+      throw new BadRequestException(`${type} is not a supported ${sport} best-effort distance`);
+    }
+    const sports = [...BEST_EFFORT_SPORTS[sport]];
+    const [rows, availableRows] = await Promise.all([
+      this.activityRepository.listBestEfforts(type, sports),
+      this.activityRepository.listAvailableBestEffortTypes(sports),
+    ]);
+    const availableTypes = new Set(availableRows.map((row) => row.type));
+
+    return {
+      sport,
+      type: selected.type,
+      valueKind: selected.valueKind,
+      higherIsBetter: selected.higherIsBetter,
+      distance: 'distance' in selected ? selected.distance : null,
+      duration: 'duration' in selected ? selected.duration : null,
+      options: definitions
+        .filter((definition) => availableTypes.has(definition.type))
+        .map((definition) => ({
+          type: definition.type,
+          valueKind: definition.valueKind,
+        })),
+      efforts: rows.map((row) => {
+        return {
+          activityId: row.activity_id,
+          activityName: row.name,
+          sport: row.sport,
+          startedAt: this.toIsoString(row.started_at),
+          elapsedTime: row.elapsed_time,
+          value: row.value,
+          overallRank: row.overall_rank,
+          year: row.year,
+          yearRank: row.year_rank,
+        };
+      }),
+    };
+  }
+
   async getById(id: string) {
-    const row = await this.activityRepository.getById(id);
+    const row = await this.activityRepository.getDetailById(id);
     if (!row) {
       return;
     }
 
-    // Older activities predate persisted analysis rows. Fill those without
-    // reparsing the upload, which would discard user-edited metadata.
-    await this.activityRepository.ensureBestEfforts(id, row.sport);
     const storedEfforts = await this.activityRepository.getBestEfforts(id);
-    const simplifiedTrack = row.track_geojson
-      ? (JSON.parse(row.track_geojson) as { type: 'LineString'; coordinates: [number, number][] })
+    const trackGeoJson = row.detail_track_geojson ?? row.track_geojson;
+    const track = trackGeoJson
+      ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] })
       : null;
-    const heatmapCoordinates = usesActivityHeatmap(row.sport)
-      ? await this.activityRepository.getTrackCoordinates(id)
-      : [];
 
     return {
       ...this.toActivityDto(row),
-      track:
-        heatmapCoordinates.length >= 2
-          ? { type: 'LineString' as const, coordinates: heatmapCoordinates }
-          : simplifiedTrack,
-      bestEfforts: RUNNING_BEST_EFFORTS.flatMap(({ type, label }) => {
-        const effort = storedEfforts.find((candidate) => candidate.type === type);
+      track,
+      bestEfforts: DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
+        const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
         return effort
           ? [
               {
-                type,
-                label,
+                type: definition.type,
                 distance: effort.distance,
                 elapsedTime: effort.elapsed_time,
                 startTime: effort.start_time,
                 endTime: effort.end_time,
+                avgHr: effort.avg_hr,
+                elevationChange: effort.elevation_change,
+                overallRank: effort.overall_rank,
+                year: effort.year,
+                yearRank: effort.year_rank,
               },
             ]
           : [];
@@ -273,6 +365,11 @@ export class ActivityService {
     }
 
     const updated = await this.activityRepository.update(id, mapped);
+    if (updated && input.sport !== undefined) {
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } });
+    } else if (updated && input.startedAt !== undefined) {
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+    }
     return updated ? this.toActivityDto(updated) : undefined;
   }
 
@@ -298,7 +395,35 @@ export class ActivityService {
   }
 
   private toIsoString(value: Timestamp): string {
-    return (value instanceof Date ? value : new Date(value)).toISOString();
+    return this.toDate(value).toISOString();
+  }
+
+  private toDate(value: Timestamp): Date {
+    return value instanceof Date ? value : new Date(value);
+  }
+
+  private async topBestEffortsForActivities(activities: ActivityRecord[]) {
+    const activityIds = new Set(activities.map(({ id }) => id));
+    const result = new Map<string, { type: BestEffortType; yearRank: number }[]>();
+    if (activityIds.size === 0) {
+      return result;
+    }
+
+    const rows = await this.activityRepository.listTopBestEfforts([...activityIds]);
+    for (const row of rows) {
+      const definition = BEST_EFFORT_DEFINITIONS.get(row.type);
+      if (!definition) {
+        continue;
+      }
+      const efforts = result.get(row.activity_id) ?? [];
+      efforts.push({ type: definition.type, yearRank: row.year_rank });
+      result.set(row.activity_id, efforts);
+    }
+
+    for (const [activityId, efforts] of result) {
+      result.set(activityId, efforts.sort((left, right) => left.yearRank - right.yearRank).slice(0, 3));
+    }
+    return result;
   }
 
   private encodeActivityCursor(startedAt: Timestamp, id: string): string {

@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { type ActivityType } from 'src/domain/activity-type';
-import { type UploadedFileData } from 'src/types';
+import { type ActivityType, type UploadedFileData } from 'src/types';
 
 export type TestAsset = {
   expectedSport: ActivityType;
@@ -10,7 +10,9 @@ export type TestAsset = {
   path: string;
 };
 
-export const testAssetDirectory = resolve(__dirname, '../../../test/test-assets');
+const currentDirectory = dirname(fileURLToPath(import.meta.url));
+
+export const testAssetDirectory = resolve(currentDirectory, '../../../test/test-assets');
 
 export const activityFixtures = {
   hindasRun: {
@@ -27,6 +29,17 @@ export const activityFixtures = {
     expectedSport: 'run',
     filename: '2024-03-01-run.gpx',
     path: resolve(testAssetDirectory, 'activities/running/2024-san-francisco/2024-03-01-run.gpx'),
+  },
+} as const satisfies Record<string, TestAsset>;
+
+export const syntheticActivityFixtures = {
+  missingRecordDistanceFit: {
+    expectedSport: 'run',
+    filename: 'synthetic-missing-record-distance.fit',
+    path: resolve(
+      testAssetDirectory,
+      'activities/running/missing-distance-stream/synthetic-missing-record-distance.fit',
+    ),
   },
 } as const satisfies Record<string, TestAsset>;
 

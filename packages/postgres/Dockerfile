@@ -1,4 +1,4 @@
-ARG PG_MAJOR
+ARG PG_MAJOR=18
 
 FROM postgres:${PG_MAJOR}
 

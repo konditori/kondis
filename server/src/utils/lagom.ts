@@ -5,8 +5,8 @@ import { parse } from 'csv-parse/sync';
 import { Open, type File as ZipEntry } from 'unzipper';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { ActivityType, toActivityType } from 'src/domain/activity-type';
-import type { UploadedFileData } from 'src/types';
+import type { ActivityType, UploadedFileData } from 'src/types';
+import { toActivityType } from 'src/utils/activity';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 const MANIFEST_NAME = 'activities.csv';

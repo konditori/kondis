@@ -22,7 +22,7 @@ export default typescriptEslint.config([
   js.configs.recommended,
   typescriptEslint.configs.recommended,
   {
-    ignores: ['eslint.config.mjs', 'vitest.config.ts', 'src/open-api/**'],
+    ignores: ['eslint.config.mjs', 'vitest.config.ts', 'src/open-api/**', 'scripts/run-typescript.cjs'],
   },
   {
     languageOptions: {

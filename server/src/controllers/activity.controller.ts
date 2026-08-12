@@ -19,9 +19,13 @@ import {
   ActivityIdParamDto,
   ActivityListQueryDto,
   ActivityListResponseDto,
+  ActivityTypeListResponseDto,
   ActivityUpdateDto,
+  BestEffortListParamDto,
+  BestEffortListResponseDto,
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
+import { ACTIVITY_TYPES } from 'src/types';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -33,6 +37,20 @@ export class ActivityController {
   @Get()
   async listRecent(@Query() query: ActivityListQueryDto): Promise<ActivityListResponseDto> {
     return this.service.listRecent(query);
+  }
+
+  @ApiOperation({ summary: 'List activity types and their behavior' })
+  @ZodResponse({ status: 200, description: 'Activity type settings', type: ActivityTypeListResponseDto })
+  @Get('types')
+  listTypes(): ActivityTypeListResponseDto {
+    return [...ACTIVITY_TYPES];
+  }
+
+  @ApiOperation({ summary: 'List best efforts over time for a sport' })
+  @ZodResponse({ status: 200, description: 'Best effort history', type: BestEffortListResponseDto })
+  @Get('best-efforts/:sport/:type')
+  async listBestEfforts(@Param() params: BestEffortListParamDto): Promise<BestEffortListResponseDto> {
+    return this.service.listBestEfforts(params.sport, params.type);
   }
 
   @ApiOperation({ summary: 'Get one activity and its route' })

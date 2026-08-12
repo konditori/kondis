@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
+import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Job, JobInsert, QueuePolicy, SendOptions } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
@@ -234,6 +235,24 @@ export class JobRepository implements OnApplicationShutdown {
     await boss.deleteStoredJobs(deadLetterName(queue));
   }
 
+  async discardQueuedDuplicates(itemName: JobName): Promise<void> {
+    const boss = await this.getBoss();
+    const queueName = this.getQueueName(itemName);
+    const queue = await boss.getQueue(queueName);
+    if (!queue) {
+      return;
+    }
+
+    const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+    await boss.getDb().executeSql(
+      `DELETE FROM ${table}
+       WHERE name = $1
+         AND state IN ('created', 'retry')
+         AND data ->> 'name' = $2`,
+      [queueName, itemName],
+    );
+  }
+
   async waitForQueueCompletion(...queues: QueueName[]): Promise<void> {
     const names = queues.length > 0 ? queues : Object.values(QueueName);
 
@@ -307,10 +326,18 @@ export class JobRepository implements OnApplicationShutdown {
         return { singletonKey: `${item.name}:${item.data.checksum}` };
       }
 
+      case JobName.ActivityBestEffortCompute:
       case JobName.ActivityParse: {
         return {
           singletonKey: `${item.name}:${item.data.id}`,
         };
+      }
+
+      case JobName.ActivityBestEffortRank: {
+        // The queue itself is exclusive, so an empty singleton key silently drops a later
+        // refresh while another is queued or active. Give every request a key; the handler
+        // removes redundant queued refreshes immediately before calculating the rankings.
+        return { singletonKey: `${item.name}:${randomUUID()}`, priority: -1 };
       }
 
       case JobName.ActivityDelete: {
