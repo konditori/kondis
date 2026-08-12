@@ -273,21 +273,25 @@ describe('ActivityController (medium)', () => {
       ).resolves.toMatchObject({ detail_track: expect.anything() });
     });
 
-    it('groups repeated GPS tracks while excluding a different route nearby', async () => {
+    it('groups repeated GPS tracks while excluding nearby and reversed routes', async () => {
       const first = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first route effort', [
-        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.341] },
+        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
         { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
       ]);
       const second = await createActivity(
         new Date('2024-02-01T08:00:00.000Z'),
-        'same route reversed with GPS drift',
+        'same direction with GPS drift',
         [
-          { type: 'latitude', data: [59.34103, 59.33702, 59.33305, 59.32932] },
-          { type: 'longitude', data: [18.06862, 18.07004, 18.07403, 18.06861] },
+          { type: 'latitude', data: [59.32932, 59.33305, 59.33702, 59.32931] },
+          { type: 'longitude', data: [18.06861, 18.07403, 18.07004, 18.06859] },
         ],
       );
+      await createActivity(new Date('2024-02-15T08:00:00.000Z'), 'same loop in reverse', [
+        { type: 'latitude', data: [59.3293, 59.337, 59.333, 59.3293] },
+        { type: 'longitude', data: [18.0686, 18.07, 18.074, 18.0686] },
+      ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'different route', [
-        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.341] },
+        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
         { type: 'longitude', data: [18.0686, 18.079, 18.075, 18.0686] },
       ]);
 
@@ -296,6 +300,10 @@ describe('ActivityController (medium)', () => {
 
       expect(detail.matchedRouteCount).toBe(2);
       expect(response.activities.map(({ id }) => id)).toEqual([first, second]);
+
+      await db.deleteFrom('activity_route_match').where('activity_id', '=', first).execute();
+      const detailAfterRemovingPersistedMatches = await controller.getById({ id: first });
+      expect(detailAfterRemovingPersistedMatches.matchedRouteCount).toBe(0);
     });
 
     it('returns no route matches for an activity without GPS data', async () => {

@@ -23,6 +23,13 @@ import {
 } from 'src/utils/best-effort';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
+const ROUTE_CANDIDATE_LIMIT = 250;
+const ROUTE_PREFILTER_RADIUS_METERS = 250;
+const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
+const ROUTE_MIN_LENGTH_RATIO = 0.88;
+const ROUTE_MAX_LENGTH_RATIO = 1.14;
+const ROUTE_FRECHET_TOLERANCE_METERS = 100;
+const ROUTE_FRECHET_DENSIFY_FRACTION = 0.05;
 const ACTIVITY_COLUMNS = [
   'activity.id',
   'activity.upload_id',
@@ -150,6 +157,8 @@ export class ActivityRepository {
         .values({ activity_id: id, ...input.metrics })
         .execute();
 
+      await this.refreshRouteMatches(id, trx);
+
       if (input.streams.length > 0) {
         await trx
           .insertInto('activity_stream')
@@ -194,11 +203,18 @@ export class ActivityRepository {
       .selectAll('activity_metric')
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'))
       .select(sql<string | null>`ST_AsGeoJSON(detail_track)`.as('detail_track_geojson'))
+      .select((eb) =>
+        eb
+          .selectFrom('activity_route_match')
+          .select(({ fn }) => fn.countAll<number>().as('count'))
+          .whereRef('activity_route_match.activity_id', '=', 'activity.id')
+          .as('matched_route_count'),
+      )
       .where('activity.id', '=', id)
       .executeTakeFirst();
   }
 
-  async listMatchedRoutes(activityId: string): Promise<ActivityRecord[]> {
+  private async findMatchingRouteIds(activityId: string, executor: KondisExecutor): Promise<string[]> {
     const { rows } = await sql<{ id: string }>`
       WITH source AS MATERIALIZED (
         SELECT id, sport, track, route_embedding
@@ -213,9 +229,9 @@ export class ActivityRepository {
         WHERE candidate.sport = source.sport
           AND candidate.track IS NOT NULL
           AND candidate.route_embedding IS NOT NULL
-          AND ST_DWithin(candidate.track, source.track, 250)
+          AND ST_DWithin(candidate.track, source.track, ${ROUTE_PREFILTER_RADIUS_METERS})
         ORDER BY candidate.route_embedding <-> source.route_embedding
-        LIMIT 250
+        LIMIT ${ROUTE_CANDIDATE_LIMIT}
       )
       SELECT candidate.id
       FROM candidates
@@ -223,41 +239,58 @@ export class ActivityRepository {
       CROSS JOIN source
       WHERE candidate.id = source.id
          OR (
-           ST_Length(candidate.track) / NULLIF(ST_Length(source.track), 0) BETWEEN 0.88 AND 1.14
-           AND (
-             (
-               ST_DWithin(
-                 ST_StartPoint(candidate.track::geometry)::geography,
-                 ST_StartPoint(source.track::geometry)::geography,
-                 120
-               )
-               AND ST_DWithin(
-                 ST_EndPoint(candidate.track::geometry)::geography,
-                 ST_EndPoint(source.track::geometry)::geography,
-                 120
-               )
-             ) OR (
-               ST_DWithin(
-                 ST_StartPoint(candidate.track::geometry)::geography,
-                 ST_EndPoint(source.track::geometry)::geography,
-                 120
-               )
-               AND ST_DWithin(
-                 ST_EndPoint(candidate.track::geometry)::geography,
-                 ST_StartPoint(source.track::geometry)::geography,
-                 120
-               )
-             )
+           ST_Length(candidate.track) / NULLIF(ST_Length(source.track), 0)
+             BETWEEN ${ROUTE_MIN_LENGTH_RATIO} AND ${ROUTE_MAX_LENGTH_RATIO}
+           AND ST_DWithin(
+             ST_StartPoint(candidate.track::geometry)::geography,
+             ST_StartPoint(source.track::geometry)::geography,
+             ${ROUTE_ENDPOINT_TOLERANCE_METERS}
            )
-           AND ST_HausdorffDistance(
+           AND ST_DWithin(
+             ST_EndPoint(candidate.track::geometry)::geography,
+             ST_EndPoint(source.track::geometry)::geography,
+             ${ROUTE_ENDPOINT_TOLERANCE_METERS}
+           )
+           AND ST_FrechetDistance(
              ST_Transform(candidate.track::geometry, 3857),
              ST_Transform(source.track::geometry, 3857),
-             0.05
-           ) <= 100
+             ${ROUTE_FRECHET_DENSIFY_FRACTION}
+           ) <= ${ROUTE_FRECHET_TOLERANCE_METERS}
          )
-    `.execute(this.db);
+    `.execute(executor);
 
-    const ids = rows.map(({ id }) => id);
+    return rows.map(({ id }) => id);
+  }
+
+  private async refreshRouteMatches(activityId: string, executor: KondisExecutor = this.db): Promise<void> {
+    await executor.deleteFrom('activity_route_match').where('activity_id', '=', activityId).execute();
+    await executor.deleteFrom('activity_route_match').where('matched_activity_id', '=', activityId).execute();
+
+    const ids = await this.findMatchingRouteIds(activityId, executor);
+    if (ids.length === 0) {
+      return;
+    }
+
+    await executor
+      .insertInto('activity_route_match')
+      .values(
+        ids.flatMap((matchedId) => [
+          { activity_id: activityId, matched_activity_id: matchedId },
+          { activity_id: matchedId, matched_activity_id: activityId },
+        ]),
+      )
+      .onConflict((conflict) => conflict.doNothing())
+      .execute();
+  }
+
+  async listMatchedRoutes(activityId: string): Promise<ActivityRecord[]> {
+    const rows = await this.db
+      .selectFrom('activity_route_match')
+      .select('matched_activity_id')
+      .where('activity_id', '=', activityId)
+      .execute();
+
+    const ids = rows.map(({ matched_activity_id }) => matched_activity_id);
     if (ids.length === 0) {
       return [];
     }
@@ -373,6 +406,7 @@ export class ActivityRepository {
       }
 
       await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
+      await this.refreshRouteMatches(id, trx);
       return row;
     });
     return updated ? this.getById(updated.id) : undefined;

@@ -10,17 +10,12 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       WITH samples AS (
         SELECT
           sample_index,
-          ST_Transform(ST_LineInterpolatePoint(route::geometry, sample_index / 15.0), 3857) AS forward_point,
-          ST_Transform(ST_LineInterpolatePoint(route::geometry, 1 - sample_index / 15.0), 3857) AS reverse_point
-        FROM generate_series(0, 7) AS sample_index
+          ST_Transform(ST_LineInterpolatePoint(route::geometry, sample_index / 15.0), 3857) AS point
+        FROM generate_series(0, 15) AS sample_index
       ), dimensions AS (
-        SELECT sample_index, 0 AS axis, (ST_X(forward_point) + ST_X(reverse_point)) / 20000.0 AS value FROM samples
+        SELECT sample_index, 0 AS axis, ST_X(point) / 10000.0 AS value FROM samples
         UNION ALL
-        SELECT sample_index, 1 AS axis, (ST_Y(forward_point) + ST_Y(reverse_point)) / 20000.0 AS value FROM samples
-        UNION ALL
-        SELECT sample_index, 2 AS axis, abs(ST_X(forward_point) - ST_X(reverse_point)) / 10000.0 AS value FROM samples
-        UNION ALL
-        SELECT sample_index, 3 AS axis, abs(ST_Y(forward_point) - ST_Y(reverse_point)) / 10000.0 AS value FROM samples
+        SELECT sample_index, 1 AS axis, ST_Y(point) / 10000.0 AS value FROM samples
       )
       SELECT array_agg(value::real ORDER BY sample_index, axis)::vector(32)
       FROM dimensions
@@ -51,9 +46,45 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     CREATE INDEX activity_route_embedding_idx
     ON activity USING vchordrq (route_embedding vector_l2_ops)
   `.execute(db);
+
+  await sql`
+    CREATE TABLE activity_route_match (
+      activity_id uuid NOT NULL REFERENCES activity (id) ON DELETE CASCADE,
+      matched_activity_id uuid NOT NULL REFERENCES activity (id) ON DELETE CASCADE,
+      PRIMARY KEY (activity_id, matched_activity_id)
+    )
+  `.execute(db);
+
+  // Persist matches for existing activities. Future imports use the same predicates in ActivityRepository.
+  await sql`
+    INSERT INTO activity_route_match (activity_id, matched_activity_id)
+    SELECT source.id, candidate.id
+    FROM activity AS source
+    JOIN activity AS candidate
+      ON candidate.sport = source.sport
+     AND candidate.track IS NOT NULL
+     AND candidate.route_embedding IS NOT NULL
+     AND ST_DWithin(candidate.track, source.track, 250)
+    WHERE source.track IS NOT NULL
+      AND source.route_embedding IS NOT NULL
+      AND (
+        candidate.id = source.id
+        OR (
+          ST_Length(candidate.track) / NULLIF(ST_Length(source.track), 0) BETWEEN 0.88 AND 1.14
+          AND ST_DWithin(ST_StartPoint(candidate.track::geometry)::geography, ST_StartPoint(source.track::geometry)::geography, 120)
+          AND ST_DWithin(ST_EndPoint(candidate.track::geometry)::geography, ST_EndPoint(source.track::geometry)::geography, 120)
+          AND ST_FrechetDistance(
+            ST_Transform(candidate.track::geometry, 3857),
+            ST_Transform(source.track::geometry, 3857),
+            0.05
+          ) <= 100
+        )
+      )
+  `.execute(db);
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
+  await sql`DROP TABLE IF EXISTS activity_route_match`.execute(db);
   await sql`DROP INDEX IF EXISTS activity_route_embedding_idx`.execute(db);
   await sql`DROP TRIGGER IF EXISTS activity_set_route_embedding ON activity`.execute(db);
   await sql`DROP FUNCTION IF EXISTS kondis_set_route_embedding()`.execute(db);
