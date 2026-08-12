@@ -80,6 +80,7 @@ describe('extractLagomTakeout', () => {
     const result = await extractLagomTakeout(archive, (activity) => {
       imported.push(activity.name ?? '');
       expect(activity.manual?.distance).toBe(4700);
+      return Promise.resolve();
     });
 
     expect(imported).toEqual(['10/08/2016']);
