@@ -125,6 +125,17 @@ describe('parseFitMessages', () => {
     expect(parsed.maxHr).toBe(160);
   });
 
+  it('treats zero heart-rate values as missing sensor data', () => {
+    const parsed = parseFitMessages({
+      sessionMesgs: [{ startTime: START, totalElapsedTime: 60, avgHeartRate: 0, maxHeartRate: 0 }],
+      recordMesgs: [{ timestamp: at(0), heartRate: 0 }, { timestamp: at(60), heartRate: 0 }],
+    });
+
+    expect(findStream(parsed, 'heartrate')).toBeUndefined();
+    expect(parsed.avgHr).toBeNull();
+    expect(parsed.maxHr).toBeNull();
+  });
+
   it('derives average speed from distance and time when the device recorded neither', () => {
     const parsed = parseFitMessages({
       sessionMesgs: [{ startTime: START, totalElapsedTime: 100, totalTimerTime: 100, totalDistance: 250 }],

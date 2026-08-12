@@ -59,13 +59,18 @@ export const toName = (value?: string | number | null): string | null => {
   return typeof value === 'string' ? value : String(value);
 };
 
+const heartRate = (value?: number | null): number | null => {
+  const parsed = int(value);
+  return parsed !== null && parsed > 0 ? parsed : null;
+};
+
 const EXTRACTORS: { type: StreamType; extract: (record: FitRecordMesg) => number | null }[] = [
   { type: 'latitude', extract: (record) => toDegrees(record.positionLat) },
   { type: 'longitude', extract: (record) => toDegrees(record.positionLong) },
   { type: 'altitude', extract: (record) => num(record.enhancedAltitude ?? record.altitude) },
   { type: 'distance', extract: (record) => num(record.distance) },
   { type: 'speed', extract: (record) => num(record.enhancedSpeed ?? record.speed) },
-  { type: 'heartrate', extract: (record) => int(record.heartRate) },
+  { type: 'heartrate', extract: (record) => heartRate(record.heartRate) },
   { type: 'cadence', extract: (record) => int(record.cadence) },
   { type: 'power', extract: (record) => int(record.power) },
   { type: 'temperature', extract: (record) => num(record.temperature) },
@@ -139,8 +144,8 @@ export const mapLap = (lap: FitLapMesg, index: number): ParsedLap => ({
   elapsedTimeS: int(lap.totalElapsedTime),
   movingTimeS: int(lap.totalTimerTime),
   distanceM: num(lap.totalDistance),
-  avgHr: int(lap.avgHeartRate),
-  maxHr: int(lap.maxHeartRate),
+  avgHr: heartRate(lap.avgHeartRate),
+  maxHr: heartRate(lap.maxHeartRate),
   avgPower: int(lap.avgPower),
   avgSpeedMps: num(lap.enhancedAvgSpeed ?? lap.avgSpeed),
 });
@@ -220,8 +225,8 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
     elevationLoss: num(session?.totalDescent) ?? (altitude.length > 0 ? elevation.lossM : null),
     avgSpeed: num(session?.enhancedAvgSpeed ?? session?.avgSpeed) ?? mean(speed) ?? derivedAvgSpeedMps,
     maxSpeed: num(session?.enhancedMaxSpeed ?? session?.maxSpeed) ?? max(speed),
-    avgHr: int(session?.avgHeartRate) ?? roundOrNull(mean(heartrate)),
-    maxHr: int(session?.maxHeartRate) ?? roundOrNull(max(heartrate)),
+    avgHr: heartRate(session?.avgHeartRate) ?? roundOrNull(mean(heartrate)),
+    maxHr: heartRate(session?.maxHeartRate) ?? roundOrNull(max(heartrate)),
     avgCadence: int(session?.avgCadence) ?? roundOrNull(mean(cadence)),
     maxCadence: int(session?.maxCadence) ?? roundOrNull(max(cadence)),
     avgPower: int(session?.avgPower) ?? roundOrNull(mean(power)),

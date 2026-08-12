@@ -12,6 +12,9 @@ import {
   NewLap,
   StreamType,
 } from 'src/db/schema';
+import { getColumns } from 'src/schema/decorators';
+import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
+import { ActivityTable } from 'src/schema/tables/activity.table';
 import { ActivityType, BestEffortGroup, BestEffortType } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
@@ -22,6 +25,7 @@ import {
   computeRunningBestEfforts,
 } from 'src/utils/best-effort';
 
+// TODO: should we move these values somewhere else than the repo?
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 const ROUTE_CANDIDATE_LIMIT = 250;
 const ROUTE_PREFILTER_RADIUS_METERS = 250;
@@ -29,37 +33,19 @@ const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
 const ROUTE_MIN_LENGTH_RATIO = 0.88;
 const ROUTE_MAX_LENGTH_RATIO = 1.14;
 const ROUTE_FRECHET_TOLERANCE_METERS = 200;
-const ACTIVITY_COLUMNS = [
-  'activity.id',
-  'activity.upload_id',
-  'activity.sport',
-  'activity.name',
-  'activity.description',
-  'activity.started_at',
-  'activity.timezone_offset_minutes',
-  'activity.metrics_computed_at',
-  'activity.best_efforts_computed_at',
-  'activity.route_matches_computed_at',
-  'activity.created_at',
-  'activity.updated_at',
-] as const;
-const METRIC_COLUMNS = [
-  'elapsed_time',
-  'moving_time',
-  'distance',
-  'elevation_gain',
-  'elevation_loss',
-  'avg_speed',
-  'max_speed',
-  'avg_hr',
-  'max_hr',
-  'avg_cadence',
-  'max_cadence',
-  'avg_power',
-  'max_power',
-  'normalized_power',
-  'calories',
-] as const;
+
+// Heavy geo/vector columns fetched separately (e.g. via ST_AsGeoJSON) instead of by default.
+const ACTIVITY_EXCLUDED_COLUMNS = new Set<keyof Activity>(['track', 'detail_track', 'route_embedding']);
+type ActivityColumn = Exclude<keyof Activity, 'track' | 'detail_track' | 'route_embedding'>;
+const ACTIVITY_COLUMNS = getColumns(ActivityTable)
+  .filter((column): column is ActivityColumn => !ACTIVITY_EXCLUDED_COLUMNS.has(column))
+  .map((column) => `activity.${column}` as const);
+
+// activity_id is the join key, embedded separately as the parent activity's id.
+const METRIC_EXCLUDED_COLUMNS = new Set<keyof ActivityMetric>(['activity_id']);
+const METRIC_COLUMNS = getColumns(ActivityMetricTable).filter(
+  (column): column is Exclude<keyof ActivityMetric, 'activity_id'> => !METRIC_EXCLUDED_COLUMNS.has(column),
+);
 
 export type ActivityStreamInput = { type: StreamType; data: number[] };
 
@@ -243,7 +229,7 @@ export class ActivityRepository {
       .executeTakeFirst();
   }
 
-  private async findMatchingRouteIds(activityId: string, executor: KondisExecutor): Promise<string[]> {
+  private async computeMatchingRouteIds(activityId: string, executor: KondisExecutor): Promise<string[]> {
     const { rows } = await sql<{ id: string }>`
       WITH source AS MATERIALIZED (
         SELECT id, sport, track, route_embedding, kondis_normalize_route(track) AS normalized_track
@@ -294,7 +280,7 @@ export class ActivityRepository {
     await executor.deleteFrom('activity_route_match').where('activity_id', '=', activityId).execute();
     await executor.deleteFrom('activity_route_match').where('matched_activity_id', '=', activityId).execute();
 
-    const ids = await this.findMatchingRouteIds(activityId, executor);
+    const ids = await this.computeMatchingRouteIds(activityId, executor);
     if (ids.length === 0) {
       return;
     }
