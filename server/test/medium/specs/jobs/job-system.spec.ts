@@ -97,6 +97,10 @@ describe('job system (medium)', () => {
       },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
       [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },
+      [JobName.ActivityManualCreate]: {
+        name: JobName.ActivityUpload,
+        data: undefined
+      }
     };
 
     it('binds a handler to every job name', async () => {
