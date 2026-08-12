@@ -1,0 +1,19 @@
+server/tsconfig.json
+  s_13a30a0a8901df::t_8fd3f2b67d9a89 15-16,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ec3bc7f07c51ac599d718c1f55f42425268f91f7",
+  "prompts": {},
+  "sessions": {
+    "s_13a30a0a8901df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff52b-7358-7163-8df0-b69934917ea8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
