@@ -1,0 +1,51 @@
+open-api/kondis-openapi-specs.json
+  s_4c3ea23d641b14::t_849981d4ca8699 406-439,1413-1418,1447-1448,1628-1738
+packages/postgres/Dockerfile
+  s_4c3ea23d641b14::t_77f62a88e93d14 15
+server/src/controllers/activity.controller.ts
+  s_4c3ea23d641b14::t_ad7d8a989b9784 26,69-80
+server/src/dtos/activity.dto.ts
+  s_4c3ea23d641b14::t_f7ba3df8967ef6 145,148-154,171
+server/src/open-api/fetch-client.ts
+  s_4c3ea23d641b14::t_09f96e35e8ec3a 231-232,292-295,557-576
+server/src/repositories/activity.repository.ts
+  s_4c3ea23d641b14::t_5f94afec77e40a 47,201-275
+server/src/schema/migrations/1786450000000-MatchedRoutes.ts
+  s_4c3ea23d641b14::t_c1b7cee5306617 1-62
+server/src/schema/tables/activity.table.ts
+  s_4c3ea23d641b14::t_2d6d7eacfcf7d3 46-48
+server/src/services/activity.service.ts
+  s_4c3ea23d641b14::t_f34c8ccdef918c 306-309,318,341-353
+server/test/medium/globalSetup.ts
+  s_4c3ea23d641b14::t_199cf1332c5fc3 1,25-31
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_4c3ea23d641b14::t_ad1d0e98bc2592 276-308
+web/src/app.css
+  s_4c3ea23d641b14::t_cc622876f6bb33 896-939,990-1132,1598-1606,1665,1669-1671,1788-1795,1799-1851
+web/src/lib/api.ts
+  s_4c3ea23d641b14::t_d65f416ab5b7a5 4,28
+web/src/lib/types.ts
+  s_4c3ea23d641b14::t_24ad480b7eb7ee 44,59-63
+web/src/routes/activities/[id]/+page.svelte
+  s_4c3ea23d641b14::t_f31be4f187a4e1 2,151-162
+web/src/routes/activities/[id]/matched-routes/+page.server.ts
+  s_4c3ea23d641b14::t_fea963bb5280c8 1-21
+web/src/routes/activities/[id]/matched-routes/+page.svelte
+  s_4c3ea23d641b14::t_07a641601235fb 1-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0484c3ae35c3a7535bd9ddf79850e31df87704b1",
+  "prompts": {},
+  "sessions": {
+    "s_4c3ea23d641b14": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff73c-dc3d-7b53-8f6a-e75577a333d7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
