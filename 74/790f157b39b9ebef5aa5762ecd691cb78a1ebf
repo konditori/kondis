@@ -1,0 +1,51 @@
+e2e/src/specs/server/api/activities.e2e-spec.ts
+  s_e571bb2bc71a8b::t_b3c5e3a38c5f8b 34-37
+e2e/src/utils.ts
+  s_e571bb2bc71a8b::t_f0372a33e16391 52
+open-api/kondis-openapi-specs.json
+  s_e571bb2bc71a8b::t_e4feb3210c3157 707-823,915-922,956-957,968,1216-1223,1346-1347,1353-1354,1365,1415-1422,1445,1463-1464
+server/src/dtos/activity.dto.ts
+  s_e571bb2bc71a8b::t_a02f1669f7060e 45,62-74,91-92,138-159,165
+server/src/enum.ts
+  s_e571bb2bc71a8b::t_27840331584d28 14,17
+server/src/open-api/fetch-client.ts
+  s_e571bb2bc71a8b::t_b6a1dca0c71db3 66-97,113-114,119-124,177-178,188-212,237-238,246
+server/src/repositories/activity.repository.ts
+  s_e571bb2bc71a8b::t_7955f141ad939f 3,40-42,46-62,72-75,164-169,171-180,182-187,189-200,202,209-216,225-232,314-360,376-383,394-401,410-417,502-508,514,527,529-531,535-539
+server/src/repositories/event.repository.ts
+  s_e571bb2bc71a8b::t_125ad76c85b0c9 15,22,32
+server/src/repositories/job.repository.ts
+  s_e571bb2bc71a8b::t_d45e787297a81f 329,331
+server/src/schema/migrations/1786451000000-DecoupledActivityAnalysis.ts
+  s_e571bb2bc71a8b::t_c7810c12f0200b 1-27
+server/src/schema/tables/activity.table.ts
+  s_e571bb2bc71a8b::t_95350985cdc95c 49-57
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_e571bb2bc71a8b::t_82cea6f8e25e46 75-78,84-87
+web/src/lib/components/ActivityCard.svelte
+  s_e571bb2bc71a8b::t_cbbe52fbeabd93 35-37
+web/src/lib/realtime.ts
+  s_e571bb2bc71a8b::t_63247a864d1733 3-6,26-31
+web/src/lib/types.ts
+  s_e571bb2bc71a8b::t_466d82697d4084 13-29,32-37,48-62,67
+web/src/routes/activities/[id]/+page.svelte
+  s_e571bb2bc71a8b::t_91f6bb3d61257e 27,32-33,36-39,41,43,45,67,151,172
+web/src/routes/activities/[id]/matched-routes/+page.svelte
+  s_e571bb2bc71a8b::t_e330991d157ea4 15,17-18,27,30-32,104,120,130,139,141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "74790f157b39b9ebef5aa5762ecd691cb78a1ebf",
+  "prompts": {},
+  "sessions": {
+    "s_e571bb2bc71a8b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff75a-2902-7b43-b9cd-6c185482167b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
