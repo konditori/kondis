@@ -128,7 +128,10 @@ describe('parseFitMessages', () => {
   it('treats zero heart-rate values as missing sensor data', () => {
     const parsed = parseFitMessages({
       sessionMesgs: [{ startTime: START, totalElapsedTime: 60, avgHeartRate: 0, maxHeartRate: 0 }],
-      recordMesgs: [{ timestamp: at(0), heartRate: 0 }, { timestamp: at(60), heartRate: 0 }],
+      recordMesgs: [
+        { timestamp: at(0), heartRate: 0 },
+        { timestamp: at(60), heartRate: 0 },
+      ],
     });
 
     expect(findStream(parsed, 'heartrate')).toBeUndefined();

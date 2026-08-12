@@ -46,10 +46,12 @@ describe('extractLagomTakeout', () => {
 
   it('creates a summary activity for a manual CSV row without a file', async () => {
     const archive = createTestZip({
-      'activities.csv': Buffer.from([
-        'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance,Average Speed,Elevation Gain,Calories',
-        '1,"Aug 10, 2016, 5:00:00 PM",10/08/2016,Run,,1495,1495,4.70,4700,2.95,0,624',
-      ].join('\n')),
+      'activities.csv': Buffer.from(
+        [
+          'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance,Average Speed,Elevation Gain,Calories',
+          '1,"Aug 10, 2016, 5:00:00 PM",10/08/2016,Run,,1495,1495,4.70,4700,2.95,0,624',
+        ].join('\n'),
+      ),
     });
 
     const result = await extractLagomTakeout(archive);
@@ -66,10 +68,12 @@ describe('extractLagomTakeout', () => {
 
   it('hands a manual CSV activity to the import callback', async () => {
     const archive = createTestZip({
-      'activities.csv': Buffer.from([
-        'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance',
-        '1,"Aug 10, 2016, 5:00:00 PM",10/08/2016,Run,,1495,1495,4.70,4700',
-      ].join('\n')),
+      'activities.csv': Buffer.from(
+        [
+          'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance',
+          '1,"Aug 10, 2016, 5:00:00 PM",10/08/2016,Run,,1495,1495,4.70,4700',
+        ].join('\n'),
+      ),
     });
     const imported: string[] = [];
 

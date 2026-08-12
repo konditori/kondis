@@ -168,7 +168,12 @@ export class UploadService {
         queued += 1;
         return;
       }
-      await this.queueActivityUpload(activity.file!, activity.name ?? undefined, activity.description ?? undefined, activity.sport ?? undefined);
+      await this.queueActivityUpload(
+        activity.file!,
+        activity.name ?? undefined,
+        activity.description ?? undefined,
+        activity.sport ?? undefined,
+      );
       queued += 1;
     });
 
