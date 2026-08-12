@@ -28,20 +28,22 @@
   const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
   const hasBestEffortAchievements = $derived(activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false);
   const hasHeartRate = $derived(activity.metrics?.avgHr != null);
+  const hasElevation = $derived(activity.metrics?.elevationGain != null || activity.metrics?.elevationLoss != null);
+  const hasGpsRoute = $derived((activity.track?.coordinates.length ?? 0) > 0);
   const hasBestEffortHeartRate = $derived(activity.bestEfforts?.some((effort) => effort.avgHr != null) ?? false);
   let refreshPending = false;
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
       : averageMetric === AverageMetric.Speed
-        ? [{ label: 'Average speed', value: speed(activity.metrics?.avgSpeed ?? null, data.unitSystem), icon: Gauge }]
-        : [{ label: 'Average pace', value: pace(activity.metrics?.avgSpeed ?? null, data.unitSystem, averageMetric === AverageMetric.SwimPace), icon: Gauge }],
+      ? [{ label: 'Average speed', value: speed(activity.metrics?.avgSpeed ?? null, data.unitSystem), icon: Gauge }]
+        : [{ label: 'Pace', value: pace(activity.metrics?.avgSpeed ?? (activity.metrics?.distance != null ? activity.metrics.distance / (activity.metrics.movingTime ?? activity.metrics.elapsedTime) : null), data.unitSystem, averageMetric === AverageMetric.SwimPace), icon: Gauge }],
   );
   const stats = $derived([
     { label: 'Distance', value: distance(activity.metrics?.distance ?? null, data.unitSystem), icon: Gauge },
     { label: 'Moving time', value: activity.metrics ? duration(activity.metrics.movingTime ?? activity.metrics.elapsedTime) : '—', icon: Timer },
     { label: 'Elapsed time', value: activity.metrics ? duration(activity.metrics.elapsedTime) : '—', icon: Clock3 },
-    { label: 'Elevation gain', value: elevation(activity.metrics?.elevationGain ?? null, data.unitSystem), icon: Mountain },
+    ...(hasElevation ? [{ label: 'Elevation gain', value: elevation(activity.metrics?.elevationGain ?? null, data.unitSystem), icon: Mountain }] : []),
     ...averageMetricStats,
     ...(hasHeartRate ? [{ label: 'Average heart rate', value: `${activity.metrics?.avgHr} bpm`, icon: HeartPulse }] : []),
     ...(activitySettings.showAveragePower
@@ -176,14 +178,16 @@
     {#if activity.description}<p class="activity-description">{activity.description}</p>{/if}
   </header>
 
-  <section class="map-panel">
-    {#key mapStyle}
-      <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} />
-    {/key}
-    {#if activity.track && mapStyle === ActivityMapStyle.Route}
-      <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span></div>
-    {/if}
-  </section>
+  {#if hasGpsRoute}
+    <section class="map-panel">
+      {#key mapStyle}
+        <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} />
+      {/key}
+      {#if activity.track && mapStyle === ActivityMapStyle.Route}
+        <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span></div>
+      {/if}
+    </section>
+  {/if}
 
   {#if activity.matchedRouteCount !== null && activity.matchedRouteCount > 1}
     <section class="route-match-summary">

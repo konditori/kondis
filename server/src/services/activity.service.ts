@@ -150,6 +150,11 @@ export class ActivityService {
 
   @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
   async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
+    const movingTime = job.movingTime ?? null;
+    const distance = job.distance ?? null;
+    const avgSpeed =
+      job.avgSpeed ??
+      (distance !== null && (movingTime ?? job.elapsedTime) > 0 ? distance / (movingTime ?? job.elapsedTime) : null);
     const createdId = await this.databaseRepository.withTransaction(async (trx) => {
       await this.uploadRepository.create({
         id: job.id,
@@ -173,11 +178,11 @@ export class ActivityService {
       }, trx);
       await this.activityRepository.setMetrics(id, {
         elapsed_time: job.elapsedTime,
-        moving_time: job.movingTime ?? null,
-        distance: job.distance ?? null,
+        moving_time: movingTime,
+        distance,
         elevation_gain: job.elevationGain ?? null,
         elevation_loss: job.elevationLoss ?? null,
-        avg_speed: job.avgSpeed ?? null,
+        avg_speed: avgSpeed,
         max_speed: job.maxSpeed ?? null,
         avg_hr: job.avgHr ?? null,
         max_hr: job.maxHr ?? null,

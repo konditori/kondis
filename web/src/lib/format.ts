@@ -37,11 +37,10 @@ export function elevation(
 
 export function duration(seconds: number | null): string {
   if (seconds == null) return "—";
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours
-    ? `${hours}h ${minutes.toString().padStart(2, "0")}m`
-    : `${minutes} min`;
+  const rounded = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return `${minutes}:${remainder.toString().padStart(2, "0")}`;
 }
 
 export function speed(value: number | null, unitSystem: UnitSystem): string {
