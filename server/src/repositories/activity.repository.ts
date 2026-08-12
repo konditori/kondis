@@ -29,7 +29,6 @@ const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
 const ROUTE_MIN_LENGTH_RATIO = 0.88;
 const ROUTE_MAX_LENGTH_RATIO = 1.14;
 const ROUTE_FRECHET_TOLERANCE_METERS = 100;
-const ROUTE_FRECHET_DENSIFY_FRACTION = 0.05;
 const ACTIVITY_COLUMNS = [
   'activity.id',
   'activity.upload_id',
@@ -253,8 +252,7 @@ export class ActivityRepository {
            )
            AND ST_FrechetDistance(
              ST_Transform(candidate.track::geometry, 3857),
-             ST_Transform(source.track::geometry, 3857),
-             ${ROUTE_FRECHET_DENSIFY_FRACTION}
+             ST_Transform(source.track::geometry, 3857)
            ) <= ${ROUTE_FRECHET_TOLERANCE_METERS}
          )
     `.execute(executor);

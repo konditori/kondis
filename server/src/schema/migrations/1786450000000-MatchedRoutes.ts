@@ -60,13 +60,17 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     INSERT INTO activity_route_match (activity_id, matched_activity_id)
     SELECT source.id, candidate.id
     FROM activity AS source
-    JOIN activity AS candidate
-      ON candidate.sport = source.sport
-     AND candidate.track IS NOT NULL
-     AND candidate.route_embedding IS NOT NULL
-     AND ST_DWithin(candidate.track, source.track, 250)
-    WHERE source.track IS NOT NULL
-      AND source.route_embedding IS NOT NULL
+    CROSS JOIN LATERAL (
+      SELECT candidate.id, candidate.track
+      FROM activity AS candidate
+      WHERE candidate.sport = source.sport
+        AND candidate.track IS NOT NULL
+        AND candidate.route_embedding IS NOT NULL
+        AND ST_DWithin(candidate.track, source.track, 250)
+      ORDER BY candidate.route_embedding <-> source.route_embedding
+      LIMIT 250
+    ) AS candidate
+    WHERE source.track IS NOT NULL AND source.route_embedding IS NOT NULL
       AND (
         candidate.id = source.id
         OR (
@@ -75,8 +79,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           AND ST_DWithin(ST_EndPoint(candidate.track::geometry)::geography, ST_EndPoint(source.track::geometry)::geography, 120)
           AND ST_FrechetDistance(
             ST_Transform(candidate.track::geometry, 3857),
-            ST_Transform(source.track::geometry, 3857),
-            0.05
+            ST_Transform(source.track::geometry, 3857)
           ) <= 100
         )
       )
