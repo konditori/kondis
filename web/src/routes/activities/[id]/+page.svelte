@@ -24,25 +24,25 @@
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
   const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
-  const hasBestEffortAchievements = $derived(activity.bestEfforts.some((effort) => bestEffortAchievement(effort) !== null));
+  const hasBestEffortAchievements = $derived(activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false);
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
       : averageMetric === AverageMetric.Speed
-        ? [{ label: 'Average speed', value: speed(activity.avgSpeed, data.unitSystem), icon: Gauge }]
-        : [{ label: 'Average pace', value: pace(activity.avgSpeed, data.unitSystem, averageMetric === AverageMetric.SwimPace), icon: Gauge }],
+        ? [{ label: 'Average speed', value: speed(activity.metrics?.avgSpeed ?? null, data.unitSystem), icon: Gauge }]
+        : [{ label: 'Average pace', value: pace(activity.metrics?.avgSpeed ?? null, data.unitSystem, averageMetric === AverageMetric.SwimPace), icon: Gauge }],
   );
   const stats = $derived([
-    { label: 'Distance', value: distance(activity.distance, data.unitSystem), icon: Gauge },
-    { label: 'Moving time', value: duration(activity.movingTime ?? activity.elapsedTime), icon: Timer },
-    { label: 'Elapsed time', value: duration(activity.elapsedTime), icon: Clock3 },
-    { label: 'Elevation gain', value: elevation(activity.elevationGain, data.unitSystem), icon: Mountain },
+    { label: 'Distance', value: distance(activity.metrics?.distance ?? null, data.unitSystem), icon: Gauge },
+    { label: 'Moving time', value: activity.metrics ? duration(activity.metrics.movingTime ?? activity.metrics.elapsedTime) : '—', icon: Timer },
+    { label: 'Elapsed time', value: activity.metrics ? duration(activity.metrics.elapsedTime) : '—', icon: Clock3 },
+    { label: 'Elevation gain', value: elevation(activity.metrics?.elevationGain ?? null, data.unitSystem), icon: Mountain },
     ...averageMetricStats,
-    { label: 'Average heart rate', value: activity.avgHr == null ? '—' : `${activity.avgHr} bpm`, icon: HeartPulse },
+    { label: 'Average heart rate', value: activity.metrics?.avgHr == null ? '—' : `${activity.metrics.avgHr} bpm`, icon: HeartPulse },
     ...(activitySettings.showAveragePower
-      ? [{ label: 'Average power', value: activity.avgPower == null ? '—' : `${activity.avgPower} W`, icon: Zap }]
+      ? [{ label: 'Average power', value: activity.metrics?.avgPower == null ? '—' : `${activity.metrics.avgPower} W`, icon: Zap }]
       : []),
-    { label: 'Energy', value: activity.calories == null ? '—' : `${activity.calories} kcal`, icon: Flame },
+    { label: 'Energy', value: activity.metrics?.calories == null ? '—' : `${activity.metrics.calories} kcal`, icon: Flame },
   ]);
 
   function backToActivities(event: MouseEvent) {
@@ -64,7 +64,7 @@
     return rank === 2 ? '2nd' : '3rd';
   }
 
-  function bestEffortAchievement(effort: ActivityDetail['bestEfforts'][number]): { rank: number; text: string } | null {
+  function bestEffortAchievement(effort: NonNullable<ActivityDetail['bestEfforts']>[number]): { rank: number; text: string } | null {
     const name = bestEffortRecordName(effort.type);
     if (effort.overallRank === 1) {
       return { rank: 1, text: `New best of all time` };
@@ -148,7 +148,7 @@
     {/if}
   </section>
 
-  {#if activity.matchedRouteCount > 1}
+  {#if activity.matchedRouteCount !== null && activity.matchedRouteCount > 1}
     <section class="route-match-summary">
       <div class="route-match-summary-icon"><MapPinned size={23} /></div>
       <div>
@@ -169,7 +169,7 @@
     </div>
   </section>
 
-  {#if activity.bestEfforts.length > 0}
+  {#if activity.bestEfforts && activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
       <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2></div></div>
       <div class="best-effort-table-wrap">

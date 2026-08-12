@@ -63,6 +63,38 @@ export type QueueCommandDto = {
   /** Operation to perform on the queue */
   command: Command;
 };
+export type ActivityMetricDtoOutput = {
+  /** Elapsed duration in seconds */
+  elapsedTime: number;
+  /** Moving duration in seconds */
+  movingTime: number | null;
+  /** Distance in meters */
+  distance: number | null;
+  /** Total elevation gain in meters */
+  elevationGain: number | null;
+  /** Total elevation loss in meters */
+  elevationLoss: number | null;
+  /** Average speed in meters per second */
+  avgSpeed: number | null;
+  /** Peak speed in meters per second */
+  maxSpeed: number | null;
+  /** Average heart rate in bpm */
+  avgHr: number | null;
+  /** Maximum heart rate in bpm */
+  maxHr: number | null;
+  /** Average cadence in rpm */
+  avgCadence: number | null;
+  /** Maximum cadence in rpm */
+  maxCadence: number | null;
+  /** Average power in watts */
+  avgPower: number | null;
+  /** Maximum power in watts */
+  maxPower: number | null;
+  /** Normalized power in watts */
+  normalizedPower: number | null;
+  /** Calories in kcal */
+  calories: number | null;
+};
 export type ActivityListResponseDtoOutput = {
   activities: {
     /** Activity id */
@@ -78,44 +110,18 @@ export type ActivityListResponseDtoOutput = {
     startedAt: string;
     /** Minutes east of UTC */
     timezoneOffsetMinutes: number | null;
-    /** Elapsed duration in seconds */
-    elapsedTime: number;
-    /** Moving duration in seconds */
-    movingTime: number | null;
-    /** Distance in meters */
-    distance: number | null;
-    /** Total elevation gain in meters */
-    elevationGain: number | null;
-    /** Total elevation loss in meters */
-    elevationLoss: number | null;
-    /** Average speed in meters per second */
-    avgSpeed: number | null;
-    /** Peak speed in meters per second */
-    maxSpeed: number | null;
-    /** Average heart rate in bpm */
-    avgHr: number | null;
-    /** Maximum heart rate in bpm */
-    maxHr: number | null;
-    /** Average cadence in rpm */
-    avgCadence: number | null;
-    /** Maximum cadence in rpm */
-    maxCadence: number | null;
-    /** Average power in watts */
-    avgPower: number | null;
-    /** Maximum power in watts */
-    maxPower: number | null;
-    /** Normalized power in watts */
-    normalizedPower: number | null;
-    /** Calories in kcal */
-    calories: number | null;
+    /** Derived metrics, or null while computation is pending */
+    metrics: ActivityMetricDtoOutput | null;
     /** Creation timestamp in ISO-8601 format */
     createdAt: string;
     /** Last update timestamp in ISO-8601 format */
     updatedAt: string;
-    topBestEfforts: {
-      type: BestEffortType_Output;
-      yearRank: number;
-    }[];
+    topBestEfforts:
+      | {
+          type: BestEffortType_Output;
+          yearRank: number;
+        }[]
+      | null;
   }[];
   /** Cursor for the next page, or null at the end */
   nextCursor: string | null;
@@ -168,36 +174,8 @@ export type ActivityDetailDtoOutput = {
   startedAt: string;
   /** Minutes east of UTC */
   timezoneOffsetMinutes: number | null;
-  /** Elapsed duration in seconds */
-  elapsedTime: number;
-  /** Moving duration in seconds */
-  movingTime: number | null;
-  /** Distance in meters */
-  distance: number | null;
-  /** Total elevation gain in meters */
-  elevationGain: number | null;
-  /** Total elevation loss in meters */
-  elevationLoss: number | null;
-  /** Average speed in meters per second */
-  avgSpeed: number | null;
-  /** Peak speed in meters per second */
-  maxSpeed: number | null;
-  /** Average heart rate in bpm */
-  avgHr: number | null;
-  /** Maximum heart rate in bpm */
-  maxHr: number | null;
-  /** Average cadence in rpm */
-  avgCadence: number | null;
-  /** Maximum cadence in rpm */
-  maxCadence: number | null;
-  /** Average power in watts */
-  avgPower: number | null;
-  /** Maximum power in watts */
-  maxPower: number | null;
-  /** Normalized power in watts */
-  normalizedPower: number | null;
-  /** Calories in kcal */
-  calories: number | null;
+  /** Derived metrics, or null while computation is pending */
+  metrics: ActivityMetricDtoOutput | null;
   /** Creation timestamp in ISO-8601 format */
   createdAt: string;
   /** Last update timestamp in ISO-8601 format */
@@ -207,29 +185,31 @@ export type ActivityDetailDtoOutput = {
     type: Type;
     coordinates: [number, number][];
   } | null;
-  bestEfforts: {
-    type: BestEffortType_Output;
-    /** Standard effort distance in meters */
-    distance: number;
-    /** Effort duration in seconds */
-    elapsedTime: number;
-    /** Start offset from activity start in seconds */
-    startTime: number;
-    /** End offset from activity start in seconds */
-    endTime: number;
-    /** Average heart rate during the effort */
-    avgHr: number | null;
-    /** Net elevation change during the effort in meters */
-    elevationChange: number | null;
-    /** Rank among all matching efforts */
-    overallRank: number;
-    /** Local calendar year of the activity */
-    year: number;
-    /** Rank among matching efforts in that calendar year */
-    yearRank: number;
-  }[];
-  /** Activities matched to the same GPS route */
-  matchedRouteCount: number;
+  bestEfforts:
+    | {
+        type: BestEffortType_Output;
+        /** Standard effort distance in meters */
+        distance: number;
+        /** Effort duration in seconds */
+        elapsedTime: number;
+        /** Start offset from activity start in seconds */
+        startTime: number;
+        /** End offset from activity start in seconds */
+        endTime: number;
+        /** Average heart rate during the effort */
+        avgHr: number | null;
+        /** Net elevation change during the effort in meters */
+        elevationChange: number | null;
+        /** Rank among all matching efforts */
+        overallRank: number;
+        /** Local calendar year of the activity */
+        year: number;
+        /** Rank among matching efforts in that calendar year */
+        yearRank: number;
+      }[]
+    | null;
+  /** Activities matched to the same GPS route, or null while matching is pending */
+  matchedRouteCount: number | null;
 };
 export type ActivityUpdateDto = {
   /** Display name for the activity */
@@ -254,36 +234,8 @@ export type ActivityDtoOutput = {
   startedAt: string;
   /** Minutes east of UTC */
   timezoneOffsetMinutes: number | null;
-  /** Elapsed duration in seconds */
-  elapsedTime: number;
-  /** Moving duration in seconds */
-  movingTime: number | null;
-  /** Distance in meters */
-  distance: number | null;
-  /** Total elevation gain in meters */
-  elevationGain: number | null;
-  /** Total elevation loss in meters */
-  elevationLoss: number | null;
-  /** Average speed in meters per second */
-  avgSpeed: number | null;
-  /** Peak speed in meters per second */
-  maxSpeed: number | null;
-  /** Average heart rate in bpm */
-  avgHr: number | null;
-  /** Maximum heart rate in bpm */
-  maxHr: number | null;
-  /** Average cadence in rpm */
-  avgCadence: number | null;
-  /** Maximum cadence in rpm */
-  maxCadence: number | null;
-  /** Average power in watts */
-  avgPower: number | null;
-  /** Maximum power in watts */
-  maxPower: number | null;
-  /** Normalized power in watts */
-  normalizedPower: number | null;
-  /** Calories in kcal */
-  calories: number | null;
+  /** Derived metrics, or null while computation is pending */
+  metrics: ActivityMetricDtoOutput | null;
   /** Creation timestamp in ISO-8601 format */
   createdAt: string;
   /** Last update timestamp in ISO-8601 format */
@@ -291,7 +243,7 @@ export type ActivityDtoOutput = {
 };
 export type MatchedRouteListResponseDtoOutput = {
   sourceActivityId: string;
-  activities: ActivityDtoOutput[];
+  activities: ActivityDtoOutput[] | null;
 };
 /**
  * Health check endpoint

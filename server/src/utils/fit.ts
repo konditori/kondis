@@ -1,5 +1,5 @@
 import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
-import { ParsedActivity, ParsedLap, ParsedStream, StreamType } from 'src/types';
+import { ParsedActivity, ParsedActivityStructure, ParsedLap, ParsedStream, StreamType } from 'src/types';
 import { toActivityType } from 'src/utils/activity';
 import {
   computeElevationChange,
@@ -148,7 +148,7 @@ export const mapLap = (lap: FitLapMesg, index: number): ParsedLap => ({
 export const findStream = (activity: ParsedActivity, type: StreamType): number[] | undefined =>
   activity.streams.find((stream) => stream.type === type)?.data;
 
-export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
+export const parseFitStructure = (messages: FitMessages): ParsedActivityStructure => {
   const session = messages.sessionMesgs?.[0];
   const records = messages.recordMesgs ?? [];
 
@@ -159,15 +159,8 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
 
   const streams = buildStreams(records, startedAt);
   const streamData = (type: StreamType): number[] => streams.find((stream) => stream.type === type)?.data ?? [];
-
-  const time = streamData('time');
-  const altitude = streamData('altitude');
-  const speed = streamData('speed');
-  const power = streamData('power');
-  const heartrate = streamData('heartrate');
-  const cadence = streamData('cadence');
   const sessionDistance = num(session?.totalDistance);
-  let distance = streamData('distance');
+  const distance = streamData('distance');
   if (!hasAnySample(distance)) {
     const derivedDistance = deriveDistanceFromPosition(
       streamData('latitude'),
@@ -176,9 +169,33 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
     );
     if (derivedDistance) {
       streams.push({ type: 'distance', data: derivedDistance });
-      distance = derivedDistance;
     }
   }
+
+  return {
+    sport: toActivityType(toName(session?.sport), toName(session?.subSport)),
+    name: null,
+    startedAt,
+    timezoneOffset: null,
+    streams,
+    laps: (messages.lapMesgs ?? []).map((lap, index) => mapLap(lap, index)),
+  };
+};
+
+export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
+  const session = messages.sessionMesgs?.[0];
+  const structure = parseFitStructure(messages);
+  const streamData = (type: StreamType): number[] =>
+    structure.streams.find((stream) => stream.type === type)?.data ?? [];
+
+  const time = streamData('time');
+  const altitude = streamData('altitude');
+  const speed = streamData('speed');
+  const power = streamData('power');
+  const heartrate = streamData('heartrate');
+  const cadence = streamData('cadence');
+  const distance = streamData('distance');
+  const sessionDistance = num(session?.totalDistance);
 
   const sampleIntervalS = inferSampleInterval(time);
   const elevation = computeElevationChange(altitude, { sampleIntervalS, smoothingWindowS: 90 });
@@ -195,10 +212,7 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
 
   // If there is a session summary, use that. Otherwise derive this data from the streams.
   return {
-    sport: toActivityType(toName(session?.sport), toName(session?.subSport)),
-    name: null,
-    startedAt,
-    timezoneOffset: null,
+    ...structure,
     elapsedTime: elapsedTimeS,
     movingTime: movingTimeS,
     distance: distanceM,
@@ -214,7 +228,5 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
     maxPower: int(session?.maxPower) ?? roundOrNull(max(power)),
     normalizedPower: int(session?.normalizedPower) ?? computeNormalizedPower(power, sampleIntervalS),
     calories: int(session?.totalCalories),
-    streams,
-    laps: (messages.lapMesgs ?? []).map((lap, index) => mapLap(lap, index)),
   };
 };

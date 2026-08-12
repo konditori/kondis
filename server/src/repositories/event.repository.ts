@@ -12,13 +12,14 @@ const EVENT_CHANNEL = 'kondis_realtime';
 
 type EventMap = {
   ActivityCreate: [activity: ActivityDto];
+  ActivityUpdate: [activity: ActivityDto];
 };
 
 export type EmitEvent = keyof EventMap;
 export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent = {
-  type: 'activity.created';
+  type: 'activity.created' | 'activity.updated';
   activity: ActivityDto;
 };
 
@@ -28,6 +29,7 @@ type EventSerializers = {
 
 const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
+  ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
 };
 
 @Injectable()

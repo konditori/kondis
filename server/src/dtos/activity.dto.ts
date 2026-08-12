@@ -42,15 +42,8 @@ export const ActivityListQuerySchema = z
   })
   .meta({ id: 'ActivityListQueryDto' });
 
-export const ActivitySchema = z
+export const ActivityMetricSchema = z
   .object({
-    id: z.string().uuid().describe('Activity id'),
-    uploadId: z.string().uuid().describe('Source upload id'),
-    sport: ActivityTypeSchema,
-    name: z.string().nullable().describe('Activity name'),
-    description: z.string().nullable().describe('Activity description'),
-    startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
-    timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
     elapsedTime: z.number().int().describe('Elapsed duration in seconds'),
     movingTime: z.number().int().nullable().describe('Moving duration in seconds'),
     distance: z.number().nullable().describe('Distance in meters'),
@@ -66,6 +59,19 @@ export const ActivitySchema = z
     maxPower: z.number().int().nullable().describe('Maximum power in watts'),
     normalizedPower: z.number().int().nullable().describe('Normalized power in watts'),
     calories: z.number().int().nullable().describe('Calories in kcal'),
+  })
+  .meta({ id: 'ActivityMetricDto' });
+
+export const ActivitySchema = z
+  .object({
+    id: z.string().uuid().describe('Activity id'),
+    uploadId: z.string().uuid().describe('Source upload id'),
+    sport: ActivityTypeSchema,
+    name: z.string().nullable().describe('Activity name'),
+    description: z.string().nullable().describe('Activity description'),
+    startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
+    timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
+    metrics: ActivityMetricSchema.nullable().describe('Derived metrics, or null while computation is pending'),
     createdAt: z.string().datetime().describe('Creation timestamp in ISO-8601 format'),
     updatedAt: z.string().datetime().describe('Last update timestamp in ISO-8601 format'),
   })
@@ -82,7 +88,8 @@ export const ActivityListResponseSchema = z
               yearRank: z.number().int().min(1).max(3),
             }),
           )
-          .max(3),
+          .max(3)
+          .nullable(),
       }),
     ),
     nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
@@ -128,27 +135,34 @@ export const ActivityDetailSchema = ActivitySchema.extend({
     })
     .nullable()
     .describe('GPS route as GeoJSON'),
-  bestEfforts: z.array(
-    z.object({
-      type: BestEffortTypeSchema,
-      distance: z.number().positive().describe('Standard effort distance in meters'),
-      elapsedTime: z.number().positive().describe('Effort duration in seconds'),
-      startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),
-      endTime: z.number().positive().describe('End offset from activity start in seconds'),
-      avgHr: z.number().int().positive().nullable().describe('Average heart rate during the effort'),
-      elevationChange: z.number().nullable().describe('Net elevation change during the effort in meters'),
-      overallRank: z.number().int().positive().describe('Rank among all matching efforts'),
-      year: z.number().int().describe('Local calendar year of the activity'),
-      yearRank: z.number().int().positive().describe('Rank among matching efforts in that calendar year'),
-    }),
-  ),
-  matchedRouteCount: z.number().int().nonnegative().describe('Activities matched to the same GPS route'),
+  bestEfforts: z
+    .array(
+      z.object({
+        type: BestEffortTypeSchema,
+        distance: z.number().positive().describe('Standard effort distance in meters'),
+        elapsedTime: z.number().positive().describe('Effort duration in seconds'),
+        startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),
+        endTime: z.number().positive().describe('End offset from activity start in seconds'),
+        avgHr: z.number().int().positive().nullable().describe('Average heart rate during the effort'),
+        elevationChange: z.number().nullable().describe('Net elevation change during the effort in meters'),
+        overallRank: z.number().int().positive().describe('Rank among all matching efforts'),
+        year: z.number().int().describe('Local calendar year of the activity'),
+        yearRank: z.number().int().positive().describe('Rank among matching efforts in that calendar year'),
+      }),
+    )
+    .nullable(),
+  matchedRouteCount: z
+    .number()
+    .int()
+    .nonnegative()
+    .nullable()
+    .describe('Activities matched to the same GPS route, or null while matching is pending'),
 }).meta({ id: 'ActivityDetailDto' });
 
 export const MatchedRouteListResponseSchema = z
   .object({
     sourceActivityId: z.string().uuid(),
-    activities: z.array(ActivitySchema),
+    activities: z.array(ActivitySchema).nullable(),
   })
   .meta({ id: 'MatchedRouteListResponseDto' });
 

@@ -326,7 +326,9 @@ export class JobRepository implements OnApplicationShutdown {
         return { singletonKey: `${item.name}:${item.data.checksum}` };
       }
 
+      case JobName.ActivityMetricCompute:
       case JobName.ActivityBestEffortCompute:
+      case JobName.ActivityRouteMatchCompute:
       case JobName.ActivityParse: {
         return {
           singletonKey: `${item.name}:${item.data.id}`,

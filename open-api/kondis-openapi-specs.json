@@ -704,6 +704,123 @@
         ],
         "description": "Activity sport type"
       },
+      "ActivityMetricDto_Output": {
+        "type": "object",
+        "properties": {
+          "elapsedTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Elapsed duration in seconds"
+          },
+          "movingTime": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Moving duration in seconds",
+            "nullable": true
+          },
+          "distance": {
+            "type": "number",
+            "description": "Distance in meters",
+            "nullable": true
+          },
+          "elevationGain": {
+            "type": "number",
+            "description": "Total elevation gain in meters",
+            "nullable": true
+          },
+          "elevationLoss": {
+            "type": "number",
+            "description": "Total elevation loss in meters",
+            "nullable": true
+          },
+          "avgSpeed": {
+            "type": "number",
+            "description": "Average speed in meters per second",
+            "nullable": true
+          },
+          "maxSpeed": {
+            "type": "number",
+            "description": "Peak speed in meters per second",
+            "nullable": true
+          },
+          "avgHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average heart rate in bpm",
+            "nullable": true
+          },
+          "maxHr": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum heart rate in bpm",
+            "nullable": true
+          },
+          "avgCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average cadence in rpm",
+            "nullable": true
+          },
+          "maxCadence": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum cadence in rpm",
+            "nullable": true
+          },
+          "avgPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Average power in watts",
+            "nullable": true
+          },
+          "maxPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Maximum power in watts",
+            "nullable": true
+          },
+          "normalizedPower": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Normalized power in watts",
+            "nullable": true
+          },
+          "calories": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Calories in kcal",
+            "nullable": true
+          }
+        },
+        "required": [
+          "elapsedTime",
+          "movingTime",
+          "distance",
+          "elevationGain",
+          "elevationLoss",
+          "avgSpeed",
+          "maxSpeed",
+          "avgHr",
+          "maxHr",
+          "avgCadence",
+          "maxCadence",
+          "avgPower",
+          "maxPower",
+          "normalizedPower",
+          "calories"
+        ],
+        "additionalProperties": false
+      },
       "BestEffortType_Output": {
         "type": "string",
         "enum": [
@@ -795,99 +912,14 @@
                   "description": "Minutes east of UTC",
                   "nullable": true
                 },
-                "elapsedTime": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Elapsed duration in seconds"
-                },
-                "movingTime": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Moving duration in seconds",
-                  "nullable": true
-                },
-                "distance": {
-                  "type": "number",
-                  "description": "Distance in meters",
-                  "nullable": true
-                },
-                "elevationGain": {
-                  "type": "number",
-                  "description": "Total elevation gain in meters",
-                  "nullable": true
-                },
-                "elevationLoss": {
-                  "type": "number",
-                  "description": "Total elevation loss in meters",
-                  "nullable": true
-                },
-                "avgSpeed": {
-                  "type": "number",
-                  "description": "Average speed in meters per second",
-                  "nullable": true
-                },
-                "maxSpeed": {
-                  "type": "number",
-                  "description": "Peak speed in meters per second",
-                  "nullable": true
-                },
-                "avgHr": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Average heart rate in bpm",
-                  "nullable": true
-                },
-                "maxHr": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Maximum heart rate in bpm",
-                  "nullable": true
-                },
-                "avgCadence": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Average cadence in rpm",
-                  "nullable": true
-                },
-                "maxCadence": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Maximum cadence in rpm",
-                  "nullable": true
-                },
-                "avgPower": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Average power in watts",
-                  "nullable": true
-                },
-                "maxPower": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Maximum power in watts",
-                  "nullable": true
-                },
-                "normalizedPower": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Normalized power in watts",
-                  "nullable": true
-                },
-                "calories": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Calories in kcal",
-                  "nullable": true
+                "metrics": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ActivityMetricDto_Output"
+                    }
+                  ],
+                  "nullable": true,
+                  "description": "Derived metrics, or null while computation is pending"
                 },
                 "createdAt": {
                   "type": "string",
@@ -921,7 +953,8 @@
                       "yearRank"
                     ],
                     "additionalProperties": false
-                  }
+                  },
+                  "nullable": true
                 }
               },
               "required": [
@@ -932,21 +965,7 @@
                 "description",
                 "startedAt",
                 "timezoneOffsetMinutes",
-                "elapsedTime",
-                "movingTime",
-                "distance",
-                "elevationGain",
-                "elevationLoss",
-                "avgSpeed",
-                "maxSpeed",
-                "avgHr",
-                "maxHr",
-                "avgCadence",
-                "maxCadence",
-                "avgPower",
-                "maxPower",
-                "normalizedPower",
-                "calories",
+                "metrics",
                 "createdAt",
                 "updatedAt",
                 "topBestEfforts"
@@ -1194,99 +1213,14 @@
             "description": "Minutes east of UTC",
             "nullable": true
           },
-          "elapsedTime": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Elapsed duration in seconds"
-          },
-          "movingTime": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Moving duration in seconds",
-            "nullable": true
-          },
-          "distance": {
-            "type": "number",
-            "description": "Distance in meters",
-            "nullable": true
-          },
-          "elevationGain": {
-            "type": "number",
-            "description": "Total elevation gain in meters",
-            "nullable": true
-          },
-          "elevationLoss": {
-            "type": "number",
-            "description": "Total elevation loss in meters",
-            "nullable": true
-          },
-          "avgSpeed": {
-            "type": "number",
-            "description": "Average speed in meters per second",
-            "nullable": true
-          },
-          "maxSpeed": {
-            "type": "number",
-            "description": "Peak speed in meters per second",
-            "nullable": true
-          },
-          "avgHr": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average heart rate in bpm",
-            "nullable": true
-          },
-          "maxHr": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum heart rate in bpm",
-            "nullable": true
-          },
-          "avgCadence": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average cadence in rpm",
-            "nullable": true
-          },
-          "maxCadence": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum cadence in rpm",
-            "nullable": true
-          },
-          "avgPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average power in watts",
-            "nullable": true
-          },
-          "maxPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum power in watts",
-            "nullable": true
-          },
-          "normalizedPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Normalized power in watts",
-            "nullable": true
-          },
-          "calories": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Calories in kcal",
-            "nullable": true
+          "metrics": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActivityMetricDto_Output"
+              }
+            ],
+            "nullable": true,
+            "description": "Derived metrics, or null while computation is pending"
           },
           "createdAt": {
             "type": "string",
@@ -1409,13 +1343,15 @@
                 "yearRank"
               ],
               "additionalProperties": false
-            }
+            },
+            "nullable": true
           },
           "matchedRouteCount": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991,
-            "description": "Activities matched to the same GPS route"
+            "description": "Activities matched to the same GPS route, or null while matching is pending",
+            "nullable": true
           }
         },
         "required": [
@@ -1426,21 +1362,7 @@
           "description",
           "startedAt",
           "timezoneOffsetMinutes",
-          "elapsedTime",
-          "movingTime",
-          "distance",
-          "elevationGain",
-          "elevationLoss",
-          "avgSpeed",
-          "maxSpeed",
-          "avgHr",
-          "maxHr",
-          "avgCadence",
-          "maxCadence",
-          "avgPower",
-          "maxPower",
-          "normalizedPower",
-          "calories",
+          "metrics",
           "createdAt",
           "updatedAt",
           "track",
@@ -1490,99 +1412,14 @@
             "description": "Minutes east of UTC",
             "nullable": true
           },
-          "elapsedTime": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Elapsed duration in seconds"
-          },
-          "movingTime": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Moving duration in seconds",
-            "nullable": true
-          },
-          "distance": {
-            "type": "number",
-            "description": "Distance in meters",
-            "nullable": true
-          },
-          "elevationGain": {
-            "type": "number",
-            "description": "Total elevation gain in meters",
-            "nullable": true
-          },
-          "elevationLoss": {
-            "type": "number",
-            "description": "Total elevation loss in meters",
-            "nullable": true
-          },
-          "avgSpeed": {
-            "type": "number",
-            "description": "Average speed in meters per second",
-            "nullable": true
-          },
-          "maxSpeed": {
-            "type": "number",
-            "description": "Peak speed in meters per second",
-            "nullable": true
-          },
-          "avgHr": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average heart rate in bpm",
-            "nullable": true
-          },
-          "maxHr": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum heart rate in bpm",
-            "nullable": true
-          },
-          "avgCadence": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average cadence in rpm",
-            "nullable": true
-          },
-          "maxCadence": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum cadence in rpm",
-            "nullable": true
-          },
-          "avgPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Average power in watts",
-            "nullable": true
-          },
-          "maxPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Maximum power in watts",
-            "nullable": true
-          },
-          "normalizedPower": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Normalized power in watts",
-            "nullable": true
-          },
-          "calories": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Calories in kcal",
-            "nullable": true
+          "metrics": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActivityMetricDto_Output"
+              }
+            ],
+            "nullable": true,
+            "description": "Derived metrics, or null while computation is pending"
           },
           "createdAt": {
             "type": "string",
@@ -1605,21 +1442,7 @@
           "description",
           "startedAt",
           "timezoneOffsetMinutes",
-          "elapsedTime",
-          "movingTime",
-          "distance",
-          "elevationGain",
-          "elevationLoss",
-          "avgSpeed",
-          "maxSpeed",
-          "avgHr",
-          "maxHr",
-          "avgCadence",
-          "maxCadence",
-          "avgPower",
-          "maxPower",
-          "normalizedPower",
-          "calories",
+          "metrics",
           "createdAt",
           "updatedAt"
         ],
@@ -1637,7 +1460,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ActivityDto_Output"
-            }
+            },
+            "nullable": true
           }
         },
         "required": [

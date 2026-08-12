@@ -12,9 +12,10 @@
 
   let { data } = $props();
   const history = $derived(data.history);
+  const activities = $derived(history.activities ?? []);
   const source = $derived(
-    history.activities.find(({ id }) => id === history.sourceActivityId) ??
-      history.activities[0],
+    activities.find(({ id }) => id === history.sourceActivityId) ??
+      activities[0],
   );
   const averageMetric = $derived(
     source
@@ -23,12 +24,12 @@
   );
   const isSpeed = $derived(averageMetric === AverageMetric.Speed);
   const efforts = $derived(
-    history.activities.map((activity) => ({
+    activities.map((activity) => ({
       ...activity,
       chartValue: isSpeed
-        ? (activity.avgSpeed ?? 0)
-        : activity.avgSpeed && activity.avgSpeed > 0
-          ? 1000 / activity.avgSpeed
+        ? (activity.metrics?.avgSpeed ?? 0)
+        : activity.metrics?.avgSpeed && activity.metrics.avgSpeed > 0
+          ? 1000 / activity.metrics.avgSpeed
           : 0,
     })),
   );
@@ -100,7 +101,7 @@
       <span class="eyebrow">Repeated route</span>
       <h1>Matched {isSpeed ? "rides" : "runs"}</h1>
       <p>
-        Compare your performance across {history.activities.length} activities
+        Compare your performance across {activities.length} activities
         on the same route.
       </p>
     </div>
@@ -116,7 +117,7 @@
         <line class="chart-average" x1="48" x2="952" y1={averageY} y2={averageY} />
         <polyline class="chart-line" points={linePoints} />
         {#each chartPoints as point}
-          <a href={`/activities/${point.id}`} aria-label={`${activityName(point)}, ${performance(point.avgSpeed)}`}>
+          <a href={`/activities/${point.id}`} aria-label={`${activityName(point)}, ${performance(point.metrics?.avgSpeed ?? null)}`}>
             <circle class:current={point.id === history.sourceActivityId} cx={point.x} cy={point.y} r={point.id === history.sourceActivityId ? 9 : 6} />
           </a>
         {/each}
@@ -126,7 +127,7 @@
   {/if}
 
   <section class="matched-route-list">
-    <div class="section-heading"><div><span class="eyebrow">Every effort</span><h2>{history.activities.length} activities</h2></div></div>
+    <div class="section-heading"><div><span class="eyebrow">Every effort</span><h2>{activities.length} activities</h2></div></div>
     <div class="matched-route-table" role="table" aria-label="Matched route activities">
       <div class="matched-route-row matched-route-table-header" role="row">
         <span role="columnheader">Date</span><span role="columnheader">Activity</span><span role="columnheader">{isSpeed ? "Speed" : "Pace"}</span><span role="columnheader">vs average</span><span role="columnheader">Moving time</span><span></span>
@@ -135,9 +136,9 @@
         <a class:current={effort.id === history.sourceActivityId} class="matched-route-row" role="row" href={`/activities/${effort.id}`}>
           <span role="cell">{localDate(effort.startedAt)}</span>
           <span role="cell"><strong>{activityName(effort)}</strong>{#if effort.id === history.sourceActivityId}<small>This activity</small>{/if}</span>
-          <span role="cell">{performance(effort.avgSpeed)}</span>
+          <span role="cell">{performance(effort.metrics?.avgSpeed ?? null)}</span>
           <span class:better={isSpeed ? effort.chartValue > average : effort.chartValue < average} role="cell">{difference(effort.chartValue)}</span>
-          <span class="matched-time" role="cell"><Timer size={15} />{effortDuration(effort.movingTime ?? effort.elapsedTime)}</span>
+          <span class="matched-time" role="cell"><Timer size={15} />{effort.metrics ? effortDuration(effort.metrics.movingTime ?? effort.metrics.elapsedTime) : '—'}</span>
           <ChevronRight size={17} />
         </a>
       {/each}

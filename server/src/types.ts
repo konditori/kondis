@@ -341,11 +341,16 @@ export type ParsedLap = {
   avgSpeedMps: number | null;
 };
 
-export type ParsedActivity = {
+export type ParsedActivityStructure = {
   sport: ActivityType;
   name: string | null;
   startedAt: Date;
   timezoneOffset: number | null; // minutes east of UTC
+  streams: ParsedStream[]; // index-aligned streams of samples
+  laps: ParsedLap[]; // lap summaries, if any
+};
+
+export type ParsedActivity = ParsedActivityStructure & {
   elapsedTime: number; // seconds
   movingTime: number | null; // seconds
   distance: number | null; // meters
@@ -361,8 +366,6 @@ export type ParsedActivity = {
   maxPower: number | null; // watts
   normalizedPower: number | null; // watts
   calories: number | null; // kilocalories
-  streams: ParsedStream[]; // index-aligned streams of samples
-  laps: ParsedLap[]; // lap summaries, if any
 };
 
 export interface IBaseJob {
@@ -395,8 +398,10 @@ export interface ILagomTakeoutImportJob {
 
 export type JobItem =
   | { name: JobName.ActivityUpload; data: IActivityUploadJob }
+  | { name: JobName.ActivityMetricCompute; data: IEntityJob }
   | { name: JobName.ActivityBestEffortCompute; data: IEntityJob }
   | { name: JobName.ActivityBestEffortRank; data: Record<string, never> }
+  | { name: JobName.ActivityRouteMatchCompute; data: IEntityJob }
   | { name: JobName.ActivityParse; data: IActivityParseJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }

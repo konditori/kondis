@@ -31,10 +31,10 @@ describe('GET /activities', () => {
 
     expect(activity.sport).toBe('other');
     expect(activity.startedAt).toBe('2013-01-13T09:16:35.000Z');
-    expect(activity.elapsedTime).toBe(10_962);
-    expect(activity.movingTime).toBe(10_962);
-    expect(activity.distance).toBeCloseTo(29_823.963165283203, 3);
-    expect(activity.calories).toBe(1690);
+    expect(activity.metrics?.elapsedTime).toBe(10_962);
+    expect(activity.metrics?.movingTime).toBe(10_962);
+    expect(activity.metrics?.distance).toBeCloseTo(29_823.963165283203, 3);
+    expect(activity.metrics?.calories).toBe(1690);
   });
 });
 

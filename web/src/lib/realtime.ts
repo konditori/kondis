@@ -1,6 +1,9 @@
 import type { Activity } from "$lib/types";
 
-type ActivityCreatedEvent = { type: "activity.created"; activity: Activity };
+type ActivityEvent = {
+  type: "activity.created" | "activity.updated";
+  activity: Activity;
+};
 
 export function subscribeToActivityEvents(
   url: string,
@@ -20,8 +23,12 @@ export function subscribeToActivityEvents(
     };
     socket.onmessage = ({ data }) => {
       try {
-        const event = JSON.parse(String(data)) as Partial<ActivityCreatedEvent>;
-        if (event.type === "activity.created" && event.activity?.id)
+        const event = JSON.parse(String(data)) as Partial<ActivityEvent>;
+        if (
+          (event.type === "activity.created" ||
+            event.type === "activity.updated") &&
+          event.activity?.id
+        )
           onActivity(event.activity);
       } catch {
         // Ignore malformed or forward-incompatible events.
