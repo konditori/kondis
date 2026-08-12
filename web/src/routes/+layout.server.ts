@@ -24,6 +24,6 @@ export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
     unitSystem:
       parseUnitSystem(cookies.get(UNIT_SYSTEM_COOKIE)) ?? DEFAULT_UNIT_SYSTEM,
     activityTypes,
-    eventsUrl: activityEventsUrl(url),
+    ...(url ? { eventsUrl: activityEventsUrl(url) } : {}),
   };
 };
