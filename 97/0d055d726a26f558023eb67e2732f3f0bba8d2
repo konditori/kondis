@@ -1,0 +1,21 @@
+server/src/repositories/activity.repository.ts
+  s_4c3ea23d641b14::t_cc8a5b03d65104 255
+server/src/schema/migrations/1786450000000-MatchedRoutes.ts
+  s_4c3ea23d641b14::t_03e7945d3e176c 63-73,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "970d055d726a26f558023eb67e2732f3f0bba8d2",
+  "prompts": {},
+  "sessions": {
+    "s_4c3ea23d641b14": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff73c-dc3d-7b53-8f6a-e75577a333d7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
