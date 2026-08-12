@@ -1,0 +1,19 @@
+web/src/routes/+page.svelte
+  s_8e00c876c33fae::t_303092b62618f0 49,65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "429ff4641e5e76e80f607ac411d580041b1bbd03",
+  "prompts": {},
+  "sessions": {
+    "s_8e00c876c33fae": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff819-566d-7e71-9365-194763310ff9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
