@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowLeft, CalendarDays, Check, Clock3, Flame, Gauge, HeartPulse, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
+  import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, Flame, Gauge, HeartPulse, MapPinned, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
   import { invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions, Sport } from '$lib/api';
@@ -147,6 +147,18 @@
       <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span></div>
     {/if}
   </section>
+
+  {#if activity.matchedRouteCount > 1}
+    <section class="route-match-summary">
+      <div class="route-match-summary-icon"><MapPinned size={23} /></div>
+      <div>
+        <span class="eyebrow">Repeated route</span>
+        <h2>{activity.matchedRouteCount} {activity.matchedRouteCount === 1 ? 'activity' : 'activities'} on this route</h2>
+        <p>Compare your performance across every matched effort.</p>
+      </div>
+      <a href={`/activities/${activity.id}/matched-routes`}>View matched {isCyclingEffort ? 'rides' : 'runs'} <ChevronRight size={17} /></a>
+    </section>
+  {/if}
 
   <section class="metrics-section">
     <div class="section-heading"><div><span class="eyebrow">Workout summary</span><h2>At a glance</h2></div></div>

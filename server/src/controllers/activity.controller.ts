@@ -23,6 +23,7 @@ import {
   ActivityUpdateDto,
   BestEffortListParamDto,
   BestEffortListResponseDto,
+  MatchedRouteListResponseDto,
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
 import { ACTIVITY_TYPES } from 'src/types';
@@ -63,6 +64,18 @@ export class ActivityController {
     }
 
     return activity;
+  }
+
+  @ApiOperation({ summary: 'List activities matched to the same GPS route' })
+  @ZodResponse({ status: 200, description: 'Matched route activities', type: MatchedRouteListResponseDto })
+  @Get(':id/matched-routes')
+  async listMatchedRoutes(@Param() { id }: ActivityIdParamDto): Promise<MatchedRouteListResponseDto> {
+    const matches = await this.service.listMatchedRoutes(id);
+    if (!matches) {
+      throw new NotFoundException(`Activity ${id} does not exist`);
+    }
+
+    return matches;
   }
 
   @ApiOperation({ summary: 'Update one activity' })

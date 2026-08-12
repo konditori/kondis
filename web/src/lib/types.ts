@@ -41,6 +41,7 @@ export type ActivityPage = {
 
 export type ActivityDetail = Activity & {
   track: { type: "LineString"; coordinates: [number, number][] } | null;
+  matchedRouteCount: number;
   bestEfforts: {
     type: string;
     distance: number;
@@ -53,6 +54,11 @@ export type ActivityDetail = Activity & {
     year: number;
     yearRank: number;
   }[];
+};
+
+export type MatchedRouteHistory = {
+  sourceActivityId: string;
+  activities: Activity[];
 };
 
 export type BestEffortSport = "run" | "ride";

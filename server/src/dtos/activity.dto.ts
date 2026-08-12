@@ -142,7 +142,15 @@ export const ActivityDetailSchema = ActivitySchema.extend({
       yearRank: z.number().int().positive().describe('Rank among matching efforts in that calendar year'),
     }),
   ),
+  matchedRouteCount: z.number().int().nonnegative().describe('Activities matched to the same GPS route'),
 }).meta({ id: 'ActivityDetailDto' });
+
+export const MatchedRouteListResponseSchema = z
+  .object({
+    sourceActivityId: z.string().uuid(),
+    activities: z.array(ActivitySchema),
+  })
+  .meta({ id: 'MatchedRouteListResponseDto' });
 
 export const ActivityUpdateSchema = z
   .object({
@@ -160,6 +168,7 @@ export class ActivityIdParamDto extends createZodDto(ActivityIdParamSchema) {}
 export class ActivityListQueryDto extends createZodDto(ActivityListQuerySchema) {}
 export class ActivityDto extends createZodDto(ActivitySchema) {}
 export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
+export class MatchedRouteListResponseDto extends createZodDto(MatchedRouteListResponseSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
 export class ActivityTypeListResponseDto extends createZodDto(ActivityTypeListResponseSchema) {}
 export class BestEffortListParamDto extends createZodDto(BestEffortListParamSchema) {}

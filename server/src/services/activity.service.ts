@@ -303,7 +303,10 @@ export class ActivityService {
       return;
     }
 
-    const storedEfforts = await this.activityRepository.getBestEfforts(id);
+    const [storedEfforts, matchedRoutes] = await Promise.all([
+      this.activityRepository.getBestEfforts(id),
+      this.activityRepository.listMatchedRoutes(id),
+    ]);
     const trackGeoJson = row.detail_track_geojson ?? row.track_geojson;
     const track = trackGeoJson
       ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] })
@@ -312,6 +315,7 @@ export class ActivityService {
     return {
       ...this.toActivityDto(row),
       track,
+      matchedRouteCount: matchedRoutes.length,
       bestEfforts: DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
         const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
         return effort
@@ -331,6 +335,19 @@ export class ActivityService {
             ]
           : [];
       }),
+    };
+  }
+
+  async listMatchedRoutes(id: string) {
+    const activity = await this.activityRepository.getById(id);
+    if (!activity) {
+      return;
+    }
+
+    const matches = await this.activityRepository.listMatchedRoutes(id);
+    return {
+      sourceActivityId: id,
+      activities: matches.map((match) => this.toActivityDto(match)),
     };
   }
 

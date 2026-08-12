@@ -44,7 +44,7 @@ export type CreateActivityInput = {
   laps: Omit<NewLap, 'activity_id' | 'id'>[];
 };
 
-export type ActivityRecord = Omit<Activity, 'detail_track' | 'track'> & ActivityMetric;
+export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' | 'track'> & ActivityMetric;
 
 export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at'>;
 
@@ -196,6 +196,81 @@ export class ActivityRepository {
       .select(sql<string | null>`ST_AsGeoJSON(detail_track)`.as('detail_track_geojson'))
       .where('activity.id', '=', id)
       .executeTakeFirst();
+  }
+
+  async listMatchedRoutes(activityId: string): Promise<ActivityRecord[]> {
+    const { rows } = await sql<{ id: string }>`
+      WITH source AS MATERIALIZED (
+        SELECT id, sport, track, route_embedding
+        FROM activity
+        WHERE id = ${activityId}::uuid
+          AND track IS NOT NULL
+          AND route_embedding IS NOT NULL
+      ), candidates AS MATERIALIZED (
+        SELECT candidate.id
+        FROM activity AS candidate
+        CROSS JOIN source
+        WHERE candidate.sport = source.sport
+          AND candidate.track IS NOT NULL
+          AND candidate.route_embedding IS NOT NULL
+          AND ST_DWithin(candidate.track, source.track, 250)
+        ORDER BY candidate.route_embedding <-> source.route_embedding
+        LIMIT 250
+      )
+      SELECT candidate.id
+      FROM candidates
+      JOIN activity AS candidate USING (id)
+      CROSS JOIN source
+      WHERE candidate.id = source.id
+         OR (
+           ST_Length(candidate.track) / NULLIF(ST_Length(source.track), 0) BETWEEN 0.88 AND 1.14
+           AND (
+             (
+               ST_DWithin(
+                 ST_StartPoint(candidate.track::geometry)::geography,
+                 ST_StartPoint(source.track::geometry)::geography,
+                 120
+               )
+               AND ST_DWithin(
+                 ST_EndPoint(candidate.track::geometry)::geography,
+                 ST_EndPoint(source.track::geometry)::geography,
+                 120
+               )
+             ) OR (
+               ST_DWithin(
+                 ST_StartPoint(candidate.track::geometry)::geography,
+                 ST_EndPoint(source.track::geometry)::geography,
+                 120
+               )
+               AND ST_DWithin(
+                 ST_EndPoint(candidate.track::geometry)::geography,
+                 ST_StartPoint(source.track::geometry)::geography,
+                 120
+               )
+             )
+           )
+           AND ST_HausdorffDistance(
+             ST_Transform(candidate.track::geometry, 3857),
+             ST_Transform(source.track::geometry, 3857),
+             0.05
+           ) <= 100
+         )
+    `.execute(this.db);
+
+    const ids = rows.map(({ id }) => id);
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .selectFrom('activity')
+      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
+      .select(ACTIVITY_COLUMNS)
+      .selectAll('activity_metric')
+      .where('activity.id', 'in', ids)
+      .orderBy('activity.started_at', 'asc')
+      .orderBy('activity.id', 'asc')
+      .execute();
   }
 
   getByUploadId(uploadId: string) {

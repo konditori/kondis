@@ -228,6 +228,8 @@ export type ActivityDetailDtoOutput = {
     /** Rank among matching efforts in that calendar year */
     yearRank: number;
   }[];
+  /** Activities matched to the same GPS route */
+  matchedRouteCount: number;
 };
 export type ActivityUpdateDto = {
   /** Display name for the activity */
@@ -286,6 +288,10 @@ export type ActivityDtoOutput = {
   createdAt: string;
   /** Last update timestamp in ISO-8601 format */
   updatedAt: string;
+};
+export type MatchedRouteListResponseDtoOutput = {
+  sourceActivityId: string;
+  activities: ActivityDtoOutput[];
 };
 /**
  * Health check endpoint
@@ -545,6 +551,26 @@ export function activityControllerDeleteById(
     oazapfts.fetchText(`/activities/${encodeURIComponent(id)}`, {
       ...opts,
       method: 'DELETE',
+    }),
+  );
+}
+/**
+ * List activities matched to the same GPS route
+ */
+export function activityControllerListMatchedRoutes(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: MatchedRouteListResponseDtoOutput;
+    }>(`/activities/${encodeURIComponent(id)}/matched-routes`, {
+      ...opts,
     }),
   );
 }

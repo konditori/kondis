@@ -403,6 +403,40 @@
           "activities"
         ]
       }
+    },
+    "/activities/{id}/matched-routes": {
+      "get": {
+        "operationId": "ActivityController_listMatchedRoutes",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Activity id",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matched route activities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchedRouteListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List activities matched to the same GPS route",
+        "tags": [
+          "activities"
+        ]
+      }
     }
   },
   "info": {
@@ -1376,6 +1410,12 @@
               ],
               "additionalProperties": false
             }
+          },
+          "matchedRouteCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Activities matched to the same GPS route"
           }
         },
         "required": [
@@ -1404,99 +1444,10 @@
           "createdAt",
           "updatedAt",
           "track",
-          "bestEfforts"
+          "bestEfforts",
+          "matchedRouteCount"
         ],
         "additionalProperties": false
-      },
-      "ActivityUpdateDtoActivityType": {
-        "type": "string",
-        "enum": [
-          "alpine_ski",
-          "backcountry_ski",
-          "badminton",
-          "basketball",
-          "canoeing",
-          "cricket",
-          "cross_country_ski",
-          "crossfit",
-          "dance",
-          "e_bike_ride",
-          "elliptical",
-          "e_mountain_bike_ride",
-          "golf",
-          "gravel_ride",
-          "handcycle",
-          "high_intensity_interval_training",
-          "hike",
-          "ice_skate",
-          "inline_skate",
-          "kayaking",
-          "kitesurf",
-          "mountain_bike_ride",
-          "padel",
-          "physical_therapy",
-          "pickleball",
-          "pilates",
-          "racquetball",
-          "ride",
-          "rock_climbing",
-          "roller_ski",
-          "rowing",
-          "run",
-          "sail",
-          "skateboard",
-          "snowboard",
-          "snowshoe",
-          "soccer",
-          "squash",
-          "stair_stepper",
-          "stand_up_paddling",
-          "surfing",
-          "swim",
-          "table_tennis",
-          "tennis",
-          "trail_run",
-          "velomobile",
-          "virtual_ride",
-          "virtual_row",
-          "virtual_run",
-          "volleyball",
-          "walk",
-          "weight_training",
-          "wheelchair",
-          "windsurf",
-          "workout",
-          "yoga",
-          "other"
-        ],
-        "description": "Activity sport type"
-      },
-      "ActivityUpdateDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
-            "description": "Display name for the activity",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 10000,
-            "description": "Description for the activity",
-            "nullable": true
-          },
-          "sport": {
-            "$ref": "#/components/schemas/ActivityUpdateDtoActivityType"
-          },
-          "startedAt": {
-            "description": "Updated start time in ISO-8601 format",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          }
-        }
       },
       "ActivityDto_Output": {
         "type": "object",
@@ -1673,6 +1624,117 @@
           "updatedAt"
         ],
         "additionalProperties": false
+      },
+      "MatchedRouteListResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "sourceActivityId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityDto_Output"
+            }
+          }
+        },
+        "required": [
+          "sourceActivityId",
+          "activities"
+        ],
+        "additionalProperties": false
+      },
+      "ActivityUpdateDtoActivityType": {
+        "type": "string",
+        "enum": [
+          "alpine_ski",
+          "backcountry_ski",
+          "badminton",
+          "basketball",
+          "canoeing",
+          "cricket",
+          "cross_country_ski",
+          "crossfit",
+          "dance",
+          "e_bike_ride",
+          "elliptical",
+          "e_mountain_bike_ride",
+          "golf",
+          "gravel_ride",
+          "handcycle",
+          "high_intensity_interval_training",
+          "hike",
+          "ice_skate",
+          "inline_skate",
+          "kayaking",
+          "kitesurf",
+          "mountain_bike_ride",
+          "padel",
+          "physical_therapy",
+          "pickleball",
+          "pilates",
+          "racquetball",
+          "ride",
+          "rock_climbing",
+          "roller_ski",
+          "rowing",
+          "run",
+          "sail",
+          "skateboard",
+          "snowboard",
+          "snowshoe",
+          "soccer",
+          "squash",
+          "stair_stepper",
+          "stand_up_paddling",
+          "surfing",
+          "swim",
+          "table_tennis",
+          "tennis",
+          "trail_run",
+          "velomobile",
+          "virtual_ride",
+          "virtual_row",
+          "virtual_run",
+          "volleyball",
+          "walk",
+          "weight_training",
+          "wheelchair",
+          "windsurf",
+          "workout",
+          "yoga",
+          "other"
+        ],
+        "description": "Activity sport type"
+      },
+      "ActivityUpdateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Display name for the activity",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000,
+            "description": "Description for the activity",
+            "nullable": true
+          },
+          "sport": {
+            "$ref": "#/components/schemas/ActivityUpdateDtoActivityType"
+          },
+          "startedAt": {
+            "description": "Updated start time in ISO-8601 format",
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        }
       },
       "QueueName": {
         "type": "string",
