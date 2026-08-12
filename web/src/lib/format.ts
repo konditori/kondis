@@ -107,8 +107,14 @@ export function localDate(value: string): string {
   const date = new Date(value);
   const today = new Date();
   const dayStart = (source: Date) =>
-    new Date(source.getFullYear(), source.getMonth(), source.getDate()).getTime();
-  const dayDifference = Math.round((dayStart(today) - dayStart(date)) / 86_400_000);
+    new Date(
+      source.getFullYear(),
+      source.getMonth(),
+      source.getDate(),
+    ).getTime();
+  const dayDifference = Math.round(
+    (dayStart(today) - dayStart(date)) / 86_400_000,
+  );
 
   if (dayDifference === 0) return "Today";
   if (dayDifference === 1) return "Yesterday";

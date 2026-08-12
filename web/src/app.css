@@ -1093,10 +1093,9 @@ button {
 }
 .matched-route-row {
   display: grid;
-  grid-template-columns: minmax(125px, 0.8fr) minmax(180px, 1.4fr) repeat(
-      3,
-      minmax(105px, 0.8fr)
-    ) 18px;
+  grid-template-columns:
+    minmax(125px, 0.8fr) minmax(180px, 1.4fr) repeat(3, minmax(105px, 0.8fr))
+    18px;
   align-items: center;
   gap: 18px;
   min-height: 70px;
@@ -1609,10 +1608,9 @@ button {
     align-items: flex-end;
   }
   .matched-route-row {
-    grid-template-columns: minmax(105px, 0.8fr) minmax(160px, 1.3fr) repeat(
-        2,
-        minmax(100px, 0.8fr)
-      ) 18px;
+    grid-template-columns:
+      minmax(105px, 0.8fr) minmax(160px, 1.3fr) repeat(2, minmax(100px, 0.8fr))
+      18px;
   }
   .matched-route-row > :nth-child(5) {
     display: none;
