@@ -335,6 +335,10 @@ export class JobRepository implements OnApplicationShutdown {
         };
       }
 
+      case JobName.ActivityManualCreate: {
+        return { singletonKey: `${item.name}:${item.data.id}` };
+      }
+
       case JobName.ActivityBestEffortRank: {
         // The queue itself is exclusive, so an empty singleton key silently drops a later
         // refresh while another is queued or active. Give every request a key; the handler

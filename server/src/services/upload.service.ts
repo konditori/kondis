@@ -154,12 +154,21 @@ export class UploadService {
   async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
     const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
-      await this.queueActivityUpload(
-        activity.file,
-        activity.name ?? undefined,
-        activity.description ?? undefined,
-        activity.sport ?? undefined,
-      );
+      if (activity.manual) {
+        await this.jobRepository.queue({
+          name: JobName.ActivityManualCreate,
+          data: {
+            id: crypto.randomUUID(),
+            activityName: activity.name ?? undefined,
+            activityDescription: activity.description ?? undefined,
+            activitySport: activity.sport ?? 'other',
+            ...activity.manual,
+          },
+        });
+        queued += 1;
+        return;
+      }
+      await this.queueActivityUpload(activity.file!, activity.name ?? undefined, activity.description ?? undefined, activity.sport ?? undefined);
       queued += 1;
     });
 

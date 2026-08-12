@@ -148,6 +148,54 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
+  @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
+  async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
+    const createdId = await this.databaseRepository.withTransaction(async (trx) => {
+      await this.uploadRepository.create({
+        id: job.id,
+        checksum: `manual:${job.id}`,
+        original_name: 'Strava manual activity',
+        byte_size: 0,
+        storage_path: '',
+        status: 'parsed',
+      }, trx);
+      const id = await this.activityRepository.create({
+        activity: {
+          upload_id: job.id,
+          sport: job.activitySport,
+          name: job.activityName ?? null,
+          description: job.activityDescription ?? null,
+          started_at: new Date(job.startedAt),
+          timezone_offset_minutes: null,
+        },
+        streams: [],
+        laps: [],
+      }, trx);
+      await this.activityRepository.setMetrics(id, {
+        elapsed_time: job.elapsedTime,
+        moving_time: job.movingTime ?? null,
+        distance: job.distance ?? null,
+        elevation_gain: job.elevationGain ?? null,
+        elevation_loss: job.elevationLoss ?? null,
+        avg_speed: job.avgSpeed ?? null,
+        max_speed: job.maxSpeed ?? null,
+        avg_hr: job.avgHr ?? null,
+        max_hr: job.maxHr ?? null,
+        avg_cadence: null,
+        max_cadence: null,
+        avg_power: null,
+        max_power: null,
+        normalized_power: null,
+        calories: job.calories ?? null,
+      }, trx);
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx });
+      return id;
+    });
+    const activity = await this.activityRepository.getById(createdId);
+    if (activity) await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+    return JobStatus.Success;
+  }
+
   @OnJob({ name: JobName.ActivityMetricCompute, queue: QueueName.ActivityParsing })
   async handleActivityMetricCompute({ id }: JobOf<JobName.ActivityMetricCompute>): Promise<JobStatus> {
     const activity = await this.activityRepository.getById(id);

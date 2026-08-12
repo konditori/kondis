@@ -6,6 +6,7 @@
   import { ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeOptions, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
+  import { subscribeToActivityEvents } from '$lib/realtime';
   import { activityName, distance, duration, effortDuration, elevation, localDate, localTime, pace, speed } from '$lib/format';
   import type { Activity, ActivityDetail } from '$lib/types';
 
@@ -28,6 +29,7 @@
   const hasBestEffortAchievements = $derived(activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false);
   const hasHeartRate = $derived(activity.metrics?.avgHr != null);
   const hasBestEffortHeartRate = $derived(activity.bestEfforts?.some((effort) => effort.avgHr != null) ?? false);
+  let refreshPending = false;
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -47,6 +49,21 @@
       : []),
     { label: 'Energy', value: activity.metrics?.calories == null ? '—' : `${activity.metrics.calories} kcal`, icon: Flame },
   ]);
+
+  $effect(() => {
+    const unsubscribe = subscribeToActivityEvents(data.eventsUrl, (updated, type) => {
+      if (type !== 'activity.updated' || updated.id !== activity.id || refreshPending) {
+        return;
+      }
+      refreshPending = true;
+      void invalidateAll().finally(() => {
+        refreshPending = false;
+      });
+    }, () => {
+      void invalidateAll();
+    });
+    return unsubscribe;
+  });
 
   function backToActivities(event: MouseEvent) {
     if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && page.state.fromActivityList) {

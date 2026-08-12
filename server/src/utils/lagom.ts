@@ -23,6 +23,19 @@ export type LagomTakeoutActivity = {
   description: string | null;
   sport: ActivityType | null;
   file: UploadedFileData;
+  manual?: {
+    startedAt: string;
+    elapsedTime: number;
+    movingTime: number | null;
+    distance: number | null;
+    elevationGain: number | null;
+    elevationLoss: number | null;
+    avgSpeed: number | null;
+    maxSpeed: number | null;
+    avgHr: number | null;
+    maxHr: number | null;
+    calories: number | null;
+  };
 };
 
 export type LagomTakeoutError = {
@@ -231,6 +244,17 @@ export const extractLagomTakeout = async (
   const nameIndex = headers.indexOf('Activity Name');
   const descriptionIndex = headers.indexOf('Activity Description');
   const sportIndex = headers.indexOf('Activity Type');
+  const column = (name: string) => headers.indexOf(name);
+  const number = (row: string[], name: string, occurrence = 0): number | null => {
+    const index = headers.reduce<number[]>((matches, header, index) => {
+      if (header === name) matches.push(index);
+      return matches;
+    }, [])[occurrence];
+    const value = row[index ?? -1]?.trim();
+    if (!value) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
 
   const result: LagomTakeoutContents = {
     totalActivities: rows.length,
@@ -249,7 +273,39 @@ export const extractLagomTakeout = async (
     const manifestSport = sportIndex === -1 ? '' : (row[sportIndex]?.trim() ?? '');
     const sport = manifestSport ? toActivityType(manifestSport) : null;
     if (!filename) {
-      result.skipped += 1;
+      const startedAt = row[column('Activity Date')]?.trim();
+      const elapsedTime = number(row, 'Elapsed Time');
+      if (startedAt && sport && elapsedTime !== null) {
+        const activity: LagomTakeoutActivity = {
+          row: rowNumber,
+          filename: '',
+          name,
+          description,
+          sport,
+          file: { originalname: 'manual.activity', buffer: Buffer.alloc(0), size: 0 },
+          manual: {
+            startedAt: new Date(startedAt).toISOString(),
+            elapsedTime,
+            movingTime: number(row, 'Moving Time'),
+            // The first Distance column is Strava's display-unit value; the second is meters.
+            distance: number(row, 'Distance', 1),
+            elevationGain: number(row, 'Elevation Gain'),
+            elevationLoss: number(row, 'Elevation Loss'),
+            avgSpeed: number(row, 'Average Speed'),
+            maxSpeed: number(row, 'Max Speed'),
+            avgHr: number(row, 'Average Heart Rate'),
+            maxHr: number(row, 'Max Heart Rate'),
+            calories: number(row, 'Calories'),
+          },
+        };
+        if (onActivity) {
+          await onActivity(activity);
+        } else {
+          result.activities.push(activity);
+        }
+      } else {
+        result.skipped += 1;
+      }
       continue;
     }
 

@@ -391,6 +391,23 @@ export interface IActivityParseJob extends IEntityJob {
   activitySport?: ActivityType;
 }
 
+export interface IManualActivityJob extends IEntityJob {
+  activityName?: string;
+  activityDescription?: string;
+  activitySport: ActivityType;
+  startedAt: string;
+  elapsedTime: number;
+  movingTime?: number | null;
+  distance?: number | null;
+  elevationGain?: number | null;
+  elevationLoss?: number | null;
+  avgSpeed?: number | null;
+  maxSpeed?: number | null;
+  avgHr?: number | null;
+  maxHr?: number | null;
+  calories?: number | null;
+}
+
 export interface ILagomTakeoutImportJob {
   originalName: string;
   storagePath: string;
@@ -403,6 +420,7 @@ export type JobItem =
   | { name: JobName.ActivityBestEffortRank; data: { id?: string } }
   | { name: JobName.ActivityRouteMatchCompute; data: IEntityJob }
   | { name: JobName.ActivityParse; data: IActivityParseJob }
+  | { name: JobName.ActivityManualCreate; data: IManualActivityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
   | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }

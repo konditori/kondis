@@ -16,6 +16,7 @@ export enum JobName {
   ActivityBestEffortRank = 'ActivityBestEffortRank',
   ActivityRouteMatchCompute = 'ActivityRouteMatchCompute',
   ActivityParse = 'ActivityParse',
+  ActivityManualCreate = 'ActivityManualCreate',
   ActivityParseQueueAll = 'ActivityParseQueueAll',
   ActivityDelete = 'ActivityDelete',
   LagomTakeoutImport = 'LagomTakeoutImport',
