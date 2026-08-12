@@ -315,9 +315,27 @@ describe('ActivityController (medium)', () => {
         { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
         { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
       ]);
+      // The same route with uneven, slightly noisy recording intervals. Comparing the raw
+      // vertices produces a large discrete Frechet distance despite the lines overlapping.
       const second = await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'same direction with GPS drift', [
-        { type: 'latitude', data: [59.32932, 59.33305, 59.33702, 59.32931] },
-        { type: 'longitude', data: [18.06861, 18.07403, 18.07004, 18.06859] },
+        {
+          type: 'latitude',
+          data: [
+            59.32932, 59.330265, 59.33111, 59.332115, 59.33305, 59.33404, 59.33496, 59.33604, 59.33702, 59.335115,
+            59.33311, 59.331265, 59.32931,
+          ],
+        },
+        {
+          type: 'longitude',
+          data: [
+            18.06861, 18.06995, 18.0713, 18.07265, 18.07403, 18.073, 18.072, 18.071, 18.07004, 18.06965, 18.0693,
+            18.06895, 18.06859,
+          ],
+        },
+      ]);
+      const lateStart = await createActivity(new Date('2024-02-10T08:00:00.000Z'), 'same route with a late start', [
+        { type: 'latitude', data: [59.32999, 59.333, 59.337, 59.3293] },
+        { type: 'longitude', data: [18.06963, 18.074, 18.07, 18.0686] },
       ]);
       await createActivity(new Date('2024-02-15T08:00:00.000Z'), 'same loop in reverse', [
         { type: 'latitude', data: [59.3293, 59.337, 59.333, 59.3293] },
@@ -331,8 +349,8 @@ describe('ActivityController (medium)', () => {
       const detail = await controller.getById({ id: first });
       const response = await controller.listMatchedRoutes({ id: first });
 
-      expect(detail.matchedRouteCount).toBe(2);
-      expect(response.activities?.map(({ id }) => id)).toEqual([first, second]);
+      expect(detail.matchedRouteCount).toBe(3);
+      expect(response.activities?.map(({ id }) => id)).toEqual([first, second, lateStart]);
 
       await db.deleteFrom('activity_route_match').where('activity_id', '=', first).execute();
       const detailAfterRemovingPersistedMatches = await controller.getById({ id: first });

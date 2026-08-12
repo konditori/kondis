@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { gzipSync } from 'node:zlib';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
@@ -148,6 +148,30 @@ describe('job system (medium)', () => {
         const finalCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
         expect(finalCounts.queued).toBe(0);
       } finally {
+        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.resume(QueueName.ActivityParsing);
+      }
+    });
+
+    it('runs one ranking refresh when a bulk operation queues more than one worker batch', async () => {
+      await jobs.pause(QueueName.ActivityParsing);
+      const refresh = vi.spyOn(activityRepository, 'refreshBestEffortRankings');
+
+      try {
+        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.queueAll(
+          Array.from({ length: 50 }, () => ({
+            name: JobName.ActivityBestEffortRank,
+            data: {},
+          })),
+        );
+
+        await jobs.resume(QueueName.ActivityParsing);
+        await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+
+        expect(refresh).toHaveBeenCalledTimes(1);
+      } finally {
+        refresh.mockRestore();
         await jobs.empty(QueueName.ActivityParsing);
         await jobs.resume(QueueName.ActivityParsing);
       }
