@@ -23,6 +23,7 @@
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
   const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
+  const hasBestEffortAchievements = $derived(activity.bestEfforts.some((effort) => bestEffortAchievement(effort) !== null));
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -169,13 +170,15 @@
         </div>
         {#each activity.bestEfforts as effort}
           {@const achievement = bestEffortAchievement(effort)}
-          <a class="best-effort-row" class:has-achievement={achievement !== null} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
+          <a class="best-effort-row" role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
             <div class="effort-distance" role="cell">
               {#if achievement}
                 <span class={`effort-medal achievement-rank-${achievement.rank}`} aria-hidden="true">
                   <Medal size={31} />
                   <small>{achievement.rank === 1 ? 'PR' : achievement.rank}</small>
                 </span>
+              {:else if hasBestEffortAchievements}
+                <span class="effort-medal-placeholder" aria-hidden="true"></span>
               {/if}
               <span class="effort-distance-copy">
                 <strong>{bestEffortLabel(effort.type)}</strong>
