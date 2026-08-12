@@ -7,8 +7,7 @@ import { DatabaseConfig } from 'src/config/config.service';
 import { createDatabase, KondisDatabase, KondisTransaction, KYSELY } from 'src/db/database';
 
 // File migrations are loaded from this module's source/compiled sibling directory.
-// eslint-disable-next-line unicorn/prefer-module
-const MIGRATION_FOLDER = join(__dirname, '..', 'schema', 'migrations');
+const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 
 @Injectable()
 export class DatabaseRepository {

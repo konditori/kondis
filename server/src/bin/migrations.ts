@@ -19,8 +19,7 @@ const createMigration = async (name: string): Promise<string> => {
   }
 
   const filename = `${Date.now()}-${migrationName}.ts`;
-  // eslint-disable-next-line unicorn/prefer-module
-  const path = join(__dirname, '..', 'schema', 'migrations', filename);
+  const path = join(import.meta.dirname, '..', 'schema', 'migrations', filename);
   const contents = `import { Kysely } from 'kysely';
 
 export async function up(db: Kysely<unknown>): Promise<void> {

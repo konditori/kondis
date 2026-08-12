@@ -5,5 +5,9 @@
     "sourceMap": false,
     "incremental": false
   },
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "resolveFullExtension": ".js"
+  },
   "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
 }

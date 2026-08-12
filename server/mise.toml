@@ -40,7 +40,7 @@ arg "<command>" help="Migration operation" {
 }
 arg "[name]" help="Name for a new migration"
 '''
-run = 'node -r @swc-node/register src/bin/migrations.ts "${usage_command?}" "${usage_name:-}"'
+run = 'node -r @swc-node/register scripts/run-typescript.cjs src/bin/migrations.ts "${usage_command?}" "${usage_name:-}"'
 
 [tasks.migrate]
 run = { task = "migrations", args = ["run"] }
@@ -51,8 +51,8 @@ run = "kysely-codegen --dialect postgres --out-file src/db/schema.generated.ts"
 
 [tasks."sync-open-api"]
 env._.path = "./node_modules/.bin"
-run = "node -r @swc-node/register src/bin/sync-open-api.ts"
+run = "node -r @swc-node/register scripts/run-typescript.cjs src/bin/sync-open-api.ts"
 
 [tasks."third-party-licenses"]
 env._.path = "./node_modules/.bin"
-run = "node -r @swc-node/register src/bin/generate-third-party-notices.ts"
+run = "node -r @swc-node/register scripts/run-typescript.cjs src/bin/generate-third-party-notices.ts"

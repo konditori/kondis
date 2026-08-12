@@ -37,7 +37,10 @@ export const syntheticActivityFixtures = {
   missingRecordDistanceFit: {
     expectedSport: 'run',
     filename: 'synthetic-missing-record-distance.fit',
-    path: resolve(testAssetDirectory, 'activities/running/missing-distance-stream/synthetic-missing-record-distance.fit'),
+    path: resolve(
+      testAssetDirectory,
+      'activities/running/missing-distance-stream/synthetic-missing-record-distance.fit',
+    ),
   },
 } as const satisfies Record<string, TestAsset>;
 
