@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, Flame, Gauge, HeartPulse, MapPinned, Medal, Mountain, Pencil, Timer, X, Zap } from '@lucide/svelte';
-  import { invalidateAll } from '$app/navigation';
+  import { ArrowLeft, CalendarDays, Check, ChevronRight, Clock3, Flame, Gauge, HeartPulse, MapPinned, Medal, Mountain, Pencil, Timer, Trash2, X, Zap } from '@lucide/svelte';
+  import { goto, invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
-  import { activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions, Sport } from '$lib/api';
+  import { activityControllerDeleteById, activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions, Sport } from '$lib/api';
   import { ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeOptions, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
@@ -14,6 +14,7 @@
   const activity = $derived<ActivityDetail>({ ...data.activity, ...(updatedActivity ?? {}) });
   let editing = $state(false);
   let saving = $state(false);
+  let deleting = $state(false);
   let editError = $state('');
   let draftName = $state('');
   let draftDescription = $state('');
@@ -25,6 +26,8 @@
   const mapStyle = $derived(activitySettings.mapStyle);
   const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
   const hasBestEffortAchievements = $derived(activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false);
+  const hasHeartRate = $derived(activity.metrics?.avgHr != null);
+  const hasBestEffortHeartRate = $derived(activity.bestEfforts?.some((effort) => effort.avgHr != null) ?? false);
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -38,7 +41,7 @@
     { label: 'Elapsed time', value: activity.metrics ? duration(activity.metrics.elapsedTime) : '—', icon: Clock3 },
     { label: 'Elevation gain', value: elevation(activity.metrics?.elevationGain ?? null, data.unitSystem), icon: Mountain },
     ...averageMetricStats,
-    { label: 'Average heart rate', value: activity.metrics?.avgHr == null ? '—' : `${activity.metrics.avgHr} bpm`, icon: HeartPulse },
+    ...(hasHeartRate ? [{ label: 'Average heart rate', value: `${activity.metrics?.avgHr} bpm`, icon: HeartPulse }] : []),
     ...(activitySettings.showAveragePower
       ? [{ label: 'Average power', value: activity.metrics?.avgPower == null ? '—' : `${activity.metrics.avgPower} W`, icon: Zap }]
       : []),
@@ -111,6 +114,22 @@
       saving = false;
     }
   }
+
+  async function deleteActivity() {
+    if (!window.confirm('Delete this activity? This cannot be undone.')) {
+      return;
+    }
+
+    deleting = true;
+    editError = '';
+    try {
+      await activityControllerDeleteById({ id: activity.id }, getSdkRequestOptions());
+      await goto('/');
+    } catch {
+      editError = 'Could not delete the activity. Please try again.';
+      deleting = false;
+    }
+  }
 </script>
 
 <svelte:head><title>{activityName(activity)} · Kondis</title></svelte:head>
@@ -129,8 +148,9 @@
         <label><span>Activity type</span><select bind:value={draftSport}>{#each activityTypeOptionsList as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
         <label class="metadata-description"><span>Description</span><textarea bind:value={draftDescription} maxlength="10000" placeholder="Activity description"></textarea></label>
         <div class="metadata-actions">
-          <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving}><X size={16} /> Cancel</button>
-          <button type="submit" class="metadata-save" disabled={saving}><Check size={16} /> {saving ? 'Saving…' : 'Save'}</button>
+          <button type="button" class="metadata-delete" onclick={deleteActivity} disabled={saving || deleting}><Trash2 size={16} /> {deleting ? 'Deleting…' : 'Delete'}</button>
+          <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving || deleting}><X size={16} /> Cancel</button>
+          <button type="submit" class="metadata-save" disabled={saving || deleting}><Check size={16} /> {saving ? 'Saving…' : 'Save'}</button>
         </div>
         {#if editError}<p class="metadata-error" role="alert">{editError}</p>{/if}
       </form>
@@ -174,16 +194,16 @@
       <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2></div></div>
       <div class="best-effort-table-wrap">
         <div class="best-effort-table" role="table" aria-label="Distance best efforts">
-          <div class="best-effort-header" role="row">
+          <div class="best-effort-header" class:no-heart-rate={!hasBestEffortHeartRate} role="row">
             <div role="columnheader"><strong>Distance</strong></div>
             <div role="columnheader"><strong>Time</strong></div>
             <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
-            <div role="columnheader"><strong>Heart Rate</strong></div>
+            {#if hasBestEffortHeartRate}<div role="columnheader"><strong>Heart Rate</strong></div>{/if}
             <div role="columnheader"><strong>Elev</strong></div>
         </div>
         {#each activity.bestEfforts as effort}
           {@const achievement = bestEffortAchievement(effort)}
-          <a class="best-effort-row" role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
+          <a class="best-effort-row" class:no-heart-rate={!hasBestEffortHeartRate} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
             <div class="effort-distance" role="cell">
               {#if achievement}
                 <span class={`effort-medal achievement-rank-${achievement.rank}`} aria-hidden="true">
@@ -200,7 +220,7 @@
             </div>
             <div role="cell">{effortDuration(effort.elapsedTime)}</div>
             <div role="cell">{isCyclingEffort ? speed(effort.distance / effort.elapsedTime, data.unitSystem) : pace(effort.distance / effort.elapsedTime, data.unitSystem)}</div>
-            <div role="cell">{effort.avgHr == null ? '—' : `${effort.avgHr} bpm`}</div>
+            {#if hasBestEffortHeartRate}<div role="cell">{effort.avgHr == null ? '—' : `${effort.avgHr} bpm`}</div>{/if}
             <div role="cell">{elevation(effort.elevationChange, data.unitSystem)}</div>
           </a>
         {/each}

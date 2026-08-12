@@ -349,7 +349,7 @@ describe('ActivityService', () => {
     it('computes persisted efforts in the activity parsing queue handler', async () => {
       await expect(makeService().handleActivityBestEffortCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
       expect(recomputeBestEfforts).toHaveBeenCalledWith(ACTIVITY_ID);
-      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} });
+      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: { id: ACTIVITY_ID } });
     });
 
     it('skips an activity that no longer exists', async () => {
@@ -371,6 +371,28 @@ describe('ActivityService', () => {
       await expect(makeService().handleActivityBestEffortRank()).resolves.toBe(JobStatus.Success);
       expect(discardQueuedDuplicates).toHaveBeenCalledWith(JobName.ActivityBestEffortRank);
       expect(refreshBestEffortRankings).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies clients after rankings are refreshed for a computed activity', async () => {
+      getActivityById.mockResolvedValue({
+        id: ACTIVITY_ID,
+        upload_id: UPLOAD_ID,
+        sport: 'run',
+        name: null,
+        description: null,
+        started_at: new Date('2024-03-01T06:00:00.000Z'),
+        timezone_offset_minutes: null,
+        metrics_computed_at: null,
+        best_efforts_computed_at: new Date(),
+        route_matches_computed_at: null,
+        metrics: null,
+        created_at: new Date('2024-03-01T06:00:01.000Z'),
+        updated_at: new Date('2024-03-01T06:00:01.000Z'),
+      });
+
+      await expect(makeService().handleActivityBestEffortRank({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
+
+      expect(emitEvent).toHaveBeenCalledWith('ActivityUpdate', expect.objectContaining({ id: ACTIVITY_ID }));
     });
   });
 

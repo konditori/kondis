@@ -785,6 +785,15 @@ button {
   background: white;
   border: 1px solid var(--line);
 }
+.metadata-delete {
+  color: #a34227;
+  background: #fff8f5;
+  border: 1px solid #e8b7a6;
+}
+.metadata-delete:hover {
+  background: #fcede8;
+  border-color: #c9785e;
+}
 .metadata-save {
   color: white;
   background: var(--green);
@@ -1147,6 +1156,10 @@ button {
   align-items: center;
   column-gap: 18px;
   padding: 0 22px;
+}
+.best-effort-header.no-heart-rate,
+.best-effort-row.no-heart-rate {
+  grid-template-columns: minmax(230px, 1.5fr) repeat(3, minmax(105px, 1fr));
 }
 .best-effort-header {
   min-height: 52px;

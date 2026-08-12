@@ -1,5 +1,6 @@
 import {
   activityControllerGetById,
+  activityControllerDeleteById,
   activityControllerListBestEfforts,
   activityControllerListMatchedRoutes,
   activityControllerListRecent,
@@ -24,6 +25,7 @@ export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
 
 export {
   activityControllerGetById,
+  activityControllerDeleteById,
   activityControllerListBestEfforts,
   activityControllerListMatchedRoutes,
   activityControllerListRecent,

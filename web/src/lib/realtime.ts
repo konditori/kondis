@@ -5,9 +5,11 @@ type ActivityEvent = {
   activity: Activity;
 };
 
+export type ActivityEventType = ActivityEvent["type"];
+
 export function subscribeToActivityEvents(
   url: string,
-  onActivity: (activity: Activity) => void,
+  onActivity: (activity: Activity, type: ActivityEventType) => void,
   onConnected: () => void,
 ): () => void {
   let socket: WebSocket | undefined;
@@ -29,7 +31,7 @@ export function subscribeToActivityEvents(
             event.type === "activity.updated") &&
           event.activity?.id
         )
-          onActivity(event.activity);
+          onActivity(event.activity, event.type);
       } catch {
         // Ignore malformed or forward-incompatible events.
       }

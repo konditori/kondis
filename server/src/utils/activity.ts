@@ -28,6 +28,18 @@ export const toActivityType = (sport?: string | null, subSport?: string | null):
   const normalizedSport = normalizeActivityType(sport);
   const normalizedSubSport = normalizeActivityType(subSport);
 
+  if (normalizedSubSport === 'virtual_activity') {
+    if (['cycling', 'ride', 'biking', 'bike'].includes(normalizedSport)) {
+      return 'virtual_ride';
+    }
+    if (['running', 'run'].includes(normalizedSport)) {
+      return 'virtual_run';
+    }
+    if (['rowing', 'row'].includes(normalizedSport)) {
+      return 'virtual_row';
+    }
+  }
+
   if (
     normalizedSport === 'trail_run' ||
     normalizedSport === 'trail_running' ||

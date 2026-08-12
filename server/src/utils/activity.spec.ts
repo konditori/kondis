@@ -23,6 +23,9 @@ describe('toActivityType', () => {
     ['stand up paddleboarding', undefined, 'stand_up_paddling'],
     ['HIIT', undefined, 'high_intensity_interval_training'],
     ['virtual running', undefined, 'virtual_run'],
+    ['cycling', 'virtual_activity', 'virtual_ride'],
+    ['running', 'virtual activity', 'virtual_run'],
+    ['rowing', 'VirtualActivity', 'virtual_row'],
   ])('maps %s / %s to %s', (sport, subSport, expected) => {
     expect(toActivityType(sport, subSport)).toBe(expected);
   });

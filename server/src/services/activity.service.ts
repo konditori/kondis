@@ -271,7 +271,7 @@ export class ActivityService {
       return JobStatus.Skipped;
     }
 
-    await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+    await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: { id } });
     this.logger.log(`Computed best efforts for activity ${id}`);
     return JobStatus.Success;
   }
@@ -289,9 +289,15 @@ export class ActivityService {
   }
 
   @OnJob({ name: JobName.ActivityBestEffortRank, queue: QueueName.ActivityParsing })
-  async handleActivityBestEffortRank(): Promise<JobStatus> {
+  async handleActivityBestEffortRank({ id }: JobOf<JobName.ActivityBestEffortRank> = {}): Promise<JobStatus> {
     await this.jobRepository.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
     await this.activityRepository.refreshBestEffortRankings();
+    if (id) {
+      const updated = await this.activityRepository.getById(id);
+      if (updated) {
+        await this.eventRepository.emit('ActivityUpdate', this.toActivityDto(updated));
+      }
+    }
     this.logger.log('Refreshed best-effort rankings');
     return JobStatus.Success;
   }
