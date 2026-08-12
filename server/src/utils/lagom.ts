@@ -246,12 +246,16 @@ export const extractLagomTakeout = async (
   const sportIndex = headers.indexOf('Activity Type');
   const column = (name: string) => headers.indexOf(name);
   const number = (row: string[], name: string, occurrence = 0): number | null => {
-    const index = headers.reduce<number[]>((matches, header, index) => {
-      if (header === name) matches.push(index);
-      return matches;
-    }, [])[occurrence];
-    const value = row[index ?? -1]?.trim();
-    if (!value) return null;
+    let index = -1;
+    let matches = 0;
+    for (const [headerIndex, header] of headers.entries()) {
+      if (header === name && matches++ === occurrence) {
+        index = headerIndex;
+        break;
+      }
+    }
+    const value = row[index]?.trim();
+    if (!value) {return null;}
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
   };

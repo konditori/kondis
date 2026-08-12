@@ -77,7 +77,7 @@ describe('extractLagomTakeout', () => {
     });
     const imported: string[] = [];
 
-    const result = await extractLagomTakeout(archive, async (activity) => {
+    const result = await extractLagomTakeout(archive, (activity) => {
       imported.push(activity.name ?? '');
       expect(activity.manual?.distance).toBe(4700);
     });
