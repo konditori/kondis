@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { type ActivityType } from 'src/domain/activity-type';
 import { type UploadedFileData } from 'src/types';
@@ -10,7 +11,9 @@ export type TestAsset = {
   path: string;
 };
 
-export const testAssetDirectory = resolve(__dirname, '../../../test/test-assets');
+const currentDirectory = dirname(fileURLToPath(import.meta.url));
+
+export const testAssetDirectory = resolve(currentDirectory, '../../../test/test-assets');
 
 export const activityFixtures = {
   hindasRun: {
