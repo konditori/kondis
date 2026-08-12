@@ -1,0 +1,29 @@
+server/src/db/schema.ts
+  s_4c3ea23d641b14::t_f744f0c990d3ce 15,19-23
+server/src/repositories/activity.repository.ts
+  s_4c3ea23d641b14::t_dea5369f49ddd3 26-32,160-161,206-212,217,232,234,242-247,249-254,257-258,260-291,293,409
+server/src/schema/migrations/1786450000000-MatchedRoutes.ts
+  s_4c3ea23d641b14::t_15e593efc080fb 13-14,16,18,49-83,87
+server/src/services/activity.service.ts
+  s_4c3ea23d641b14::t_d90a2693cd3567 306,315
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_4c3ea23d641b14::t_ea963d92d644c2 276,278,283,285-286,289-292,294,303-306
+server/test/medium/test-db.ts
+  s_4c3ea23d641b14::t_63edb843009f67 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d5b87e0cf4b41d1a43f76b0ca3dbda2c87712a3d",
+  "prompts": {},
+  "sessions": {
+    "s_4c3ea23d641b14": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff73c-dc3d-7b53-8f6a-e75577a333d7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
