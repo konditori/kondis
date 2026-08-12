@@ -1,0 +1,19 @@
+server/src/utils/lagom.spec.ts
+  s_f21b11295d946a::t_02f142c32df2ce 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2efaf8f60e1de673923e07c5067d745d74ee9474",
+  "prompts": {},
+  "sessions": {
+    "s_f21b11295d946a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff81e-286e-74c0-bc83-a894651b75dd",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
