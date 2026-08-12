@@ -1,0 +1,33 @@
+server/src/services/activity.service.spec.ts
+  s_932d9ff109aee5::t_85be2eaa7a4a13 352,375-396
+server/src/services/activity.service.ts
+  s_932d9ff109aee5::t_d25a4009b1bb58 274,292,295-300
+server/src/types.ts
+  s_932d9ff109aee5::t_ec31a07888737f 403
+server/src/utils/activity.spec.ts
+  s_932d9ff109aee5::t_6ccbfa84628286 26-28
+server/src/utils/activity.ts
+  s_932d9ff109aee5::t_14f6f7290ad33f 31-42
+web/src/app.css
+  s_932d9ff109aee5::t_e58132dff03f79 788-796,1160-1163
+web/src/lib/api.ts
+  s_932d9ff109aee5::t_8a1c4d1bcdb9db 3,28
+web/src/routes/activities/[id]/+page.svelte
+  s_932d9ff109aee5::t_72cdaa3bb83a09 2-3,5,17,29-30,44,117-132,151-153,197,201,206,223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c31db92680811bd327f090a54e9d3de45b296f22",
+  "prompts": {},
+  "sessions": {
+    "s_932d9ff109aee5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff7ee-d1f9-7711-8c8f-73fae4c7ce19",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
