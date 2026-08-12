@@ -1,0 +1,25 @@
+server/mise.toml
+  s_13a30a0a8901df::t_70644f8796e74e 22
+server/package.json
+  s_13a30a0a8901df::t_11fd562e3db43d 17
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_13a30a0a8901df::t_ad670132a6f348 260-261
+server/test/utils/zip.ts
+  s_13a30a0a8901df::t_74d31338881f58 15,17,25,28,41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9c638d52d7bccae517ad4ac4b33c62d48bb26af0",
+  "prompts": {},
+  "sessions": {
+    "s_13a30a0a8901df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff52b-7358-7163-8df0-b69934917ea8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
