@@ -12,20 +12,15 @@ import {
   NewLap,
   StreamType,
 } from 'src/db/schema';
+import { ActivityType, BestEffortGroup, BestEffortType } from 'src/types';
+import { getActivityTypeSettings } from 'src/utils/activity';
 import {
-  ActivityType,
-  supportsCyclingBestEfforts,
-  supportsDistanceBestEfforts,
-  supportsRunningBestEfforts,
-} from 'src/domain/activity-type';
-import {
-  BestEffortType,
   computeBiggestClimb,
   computeCyclingBestEfforts,
   computeCyclingPowerBestEfforts,
   computeCyclingSummaryBestEfforts,
   computeRunningBestEfforts,
-} from 'src/domain/running-best-effort';
+} from 'src/utils/best-effort';
 
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 const ACTIVITY_COLUMNS = [
@@ -341,14 +336,15 @@ export class ActivityRepository {
     streams: ActivityStreamInput[],
     metrics: { elapsed_time: number; distance?: number | null; elevation_gain?: number | null },
   ): Promise<void> {
-    if (!supportsDistanceBestEfforts(sport)) {
+    const bestEffortGroup = getActivityTypeSettings(sport).bestEffortGroup;
+    if (bestEffortGroup === BestEffortGroup.None) {
       return;
     }
 
     const distance = streams.find((stream) => stream.type === 'distance')?.data ?? [];
     const time = streams.find((stream) => stream.type === 'time')?.data ?? [];
-    const efforts = supportsRunningBestEfforts(sport) ? computeRunningBestEfforts(distance, time) : [];
-    if (supportsCyclingBestEfforts(sport)) {
+    const efforts = bestEffortGroup === BestEffortGroup.Run ? computeRunningBestEfforts(distance, time) : [];
+    if (bestEffortGroup === BestEffortGroup.Ride) {
       efforts.push(
         ...computeCyclingBestEfforts(distance, time),
         ...computeCyclingSummaryBestEfforts({

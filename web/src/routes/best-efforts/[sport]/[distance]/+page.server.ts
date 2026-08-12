@@ -5,14 +5,14 @@ import {
   BestEffortType,
   getSdkRequestOptions,
 } from "$lib/api";
-import type { RunningBestEffortHistory } from "$lib/types";
+import type { BestEffortHistory } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ fetch, params }) => {
   if (params.sport !== "run" && params.sport !== "ride")
     error(404, "Best effort sport not found");
 
-  let history: RunningBestEffortHistory;
+  let history: BestEffortHistory;
   try {
     history = (await activityControllerListBestEfforts(
       {
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
         $type: params.distance as BestEffortType,
       },
       getSdkRequestOptions(fetch),
-    )) as RunningBestEffortHistory;
+    )) as BestEffortHistory;
   } catch (requestError) {
     if ((requestError as { status?: number }).status === 400)
       error(404, "Best effort not found");

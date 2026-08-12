@@ -5,7 +5,7 @@ import {
   computeCyclingBestEfforts,
   computeCyclingPowerBestEfforts,
   computeRunningBestEfforts,
-} from 'src/domain/running-best-effort';
+} from 'src/utils/best-effort';
 
 describe('computeRunningBestEfforts', () => {
   it('computes every attainable standard distance with interpolation', () => {

@@ -13,7 +13,6 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
-import { ACTIVITY_TYPE_SETTINGS } from 'src/domain/activity-type';
 import {
   ActivityDetailDto,
   ActivityDto,
@@ -26,6 +25,7 @@ import {
   BestEffortListResponseDto,
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
+import { ACTIVITY_TYPES } from 'src/types';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -43,7 +43,7 @@ export class ActivityController {
   @ZodResponse({ status: 200, description: 'Activity type settings', type: ActivityTypeListResponseDto })
   @Get('types')
   listTypes(): ActivityTypeListResponseDto {
-    return [...ACTIVITY_TYPE_SETTINGS];
+    return [...ACTIVITY_TYPES];
   }
 
   @ApiOperation({ summary: 'List best efforts over time for a sport' })

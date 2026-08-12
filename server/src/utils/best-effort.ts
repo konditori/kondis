@@ -1,73 +1,10 @@
-export const RUNNING_BEST_EFFORTS = [
-  { type: '400m', distance: 400, valueKind: 'duration', higherIsBetter: false },
-  { type: '1k', distance: 1000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_mile', distance: 804.672, valueKind: 'duration', higherIsBetter: false },
-  { type: '1_mile', distance: 1609.344, valueKind: 'duration', higherIsBetter: false },
-  { type: '2_miles', distance: 3218.688, valueKind: 'duration', higherIsBetter: false },
-  { type: '5k', distance: 5000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '15k', distance: 15_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_marathon', distance: 21_097.5, valueKind: 'duration', higherIsBetter: false },
-  { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'marathon', distance: 42_195, valueKind: 'duration', higherIsBetter: false },
-  { type: '50k', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
-] as const;
-
-export const CYCLING_BEST_EFFORTS = [
-  { type: 'longest_ride', valueKind: 'distance', higherIsBetter: true },
-  { type: 'biggest_climb', valueKind: 'elevation', higherIsBetter: true },
-  { type: 'elevation_gain', valueKind: 'elevation', higherIsBetter: true },
-  { type: '5_miles', distance: 8046.72, valueKind: 'duration', higherIsBetter: false },
-  { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '40k', distance: 40_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '50k', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '80k', distance: 80_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '50_miles', distance: 80_467.2, valueKind: 'duration', higherIsBetter: false },
-  { type: '90k', distance: 90_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '100k', distance: 100_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '100_miles', distance: 160_934.4, valueKind: 'duration', higherIsBetter: false },
-  { type: '180k', distance: 180_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'power_5s', duration: 5, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_15s', duration: 15, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_30s', duration: 30, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_1m', duration: 60, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_2m', duration: 120, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_3m', duration: 180, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_5m', duration: 300, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_8m', duration: 480, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_10m', duration: 600, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_15m', duration: 900, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_20m', duration: 1200, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_30m', duration: 1800, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_45m', duration: 2700, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_1h', duration: 3600, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_2h', duration: 7200, valueKind: 'power', higherIsBetter: true },
-] as const;
-
-export const BEST_EFFORT_TYPES = [
-  ...new Set([...RUNNING_BEST_EFFORTS.map(({ type }) => type), ...CYCLING_BEST_EFFORTS.map(({ type }) => type)]),
-] as [BestEffortType, ...BestEffortType[]];
-
-export type RunningBestEffortType = (typeof RUNNING_BEST_EFFORTS)[number]['type'];
-export type CyclingBestEffortType = (typeof CYCLING_BEST_EFFORTS)[number]['type'];
-export type BestEffortType = RunningBestEffortType | CyclingBestEffortType;
-export type BestEffortValueKind = 'duration' | 'distance' | 'elevation' | 'power';
-export type DistanceBestEffortDefinition = { type: BestEffortType; distance: number };
-
-export type RunningBestEffort = {
-  type: BestEffortType;
-  distance: number;
-  elapsedTime: number;
-  startTime: number;
-  endTime: number;
-  value: number;
-  valueKind: BestEffortValueKind;
-};
+import {
+  BestEffort,
+  BestEffortType,
+  CYCLING_BEST_EFFORTS,
+  DistanceBestEffortDefinition,
+  RUNNING_BEST_EFFORTS,
+} from 'src/types';
 
 type DistanceTimePoint = { distance: number; time: number };
 
@@ -122,12 +59,12 @@ const fastestEffort = (
   points: DistanceTimePoint[],
   type: BestEffortType,
   targetDistance: number,
-): RunningBestEffort | undefined => {
+): BestEffort | undefined => {
   if (points.length < 2 || points.at(-1)!.distance - points[0].distance < targetDistance) {
     return;
   }
 
-  let best: RunningBestEffort | undefined;
+  let best: BestEffort | undefined;
   const consider = (startTime: number, endTime: number): void => {
     const elapsedTime = endTime - startTime;
     if (!Number.isFinite(elapsedTime) || elapsedTime <= 0 || (best && elapsedTime >= best.elapsedTime)) {
@@ -185,7 +122,7 @@ export const computeDistanceBestEfforts = (
   distance: number[],
   time: number[],
   definitions: readonly DistanceBestEffortDefinition[],
-): RunningBestEffort[] => {
+): BestEffort[] => {
   const points = buildPoints(distance, time);
   return definitions.flatMap(({ type, distance: targetDistance }) => {
     const effort = fastestEffort(points, type, targetDistance);
@@ -193,10 +130,10 @@ export const computeDistanceBestEfforts = (
   });
 };
 
-export const computeRunningBestEfforts = (distance: number[], time: number[]): RunningBestEffort[] =>
+export const computeRunningBestEfforts = (distance: number[], time: number[]): BestEffort[] =>
   computeDistanceBestEfforts(distance, time, RUNNING_BEST_EFFORTS);
 
-export const computeCyclingBestEfforts = (distance: number[], time: number[]): RunningBestEffort[] =>
+export const computeCyclingBestEfforts = (distance: number[], time: number[]): BestEffort[] =>
   computeDistanceBestEfforts(
     distance,
     time,
@@ -209,8 +146,8 @@ export const computeCyclingSummaryBestEfforts = (summary: {
   distance: number | null;
   elevationGain: number | null;
   elapsedTime: number;
-}): RunningBestEffort[] => {
-  const efforts: RunningBestEffort[] = [];
+}): BestEffort[] => {
+  const efforts: BestEffort[] = [];
   if (summary.distance && summary.distance > 0 && summary.elapsedTime > 0) {
     efforts.push({
       type: 'longest_ride',
@@ -236,10 +173,10 @@ export const computeCyclingSummaryBestEfforts = (summary: {
   return efforts;
 };
 
-export const computeBiggestClimb = (altitude: number[], time: number[]): RunningBestEffort | undefined => {
+export const computeBiggestClimb = (altitude: number[], time: number[]): BestEffort | undefined => {
   let minimumAltitude: number | undefined;
   let minimumTime = 0;
-  let best: RunningBestEffort | undefined;
+  let best: BestEffort | undefined;
 
   for (let index = 0; index < Math.min(altitude.length, time.length); index++) {
     const currentAltitude = altitude[index];
@@ -282,7 +219,7 @@ const buildTimedPower = (power: number[], time: number[]): TimedPower[] => {
   return points;
 };
 
-export const computeCyclingPowerBestEfforts = (power: number[], time: number[]): RunningBestEffort[] => {
+export const computeCyclingPowerBestEfforts = (power: number[], time: number[]): BestEffort[] => {
   const points = buildTimedPower(power, time);
   if (points.length < 2) {
     return [];
@@ -318,7 +255,7 @@ export const computeCyclingPowerBestEfforts = (power: number[], time: number[]):
   return CYCLING_BEST_EFFORTS.filter(
     (effort): effort is (typeof CYCLING_BEST_EFFORTS)[number] & { duration: number } => 'duration' in effort,
   ).flatMap(({ type, duration }) => {
-    let best: RunningBestEffort | undefined;
+    let best: BestEffort | undefined;
     for (let startIndex = 0; startIndex < points.length; startIndex++) {
       const startTime = points[startIndex].time;
       const endTime = startTime + duration;

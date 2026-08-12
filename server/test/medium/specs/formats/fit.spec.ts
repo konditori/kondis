@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { ConsoleLogger } from '@nestjs/common';
 
-import { computeRunningBestEfforts } from 'src/domain/running-best-effort';
 import { FitRepository } from 'src/repositories/fit.repository';
+import { computeRunningBestEfforts } from 'src/utils/best-effort';
 import { findStream, parseFitMessages } from 'src/utils/fit';
 
 import { activityFixtures, hasTestAsset, syntheticActivityFixtures } from 'test/medium/utils';

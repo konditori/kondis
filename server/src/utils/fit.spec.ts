@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeRunningBestEfforts } from 'src/domain/running-best-effort';
 import { FitMessages } from 'src/repositories/fit.repository';
+import { computeRunningBestEfforts } from 'src/utils/best-effort';
 import { findStream, FitParseError, parseFitMessages } from 'src/utils/fit';
 
 const START = new Date('2015-06-22T08:00:00.000Z');

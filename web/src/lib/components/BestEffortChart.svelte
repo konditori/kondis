@@ -1,6 +1,6 @@
 <script lang="ts">
   import { bestEffortValue } from "$lib/format";
-  import type { RunningBestEffortHistory } from "$lib/types";
+  import type { BestEffortHistory } from "$lib/types";
   import type { UnitSystem } from "$lib/units";
 
   let {
@@ -10,9 +10,9 @@
     higherIsBetter,
     unitSystem,
   }: {
-    efforts: RunningBestEffortHistory["efforts"];
+    efforts: BestEffortHistory["efforts"];
     label: string;
-    valueKind: RunningBestEffortHistory["valueKind"];
+    valueKind: BestEffortHistory["valueKind"];
     higherIsBetter: boolean;
     unitSystem: UnitSystem;
   } = $props();

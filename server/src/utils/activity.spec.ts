@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  ACTIVITY_TYPES,
-  ACTIVITY_TYPE_SETTINGS,
-  AverageMetric,
-  BestEffortGroup,
-  activityTypeSettings,
-  toActivityType,
-} from 'src/domain/activity-type';
+import { ACTIVITY_TYPE_IDS, ACTIVITY_TYPES, AverageMetric, BestEffortGroup } from 'src/types';
+import { getActivityTypeSettings, toActivityType } from 'src/utils/activity';
 
 describe('toActivityType', () => {
   it.each([
@@ -39,13 +33,13 @@ describe('toActivityType', () => {
   });
 
   it('accepts every canonical activity type without an alias', () => {
-    for (const type of ACTIVITY_TYPES) {
+    for (const type of ACTIVITY_TYPE_IDS) {
       expect(toActivityType(type)).toBe(type);
     }
   });
 
   it('maps every declared alias to its activity type', () => {
-    for (const { type, aliases } of ACTIVITY_TYPE_SETTINGS) {
+    for (const { type, aliases } of ACTIVITY_TYPES) {
       for (const alias of aliases) {
         expect(toActivityType(alias)).toBe(type);
       }
@@ -53,12 +47,12 @@ describe('toActivityType', () => {
   });
 
   it('does not declare the same canonical name or alias twice', () => {
-    const names = ACTIVITY_TYPE_SETTINGS.flatMap(({ type, aliases }) => [type, ...aliases]);
+    const names = ACTIVITY_TYPES.flatMap(({ type, aliases }) => [type, ...aliases]);
     expect(new Set(names).size).toBe(names.length);
   });
 
   it('defines settings for every activity type', () => {
-    expect(ACTIVITY_TYPE_SETTINGS.map(({ type }) => type)).toEqual(ACTIVITY_TYPES);
+    expect(ACTIVITY_TYPES.map(({ type }) => type)).toEqual(ACTIVITY_TYPE_IDS);
   });
 
   it.each([
@@ -67,20 +61,20 @@ describe('toActivityType', () => {
     ['ice_skate', AverageMetric.None],
     ['swim', AverageMetric.SwimPace],
   ] as const)('defines the average metric for %s', (type, averageMetric) => {
-    expect(activityTypeSettings(type).averageMetric).toBe(averageMetric);
+    expect(getActivityTypeSettings(type).averageMetric).toBe(averageMetric);
   });
 
   it('groups all running and cycling best-effort activity types', () => {
     const running = new Set(['run', 'trail_run', 'virtual_run']);
     const cycling = new Set(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride']);
 
-    for (const type of ACTIVITY_TYPES) {
+    for (const type of ACTIVITY_TYPE_IDS) {
       const expected = running.has(type)
         ? BestEffortGroup.Run
         : cycling.has(type)
           ? BestEffortGroup.Ride
           : BestEffortGroup.None;
-      expect(activityTypeSettings(type).bestEffortGroup).toBe(expected);
+      expect(getActivityTypeSettings(type).bestEffortGroup).toBe(expected);
     }
   });
 
@@ -94,8 +88,8 @@ describe('toActivityType', () => {
       'virtual_ride',
     ]);
 
-    for (const type of ACTIVITY_TYPES) {
-      expect(activityTypeSettings(type).showAveragePower).toBe(powerTypes.has(type));
+    for (const type of ACTIVITY_TYPE_IDS) {
+      expect(getActivityTypeSettings(type).showAveragePower).toBe(powerTypes.has(type));
     }
   });
 });

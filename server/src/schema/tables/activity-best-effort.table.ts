@@ -1,5 +1,5 @@
-import { BestEffortType, BestEffortValueKind } from 'src/domain/running-best-effort';
 import { Column, Generated, Table } from 'src/schema/decorators';
+import { BestEffortType, BestEffortValueKind } from 'src/types';
 
 @Table('activity_best_effort')
 export class ActivityBestEffortTable {

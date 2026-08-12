@@ -3,8 +3,6 @@ import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
-import { ActivityType, BestEffortGroup, activityTypesForBestEffortGroup } from 'src/domain/activity-type';
-import { BestEffortType, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/domain/running-best-effort';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
@@ -22,15 +20,27 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
-import { JobItem, JobOf, ParsedActivity } from 'src/types';
+import {
+  ACTIVITY_TYPES,
+  ActivityType,
+  BestEffortGroup,
+  BestEffortType,
+  CYCLING_BEST_EFFORTS,
+  JobItem,
+  JobOf,
+  ParsedActivity,
+  RUNNING_BEST_EFFORTS,
+} from 'src/types';
 import { parseFitMessages } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
 export type BestEffortSport = 'run' | 'ride';
 
 const BEST_EFFORT_SPORTS = {
-  run: activityTypesForBestEffortGroup(BestEffortGroup.Run),
-  ride: activityTypesForBestEffortGroup(BestEffortGroup.Ride),
+  run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(({ type }) => type),
+  ride: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Ride).map(
+    ({ type }) => type,
+  ),
 } satisfies Record<BestEffortSport, readonly ActivityType[]>;
 const BEST_EFFORT_DEFINITIONS = new Map(
   [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),

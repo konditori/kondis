@@ -2,8 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type ActivityType } from 'src/domain/activity-type';
-import { type UploadedFileData } from 'src/types';
+import { type ActivityType, type UploadedFileData } from 'src/types';
 
 export type TestAsset = {
   expectedSport: ActivityType;

@@ -59,7 +59,7 @@ export type BestEffortSport = "run" | "ride";
 export type BestEffortValueKind =
   "duration" | "distance" | "elevation" | "power";
 
-export type RunningBestEffortHistory = {
+export type BestEffortHistory = {
   sport: BestEffortSport;
   type: string;
   valueKind: BestEffortValueKind;

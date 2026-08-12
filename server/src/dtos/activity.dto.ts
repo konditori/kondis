@@ -1,10 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-import { ACTIVITY_TYPES, AverageMetric, BestEffortGroup } from 'src/domain/activity-type';
-import { BEST_EFFORT_TYPES } from 'src/domain/running-best-effort';
+import { ACTIVITY_TYPE_IDS, AverageMetric, BEST_EFFORT_TYPES, BestEffortGroup } from 'src/types';
 
-export const ActivityTypeSchema = z.enum(ACTIVITY_TYPES).describe('Activity sport type').meta({ id: 'ActivityType' });
+export const ActivityTypeSchema = z
+  .enum(ACTIVITY_TYPE_IDS)
+  .describe('Activity sport type')
+  .meta({ id: 'ActivityType' });
 export const ActivityTypeSettingsSchema = z
   .object({
     type: ActivityTypeSchema,

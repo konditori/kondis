@@ -1,6 +1,6 @@
-import { toActivityType } from 'src/domain/activity-type';
 import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
 import { ParsedActivity, ParsedLap, ParsedStream, StreamType } from 'src/types';
+import { toActivityType } from 'src/utils/activity';
 import {
   computeElevationChange,
   computeMovingTime,
