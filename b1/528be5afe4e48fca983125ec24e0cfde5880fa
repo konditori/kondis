@@ -1,0 +1,29 @@
+server/src/controllers/activity.controller.ts
+  s_4f263539d7699f::t_e819f3c339eba5 28,46
+server/src/schema/tables/activity.table.ts
+  s_4f263539d7699f::t_4d9650849d640a 12
+server/src/utils/activity.spec.ts
+  s_4f263539d7699f::t_b2df9f0b1efc01 3-4,36,42,50,55,64,71,77,91-92
+server/src/utils/fit.ts
+  s_4f263539d7699f::t_031fcf247b3028 3
+server/src/utils/lagom.ts
+  s_4f263539d7699f::t_212b5161d7a94c 8-9
+server/test/medium/utils.ts
+  s_4f263539d7699f::t_0fbe8e64df80da 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b1528be5afe4e48fca983125ec24e0cfde5880fa",
+  "prompts": {},
+  "sessions": {
+    "s_4f263539d7699f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff593-932a-7490-a4ec-8b50568cd440",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
