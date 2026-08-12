@@ -98,9 +98,14 @@ describe('job system (medium)', () => {
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
       [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },
       [JobName.ActivityManualCreate]: {
-        name: JobName.ActivityUpload,
-        data: undefined
-      }
+        name: JobName.ActivityManualCreate,
+        data: {
+          id: MISSING_UUID,
+          activitySport: 'run',
+          startedAt: '2024-01-01T00:00:00.000Z',
+          elapsedTime: 60,
+        },
+      },
     };
 
     it('binds a handler to every job name', async () => {

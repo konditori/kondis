@@ -255,7 +255,9 @@ export const extractLagomTakeout = async (
       }
     }
     const value = row[index]?.trim();
-    if (!value) {return null;}
+    if (!value) {
+      return null;
+    }
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
   };
