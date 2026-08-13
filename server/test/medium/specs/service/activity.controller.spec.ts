@@ -141,7 +141,6 @@ describe('ActivityController (medium)', () => {
         type: 'LineString',
         coordinates: [
           [15.6211, 58.4101],
-          [15.6222, 58.4112],
           [15.6234, 58.4124],
         ],
       });

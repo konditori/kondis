@@ -37,11 +37,7 @@
   const displayedNextCursor = $derived(hasSearch ? searchCursor : nextCursor);
   const displayedTotal = $derived(hasSearch ? (searchTotal ?? 0) : total);
   const heading = $derived(hasSearch ? `Search results for “${query.trim()}”` : 'Activities');
-  const resultSummary = $derived(
-    hasSearch
-      ? `${displayedTotal} ${displayedTotal === 1 ? 'workout' : 'workouts'} found`
-      : `${displayedTotal} ${displayedTotal === 1 ? 'workout' : 'workouts'}, all in one place.`,
-  );
+  const resultSummary = $derived(`${displayedTotal} ${displayedTotal === 1 ? 'workout' : 'workouts'} found`);
 
   $effect(() => {
     if (data.activities) {
@@ -178,7 +174,7 @@
 
 <div class="page-shell">
   <header class="page-header">
-    <div><span class="eyebrow">{hasSearch ? 'Your archive · Search' : 'Your archive'}</span><h1>{heading}</h1><p>{resultSummary}</p></div>
+    <div>{#if hasSearch}<span class="eyebrow">Search results</span>{/if}<h1>{heading}</h1>{#if hasSearch}<p>{resultSummary}</p>{/if}</div>
     <label class="search"><Search size={18} /><input bind:value={query} placeholder="Search activities" aria-label="Search activities" />{#if hasSearch}<button class="search-clear" type="button" onclick={clearSearch} aria-label="Clear search" title="Clear search"><X size={17} /></button>{/if}</label>
   </header>
 
