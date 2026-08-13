@@ -228,7 +228,6 @@
     <div class:activity-visuals={hasActivityAnalysis}>
       {#if hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
         <section class="splits-section splits-section-visual">
-          <div class="section-heading"><div><h2>Splits</h2></div></div>
           <div class="split-table-wrap">
             <div class="split-table" role="table" aria-label="Activity kilometre splits">
               <div class="split-header" class:no-heart-rate={!hasSplitHeartRate} role="row">
@@ -266,7 +265,6 @@
 
   {#if !hasGpsRoute && hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
     <section class="splits-section">
-      <div class="section-heading"><div><h2>Splits</h2></div></div>
       <div class="split-table-wrap">
         <div class="split-table" role="table" aria-label="Activity kilometre splits">
           <div class="split-header" class:no-heart-rate={!hasSplitHeartRate} role="row">
