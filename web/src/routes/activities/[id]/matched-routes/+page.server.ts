@@ -1,16 +1,14 @@
 import { error } from "@sveltejs/kit";
-import {
-  activityControllerListMatchedRoutes,
-  getSdkRequestOptions,
-} from "$lib/api";
+import { activityControllerListMatchedRoutes } from "$lib/api";
+import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { MatchedRouteHistory } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ fetch, params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
   try {
     const history = (await activityControllerListMatchedRoutes(
       { id: params.id },
-      getSdkRequestOptions(fetch),
+      getServerSdkRequestOptions(locals.kondisFetch),
     )) as MatchedRouteHistory;
     return { history };
   } catch (requestError) {

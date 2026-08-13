@@ -8,10 +8,19 @@
     { href: '/', label: 'Activities', icon: Activity, section: null },
     { href: '/best-efforts/run/5k', label: 'Best efforts', icon: Trophy, section: '/best-efforts' },
   ];
+
+  function goHome(event: MouseEvent) {
+    // The activities search is local page state, so navigating to the current
+    // route would otherwise leave the existing results rendered.
+    if (page.url.pathname === '/') {
+      event.preventDefault();
+      window.dispatchEvent(new Event('kondis:clear-search'));
+    }
+  }
 </script>
 
 <aside class="sidebar">
-  <a class="brand" href="/" aria-label="Kondis home">
+  <a class="brand" href="/" onclick={goHome} aria-label="Kondis home">
     <span class="brand-mark"><HeartPulse size={22} strokeWidth={2.5} /></span>
     <span>kondis</span>
   </a>

@@ -8,10 +8,12 @@ import * as Oazapfts from '@oazapfts/runtime';
 import * as QS from '@oazapfts/runtime/query';
 export const defaults: Oazapfts.Defaults<Oazapfts.CustomHeaders> = {
   headers: {},
-  baseUrl: '/',
+  baseUrl: '/api/v1',
 };
 const oazapfts = Oazapfts.runtime(defaults);
-export const servers = {};
+export const servers = {
+  server1: '/api/v1',
+};
 export type PingResponseDtoOutput = {
   /** Health status of the API */
   status: string;
@@ -119,9 +121,15 @@ export type ActivityListResponseDtoOutput = {
     topBestEfforts:
       | {
           type: BestEffortType_Output;
+          overallRank: number;
           yearRank: number;
         }[]
       | null;
+    /** Simplified GPS route as GeoJSON */
+    track: {
+      type: Type;
+      coordinates: [number, number][];
+    } | null;
   }[];
   /** Cursor for the next page, or null at the end */
   nextCursor: string | null;
@@ -383,9 +391,11 @@ export function activityControllerListRecent(
   {
     cursor,
     limit,
+    search,
   }: {
     cursor?: string;
     limit?: number;
+    search?: string;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -398,6 +408,7 @@ export function activityControllerListRecent(
         QS.explode({
           cursor,
           limit,
+          search,
         }),
       )}`,
       {
@@ -642,6 +653,9 @@ export enum BestEffortType_Output {
   Power1H = 'power_1h',
   Power2H = 'power_2h',
 }
+export enum Type {
+  LineString = 'LineString',
+}
 export enum AverageMetric {
   None = 'none',
   Pace = 'pace',
@@ -708,9 +722,6 @@ export enum BestEffortValueKind_Output {
   Distance = 'distance',
   Elevation = 'elevation',
   Power = 'power',
-}
-export enum Type {
-  LineString = 'LineString',
 }
 export enum ActivityUpdateDtoActivityType {
   AlpineSki = 'alpine_ski',

@@ -59,6 +59,7 @@ export type ActivityMetrics = Omit<ActivityMetric, 'activity_id'>;
 export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' | 'track'> & {
   metrics: ActivityMetrics | null;
 };
+export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
 
 export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at'>;
 
@@ -389,7 +390,7 @@ export class ActivityRepository {
       .executeTakeFirst();
   }
 
-  listRecentPage({ limit, cursor }: { limit: number; cursor?: ActivityCursor }) {
+  listRecentPage({ limit, cursor, search }: { limit: number; cursor?: ActivityCursor; search?: string }) {
     let query = this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -400,7 +401,19 @@ export class ActivityRepository {
             .select(METRIC_COLUMNS)
             .whereRef('activity_metric.activity_id', '=', 'activity.id'),
         ).as('metrics'),
+      )
+      .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
+
+    if (search) {
+      const pattern = `%${search}%`;
+      query = query.where(({ or, eb }) =>
+        or([
+          eb('activity.name', 'ilike', pattern),
+          eb('activity.description', 'ilike', pattern),
+          sql<boolean>`activity.sport ILIKE ${pattern}`,
+        ]),
       );
+    }
 
     if (cursor) {
       query = query.where(({ and, eb, or }) =>
@@ -414,11 +427,19 @@ export class ActivityRepository {
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
-  async count(): Promise<number> {
-    const row = await this.db
-      .selectFrom('activity')
-      .select(({ fn }) => fn.countAll<number>().as('count'))
-      .executeTakeFirstOrThrow();
+  async count(search?: string): Promise<number> {
+    let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
+    if (search) {
+      const pattern = `%${search}%`;
+      query = query.where(({ or, eb }) =>
+        or([
+          eb('activity.name', 'ilike', pattern),
+          eb('activity.description', 'ilike', pattern),
+          sql<boolean>`activity.sport ILIKE ${pattern}`,
+        ]),
+      );
+    }
+    const row = await query.executeTakeFirstOrThrow();
     return Number(row.count);
   }
 
@@ -461,7 +482,12 @@ export class ActivityRepository {
   listTopBestEfforts(activityIds: string[]) {
     return this.db
       .selectFrom('activity_best_effort')
-      .select(['activity_best_effort.activity_id', 'activity_best_effort.type', 'activity_best_effort.year_rank'])
+      .select([
+        'activity_best_effort.activity_id',
+        'activity_best_effort.type',
+        'activity_best_effort.overall_rank',
+        'activity_best_effort.year_rank',
+      ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity_best_effort.year_rank', '<=', 3)
       .execute();

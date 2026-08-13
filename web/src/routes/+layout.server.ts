@@ -5,17 +5,16 @@ import {
 } from "$lib/units";
 import {
   activityControllerListTypes,
-  getSdkRequestOptions,
   type ActivityTypeSettingsOutput,
 } from "$lib/api";
-import { activityEventsUrl } from "$lib/server/api";
+import { activityEventsUrl, getServerSdkRequestOptions } from "$lib/server/api";
 import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
+export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
     activityTypes = await activityControllerListTypes(
-      getSdkRequestOptions(fetch),
+      getServerSdkRequestOptions(locals.kondisFetch),
     );
   } catch {
     // Activity pages already surface API availability; keep settings usable.

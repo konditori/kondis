@@ -207,11 +207,31 @@ button {
 }
 .search input {
   width: 100%;
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: #1c211d;
   font-size: 14px;
+}
+.search-clear {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.search-clear:hover,
+.search-clear:focus-visible {
+  color: var(--green-dark);
+  background: var(--green-soft);
+  outline: 0;
 }
 .notice {
   display: flex;
@@ -340,38 +360,6 @@ button {
   display: flex;
   gap: 7px;
 }
-.timeline {
-  display: grid;
-  gap: 39px;
-}
-.day-group {
-  display: grid;
-  grid-template-columns: 178px minmax(0, 1fr);
-  gap: 20px;
-}
-.date-rail {
-  position: relative;
-  padding-left: 22px;
-  padding-top: 15px;
-}
-.date-rail > span {
-  position: absolute;
-  top: 19px;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 5px var(--green-soft);
-}
-.date-rail h2 {
-  font-size: 13px;
-  line-height: 1.45;
-}
-.date-rail small {
-  color: var(--muted);
-  font-size: 12px;
-}
 .activity-list {
   display: grid;
   gap: 10px;
@@ -393,15 +381,7 @@ button {
   cursor: pointer;
 }
 .activity-card {
-  min-height: 100px;
-  display: grid;
-  grid-template-columns: 52px minmax(170px, 1fr) repeat(
-      3,
-      minmax(105px, 0.54fr)
-    );
-  align-items: center;
-  gap: 15px;
-  padding: 16px 22px 16px 17px;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 13px;
@@ -414,6 +394,14 @@ button {
   border-color: #aeb9af;
   transform: translateY(-1px);
   box-shadow: 0 8px 24px #2334250c;
+}
+.activity-card-summary {
+  display: grid;
+  grid-template-columns: 52px minmax(180px, 1fr) minmax(360px, 1.45fr);
+  align-items: center;
+  gap: 15px;
+  min-height: 108px;
+  padding: 16px 22px 16px 17px;
 }
 .sport-badge,
 .detail-sport {
@@ -477,27 +465,78 @@ button {
   color: #88502d;
   background: #fae8dc;
 }
-.activity-stat {
+.activity-feed-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  align-items: center;
+}
+.activity-pr-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #8a908a;
+  gap: 18px;
+  min-height: 92px;
+  padding: 16px 28px;
+  background: #fafaf9;
+  border-top: 1px solid #edf0ea;
 }
-.activity-stat span {
+.activity-pr-banner strong {
+  color: #2c322d;
+  font-size: 17px;
+  letter-spacing: -0.2px;
+}
+.activity-pr-badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  flex: 0 0 auto;
+  color: #f59e0b;
+}
+.activity-pr-badge.rank-2 {
+  color: #a7b0b5;
+}
+.activity-pr-badge.rank-3 {
+  color: #b87333;
+}
+.activity-pr-badge small {
+  position: absolute;
+  top: 17px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+}
+.activity-stat {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  padding: 3px 15px;
+  border-left: 1px solid #e4e6e0;
 }
 .activity-stat strong {
   color: #2c322d;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  white-space: nowrap;
 }
 .activity-stat small {
-  margin-top: 3px;
+  margin-top: 4px;
   color: var(--muted);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
+.activity-card-map {
+  height: 235px;
+  border-top: 1px solid #edf0ea;
+  background: #e6e8e1;
+}
+.activity-card-map .route-map {
+  pointer-events: none;
+}
+.route-map-compact .leaflet-control-attribution {
+  padding: 1px 4px;
+  background: #ffffffb8;
 }
 .empty-state {
   min-height: 360px;
@@ -1737,17 +1776,15 @@ button {
 }
 
 @media (max-width: 1050px) {
-  .activity-card {
+  .activity-card-summary {
     grid-template-columns: 52px minmax(180px, 1fr) repeat(
         2,
-        minmax(100px, 0.55fr)
+        minmax(150px, 0.55fr)
       );
   }
-  .activity-stat.optional {
-    display: none;
-  }
-  .day-group {
-    grid-template-columns: 145px minmax(0, 1fr);
+  .activity-feed-stats {
+    grid-column: 2 / -1;
+    margin-top: 3px;
   }
   .metric-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1886,24 +1923,9 @@ button {
   .unit-options {
     grid-template-columns: 1fr;
   }
-  .day-group {
-    display: block;
-  }
-  .date-rail {
-    display: flex;
-    gap: 8px;
-    align-items: baseline;
-    padding: 0 0 11px 3px;
-  }
-  .date-rail > span {
-    display: none;
-  }
-  .date-rail h2 {
-    font-size: 13px;
-  }
-  .activity-card {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-    min-height: 86px;
+  .activity-card-summary {
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
     padding: 13px;
     gap: 11px;
   }
@@ -1911,16 +1933,27 @@ button {
     width: 42px;
     height: 42px;
   }
+  .activity-feed-stats {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 3px;
+  }
+  .activity-stat:nth-child(n + 4) {
+    display: none;
+  }
   .activity-stat {
-    min-width: 75px;
+    padding: 4px 10px;
   }
-  .activity-stat:nth-of-type(n + 4),
-  .activity-stat.optional {
-    display: none;
+  .activity-stat:first-child {
+    padding-left: 0;
+    border-left: 0;
   }
-  .activity-stat svg,
-  .activity-stat small {
-    display: none;
+  .activity-card-map {
+    height: 210px;
+  }
+  .activity-pr-banner {
+    min-height: 76px;
+    padding: 14px 16px;
   }
   .activity-title h3 {
     font-size: 14px;
@@ -2055,10 +2088,10 @@ button {
 }
 
 @media (max-width: 390px) {
-  .activity-card {
-    grid-template-columns: 42px minmax(0, 1fr);
+  .activity-feed-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .activity-stat {
+  .activity-stat:nth-child(3) {
     display: none;
   }
   .metric-grid {

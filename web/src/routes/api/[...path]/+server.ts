@@ -1,14 +1,14 @@
-import { apiUrl } from "$lib/server/api";
+import { apiEndpointUrl } from "$lib/server/api";
 import type { RequestHandler } from "./$types";
 
-const proxy: RequestHandler = async ({ request, params, url, fetch }) => {
-  const target = apiUrl(params.path ?? "");
+const proxy: RequestHandler = async ({ request, params, url, locals }) => {
+  const target = apiEndpointUrl(params.path ?? "");
   target.search = url.search;
 
   const headers = new Headers(request.headers);
   headers.delete("host");
 
-  return fetch(target, {
+  return locals.kondisFetch(target, {
     method: request.method,
     headers,
     body:

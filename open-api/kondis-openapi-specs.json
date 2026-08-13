@@ -220,6 +220,16 @@
               "default": 50,
               "type": "integer"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Text to search in activity name, description, or sport",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -446,7 +456,11 @@
     "contact": {}
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
   "components": {
     "schemas": {
       "PingResponseDto_Output": {
@@ -942,6 +956,11 @@
                       "type": {
                         "$ref": "#/components/schemas/BestEffortType_Output"
                       },
+                      "overallRank": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
                       "yearRank": {
                         "type": "integer",
                         "minimum": 1,
@@ -950,10 +969,43 @@
                     },
                     "required": [
                       "type",
+                      "overallRank",
                       "yearRank"
                     ],
                     "additionalProperties": false
                   },
+                  "nullable": true
+                },
+                "track": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "LineString"
+                      ]
+                    },
+                    "coordinates": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Simplified GPS route as GeoJSON",
                   "nullable": true
                 }
               },
@@ -968,7 +1020,8 @@
                 "metrics",
                 "createdAt",
                 "updatedAt",
-                "topBestEfforts"
+                "topBestEfforts",
+                "track"
               ],
               "additionalProperties": false
             }

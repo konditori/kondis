@@ -29,9 +29,11 @@ export type Activity = {
   } | null;
   createdAt: string;
   updatedAt: string;
+  track: { type: "LineString"; coordinates: [number, number][] } | null;
   topBestEfforts?:
     | {
         type: string;
+        overallRank: number;
         yearRank: number;
       }[]
     | null;
@@ -44,7 +46,6 @@ export type ActivityPage = {
 };
 
 export type ActivityDetail = Activity & {
-  track: { type: "LineString"; coordinates: [number, number][] } | null;
   matchedRouteCount: number | null;
   bestEfforts:
     | {

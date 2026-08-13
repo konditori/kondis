@@ -6,6 +6,7 @@ import { OnJob } from 'src/decorators';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
+  ActivityListRecord,
   ActivityMetrics,
   ActivityRecord,
   ActivityRepository,
@@ -395,10 +396,12 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent({ cursor, limit = 50 }: { cursor?: string; limit?: number }) {
+  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }) {
+    const normalizedSearch = search?.trim() || undefined;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
       cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
+      search: normalizedSearch,
     });
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -408,10 +411,11 @@ export class ActivityService {
     return {
       activities: page.map((row) => ({
         ...this.toActivityDto(row),
+        track: this.toTrack(row.track_geojson),
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
-      total: await this.activityRepository.count(),
+      total: await this.activityRepository.count(normalizedSearch),
     };
   }
 
@@ -464,10 +468,7 @@ export class ActivityService {
     }
 
     const storedEfforts = await this.activityRepository.getBestEfforts(id);
-    const trackGeoJson = row.detail_track_geojson ?? row.track_geojson;
-    const track = trackGeoJson
-      ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] })
-      : null;
+    const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
 
     return {
       ...this.toActivityDto(row),
@@ -591,6 +592,10 @@ export class ActivityService {
     });
   }
 
+  private toTrack(trackGeoJson: string | null): { type: 'LineString'; coordinates: [number, number][] } | null {
+    return trackGeoJson ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] }) : null;
+  }
+
   private toIsoString(value: Timestamp): string {
     return this.toDate(value).toISOString();
   }
@@ -599,9 +604,9 @@ export class ActivityService {
     return value instanceof Date ? value : new Date(value);
   }
 
-  private async topBestEffortsForActivities(activities: ActivityRecord[]) {
+  private async topBestEffortsForActivities(activities: ActivityListRecord[]) {
     const activityIds = new Set(activities.map(({ id }) => id));
-    const result = new Map<string, { type: BestEffortType; yearRank: number }[]>();
+    const result = new Map<string, { type: BestEffortType; overallRank: number; yearRank: number }[]>();
     if (activityIds.size === 0) {
       return result;
     }
@@ -613,12 +618,35 @@ export class ActivityService {
         continue;
       }
       const efforts = result.get(row.activity_id) ?? [];
-      efforts.push({ type: definition.type, yearRank: row.year_rank });
+      efforts.push({ type: definition.type, overallRank: row.overall_rank, yearRank: row.year_rank });
       result.set(row.activity_id, efforts);
     }
 
     for (const [activityId, efforts] of result) {
-      result.set(activityId, efforts.sort((left, right) => left.yearRank - right.yearRank).slice(0, 3));
+      result.set(
+        activityId,
+        efforts
+          .sort((left, right) => {
+            const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
+            const rightDefinition = BEST_EFFORT_DEFINITIONS.get(right.type);
+            const leftDistance =
+              leftDefinition && 'distance' in leftDefinition
+                ? leftDefinition.distance
+                : left.type === 'longest_ride'
+                  ? Infinity
+                  : 0;
+            const rightDistance =
+              rightDefinition && 'distance' in rightDefinition
+                ? rightDefinition.distance
+                : right.type === 'longest_ride'
+                  ? Infinity
+                  : 0;
+            return (
+              rightDistance - leftDistance || left.overallRank - right.overallRank || left.yearRank - right.yearRank
+            );
+          })
+          .slice(0, 3),
+      );
     }
     return result;
   }
