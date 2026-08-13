@@ -137,6 +137,12 @@
     graphPointTime = null;
   }
 
+  function splitRate(distanceMeters: number, elapsedTime: number): string {
+    return isCyclingEffort
+      ? speed(distanceMeters / elapsedTime, data.unitSystem)
+      : pace(distanceMeters / elapsedTime, data.unitSystem).replace(' min/', ' /');
+  }
+
   const mapHighlight = $derived(
     highlightedRange || graphPointTime !== null
       ? {
@@ -222,12 +228,11 @@
     <div class:activity-visuals={hasActivityAnalysis}>
       {#if hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
         <section class="splits-section splits-section-visual">
-          <div class="section-heading"><div><span class="eyebrow">Distance detail</span><h2>Splits</h2><p>Hover a split to highlight it on the route.</p></div></div>
+          <div class="section-heading"><div><h2>Splits</h2></div></div>
           <div class="split-table-wrap">
             <div class="split-table" role="table" aria-label="Activity kilometre splits">
               <div class="split-header" class:no-heart-rate={!hasSplitHeartRate} role="row">
                 <div role="columnheader"><strong>KM</strong></div>
-                <div role="columnheader"><strong>Time</strong></div>
                 <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
                 {#if hasSplitHeartRate}<div role="columnheader"><strong>HR</strong></div>{/if}
                 <div role="columnheader"><strong>Elev</strong></div>
@@ -236,8 +241,7 @@
                 {@const splitLabel = index === activity.analysis.splits.length - 1 && split.distance < 995 ? (split.distance / 1000).toFixed(2) : `${index + 1}`}
                 <div class="split-row" class:no-heart-rate={!hasSplitHeartRate} class:highlighted={highlightedRange?.startTime === split.startTime && highlightedRange?.endTime === split.endTime} role="row" tabindex="0" onpointerenter={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onpointerleave={clearHighlight} onfocus={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onblur={clearHighlight}>
                   <div role="cell"><strong>{splitLabel}</strong></div>
-                  <div role="cell">{effortDuration(split.elapsedTime)}</div>
-                  <div role="cell">{isCyclingEffort ? speed(split.distance / split.elapsedTime, data.unitSystem) : pace(split.distance / split.elapsedTime, data.unitSystem)}</div>
+                  <div role="cell">{splitRate(split.distance, split.elapsedTime)}</div>
                   {#if hasSplitHeartRate}<div role="cell">{split.avgHr == null ? '—' : `${split.avgHr}`}</div>{/if}
                   <div role="cell">{elevation(split.elevationChange, data.unitSystem)}</div>
                 </div>
@@ -248,26 +252,25 @@
       {/if}
       <section class="map-panel">
         {#key mapStyle}
-          <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} route={activity.analysis?.route ?? []} highlight={mapHighlight} />
+          <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} route={activity.analysis?.route ?? []} highlight={mapHighlight} onPointHover={highlightGraphPoint} />
         {/key}
         {#if activity.track && mapStyle === ActivityMapStyle.Route}
-          <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span>{#if highlightedRange}<span><i class="highlight-dot"></i> Selected</span>{/if}</div>
+          <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span></div>
         {/if}
       </section>
       {#if hasActivityAnalysis}
-        <ActivityProfile points={activity.analysis?.profile ?? []} selection={highlightedRange} onPointHover={highlightGraphPoint} />
+        <ActivityProfile points={activity.analysis?.profile ?? []} selection={highlightedRange} pointTime={graphPointTime} onPointHover={highlightGraphPoint} />
       {/if}
     </div>
   {/if}
 
   {#if !hasGpsRoute && hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
     <section class="splits-section">
-      <div class="section-heading"><div><span class="eyebrow">Distance detail</span><h2>Splits</h2><p>Hover a split to highlight it on the route and elevation profile.</p></div></div>
+      <div class="section-heading"><div><h2>Splits</h2></div></div>
       <div class="split-table-wrap">
         <div class="split-table" role="table" aria-label="Activity kilometre splits">
           <div class="split-header" class:no-heart-rate={!hasSplitHeartRate} role="row">
             <div role="columnheader"><strong>KM</strong></div>
-            <div role="columnheader"><strong>Time</strong></div>
             <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
             {#if hasSplitHeartRate}<div role="columnheader"><strong>Heart rate</strong></div>{/if}
             <div role="columnheader"><strong>Elev</strong></div>
@@ -276,8 +279,7 @@
             {@const splitLabel = index === activity.analysis.splits.length - 1 && split.distance < 995 ? (split.distance / 1000).toFixed(2) : `${index + 1}`}
             <div class="split-row" class:no-heart-rate={!hasSplitHeartRate} class:highlighted={highlightedRange?.startTime === split.startTime && highlightedRange?.endTime === split.endTime} role="row" tabindex="0" onpointerenter={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onpointerleave={clearHighlight} onfocus={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onblur={clearHighlight}>
               <div role="cell"><strong>{splitLabel}</strong></div>
-              <div role="cell">{effortDuration(split.elapsedTime)}</div>
-              <div role="cell">{isCyclingEffort ? speed(split.distance / split.elapsedTime, data.unitSystem) : pace(split.distance / split.elapsedTime, data.unitSystem)}</div>
+              <div role="cell">{splitRate(split.distance, split.elapsedTime)}</div>
               {#if hasSplitHeartRate}<div role="cell">{split.avgHr == null ? '—' : `${split.avgHr} bpm`}</div>{/if}
               <div role="cell">{elevation(split.elevationChange, data.unitSystem)}</div>
             </div>

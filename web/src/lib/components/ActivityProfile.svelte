@@ -1,14 +1,16 @@
 <script lang="ts">
-  type ProfilePoint = { distance: number; time: number; altitude: number };
+  type ProfilePoint = { distance: number; time: number; altitude: number; heartRate: number | null };
   type Selection = { startTime: number; endTime: number; label: string } | null;
 
   let {
     points,
     selection = null,
+    pointTime = null,
     onPointHover,
   }: {
     points: ProfilePoint[];
     selection?: Selection;
+    pointTime?: number | null;
     onPointHover?: (point: ProfilePoint | null) => void;
   } = $props();
 
@@ -41,13 +43,37 @@
     Array.from({ length: Math.floor(maxDistance / 1000) }, (_, index) => ({ kilometer: index + 1, distance: (index + 1) * 1000 })),
   );
   let hoveredPoint = $state<ProfilePoint | null>(null);
-  const hoveredX = $derived(hoveredPoint ? x(hoveredPoint.distance) : 0);
-  const hoveredY = $derived(hoveredPoint ? y(hoveredPoint.altitude) : 0);
+  let cursorX = $state<number | null>(null);
+  const externalPoint = $derived(
+    pointTime == null ? null : validPoints.reduce((closest, point) => Math.abs(point.time - pointTime) < Math.abs(closest.time - pointTime) ? point : closest),
+  );
+  const displayedPoint = $derived(externalPoint ?? hoveredPoint);
+  const hoveredX = $derived(cursorX ?? (displayedPoint ? x(displayedPoint.distance) : 0));
+  const hoveredY = $derived(displayedPoint ? y(displayedPoint.altitude) : 0);
+  const tooltipX = $derived(
+    hoveredX + 170 > width - padding.right
+      ? Math.max(hoveredX - 170 - 12, padding.left + 8)
+      : Math.min(hoveredX + 12, width - 170),
+  );
+  const tooltipY = $derived(Math.max(hoveredY - 84, padding.top + 8));
+  const previousPoint = $derived(
+    displayedPoint && validPoints.length > 1 ? validPoints[Math.max(validPoints.indexOf(displayedPoint) - 1, 0)] : null,
+  );
+  const pointPace = $derived(
+    displayedPoint && previousPoint && displayedPoint.distance > previousPoint.distance && displayedPoint.time > previousPoint.time
+      ? (displayedPoint.time - previousPoint.time) / ((displayedPoint.distance - previousPoint.distance) / 1000)
+      : null,
+  );
+  const paceText = (seconds: number | null) => {
+    if (seconds == null || !Number.isFinite(seconds)) return '—';
+    return `${Math.floor(seconds / 60)}:${Math.round(seconds % 60).toString().padStart(2, '0')} /km`;
+  };
 
   function handleGraphMove(event: PointerEvent) {
     const svg = event.currentTarget as SVGSVGElement;
     const bounds = svg.getBoundingClientRect();
-    const graphX = padding.left + ((event.clientX - bounds.left) / bounds.width) * width;
+    const graphX = ((event.clientX - bounds.left) / bounds.width) * width;
+    cursorX = Math.min(Math.max(graphX, padding.left), width - padding.right);
     const targetDistance = minDistance + ((graphX - padding.left) / chartWidth) * (maxDistance - minDistance);
     const nearest = validPoints.reduce((closest, point) =>
       Math.abs(point.distance - targetDistance) < Math.abs(closest.distance - targetDistance) ? point : closest,
@@ -59,15 +85,12 @@
 
   function clearGraphHover() {
     hoveredPoint = null;
+    cursorX = null;
     onPointHover?.(null);
   }
 </script>
 
 <section class="activity-profile" aria-label="Elevation profile">
-  <div class="activity-profile-heading">
-    <div><span class="eyebrow">Route detail</span><h2>Elevation profile</h2></div>
-    {#if selection}<strong>{selection.label}</strong>{/if}
-  </div>
   {#if validPoints.length > 1}
     <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Elevation by distance" onpointermove={handleGraphMove} onpointerleave={clearGraphHover}>
       <defs>
@@ -92,9 +115,16 @@
       {#if selectionStart && selectionEnd}
         <path class="profile-selected-line" d={selectedPoints.map((point, index) => `${index === 0 ? 'M' : 'L'} ${x(point.distance)} ${y(point.altitude)}`).join(' ')} />
       {/if}
-      {#if hoveredPoint}
+      {#if displayedPoint}
         <line class="profile-hover-line" x1={hoveredX} x2={hoveredX} y1={padding.top} y2={padding.top + chartHeight} />
         <circle class="profile-hover-point" cx={hoveredX} cy={hoveredY} r="5" />
+        <g class="profile-tooltip" transform={`translate(${tooltipX} ${tooltipY})`}>
+          <rect width="158" height={displayedPoint.heartRate == null ? 73 : 91} rx="3" />
+          <text x="10" y="19"><tspan class="profile-tooltip-label">Dist: </tspan><tspan class="profile-tooltip-value">{(displayedPoint.distance / 1000).toFixed(2)} km</tspan></text>
+          <text x="10" y="37"><tspan class="profile-tooltip-label">Elev: </tspan><tspan class="profile-tooltip-value">{Math.round(displayedPoint.altitude)} m</tspan></text>
+          <text x="10" y="55"><tspan class="profile-tooltip-label">Pace: </tspan><tspan class="profile-tooltip-value">{paceText(pointPace)}</tspan></text>
+          {#if displayedPoint.heartRate != null}<text x="10" y="73"><tspan class="profile-tooltip-label">HR: </tspan><tspan class="profile-tooltip-value">{displayedPoint.heartRate} bpm</tspan></text>{/if}
+        </g>
       {/if}
       <line class="profile-axis-line" x1={padding.left} x2={width - padding.right} y1={padding.top + chartHeight} y2={padding.top + chartHeight} />
       <text class="profile-distance-label" x={padding.left} y={height - 8}>0 km</text>

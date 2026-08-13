@@ -57,7 +57,12 @@ export type ActivityDetail = Activity & {
       avgHr: number | null;
       elevationChange: number | null;
     }[];
-    profile: { distance: number; time: number; altitude: number }[];
+    profile: {
+      distance: number;
+      time: number;
+      altitude: number;
+      heartRate: number | null;
+    }[];
     route: { time: number; coordinate: [number, number] }[];
   } | null;
   bestEfforts:

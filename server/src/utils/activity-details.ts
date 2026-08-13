@@ -16,6 +16,7 @@ export type ActivityProfilePoint = {
   distance: number;
   time: number;
   altitude: number;
+  heartRate: number | null;
 };
 
 export type ActivityRoutePoint = {
@@ -146,7 +147,12 @@ export const buildActivityAnalysis = (streams: DetailStream[]): ActivityAnalysis
   for (let index = 0; index < length; index++) {
     if (!Number.isFinite(time[index]) || !Number.isFinite(distance[index])) continue;
     if (Number.isFinite(altitude[index])) {
-      profile.push({ time: time[index], distance: distance[index], altitude: altitude[index] });
+      profile.push({
+        time: time[index],
+        distance: distance[index],
+        altitude: altitude[index],
+        heartRate: Number.isFinite(heartrate[index]) ? Math.round(heartrate[index]) : null,
+      });
     }
     if (
       Number.isFinite(latitude[index]) &&

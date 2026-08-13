@@ -10,6 +10,7 @@
     showEndpoints = true,
     route = [],
     highlight = null,
+    onPointHover,
   }: {
     coordinates: [number, number][] | null;
     mode?: ActivityMapStyle;
@@ -17,6 +18,7 @@
     showEndpoints?: boolean;
     route?: { time: number; coordinate: [number, number] }[];
     highlight?: { startTime: number; endTime: number; pointTime?: number } | null;
+    onPointHover?: (point: { time: number } | null) => void;
   } = $props();
   let container = $state<HTMLDivElement>();
   let map = $state<import('leaflet').Map>();
@@ -30,9 +32,8 @@
   $effect(() => {
     if (!map || !leaflet || !highlightLine || !highlightStart || !highlightEnd || !highlightPoint) return;
     const L = leaflet;
-    const hasRange = highlight !== null && highlight.endTime > highlight.startTime;
     for (const { line, opacity } of routeLines) {
-      line.setStyle({ opacity: hasRange ? opacity * 0.28 : opacity });
+      line.setStyle({ opacity });
     }
     if (!highlight) {
       highlightLine.setLatLngs([]);
@@ -126,11 +127,22 @@
         }
       } else {
         const outline = L.polyline(points, { color: '#ffffff', weight: compact ? 7 : 9, opacity: 0.9, lineCap: 'round' }).addTo(map);
-        const route = L.polyline(points, { color: '#166534', weight: compact ? 4 : 5, opacity: 1, lineCap: 'round' }).addTo(map);
+        const routeLine = L.polyline(points, { color: '#166534', weight: compact ? 4 : 5, opacity: 1, lineCap: 'round' }).addTo(map);
         routeLines = [
           { line: outline, opacity: 0.9 },
-          { line: route, opacity: 1 },
+          { line: routeLine, opacity: 1 },
         ];
+        const hitArea = L.polyline(points, { color: '#000', weight: 24, opacity: 0, interactive: true }).addTo(map);
+        const updatePoint = (event: import('leaflet').LeafletMouseEvent) => {
+          const nearest = route.reduce((closest, candidate) => {
+            const candidatePoint = L.latLng(candidate.coordinate[1], candidate.coordinate[0]);
+            const candidateDistance = candidatePoint.distanceTo(event.latlng);
+            return candidateDistance < closest.distance ? { point: candidate, distance: candidateDistance } : closest;
+          }, { point: route[0], distance: Number.POSITIVE_INFINITY } as { point: (typeof route)[number]; distance: number });
+          onPointHover?.(nearest.point);
+        };
+        hitArea.on('mousemove mouseover', (event) => updatePoint(event as import('leaflet').LeafletMouseEvent));
+        hitArea.on('mouseout', () => onPointHover?.(null));
         if (showEndpoints) {
           L.circleMarker(points[0], {
             radius: 7,
@@ -138,6 +150,7 @@
             weight: 3,
             fillColor: '#166534',
             fillOpacity: 1,
+            interactive: false,
           }).addTo(map);
           L.circleMarker(points.at(-1)!, {
             radius: 7,
@@ -145,6 +158,7 @@
             weight: 3,
             fillColor: '#d97706',
             fillOpacity: 1,
+            interactive: false,
           }).addTo(map);
         }
       }

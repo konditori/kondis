@@ -101,6 +101,7 @@ const ActivityAnalysisSchema = z.object({
         distance: z.number().nonnegative(),
         time: z.number().nonnegative(),
         altitude: z.number(),
+        heartRate: z.number().int().positive().nullable(),
       }),
     )
     .describe('Downsampled elevation profile points'),

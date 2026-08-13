@@ -219,6 +219,7 @@ export type ActivityDetailDtoOutput = {
       distance: number;
       time: number;
       altitude: number;
+      heartRate: number | null;
     }[];
     /** Downsampled route points aligned to elapsed time */
     route: {
