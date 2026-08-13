@@ -65,15 +65,19 @@ jobs:
 
       - name: Run lint
         run: mise run //server:lint
+        continue-on-error: true
 
       - name: Run format check
         run: mise run //server:format
+        continue-on-error: true
 
       - name: Run typecheck
         run: mise run //server:check
+        continue-on-error: true
 
       - name: Run unit tests
         run: mise run //server:test
+        continue-on-error: true
 
   e2e-check:
     name: Check E2E

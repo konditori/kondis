@@ -197,6 +197,36 @@ export type ActivityDetailDtoOutput = {
     type: Type;
     coordinates: [number, number][];
   } | null;
+  /** Split, profile, and route data for activity analysis */
+  analysis: {
+    /** Consecutive kilometre splits */
+    splits: {
+      /** Split distance in meters */
+      distance: number;
+      /** Split duration in seconds */
+      elapsedTime: number;
+      /** Start offset from activity start in seconds */
+      startTime: number;
+      /** End offset from activity start in seconds */
+      endTime: number;
+      /** Average heart rate during the split */
+      avgHr: number | null;
+      /** Net elevation change during the split in meters */
+      elevationChange: number | null;
+    }[];
+    /** Downsampled elevation profile points */
+    profile: {
+      distance: number;
+      time: number;
+      altitude: number;
+      heartRate: number | null;
+    }[];
+    /** Downsampled route points aligned to elapsed time */
+    route: {
+      time: number;
+      coordinate: [number, number];
+    }[];
+  } | null;
   bestEfforts:
     | {
         type: BestEffortType_Output;
