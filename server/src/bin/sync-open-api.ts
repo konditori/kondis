@@ -31,9 +31,7 @@ async function run(): Promise<void> {
     .addServer(API_PREFIX)
     .build();
 
-  const document = cleanupOpenApiDoc(
-    SwaggerModule.createDocument(app, config, { ignoreGlobalPrefix: true }),
-  );
+  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config, { ignoreGlobalPrefix: true }));
   const outputPath = resolve(process.cwd(), '..', 'open-api', 'kondis-openapi-specs.json');
 
   await mkdir(dirname(outputPath), { recursive: true });

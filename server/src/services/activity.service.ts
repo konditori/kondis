@@ -641,7 +641,9 @@ export class ActivityService {
                 : right.type === 'longest_ride'
                   ? Infinity
                   : 0;
-            return rightDistance - leftDistance || left.overallRank - right.overallRank || left.yearRank - right.yearRank;
+            return (
+              rightDistance - leftDistance || left.overallRank - right.overallRank || left.yearRank - right.yearRank
+            );
           })
           .slice(0, 3),
       );
