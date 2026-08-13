@@ -192,6 +192,67 @@ describe('ActivityController (medium)', () => {
   });
 
   describe('GET /activities/best-efforts', () => {
+    it('assigns consecutive podium rankings to the three fastest efforts', async () => {
+      await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'bronze', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1500] },
+      ]);
+      await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'gold', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1300] },
+      ]);
+      await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'silver', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1400] },
+      ]);
+      await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'outside podium', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1600] },
+      ]);
+
+      const response = await controller.listBestEfforts({ sport: 'run', type: '5k' });
+
+      expect(response.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
+        { activityName: 'bronze', overallRank: 3 },
+        { activityName: 'gold', overallRank: 1 },
+        { activityName: 'silver', overallRank: 2 },
+        { activityName: 'outside podium', overallRank: 4 },
+      ]);
+    });
+
+    it('removes an excluded podium activity and reranks the remaining efforts', async () => {
+      const goldId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'bad GPS gold', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1300] },
+      ]);
+      await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'silver becomes gold', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1400] },
+      ]);
+      await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'bronze becomes silver', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1500] },
+      ]);
+      await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'fourth becomes bronze', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1600] },
+      ]);
+
+      await controller.updateById({ id: goldId }, { excludeFromBestEfforts: true });
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+
+      const history = await controller.listBestEfforts({ sport: 'run', type: '5k' });
+      expect(history.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
+        { activityName: 'silver becomes gold', overallRank: 1 },
+        { activityName: 'bronze becomes silver', overallRank: 2 },
+        { activityName: 'fourth becomes bronze', overallRank: 3 },
+      ]);
+
+      const excludedActivity = await controller.getById({ id: goldId });
+      expect(excludedActivity.excludeFromBestEfforts).toBe(true);
+      expect(excludedActivity.bestEfforts?.find(({ type }) => type === '5k')).toMatchObject({ elapsedTime: 1300 });
+    });
+
     it('ranks overall and yearly efforts while preserving chronological order', async () => {
       const first = await createActivity(new Date('2023-06-01T08:00:00.000Z'), 'first', [
         { type: 'distance', data: [0, 5000] },

@@ -559,7 +559,10 @@ export class ActivityService {
     } else if (updated && input.startedAt !== undefined) {
       await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
     }
-    return updated ? this.toActivityDto(updated) : undefined;
+    if (!updated) return undefined;
+    const updatedDto = this.toActivityDto(updated);
+    await this.eventRepository.emit('ActivityUpdate', updatedDto);
+    return updatedDto;
   }
 
   async deleteById(id: string): Promise<boolean> {
