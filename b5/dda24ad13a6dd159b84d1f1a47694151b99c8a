@@ -1,0 +1,127 @@
+android/.gitignore
+  s_eb3d67945dd11d::t_62db3beef94ec4 1-12
+android/app/build.gradle.kts
+  s_eb3d67945dd11d::t_36eab5953255b5 1-113
+android/app/proguard-rules.pro
+  s_eb3d67945dd11d::t_e41003e4658907 1-5
+android/app/schemas/.gitkeep
+  s_eb3d67945dd11d::t_73e9b16788cc4a 1
+android/app/schemas/app.kondis.data.local.KondisDatabase/1.json
+  s_eb3d67945dd11d::t_712b178b52dfee 1-79
+android/app/src/main/AndroidManifest.xml
+  s_eb3d67945dd11d::t_7b59d78c0e880c 1-39
+android/app/src/main/java/app/kondis/KondisApplication.kt
+  s_eb3d67945dd11d::t_709e7b8a3bec4f 1-8
+android/app/src/main/java/app/kondis/MainActivity.kt
+  s_eb3d67945dd11d::t_dacd0f9a6203a7 1-25
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_eb3d67945dd11d::t_13151e2f6e4d43 1-94
+android/app/src/main/java/app/kondis/data/local/ActivityDao.kt
+  s_eb3d67945dd11d::t_b4b55aed800d61 1-40
+android/app/src/main/java/app/kondis/data/local/ActivityEntity.kt
+  s_eb3d67945dd11d::t_8f2b73f556f02e 1-20
+android/app/src/main/java/app/kondis/data/local/KondisDatabase.kt
+  s_eb3d67945dd11d::t_93518f7bff2c5a 1-14
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_eb3d67945dd11d::t_a9f717baa0463e 1-29
+android/app/src/main/java/app/kondis/data/remote/KondisApiFactory.kt
+  s_eb3d67945dd11d::t_f2c299d0067d73 1-33
+android/app/src/main/java/app/kondis/data/settings/SettingsRepository.kt
+  s_eb3d67945dd11d::t_a6077a958598db 1-55
+android/app/src/main/java/app/kondis/di/AppModule.kt
+  s_eb3d67945dd11d::t_5807a1e69f920d 1-48
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_eb3d67945dd11d::t_930c99b17924e0 1-138
+android/app/src/main/java/app/kondis/model/Formatting.kt
+  s_eb3d67945dd11d::t_b8bb9cf37e0be8 1-77
+android/app/src/main/java/app/kondis/recording/GpxWriter.kt
+  s_eb3d67945dd11d::t_ec876105969b53 1-32
+android/app/src/main/java/app/kondis/recording/RecordingManager.kt
+  s_eb3d67945dd11d::t_054e8c9e2f0cf6 1-92
+android/app/src/main/java/app/kondis/recording/RecordingModels.kt
+  s_eb3d67945dd11d::t_ef28be2219fa83 1-48
+android/app/src/main/java/app/kondis/ui/AppViewModel.kt
+  s_eb3d67945dd11d::t_207e7b113dccc5 1-23
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_eb3d67945dd11d::t_e5ab916919a8df 1-101
+android/app/src/main/java/app/kondis/ui/components/ActivityComponents.kt
+  s_eb3d67945dd11d::t_fed34e2f04472e 1-170
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_eb3d67945dd11d::t_35164c4f9f0dd9 1-169
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_eb3d67945dd11d::t_a72b2290584a39 1-55
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_eb3d67945dd11d::t_f70f810a565795 1-147
+android/app/src/main/java/app/kondis/ui/feed/FeedViewModel.kt
+  s_eb3d67945dd11d::t_980b02b326f40f 1-100
+android/app/src/main/java/app/kondis/ui/settings/SettingsScreen.kt
+  s_eb3d67945dd11d::t_489cc30950846f 1-98
+android/app/src/main/java/app/kondis/ui/settings/SettingsViewModel.kt
+  s_eb3d67945dd11d::t_83dc501855405b 1-71
+android/app/src/main/java/app/kondis/ui/theme/Theme.kt
+  s_eb3d67945dd11d::t_24a643c5bb00a6 1-53
+android/app/src/main/java/app/kondis/ui/theme/Type.kt
+  s_eb3d67945dd11d::t_a4faf7e41af547 1-53
+android/app/src/main/res/drawable/ic_launcher.xml
+  s_eb3d67945dd11d::t_adaf32f5c3b1e1 1-9
+android/app/src/main/res/drawable/ic_launcher_foreground.xml
+  s_eb3d67945dd11d::t_18941b54fdd97f 1-13
+android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+  s_eb3d67945dd11d::t_e046dc0a29a74a 1-6
+android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+  s_eb3d67945dd11d::t_f8be27ed82cd22 1-6
+android/app/src/main/res/mipmap/ic_launcher.xml
+  s_eb3d67945dd11d::t_97dd9192964ea3 1-5
+android/app/src/main/res/mipmap/ic_launcher_round.xml
+  s_eb3d67945dd11d::t_9e4400d2c43317 1-5
+android/app/src/main/res/values-night/styles.xml
+  s_eb3d67945dd11d::t_a4e578c4021640 1-11
+android/app/src/main/res/values/colors.xml
+  s_eb3d67945dd11d::t_d64fd5044b90bc 1-4
+android/app/src/main/res/values/strings.xml
+  s_eb3d67945dd11d::t_1be223e10f3337 1-7
+android/app/src/main/res/values/styles.xml
+  s_eb3d67945dd11d::t_cea13725363f99 1-11
+android/app/src/main/res/xml/backup_rules.xml
+  s_eb3d67945dd11d::t_0ffc514457bfd0 1-6
+android/app/src/main/res/xml/data_extraction_rules.xml
+  s_eb3d67945dd11d::t_975c43ae7d1bd3 1-12
+android/app/src/test/java/app/kondis/model/ApiModelTest.kt
+  s_eb3d67945dd11d::t_4ff724f56726cc 1-59
+android/app/src/test/java/app/kondis/model/FormattingTest.kt
+  s_eb3d67945dd11d::t_13ec0e5cf2aa50 1-42
+android/app/src/test/java/app/kondis/recording/GpxWriterTest.kt
+  s_eb3d67945dd11d::t_bfd07429aecbb2 1-44
+android/app/src/test/java/app/kondis/recording/RecordingModelsTest.kt
+  s_eb3d67945dd11d::t_c239b85cd9be10 1-17
+android/build.gradle.kts
+  s_eb3d67945dd11d::t_71af5364b0a66c 1-8
+android/gradle.properties
+  s_eb3d67945dd11d::t_f1fb15b504e1ce 1-7
+android/gradle/libs.versions.toml
+  s_eb3d67945dd11d::t_c3861e0e63a284 1-73
+android/gradle/wrapper/gradle-wrapper.properties
+  s_eb3d67945dd11d::t_c669026eaa8f16 1-7
+android/gradlew
+  s_eb3d67945dd11d::t_e01152c2e79962 1-252
+android/gradlew.bat
+  s_eb3d67945dd11d::t_6baab15b756275 1-94
+android/settings.gradle.kts
+  s_eb3d67945dd11d::t_cd23b45bc0a62e 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b5dda24ad13a6dd159b84d1f1a47694151b99c8a",
+  "prompts": {},
+  "sessions": {
+    "s_eb3d67945dd11d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffccb-c196-7e90-8092-976b7060bec3",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
