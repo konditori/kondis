@@ -1085,9 +1085,15 @@ button {
   font-size: 13px;
   line-height: 1.05;
 }
-.chart-stat-labels .fastest { color: #b77900; }
-.chart-stat-labels .fastest strong { color: #a86f00; }
-.chart-stat-labels .slowest { color: #8a6c3c; }
+.chart-stat-labels .fastest {
+  color: #b77900;
+}
+.chart-stat-labels .fastest strong {
+  color: #a86f00;
+}
+.chart-stat-labels .slowest {
+  color: #8a6c3c;
+}
 .matched-route-chart .chart-average {
   stroke: #bdc5bc;
   stroke-width: 1.5;
@@ -1135,7 +1141,10 @@ button {
   fill: white;
   stroke: var(--green);
   stroke-width: 3;
-  transition: r 140ms ease, fill 140ms ease, filter 140ms ease;
+  transition:
+    r 140ms ease,
+    fill 140ms ease,
+    filter 140ms ease;
 }
 .matched-route-chart .chart-point {
   cursor: pointer;
@@ -1254,7 +1263,9 @@ button {
   box-shadow: inset 3px 0 #f97316;
 }
 .matched-route-row.current.active {
-  box-shadow: inset 3px 0 #f97316, inset 6px 0 var(--green);
+  box-shadow:
+    inset 3px 0 #f97316,
+    inset 6px 0 var(--green);
 }
 .matched-route-row > [role="cell"]:nth-child(2) {
   display: flex;
