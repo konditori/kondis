@@ -31,6 +31,9 @@ export class ActivityTable {
   @Column({ type: 'text', nullable: true })
   description!: Generated<string | null>;
 
+  @Column({ type: 'boolean' })
+  exclude_from_best_efforts!: Generated<boolean>;
+
   @Column({ type: 'timestamp' })
   started_at!: Timestamp;
 

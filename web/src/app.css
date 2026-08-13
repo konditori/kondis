@@ -801,6 +801,51 @@ button {
   padding: 9px 10px;
   resize: vertical;
 }
+.metadata-checkbox {
+  grid-column: 1 / -1;
+  display: flex !important;
+  align-items: center;
+  gap: 9px !important;
+  min-height: 32px;
+  cursor: pointer;
+}
+.metadata-checkbox span {
+  color: #39423b !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+.metadata-checkbox input {
+  appearance: none;
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px;
+  margin: 0;
+  padding: 0 !important;
+  background: #fbfcf9;
+  border: 1px solid #aeb9af;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.metadata-checkbox input:checked {
+  position: relative;
+  background: var(--green);
+  border-color: var(--green);
+}
+.metadata-checkbox input:checked::after {
+  position: absolute;
+  width: 5px;
+  height: 9px;
+  top: 2px;
+  left: 6px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  content: '';
+  transform: rotate(45deg);
+}
+.metadata-checkbox input:focus-visible {
+  outline: 2px solid #8bae94;
+  outline-offset: 2px;
+}
 .metadata-actions {
   display: flex;
   gap: 7px;
@@ -1034,6 +1079,11 @@ button {
 .best-efforts-section {
   width: min(1120px, calc(100% - 72px));
   margin: 45px auto 0;
+}
+.best-efforts-excluded-note {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 .matched-routes-page {
   width: min(1120px, calc(100% - 72px));
