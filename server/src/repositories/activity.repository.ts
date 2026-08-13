@@ -390,7 +390,7 @@ export class ActivityRepository {
       .executeTakeFirst();
   }
 
-  listRecentPage({ limit, cursor }: { limit: number; cursor?: ActivityCursor }) {
+  listRecentPage({ limit, cursor, search }: { limit: number; cursor?: ActivityCursor; search?: string }) {
     let query = this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -404,6 +404,17 @@ export class ActivityRepository {
       )
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
 
+    if (search) {
+      const pattern = `%${search}%`;
+      query = query.where(({ or, eb }) =>
+        or([
+          eb('activity.name', 'ilike', pattern),
+          eb('activity.description', 'ilike', pattern),
+          sql<boolean>`activity.sport ILIKE ${pattern}`,
+        ]),
+      );
+    }
+
     if (cursor) {
       query = query.where(({ and, eb, or }) =>
         or([
@@ -416,11 +427,19 @@ export class ActivityRepository {
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
-  async count(): Promise<number> {
-    const row = await this.db
-      .selectFrom('activity')
-      .select(({ fn }) => fn.countAll<number>().as('count'))
-      .executeTakeFirstOrThrow();
+  async count(search?: string): Promise<number> {
+    let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
+    if (search) {
+      const pattern = `%${search}%`;
+      query = query.where(({ or, eb }) =>
+        or([
+          eb('activity.name', 'ilike', pattern),
+          eb('activity.description', 'ilike', pattern),
+          sql<boolean>`activity.sport ILIKE ${pattern}`,
+        ]),
+      );
+    }
+    const row = await query.executeTakeFirstOrThrow();
     return Number(row.count);
   }
 

@@ -396,10 +396,12 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent({ cursor, limit = 50 }: { cursor?: string; limit?: number }) {
+  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }) {
+    const normalizedSearch = search?.trim() || undefined;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
       cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
+      search: normalizedSearch,
     });
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -413,7 +415,7 @@ export class ActivityService {
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
-      total: await this.activityRepository.count(),
+      total: await this.activityRepository.count(normalizedSearch),
     };
   }
 

@@ -220,6 +220,16 @@
               "default": 50,
               "type": "integer"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Text to search in activity name, description, or sport",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
           }
         ],
         "responses": {

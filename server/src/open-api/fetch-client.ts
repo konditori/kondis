@@ -389,9 +389,11 @@ export function activityControllerListRecent(
   {
     cursor,
     limit,
+    search,
   }: {
     cursor?: string;
     limit?: number;
+    search?: string;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -404,6 +406,7 @@ export function activityControllerListRecent(
         QS.explode({
           cursor,
           limit,
+          search,
         }),
       )}`,
       {

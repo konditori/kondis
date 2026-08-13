@@ -39,6 +39,7 @@ export const ActivityListQuerySchema = z
   .object({
     cursor: z.string().min(1).optional().describe('Opaque cursor returned by the previous page'),
     limit: z.coerce.number().int().min(1).max(100).default(50).describe('Maximum activities to return'),
+    search: z.string().trim().max(200).optional().describe('Text to search in activity name, description, or sport'),
   })
   .meta({ id: 'ActivityListQueryDto' });
 
