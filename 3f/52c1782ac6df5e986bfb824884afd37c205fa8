@@ -1,0 +1,19 @@
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_899bed581405ae::t_d6614dab663434 3-4,7-8,11,19-48,52,56,59,71-84,86,90-94,96,108-111,156-251,257-259,265-267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3f52c1782ac6df5e986bfb824884afd37c205fa8",
+  "prompts": {},
+  "sessions": {
+    "s_899bed581405ae": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffa05-4ced-7ea2-9e44-348dd63a074c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
