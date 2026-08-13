@@ -326,11 +326,17 @@ export class JobRepository implements OnApplicationShutdown {
         return { singletonKey: `${item.name}:${item.data.checksum}` };
       }
 
+      case JobName.ActivityMetricCompute:
       case JobName.ActivityBestEffortCompute:
+      case JobName.ActivityRouteMatchCompute:
       case JobName.ActivityParse: {
         return {
           singletonKey: `${item.name}:${item.data.id}`,
         };
+      }
+
+      case JobName.ActivityManualCreate: {
+        return { singletonKey: `${item.name}:${item.data.id}` };
       }
 
       case JobName.ActivityBestEffortRank: {
@@ -442,11 +448,29 @@ export class JobRepository implements OnApplicationShutdown {
         notifyPollingIntervalSeconds: 30,
       },
       async (jobs) => {
-        for (const job of jobs) {
-          await this.dispatch(job);
-        }
+        await this.dispatchBatch(jobs);
       },
     );
+  }
+
+  private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<void> {
+    let rankingRefresh: Job<StoredJob> | undefined;
+
+    for (const job of jobs) {
+      if (job.data.name === JobName.ActivityBestEffortRank) {
+        // pg-boss marks the whole prefetched batch active before invoking us, so the ranking
+        // handler cannot delete these duplicates from the queue. Keep one refresh and run it
+        // after every computation in this batch; queued duplicates are discarded by the handler.
+        rankingRefresh = job;
+        continue;
+      }
+
+      await this.dispatch(job);
+    }
+
+    if (rankingRefresh) {
+      await this.dispatch(rankingRefresh);
+    }
   }
 
   private dispatch(job: Job<StoredJob>): Promise<void> {

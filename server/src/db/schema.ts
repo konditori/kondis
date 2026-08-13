@@ -12,7 +12,13 @@ export interface DB {
   activity_best_effort: ActivityBestEffortTable;
   activity_metric: ActivityMetricTable;
   activity_stream: ActivityStreamTable;
+  activity_route_match: ActivityRouteMatchTable;
   lap: LapTable;
+}
+
+export interface ActivityRouteMatchTable {
+  activity_id: string;
+  matched_activity_id: string;
 }
 
 export type Upload = Selectable<UploadTable>;

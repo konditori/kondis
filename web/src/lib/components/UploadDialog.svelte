@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { invalidateAll } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import { Check, FileUp, LoaderCircle, X } from '@lucide/svelte';
   import { getSdkRequestOptions, uploadControllerUploadActivity, uploadControllerUploadStravaTakeout } from '$lib/api';
+  import { subscribeToActivityEvents } from '$lib/realtime';
+  import type { Activity } from '$lib/types';
 
-  let { open = $bindable(false) }: { open: boolean } = $props();
+  let { open = $bindable(false), eventsUrl }: { open: boolean; eventsUrl: string } = $props();
   let input = $state<HTMLInputElement>();
   let dragging = $state(false);
   let uploads = $state<
@@ -14,10 +16,29 @@
     if (!uploads.some((item) => item.state === 'uploading')) open = false;
   }
 
+  function waitForActivityCreated(): Promise<Activity> {
+    return new Promise((resolve, reject) => {
+      let unsubscribe: (() => void) | undefined;
+      const timeout = setTimeout(() => {
+        unsubscribe?.();
+        reject(new Error('Activity processing is taking longer than expected'));
+      }, 60_000);
+      unsubscribe = subscribeToActivityEvents(eventsUrl, (activity, type) => {
+        if (type !== 'activity.created') return;
+        clearTimeout(timeout);
+        unsubscribe?.();
+        resolve(activity);
+      }, () => {});
+    });
+  }
+
   async function addFiles(files: FileList | File[]) {
     const acceptedExtensions = ['.fit', '.tcx', '.gpx', '.zip'];
     const accepted = [...files].filter((file) => acceptedExtensions.some((extension) => file.name.toLowerCase().endsWith(extension)));
     uploads = accepted.map((file) => ({ file, state: 'waiting' }));
+
+    const navigateToActivity = accepted.length === 1 && !accepted[0]?.name.toLowerCase().endsWith('.zip');
+    const activityCreated = navigateToActivity ? waitForActivityCreated() : undefined;
 
     for (const item of uploads) {
       item.state = 'uploading';
@@ -35,6 +56,19 @@
     }
 
     await invalidateAll();
+    if (activityCreated && uploads.length === 1 && uploads[0]?.state === 'done') {
+      try {
+        const activity = await activityCreated;
+        open = false;
+        uploads = [];
+        await goto(`/activities/${activity.id}`);
+        return;
+      } catch {
+        // Keep the completed upload visible if processing does not finish promptly.
+      }
+    } else {
+      void activityCreated?.catch(() => {});
+    }
     if (uploads.every((item) => item.state === 'done')) {
       open = false;
       uploads = [];

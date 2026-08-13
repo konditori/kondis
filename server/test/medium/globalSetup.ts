@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { Client } from 'pg';
 import { GenericContainer, Wait } from 'testcontainers';
 
@@ -21,10 +22,13 @@ const globalSetup = async (): Promise<() => Promise<void>> => {
   const username = 'postgres';
   const password = 'postgres';
 
-  // imresamu/postgis is the multi-arch (amd64 + arm64) publication of the same
-  // upstream PostGIS Dockerfiles. postgis/postgis only ships amd64, which fails
-  // on Apple Silicon with "no matching manifest for linux/arm64/v8".
-  const postgresContainer = await new GenericContainer('imresamu/postgis:18-3.6')
+  // Exercise the same PostGIS + VectorChord image used by development and production.
+  const postgresImage = await GenericContainer.fromDockerfile(
+    resolve(import.meta.dirname, '../../../packages/postgres'),
+  )
+    .withBuildArgs({ PG_MAJOR: '18', VECTORCHORD_TAG: '1.1.1' })
+    .build('kondis-medium-postgres:latest', { deleteOnExit: false });
+  const postgresContainer = await postgresImage
     .withExposedPorts(5432)
     .withEnvironment({
       POSTGRES_PASSWORD: password,

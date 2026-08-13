@@ -32,7 +32,9 @@
       </div>
     {/if}
   </div>
-  <div class="activity-stat"><Gauge size={16} /><span><strong>{distance(activity.distance, unitSystem)}</strong><small>Distance</small></span></div>
-  <div class="activity-stat"><Clock3 size={16} /><span><strong>{duration(activity.movingTime ?? activity.elapsedTime)}</strong><small>Moving time</small></span></div>
-  <div class="activity-stat optional"><Mountain size={16} /><span><strong>{elevation(activity.elevationGain, unitSystem)}</strong><small>Elevation</small></span></div>
+  <div class="activity-stat"><Gauge size={16} /><span><strong>{distance(activity.metrics?.distance ?? null, unitSystem)}</strong><small>Distance</small></span></div>
+  <div class="activity-stat"><Clock3 size={16} /><span><strong>{activity.metrics ? duration(activity.metrics.movingTime ?? activity.metrics.elapsedTime) : '—'}</strong><small>Moving time</small></span></div>
+  {#if activity.metrics?.elevationGain != null || activity.metrics?.elevationLoss != null}
+    <div class="activity-stat optional"><Mountain size={16} /><span><strong>{elevation(activity.metrics?.elevationGain ?? null, unitSystem)}</strong><small>Elevation</small></span></div>
+  {/if}
 </a>

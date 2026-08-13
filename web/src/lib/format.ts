@@ -37,11 +37,10 @@ export function elevation(
 
 export function duration(seconds: number | null): string {
   if (seconds == null) return "—";
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours
-    ? `${hours}h ${minutes.toString().padStart(2, "0")}m`
-    : `${minutes} min`;
+  const rounded = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(rounded / 60);
+  const remainder = rounded % 60;
+  return `${minutes}:${remainder.toString().padStart(2, "0")}`;
 }
 
 export function speed(value: number | null, unitSystem: UnitSystem): string {
@@ -105,12 +104,28 @@ export function bestEffortValue(
 }
 
 export function localDate(value: string): string {
+  const date = new Date(value);
+  const today = new Date();
+  const dayStart = (source: Date) =>
+    new Date(
+      source.getFullYear(),
+      source.getMonth(),
+      source.getDate(),
+    ).getTime();
+  const dayDifference = Math.round(
+    (dayStart(today) - dayStart(date)) / 86_400_000,
+  );
+
+  if (dayDifference === 0) return "Today";
+  if (dayDifference === 1) return "Yesterday";
+  if (dayDifference === -1) return "Tomorrow";
+
   return new Intl.DateTimeFormat(undefined, {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 export function localTime(value: string): string {

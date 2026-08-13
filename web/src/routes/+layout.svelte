@@ -3,7 +3,7 @@
   import Sidebar from '$lib/components/Sidebar.svelte';
   import UploadDialog from '$lib/components/UploadDialog.svelte';
 
-  let { children } = $props();
+  let { children, data } = $props();
   let uploadOpen = $state(false);
 </script>
 
@@ -11,4 +11,4 @@
 
 <Sidebar onUpload={() => (uploadOpen = true)} />
 <main class="app-main">{@render children()}</main>
-<UploadDialog bind:open={uploadOpen} />
+<UploadDialog bind:open={uploadOpen} eventsUrl={data.eventsUrl} />

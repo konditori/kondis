@@ -34,9 +34,7 @@
   });
 
   $effect(() => subscribeToActivityEvents(data.eventsUrl, (activity) => {
-    const isNew = !activities.some(({ uploadId }) => uploadId === activity.uploadId);
     appendedActivities = [...appendedActivities.filter(({ uploadId }) => uploadId !== activity.uploadId), activity];
-    if (isNew) totalOverride = (totalOverride ?? data.total) + 1;
     void refreshRecent();
   }, () => void refreshRecent()));
 
@@ -48,7 +46,7 @@
         ...appendedActivities.filter(({ uploadId }) => !refreshedUploads.has(uploadId)),
         ...page.activities,
       ];
-      totalOverride = Math.max(totalOverride ?? data.total, page.total);
+      totalOverride = page.total;
     } catch {
       // The socket will retry and reconcile again after reconnecting.
     }
@@ -64,7 +62,7 @@
       const existing = new Set(activities.map(({ id }) => id));
       appendedActivities = [...appendedActivities, ...page.activities.filter(({ id }) => !existing.has(id))];
       cursorOverride = page.nextCursor;
-      totalOverride = Math.max(totalOverride ?? data.total, page.total);
+      totalOverride = page.total;
     } catch {
       loadError = true;
     } finally {

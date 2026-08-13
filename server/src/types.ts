@@ -341,11 +341,16 @@ export type ParsedLap = {
   avgSpeedMps: number | null;
 };
 
-export type ParsedActivity = {
+export type ParsedActivityStructure = {
   sport: ActivityType;
   name: string | null;
   startedAt: Date;
   timezoneOffset: number | null; // minutes east of UTC
+  streams: ParsedStream[]; // index-aligned streams of samples
+  laps: ParsedLap[]; // lap summaries, if any
+};
+
+export type ParsedActivity = ParsedActivityStructure & {
   elapsedTime: number; // seconds
   movingTime: number | null; // seconds
   distance: number | null; // meters
@@ -361,8 +366,6 @@ export type ParsedActivity = {
   maxPower: number | null; // watts
   normalizedPower: number | null; // watts
   calories: number | null; // kilocalories
-  streams: ParsedStream[]; // index-aligned streams of samples
-  laps: ParsedLap[]; // lap summaries, if any
 };
 
 export interface IBaseJob {
@@ -388,6 +391,23 @@ export interface IActivityParseJob extends IEntityJob {
   activitySport?: ActivityType;
 }
 
+export interface IManualActivityJob extends IEntityJob {
+  activityName?: string;
+  activityDescription?: string;
+  activitySport: ActivityType;
+  startedAt: string;
+  elapsedTime: number;
+  movingTime?: number | null;
+  distance?: number | null;
+  elevationGain?: number | null;
+  elevationLoss?: number | null;
+  avgSpeed?: number | null;
+  maxSpeed?: number | null;
+  avgHr?: number | null;
+  maxHr?: number | null;
+  calories?: number | null;
+}
+
 export interface ILagomTakeoutImportJob {
   originalName: string;
   storagePath: string;
@@ -395,9 +415,12 @@ export interface ILagomTakeoutImportJob {
 
 export type JobItem =
   | { name: JobName.ActivityUpload; data: IActivityUploadJob }
+  | { name: JobName.ActivityMetricCompute; data: IEntityJob }
   | { name: JobName.ActivityBestEffortCompute; data: IEntityJob }
-  | { name: JobName.ActivityBestEffortRank; data: Record<string, never> }
+  | { name: JobName.ActivityBestEffortRank; data: { id?: string } }
+  | { name: JobName.ActivityRouteMatchCompute; data: IEntityJob }
   | { name: JobName.ActivityParse; data: IActivityParseJob }
+  | { name: JobName.ActivityManualCreate; data: IManualActivityJob }
   | { name: JobName.ActivityParseQueueAll; data: IBaseJob }
   | { name: JobName.ActivityDelete; data: IEntityJob }
   | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }
