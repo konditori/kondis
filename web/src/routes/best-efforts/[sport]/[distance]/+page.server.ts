@@ -3,12 +3,12 @@ import {
   activityControllerListBestEfforts,
   BestEffortSportInput,
   BestEffortType,
-  getSdkRequestOptions,
 } from "$lib/api";
+import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { BestEffortHistory } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ fetch, params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
   if (params.sport !== "run" && params.sport !== "ride")
     error(404, "Best effort sport not found");
 
@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
         sport: params.sport as BestEffortSportInput,
         $type: params.distance as BestEffortType,
       },
-      getSdkRequestOptions(fetch),
+      getServerSdkRequestOptions(locals.kondisFetch),
     )) as BestEffortHistory;
   } catch (requestError) {
     if ((requestError as { status?: number }).status === 400)

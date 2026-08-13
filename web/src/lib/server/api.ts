@@ -6,6 +6,13 @@ export function apiUrl(path: string): URL {
   return new URL(path.replace(/^\//, ""), `${apiBase.replace(/\/$/, "")}/`);
 }
 
+export function getServerSdkRequestOptions(fetchImpl: typeof fetch) {
+  return {
+    baseUrl: apiUrl("").toString(),
+    fetch: fetchImpl,
+  };
+}
+
 export function activityEventsUrl(requestUrl: URL): string {
   if (publicEnv.PUBLIC_KONDIS_EVENTS_URL)
     return publicEnv.PUBLIC_KONDIS_EVENTS_URL;

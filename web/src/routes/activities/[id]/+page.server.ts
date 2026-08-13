@@ -1,13 +1,14 @@
 import { error } from "@sveltejs/kit";
-import { activityControllerGetById, getSdkRequestOptions } from "$lib/api";
+import { activityControllerGetById } from "$lib/api";
+import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { ActivityDetail } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ fetch, params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
   try {
     const activity = (await activityControllerGetById(
       { id: params.id },
-      getSdkRequestOptions(fetch),
+      getServerSdkRequestOptions(locals.kondisFetch),
     )) as ActivityDetail;
     return { activity };
   } catch (requestError) {
