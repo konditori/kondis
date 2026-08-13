@@ -876,6 +876,11 @@
                       "type": {
                         "$ref": "#/components/schemas/BestEffortType_Output"
                       },
+                      "overallRank": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
                       "yearRank": {
                         "type": "integer",
                         "minimum": 1,
@@ -884,10 +889,43 @@
                     },
                     "required": [
                       "type",
+                      "overallRank",
                       "yearRank"
                     ],
                     "additionalProperties": false
                   }
+                },
+                "track": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "LineString"
+                      ]
+                    },
+                    "coordinates": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Simplified GPS route as GeoJSON",
+                  "nullable": true
                 }
               },
               "required": [
@@ -915,7 +953,8 @@
                 "calories",
                 "createdAt",
                 "updatedAt",
-                "topBestEfforts"
+                "topBestEfforts",
+                "track"
               ],
               "additionalProperties": false
             }

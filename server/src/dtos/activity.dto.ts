@@ -71,6 +71,11 @@ export const ActivitySchema = z
   })
   .meta({ id: 'ActivityDto' });
 
+const ActivityTrackSchema = z.object({
+  type: z.literal('LineString'),
+  coordinates: z.array(z.tuple([z.number(), z.number()])),
+});
+
 export const ActivityListResponseSchema = z
   .object({
     activities: z.array(
@@ -79,10 +84,12 @@ export const ActivityListResponseSchema = z
           .array(
             z.object({
               type: BestEffortTypeSchema,
+              overallRank: z.number().int().min(1),
               yearRank: z.number().int().min(1).max(3),
             }),
           )
           .max(3),
+        track: ActivityTrackSchema.nullable().describe('Simplified GPS route as GeoJSON'),
       }),
     ),
     nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
@@ -121,13 +128,7 @@ export const BestEffortListResponseSchema = z
   .meta({ id: 'BestEffortListResponseDto' });
 
 export const ActivityDetailSchema = ActivitySchema.extend({
-  track: z
-    .object({
-      type: z.literal('LineString'),
-      coordinates: z.array(z.tuple([z.number(), z.number()])),
-    })
-    .nullable()
-    .describe('GPS route as GeoJSON'),
+  track: ActivityTrackSchema.nullable().describe('GPS route as GeoJSON'),
   bestEfforts: z.array(
     z.object({
       type: BestEffortTypeSchema,

@@ -27,8 +27,10 @@ export type Activity = {
   calories: number | null;
   createdAt: string;
   updatedAt: string;
+  track: { type: "LineString"; coordinates: [number, number][] } | null;
   topBestEfforts?: {
     type: string;
+    overallRank: number;
     yearRank: number;
   }[];
 };
@@ -40,7 +42,6 @@ export type ActivityPage = {
 };
 
 export type ActivityDetail = Activity & {
-  track: { type: "LineString"; coordinates: [number, number][] } | null;
   bestEfforts: {
     type: string;
     distance: number;

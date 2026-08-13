@@ -114,8 +114,14 @@ export type ActivityListResponseDtoOutput = {
     updatedAt: string;
     topBestEfforts: {
       type: BestEffortType_Output;
+      overallRank: number;
       yearRank: number;
     }[];
+    /** Simplified GPS route as GeoJSON */
+    track: {
+      type: Type;
+      coordinates: [number, number][];
+    } | null;
   }[];
   /** Cursor for the next page, or null at the end */
   nextCursor: string | null;
@@ -664,6 +670,9 @@ export enum BestEffortType_Output {
   Power1H = 'power_1h',
   Power2H = 'power_2h',
 }
+export enum Type {
+  LineString = 'LineString',
+}
 export enum AverageMetric {
   None = 'none',
   Pace = 'pace',
@@ -730,9 +739,6 @@ export enum BestEffortValueKind_Output {
   Distance = 'distance',
   Elevation = 'elevation',
   Power = 'power',
-}
-export enum Type {
-  LineString = 'LineString',
 }
 export enum ActivityUpdateDtoActivityType {
   AlpineSki = 'alpine_ski',

@@ -45,6 +45,7 @@ export type CreateActivityInput = {
 };
 
 export type ActivityRecord = Omit<Activity, 'detail_track' | 'track'> & ActivityMetric;
+export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
 
 export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at'>;
 
@@ -213,7 +214,8 @@ export class ActivityRepository {
       .selectFrom('activity')
       .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
       .select(ACTIVITY_COLUMNS)
-      .selectAll('activity_metric');
+      .selectAll('activity_metric')
+      .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
 
     if (cursor) {
       query = query.where(({ and, eb, or }) =>
@@ -274,7 +276,12 @@ export class ActivityRepository {
   listTopBestEfforts(activityIds: string[]) {
     return this.db
       .selectFrom('activity_best_effort')
-      .select(['activity_best_effort.activity_id', 'activity_best_effort.type', 'activity_best_effort.year_rank'])
+      .select([
+        'activity_best_effort.activity_id',
+        'activity_best_effort.type',
+        'activity_best_effort.overall_rank',
+        'activity_best_effort.year_rank',
+      ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity_best_effort.year_rank', '<=', 3)
       .execute();

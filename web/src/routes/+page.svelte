@@ -4,7 +4,6 @@
   import type { Snapshot } from '@sveltejs/kit';
   import ActivityCard from '$lib/components/ActivityCard.svelte';
   import { activityControllerListRecent, getSdkRequestOptions } from '$lib/api';
-  import { localDate } from '$lib/format';
   import { subscribeToActivityEvents } from '$lib/realtime';
   import type { Activity, ActivityPage } from '$lib/types';
 
@@ -23,7 +22,6 @@
   const nextCursor = $derived(cursorOverride === undefined ? data.nextCursor : cursorOverride);
   const total = $derived(totalOverride ?? data.total);
   const filtered = $derived(activities.filter((activity) => `${activity.name ?? ''} ${activity.description ?? ''} ${activity.sport}`.toLowerCase().includes(query.toLowerCase())));
-  const groups = $derived(Object.entries(Object.groupBy(filtered, (activity) => localDate(activity.startedAt))));
 
   $effect(() => {
     if (data.activities) {
@@ -121,15 +119,10 @@
     <div class="notice"><CloudOff size={20} /><span><strong>Server unavailable</strong> Start the Kondis API to load your activities.</span></div>
   {/if}
 
-  {#if groups.length}
-    <div class="timeline">
-      {#each groups as [date, activities]}
-        <section class="day-group">
-          <div class="date-rail"><span></span><h2>{date}</h2><small>{activities?.length}</small></div>
-          <div class="activity-list">
-            {#each activities ?? [] as activity (activity.id)}<ActivityCard {activity} activityTypes={data.activityTypes} unitSystem={data.unitSystem} />{/each}
-          </div>
-        </section>
+  {#if filtered.length}
+    <div class="activity-list">
+      {#each filtered as activity (activity.id)}
+        <ActivityCard {activity} activityTypes={data.activityTypes} unitSystem={data.unitSystem} />
       {/each}
     </div>
     {#if nextCursor}

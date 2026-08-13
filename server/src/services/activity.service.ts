@@ -6,6 +6,7 @@ import { OnJob } from 'src/decorators';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
+  ActivityListRecord,
   ActivityRecord,
   ActivityRepository,
   CreateActivityInput,
@@ -248,6 +249,7 @@ export class ActivityService {
     return {
       activities: page.map((row) => ({
         ...this.toActivityDto(row),
+        track: this.toTrack(row.track_geojson),
         topBestEfforts: topBestEfforts.get(row.id) ?? [],
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
@@ -304,10 +306,7 @@ export class ActivityService {
     }
 
     const storedEfforts = await this.activityRepository.getBestEfforts(id);
-    const trackGeoJson = row.detail_track_geojson ?? row.track_geojson;
-    const track = trackGeoJson
-      ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] })
-      : null;
+    const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
 
     return {
       ...this.toActivityDto(row),
@@ -394,6 +393,10 @@ export class ActivityService {
     });
   }
 
+  private toTrack(trackGeoJson: string | null): { type: 'LineString'; coordinates: [number, number][] } | null {
+    return trackGeoJson ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] }) : null;
+  }
+
   private toIsoString(value: Timestamp): string {
     return this.toDate(value).toISOString();
   }
@@ -402,9 +405,9 @@ export class ActivityService {
     return value instanceof Date ? value : new Date(value);
   }
 
-  private async topBestEffortsForActivities(activities: ActivityRecord[]) {
+  private async topBestEffortsForActivities(activities: ActivityListRecord[]) {
     const activityIds = new Set(activities.map(({ id }) => id));
-    const result = new Map<string, { type: BestEffortType; yearRank: number }[]>();
+    const result = new Map<string, { type: BestEffortType; overallRank: number; yearRank: number }[]>();
     if (activityIds.size === 0) {
       return result;
     }
@@ -416,7 +419,7 @@ export class ActivityService {
         continue;
       }
       const efforts = result.get(row.activity_id) ?? [];
-      efforts.push({ type: definition.type, yearRank: row.year_rank });
+      efforts.push({ type: definition.type, overallRank: row.overall_rank, yearRank: row.year_rank });
       result.set(row.activity_id, efforts);
     }
 

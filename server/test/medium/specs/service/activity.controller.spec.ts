@@ -107,6 +107,23 @@ describe('ActivityController (medium)', () => {
       expect(response.activities[0].startedAt).toBe('2024-01-01T09:00:00.000Z');
     });
 
+    it('includes the simplified GPS route needed for activity feed maps', async () => {
+      await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'mapped run', [
+        { type: 'latitude', data: [58.4101, 58.4112, 58.4124] },
+        { type: 'longitude', data: [15.6211, 15.6222, 15.6234] },
+      ]);
+
+      const response = await controller.listRecent({ limit: 50 });
+      expect(response.activities[0].track).toEqual({
+        type: 'LineString',
+        coordinates: [
+          [15.6211, 58.4101],
+          [15.6222, 58.4112],
+          [15.6234, 58.4124],
+        ],
+      });
+    });
+
     it('paginates through every activity without duplicates', async () => {
       await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'oldest');
       await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'middle');
@@ -146,6 +163,7 @@ describe('ActivityController (medium)', () => {
       const fourth = response.activities.find(({ name }) => name === 'fourth');
 
       expect(second?.topBestEfforts).toHaveLength(3);
+      expect(second?.topBestEfforts.every(({ overallRank }) => overallRank === 2)).toBe(true);
       expect(second?.topBestEfforts.every(({ yearRank }) => yearRank === 2)).toBe(true);
       expect(fourth?.topBestEfforts).toEqual([]);
     });

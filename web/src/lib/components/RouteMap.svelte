@@ -3,7 +3,7 @@
   import { MapPinOff } from '@lucide/svelte';
   import { ActivityMapStyle } from '$lib/activity-types';
 
-  let { coordinates, mode = ActivityMapStyle.Route }: { coordinates: [number, number][] | null; mode?: ActivityMapStyle } = $props();
+  let { coordinates, mode = ActivityMapStyle.Route, compact = false }: { coordinates: [number, number][] | null; mode?: ActivityMapStyle; compact?: boolean } = $props();
   let container = $state<HTMLDivElement>();
 
   onMount(() => {
@@ -16,12 +16,20 @@
 
     void import('leaflet').then((L) => {
       if (disposed) return;
-      map = L.map(mapContainer, { zoomControl: false, attributionControl: true });
+      map = L.map(mapContainer, {
+        zoomControl: false,
+        attributionControl: true,
+        dragging: !compact,
+        scrollWheelZoom: !compact,
+        doubleClickZoom: !compact,
+        touchZoom: !compact,
+        keyboard: !compact,
+      });
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      if (!compact) L.control.zoom({ position: 'bottomright' }).addTo(map);
 
       const points = coordinates.map(([longitude, latitude]) => L.latLng(latitude, longitude));
       const boundsLayer = L.polyline(points);
@@ -79,7 +87,7 @@
 </script>
 
 {#if coordinates && coordinates.length >= 2}
-  <div class="route-map" bind:this={container} aria-label={mode === ActivityMapStyle.Heatmap ? 'Activity density map' : 'Activity route map'}></div>
+  <div class:route-map-compact={compact} class="route-map" bind:this={container} aria-label={mode === ActivityMapStyle.Heatmap ? 'Activity density map' : 'Activity route map'}></div>
 {:else}
   <div class="map-empty"><MapPinOff size={27} /><strong>No GPS route</strong><span>This activity did not include location data.</span></div>
 {/if}
