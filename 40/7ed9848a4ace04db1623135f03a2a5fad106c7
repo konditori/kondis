@@ -1,0 +1,21 @@
+web/src/lib/components/ActivityCard.svelte
+  s_9261f80e7031ac::t_583a331f4444a6 94
+web/src/lib/components/RouteMap.svelte
+  s_9261f80e7031ac::t_08b347cde6c2ac 6-16,79-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "407ed9848a4ace04db1623135f03a2a5fad106c7",
+  "prompts": {},
+  "sessions": {
+    "s_9261f80e7031ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffabf-1ec5-7782-8fd1-dd3585820d7e",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
