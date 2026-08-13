@@ -128,7 +128,6 @@
       {/if}
       <line class="profile-axis-line" x1={padding.left} x2={width - padding.right} y1={padding.top + chartHeight} y2={padding.top + chartHeight} />
       <text class="profile-distance-label" x={padding.left} y={height - 8}>0 km</text>
-      <text class="profile-distance-label" x={width - padding.right} y={height - 8} text-anchor="end">{(maxDistance / 1000).toFixed(1)} km</text>
     </svg>
   {:else}
     <div class="activity-profile-empty">No elevation samples available for this activity.</div>
