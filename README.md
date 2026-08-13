@@ -22,6 +22,10 @@ mise run dev
 
 The web app is available at [http://localhost:3000](http://localhost:3000) and proxies API requests to the server container on port 2293.
 
+### Android app
+
+The native Kotlin/Jetpack Compose client lives in [`android/`](./android). See the [Android README](./android/README.md) for its feature set, architecture, setup, and verification commands.
+
 ### Database migrations
 
 Migrations live in `server/src/schema/migrations` and are discovered automatically at runtime. Create a timestamped migration, apply pending migrations, or revert the latest migration with:

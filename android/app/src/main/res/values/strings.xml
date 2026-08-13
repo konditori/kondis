@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Kondis</string>
+    <string name="recording_channel_name">Workout recording</string>
+    <string name="recording_channel_description">Keeps location recording active during a workout</string>
+    <string name="recording_notification_title">Kondis is recording</string>
+</resources>
+
