@@ -41,7 +41,7 @@ import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
 import app.kondis.ui.components.ActivityStat
-import app.kondis.ui.components.RoutePreview
+import app.kondis.ui.components.StaticRoutePreview
 
 @Composable
 fun ActivityDetailRoute(
@@ -85,7 +85,7 @@ fun ActivityDetailScreen(
     ) {
         item { DetailHeader(activity, units, onBack) }
         activity.track?.takeIf { it.coordinates.size > 1 }?.let { track ->
-            item { RoutePreview(track, Modifier.fillMaxWidth().height(280.dp)) }
+            item { StaticRoutePreview(track, Modifier.fillMaxWidth().height(280.dp)) }
         }
         activity.description?.takeIf(String::isNotBlank)?.let { description ->
             item {
@@ -166,4 +166,3 @@ private fun DetailHeader(activity: ActivityDetail, units: UnitSystem, onBack: ()
         }
     }
 }
-

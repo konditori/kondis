@@ -1,6 +1,5 @@
 package app.kondis.ui.components
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,14 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import app.kondis.model.Activity
-import app.kondis.model.Track
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
 import app.kondis.model.formatDateTime
@@ -103,7 +97,7 @@ fun ActivityCard(
                 }
             }
             activity.track?.takeIf { it.coordinates.size > 1 }?.let { track ->
-                RoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(170.dp))
+                StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(170.dp))
             }
         }
     }
@@ -114,46 +108,6 @@ fun ActivityStat(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(value, style = MaterialTheme.typography.titleMedium)
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-fun RoutePreview(track: Track, modifier: Modifier = Modifier) {
-    val routeColor = MaterialTheme.colorScheme.primary
-    val finishColor = MaterialTheme.colorScheme.tertiary
-    val background = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
-    val grid = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-    Canvas(modifier = modifier.background(background)) {
-        for (step in 1..5) {
-            val x = size.width * step / 6f
-            val y = size.height * step / 6f
-            drawLine(grid, Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
-            drawLine(grid, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
-        }
-        val valid = track.coordinates.filter { it.size >= 2 }
-        if (valid.size < 2) return@Canvas
-        val minLongitude = valid.minOf { it[0] }
-        val maxLongitude = valid.maxOf { it[0] }
-        val minLatitude = valid.minOf { it[1] }
-        val maxLatitude = valid.maxOf { it[1] }
-        val longitudeRange = (maxLongitude - minLongitude).takeIf { it > 0 } ?: 1.0
-        val latitudeRange = (maxLatitude - minLatitude).takeIf { it > 0 } ?: 1.0
-        val padding = 20.dp.toPx()
-        val path = Path()
-        valid.forEachIndexed { index, coordinate ->
-            val x = padding + ((coordinate[0] - minLongitude) / longitudeRange).toFloat() * (size.width - padding * 2)
-            val y = size.height - padding - ((coordinate[1] - minLatitude) / latitudeRange).toFloat() * (size.height - padding * 2)
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        drawPath(path, routeColor, style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round))
-        val first = valid.first()
-        val last = valid.last()
-        fun offset(point: List<Double>) = Offset(
-            padding + ((point[0] - minLongitude) / longitudeRange).toFloat() * (size.width - padding * 2),
-            size.height - padding - ((point[1] - minLatitude) / latitudeRange).toFloat() * (size.height - padding * 2),
-        )
-        drawCircle(routeColor, 6.dp.toPx(), offset(first))
-        drawCircle(finishColor, 6.dp.toPx(), offset(last))
     }
 }
 
