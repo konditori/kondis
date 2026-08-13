@@ -1,0 +1,31 @@
+open-api/kondis-openapi-specs.json
+  s_40964a3bc06f87::t_9de6d6e04d7151 406-439,707-823,915-922,962-963,1006,1255-1262,1264-1268,1270-1274,1385-1393,1404,1408-1508
+server/src/dtos/activity.dto.ts
+  s_40964a3bc06f87::t_b1fb1a70c0bd1d 45,62-74,97-98,139-160,163-169,186
+server/src/open-api/fetch-client.ts
+  s_40964a3bc06f87::t_a9b367bab68bc5 66-97,113-114,119-125,183-184,194-218,243-244,250-253,515-534
+server/src/repositories/activity.repository.ts
+  s_40964a3bc06f87::t_e39d2558f1f9a5 3,15-17,28,30-48,58-61,151-156,158-167,169-174,176-187,189,196-203,212-219,222-228,233-376,381-388,397-404,495-501,507,520,522-524,528-532
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_40964a3bc06f87::t_66ebbcbc14e6e7 37-53,65-67,72-91,189-190,244-257,268-270,297,331-385
+web/src/lib/components/ActivityCard.svelte
+  s_40964a3bc06f87::t_8bf37ee12a7feb 17,22-26,30,32-36
+web/src/lib/types.ts
+  s_40964a3bc06f87::t_56269e0277deeb 13-29,33-39,49-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "78f1af6e1ed7642d0ac816d6553cd242f22f9a60",
+  "prompts": {},
+  "sessions": {
+    "s_40964a3bc06f87": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffa41-9478-7f03-894d-4dbc44de478b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
