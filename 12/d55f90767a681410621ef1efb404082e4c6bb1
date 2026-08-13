@@ -1,0 +1,35 @@
+web/src/app.d.ts
+  s_3815a562651dc4::t_c1299c1c4327bd 3-7
+web/src/hooks.server.ts
+  s_3815a562651dc4::t_dee2d93f116559 1-10
+web/src/lib/server/api.ts
+  s_3815a562651dc4::t_3ff55f5afdb4d9 9-15
+web/src/routes/+layout.server.ts
+  s_3815a562651dc4::t_ef3e7528fd69ad 10,13,17
+web/src/routes/+page.server.ts
+  s_3815a562651dc4::t_6a4773dc4a6da5 1-2,6,11
+web/src/routes/activities/[id]/+page.server.ts
+  s_3815a562651dc4::t_e1ce4c87070519 2-3,7,11
+web/src/routes/activities/[id]/matched-routes/+page.server.ts
+  s_3815a562651dc4::t_acba2dcb01a2bb 2-3,7,11
+web/src/routes/api/[...path]/+server.ts
+  s_3815a562651dc4::t_3d1492f1dff9eb 4,11
+web/src/routes/best-efforts/[sport]/[distance]/+page.server.ts
+  s_3815a562651dc4::t_c59f05cafa52c2 7,11,22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "12d55f90767a681410621ef1efb404082e4c6bb1",
+  "prompts": {},
+  "sessions": {
+    "s_3815a562651dc4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffa60-e7be-70b0-87b2-dbab67e173d1",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
