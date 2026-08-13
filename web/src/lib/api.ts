@@ -18,7 +18,7 @@ import {
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
   return {
-    baseUrl: "/api",
+    baseUrl: "/api/v1",
     fetch: fetchImpl,
   };
 }

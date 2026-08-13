@@ -2,7 +2,7 @@
   import { ArrowUpRight, Medal } from '@lucide/svelte';
   import { goto } from '$app/navigation';
   import { AverageMetric, activityTypeLabel, activityTypeSettings, sportIcon } from '$lib/activity-types';
-  import { bestEffortLabel } from '$lib/best-efforts';
+  import { bestEffortDistance, bestEffortLabel } from '$lib/best-efforts';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import type { ActivityTypeSettingsOutput } from '$lib/api';
   import type { Activity } from '$lib/types';
@@ -39,7 +39,11 @@
     activity.topBestEfforts
       ?.slice()
       .filter(({ overallRank }) => overallRank >= 1 && overallRank <= 3)
-      .sort((left, right) => left.overallRank - right.overallRank)[0] ?? null,
+      .sort(
+        (left, right) =>
+          bestEffortDistance(right.type) - bestEffortDistance(left.type) ||
+          left.overallRank - right.overallRank,
+      )[0] ?? null,
   );
 
   function achievementText(type: string): string {

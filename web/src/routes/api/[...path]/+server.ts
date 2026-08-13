@@ -1,8 +1,8 @@
-import { apiUrl } from "$lib/server/api";
+import { apiEndpointUrl } from "$lib/server/api";
 import type { RequestHandler } from "./$types";
 
 const proxy: RequestHandler = async ({ request, params, url, locals }) => {
-  const target = apiUrl(params.path ?? "");
+  const target = apiEndpointUrl(params.path ?? "");
   target.search = url.search;
 
   const headers = new Headers(request.headers);

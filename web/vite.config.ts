@@ -5,8 +5,6 @@ const upstream: ProxyOptions = {
   target: process.env.KONDIS_API_URL ?? "http://localhost:2293",
   changeOrigin: true,
   secure: false,
-  // The browser-facing SDK uses /api, while Nest exposes the routes at /.
-  rewrite: (path) => path.replace(/^\/api(?=\/|$)/, ""),
 };
 
 export default defineConfig({

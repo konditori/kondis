@@ -9,6 +9,8 @@ import { WorkerType } from 'src/enum';
 import { migrateDatabase } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 
+const API_PREFIX = 'api/v1';
+
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
   const config = new ConfigService();
@@ -20,6 +22,7 @@ async function bootstrap(): Promise<void> {
 
   if (config.hasWorker(WorkerType.API)) {
     const app = await NestFactory.create(AppModule, { cors: false });
+    app.setGlobalPrefix(API_PREFIX);
     app.enableShutdownHooks();
     await app.init();
     await app.get(EventRepository).attach(app.getHttpServer());

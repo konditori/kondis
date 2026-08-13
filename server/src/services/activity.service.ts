@@ -626,7 +626,23 @@ export class ActivityService {
       result.set(
         activityId,
         efforts
-          .sort((left, right) => left.overallRank - right.overallRank || left.yearRank - right.yearRank)
+          .sort((left, right) => {
+            const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
+            const rightDefinition = BEST_EFFORT_DEFINITIONS.get(right.type);
+            const leftDistance =
+              leftDefinition && 'distance' in leftDefinition
+                ? leftDefinition.distance
+                : left.type === 'longest_ride'
+                  ? Number.POSITIVE_INFINITY
+                  : 0;
+            const rightDistance =
+              rightDefinition && 'distance' in rightDefinition
+                ? rightDefinition.distance
+                : right.type === 'longest_ride'
+                  ? Number.POSITIVE_INFINITY
+                  : 0;
+            return rightDistance - leftDistance || left.overallRank - right.overallRank || left.yearRank - right.yearRank;
+          })
           .slice(0, 3),
       );
     }

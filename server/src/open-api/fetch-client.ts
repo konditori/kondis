@@ -8,10 +8,12 @@ import * as Oazapfts from '@oazapfts/runtime';
 import * as QS from '@oazapfts/runtime/query';
 export const defaults: Oazapfts.Defaults<Oazapfts.CustomHeaders> = {
   headers: {},
-  baseUrl: '/',
+  baseUrl: '/api/v1',
 };
 const oazapfts = Oazapfts.runtime(defaults);
-export const servers = {};
+export const servers = {
+  server1: '/api/v1',
+};
 export type PingResponseDtoOutput = {
   /** Health status of the API */
   status: string;

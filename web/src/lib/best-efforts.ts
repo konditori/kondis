@@ -49,3 +49,25 @@ export function bestEffortRecordName(type: string): string {
   const label = bestEffortLabel(type);
   return type === "1_mile" ? "mile" : label;
 }
+
+const BEST_EFFORT_DISTANCES: Readonly<Record<string, number>> = {
+  "400m": 400,
+  "1k": 1000,
+  half_mile: 804.672,
+  "1_mile": 1609.344,
+  "2_miles": 3218.688,
+  "5k": 5000,
+  "10k": 10_000,
+  "15k": 15_000,
+  "10_miles": 16_093.44,
+  "20k": 20_000,
+  half_marathon: 21_097.5,
+  "30k": 30_000,
+  marathon: 42_195,
+  "50k": 50_000,
+  longest_ride: Number.POSITIVE_INFINITY,
+};
+
+export function bestEffortDistance(type: string): number {
+  return BEST_EFFORT_DISTANCES[type] ?? 0;
+}

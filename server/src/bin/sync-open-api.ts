@@ -9,6 +9,8 @@ import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 import { AppModule } from 'src/app.module';
 
+const API_PREFIX = '/api/v1';
+
 async function run(): Promise<void> {
   process.env.DB_USERNAME ??= 'openapi';
   process.env.DB_PASSWORD ??= 'openapi';
@@ -20,14 +22,18 @@ async function run(): Promise<void> {
     logger: false,
     abortOnError: false,
   });
+  app.setGlobalPrefix(API_PREFIX.slice(1));
 
   const config = new DocumentBuilder()
     .setTitle('Kondis API')
     .setDescription('OpenAPI schema for the Kondis server')
     .setVersion('0.0.0')
+    .addServer(API_PREFIX)
     .build();
 
-  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config));
+  const document = cleanupOpenApiDoc(
+    SwaggerModule.createDocument(app, config, { ignoreGlobalPrefix: true }),
+  );
   const outputPath = resolve(process.cwd(), '..', 'open-api', 'kondis-openapi-specs.json');
 
   await mkdir(dirname(outputPath), { recursive: true });

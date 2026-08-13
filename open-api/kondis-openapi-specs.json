@@ -456,7 +456,11 @@
     "contact": {}
   },
   "tags": [],
-  "servers": [],
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
   "components": {
     "schemas": {
       "PingResponseDto_Output": {
