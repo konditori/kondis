@@ -46,11 +46,11 @@ const BEST_EFFORT_SPORTS = {
     ({ type }) => type,
   ),
 } satisfies Record<BestEffortSport, readonly ActivityType[]>;
-const CYCLING_ANALYSIS_SPORTS: readonly ActivityType[] = [
+const CYCLING_ANALYSIS_SPORTS: ReadonlySet<ActivityType> = new Set([
   ...BEST_EFFORT_SPORTS.ride,
   'e_bike_ride',
   'e_mountain_bike_ride',
-];
+]);
 const BEST_EFFORT_DEFINITIONS = new Map(
   [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),
 );
@@ -474,7 +474,7 @@ export class ActivityService {
     }
 
     const supportsActivityAnalysis =
-      BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.includes(row.sport);
+      BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.has(row.sport);
     const [storedEfforts, streams] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),

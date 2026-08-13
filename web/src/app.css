@@ -1217,12 +1217,13 @@ button {
 .splits-section-visual {
   width: max-content;
   min-width: 300px;
-  height: 440px;
+  height: max-content;
+  align-self: start;
   display: flex;
   min-width: 0;
   flex-direction: column;
   margin: 0;
-  overflow: hidden;
+  overflow: visible;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 17px;
@@ -1233,9 +1234,8 @@ button {
 }
 .splits-section-visual .split-table-wrap {
   min-height: 0;
-  flex: 1;
   margin: 0;
-  overflow: auto;
+  overflow: visible;
   border-width: 1px 0 0;
   border-radius: 0;
 }
@@ -1245,13 +1245,14 @@ button {
 }
 .splits-section-visual .split-header,
 .splits-section-visual .split-row {
-  grid-template-columns: 38px max-content 52px 60px;
+  grid-template-columns: 38px max-content max-content max-content;
   column-gap: 8px;
   padding: 0 13px;
+  justify-items: start;
 }
 .splits-section-visual .split-header.no-heart-rate,
 .splits-section-visual .split-row.no-heart-rate {
-  grid-template-columns: 38px max-content 60px;
+  grid-template-columns: 38px max-content max-content;
 }
 .splits-section-visual .split-header {
   position: sticky;
@@ -2295,7 +2296,7 @@ button {
   .splits-section-visual {
     width: 100%;
     height: auto;
-    max-height: 440px;
+    max-height: none;
     border-radius: 13px;
   }
   .metrics-section {
