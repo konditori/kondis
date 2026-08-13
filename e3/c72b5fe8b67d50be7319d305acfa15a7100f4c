@@ -1,0 +1,37 @@
+server/src/controllers/activity.controller.ts
+  s_6a2f32d1bfcae6::t_44661fbb3425d8 88
+server/src/dtos/activity.dto.ts
+  s_6a2f32d1bfcae6::t_10066c1ee00515 73,176
+server/src/open-api/fetch-client.ts
+  s_6a2f32d1bfcae6::t_c1bc73a14dc56f 111,182,229,244
+server/src/repositories/activity.repository.ts
+  s_6a2f32d1bfcae6::t_7bf46f3b75fa8e 64,477,486,494,506,513,517-519,535
+server/src/schema/migrations/1786440063867-ExcludeActivitiesFromBestEfforts.ts
+  s_6a2f32d1bfcae6::t_f498ee108ebb5f 1-9
+server/src/schema/tables/activity.table.ts
+  s_6a2f32d1bfcae6::t_b5f92fc558bf6d 34-36
+server/src/services/activity.service.ts
+  s_6a2f32d1bfcae6::t_1e6ff6d1be610d 518,546-547,549-554
+web/src/app.css
+  s_6a2f32d1bfcae6::t_5a9fdf7546bef0 804-848,1083-1087
+web/src/lib/types.ts
+  s_6a2f32d1bfcae6::t_18af84b8868216 11
+web/src/routes/activities/[id]/+page.svelte
+  s_6a2f32d1bfcae6::t_67af06e0f63e54 22,30,82,125,172,219,230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e3c72b5fe8b67d50be7319d305acfa15a7100f4c",
+  "prompts": {},
+  "sessions": {
+    "s_6a2f32d1bfcae6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffae2-9cc1-7861-b83c-01187b9c7c88",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
