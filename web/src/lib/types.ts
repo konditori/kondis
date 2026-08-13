@@ -48,6 +48,18 @@ export type ActivityPage = {
 
 export type ActivityDetail = Activity & {
   matchedRouteCount: number | null;
+  analysis: {
+    splits: {
+      distance: number;
+      elapsedTime: number;
+      startTime: number;
+      endTime: number;
+      avgHr: number | null;
+      elevationChange: number | null;
+    }[];
+    profile: { distance: number; time: number; altitude: number }[];
+    route: { time: number; coordinate: [number, number] }[];
+  } | null;
   bestEfforts:
     | {
         type: string;

@@ -84,6 +84,36 @@ const ActivityTrackSchema = z.object({
   coordinates: z.array(z.tuple([z.number(), z.number()])),
 });
 
+const ActivitySplitSchema = z.object({
+  distance: z.number().positive().describe('Split distance in meters'),
+  elapsedTime: z.number().positive().describe('Split duration in seconds'),
+  startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),
+  endTime: z.number().positive().describe('End offset from activity start in seconds'),
+  avgHr: z.number().int().positive().nullable().describe('Average heart rate during the split'),
+  elevationChange: z.number().nullable().describe('Net elevation change during the split in meters'),
+});
+
+const ActivityAnalysisSchema = z.object({
+  splits: z.array(ActivitySplitSchema).describe('Consecutive kilometre splits'),
+  profile: z
+    .array(
+      z.object({
+        distance: z.number().nonnegative(),
+        time: z.number().nonnegative(),
+        altitude: z.number(),
+      }),
+    )
+    .describe('Downsampled elevation profile points'),
+  route: z
+    .array(
+      z.object({
+        time: z.number().nonnegative(),
+        coordinate: z.tuple([z.number(), z.number()]),
+      }),
+    )
+    .describe('Downsampled route points aligned to elapsed time'),
+});
+
 export const ActivityListResponseSchema = z
   .object({
     activities: z.array(
@@ -138,6 +168,7 @@ export const BestEffortListResponseSchema = z
 
 export const ActivityDetailSchema = ActivitySchema.extend({
   track: ActivityTrackSchema.nullable().describe('GPS route as GeoJSON'),
+  analysis: ActivityAnalysisSchema.nullable().describe('Split, profile, and route data for activity analysis'),
   bestEfforts: z
     .array(
       z.object({

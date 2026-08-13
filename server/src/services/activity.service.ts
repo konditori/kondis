@@ -34,6 +34,7 @@ import {
   ParsedActivityStructure,
   RUNNING_BEST_EFFORTS,
 } from 'src/types';
+import { buildActivityAnalysis } from 'src/utils/activity-details';
 import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
@@ -45,6 +46,11 @@ const BEST_EFFORT_SPORTS = {
     ({ type }) => type,
   ),
 } satisfies Record<BestEffortSport, readonly ActivityType[]>;
+const CYCLING_ANALYSIS_SPORTS: readonly ActivityType[] = [
+  ...BEST_EFFORT_SPORTS.ride,
+  'e_bike_ride',
+  'e_mountain_bike_ride',
+];
 const BEST_EFFORT_DEFINITIONS = new Map(
   [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),
 );
@@ -467,12 +473,18 @@ export class ActivityService {
       return;
     }
 
-    const storedEfforts = await this.activityRepository.getBestEfforts(id);
+    const supportsActivityAnalysis =
+      BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.includes(row.sport);
+    const [storedEfforts, streams] = await Promise.all([
+      this.activityRepository.getBestEfforts(id),
+      supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
+    ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
 
     return {
       ...this.toActivityDto(row),
       track,
+      analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
       matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),
       bestEfforts:
         row.best_efforts_computed_at === null

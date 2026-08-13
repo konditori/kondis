@@ -8,27 +8,76 @@
     mode = ActivityMapStyle.Route,
     compact = false,
     showEndpoints = true,
+    route = [],
+    highlight = null,
   }: {
     coordinates: [number, number][] | null;
     mode?: ActivityMapStyle;
     compact?: boolean;
     showEndpoints?: boolean;
+    route?: { time: number; coordinate: [number, number] }[];
+    highlight?: { startTime: number; endTime: number; pointTime?: number } | null;
   } = $props();
   let container = $state<HTMLDivElement>();
+  let map = $state<import('leaflet').Map>();
+  let leaflet = $state<typeof import('leaflet')>();
+  let highlightLine = $state<import('leaflet').Polyline>();
+  let highlightStart = $state<import('leaflet').CircleMarker>();
+  let highlightEnd = $state<import('leaflet').CircleMarker>();
+  let highlightPoint = $state<import('leaflet').CircleMarker>();
+  let routeLines = $state<{ line: import('leaflet').Polyline; opacity: number }[]>([]);
+
+  $effect(() => {
+    if (!map || !leaflet || !highlightLine || !highlightStart || !highlightEnd || !highlightPoint) return;
+    const L = leaflet;
+    const hasRange = highlight !== null && highlight.endTime > highlight.startTime;
+    for (const { line, opacity } of routeLines) {
+      line.setStyle({ opacity: hasRange ? opacity * 0.28 : opacity });
+    }
+    if (!highlight) {
+      highlightLine.setLatLngs([]);
+      highlightStart.setStyle({ opacity: 0, fillOpacity: 0 });
+      highlightEnd.setStyle({ opacity: 0, fillOpacity: 0 });
+      highlightPoint.setStyle({ opacity: 0, fillOpacity: 0 });
+      return;
+    }
+
+    const selected = highlight.endTime > highlight.startTime
+      ? route.filter((point) => point.time >= highlight.startTime && point.time <= highlight.endTime)
+      : [];
+    const points = selected.map(({ coordinate }) => L.latLng(coordinate[1], coordinate[0]));
+    highlightLine.setLatLngs(points);
+    if (points.length > 0) {
+      highlightStart.setLatLng(points[0]!).setStyle({ opacity: 1, fillOpacity: 1 });
+      highlightEnd.setLatLng(points.at(-1)!).setStyle({ opacity: 1, fillOpacity: 1 });
+    } else {
+      highlightStart.setStyle({ opacity: 0, fillOpacity: 0 });
+      highlightEnd.setStyle({ opacity: 0, fillOpacity: 0 });
+    }
+    if (highlight.pointTime != null) {
+      const point = route.reduce((closest, candidate) =>
+        Math.abs(candidate.time - highlight.pointTime!) < Math.abs(closest.time - highlight.pointTime!) ? candidate : closest,
+      );
+      highlightPoint.setLatLng([point.coordinate[1], point.coordinate[0]]).setStyle({ opacity: 1, fillOpacity: 1 });
+    } else {
+      highlightPoint.setStyle({ opacity: 0, fillOpacity: 0 });
+    }
+  });
 
   onMount(() => {
     if (!container || !coordinates || coordinates.length < 2) return;
 
     const mapContainer = container;
     let disposed = false;
-    let map: import('leaflet').Map | undefined;
     let observer: ResizeObserver | undefined;
 
     void import('leaflet').then((L) => {
       if (disposed) return;
+      leaflet = L;
       map = L.map(mapContainer, {
         zoomControl: false,
         attributionControl: true,
+        preferCanvas: true,
         dragging: !compact,
         scrollWheelZoom: !compact,
         doubleClickZoom: !compact,
@@ -76,8 +125,12 @@
           }).addTo(map);
         }
       } else {
-        L.polyline(points, { color: '#ffffff', weight: compact ? 7 : 9, opacity: 0.9, lineCap: 'round' }).addTo(map);
-        L.polyline(points, { color: '#166534', weight: compact ? 4 : 5, opacity: 1, lineCap: 'round' }).addTo(map);
+        const outline = L.polyline(points, { color: '#ffffff', weight: compact ? 7 : 9, opacity: 0.9, lineCap: 'round' }).addTo(map);
+        const route = L.polyline(points, { color: '#166534', weight: compact ? 4 : 5, opacity: 1, lineCap: 'round' }).addTo(map);
+        routeLines = [
+          { line: outline, opacity: 0.9 },
+          { line: route, opacity: 1 },
+        ];
         if (showEndpoints) {
           L.circleMarker(points[0], {
             radius: 7,
@@ -96,6 +149,43 @@
         }
       }
 
+      // Keep these layers alive and only replace their coordinates on hover.
+      // Recreating layers and moving the tiled map made rapid split selection visibly stall.
+      highlightLine = L.polyline([], {
+        color: '#f97316',
+        weight: compact ? 6 : 7,
+        opacity: 1,
+        lineCap: 'round',
+        interactive: false,
+      }).addTo(map);
+      highlightStart = L.circleMarker([0, 0], {
+        radius: 6,
+        color: '#fff',
+        weight: 2,
+        opacity: 0,
+        fillColor: '#f97316',
+        fillOpacity: 0,
+        interactive: false,
+      }).addTo(map);
+      highlightEnd = L.circleMarker([0, 0], {
+        radius: 6,
+        color: '#fff',
+        weight: 2,
+        opacity: 0,
+        fillColor: '#f97316',
+        fillOpacity: 0,
+        interactive: false,
+      }).addTo(map);
+      highlightPoint = L.circleMarker([0, 0], {
+        radius: 8,
+        color: '#fff',
+        weight: 3,
+        opacity: 0,
+        fillColor: '#0ea5e9',
+        fillOpacity: 0,
+        interactive: false,
+      }).addTo(map);
+
       map.fitBounds(boundsLayer.getBounds(), { padding: [36, 36] });
 
       observer = new ResizeObserver(() => map?.invalidateSize());
@@ -106,6 +196,13 @@
       disposed = true;
       observer?.disconnect();
       map?.remove();
+      map = undefined;
+      leaflet = undefined;
+      highlightLine = undefined;
+      highlightStart = undefined;
+      highlightEnd = undefined;
+      highlightPoint = undefined;
+      routeLines = [];
     };
   });
 </script>

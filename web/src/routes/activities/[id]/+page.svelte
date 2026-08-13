@@ -5,6 +5,7 @@
   import { activityControllerDeleteById, activityControllerUpdateById, ActivityUpdateSport, getSdkRequestOptions, Sport } from '$lib/api';
   import { ActivityMapStyle, AverageMetric, activityTypeLabel, activityTypeOptions, activityTypeSettings, sportIcon } from '$lib/activity-types';
   import { bestEffortLabel, bestEffortRecordName } from '$lib/best-efforts';
+  import ActivityProfile from '$lib/components/ActivityProfile.svelte';
   import RouteMap from '$lib/components/RouteMap.svelte';
   import { subscribeToActivityEvents } from '$lib/realtime';
   import { activityName, distance, duration, effortDuration, elevation, localDate, localTime, pace, speed } from '$lib/format';
@@ -26,12 +27,17 @@
   const activitySettings = $derived(activityTypeSettings(data.activityTypes, activity.sport));
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
-  const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
+  const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride', 'e_bike_ride', 'e_mountain_bike_ride'].includes(activity.sport));
   const hasBestEffortAchievements = $derived(!activity.excludeFromRankings && (activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false));
   const hasHeartRate = $derived(activity.metrics?.avgHr != null);
   const hasElevation = $derived(activity.metrics?.elevationGain != null || activity.metrics?.elevationLoss != null);
   const hasGpsRoute = $derived((activity.track?.coordinates.length ?? 0) > 0);
   const hasBestEffortHeartRate = $derived(activity.bestEfforts?.some((effort) => effort.avgHr != null) ?? false);
+  const hasActivityAnalysis = $derived(activity.analysis !== null);
+  const hasSplitHeartRate = $derived(activity.analysis?.splits.some((split) => split.avgHr != null) ?? false);
+  type HighlightRange = { startTime: number; endTime: number; label: string; pointTime?: number };
+  let highlightedRange = $state<HighlightRange | null>(null);
+  let graphPointTime = $state<number | null>(null);
   let refreshPending = false;
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
@@ -110,6 +116,36 @@
     editError = '';
   }
 
+  function highlight(startTime: number, endTime: number, label: string, pointTime?: number) {
+    if (highlightedRange?.startTime === startTime && highlightedRange.endTime === endTime && highlightedRange.pointTime === pointTime) {
+      return;
+    }
+    highlightedRange = { startTime, endTime, label, pointTime };
+    graphPointTime = pointTime ?? null;
+  }
+
+  function highlightGraphPoint(point: { time: number } | null) {
+    if (!point) {
+      graphPointTime = null;
+      return;
+    }
+    graphPointTime = point.time;
+  }
+
+  function clearHighlight() {
+    highlightedRange = null;
+    graphPointTime = null;
+  }
+
+  const mapHighlight = $derived(
+    highlightedRange || graphPointTime !== null
+      ? {
+          ...(highlightedRange ?? { startTime: 0, endTime: 0, label: '' }),
+          pointTime: graphPointTime ?? highlightedRange?.pointTime,
+        }
+      : null,
+  );
+
   async function saveMetadata(event: SubmitEvent) {
     event.preventDefault();
     saving = true;
@@ -183,13 +219,71 @@
   </header>
 
   {#if hasGpsRoute}
-    <section class="map-panel">
-      {#key mapStyle}
-        <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} />
-      {/key}
-      {#if activity.track && mapStyle === ActivityMapStyle.Route}
-        <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span></div>
+    <div class:activity-visuals={hasActivityAnalysis}>
+      {#if hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
+        <section class="splits-section splits-section-visual">
+          <div class="section-heading"><div><span class="eyebrow">Distance detail</span><h2>Splits</h2><p>Hover a split to highlight it on the route.</p></div></div>
+          <div class="split-table-wrap">
+            <div class="split-table" role="table" aria-label="Activity kilometre splits">
+              <div class="split-header" class:no-heart-rate={!hasSplitHeartRate} role="row">
+                <div role="columnheader"><strong>KM</strong></div>
+                <div role="columnheader"><strong>Time</strong></div>
+                <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
+                {#if hasSplitHeartRate}<div role="columnheader"><strong>HR</strong></div>{/if}
+                <div role="columnheader"><strong>Elev</strong></div>
+              </div>
+              {#each activity.analysis.splits as split, index}
+                {@const splitLabel = index === activity.analysis.splits.length - 1 && split.distance < 995 ? (split.distance / 1000).toFixed(2) : `${index + 1}`}
+                <div class="split-row" class:no-heart-rate={!hasSplitHeartRate} class:highlighted={highlightedRange?.startTime === split.startTime && highlightedRange?.endTime === split.endTime} role="row" tabindex="0" onpointerenter={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onpointerleave={clearHighlight} onfocus={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onblur={clearHighlight}>
+                  <div role="cell"><strong>{splitLabel}</strong></div>
+                  <div role="cell">{effortDuration(split.elapsedTime)}</div>
+                  <div role="cell">{isCyclingEffort ? speed(split.distance / split.elapsedTime, data.unitSystem) : pace(split.distance / split.elapsedTime, data.unitSystem)}</div>
+                  {#if hasSplitHeartRate}<div role="cell">{split.avgHr == null ? '—' : `${split.avgHr}`}</div>{/if}
+                  <div role="cell">{elevation(split.elevationChange, data.unitSystem)}</div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        </section>
       {/if}
+      <section class="map-panel">
+        {#key mapStyle}
+          <RouteMap coordinates={activity.track?.coordinates ?? null} mode={mapStyle} route={activity.analysis?.route ?? []} highlight={mapHighlight} />
+        {/key}
+        {#if activity.track && mapStyle === ActivityMapStyle.Route}
+          <div class="map-key"><span><i class="start-dot"></i> Start</span><span><i class="finish-dot"></i> Finish</span>{#if highlightedRange}<span><i class="highlight-dot"></i> Selected</span>{/if}</div>
+        {/if}
+      </section>
+      {#if hasActivityAnalysis}
+        <ActivityProfile points={activity.analysis?.profile ?? []} selection={highlightedRange} onPointHover={highlightGraphPoint} />
+      {/if}
+    </div>
+  {/if}
+
+  {#if !hasGpsRoute && hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
+    <section class="splits-section">
+      <div class="section-heading"><div><span class="eyebrow">Distance detail</span><h2>Splits</h2><p>Hover a split to highlight it on the route and elevation profile.</p></div></div>
+      <div class="split-table-wrap">
+        <div class="split-table" role="table" aria-label="Activity kilometre splits">
+          <div class="split-header" class:no-heart-rate={!hasSplitHeartRate} role="row">
+            <div role="columnheader"><strong>KM</strong></div>
+            <div role="columnheader"><strong>Time</strong></div>
+            <div role="columnheader"><strong>{isCyclingEffort ? 'Speed' : 'Pace'}</strong></div>
+            {#if hasSplitHeartRate}<div role="columnheader"><strong>Heart rate</strong></div>{/if}
+            <div role="columnheader"><strong>Elev</strong></div>
+          </div>
+          {#each activity.analysis.splits as split, index}
+            {@const splitLabel = index === activity.analysis.splits.length - 1 && split.distance < 995 ? (split.distance / 1000).toFixed(2) : `${index + 1}`}
+            <div class="split-row" class:no-heart-rate={!hasSplitHeartRate} class:highlighted={highlightedRange?.startTime === split.startTime && highlightedRange?.endTime === split.endTime} role="row" tabindex="0" onpointerenter={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onpointerleave={clearHighlight} onfocus={() => highlight(split.startTime, split.endTime, `KM ${splitLabel}`)} onblur={clearHighlight}>
+              <div role="cell"><strong>{splitLabel}</strong></div>
+              <div role="cell">{effortDuration(split.elapsedTime)}</div>
+              <div role="cell">{isCyclingEffort ? speed(split.distance / split.elapsedTime, data.unitSystem) : pace(split.distance / split.elapsedTime, data.unitSystem)}</div>
+              {#if hasSplitHeartRate}<div role="cell">{split.avgHr == null ? '—' : `${split.avgHr} bpm`}</div>{/if}
+              <div role="cell">{elevation(split.elevationChange, data.unitSystem)}</div>
+            </div>
+          {/each}
+        </div>
+      </div>
     </section>
   {/if}
 
@@ -228,7 +322,7 @@
         </div>
         {#each activity.bestEfforts as effort}
           {@const achievement = activity.excludeFromRankings ? null : bestEffortAchievement(effort)}
-          <a class="best-effort-row" class:no-heart-rate={!hasBestEffortHeartRate} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
+          <a class="best-effort-row" class:no-heart-rate={!hasBestEffortHeartRate} class:highlighted={highlightedRange?.startTime === effort.startTime && highlightedRange?.endTime === effort.endTime} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`} onpointerenter={() => highlight(effort.startTime, effort.endTime, bestEffortLabel(effort.type))} onpointerleave={clearHighlight} onfocus={() => highlight(effort.startTime, effort.endTime, bestEffortLabel(effort.type))} onblur={clearHighlight}>
             <div class="effort-distance" role="cell">
               {#if achievement}
                 <span class={`effort-medal achievement-rank-${achievement.rank}`} aria-hidden="true">

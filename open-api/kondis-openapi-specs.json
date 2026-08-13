@@ -1328,6 +1328,127 @@
             "description": "GPS route as GeoJSON",
             "nullable": true
           },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "splits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "distance": {
+                      "type": "number",
+                      "exclusiveMinimum": true,
+                      "description": "Split distance in meters",
+                      "minimum": 0
+                    },
+                    "elapsedTime": {
+                      "type": "number",
+                      "exclusiveMinimum": true,
+                      "description": "Split duration in seconds",
+                      "minimum": 0
+                    },
+                    "startTime": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Start offset from activity start in seconds"
+                    },
+                    "endTime": {
+                      "type": "number",
+                      "exclusiveMinimum": true,
+                      "description": "End offset from activity start in seconds",
+                      "minimum": 0
+                    },
+                    "avgHr": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Average heart rate during the split",
+                      "nullable": true
+                    },
+                    "elevationChange": {
+                      "type": "number",
+                      "description": "Net elevation change during the split in meters",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "distance",
+                    "elapsedTime",
+                    "startTime",
+                    "endTime",
+                    "avgHr",
+                    "elevationChange"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Consecutive kilometre splits"
+              },
+              "profile": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "time": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "altitude": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "distance",
+                    "time",
+                    "altitude"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Downsampled elevation profile points"
+              },
+              "route": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "time": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "coordinate": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "time",
+                    "coordinate"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Downsampled route points aligned to elapsed time"
+              }
+            },
+            "required": [
+              "splits",
+              "profile",
+              "route"
+            ],
+            "additionalProperties": false,
+            "description": "Split, profile, and route data for activity analysis",
+            "nullable": true
+          },
           "bestEfforts": {
             "type": "array",
             "items": {
@@ -1429,6 +1550,7 @@
           "createdAt",
           "updatedAt",
           "track",
+          "analysis",
           "bestEfforts",
           "matchedRouteCount"
         ],
