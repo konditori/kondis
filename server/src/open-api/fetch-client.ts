@@ -108,6 +108,7 @@ export type ActivityListResponseDtoOutput = {
     name: string | null;
     /** Activity description */
     description: string | null;
+    /** Exclude from rankings */
     excludeFromRankings: boolean;
     /** Start time in ISO-8601 format */
     startedAt: string;
@@ -179,6 +180,7 @@ export type ActivityDetailDtoOutput = {
   name: string | null;
   /** Activity description */
   description: string | null;
+  /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Start time in ISO-8601 format */
   startedAt: string;
@@ -226,6 +228,7 @@ export type ActivityUpdateDto = {
   name?: string | null;
   /** Description for the activity */
   description?: string | null;
+  /** Exclude from rankings */
   excludeFromRankings?: boolean;
   sport?: ActivityUpdateDtoActivityType;
   /** Updated start time in ISO-8601 format */
@@ -241,6 +244,7 @@ export type ActivityDtoOutput = {
   name: string | null;
   /** Activity description */
   description: string | null;
+  /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Start time in ISO-8601 format */
   startedAt: string;

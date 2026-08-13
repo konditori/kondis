@@ -515,7 +515,13 @@ export class ActivityService {
 
   async updateById(
     id: string,
-    input: { name?: string | null; description?: string | null; sport?: ActivityType; startedAt?: Date; excludeFromRankings?: boolean },
+    input: {
+      name?: string | null;
+      description?: string | null;
+      sport?: ActivityType;
+      startedAt?: Date;
+      excludeFromRankings?: boolean;
+    },
   ) {
     const mapped: UpdateActivityInput = {};
 
@@ -543,7 +549,9 @@ export class ActivityService {
       mapped.started_at = input.startedAt;
     }
 
-    if (input.excludeFromRankings !== undefined) mapped.exclude_from_rankings = input.excludeFromRankings;
+    if (input.excludeFromRankings !== undefined) {
+      mapped.exclude_from_rankings = input.excludeFromRankings;
+    }
 
     const updated = await this.activityRepository.update(id, mapped);
     if (updated && input.excludeFromRankings === true) {
@@ -559,7 +567,9 @@ export class ActivityService {
     } else if (updated && input.startedAt !== undefined) {
       await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
     }
-    if (!updated) return undefined;
+    if (!updated) {
+      return;
+    }
     const updatedDto = this.toActivityDto(updated);
     await this.eventRepository.emit('ActivityUpdate', updatedDto);
     return updatedDto;

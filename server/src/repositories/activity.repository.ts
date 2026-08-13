@@ -61,7 +61,10 @@ export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' |
 };
 export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
 
-export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings'>;
+export type UpdateActivityInput = Pick<
+  ActivityUpdate,
+  'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings'
+>;
 
 export type ActivityCursor = {
   startedAt: Date;
@@ -532,7 +535,11 @@ export class ActivityRepository {
 
   async recomputeBestEfforts(activityId: string): Promise<boolean | null> {
     return this.db.transaction().execute(async (trx) => {
-      const activity = await trx.selectFrom('activity').select(['sport', 'exclude_from_rankings']).where('id', '=', activityId).executeTakeFirst();
+      const activity = await trx
+        .selectFrom('activity')
+        .select(['sport', 'exclude_from_rankings'])
+        .where('id', '=', activityId)
+        .executeTakeFirst();
       if (!activity) {
         return false;
       }
