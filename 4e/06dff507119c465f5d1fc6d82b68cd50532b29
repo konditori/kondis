@@ -1,0 +1,23 @@
+server/src/services/activity.service.ts
+  s_6a2f32d1bfcae6::t_2ee06e8e2a1af9 562-565
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_6a2f32d1bfcae6::t_839a021ccded1a 195-255
+web/src/routes/best-efforts/[sport]/[distance]/+page.svelte
+  s_6a2f32d1bfcae6::t_bcee1e957506ed 3,7,10-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4e06dff507119c465f5d1fc6d82b68cd50532b29",
+  "prompts": {},
+  "sessions": {
+    "s_6a2f32d1bfcae6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffae2-9cc1-7861-b83c-01187b9c7c88",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
