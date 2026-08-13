@@ -832,11 +832,8 @@ button {
   border-color: var(--green);
 }
 .metadata-checkbox input:checked::after {
-  position: absolute;
   width: 5px;
   height: 9px;
-  top: 2px;
-  left: 6px;
   border: solid white;
   border-width: 0 2px 2px 0;
   content: '';

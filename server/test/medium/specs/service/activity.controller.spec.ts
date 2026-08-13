@@ -238,7 +238,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 1600] },
       ]);
 
-      await controller.updateById({ id: goldId }, { excludeFromBestEfforts: true });
+      await controller.updateById({ id: goldId }, { excludeFromRankings: true });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
       const history = await controller.listBestEfforts({ sport: 'run', type: '5k' });
@@ -249,7 +249,7 @@ describe('ActivityController (medium)', () => {
       ]);
 
       const excludedActivity = await controller.getById({ id: goldId });
-      expect(excludedActivity.excludeFromBestEfforts).toBe(true);
+      expect(excludedActivity.excludeFromRankings).toBe(true);
       expect(excludedActivity.bestEfforts?.find(({ type }) => type === '5k')).toMatchObject({ elapsedTime: 1300 });
     });
 

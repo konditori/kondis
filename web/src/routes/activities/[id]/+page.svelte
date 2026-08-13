@@ -19,7 +19,7 @@
   let editError = $state('');
   let draftName = $state('');
   let draftDescription = $state('');
-  let draftExcludeFromBestEfforts = $state(false);
+  let draftExcludeFromRankings = $state(false);
   const activityTypeOptionsList = $derived(activityTypeOptions(data.activityTypes));
   let draftSport = $state<Activity['sport']>(Sport.Other);
   const Icon = $derived(sportIcon(activity.sport));
@@ -27,7 +27,7 @@
   const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
   const isCyclingEffort = $derived(['ride', 'gravel_ride', 'mountain_bike_ride', 'virtual_ride'].includes(activity.sport));
-  const hasBestEffortAchievements = $derived(!activity.excludeFromBestEfforts && (activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false));
+  const hasBestEffortAchievements = $derived(!activity.excludeFromRankings && (activity.bestEfforts?.some((effort) => bestEffortAchievement(effort) !== null) ?? false));
   const hasHeartRate = $derived(activity.metrics?.avgHr != null);
   const hasElevation = $derived(activity.metrics?.elevationGain != null || activity.metrics?.elevationLoss != null);
   const hasGpsRoute = $derived((activity.track?.coordinates.length ?? 0) > 0);
@@ -79,7 +79,7 @@
     draftName = activity.name ?? '';
     draftDescription = activity.description ?? '';
     draftSport = activity.sport;
-    draftExcludeFromBestEfforts = activity.excludeFromBestEfforts;
+    draftExcludeFromRankings = activity.excludeFromRankings;
     editError = '';
     editing = true;
   }
@@ -122,7 +122,7 @@
             name: draftName.trim() || null,
             description: draftDescription.trim() || null,
             sport: draftSport as unknown as ActivityUpdateSport,
-            excludeFromBestEfforts: draftExcludeFromBestEfforts,
+            excludeFromRankings: draftExcludeFromRankings,
           },
         },
         getSdkRequestOptions(),
@@ -169,7 +169,7 @@
         <label><span>Name</span><input bind:value={draftName} maxlength="200" placeholder="Activity name" /></label>
         <label><span>Activity type</span><select bind:value={draftSport}>{#each activityTypeOptionsList as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
         <label class="metadata-description"><span>Description</span><textarea bind:value={draftDescription} maxlength="10000" placeholder="Activity description"></textarea></label>
-        <label class="metadata-checkbox"><input type="checkbox" bind:checked={draftExcludeFromBestEfforts} /><span>Exclude from best efforts</span></label>
+        <label class="metadata-checkbox"><input type="checkbox" bind:checked={draftExcludeFromRankings} /><span>Exclude from rankings</span></label>
         <div class="metadata-actions">
           <button type="button" class="metadata-delete" onclick={deleteActivity} disabled={saving || deleting}><Trash2 size={16} /> {deleting ? 'Deleting…' : 'Delete'}</button>
           <button type="button" class="metadata-cancel" onclick={cancelEditing} disabled={saving || deleting}><X size={16} /> Cancel</button>
@@ -216,7 +216,7 @@
 
   {#if activity.bestEfforts && activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
-      <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2>{#if activity.excludeFromBestEfforts}<p class="best-efforts-excluded-note">Shown for this activity only; excluded from rankings.</p>{/if}</div></div>
+      <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2>{#if activity.excludeFromRankings}<p class="best-efforts-excluded-note">Shown for this activity only; excluded from rankings.</p>{/if}</div></div>
       <div class="best-effort-table-wrap">
         <div class="best-effort-table" role="table" aria-label="Distance best efforts">
           <div class="best-effort-header" class:no-heart-rate={!hasBestEffortHeartRate} role="row">
@@ -227,7 +227,7 @@
             <div role="columnheader"><strong>Elev</strong></div>
         </div>
         {#each activity.bestEfforts as effort}
-          {@const achievement = activity.excludeFromBestEfforts ? null : bestEffortAchievement(effort)}
+          {@const achievement = activity.excludeFromRankings ? null : bestEffortAchievement(effort)}
           <a class="best-effort-row" class:no-heart-rate={!hasBestEffortHeartRate} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
             <div class="effort-distance" role="cell">
               {#if achievement}

@@ -61,7 +61,7 @@ export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' |
 };
 export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
 
-export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_best_efforts'>;
+export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings'>;
 
 export type ActivityCursor = {
   startedAt: Date;
@@ -474,7 +474,7 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.type', '=', type)
       .where('activity.sport', 'in', sports)
-      .where('activity.exclude_from_best_efforts', '=', false)
+      .where('activity.exclude_from_rankings', '=', false)
       .orderBy('activity.started_at', 'asc')
       .orderBy('activity.id', 'asc')
       .execute();
@@ -491,7 +491,7 @@ export class ActivityRepository {
         'activity_best_effort.year_rank',
       ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
-      .where('activity.exclude_from_best_efforts', '=', false)
+      .where('activity.exclude_from_rankings', '=', false)
       .where('activity_best_effort.year_rank', '<=', 3)
       .execute();
   }
@@ -503,18 +503,18 @@ export class ActivityRepository {
       .select('activity_best_effort.type')
       .distinct()
       .where('activity.sport', 'in', sports)
-      .where('activity.exclude_from_best_efforts', '=', false)
+      .where('activity.exclude_from_rankings', '=', false)
       .execute();
   }
 
   async update(id: string, input: UpdateActivityInput) {
     const updated = await this.db.transaction().execute(async (trx) => {
       const row = await trx.updateTable('activity').set(input).where('id', '=', id).returning('id').executeTakeFirst();
-      if (!row || (input.sport === undefined && input.exclude_from_best_efforts === undefined)) {
+      if (!row || (input.sport === undefined && input.exclude_from_rankings === undefined)) {
         return row;
       }
 
-      if (input.sport === undefined && input.exclude_from_best_efforts !== undefined) {
+      if (input.sport === undefined && input.exclude_from_rankings !== undefined) {
         return row;
       }
       await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
@@ -532,7 +532,7 @@ export class ActivityRepository {
 
   async recomputeBestEfforts(activityId: string): Promise<boolean | null> {
     return this.db.transaction().execute(async (trx) => {
-      const activity = await trx.selectFrom('activity').select(['sport', 'exclude_from_best_efforts']).where('id', '=', activityId).executeTakeFirst();
+      const activity = await trx.selectFrom('activity').select(['sport', 'exclude_from_rankings']).where('id', '=', activityId).executeTakeFirst();
       if (!activity) {
         return false;
       }
