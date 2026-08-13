@@ -1,0 +1,33 @@
+e2e/vitest.config.ts
+  s_3815a562651dc4::t_7a364c43e34a01 4
+open-api/kondis-openapi-specs.json
+  s_3815a562651dc4::t_068f6e33a619a3 459-463
+server/src/bin/sync-open-api.ts
+  s_3815a562651dc4::t_52c5293673d137 12-13,25,31,34-36
+server/src/main.ts
+  s_3815a562651dc4::t_73fa46eba3fb76 12-13,25
+server/src/open-api/fetch-client.ts
+  s_3815a562651dc4::t_f9ba007b375ec8 11,14-16
+web/src/lib/api.ts
+  s_3815a562651dc4::t_a4c22e9e64c451 21
+web/src/lib/server/api.ts
+  s_3815a562651dc4::t_6c28d5c601bc75 4-5,13,18-21
+web/src/routes/api/[...path]/+server.ts
+  s_3815a562651dc4::t_59b3c96a24d3ec 1,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a4adb3c9678574e851cfc0717ebd69f37ad000c3",
+  "prompts": {},
+  "sessions": {
+    "s_3815a562651dc4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffa60-e7be-70b0-87b2-dbab67e173d1",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
