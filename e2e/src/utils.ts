@@ -49,7 +49,7 @@ export const utils = {
     while (Date.now() < deadline) {
       const { activities } = await activityControllerListRecent({});
       const activity = activities.at(0);
-      if (activity) {
+      if (activity?.metrics) {
         return activity;
       }
 

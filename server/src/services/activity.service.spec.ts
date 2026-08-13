@@ -33,9 +33,11 @@ describe('ActivityService', () => {
 
   const getActivityById = vi.fn();
   const getByUploadId = vi.fn();
-  const createActivity = vi.fn<(input: unknown) => Promise<string>>();
+  const createActivity = vi.fn<(input: unknown, executor?: unknown) => Promise<string>>();
   const deleteActivity = vi.fn(async () => {});
+  const setMetrics = vi.fn<(id: string, metrics: unknown, executor?: unknown) => Promise<boolean>>();
   const recomputeBestEfforts = vi.fn<(id: string) => Promise<boolean>>();
+  const recomputeRouteMatches = vi.fn<(id: string) => Promise<boolean>>();
   const refreshBestEffortRankings = vi.fn(async () => {});
 
   const withTransaction = vi.fn(async (fn: (trx: unknown) => Promise<unknown>) => fn('trx'));
@@ -63,7 +65,9 @@ describe('ActivityService', () => {
     getByUploadId,
     create: createActivity,
     delete: deleteActivity,
+    setMetrics,
     recomputeBestEfforts,
+    recomputeRouteMatches,
     refreshBestEffortRankings,
   } as unknown as ActivityRepository;
 
@@ -106,21 +110,10 @@ describe('ActivityService', () => {
               description: null,
               started_at: new Date('2024-03-01T06:00:00.000Z'),
               timezone_offset_minutes: null,
-              elapsed_time: 1,
-              moving_time: 1,
-              distance: 1,
-              elevation_gain: null,
-              elevation_loss: null,
-              avg_speed: null,
-              max_speed: null,
-              avg_hr: null,
-              max_hr: null,
-              avg_cadence: null,
-              max_cadence: null,
-              avg_power: null,
-              max_power: null,
-              normalized_power: null,
-              calories: null,
+              metrics_computed_at: null,
+              best_efforts_computed_at: null,
+              route_matches_computed_at: null,
+              metrics: null,
               created_at: new Date('2024-03-01T06:00:01.000Z'),
               updated_at: new Date('2024-03-01T06:00:01.000Z'),
             }
@@ -130,7 +123,9 @@ describe('ActivityService', () => {
     getActivityById.mockResolvedValue(undefined);
     getIdsToParse.mockResolvedValue([]);
     createActivity.mockResolvedValue(ACTIVITY_ID);
+    setMetrics.mockResolvedValue(true);
     recomputeBestEfforts.mockResolvedValue(true);
+    recomputeRouteMatches.mockResolvedValue(true);
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
@@ -146,11 +141,35 @@ describe('ActivityService', () => {
     });
 
     it('skips an upload that already produced an activity', async () => {
-      getByUploadId.mockResolvedValue({ id: 'activity-1' });
+      getByUploadId.mockResolvedValue({
+        id: 'activity-1',
+        metrics_computed_at: new Date(),
+        best_efforts_computed_at: new Date(),
+        route_matches_computed_at: new Date(),
+      });
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Skipped);
       expect(deleteActivity).not.toHaveBeenCalled();
       expect(createActivity).not.toHaveBeenCalled();
+      expect(queueAll).not.toHaveBeenCalled();
+      expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
+    });
+
+    it('repairs missing analysis jobs for an existing activity', async () => {
+      getByUploadId.mockResolvedValue({
+        id: ACTIVITY_ID,
+        metrics_computed_at: null,
+        best_efforts_computed_at: null,
+        route_matches_computed_at: null,
+      });
+
+      await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Skipped);
+
+      expect(queueAll).toHaveBeenCalledWith([
+        { name: JobName.ActivityMetricCompute, data: { id: ACTIVITY_ID } },
+        { name: JobName.ActivityRouteMatchCompute, data: { id: ACTIVITY_ID } },
+      ]);
+      expect(read).not.toHaveBeenCalled();
     });
 
     it('replaces the existing activity when forced', async () => {
@@ -172,8 +191,16 @@ describe('ActivityService', () => {
       expect(decodeTcx).not.toHaveBeenCalled();
       expect(createActivity).toHaveBeenCalledWith(
         expect.objectContaining({ activity: expect.objectContaining({ upload_id: UPLOAD_ID }) }),
+        'trx',
       );
-      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} });
+      expect(queue).toHaveBeenCalledWith(
+        { name: JobName.ActivityMetricCompute, data: { id: ACTIVITY_ID } },
+        { transaction: 'trx' },
+      );
+      expect(queue).toHaveBeenCalledWith(
+        { name: JobName.ActivityRouteMatchCompute, data: { id: ACTIVITY_ID } },
+        { transaction: 'trx' },
+      );
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
       expect(emitEvent).toHaveBeenCalledWith('ActivityCreate', expect.objectContaining({ id: ACTIVITY_ID }));
     });
@@ -196,6 +223,7 @@ describe('ActivityService', () => {
             sport: 'roller_ski',
           }),
         }),
+        'trx',
       );
     });
 
@@ -294,11 +322,34 @@ describe('ActivityService', () => {
     });
   });
 
+  describe('handleActivityMetricCompute', () => {
+    it('persists metrics independently and queues best-effort computation', async () => {
+      getActivityById.mockResolvedValueOnce({ id: ACTIVITY_ID, upload_id: UPLOAD_ID });
+
+      await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
+
+      expect(setMetrics).toHaveBeenCalledWith(
+        ACTIVITY_ID,
+        expect.objectContaining({ elapsed_time: expect.any(Number) }),
+        'trx',
+      );
+      expect(queue).toHaveBeenCalledWith(
+        { name: JobName.ActivityBestEffortCompute, data: { id: ACTIVITY_ID } },
+        { transaction: 'trx' },
+      );
+    });
+
+    it('skips an activity that no longer exists', async () => {
+      await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Skipped);
+      expect(read).not.toHaveBeenCalled();
+    });
+  });
+
   describe('handleActivityBestEffortCompute', () => {
     it('computes persisted efforts in the activity parsing queue handler', async () => {
       await expect(makeService().handleActivityBestEffortCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
       expect(recomputeBestEfforts).toHaveBeenCalledWith(ACTIVITY_ID);
-      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} });
+      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: { id: ACTIVITY_ID } });
     });
 
     it('skips an activity that no longer exists', async () => {
@@ -308,11 +359,40 @@ describe('ActivityService', () => {
     });
   });
 
+  describe('handleActivityRouteMatchCompute', () => {
+    it('computes route matches independently', async () => {
+      await expect(makeService().handleActivityRouteMatchCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
+      expect(recomputeRouteMatches).toHaveBeenCalledWith(ACTIVITY_ID);
+    });
+  });
+
   describe('handleActivityBestEffortRank', () => {
     it('refreshes persisted rankings in the activity parsing queue handler', async () => {
       await expect(makeService().handleActivityBestEffortRank()).resolves.toBe(JobStatus.Success);
       expect(discardQueuedDuplicates).toHaveBeenCalledWith(JobName.ActivityBestEffortRank);
       expect(refreshBestEffortRankings).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies clients after rankings are refreshed for a computed activity', async () => {
+      getActivityById.mockResolvedValue({
+        id: ACTIVITY_ID,
+        upload_id: UPLOAD_ID,
+        sport: 'run',
+        name: null,
+        description: null,
+        started_at: new Date('2024-03-01T06:00:00.000Z'),
+        timezone_offset_minutes: null,
+        metrics_computed_at: null,
+        best_efforts_computed_at: new Date(),
+        route_matches_computed_at: null,
+        metrics: null,
+        created_at: new Date('2024-03-01T06:00:01.000Z'),
+        updated_at: new Date('2024-03-01T06:00:01.000Z'),
+      });
+
+      await expect(makeService().handleActivityBestEffortRank({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
+
+      expect(emitEvent).toHaveBeenCalledWith('ActivityUpdate', expect.objectContaining({ id: ACTIVITY_ID }));
     });
   });
 

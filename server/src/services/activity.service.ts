@@ -7,6 +7,7 @@ import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
   ActivityListRecord,
+  ActivityMetrics,
   ActivityRecord,
   ActivityRepository,
   CreateActivityInput,
@@ -30,9 +31,10 @@ import {
   JobItem,
   JobOf,
   ParsedActivity,
+  ParsedActivityStructure,
   RUNNING_BEST_EFFORTS,
 } from 'src/types';
-import { parseFitMessages } from 'src/utils/fit';
+import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
 export type BestEffortSport = 'run' | 'ride';
@@ -86,7 +88,19 @@ export class ActivityService {
     const existing = await this.activityRepository.getByUploadId(id);
     if (existing) {
       if (!force) {
-        await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+        const pendingJobs: JobItem[] = [];
+        if (existing.metrics_computed_at === null) {
+          pendingJobs.push({ name: JobName.ActivityMetricCompute, data: { id: existing.id } });
+        } else if (existing.best_efforts_computed_at === null) {
+          pendingJobs.push({ name: JobName.ActivityBestEffortCompute, data: { id: existing.id } });
+        }
+        if (existing.route_matches_computed_at === null) {
+          pendingJobs.push({ name: JobName.ActivityRouteMatchCompute, data: { id: existing.id } });
+        }
+        if (pendingJobs.length > 0) {
+          await this.jobRepository.queueAll(pendingJobs);
+        }
+        await this.uploadRepository.setStatus(id, 'parsed');
         return JobStatus.Skipped;
       }
 
@@ -99,11 +113,24 @@ export class ActivityService {
       if (contents.length > UPLOAD_LIMITS.activityFileBytes) {
         throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
       }
-      const parsed = this.parseActivityFile(upload.storage_path, contents);
-      const activityId = await this.activityRepository.create(
-        this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
-      );
-      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+      const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
+      const activityId = await this.databaseRepository.withTransaction(async (trx) => {
+        const createdId = await this.activityRepository.create(
+          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
+          trx,
+        );
+        await Promise.all([
+          this.jobRepository.queue(
+            { name: JobName.ActivityMetricCompute, data: { id: createdId } },
+            { transaction: trx },
+          ),
+          this.jobRepository.queue(
+            { name: JobName.ActivityRouteMatchCompute, data: { id: createdId } },
+            { transaction: trx },
+          ),
+        ]);
+        return createdId;
+      });
 
       await this.uploadRepository.setStatus(id, 'parsed');
       const activity = await this.activityRepository.getByUploadId(id);
@@ -122,7 +149,110 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  private parseActivityFile(path: string, contents: Buffer): ParsedActivity {
+  @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
+  async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
+    const movingTime = job.movingTime ?? null;
+    const distance = job.distance ?? null;
+    const avgSpeed =
+      job.avgSpeed ??
+      (distance !== null && (movingTime ?? job.elapsedTime) > 0 ? distance / (movingTime ?? job.elapsedTime) : null);
+    const createdId = await this.databaseRepository.withTransaction(async (trx) => {
+      await this.uploadRepository.create(
+        {
+          id: job.id,
+          checksum: `manual:${job.id}`,
+          original_name: 'Strava manual activity',
+          byte_size: 0,
+          storage_path: '',
+          status: 'parsed',
+        },
+        trx,
+      );
+      const id = await this.activityRepository.create(
+        {
+          activity: {
+            upload_id: job.id,
+            sport: job.activitySport,
+            name: job.activityName ?? null,
+            description: job.activityDescription ?? null,
+            started_at: new Date(job.startedAt),
+            timezone_offset_minutes: null,
+          },
+          streams: [],
+          laps: [],
+        },
+        trx,
+      );
+      await this.activityRepository.setMetrics(
+        id,
+        {
+          elapsed_time: job.elapsedTime,
+          moving_time: movingTime,
+          distance,
+          elevation_gain: job.elevationGain ?? null,
+          elevation_loss: job.elevationLoss ?? null,
+          avg_speed: avgSpeed,
+          max_speed: job.maxSpeed ?? null,
+          avg_hr: job.avgHr ?? null,
+          max_hr: job.maxHr ?? null,
+          avg_cadence: null,
+          max_cadence: null,
+          avg_power: null,
+          max_power: null,
+          normalized_power: null,
+          calories: job.calories ?? null,
+        },
+        trx,
+      );
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx });
+      return id;
+    });
+    const activity = await this.activityRepository.getById(createdId);
+    if (activity) {
+      await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+    }
+    return JobStatus.Success;
+  }
+
+  @OnJob({ name: JobName.ActivityMetricCompute, queue: QueueName.ActivityParsing })
+  async handleActivityMetricCompute({ id }: JobOf<JobName.ActivityMetricCompute>): Promise<JobStatus> {
+    const activity = await this.activityRepository.getById(id);
+    if (!activity) {
+      this.logger.warn(`Skipping metric computation for activity ${id}: no longer exists`);
+      return JobStatus.Skipped;
+    }
+
+    const upload = await this.uploadRepository.getById(activity.upload_id);
+    if (!upload) {
+      this.logger.warn(`Skipping metric computation for activity ${id}: source upload no longer exists`);
+      return JobStatus.Skipped;
+    }
+
+    const contents = await this.storageRepository.read(upload.storage_path);
+    if (contents.length > UPLOAD_LIMITS.activityFileBytes) {
+      throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
+    }
+    const parsed = this.computeActivityFile(upload.storage_path, contents);
+    const found = await this.databaseRepository.withTransaction(async (trx) => {
+      const activityFound = await this.activityRepository.setMetrics(id, this.toMetrics(parsed), trx);
+      if (activityFound) {
+        await this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx });
+      }
+      return activityFound;
+    });
+    if (!found) {
+      return JobStatus.Skipped;
+    }
+
+    const updated = await this.activityRepository.getById(id);
+    if (updated) {
+      await this.eventRepository.emit('ActivityUpdate', this.toActivityDto(updated));
+    }
+    this.logger.log(`Computed metrics for activity ${id}`);
+    return JobStatus.Success;
+  }
+
+  private decodeActivityFile(path: string, contents: Buffer): FitMessages {
     const extension = extname(path).toLowerCase();
     let messages: FitMessages;
 
@@ -145,7 +275,15 @@ export class ActivityService {
     }
 
     this.assertActivityMessageLimits(messages);
-    return parseFitMessages(messages);
+    return messages;
+  }
+
+  private parseActivityStructureFile(path: string, contents: Buffer): ParsedActivityStructure {
+    return parseFitStructure(this.decodeActivityFile(path, contents));
+  }
+
+  private computeActivityFile(path: string, contents: Buffer): ParsedActivity {
+    return parseFitMessages(this.decodeActivityFile(path, contents));
   }
 
   private assertActivityMessageLimits(messages: FitMessages): void {
@@ -190,20 +328,42 @@ export class ActivityService {
   @OnJob({ name: JobName.ActivityBestEffortCompute, queue: QueueName.ActivityParsing })
   async handleActivityBestEffortCompute({ id }: JobOf<JobName.ActivityBestEffortCompute>): Promise<JobStatus> {
     const found = await this.activityRepository.recomputeBestEfforts(id);
+    if (found === null) {
+      this.logger.warn(`Skipping best-effort computation for activity ${id}: metrics are still pending`);
+      return JobStatus.Skipped;
+    }
     if (!found) {
       this.logger.warn(`Skipping best-effort computation for activity ${id}: no longer exists`);
       return JobStatus.Skipped;
     }
 
-    await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+    await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: { id } });
     this.logger.log(`Computed best efforts for activity ${id}`);
     return JobStatus.Success;
   }
 
+  @OnJob({ name: JobName.ActivityRouteMatchCompute, queue: QueueName.ActivityParsing })
+  async handleActivityRouteMatchCompute({ id }: JobOf<JobName.ActivityRouteMatchCompute>): Promise<JobStatus> {
+    const found = await this.activityRepository.recomputeRouteMatches(id);
+    if (!found) {
+      this.logger.warn(`Skipping route-match computation for activity ${id}: no longer exists`);
+      return JobStatus.Skipped;
+    }
+
+    this.logger.log(`Computed route matches for activity ${id}`);
+    return JobStatus.Success;
+  }
+
   @OnJob({ name: JobName.ActivityBestEffortRank, queue: QueueName.ActivityParsing })
-  async handleActivityBestEffortRank(): Promise<JobStatus> {
+  async handleActivityBestEffortRank({ id }: JobOf<JobName.ActivityBestEffortRank> = {}): Promise<JobStatus> {
     await this.jobRepository.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
     await this.activityRepository.refreshBestEffortRankings();
+    if (id) {
+      const updated = await this.activityRepository.getById(id);
+      if (updated) {
+        await this.eventRepository.emit('ActivityUpdate', this.toActivityDto(updated));
+      }
+    }
     this.logger.log('Refreshed best-effort rankings');
     return JobStatus.Success;
   }
@@ -250,7 +410,7 @@ export class ActivityService {
       activities: page.map((row) => ({
         ...this.toActivityDto(row),
         track: this.toTrack(row.track_geojson),
-        topBestEfforts: topBestEfforts.get(row.id) ?? [],
+        topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(),
@@ -311,25 +471,43 @@ export class ActivityService {
     return {
       ...this.toActivityDto(row),
       track,
-      bestEfforts: DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
-        const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
-        return effort
-          ? [
-              {
-                type: definition.type,
-                distance: effort.distance,
-                elapsedTime: effort.elapsed_time,
-                startTime: effort.start_time,
-                endTime: effort.end_time,
-                avgHr: effort.avg_hr,
-                elevationChange: effort.elevation_change,
-                overallRank: effort.overall_rank,
-                year: effort.year,
-                yearRank: effort.year_rank,
-              },
-            ]
-          : [];
-      }),
+      matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),
+      bestEfforts:
+        row.best_efforts_computed_at === null
+          ? null
+          : DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
+              const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
+              return effort
+                ? [
+                    {
+                      type: definition.type,
+                      distance: effort.distance,
+                      elapsedTime: effort.elapsed_time,
+                      startTime: effort.start_time,
+                      endTime: effort.end_time,
+                      avgHr: effort.avg_hr,
+                      elevationChange: effort.elevation_change,
+                      overallRank: effort.overall_rank,
+                      year: effort.year,
+                      yearRank: effort.year_rank,
+                    },
+                  ]
+                : [];
+            }),
+    };
+  }
+
+  async listMatchedRoutes(id: string) {
+    const activity = await this.activityRepository.getById(id);
+    if (!activity) {
+      return;
+    }
+
+    const matches = await this.activityRepository.listMatchedRoutes(id);
+    return {
+      sourceActivityId: id,
+      activities:
+        activity.route_matches_computed_at === null ? null : matches.map((match) => this.toActivityDto(match)),
     };
   }
 
@@ -365,7 +543,10 @@ export class ActivityService {
 
     const updated = await this.activityRepository.update(id, mapped);
     if (updated && input.sport !== undefined) {
-      await this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } });
+      await Promise.all([
+        this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
+        this.jobRepository.queue({ name: JobName.ActivityRouteMatchCompute, data: { id } }),
+      ]);
     } else if (updated && input.startedAt !== undefined) {
       await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
     }
@@ -378,15 +559,31 @@ export class ActivityService {
   }
 
   private toActivityDto(activity: ActivityRecord) {
+    const {
+      metrics,
+      metrics_computed_at: metricsComputedAt,
+      best_efforts_computed_at: _bestEffortsComputedAt,
+      route_matches_computed_at: _routeMatchesComputedAt,
+      ...core
+    } = activity;
     const camelCased = Object.fromEntries(
-      Object.entries(activity).map(([key, value]) => [
+      Object.entries(core).map(([key, value]) => [
         key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase()),
         value,
       ]),
     );
+    const camelCasedMetrics = metrics
+      ? Object.fromEntries(
+          Object.entries(metrics).map(([key, value]) => [
+            key.replaceAll(/_([a-z0-9])/g, (_, character: string) => character.toUpperCase()),
+            value,
+          ]),
+        )
+      : null;
 
     return ActivitySchema.parse({
       ...camelCased,
+      metrics: metricsComputedAt === null ? null : camelCasedMetrics,
       startedAt: this.toIsoString(activity.started_at),
       createdAt: this.toIsoString(activity.created_at),
       updatedAt: this.toIsoString(activity.updated_at),
@@ -424,7 +621,12 @@ export class ActivityService {
     }
 
     for (const [activityId, efforts] of result) {
-      result.set(activityId, efforts.sort((left, right) => left.yearRank - right.yearRank).slice(0, 3));
+      result.set(
+        activityId,
+        efforts
+          .sort((left, right) => left.overallRank - right.overallRank || left.yearRank - right.yearRank)
+          .slice(0, 3),
+      );
     }
     return result;
   }
@@ -452,7 +654,7 @@ export class ActivityService {
 
   private toCreateInput(
     uploadId: string,
-    parsed: ParsedActivity,
+    parsed: ParsedActivityStructure,
     activityName?: string,
     activityDescription?: string,
     activitySport?: ActivityType,
@@ -466,23 +668,6 @@ export class ActivityService {
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,
       },
-      metrics: {
-        elapsed_time: parsed.elapsedTime,
-        moving_time: parsed.movingTime,
-        distance: parsed.distance,
-        elevation_gain: parsed.elevationGain,
-        elevation_loss: parsed.elevationLoss,
-        avg_speed: parsed.avgSpeed,
-        max_speed: parsed.maxSpeed,
-        avg_hr: parsed.avgHr,
-        max_hr: parsed.maxHr,
-        avg_cadence: parsed.avgCadence,
-        max_cadence: parsed.maxCadence,
-        avg_power: parsed.avgPower,
-        max_power: parsed.maxPower,
-        normalized_power: parsed.normalizedPower,
-        calories: parsed.calories,
-      },
       streams: parsed.streams.map((stream) => ({ type: stream.type, data: stream.data })),
       laps: parsed.laps.map((lap) => ({
         lap_index: lap.index,
@@ -495,6 +680,26 @@ export class ActivityService {
         avg_power: lap.avgPower,
         avg_speed_mps: lap.avgSpeedMps,
       })),
+    };
+  }
+
+  private toMetrics(parsed: ParsedActivity): ActivityMetrics {
+    return {
+      elapsed_time: parsed.elapsedTime,
+      moving_time: parsed.movingTime,
+      distance: parsed.distance,
+      elevation_gain: parsed.elevationGain,
+      elevation_loss: parsed.elevationLoss,
+      avg_speed: parsed.avgSpeed,
+      max_speed: parsed.maxSpeed,
+      avg_hr: parsed.avgHr,
+      max_hr: parsed.maxHr,
+      avg_cadence: parsed.avgCadence,
+      max_cadence: parsed.maxCadence,
+      avg_power: parsed.avgPower,
+      max_power: parsed.maxPower,
+      normalized_power: parsed.normalizedPower,
+      calories: parsed.calories,
     };
   }
 }

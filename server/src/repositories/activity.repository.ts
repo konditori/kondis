@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
+import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
 import { KondisDatabase, KondisExecutor, KYSELY } from 'src/db/database';
 import {
@@ -8,10 +9,12 @@ import {
   ActivityStream,
   ActivityUpdate,
   NewActivity,
-  NewActivityMetric,
   NewLap,
   StreamType,
 } from 'src/db/schema';
+import { getColumns } from 'src/schema/decorators';
+import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
+import { ActivityTable } from 'src/schema/tables/activity.table';
 import { ActivityType, BestEffortGroup, BestEffortType } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
@@ -22,29 +25,40 @@ import {
   computeRunningBestEfforts,
 } from 'src/utils/best-effort';
 
+// TODO: should we move these values somewhere else than the repo?
 const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
-const ACTIVITY_COLUMNS = [
-  'activity.id',
-  'activity.upload_id',
-  'activity.sport',
-  'activity.name',
-  'activity.description',
-  'activity.started_at',
-  'activity.timezone_offset_minutes',
-  'activity.created_at',
-  'activity.updated_at',
-] as const;
+const ROUTE_CANDIDATE_LIMIT = 250;
+const ROUTE_PREFILTER_RADIUS_METERS = 250;
+const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
+const ROUTE_MIN_LENGTH_RATIO = 0.88;
+const ROUTE_MAX_LENGTH_RATIO = 1.14;
+const ROUTE_FRECHET_TOLERANCE_METERS = 200;
+
+// Heavy geo/vector columns fetched separately (e.g. via ST_AsGeoJSON) instead of by default.
+const ACTIVITY_EXCLUDED_COLUMNS = new Set<keyof Activity>(['track', 'detail_track', 'route_embedding']);
+type ActivityColumn = Exclude<keyof Activity, 'track' | 'detail_track' | 'route_embedding'>;
+const ACTIVITY_COLUMNS = getColumns(ActivityTable)
+  .filter((column): column is ActivityColumn => !ACTIVITY_EXCLUDED_COLUMNS.has(column))
+  .map((column) => `activity.${column}` as const);
+
+// activity_id is the join key, embedded separately as the parent activity's id.
+const METRIC_EXCLUDED_COLUMNS = new Set<keyof ActivityMetric>(['activity_id']);
+const METRIC_COLUMNS = getColumns(ActivityMetricTable).filter(
+  (column): column is Exclude<keyof ActivityMetric, 'activity_id'> => !METRIC_EXCLUDED_COLUMNS.has(column),
+);
 
 export type ActivityStreamInput = { type: StreamType; data: number[] };
 
 export type CreateActivityInput = {
   activity: Omit<NewActivity, 'detail_track' | 'track'>;
-  metrics: Omit<NewActivityMetric, 'activity_id'>;
   streams: ActivityStreamInput[];
   laps: Omit<NewLap, 'activity_id' | 'id'>[];
 };
 
-export type ActivityRecord = Omit<Activity, 'detail_track' | 'track'> & ActivityMetric;
+export type ActivityMetrics = Omit<ActivityMetric, 'activity_id'>;
+export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' | 'track'> & {
+  metrics: ActivityMetrics | null;
+};
 export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
 
 export type UpdateActivityInput = Pick<ActivityUpdate, 'name' | 'description' | 'sport' | 'started_at'>;
@@ -134,55 +148,59 @@ export class ActivityRepository {
     return sql`ST_Simplify(ST_SetSRID(ST_GeomFromGeoJSON(${geojson}), 4326), ${tolerance})::geography`;
   }
 
-  async create(input: CreateActivityInput): Promise<string> {
-    return this.db.transaction().execute(async (trx) => {
-      const { id } = await trx
-        .insertInto('activity')
-        .values({
-          ...input.activity,
-          track: this.buildTrack(input.streams, true),
-          detail_track: this.buildTrack(input.streams, false),
-        })
-        .returning('id')
-        .executeTakeFirstOrThrow();
+  async create(input: CreateActivityInput, executor?: KondisExecutor): Promise<string> {
+    if (executor) {
+      return this.createWithExecutor(input, executor);
+    }
+    return this.db.transaction().execute((trx) => this.createWithExecutor(input, trx));
+  }
 
-      await trx
-        .insertInto('activity_metric')
-        .values({ activity_id: id, ...input.metrics })
+  private async createWithExecutor(input: CreateActivityInput, executor: KondisExecutor): Promise<string> {
+    const { id } = await executor
+      .insertInto('activity')
+      .values({
+        ...input.activity,
+        track: this.buildTrack(input.streams, true),
+        detail_track: this.buildTrack(input.streams, false),
+      })
+      .returning('id')
+      .executeTakeFirstOrThrow();
+
+    if (input.streams.length > 0) {
+      await executor
+        .insertInto('activity_stream')
+        .values(input.streams.map((stream) => ({ activity_id: id, type: stream.type, data: stream.data })))
         .execute();
+    }
 
-      if (input.streams.length > 0) {
-        await trx
-          .insertInto('activity_stream')
-          .values(input.streams.map((stream) => ({ activity_id: id, type: stream.type, data: stream.data })))
-          .execute();
-      }
+    if (input.laps.length > 0) {
+      await executor
+        .insertInto('lap')
+        .values(
+          input.laps.map((lap) => ({
+            id: crypto.randomUUID(),
+            ...lap,
+            activity_id: id,
+          })),
+        )
+        .execute();
+    }
 
-      await this.insertBestEfforts(trx, id, input.activity.sport, input.streams, input.metrics);
-
-      if (input.laps.length > 0) {
-        await trx
-          .insertInto('lap')
-          .values(
-            input.laps.map((lap) => ({
-              id: crypto.randomUUID(),
-              ...lap,
-              activity_id: id,
-            })),
-          )
-          .execute();
-      }
-
-      return id;
-    });
+    return id;
   }
 
   getById(id: string) {
     return this.db
       .selectFrom('activity')
-      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
       .select(ACTIVITY_COLUMNS)
-      .selectAll('activity_metric')
+      .select((eb) =>
+        jsonObjectFrom(
+          eb
+            .selectFrom('activity_metric')
+            .select(METRIC_COLUMNS)
+            .whereRef('activity_metric.activity_id', '=', 'activity.id'),
+        ).as('metrics'),
+      )
       .where('activity.id', '=', id)
       .executeTakeFirst();
   }
@@ -190,21 +208,184 @@ export class ActivityRepository {
   getDetailById(id: string) {
     return this.db
       .selectFrom('activity')
-      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
       .select(ACTIVITY_COLUMNS)
-      .selectAll('activity_metric')
+      .select((eb) =>
+        jsonObjectFrom(
+          eb
+            .selectFrom('activity_metric')
+            .select(METRIC_COLUMNS)
+            .whereRef('activity_metric.activity_id', '=', 'activity.id'),
+        ).as('metrics'),
+      )
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'))
       .select(sql<string | null>`ST_AsGeoJSON(detail_track)`.as('detail_track_geojson'))
+      .select((eb) =>
+        eb
+          .selectFrom('activity_route_match')
+          .select(({ fn }) => fn.countAll<number>().as('count'))
+          .whereRef('activity_route_match.activity_id', '=', 'activity.id')
+          .as('matched_route_count'),
+      )
       .where('activity.id', '=', id)
       .executeTakeFirst();
+  }
+
+  private async computeMatchingRouteIds(activityId: string, executor: KondisExecutor): Promise<string[]> {
+    const { rows } = await sql<{ id: string }>`
+      WITH source AS MATERIALIZED (
+        SELECT id, sport, track, route_embedding, kondis_normalize_route(track) AS normalized_track
+        FROM activity
+        WHERE id = ${activityId}::uuid
+          AND track IS NOT NULL
+          AND route_embedding IS NOT NULL
+      ), candidates AS MATERIALIZED (
+        SELECT candidate.id
+        FROM activity AS candidate
+        CROSS JOIN source
+        WHERE candidate.sport = source.sport
+          AND candidate.track IS NOT NULL
+          AND candidate.route_embedding IS NOT NULL
+          AND ST_DWithin(candidate.track, source.track, ${ROUTE_PREFILTER_RADIUS_METERS})
+        ORDER BY candidate.route_embedding <-> source.route_embedding
+        LIMIT ${ROUTE_CANDIDATE_LIMIT}
+      )
+      SELECT candidate.id
+      FROM candidates
+      JOIN activity AS candidate USING (id)
+      CROSS JOIN source
+      WHERE candidate.id = source.id
+         OR (
+           ST_Length(candidate.track) / NULLIF(ST_Length(source.track), 0)
+             BETWEEN ${ROUTE_MIN_LENGTH_RATIO} AND ${ROUTE_MAX_LENGTH_RATIO}
+           AND ST_DWithin(
+             ST_StartPoint(candidate.track::geometry)::geography,
+             ST_StartPoint(source.track::geometry)::geography,
+             ${ROUTE_ENDPOINT_TOLERANCE_METERS}
+           )
+           AND ST_DWithin(
+             ST_EndPoint(candidate.track::geometry)::geography,
+             ST_EndPoint(source.track::geometry)::geography,
+             ${ROUTE_ENDPOINT_TOLERANCE_METERS}
+           )
+           AND ST_FrechetDistance(
+             ST_Transform(kondis_normalize_route(candidate.track), 3857),
+             ST_Transform(source.normalized_track, 3857)
+           ) <= ${ROUTE_FRECHET_TOLERANCE_METERS}
+         )
+    `.execute(executor);
+
+    return rows.map(({ id }) => id);
+  }
+
+  private async refreshRouteMatches(activityId: string, executor: KondisExecutor = this.db): Promise<void> {
+    await executor.deleteFrom('activity_route_match').where('activity_id', '=', activityId).execute();
+    await executor.deleteFrom('activity_route_match').where('matched_activity_id', '=', activityId).execute();
+
+    const ids = await this.computeMatchingRouteIds(activityId, executor);
+    if (ids.length === 0) {
+      return;
+    }
+
+    await executor
+      .insertInto('activity_route_match')
+      .values(
+        ids.flatMap((matchedId) => [
+          { activity_id: activityId, matched_activity_id: matchedId },
+          { activity_id: matchedId, matched_activity_id: activityId },
+        ]),
+      )
+      .onConflict((conflict) => conflict.doNothing())
+      .execute();
+  }
+
+  async recomputeRouteMatches(activityId: string): Promise<boolean> {
+    return this.db.transaction().execute(async (trx) => {
+      const activity = await trx.selectFrom('activity').select('id').where('id', '=', activityId).executeTakeFirst();
+      if (!activity) {
+        return false;
+      }
+
+      await this.refreshRouteMatches(activityId, trx);
+      await trx
+        .updateTable('activity')
+        .set({ route_matches_computed_at: sql`now()` })
+        .where('id', '=', activityId)
+        .execute();
+      return true;
+    });
+  }
+
+  async setMetrics(activityId: string, metrics: ActivityMetrics, executor?: KondisExecutor): Promise<boolean> {
+    if (executor) {
+      return this.setMetricsWithExecutor(activityId, metrics, executor);
+    }
+    return this.db.transaction().execute((trx) => this.setMetricsWithExecutor(activityId, metrics, trx));
+  }
+
+  private async setMetricsWithExecutor(
+    activityId: string,
+    metrics: ActivityMetrics,
+    executor: KondisExecutor,
+  ): Promise<boolean> {
+    const activity = await executor.selectFrom('activity').select('id').where('id', '=', activityId).executeTakeFirst();
+    if (!activity) {
+      return false;
+    }
+
+    await executor
+      .insertInto('activity_metric')
+      .values({ activity_id: activityId, ...metrics })
+      .onConflict((conflict) => conflict.column('activity_id').doUpdateSet(metrics))
+      .execute();
+    await executor
+      .updateTable('activity')
+      .set({ metrics_computed_at: sql`now()` })
+      .where('id', '=', activityId)
+      .execute();
+    return true;
+  }
+
+  async listMatchedRoutes(activityId: string): Promise<ActivityRecord[]> {
+    const rows = await this.db
+      .selectFrom('activity_route_match')
+      .select('matched_activity_id')
+      .where('activity_id', '=', activityId)
+      .execute();
+
+    const ids = rows.map(({ matched_activity_id }) => matched_activity_id);
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .selectFrom('activity')
+      .select(ACTIVITY_COLUMNS)
+      .select((eb) =>
+        jsonObjectFrom(
+          eb
+            .selectFrom('activity_metric')
+            .select(METRIC_COLUMNS)
+            .whereRef('activity_metric.activity_id', '=', 'activity.id'),
+        ).as('metrics'),
+      )
+      .where('activity.id', 'in', ids)
+      .orderBy('activity.started_at', 'asc')
+      .orderBy('activity.id', 'asc')
+      .execute();
   }
 
   getByUploadId(uploadId: string) {
     return this.db
       .selectFrom('activity')
-      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
       .select(ACTIVITY_COLUMNS)
-      .selectAll('activity_metric')
+      .select((eb) =>
+        jsonObjectFrom(
+          eb
+            .selectFrom('activity_metric')
+            .select(METRIC_COLUMNS)
+            .whereRef('activity_metric.activity_id', '=', 'activity.id'),
+        ).as('metrics'),
+      )
       .where('upload_id', '=', uploadId)
       .executeTakeFirst();
   }
@@ -212,9 +393,15 @@ export class ActivityRepository {
   listRecentPage({ limit, cursor }: { limit: number; cursor?: ActivityCursor }) {
     let query = this.db
       .selectFrom('activity')
-      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
       .select(ACTIVITY_COLUMNS)
-      .selectAll('activity_metric')
+      .select((eb) =>
+        jsonObjectFrom(
+          eb
+            .selectFrom('activity_metric')
+            .select(METRIC_COLUMNS)
+            .whereRef('activity_metric.activity_id', '=', 'activity.id'),
+        ).as('metrics'),
+      )
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
 
     if (cursor) {
@@ -305,12 +492,19 @@ export class ActivityRepository {
       }
 
       await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
+      await trx.deleteFrom('activity_route_match').where('activity_id', '=', id).execute();
+      await trx.deleteFrom('activity_route_match').where('matched_activity_id', '=', id).execute();
+      await trx
+        .updateTable('activity')
+        .set({ best_efforts_computed_at: null, route_matches_computed_at: null })
+        .where('id', '=', id)
+        .execute();
       return row;
     });
     return updated ? this.getById(updated.id) : undefined;
   }
 
-  async recomputeBestEfforts(activityId: string): Promise<boolean> {
+  async recomputeBestEfforts(activityId: string): Promise<boolean | null> {
     return this.db.transaction().execute(async (trx) => {
       const activity = await trx.selectFrom('activity').select('sport').where('id', '=', activityId).executeTakeFirst();
       if (!activity) {
@@ -323,11 +517,19 @@ export class ActivityRepository {
           .selectFrom('activity_metric')
           .select(['elapsed_time', 'distance', 'elevation_gain'])
           .where('activity_id', '=', activityId)
-          .executeTakeFirstOrThrow(),
+          .executeTakeFirst(),
       ]);
+      if (!metrics) {
+        return null;
+      }
 
       await trx.deleteFrom('activity_best_effort').where('activity_id', '=', activityId).execute();
       await this.insertBestEfforts(trx, activityId, activity.sport, streams, metrics);
+      await trx
+        .updateTable('activity')
+        .set({ best_efforts_computed_at: sql`now()` })
+        .where('id', '=', activityId)
+        .execute();
       return true;
     });
   }

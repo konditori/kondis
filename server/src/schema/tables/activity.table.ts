@@ -43,6 +43,18 @@ export class ActivityTable {
   @Column({ type: 'geography', nullable: true })
   detail_track!: Geography;
 
+  @Column({ type: 'vector', nullable: true })
+  route_embedding!: Generated<string | null>;
+
+  @Column({ type: 'timestamp', nullable: true })
+  metrics_computed_at!: Generated<Timestamp | null>;
+
+  @Column({ type: 'timestamp', nullable: true })
+  best_efforts_computed_at!: Generated<Timestamp | null>;
+
+  @Column({ type: 'timestamp', nullable: true })
+  route_matches_computed_at!: Generated<Timestamp | null>;
+
   @CreateDateColumn()
   created_at!: Generated<Timestamp>;
 

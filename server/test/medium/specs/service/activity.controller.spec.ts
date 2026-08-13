@@ -34,6 +34,23 @@ describe('ActivityController (medium)', () => {
       storage_path: `seed/${name}.fit`,
     });
 
+    const metrics = {
+      elapsed_time: 3600,
+      moving_time: 3500,
+      distance: 10_000,
+      elevation_gain: 100,
+      elevation_loss: 100,
+      avg_speed: 2.8,
+      max_speed: 4.9,
+      avg_hr: 150,
+      max_hr: 175,
+      avg_cadence: 168,
+      max_cadence: 190,
+      avg_power: 210,
+      max_power: 420,
+      normalized_power: 230,
+      calories: 700,
+    };
     const id = await activities.create({
       activity: {
         upload_id: upload.id,
@@ -42,28 +59,34 @@ describe('ActivityController (medium)', () => {
         started_at: startedAt,
         timezone_offset_minutes: 0,
       },
-      metrics: {
-        elapsed_time: 3600,
-        moving_time: 3500,
-        distance: 10_000,
-        elevation_gain: 100,
-        elevation_loss: 100,
-        avg_speed: 2.8,
-        max_speed: 4.9,
-        avg_hr: 150,
-        max_hr: 175,
-        avg_cadence: 168,
-        max_cadence: 190,
-        avg_power: 210,
-        max_power: 420,
-        normalized_power: 230,
-        calories: 700,
-      },
       streams,
       laps: [],
     });
+    await activities.setMetrics(id, metrics);
+    await activities.recomputeBestEfforts(id);
+    await activities.recomputeRouteMatches(id);
     await activities.refreshBestEffortRankings();
     return id;
+  };
+
+  const createPendingActivity = async (): Promise<string> => {
+    const upload = await uploads.create({
+      checksum: crypto.randomUUID().replaceAll('-', ''),
+      original_name: 'pending.fit',
+      byte_size: 1,
+      storage_path: 'seed/pending.fit',
+    });
+    return activities.create({
+      activity: {
+        upload_id: upload.id,
+        sport: 'run',
+        name: 'pending',
+        started_at: new Date('2024-01-01T08:00:00.000Z'),
+        timezone_offset_minutes: 0,
+      },
+      streams: [],
+      laps: [],
+    });
   };
 
   beforeAll(async () => {
@@ -163,8 +186,8 @@ describe('ActivityController (medium)', () => {
       const fourth = response.activities.find(({ name }) => name === 'fourth');
 
       expect(second?.topBestEfforts).toHaveLength(3);
-      expect(second?.topBestEfforts.every(({ overallRank }) => overallRank === 2)).toBe(true);
-      expect(second?.topBestEfforts.every(({ yearRank }) => yearRank === 2)).toBe(true);
+      expect(second?.topBestEfforts?.every(({ overallRank }) => overallRank === 2)).toBe(true);
+      expect(second?.topBestEfforts?.every(({ yearRank }) => yearRank === 2)).toBe(true);
       expect(fourth?.topBestEfforts).toEqual([]);
     });
   });
@@ -218,6 +241,20 @@ describe('ActivityController (medium)', () => {
   });
 
   describe('GET /activities/:id', () => {
+    it('returns null analysis fields while computations are pending', async () => {
+      const activityId = await createPendingActivity();
+
+      const activity = await controller.getById({ id: activityId });
+      const list = await controller.listRecent({ limit: 50 });
+      const matches = await controller.listMatchedRoutes({ id: activityId });
+
+      expect(activity.metrics).toBeNull();
+      expect(activity.bestEfforts).toBeNull();
+      expect(activity.matchedRouteCount).toBeNull();
+      expect(list.activities[0].topBestEfforts).toBeNull();
+      expect(matches.activities).toBeNull();
+    });
+
     it('returns persisted running best efforts in standard-distance order', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'run', [
         { type: 'distance', data: [0, 400, 1000, 1700] },
@@ -228,9 +265,9 @@ describe('ActivityController (medium)', () => {
 
       const activity = await controller.getById({ id: activityId });
 
-      expect(activity.bestEfforts.map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile', '1_mile']);
-      expect(activity.bestEfforts.find(({ type }) => type === '1_mile')?.elapsedTime).toBeCloseTo(402.336);
-      expect(activity.bestEfforts.find(({ type }) => type === '1k')).toMatchObject({
+      expect(activity.bestEfforts?.map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile', '1_mile']);
+      expect(activity.bestEfforts?.find(({ type }) => type === '1_mile')?.elapsedTime).toBeCloseTo(402.336);
+      expect(activity.bestEfforts?.find(({ type }) => type === '1k')).toMatchObject({
         avgHr: 120,
         elevationChange: -3,
         overallRank: 1,
@@ -257,7 +294,7 @@ describe('ActivityController (medium)', () => {
 
       const activity = await controller.getById({ id: activityId });
 
-      expect(activity.bestEfforts.find(({ type }) => type === '1k')).toMatchObject({
+      expect(activity.bestEfforts?.find(({ type }) => type === '1k')).toMatchObject({
         overallRank: 4,
         year: 2024,
         yearRank: 3,
@@ -289,6 +326,61 @@ describe('ActivityController (medium)', () => {
           .where('id', '=', activityId)
           .executeTakeFirstOrThrow(),
       ).resolves.toMatchObject({ detail_track: expect.anything() });
+    });
+
+    it('groups repeated GPS tracks while excluding nearby and reversed routes', async () => {
+      const first = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first route effort', [
+        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
+      ]);
+      // The same route with uneven, slightly noisy recording intervals. Comparing the raw
+      // vertices produces a large discrete Frechet distance despite the lines overlapping.
+      const second = await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'same direction with GPS drift', [
+        {
+          type: 'latitude',
+          data: [
+            59.32932, 59.330265, 59.33111, 59.332115, 59.33305, 59.33404, 59.33496, 59.33604, 59.33702, 59.335115,
+            59.33311, 59.331265, 59.32931,
+          ],
+        },
+        {
+          type: 'longitude',
+          data: [
+            18.06861, 18.06995, 18.0713, 18.07265, 18.07403, 18.073, 18.072, 18.071, 18.07004, 18.06965, 18.0693,
+            18.06895, 18.06859,
+          ],
+        },
+      ]);
+      const lateStart = await createActivity(new Date('2024-02-10T08:00:00.000Z'), 'same route with a late start', [
+        { type: 'latitude', data: [59.32999, 59.333, 59.337, 59.3293] },
+        { type: 'longitude', data: [18.06963, 18.074, 18.07, 18.0686] },
+      ]);
+      await createActivity(new Date('2024-02-15T08:00:00.000Z'), 'same loop in reverse', [
+        { type: 'latitude', data: [59.3293, 59.337, 59.333, 59.3293] },
+        { type: 'longitude', data: [18.0686, 18.07, 18.074, 18.0686] },
+      ]);
+      await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'different route', [
+        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: 'longitude', data: [18.0686, 18.079, 18.075, 18.0686] },
+      ]);
+
+      const detail = await controller.getById({ id: first });
+      const response = await controller.listMatchedRoutes({ id: first });
+
+      expect(detail.matchedRouteCount).toBe(3);
+      expect(response.activities?.map(({ id }) => id)).toEqual([first, second, lateStart]);
+
+      await db.deleteFrom('activity_route_match').where('activity_id', '=', first).execute();
+      const detailAfterRemovingPersistedMatches = await controller.getById({ id: first });
+      expect(detailAfterRemovingPersistedMatches.matchedRouteCount).toBe(0);
+    });
+
+    it('returns no route matches for an activity without GPS data', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'indoor run');
+
+      const activity = await controller.getById({ id: activityId });
+
+      expect(activity.matchedRouteCount).toBe(0);
     });
 
     it('does not compute missing best efforts while reading an activity', async () => {

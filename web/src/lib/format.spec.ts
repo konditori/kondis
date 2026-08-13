@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { distance, elevation, pace, speed } from "$lib/format";
+import { distance, duration, elevation, pace, speed } from "$lib/format";
 
 describe("unit-aware activity formatting", () => {
   it("formats metric measurements", () => {
@@ -9,6 +9,8 @@ describe("unit-aware activity formatting", () => {
     expect(speed(10, "metric")).toBe("36.0 km/h");
     expect(pace(1000 / 300, "metric")).toBe("5:00 min/km");
     expect(pace(1, "metric", true)).toBe("1:40 min/100m");
+    expect(duration(26 * 60)).toBe("26:00");
+    expect(duration(3661)).toBe("61:01");
   });
 
   it("formats imperial measurements from the same stored SI values", () => {

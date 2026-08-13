@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { gzipSync } from 'node:zlib';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
@@ -72,11 +72,19 @@ describe('job system (medium)', () => {
           checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
         },
       },
+      [JobName.ActivityMetricCompute]: {
+        name: JobName.ActivityMetricCompute,
+        data: { id: MISSING_UUID },
+      },
       [JobName.ActivityBestEffortCompute]: {
         name: JobName.ActivityBestEffortCompute,
         data: { id: MISSING_UUID },
       },
       [JobName.ActivityBestEffortRank]: { name: JobName.ActivityBestEffortRank, data: {} },
+      [JobName.ActivityRouteMatchCompute]: {
+        name: JobName.ActivityRouteMatchCompute,
+        data: { id: MISSING_UUID },
+      },
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
@@ -89,6 +97,15 @@ describe('job system (medium)', () => {
       },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
       [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },
+      [JobName.ActivityManualCreate]: {
+        name: JobName.ActivityManualCreate,
+        data: {
+          id: MISSING_UUID,
+          activitySport: 'run',
+          startedAt: '2024-01-01T00:00:00.000Z',
+          elapsedTime: 60,
+        },
+      },
     };
 
     it('binds a handler to every job name', async () => {
@@ -140,6 +157,30 @@ describe('job system (medium)', () => {
         const finalCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
         expect(finalCounts.queued).toBe(0);
       } finally {
+        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.resume(QueueName.ActivityParsing);
+      }
+    });
+
+    it('runs one ranking refresh when a bulk operation queues more than one worker batch', async () => {
+      await jobs.pause(QueueName.ActivityParsing);
+      const refresh = vi.spyOn(activityRepository, 'refreshBestEffortRankings');
+
+      try {
+        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.queueAll(
+          Array.from({ length: 50 }, () => ({
+            name: JobName.ActivityBestEffortRank,
+            data: {},
+          })),
+        );
+
+        await jobs.resume(QueueName.ActivityParsing);
+        await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+
+        expect(refresh).toHaveBeenCalledTimes(1);
+      } finally {
+        refresh.mockRestore();
         await jobs.empty(QueueName.ActivityParsing);
         await jobs.resume(QueueName.ActivityParsing);
       }

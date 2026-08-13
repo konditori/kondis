@@ -14,19 +14,26 @@
   const settings = $derived(activityTypeSettings(activityTypes, activity.sport));
   const average = $derived(
     settings.averageMetric === AverageMetric.Speed
-      ? { label: 'Avg speed', value: speed(activity.avgSpeed, unitSystem) }
+      ? { label: 'Avg speed', value: speed(activity.metrics?.avgSpeed ?? null, unitSystem) }
       : settings.averageMetric === AverageMetric.None
         ? null
         : {
             label: 'Pace',
-            value: pace(activity.avgSpeed, unitSystem, settings.averageMetric === AverageMetric.SwimPace),
+            value: pace(
+              activity.metrics?.avgSpeed ?? null,
+              unitSystem,
+              settings.averageMetric === AverageMetric.SwimPace,
+            ),
           },
   );
   const stats = $derived([
-    { label: 'Distance', value: distance(activity.distance, unitSystem) },
+    { label: 'Distance', value: distance(activity.metrics?.distance ?? null, unitSystem) },
     ...(average ? [average] : []),
-    { label: 'Moving time', value: duration(activity.movingTime ?? activity.elapsedTime) },
-    { label: 'Elevation', value: elevation(activity.elevationGain, unitSystem) },
+    {
+      label: 'Moving time',
+      value: activity.metrics ? duration(activity.metrics.movingTime ?? activity.metrics.elapsedTime) : '—',
+    },
+    { label: 'Elevation', value: elevation(activity.metrics?.elevationGain ?? null, unitSystem) },
   ]);
   const personalRecord = $derived(
     activity.topBestEfforts

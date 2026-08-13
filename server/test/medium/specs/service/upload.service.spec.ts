@@ -184,10 +184,10 @@ describe('UploadService (medium)', () => {
     const archive = createTestZip({
       'activities.csv': Buffer.from(
         [
-          'Activity ID,Activity Name,Activity Description,Activity Type,Filename',
-          '1,Run,Forest loop,Roller Ski,activities/run.fit.gz',
-          '2,Ride,,Ride,activities/ride.gpx',
-          '3,Manual,,,',
+          'Activity ID,Activity Date,Activity Name,Activity Description,Activity Type,Filename,Elapsed Time',
+          '1,"Aug 11, 2016, 5:00:00 PM",Run,Forest loop,Roller Ski,activities/run.fit.gz,100',
+          '2,"Aug 12, 2016, 5:00:00 PM",Ride,,Ride,activities/ride.gpx,100',
+          '3,"Aug 10, 2016, 5:00:00 PM",Manual,,Run,,1495',
         ].join('\n'),
       ),
       'activities/run.fit.gz': gzipSync(fit),
@@ -213,13 +213,16 @@ describe('UploadService (medium)', () => {
 
     queue.mockClear();
     await expect(uploadService.handleLagomTakeout(item.data)).resolves.toBe('success');
-    expect(queue).toHaveBeenCalledTimes(2);
+    expect(queue).toHaveBeenCalledTimes(3);
     const [fitJob] = queue.mock.calls[0] as unknown as [
       { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
     ];
     const [gpxJob] = queue.mock.calls[1] as unknown as [
       { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
     ];
+    const [manualJob] = queue.mock.calls[2] as unknown as [{ name: JobName; data: { activityName: string } }];
+    expect(manualJob.name).toBe(JobName.ActivityManualCreate);
+    expect(manualJob.data.activityName).toBe('Manual');
     expect(fitJob).toEqual({
       name: JobName.ActivityUpload,
       data: {
