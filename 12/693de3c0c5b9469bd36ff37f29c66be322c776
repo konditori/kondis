@@ -1,0 +1,19 @@
+server/src/services/activity.service.spec.ts
+  s_6a2f32d1bfcae6::t_c265ceac1353ef 115,149,165,390
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "12693de3c0c5b9469bd36ff37f29c66be322c776",
+  "prompts": {},
+  "sessions": {
+    "s_6a2f32d1bfcae6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffae2-9cc1-7861-b83c-01187b9c7c88",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
