@@ -174,7 +174,7 @@
 
 <div class="page-shell">
   <header class="page-header">
-    <div>{#if hasSearch}<span class="eyebrow">Search results</span>{/if}<h1>{heading}</h1>{#if hasSearch}<p>{resultSummary}</p>{/if}</div>
+    <div><h1>{heading}</h1>{#if hasSearch}<p>{resultSummary}</p>{/if}</div>
     <label class="search"><Search size={18} /><input bind:value={query} placeholder="Search activities" aria-label="Search activities" />{#if hasSearch}<button class="search-clear" type="button" onclick={clearSearch} aria-label="Clear search" title="Clear search"><X size={17} /></button>{/if}</label>
   </header>
 
