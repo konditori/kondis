@@ -1,0 +1,21 @@
+web/src/lib/components/RouteMap.svelte
+  s_40964a3bc06f87::t_4d669e1ba9ce4e 6,19-27,32,90
+web/src/routes/+page.svelte
+  s_40964a3bc06f87::t_2ffaa285bc6c98 122-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4bac45fd2fc5494d225f47a31a9d73a212f06d4f",
+  "prompts": {},
+  "sessions": {
+    "s_40964a3bc06f87": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffa41-9478-7f03-894d-4dbc44de478b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
