@@ -84,6 +84,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       ),
       name text,
       description text,
+      exclude_from_rankings boolean NOT NULL DEFAULT false,
       started_at timestamptz NOT NULL,
       timezone_offset_minutes integer,
       track geography(LineString, 4326),
@@ -205,6 +206,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           )::integer AS year
         FROM activity_best_effort AS effort
         INNER JOIN activity ON activity.id = effort.activity_id
+        WHERE activity.exclude_from_rankings = false
       ), ranked AS (
         SELECT
           activity_id,

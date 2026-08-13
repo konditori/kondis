@@ -112,6 +112,7 @@ describe('ActivityService', () => {
               timezone_offset_minutes: null,
               metrics_computed_at: null,
               best_efforts_computed_at: null,
+              exclude_from_rankings: false,
               route_matches_computed_at: null,
               metrics: null,
               created_at: new Date('2024-03-01T06:00:01.000Z'),
@@ -145,6 +146,7 @@ describe('ActivityService', () => {
         id: 'activity-1',
         metrics_computed_at: new Date(),
         best_efforts_computed_at: new Date(),
+        exclude_from_rankings: false,
         route_matches_computed_at: new Date(),
       });
 
@@ -160,6 +162,7 @@ describe('ActivityService', () => {
         id: ACTIVITY_ID,
         metrics_computed_at: null,
         best_efforts_computed_at: null,
+        exclude_from_rankings: false,
         route_matches_computed_at: null,
       });
 
@@ -384,6 +387,7 @@ describe('ActivityService', () => {
         timezone_offset_minutes: null,
         metrics_computed_at: null,
         best_efforts_computed_at: new Date(),
+        exclude_from_rankings: false,
         route_matches_computed_at: null,
         metrics: null,
         created_at: new Date('2024-03-01T06:00:01.000Z'),

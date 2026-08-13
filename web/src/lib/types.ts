@@ -8,6 +8,7 @@ export type Activity = {
   sport: ActivityType;
   name: string | null;
   description: string | null;
+  excludeFromRankings: boolean;
   startedAt: string;
   timezoneOffsetMinutes: number | null;
   metrics: {

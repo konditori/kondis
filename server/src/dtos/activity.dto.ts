@@ -70,6 +70,7 @@ export const ActivitySchema = z
     sport: ActivityTypeSchema,
     name: z.string().nullable().describe('Activity name'),
     description: z.string().nullable().describe('Activity description'),
+    excludeFromRankings: z.boolean().describe('Exclude from rankings'),
     startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
     timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
     metrics: ActivityMetricSchema.nullable().describe('Derived metrics, or null while computation is pending'),
@@ -172,6 +173,7 @@ export const ActivityUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).nullable().optional().describe('Display name for the activity'),
     description: z.string().trim().max(10_000).nullable().optional().describe('Description for the activity'),
+    excludeFromRankings: z.boolean().optional().describe('Exclude from rankings'),
     sport: ActivityTypeSchema.optional(),
     startedAt: z.string().datetime().optional().describe('Updated start time in ISO-8601 format'),
   })

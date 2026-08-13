@@ -913,6 +913,10 @@
                   "description": "Activity description",
                   "nullable": true
                 },
+                "excludeFromRankings": {
+                  "type": "boolean",
+                  "description": "Exclude from rankings"
+                },
                 "startedAt": {
                   "type": "string",
                   "format": "date-time",
@@ -1015,6 +1019,7 @@
                 "sport",
                 "name",
                 "description",
+                "excludeFromRankings",
                 "startedAt",
                 "timezoneOffsetMinutes",
                 "metrics",
@@ -1253,6 +1258,10 @@
             "description": "Activity description",
             "nullable": true
           },
+          "excludeFromRankings": {
+            "type": "boolean",
+            "description": "Exclude from rankings"
+          },
           "startedAt": {
             "type": "string",
             "format": "date-time",
@@ -1413,6 +1422,7 @@
           "sport",
           "name",
           "description",
+          "excludeFromRankings",
           "startedAt",
           "timezoneOffsetMinutes",
           "metrics",
@@ -1451,6 +1461,10 @@
             "type": "string",
             "description": "Activity description",
             "nullable": true
+          },
+          "excludeFromRankings": {
+            "type": "boolean",
+            "description": "Exclude from rankings"
           },
           "startedAt": {
             "type": "string",
@@ -1493,6 +1507,7 @@
           "sport",
           "name",
           "description",
+          "excludeFromRankings",
           "startedAt",
           "timezoneOffsetMinutes",
           "metrics",
@@ -1601,6 +1616,10 @@
             "maxLength": 10000,
             "description": "Description for the activity",
             "nullable": true
+          },
+          "excludeFromRankings": {
+            "description": "Exclude from rankings",
+            "type": "boolean"
           },
           "sport": {
             "$ref": "#/components/schemas/ActivityUpdateDtoActivityType"

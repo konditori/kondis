@@ -1,11 +1,18 @@
 <script lang="ts">
   import { Award, CalendarCheck, ChevronRight, CloudOff, Medal, Timer, Trophy } from "@lucide/svelte";
-  import { goto } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import { bestEffortLabel } from "$lib/best-efforts";
   import BestEffortChart from "$lib/components/BestEffortChart.svelte";
   import { activityName, bestEffortValue, duration, pace } from "$lib/format";
+  import { subscribeToActivityEvents } from "$lib/realtime";
 
   let { data } = $props();
+  $effect(() => {
+    if (!data.eventsUrl) return;
+    return subscribeToActivityEvents(data.eventsUrl, (_activity, type) => {
+      if (type === "activity.updated") void invalidateAll();
+    }, () => {});
+  });
   const history = $derived(data.history);
   const label = $derived(history ? bestEffortLabel(history.type) : "");
   const podium = $derived(

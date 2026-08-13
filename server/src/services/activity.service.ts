@@ -515,7 +515,13 @@ export class ActivityService {
 
   async updateById(
     id: string,
-    input: { name?: string | null; description?: string | null; sport?: ActivityType; startedAt?: Date },
+    input: {
+      name?: string | null;
+      description?: string | null;
+      sport?: ActivityType;
+      startedAt?: Date;
+      excludeFromRankings?: boolean;
+    },
   ) {
     const mapped: UpdateActivityInput = {};
 
@@ -543,8 +549,17 @@ export class ActivityService {
       mapped.started_at = input.startedAt;
     }
 
+    if (input.excludeFromRankings !== undefined) {
+      mapped.exclude_from_rankings = input.excludeFromRankings;
+    }
+
     const updated = await this.activityRepository.update(id, mapped);
-    if (updated && input.sport !== undefined) {
+    if (updated && input.excludeFromRankings === true) {
+      await Promise.all([
+        this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
+        this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} }),
+      ]);
+    } else if (updated && (input.sport !== undefined || input.excludeFromRankings === false)) {
       await Promise.all([
         this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
         this.jobRepository.queue({ name: JobName.ActivityRouteMatchCompute, data: { id } }),
@@ -552,7 +567,12 @@ export class ActivityService {
     } else if (updated && input.startedAt !== undefined) {
       await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
     }
-    return updated ? this.toActivityDto(updated) : undefined;
+    if (!updated) {
+      return;
+    }
+    const updatedDto = this.toActivityDto(updated);
+    await this.eventRepository.emit('ActivityUpdate', updatedDto);
+    return updatedDto;
   }
 
   async deleteById(id: string): Promise<boolean> {

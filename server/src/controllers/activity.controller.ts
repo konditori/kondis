@@ -85,6 +85,7 @@ export class ActivityController {
     const updated = await this.service.updateById(id, {
       ...payload,
       startedAt: payload.startedAt ? new Date(payload.startedAt) : undefined,
+      excludeFromRankings: payload.excludeFromRankings,
     });
     if (!updated) {
       throw new NotFoundException(`Activity ${id} does not exist`);
