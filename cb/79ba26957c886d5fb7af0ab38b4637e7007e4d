@@ -1,0 +1,39 @@
+open-api/kondis-openapi-specs.json
+  s_6a2f32d1bfcae6::t_67a6d4fbd1737f 1256-1259,1459-1462,1613-1616
+server/src/controllers/activity.controller.ts
+  s_6a2f32d1bfcae6::t_5284df203f4f2a 88
+server/src/dtos/activity.dto.ts
+  s_6a2f32d1bfcae6::t_74cfe04a23f50b 73,176
+server/src/open-api/fetch-client.ts
+  s_6a2f32d1bfcae6::t_276aab4254f76e 111,182,229,244
+server/src/repositories/activity.repository.ts
+  s_6a2f32d1bfcae6::t_240eae25358f3a 64,477,494,506,513,517,535
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_6a2f32d1bfcae6::t_033be364675665 87,209
+server/src/schema/tables/activity.table.ts
+  s_6a2f32d1bfcae6::t_3662f6fe1c8d5c 35
+server/src/services/activity.service.ts
+  s_6a2f32d1bfcae6::t_ba48ef675d0871 518,546,549,554
+server/test/medium/specs/service/activity.controller.spec.ts
+  s_6a2f32d1bfcae6::t_8cd2ed44aa54aa 241,252
+web/src/lib/types.ts
+  s_6a2f32d1bfcae6::t_f0f2558a54de67 11
+web/src/routes/activities/[id]/+page.svelte
+  s_6a2f32d1bfcae6::t_e30c059048d62d 22,30,82,125,172,219,230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cb79ba26957c886d5fb7af0ab38b4637e7007e4d",
+  "prompts": {},
+  "sessions": {
+    "s_6a2f32d1bfcae6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffae2-9cc1-7861-b83c-01187b9c7c88",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
