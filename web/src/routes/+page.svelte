@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity as ActivityIcon, CloudOff, LoaderCircle, Search } from '@lucide/svelte';
+  import { Activity as ActivityIcon, CloudOff, LoaderCircle, Search, X } from '@lucide/svelte';
   import { tick } from 'svelte';
   import type { Snapshot } from '@sveltejs/kit';
   import ActivityCard from '$lib/components/ActivityCard.svelte';
@@ -36,6 +36,12 @@
   );
   const displayedNextCursor = $derived(hasSearch ? searchCursor : nextCursor);
   const displayedTotal = $derived(hasSearch ? (searchTotal ?? 0) : total);
+  const heading = $derived(hasSearch ? `Search results for “${query.trim()}”` : 'Activities');
+  const resultSummary = $derived(
+    hasSearch
+      ? `${displayedTotal} ${displayedTotal === 1 ? 'workout' : 'workouts'} found`
+      : `${displayedTotal} ${displayedTotal === 1 ? 'workout' : 'workouts'}, all in one place.`,
+  );
 
   $effect(() => {
     if (data.activities) {
@@ -78,6 +84,12 @@
     appendedActivities = [...appendedActivities.filter(({ uploadId }) => uploadId !== activity.uploadId), activity];
     void refreshRecent();
   }, () => void refreshRecent()));
+
+  $effect(() => {
+    const handleClearSearch = () => clearSearch();
+    window.addEventListener('kondis:clear-search', handleClearSearch);
+    return () => window.removeEventListener('kondis:clear-search', handleClearSearch);
+  });
 
   async function refreshRecent() {
     try {
@@ -129,6 +141,10 @@
     return { destroy: () => observer.disconnect() };
   }
 
+  function clearSearch() {
+    query = '';
+  }
+
   type ActivityListSnapshot = {
     appendedActivities: Activity[];
     cursorOverride?: string | null;
@@ -162,8 +178,8 @@
 
 <div class="page-shell">
   <header class="page-header">
-    <div><span class="eyebrow">Your archive</span><h1>Activities</h1><p>{displayedTotal} workouts, all in one place.</p></div>
-    <label class="search"><Search size={18} /><input bind:value={query} placeholder="Search activities" aria-label="Search activities" /></label>
+    <div><span class="eyebrow">{hasSearch ? 'Your archive · Search' : 'Your archive'}</span><h1>{heading}</h1><p>{resultSummary}</p></div>
+    <label class="search"><Search size={18} /><input bind:value={query} placeholder="Search activities" aria-label="Search activities" />{#if hasSearch}<button class="search-clear" type="button" onclick={clearSearch} aria-label="Clear search" title="Clear search"><X size={17} /></button>{/if}</label>
   </header>
 
   {#if data.unavailable}

@@ -207,11 +207,31 @@ button {
 }
 .search input {
   width: 100%;
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: #1c211d;
   font-size: 14px;
+}
+.search-clear {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.search-clear:hover,
+.search-clear:focus-visible {
+  color: var(--green-dark);
+  background: var(--green-soft);
+  outline: 0;
 }
 .notice {
   display: flex;
