@@ -633,13 +633,13 @@ export class ActivityService {
               leftDefinition && 'distance' in leftDefinition
                 ? leftDefinition.distance
                 : left.type === 'longest_ride'
-                  ? Number.POSITIVE_INFINITY
+                  ? Infinity
                   : 0;
             const rightDistance =
               rightDefinition && 'distance' in rightDefinition
                 ? rightDefinition.distance
                 : right.type === 'longest_ride'
-                  ? Number.POSITIVE_INFINITY
+                  ? Infinity
                   : 0;
             return rightDistance - leftDistance || left.overallRank - right.overallRank || left.yearRank - right.yearRank;
           })
