@@ -91,7 +91,7 @@
   {/if}
   {#if activity.track}
     <div class="activity-card-map">
-      <RouteMap coordinates={activity.track.coordinates} compact />
+      <RouteMap coordinates={activity.track.coordinates} compact showEndpoints={false} />
     </div>
   {/if}
 </article>

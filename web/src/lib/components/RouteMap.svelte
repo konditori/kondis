@@ -3,7 +3,17 @@
   import { MapPinOff } from '@lucide/svelte';
   import { ActivityMapStyle } from '$lib/activity-types';
 
-  let { coordinates, mode = ActivityMapStyle.Route, compact = false }: { coordinates: [number, number][] | null; mode?: ActivityMapStyle; compact?: boolean } = $props();
+  let {
+    coordinates,
+    mode = ActivityMapStyle.Route,
+    compact = false,
+    showEndpoints = true,
+  }: {
+    coordinates: [number, number][] | null;
+    mode?: ActivityMapStyle;
+    compact?: boolean;
+    showEndpoints?: boolean;
+  } = $props();
   let container = $state<HTMLDivElement>();
 
   onMount(() => {
@@ -66,10 +76,24 @@
           }).addTo(map);
         }
       } else {
-        L.polyline(points, { color: '#ffffff', weight: 9, opacity: 0.9, lineCap: 'round' }).addTo(map);
-        L.polyline(points, { color: '#166534', weight: 5, opacity: 1, lineCap: 'round' }).addTo(map);
-        L.circleMarker(points[0], { radius: 7, color: '#fff', weight: 3, fillColor: '#166534', fillOpacity: 1 }).addTo(map);
-        L.circleMarker(points.at(-1)!, { radius: 7, color: '#fff', weight: 3, fillColor: '#d97706', fillOpacity: 1 }).addTo(map);
+        L.polyline(points, { color: '#ffffff', weight: compact ? 7 : 9, opacity: 0.9, lineCap: 'round' }).addTo(map);
+        L.polyline(points, { color: '#166534', weight: compact ? 4 : 5, opacity: 1, lineCap: 'round' }).addTo(map);
+        if (showEndpoints) {
+          L.circleMarker(points[0], {
+            radius: 7,
+            color: '#fff',
+            weight: 3,
+            fillColor: '#166534',
+            fillOpacity: 1,
+          }).addTo(map);
+          L.circleMarker(points.at(-1)!, {
+            radius: 7,
+            color: '#fff',
+            weight: 3,
+            fillColor: '#d97706',
+            fillOpacity: 1,
+          }).addTo(map);
+        }
       }
 
       map.fitBounds(boundsLayer.getBounds(), { padding: [36, 36] });
