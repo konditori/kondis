@@ -1,0 +1,25 @@
+android/.gitignore
+  s_6ca6b6038e0150::t_bdc2d9cde66f17 12
+android/app/src/main/java/app/kondis/ui/components/ActivityComponents.kt
+  s_6ca6b6038e0150::t_a26107001b37f0 100
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_6ca6b6038e0150::t_35563b11c65e58 44,88
+android/gradle.properties
+  s_6ca6b6038e0150::t_4e4a8253b55db0 2-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ee4968244404c4857437fd2be4b13b13e515249b",
+  "prompts": {},
+  "sessions": {
+    "s_6ca6b6038e0150": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffcff-1c94-7fc1-bd38-66966127a37f",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
