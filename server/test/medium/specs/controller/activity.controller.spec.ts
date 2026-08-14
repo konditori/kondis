@@ -1,108 +1,66 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import type { AuthenticatedUser } from 'src/auth';
 import { ActivityController } from 'src/controllers/activity.controller';
 import { type KondisDatabase } from 'src/db/database';
 import { QueueName } from 'src/enum';
-import { ActivityRepository, ActivityStreamInput } from 'src/repositories/activity.repository';
+import { ActivityRepository, type ActivityStreamInput } from 'src/repositories/activity.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 
+import { createMediumFactory } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 
-describe('ActivityController (medium)', () => {
+describe(ActivityController.name, () => {
   let testApp: TestApp;
   let db: KondisDatabase;
-  let controller: ActivityController;
-  let uploads: UploadRepository;
+  let activityController: ActivityController;
   let activities: ActivityRepository;
+  let uploads: UploadRepository;
   let activityService: ActivityService;
   let jobs: JobRepository;
-
-  const createActivity = async (
-    startedAt: Date,
-    name: string,
-    streams: ActivityStreamInput[] = [],
-  ): Promise<string> => {
-    const upload = await uploads.create({
-      checksum: crypto.randomUUID().replaceAll('-', ''),
-      original_name: `${name}.fit`,
-      byte_size: 1,
-      storage_path: `seed/${name}.fit`,
-    });
-
-    const metrics = {
-      elapsed_time: 3600,
-      moving_time: 3500,
-      distance: 10_000,
-      elevation_gain: 100,
-      elevation_loss: 100,
-      avg_speed: 2.8,
-      max_speed: 4.9,
-      avg_hr: 150,
-      max_hr: 175,
-      avg_cadence: 168,
-      max_cadence: 190,
-      avg_power: 210,
-      max_power: 420,
-      normalized_power: 230,
-      calories: 700,
-    };
-    const id = await activities.create({
-      activity: {
-        upload_id: upload.id,
-        sport: 'run',
-        name,
-        started_at: startedAt,
-        timezone_offset_minutes: 0,
-      },
-      streams,
-      laps: [],
-    });
-    await activities.setMetrics(id, metrics);
-    await activities.recomputeBestEfforts(id);
-    await activities.recomputeRouteMatches(id);
-    await activities.refreshBestEffortRankings();
-    return id;
-  };
-
-  const createPendingActivity = async (): Promise<string> => {
-    const upload = await uploads.create({
-      checksum: crypto.randomUUID().replaceAll('-', ''),
-      original_name: 'pending.fit',
-      byte_size: 1,
-      storage_path: 'seed/pending.fit',
-    });
-    return activities.create({
-      activity: {
-        upload_id: upload.id,
-        sport: 'run',
-        name: 'pending',
-        started_at: new Date('2024-01-01T08:00:00.000Z'),
-        timezone_offset_minutes: 0,
-      },
-      streams: [],
-      laps: [],
-    });
-  };
+  let factory: ReturnType<typeof createMediumFactory>;
+  let testUser: AuthenticatedUser;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
     testApp = await createTestApp();
 
-    controller = testApp.get(ActivityController);
-    uploads = testApp.get(UploadRepository);
+    activityController = testApp.get(ActivityController);
     activities = testApp.get(ActivityRepository);
+    uploads = testApp.get(UploadRepository);
     activityService = testApp.get(ActivityService);
     jobs = testApp.get(JobRepository);
+    factory = createMediumFactory(testApp);
   }, 60_000);
 
   beforeEach(async () => {
     await resetMediumTestDatabase(db);
+    testUser = await factory.newUser();
   });
+
+  const createActivity = (startedAt: Date, name: string, streams: ActivityStreamInput[] = []) =>
+    factory.newActivity(testUser.id, startedAt, name, streams);
+
+  const controller = {
+    listRecent: (query: Parameters<ActivityController['listRecent']>[0]) =>
+      activityController.listRecent(query, testUser),
+    listBestEfforts: (params: Parameters<ActivityController['listBestEfforts']>[0]) =>
+      activityController.listBestEfforts(params, testUser),
+    getById: (params: Parameters<ActivityController['getById']>[0]) => activityController.getById(params, testUser),
+    listMatchedRoutes: (params: Parameters<ActivityController['listMatchedRoutes']>[0]) =>
+      activityController.listMatchedRoutes(params, testUser),
+    updateById: (
+      params: Parameters<ActivityController['updateById']>[0],
+      payload: Parameters<ActivityController['updateById']>[1],
+    ) => activityController.updateById(params, payload, testUser),
+    deleteById: (params: Parameters<ActivityController['deleteById']>[0]) =>
+      activityController.deleteById(params, testUser),
+  };
 
   afterAll(async () => {
     await testApp?.destroy();
@@ -302,7 +260,7 @@ describe('ActivityController (medium)', () => {
 
   describe('GET /activities/:id', () => {
     it('returns null analysis fields while computations are pending', async () => {
-      const activityId = await createPendingActivity();
+      const activityId = await factory.newPendingActivity(testUser.id);
 
       const activity = await controller.getById({ id: activityId });
       const list = await controller.listRecent({ limit: 50 });

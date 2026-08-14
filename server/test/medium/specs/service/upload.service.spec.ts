@@ -7,19 +7,22 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { type ConfigService } from 'src/config/config.service';
 import { type KondisDatabase } from 'src/db/database';
-import { JobName } from 'src/enum';
+import { JobName, QueueName } from 'src/enum';
+import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { type JobRepository } from 'src/repositories/job.repository';
+import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
 
+import { makeUploadedFile } from 'test/medium.factory';
+import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
-import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
+import { activityFixtures } from 'test/medium/utils';
 import { createTestZip } from 'test/utils/zip';
 
-describe('UploadService (medium)', () => {
+describe(UploadService.name, () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
   const queue = vi.fn(async () => {});
@@ -30,6 +33,11 @@ describe('UploadService (medium)', () => {
   let uploadService: UploadService;
   let uploadRepository: UploadRepository;
   let storageRepository: StorageRepository;
+  let testApp: TestApp;
+  let queuedUploadService: UploadService;
+  let jobsRepository: JobRepository;
+  let queuedUploadRepository: UploadRepository;
+  let activityRepository: ActivityRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -47,15 +55,23 @@ describe('UploadService (medium)', () => {
       jobs,
       logger,
     );
+
+    testApp = await createTestApp();
+    queuedUploadService = testApp.get(UploadService);
+    jobsRepository = testApp.get(JobRepository);
+    queuedUploadRepository = testApp.get(UploadRepository);
+    activityRepository = testApp.get(ActivityRepository);
   });
 
   beforeEach(async () => {
     queue.mockClear();
     await truncateAllTables(db);
+    await Promise.all(Object.values(QueueName).map((queueName) => jobsRepository.empty(queueName)));
   });
 
   afterAll(async () => {
     if (db) {
+      await testApp?.destroy();
       await db.destroy();
     }
     if (storageDir.length > 0) {
@@ -191,7 +207,7 @@ describe('UploadService (medium)', () => {
     expect(first).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string } },
+      { name: JobName; data: { originalName: string; storagePath: string; takeoutImportId: string } },
     ];
     expect(item).toEqual({
       name: JobName.LagomTakeoutImport,
@@ -208,10 +224,16 @@ describe('UploadService (medium)', () => {
     await expect(uploadService.handleLagomTakeout(item.data)).resolves.toBe('success');
     expect(queue).toHaveBeenCalledTimes(3);
     const [fitJob] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
+      {
+        name: JobName;
+        data: { originalName: string; storagePath: string; checksum: string; takeoutImportId?: string };
+      },
     ];
     const [gpxJob] = queue.mock.calls[1] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
+      {
+        name: JobName;
+        data: { originalName: string; storagePath: string; checksum: string; takeoutImportId?: string };
+      },
     ];
     const [manualJob] = queue.mock.calls[2] as unknown as [{ name: JobName; data: { activityName: string } }];
     expect(manualJob.name).toBe(JobName.ActivityManualCreate);
@@ -275,5 +297,125 @@ describe('UploadService (medium)', () => {
     await expect(
       uploadService.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
     ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
+  });
+
+  describe('real queue processing', () => {
+    it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
+      const contents = await readFile(fixture.path);
+      const result = await queuedUploadService.uploadActivity(makeUploadedFile(fixture.filename, contents));
+      expect(result.queued).toBe(true);
+
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const upload = await queuedUploadRepository.getByChecksum(crypto.xxHash(contents));
+      expect(upload?.status).toBe('parsed');
+
+      const activity = await activityRepository.getByUploadId(upload!.id);
+      expect(activity).toBeDefined();
+      expect(activity?.sport).toBe(fixture.expectedSport);
+    });
+
+    it('imports a Strava takeout and parses its activities through the real queues', async () => {
+      const fit = await readFile(activityFixtures.hindasRun.path);
+      const archive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Forest walk,A walk in the woods,Roller Ski,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+
+      const result = await queuedUploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+      expect(result.queued).toBe(true);
+      expect(await queuedUploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
+
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const imported = await queuedUploadRepository.getByChecksum(crypto.xxHash(fit));
+      expect(imported?.status).toBe('parsed');
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+
+      const updatedArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Updated hike,Updated description,Hike,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      const updatedResult = await queuedUploadService.uploadLagomTakeout(
+        makeUploadedFile('updated-export.zip', updatedArchive),
+      );
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(queuedUploadService.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+
+      const iceSkateArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Evening skate,Frozen lake,Ice Skate,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      const iceSkateResult = await queuedUploadService.uploadLagomTakeout(
+        makeUploadedFile('ice-skate-export.zip', iceSkateArchive),
+      );
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(queuedUploadService.getLagomTakeoutStatus(iceSkateResult.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+    });
+
+    it('deduplicates manual activities using the takeout Activity ID', async () => {
+      const archive = createTestZip({
+        'activities.csv': Buffer.from(
+          [
+            'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance',
+            'manual-1,"Aug 10, 2016, 5:00:00 PM",Gym,Weight Training,,600,600,0,0',
+          ].join('\n'),
+        ),
+      });
+
+      const first = await queuedUploadService.uploadLagomTakeout(makeUploadedFile('manual.zip', archive));
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+      const second = await queuedUploadService.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive));
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(queuedUploadService.getLagomTakeoutStatus(first.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 0,
+        status: 'completed',
+      });
+      expect(queuedUploadService.getLagomTakeoutStatus(second.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+
+      const manualUpload = await queuedUploadRepository.getByChecksum('strava:manual-1');
+      expect(manualUpload).toBeDefined();
+      expect(await activityRepository.getByUploadId(manualUpload!.id)).toBeDefined();
+    });
   });
 });

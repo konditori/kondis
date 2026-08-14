@@ -1,0 +1,103 @@
+import type { AuthenticatedUser } from 'src/auth';
+import type { ActivityMetrics, ActivityStreamInput } from 'src/repositories/activity.repository';
+import { ActivityRepository } from 'src/repositories/activity.repository';
+import { UploadRepository } from 'src/repositories/upload.repository';
+import { UserRepository } from 'src/repositories/user.repository';
+import type { UploadedFileData } from 'src/types';
+
+import type { TestApp } from 'test/medium/test-app';
+
+export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFileData => ({
+  originalname: filename,
+  buffer,
+  size: buffer.length,
+});
+
+type UserOverrides = Partial<{
+  email: string;
+  name: string;
+  password_hash: string;
+  role: 'admin' | 'user';
+}>;
+
+const defaultMetrics: ActivityMetrics = {
+  elapsed_time: 3600,
+  moving_time: 3500,
+  distance: 10_000,
+  elevation_gain: 100,
+  elevation_loss: 100,
+  avg_speed: 2.8,
+  max_speed: 4.9,
+  avg_hr: 150,
+  max_hr: 175,
+  avg_cadence: 168,
+  max_cadence: 190,
+  avg_power: 210,
+  max_power: 420,
+  normalized_power: 230,
+  calories: 700,
+};
+
+export const createMediumFactory = (testApp: TestApp) => {
+  const users = testApp.get(UserRepository);
+  const uploads = testApp.get(UploadRepository);
+  const activities = testApp.get(ActivityRepository);
+
+  const newUser = async (overrides: UserOverrides = {}): Promise<AuthenticatedUser> => {
+    const user = await users.create({
+      email: `medium-test-${crypto.randomUUID()}@example.com`,
+      name: 'Medium Test User',
+      password_hash: 'not-a-real-password-hash',
+      role: 'user',
+      ...overrides,
+    });
+
+    return {
+      id: user.id,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+    };
+  };
+
+  const newActivity = async (
+    userId: string,
+    startedAt: Date,
+    name: string,
+    streams: ActivityStreamInput[] = [],
+    metrics: Partial<ActivityMetrics> | null = {},
+  ): Promise<string> => {
+    const upload = await uploads.create({
+      checksum: crypto.randomUUID().replaceAll('-', ''),
+      original_name: `${name}.fit`,
+      byte_size: 1,
+      storage_path: `seed/${name}.fit`,
+      user_id: userId,
+    });
+
+    const id = await activities.create({
+      activity: {
+        upload_id: upload.id,
+        sport: 'run',
+        name,
+        started_at: startedAt,
+        timezone_offset_minutes: 0,
+        user_id: userId,
+      },
+      streams,
+      laps: [],
+    });
+    if (metrics) {
+      await activities.setMetrics(id, { ...defaultMetrics, ...metrics });
+      await activities.recomputeBestEfforts(id);
+      await activities.recomputeRouteMatches(id);
+      await activities.refreshBestEffortRankings();
+    }
+    return id;
+  };
+
+  const newPendingActivity = (userId: string) =>
+    newActivity(userId, new Date('2024-01-01T08:00:00.000Z'), 'pending', [], null);
+
+  return { newUser, newActivity, newPendingActivity };
+};

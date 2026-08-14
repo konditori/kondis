@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
@@ -18,9 +17,10 @@ import { JobService } from 'src/services/job.service';
 import { UploadService } from 'src/services/upload.service';
 import { type JobItem } from 'src/types';
 
+import { makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
-import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
+import { activityFixtures } from 'test/medium/utils';
 import { createTestZip } from 'test/utils/zip';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
@@ -127,6 +127,7 @@ describe('job system (medium)', () => {
       await Promise.all(Object.values(QueueName).map((queue) => jobs.pause(queue)));
 
       try {
+        await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
         await jobs.queueAll(Object.values(samples));
 
         const counts = await Promise.all(Object.values(QueueName).map((queue) => jobs.getJobCounts(queue)));
@@ -188,124 +189,6 @@ describe('job system (medium)', () => {
   });
 
   describe('end to end', () => {
-    it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
-      const contents = await readFile(fixture.path);
-      const result = await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents));
-      expect(result.queued).toBe(true);
-
-      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-
-      const upload = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
-      expect(upload?.status).toBe('parsed');
-
-      const activity = await activityRepository.getByUploadId(upload!.id);
-      expect(activity).toBeDefined();
-      expect(activity?.sport).toBe(fixture.expectedSport);
-    });
-
-    it('imports a Strava takeout and parses its activities through the real queues', async () => {
-      const fit = await readFile(activityFixtures.hindasRun.path);
-      const archive = createTestZip({
-        'activities.csv': Buffer.from(
-          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Forest walk,A walk in the woods,Roller Ski,activities/run.fit.gz',
-        ),
-        'activities/run.fit.gz': gzipSync(fit),
-      });
-
-      const result = await uploads.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
-      expect(result.queued).toBe(true);
-      expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
-
-      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-
-      const imported = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(fit));
-      expect(imported?.status).toBe('parsed');
-      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
-        name: 'Forest walk',
-        description: 'A walk in the woods',
-        sport: 'roller_ski',
-      });
-
-      const updatedArchive = createTestZip({
-        'activities.csv': Buffer.from(
-          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Updated hike,Updated description,Hike,activities/run.fit.gz',
-        ),
-        'activities/run.fit.gz': gzipSync(fit),
-      });
-      const updatedResult = await uploads.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
-      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-
-      expect(uploads.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
-        total: 1,
-        processed: 1,
-        duplicates: 1,
-        status: 'completed',
-      });
-
-      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
-        name: 'Forest walk',
-        description: 'A walk in the woods',
-        sport: 'roller_ski',
-      });
-
-      const iceSkateArchive = createTestZip({
-        'activities.csv': Buffer.from(
-          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Evening skate,Frozen lake,Ice Skate,activities/run.fit.gz',
-        ),
-        'activities/run.fit.gz': gzipSync(fit),
-      });
-      const iceSkateResult = await uploads.uploadLagomTakeout(
-        makeUploadedFile('ice-skate-export.zip', iceSkateArchive),
-      );
-      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-
-      await expect(uploads.getLagomTakeoutStatus(iceSkateResult.importId, '')).resolves.toMatchObject({
-        total: 1,
-        processed: 1,
-        duplicates: 1,
-        status: 'completed',
-      });
-
-      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
-        name: 'Forest walk',
-        description: 'A walk in the woods',
-        sport: 'roller_ski',
-      });
-    });
-
-    it('deduplicates manual activities using the takeout Activity ID', async () => {
-      const archive = createTestZip({
-        'activities.csv': Buffer.from(
-          [
-            'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance',
-            'manual-1,"Aug 10, 2016, 5:00:00 PM",Gym,Weight Training,,600,600,0,0',
-          ].join('\n'),
-        ),
-      });
-
-      const first = await uploads.uploadLagomTakeout(makeUploadedFile('manual.zip', archive));
-      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-      const second = await uploads.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive));
-      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-
-      expect(uploads.getLagomTakeoutStatus(first.importId, '')).toMatchObject({
-        total: 1,
-        processed: 1,
-        duplicates: 0,
-        status: 'completed',
-      });
-      expect(uploads.getLagomTakeoutStatus(second.importId, '')).toMatchObject({
-        total: 1,
-        processed: 1,
-        duplicates: 1,
-        status: 'completed',
-      });
-
-      const manualUpload = await uploadRepository.getByChecksum('strava:manual-1');
-      expect(manualUpload).toBeDefined();
-      expect(await activityRepository.getByUploadId(manualUpload!.id)).toBeDefined();
-    });
-
     it('deletes the activity, the upload and the file', async () => {
       const fixture = activityFixtures.hindasRun;
       const contents = await readFile(fixture.path);
