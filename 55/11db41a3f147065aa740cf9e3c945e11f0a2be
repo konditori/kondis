@@ -1,0 +1,29 @@
+android/gradle.properties
+  s_521094ef456611::t_bb551878971915 7
+server/src/auth.ts
+  s_521094ef456611::t_b4f58aeeee6622 5,41
+server/src/services/auth.service.ts
+  s_521094ef456611::t_a17db6f844bc02 1,10-11,14-27
+web/src/routes/login/+page.server.ts
+  s_521094ef456611::t_94bdf90df1f56d 7-9,14-21,24-30
+web/src/routes/logout/+server.ts
+  s_521094ef456611::t_b4a476b5963e42 1-9
+web/src/routes/setup/+page.server.ts
+  s_521094ef456611::t_4f63a13bc6ed3a 4-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5511db41a3f147065aa740cf9e3c945e11f0a2be",
+  "prompts": {},
+  "sessions": {
+    "s_521094ef456611": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00058-2d24-7472-b656-88e40ea2485a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
