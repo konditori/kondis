@@ -1,0 +1,31 @@
+pnpm-lock.yaml
+  s_e48167606e2801::t_c6f1be085aeaf8 71-73,123-125,1186-1188,1628-1631,2623-2630,4211-4214,4653-4657,5645-5648
+pnpm-workspace.yaml
+  s_1576a91d22ad8b::t_ce5b7fcf7ae970 20
+server/package.json
+  s_e48167606e2801::t_484a5dd59b2fd9 36,55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "59ae72c24abc07c7274e5c230c5c255e29b1179c",
+  "prompts": {},
+  "sessions": {
+    "s_1576a91d22ad8b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00194-ed69-7a53-a2e9-163fc4323fdc",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e48167606e2801": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00194-ecb4-7810-8849-153775b38bd8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
