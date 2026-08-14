@@ -5,8 +5,10 @@ import { ActivityStreamTable } from 'src/schema/tables/activity-stream.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
 import { LapTable } from 'src/schema/tables/lap.table';
 import { UploadTable } from 'src/schema/tables/upload.table';
+import { UserTable } from 'src/schema/tables/user.table';
 
 export interface DB {
+  user: UserTable;
   upload: UploadTable;
   activity: ActivityTable;
   activity_best_effort: ActivityBestEffortTable;

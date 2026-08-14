@@ -1,10 +1,11 @@
-import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
+import { FitUploadResponseDto, LagomTakeoutUploadResponseDto, TakeoutImportStatusDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
 import { UploadedFileData } from 'src/types';
 
@@ -39,8 +40,11 @@ export class UploadController {
       limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0 },
     }),
   )
-  async uploadActivity(@UploadedFile() file?: UploadedFileData): Promise<FitUploadResponseDto> {
-    return this.service.uploadActivity(file);
+  async uploadActivity(
+    @UploadedFile() file: UploadedFileData | undefined,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<FitUploadResponseDto> {
+    return this.service.uploadActivity(file, user.id);
   }
 
   @ApiOperation({ summary: 'Import activities from a Strava takeout ZIP archive' })
@@ -69,7 +73,17 @@ export class UploadController {
       limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0 },
     }),
   )
-  async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
-    return this.service.uploadLagomTakeout(uploadedFile);
+  async uploadStravaTakeout(
+    @UploadedFile() uploadedFile: UploadedFileData | undefined,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<LagomTakeoutUploadResponseDto> {
+    return this.service.uploadLagomTakeout(uploadedFile, user.id);
+  }
+
+  @ApiOperation({ summary: 'Get Strava takeout import progress' })
+  @ZodResponse({ status: 200, description: 'Current import progress', type: TakeoutImportStatusDto })
+  @Get('upload/strava/:id')
+  getStravaTakeoutStatus(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): TakeoutImportStatusDto {
+    return this.service.getLagomTakeoutStatus(id, user.id);
   }
 }

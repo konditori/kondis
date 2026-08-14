@@ -5,7 +5,6 @@ config_roots = [
   "server",
   "web",
   "e2e",
-  "android",
 ]
 
 [tools]

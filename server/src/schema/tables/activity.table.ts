@@ -22,6 +22,9 @@ export class ActivityTable {
   @Column({ type: 'text' })
   upload_id!: string;
 
+  @Column({ type: 'text', nullable: true })
+  user_id!: string | null;
+
   @Column({ type: 'text' })
   sport!: ActivityType;
 

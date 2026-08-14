@@ -2,11 +2,18 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { NewUpload, Upload, UploadStatus } from 'src/db/schema';
+import { ActivityType } from 'src/types';
 
 export type UploadPageOptions = {
   force: boolean;
   after?: string;
   limit: number;
+};
+
+export type ManualActivitySignature = {
+  startedAt: Date;
+  sport: ActivityType;
+  elapsedTime: number;
 };
 
 @Injectable()
@@ -21,8 +28,27 @@ export class UploadRepository {
     return this.db.selectFrom('upload').selectAll().where('id', '=', id).executeTakeFirst();
   }
 
-  getByChecksum(checksum: string): Promise<Upload | undefined> {
-    return this.db.selectFrom('upload').selectAll().where('checksum', '=', checksum).executeTakeFirst();
+  getByChecksum(checksum: string, userId?: string): Promise<Upload | undefined> {
+    let query = this.db.selectFrom('upload').selectAll().where('checksum', '=', checksum);
+    if (userId) {
+      query = query.where('user_id', '=', userId);
+    }
+    return query.executeTakeFirst();
+  }
+
+  async hasManualActivity(signature: ManualActivitySignature, userId: string): Promise<boolean> {
+    const row = await this.db
+      .selectFrom('upload')
+      .innerJoin('activity', 'activity.upload_id', 'upload.id')
+      .innerJoin('activity_metric', 'activity_metric.activity_id', 'activity.id')
+      .select('upload.id')
+      .where('upload.user_id', '=', userId)
+      .where('upload.original_name', '=', 'Strava manual activity')
+      .where('activity.started_at', '=', signature.startedAt)
+      .where('activity.sport', '=', signature.sport)
+      .where('activity_metric.elapsed_time', '=', signature.elapsedTime)
+      .executeTakeFirst();
+    return row !== undefined;
   }
 
   async setStatus(id: string, status: UploadStatus, error: string | null = null): Promise<void> {

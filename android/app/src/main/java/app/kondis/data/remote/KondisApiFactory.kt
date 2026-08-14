@@ -15,11 +15,11 @@ class KondisApiFactory
         private val client: OkHttpClient,
         private val json: Json,
     ) {
-        fun create(baseUrl: String): KondisApi =
+        fun create(baseUrl: String, accessToken: String? = null): KondisApi =
             Retrofit
                 .Builder()
                 .baseUrl(normalizeBaseUrl(baseUrl))
-                .client(client)
+                .client(client.newBuilder().addInterceptor { chain -> chain.proceed(chain.request().newBuilder().apply { if (accessToken != null) header("Authorization", "Bearer $accessToken") }.build()) }.build())
                 .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
                 .build()
                 .create(KondisApi::class.java)

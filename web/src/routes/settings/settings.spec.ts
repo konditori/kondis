@@ -12,10 +12,14 @@ describe("unit preference settings", () => {
       .mockReturnValueOnce("imperial");
 
     expect(await load({ cookies: { get } } as never)).toEqual({
+      user: undefined,
+      authenticated: true,
       unitSystem: "metric",
       activityTypes: [],
     });
     expect(await load({ cookies: { get } } as never)).toEqual({
+      user: undefined,
+      authenticated: true,
       unitSystem: "imperial",
       activityTypes: [],
     });

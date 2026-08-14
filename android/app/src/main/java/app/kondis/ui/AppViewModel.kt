@@ -10,13 +10,18 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
+import app.kondis.data.remote.KondisApiFactory
+import app.kondis.data.remote.LoginRequest
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AppViewModel
     @Inject
     constructor(
-        settingsRepository: SettingsRepository,
+        private val settingsRepository: SettingsRepository,
+        private val apiFactory: KondisApiFactory,
         recordingManager: RecordingManager,
     ) : ViewModel() {
         val settings: StateFlow<AppSettings> =
@@ -27,4 +32,10 @@ class AppViewModel
             )
 
         val recording: StateFlow<RecordingState> = recordingManager.state
+
+        fun login(email: String, password: String) = viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            val response = apiFactory.create(settings.serverUrl).login(LoginRequest(email, password))
+            settingsRepository.setAccessToken(response.accessToken)
+        }
     }

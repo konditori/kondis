@@ -14,6 +14,7 @@ import {
   BestEffortType,
   uploadControllerUploadActivity,
   uploadControllerUploadStravaTakeout,
+  uploadControllerGetStravaTakeoutStatus,
 } from "../../../server/src/open-api/fetch-client";
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
@@ -39,4 +40,5 @@ export {
   BestEffortType,
   uploadControllerUploadActivity,
   uploadControllerUploadStravaTakeout,
+  uploadControllerGetStravaTakeoutStatus,
 };

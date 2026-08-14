@@ -1,108 +1,88 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { ActivityController } from 'src/controllers/activity.controller';
+import type { AuthenticatedUser } from 'src/auth';
 import { type KondisDatabase } from 'src/db/database';
 import { QueueName } from 'src/enum';
-import { ActivityRepository, ActivityStreamInput } from 'src/repositories/activity.repository';
+import { ActivityRepository, type ActivityStreamInput } from 'src/repositories/activity.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 
+import { createMediumFactory } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 
-describe('ActivityController (medium)', () => {
+describe(ActivityService.name, () => {
   let testApp: TestApp;
   let db: KondisDatabase;
-  let controller: ActivityController;
-  let uploads: UploadRepository;
   let activities: ActivityRepository;
-  let activityService: ActivityService;
+  let uploads: UploadRepository;
+  let sut: ActivityService;
   let jobs: JobRepository;
-
-  const createActivity = async (
-    startedAt: Date,
-    name: string,
-    streams: ActivityStreamInput[] = [],
-  ): Promise<string> => {
-    const upload = await uploads.create({
-      checksum: crypto.randomUUID().replaceAll('-', ''),
-      original_name: `${name}.fit`,
-      byte_size: 1,
-      storage_path: `seed/${name}.fit`,
-    });
-
-    const metrics = {
-      elapsed_time: 3600,
-      moving_time: 3500,
-      distance: 10_000,
-      elevation_gain: 100,
-      elevation_loss: 100,
-      avg_speed: 2.8,
-      max_speed: 4.9,
-      avg_hr: 150,
-      max_hr: 175,
-      avg_cadence: 168,
-      max_cadence: 190,
-      avg_power: 210,
-      max_power: 420,
-      normalized_power: 230,
-      calories: 700,
-    };
-    const id = await activities.create({
-      activity: {
-        upload_id: upload.id,
-        sport: 'run',
-        name,
-        started_at: startedAt,
-        timezone_offset_minutes: 0,
-      },
-      streams,
-      laps: [],
-    });
-    await activities.setMetrics(id, metrics);
-    await activities.recomputeBestEfforts(id);
-    await activities.recomputeRouteMatches(id);
-    await activities.refreshBestEffortRankings();
-    return id;
-  };
-
-  const createPendingActivity = async (): Promise<string> => {
-    const upload = await uploads.create({
-      checksum: crypto.randomUUID().replaceAll('-', ''),
-      original_name: 'pending.fit',
-      byte_size: 1,
-      storage_path: 'seed/pending.fit',
-    });
-    return activities.create({
-      activity: {
-        upload_id: upload.id,
-        sport: 'run',
-        name: 'pending',
-        started_at: new Date('2024-01-01T08:00:00.000Z'),
-        timezone_offset_minutes: 0,
-      },
-      streams: [],
-      laps: [],
-    });
-  };
+  let factory: ReturnType<typeof createMediumFactory>;
+  let testUser: AuthenticatedUser;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
     testApp = await createTestApp();
 
-    controller = testApp.get(ActivityController);
-    uploads = testApp.get(UploadRepository);
     activities = testApp.get(ActivityRepository);
-    activityService = testApp.get(ActivityService);
+    uploads = testApp.get(UploadRepository);
+    sut = testApp.get(ActivityService);
     jobs = testApp.get(JobRepository);
-  }, 60_000);
+    factory = createMediumFactory(db);
+  });
 
   beforeEach(async () => {
     await resetMediumTestDatabase(db);
+    testUser = await factory.newUser();
   });
+
+  const createActivity = (startedAt: Date, name: string, streams: ActivityStreamInput[] = []) =>
+    factory.newActivity(testUser.id, startedAt, name, streams);
+
+  const serviceApi = {
+    listRecent: (query: Parameters<ActivityService['listRecent']>[0]) =>
+      sut.listRecent(query, testUser.id),
+    listBestEfforts: (params: { sport: Parameters<ActivityService['listBestEfforts']>[0]; type: Parameters<ActivityService['listBestEfforts']>[1] }) =>
+      sut.listBestEfforts(params.sport, params.type, testUser.id),
+    getById: async ({ id }: { id: string }) => {
+      const activity = await sut.getById(id, testUser.id);
+      if (!activity) {
+        throw new Error(`Activity ${id} does not exist`);
+      }
+      return activity;
+    },
+    listMatchedRoutes: async ({ id }: { id: string }) => {
+      const matches = await sut.listMatchedRoutes(id, testUser.id);
+      if (!matches) {
+        throw new Error(`Activity ${id} does not exist`);
+      }
+      return matches;
+    },
+    updateById: async (
+      { id }: { id: string },
+      payload: {
+        name?: string;
+        description?: string;
+        sport?: 'run' | 'ride' | 'trail_run';
+        startedAt?: string;
+        excludeFromRankings?: boolean;
+      },
+    ) => {
+      const updated = await sut.updateById(id, testUser.id, {
+        ...payload,
+        startedAt: payload.startedAt ? new Date(payload.startedAt) : undefined,
+      });
+      if (!updated) {
+        throw new Error(`Activity ${id} does not exist`);
+      }
+      return updated;
+    },
+    deleteById: ({ id }: { id: string }) => sut.deleteById(id, testUser.id),
+  };
 
   afterAll(async () => {
     await testApp?.destroy();
@@ -114,7 +94,7 @@ describe('ActivityController (medium)', () => {
       await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'older');
       const newerId = await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'newer');
 
-      const response = await controller.listRecent({ limit: 50 });
+      const response = await serviceApi.listRecent({ limit: 50 });
 
       expect(response.activities).toHaveLength(2);
       expect(response.activities[0].id).toBe(newerId);
@@ -126,7 +106,7 @@ describe('ActivityController (medium)', () => {
     it('serializes timestamps as ISO strings', async () => {
       await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'newer');
 
-      const response = await controller.listRecent({ limit: 50 });
+      const response = await serviceApi.listRecent({ limit: 50 });
       expect(response.activities[0].startedAt).toBe('2024-01-01T09:00:00.000Z');
     });
 
@@ -136,7 +116,7 @@ describe('ActivityController (medium)', () => {
         { type: 'longitude', data: [15.6211, 15.6222, 15.6234] },
       ]);
 
-      const response = await controller.listRecent({ limit: 50 });
+      const response = await serviceApi.listRecent({ limit: 50 });
       expect(response.activities[0].track).toEqual({
         type: 'LineString',
         coordinates: [
@@ -151,12 +131,12 @@ describe('ActivityController (medium)', () => {
       await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'middle');
       await createActivity(new Date('2024-01-01T10:00:00.000Z'), 'newest');
 
-      const first = await controller.listRecent({ limit: 2 });
+      const first = await serviceApi.listRecent({ limit: 2 });
       expect(first.activities.map(({ name }) => name)).toEqual(['newest', 'middle']);
       expect(first.nextCursor).not.toBeNull();
       expect(first.total).toBe(3);
 
-      const second = await controller.listRecent({ limit: 2, cursor: first.nextCursor ?? undefined });
+      const second = await serviceApi.listRecent({ limit: 2, cursor: first.nextCursor ?? undefined });
       expect(second.activities.map(({ name }) => name)).toEqual(['oldest']);
       expect(second.nextCursor).toBeNull();
       expect(second.total).toBe(3);
@@ -180,7 +160,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 130, 310] },
       ]);
 
-      const response = await controller.listRecent({ limit: 50 });
+      const response = await serviceApi.listRecent({ limit: 50 });
       const second = response.activities.find(({ id }) => id === secondId);
       const fourth = response.activities.find(({ name }) => name === 'fourth');
 
@@ -210,7 +190,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 1600] },
       ]);
 
-      const response = await controller.listBestEfforts({ sport: 'run', type: '5k' });
+      const response = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
 
       expect(response.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
         { activityName: 'bronze', overallRank: 3 },
@@ -238,17 +218,17 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 1600] },
       ]);
 
-      await controller.updateById({ id: goldId }, { excludeFromRankings: true });
+      await serviceApi.updateById({ id: goldId }, { excludeFromRankings: true });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
-      const history = await controller.listBestEfforts({ sport: 'run', type: '5k' });
+      const history = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
       expect(history.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
         { activityName: 'silver becomes gold', overallRank: 1 },
         { activityName: 'bronze becomes silver', overallRank: 2 },
         { activityName: 'fourth becomes bronze', overallRank: 3 },
       ]);
 
-      const excludedActivity = await controller.getById({ id: goldId });
+      const excludedActivity = await serviceApi.getById({ id: goldId });
       expect(excludedActivity.excludeFromRankings).toBe(true);
       expect(excludedActivity.bestEfforts?.find(({ type }) => type === '5k')).toMatchObject({ elapsedTime: 1300 });
     });
@@ -267,7 +247,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 1450] },
       ]);
 
-      const response = await controller.listBestEfforts({ sport: 'run', type: '5k' });
+      const response = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
 
       expect(response.type).toBe('5k');
       expect(response.efforts.map(({ activityName }) => activityName)).toEqual(['first', 'yearly best', 'later']);
@@ -287,9 +267,9 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 600, 1200, 2400] },
       ]);
       await activities.update(rideId, { sport: 'ride' });
-      await activityService.handleActivityBestEffortCompute({ id: rideId });
+      await sut.handleActivityBestEffortCompute({ id: rideId });
 
-      const response = await controller.listBestEfforts({ sport: 'ride', type: '20k' });
+      const response = await serviceApi.listBestEfforts({ sport: 'ride', type: '20k' });
 
       expect(response.sport).toBe('ride');
       expect(response.options.map(({ type }) => type)).toContain('longest_ride');
@@ -302,11 +282,11 @@ describe('ActivityController (medium)', () => {
 
   describe('GET /activities/:id', () => {
     it('returns null analysis fields while computations are pending', async () => {
-      const activityId = await createPendingActivity();
+      const activityId = await factory.newPendingActivity(testUser.id);
 
-      const activity = await controller.getById({ id: activityId });
-      const list = await controller.listRecent({ limit: 50 });
-      const matches = await controller.listMatchedRoutes({ id: activityId });
+      const activity = await serviceApi.getById({ id: activityId });
+      const list = await serviceApi.listRecent({ limit: 50 });
+      const matches = await serviceApi.listMatchedRoutes({ id: activityId });
 
       expect(activity.metrics).toBeNull();
       expect(activity.bestEfforts).toBeNull();
@@ -323,7 +303,7 @@ describe('ActivityController (medium)', () => {
         { type: 'altitude', data: [10, 15, 7, 20] },
       ]);
 
-      const activity = await controller.getById({ id: activityId });
+      const activity = await serviceApi.getById({ id: activityId });
 
       expect(activity.bestEfforts?.map(({ type }) => type)).toEqual(['400m', '1k', 'half_mile', '1_mile']);
       expect(activity.bestEfforts?.find(({ type }) => type === '1_mile')?.elapsedTime).toBeCloseTo(402.336);
@@ -352,7 +332,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 220] },
       ]);
 
-      const activity = await controller.getById({ id: activityId });
+      const activity = await serviceApi.getById({ id: activityId });
 
       expect(activity.bestEfforts?.find(({ type }) => type === '1k')).toMatchObject({
         overallRank: 4,
@@ -376,7 +356,7 @@ describe('ActivityController (medium)', () => {
         { type: 'longitude', data: [18, 18.000001, 18.000002] },
       ]);
 
-      const activity = await controller.getById({ id: activityId });
+      const activity = await serviceApi.getById({ id: activityId });
 
       expect(activity.track?.coordinates).toHaveLength(3);
       await expect(
@@ -424,21 +404,21 @@ describe('ActivityController (medium)', () => {
         { type: 'longitude', data: [18.0686, 18.079, 18.075, 18.0686] },
       ]);
 
-      const detail = await controller.getById({ id: first });
-      const response = await controller.listMatchedRoutes({ id: first });
+      const detail = await serviceApi.getById({ id: first });
+      const response = await serviceApi.listMatchedRoutes({ id: first });
 
       expect(detail.matchedRouteCount).toBe(3);
       expect(response.activities?.map(({ id }) => id)).toEqual([first, second, lateStart]);
 
       await db.deleteFrom('activity_route_match').where('activity_id', '=', first).execute();
-      const detailAfterRemovingPersistedMatches = await controller.getById({ id: first });
+      const detailAfterRemovingPersistedMatches = await serviceApi.getById({ id: first });
       expect(detailAfterRemovingPersistedMatches.matchedRouteCount).toBe(0);
     });
 
     it('returns no route matches for an activity without GPS data', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'indoor run');
 
-      const activity = await controller.getById({ id: activityId });
+      const activity = await serviceApi.getById({ id: activityId });
 
       expect(activity.matchedRouteCount).toBe(0);
     });
@@ -450,7 +430,7 @@ describe('ActivityController (medium)', () => {
       ]);
       await db.deleteFrom('activity_best_effort').where('activity_id', '=', activityId).execute();
 
-      const activity = await controller.getById({ id: activityId });
+      const activity = await serviceApi.getById({ id: activityId });
 
       expect(activity.bestEfforts).toEqual([]);
       await expect(
@@ -463,7 +443,7 @@ describe('ActivityController (medium)', () => {
     it('updates the activity name and description', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before');
 
-      const updated = await controller.updateById({ id: activityId }, { name: 'after', description: 'A lovely run' });
+      const updated = await serviceApi.updateById({ id: activityId }, { name: 'after', description: 'A lovely run' });
 
       expect(updated.id).toBe(activityId);
       expect(updated.name).toBe('after');
@@ -473,7 +453,7 @@ describe('ActivityController (medium)', () => {
     it('updates sport and startedAt', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before');
 
-      const updated = await controller.updateById(
+      const updated = await serviceApi.updateById(
         { id: activityId },
         {
           sport: 'trail_run',
@@ -491,17 +471,17 @@ describe('ActivityController (medium)', () => {
         { type: 'distance', data: [0, 400, 1000] },
         { type: 'time', data: [0, 100, 250] },
       ]);
-      const initialActivity = await controller.getById({ id: activityId });
+      const initialActivity = await serviceApi.getById({ id: activityId });
       expect(initialActivity.bestEfforts).toHaveLength(3);
 
-      await controller.updateById({ id: activityId }, { sport: 'ride' });
+      await serviceApi.updateById({ id: activityId }, { sport: 'ride' });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
-      const rideActivity = await controller.getById({ id: activityId });
+      const rideActivity = await serviceApi.getById({ id: activityId });
       expect(rideActivity.bestEfforts).toEqual([]);
 
-      await controller.updateById({ id: activityId }, { sport: 'run' });
+      await serviceApi.updateById({ id: activityId }, { sport: 'run' });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
-      const runActivity = await controller.getById({ id: activityId });
+      const runActivity = await serviceApi.getById({ id: activityId });
       expect(runActivity.bestEfforts).toHaveLength(3);
     });
 
@@ -511,7 +491,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 250] },
       ]);
 
-      await controller.updateById({ id: activityId }, { startedAt: '2025-01-01T08:00:00.000Z' });
+      await serviceApi.updateById({ id: activityId }, { startedAt: '2025-01-01T08:00:00.000Z' });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
       await expect(
@@ -524,10 +504,8 @@ describe('ActivityController (medium)', () => {
       ).resolves.toEqual({ year: 2025 });
     });
 
-    it('throws for a missing activity id', async () => {
-      await expect(controller.updateById({ id: MISSING_UUID }, { name: 'x' })).rejects.toThrow(
-        `Activity ${MISSING_UUID} does not exist`,
-      );
+    it('returns no activity for a missing activity id', async () => {
+      await expect(sut.updateById(MISSING_UUID, testUser.id, { name: 'x' })).resolves.toBeUndefined();
     });
   });
 
@@ -535,7 +513,7 @@ describe('ActivityController (medium)', () => {
     it('deletes the activity row', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'to-delete');
 
-      await controller.deleteById({ id: activityId });
+      await serviceApi.deleteById({ id: activityId });
 
       expect(await activities.getById(activityId)).toBeUndefined();
     });
@@ -545,7 +523,7 @@ describe('ActivityController (medium)', () => {
       const activityBefore = await activities.getById(activityId);
       expect(activityBefore).toBeDefined();
 
-      await controller.deleteById({ id: activityId });
+      await serviceApi.deleteById({ id: activityId });
 
       expect(await uploads.getById(activityBefore!.upload_id)).toBeUndefined();
     });
@@ -560,7 +538,7 @@ describe('ActivityController (medium)', () => {
         { type: 'time', data: [0, 240] },
       ]);
 
-      await controller.deleteById({ id: firstId });
+      await serviceApi.deleteById({ id: firstId });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
       await expect(
@@ -573,10 +551,8 @@ describe('ActivityController (medium)', () => {
       ).resolves.toEqual({ overall_rank: 1, year_rank: 1 });
     });
 
-    it('throws for a missing activity id', async () => {
-      await expect(controller.deleteById({ id: MISSING_UUID })).rejects.toThrow(
-        `Activity ${MISSING_UUID} does not exist`,
-      );
+    it('returns false for a missing activity id', async () => {
+      await expect(serviceApi.deleteById({ id: MISSING_UUID })).resolves.toBe(false);
     });
   });
 });

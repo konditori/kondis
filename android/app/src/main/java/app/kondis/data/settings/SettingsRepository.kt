@@ -20,6 +20,7 @@ private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 data class AppSettings(
     val serverUrl: String = BuildConfig.DEFAULT_API_URL,
     val unitSystem: UnitSystem = UnitSystem.Metric,
+    val accessToken: String? = null,
 )
 
 @Singleton
@@ -47,6 +48,7 @@ class SettingsRepository
                                 ?.let { value -> UnitSystem.entries.firstOrNull { it.name == value } }
                                 ?: UnitSystem.Metric,
                     )
+                        .copy(accessToken = preferences[ACCESS_TOKEN])
                 }
 
         suspend fun setServerUrl(url: String) {
@@ -57,9 +59,11 @@ class SettingsRepository
         suspend fun setUnitSystem(unitSystem: UnitSystem) {
             context.settingsDataStore.edit { it[UNIT_SYSTEM] = unitSystem.name }
         }
+        suspend fun setAccessToken(token: String?) { context.settingsDataStore.edit { preferences -> if (token == null) preferences.remove(ACCESS_TOKEN) else preferences[ACCESS_TOKEN] = token } }
 
         private companion object {
             val SERVER_URL = stringPreferencesKey("server_url")
             val UNIT_SYSTEM = stringPreferencesKey("unit_system")
+            val ACCESS_TOKEN = stringPreferencesKey("access_token")
         }
     }

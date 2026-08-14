@@ -1,14 +1,19 @@
 <script lang="ts">
-  import { Activity as ActivityIcon, CloudOff, LoaderCircle, Search, X } from '@lucide/svelte';
-  import { tick } from 'svelte';
-  import type { Snapshot } from '@sveltejs/kit';
-  import ActivityCard from '$lib/components/ActivityCard.svelte';
-  import { activityControllerListRecent, getSdkRequestOptions } from '$lib/api';
-  import { subscribeToActivityEvents } from '$lib/realtime';
-  import type { Activity, ActivityPage } from '$lib/types';
+  import {
+    Activity as ActivityIcon,
+    CloudOff,
+    LoaderCircle,
+  } from "@lucide/svelte";
+  import { tick } from "svelte";
+  import { page } from "$app/state";
+  import type { Snapshot } from "@sveltejs/kit";
+  import ActivityCard from "$lib/components/ActivityCard.svelte";
+  import { activityControllerListRecent, getSdkRequestOptions } from "$lib/api";
+  import { subscribeToActivityEvents } from "$lib/realtime";
+  import type { Activity, ActivityPage } from "$lib/types";
 
   let { data } = $props();
-  let query = $state('');
+  let query = $state(page.url.searchParams.get("search") ?? "");
   let appendedActivities = $state<Activity[]>([]);
   let cursorOverride = $state<string | null>();
   let totalOverride = $state<number>();
@@ -22,11 +27,19 @@
   let loading = $state(false);
   let loadError = $state(false);
   const activities = $derived.by(() => {
-    const byUpload = new Map(data.activities.map((activity) => [activity.uploadId, activity]));
-    for (const activity of appendedActivities) byUpload.set(activity.uploadId, activity);
-    return [...byUpload.values()].sort((a, b) => b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id));
+    const byUpload = new Map(
+      data.activities.map((activity) => [activity.uploadId, activity]),
+    );
+    for (const activity of appendedActivities)
+      byUpload.set(activity.uploadId, activity);
+    return [...byUpload.values()].sort(
+      (a, b) =>
+        b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id),
+    );
   });
-  const nextCursor = $derived(cursorOverride === undefined ? data.nextCursor : cursorOverride);
+  const nextCursor = $derived(
+    cursorOverride === undefined ? data.nextCursor : cursorOverride,
+  );
   const total = $derived(totalOverride ?? data.total);
   const hasSearch = $derived(query.trim().length > 0);
   const displayedActivities = $derived(
@@ -36,8 +49,12 @@
   );
   const displayedNextCursor = $derived(hasSearch ? searchCursor : nextCursor);
   const displayedTotal = $derived(hasSearch ? (searchTotal ?? 0) : total);
-  const heading = $derived(hasSearch ? `Search results for “${query.trim()}”` : 'Activities');
-  const resultSummary = $derived(`${displayedTotal} ${displayedTotal === 1 ? 'workout' : 'workouts'} found`);
+  const heading = $derived(
+    hasSearch ? `Search results for “${query.trim()}”` : "Activities",
+  );
+  const resultSummary = $derived(
+    `${displayedTotal} ${displayedTotal === 1 ? "workout" : "workouts"} found`,
+  );
 
   $effect(() => {
     if (data.activities) {
@@ -76,23 +93,48 @@
       });
   });
 
-  $effect(() => subscribeToActivityEvents(data.eventsUrl, (activity) => {
-    appendedActivities = [...appendedActivities.filter(({ uploadId }) => uploadId !== activity.uploadId), activity];
-    void refreshRecent();
-  }, () => void refreshRecent()));
+  $effect(() =>
+    subscribeToActivityEvents(
+      data.eventsUrl,
+      (activity) => {
+        appendedActivities = [
+          ...appendedActivities.filter(
+            ({ uploadId }) => uploadId !== activity.uploadId,
+          ),
+          activity,
+        ];
+        void refreshRecent();
+      },
+      () => void refreshRecent(),
+    ),
+  );
 
   $effect(() => {
     const handleClearSearch = () => clearSearch();
-    window.addEventListener('kondis:clear-search', handleClearSearch);
-    return () => window.removeEventListener('kondis:clear-search', handleClearSearch);
+    const handleSearch = (event: Event) => {
+      query = String((event as CustomEvent<string>).detail ?? "");
+    };
+    window.addEventListener("kondis:clear-search", handleClearSearch);
+    window.addEventListener("kondis:search", handleSearch);
+    return () => {
+      window.removeEventListener("kondis:clear-search", handleClearSearch);
+      window.removeEventListener("kondis:search", handleSearch);
+    };
   });
 
   async function refreshRecent() {
     try {
-      const page = (await activityControllerListRecent({}, getSdkRequestOptions())) as ActivityPage;
-      const refreshedUploads = new Set(page.activities.map(({ uploadId }) => uploadId));
+      const page = (await activityControllerListRecent(
+        {},
+        getSdkRequestOptions(),
+      )) as ActivityPage;
+      const refreshedUploads = new Set(
+        page.activities.map(({ uploadId }) => uploadId),
+      );
       appendedActivities = [
-        ...appendedActivities.filter(({ uploadId }) => !refreshedUploads.has(uploadId)),
+        ...appendedActivities.filter(
+          ({ uploadId }) => !refreshedUploads.has(uploadId),
+        ),
         ...page.activities,
       ];
       totalOverride = page.total;
@@ -108,17 +150,25 @@
     loadError = false;
     try {
       const page = (await activityControllerListRecent(
-        hasSearch ? { cursor: searchCursor!, search: query.trim() } : { cursor: nextCursor! },
+        hasSearch
+          ? { cursor: searchCursor!, search: query.trim() }
+          : { cursor: nextCursor! },
         getSdkRequestOptions(),
       )) as ActivityPage;
       if (hasSearch) {
         const existing = new Set(displayedActivities.map(({ id }) => id));
-        searchAppendedActivities = [...searchAppendedActivities, ...page.activities.filter(({ id }) => !existing.has(id))];
+        searchAppendedActivities = [
+          ...searchAppendedActivities,
+          ...page.activities.filter(({ id }) => !existing.has(id)),
+        ];
         searchCursor = page.nextCursor;
         searchTotal = page.total;
       } else {
         const existing = new Set(activities.map(({ id }) => id));
-        appendedActivities = [...appendedActivities, ...page.activities.filter(({ id }) => !existing.has(id))];
+        appendedActivities = [
+          ...appendedActivities,
+          ...page.activities.filter(({ id }) => !existing.has(id)),
+        ];
         cursorOverride = page.nextCursor;
         totalOverride = page.total;
       }
@@ -130,15 +180,19 @@
   }
 
   function infiniteScroll(node: HTMLElement) {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some(({ isIntersecting }) => isIntersecting)) void loadMore();
-    }, { rootMargin: '500px 0px' });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some(({ isIntersecting }) => isIntersecting))
+          void loadMore();
+      },
+      { rootMargin: "500px 0px" },
+    );
     observer.observe(node);
     return { destroy: () => observer.disconnect() };
   }
 
   function clearSearch() {
-    query = '';
+    query = "";
   }
 
   type ActivityListSnapshot = {
@@ -165,7 +219,9 @@
 
       // SvelteKit restores its scroll position before snapshots. Wait until the
       // restored activities have rebuilt the page height, then restore it again.
-      void tick().then(() => requestAnimationFrame(() => window.scrollTo({ top: value.scrollY })));
+      void tick().then(() =>
+        requestAnimationFrame(() => window.scrollTo({ top: value.scrollY })),
+      );
     },
   };
 </script>
@@ -174,32 +230,50 @@
 
 <div class="page-shell">
   <header class="page-header">
-    <div><h1>{heading}</h1>{#if hasSearch}<p>{resultSummary}</p>{/if}</div>
-    <label class="search"><Search size={18} /><input bind:value={query} placeholder="Search activities" aria-label="Search activities" />{#if hasSearch}<button class="search-clear" type="button" onclick={clearSearch} aria-label="Clear search" title="Clear search"><X size={17} /></button>{/if}</label>
+    <div>
+      <h1>{heading}</h1>
+      {#if hasSearch}<p>{resultSummary}</p>{/if}
+    </div>
   </header>
 
   {#if data.unavailable}
-    <div class="notice"><CloudOff size={20} /><span><strong>Server unavailable</strong> Start the Kondis API to load your activities.</span></div>
+    <div class="notice">
+      <CloudOff size={20} /><span
+        ><strong>Server unavailable</strong> Start the Kondis API to load your activities.</span
+      >
+    </div>
   {/if}
 
   {#if displayedActivities.length}
-      <div class="activity-list">
+    <div class="activity-list">
       {#each displayedActivities as activity (activity.id)}
-        <ActivityCard {activity} activityTypes={data.activityTypes} unitSystem={data.unitSystem} />
+        <ActivityCard
+          {activity}
+          activityTypes={data.activityTypes}
+          unitSystem={data.unitSystem}
+        />
       {/each}
     </div>
     {#if displayedNextCursor}
       <div class="load-more" use:infiniteScroll aria-live="polite">
         {#if loading}<LoaderCircle class="spin" size={18} /> Loading more activities…
-        {:else if loadError}<button onclick={() => void loadMore()}>Could not load more. Try again</button>
+        {:else if loadError}<button onclick={() => void loadMore()}
+            >Could not load more. Try again</button
+          >
         {/if}
       </div>
     {/if}
   {:else if !data.unavailable && !searchLoading}
     <div class="empty-state">
       <span class="empty-icon"><ActivityIcon size={28} /></span>
-      <h2>{query ? 'No matching activities' : 'Your first activity starts here'}</h2>
-      <p>{query ? 'Try a different sport or activity name.' : 'Import a file to build your private training archive.'}</p>
+      <h2>
+        {query ? "No matching activities" : "Your first activity starts here"}
+      </h2>
+      <p>
+        {query
+          ? "Try a different sport or activity name."
+          : "Import a file to build your private training archive."}
+      </p>
     </div>
   {/if}
 </div>

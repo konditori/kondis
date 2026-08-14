@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { Public } from 'src/auth';
 import { PingResponseDto } from 'src/dtos/ping.dto';
 import { ServerService } from 'src/services/server.service';
 
@@ -17,6 +18,7 @@ export class ServerController {
     type: PingResponseDto,
   })
   @Get('ping')
+  @Public()
   ping(): PingResponseDto {
     return this.service.ping();
   }

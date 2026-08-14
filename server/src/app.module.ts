@@ -1,14 +1,17 @@
 import { ConsoleLogger, Module, OnApplicationBootstrap } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import { AuthGuard } from 'src/auth';
 
 import { ConfigService } from 'src/config/config.service';
 import { controllers } from 'src/controllers';
 import { databaseProviders } from 'src/db';
+import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { repositories } from 'src/repositories';
 import { JobRepository } from 'src/repositories/job.repository';
 import { services } from 'src/services';
 import { JobService } from 'src/services/job.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 
 @Module({
   controllers,
@@ -17,7 +20,11 @@ import { JobService } from 'src/services/job.service';
     ConsoleLogger,
     ...databaseProviders,
     ...repositories,
+    LagomTakeoutParser,
+    ImportProgressStore,
     ...services,
+    AuthGuard,
+    { provide: APP_GUARD, useExisting: AuthGuard },
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,

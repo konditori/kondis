@@ -377,21 +377,26 @@ export interface IEntityJob extends IBaseJob {
 }
 
 export interface IActivityUploadJob {
+  userId?: string;
   originalName: string;
   storagePath: string;
   checksum: string;
   activityName?: string;
   activityDescription?: string;
   activitySport?: ActivityType;
+  takeoutImportId?: string;
 }
 
 export interface IActivityParseJob extends IEntityJob {
   activityName?: string;
   activityDescription?: string;
   activitySport?: ActivityType;
+  takeoutImportId?: string;
 }
 
 export interface IManualActivityJob extends IEntityJob {
+  userId?: string;
+  sourceId?: string;
   activityName?: string;
   activityDescription?: string;
   activitySport: ActivityType;
@@ -406,11 +411,14 @@ export interface IManualActivityJob extends IEntityJob {
   avgHr?: number | null;
   maxHr?: number | null;
   calories?: number | null;
+  takeoutImportId?: string;
 }
 
 export interface ILagomTakeoutImportJob {
+  userId?: string;
   originalName: string;
   storagePath: string;
+  takeoutImportId?: string;
 }
 
 export type JobItem =

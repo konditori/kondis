@@ -7,14 +7,18 @@ const proxy: RequestHandler = async ({ request, params, url, locals }) => {
 
   const headers = new Headers(request.headers);
   headers.delete("host");
+  headers.delete("content-length");
+  headers.delete("transfer-encoding");
+  headers.delete("connection");
 
+  const body =
+    request.method === "GET" || request.method === "HEAD"
+      ? undefined
+      : await request.arrayBuffer();
   return locals.kondisFetch(target, {
     method: request.method,
     headers,
-    body:
-      request.method === "GET" || request.method === "HEAD"
-        ? undefined
-        : await request.arrayBuffer(),
+    body,
     redirect: "manual",
   });
 };

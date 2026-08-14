@@ -38,6 +38,16 @@ mise //server:migrations revert
 
 Review and implement both `up` and `down` in every generated migration before applying it.
 
+### Medium tests
+
+Run the server's medium integration tests with:
+
+```bash
+mise run //server:test-medium
+```
+
+These tests use Testcontainers and require a working container runtime.
+
 ## License
 
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).

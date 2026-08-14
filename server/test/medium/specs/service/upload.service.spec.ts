@@ -7,19 +7,22 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { type ConfigService } from 'src/config/config.service';
 import { type KondisDatabase } from 'src/db/database';
-import { JobName } from 'src/enum';
+import { JobName, QueueName } from 'src/enum';
+import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { type JobRepository } from 'src/repositories/job.repository';
+import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
 
+import { makeUploadedFile } from 'test/medium.factory';
+import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
-import { activityFixtures, makeUploadedFile } from 'test/medium/utils';
+import { activityFixtures } from 'test/medium/utils';
 import { createTestZip } from 'test/utils/zip';
 
-describe('UploadService (medium)', () => {
+describe(UploadService.name, () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
   const queue = vi.fn(async () => {});
@@ -27,9 +30,14 @@ describe('UploadService (medium)', () => {
 
   let storageDir = '';
   let db: KondisDatabase;
-  let uploadService: UploadService;
+  let sut: UploadService;
   let uploadRepository: UploadRepository;
   let storageRepository: StorageRepository;
+  let testApp: TestApp;
+  let queuedSut: UploadService;
+  let jobsRepository: JobRepository;
+  let queuedUploadRepository: UploadRepository;
+  let activityRepository: ActivityRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -39,7 +47,7 @@ describe('UploadService (medium)', () => {
     const config = { storageDir } as unknown as ConfigService;
 
     storageRepository = new StorageRepository(config, crypto);
-    uploadService = new UploadService(
+    sut = new UploadService(
       uploadRepository,
       storageRepository,
       crypto,
@@ -47,15 +55,23 @@ describe('UploadService (medium)', () => {
       jobs,
       logger,
     );
+
+    testApp = await createTestApp();
+    queuedSut = testApp.get(UploadService);
+    jobsRepository = testApp.get(JobRepository);
+    queuedUploadRepository = testApp.get(UploadRepository);
+    activityRepository = testApp.get(ActivityRepository);
   });
 
   beforeEach(async () => {
     queue.mockClear();
     await truncateAllTables(db);
+    await Promise.all(Object.values(QueueName).map((queueName) => jobsRepository.empty(queueName)));
   });
 
   afterAll(async () => {
     if (db) {
+      await testApp?.destroy();
       await db.destroy();
     }
     if (storageDir.length > 0) {
@@ -67,7 +83,7 @@ describe('UploadService (medium)', () => {
     const buffer = Buffer.from('not really a fit file, but parsing happens in a later job');
     const file = makeUploadedFile('ride.fit', buffer);
 
-    const result = await uploadService.uploadActivity(file);
+    const result = await sut.uploadActivity(file);
 
     expect(result).toEqual({ byteSize: buffer.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
@@ -96,7 +112,7 @@ describe('UploadService (medium)', () => {
       checksum: crypto.xxHash(buffer),
     };
 
-    await expect(uploadService.handleActivityUpload(data)).resolves.toBe('success');
+    await expect(sut.handleActivityUpload(data)).resolves.toBe('success');
     const stored = await uploadRepository.getByChecksum(crypto.xxHash(buffer));
     expect(stored).toBeDefined();
     expect(queue).toHaveBeenCalledTimes(1);
@@ -105,25 +121,17 @@ describe('UploadService (medium)', () => {
     expect(options.transaction).toBeDefined();
 
     queue.mockClear();
-    await expect(uploadService.handleActivityUpload(data)).resolves.toBe('skipped');
+    await expect(sut.handleActivityUpload(data)).resolves.toBe('skipped');
     expect(queue).not.toHaveBeenCalled();
 
     await expect(
-      uploadService.handleActivityUpload({
+      sut.handleActivityUpload({
         ...data,
         activityName: 'A nice workout',
         activitySport: 'roller_ski',
       }),
-    ).resolves.toBe('success');
-    expect(queue).toHaveBeenCalledWith({
-      name: JobName.ActivityParse,
-      data: {
-        id: stored!.id,
-        force: true,
-        activityName: 'A nice workout',
-        activitySport: 'roller_ski',
-      },
-    });
+    ).resolves.toBe('skipped');
+    expect(queue).not.toHaveBeenCalled();
   });
 
   it('stores a real .fit fixture from the queued activity upload', async () => {
@@ -133,7 +141,7 @@ describe('UploadService (medium)', () => {
     await storageRepository.write(storagePath, file.buffer);
 
     await expect(
-      uploadService.handleActivityUpload({
+      sut.handleActivityUpload({
         originalName: file.originalname,
         storagePath,
         checksum: crypto.xxHash(file.buffer),
@@ -150,7 +158,7 @@ describe('UploadService (medium)', () => {
     await storageRepository.write(storagePath, Buffer.from('changed'));
 
     await expect(
-      uploadService.handleActivityUpload({
+      sut.handleActivityUpload({
         originalName: 'ride.fit',
         storagePath,
         checksum: crypto.xxHash(Buffer.from('original')),
@@ -163,14 +171,14 @@ describe('UploadService (medium)', () => {
     const buffer = Buffer.from('nope');
     const file = makeUploadedFile('ride.lol', buffer);
 
-    await expect(uploadService.uploadActivity(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
+    await expect(sut.uploadActivity(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
 
   it('leaves a staged activity for cleanup when queueing its upload fails', async () => {
     const contents = Buffer.from('activity');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(uploadService.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow(
+    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow(
       'queue unavailable',
     );
 
@@ -194,31 +202,38 @@ describe('UploadService (medium)', () => {
       'activities/ride.gpx': gpx,
     });
 
-    const first = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+    const first = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(first).toEqual({ byteSize: archive.length, queued: true });
+    expect(first).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string } },
+      { name: JobName; data: { originalName: string; storagePath: string; takeoutImportId: string } },
     ];
     expect(item).toEqual({
       name: JobName.LagomTakeoutImport,
       data: {
         originalName: 'export.zip',
         storagePath: expect.stringMatching(/^temporary\/.+\.zip$/),
+        takeoutImportId: first.importId,
       },
     });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
     expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
 
     queue.mockClear();
-    await expect(uploadService.handleLagomTakeout(item.data)).resolves.toBe('success');
+    await expect(sut.handleLagomTakeout(item.data)).resolves.toBe('success');
     expect(queue).toHaveBeenCalledTimes(3);
     const [fitJob] = queue.mock.calls[0] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
+      {
+        name: JobName;
+        data: { originalName: string; storagePath: string; checksum: string; takeoutImportId?: string };
+      },
     ];
     const [gpxJob] = queue.mock.calls[1] as unknown as [
-      { name: JobName; data: { originalName: string; storagePath: string; checksum: string } },
+      {
+        name: JobName;
+        data: { originalName: string; storagePath: string; checksum: string; takeoutImportId?: string };
+      },
     ];
     const [manualJob] = queue.mock.calls[2] as unknown as [{ name: JobName; data: { activityName: string } }];
     expect(manualJob.name).toBe(JobName.ActivityManualCreate);
@@ -232,6 +247,7 @@ describe('UploadService (medium)', () => {
         activityName: 'Run',
         activityDescription: 'Forest loop',
         activitySport: 'roller_ski',
+        takeoutImportId: item.data.takeoutImportId,
       },
     });
     expect(gpxJob).toEqual({
@@ -242,24 +258,25 @@ describe('UploadService (medium)', () => {
         checksum: crypto.xxHash(gpx),
         activityName: 'Ride',
         activitySport: 'ride',
+        takeoutImportId: item.data.takeoutImportId,
       },
     });
     await expect(storageRepository.read(fitJob.data.storagePath)).resolves.toEqual(fit);
     await expect(storageRepository.read(gpxJob.data.storagePath)).resolves.toEqual(gpx);
     queue.mockClear();
-    const second = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+    const second = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(second).toEqual(first);
+    expect(second).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
   });
 
   it('defers validation of ZIP contents to the takeout import job', async () => {
     const archive = Buffer.from('nope');
-    const result = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+    const result = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
     expect(result.queued).toBe(true);
     const [item] = queue.mock.calls[0] as unknown as [{ data: { originalName: string; storagePath: string } }];
-    await expect(uploadService.handleLagomTakeout(item.data)).rejects.toThrow();
+    await expect(sut.handleLagomTakeout(item.data)).rejects.toThrow();
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
     expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
   });
@@ -268,7 +285,7 @@ describe('UploadService (medium)', () => {
     const archive = Buffer.from('archive');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow(
+    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow(
       'queue unavailable',
     );
 
@@ -278,7 +295,127 @@ describe('UploadService (medium)', () => {
 
   it('rejects a non-ZIP Strava takeout upload', async () => {
     await expect(
-      uploadService.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
+      sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
     ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
+  });
+
+  describe('real queue processing', () => {
+    it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
+      const contents = await readFile(fixture.path);
+      const result = await queuedSut.uploadActivity(makeUploadedFile(fixture.filename, contents));
+      expect(result.queued).toBe(true);
+
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const upload = await queuedUploadRepository.getByChecksum(crypto.xxHash(contents));
+      expect(upload?.status).toBe('parsed');
+
+      const activity = await activityRepository.getByUploadId(upload!.id);
+      expect(activity).toBeDefined();
+      expect(activity?.sport).toBe(fixture.expectedSport);
+    });
+
+    it('imports a Strava takeout and parses its activities through the real queues', async () => {
+      const fit = await readFile(activityFixtures.hindasRun.path);
+      const archive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Forest walk,A walk in the woods,Roller Ski,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+
+      const result = await queuedSut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+      expect(result.queued).toBe(true);
+      expect(await queuedUploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
+
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const imported = await queuedUploadRepository.getByChecksum(crypto.xxHash(fit));
+      expect(imported?.status).toBe('parsed');
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+
+      const updatedArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Updated hike,Updated description,Hike,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      const updatedResult = await queuedSut.uploadLagomTakeout(
+        makeUploadedFile('updated-export.zip', updatedArchive),
+      );
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+
+      const iceSkateArchive = createTestZip({
+        'activities.csv': Buffer.from(
+          'Activity ID,Activity Name,Activity Description,Activity Type,Filename\n1,Evening skate,Frozen lake,Ice Skate,activities/run.fit.gz',
+        ),
+        'activities/run.fit.gz': gzipSync(fit),
+      });
+      const iceSkateResult = await queuedSut.uploadLagomTakeout(
+        makeUploadedFile('ice-skate-export.zip', iceSkateArchive),
+      );
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+    });
+
+    it('deduplicates manual activities using the takeout Activity ID', async () => {
+      const archive = createTestZip({
+        'activities.csv': Buffer.from(
+          [
+            'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance',
+            'manual-1,"Aug 10, 2016, 5:00:00 PM",Gym,Weight Training,,600,600,0,0',
+          ].join('\n'),
+        ),
+      });
+
+      const first = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual.zip', archive));
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+      const second = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive));
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(queuedSut.getLagomTakeoutStatus(first.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 0,
+        status: 'completed',
+      });
+      expect(queuedSut.getLagomTakeoutStatus(second.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+
+      const manualUpload = await queuedUploadRepository.getByChecksum('strava:manual-1');
+      expect(manualUpload).toBeDefined();
+      expect(await activityRepository.getByUploadId(manualUpload!.id)).toBeDefined();
+    });
   });
 });

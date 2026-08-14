@@ -1,4 +1,4 @@
-import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable, Optional } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -22,6 +22,7 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 import {
   ACTIVITY_TYPES,
   ActivityType,
@@ -74,6 +75,7 @@ export class ActivityService {
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
+    @Optional() private readonly importProgressStore?: ImportProgressStore,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -85,6 +87,7 @@ export class ActivityService {
     activityName,
     activityDescription,
     activitySport,
+    takeoutImportId,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
@@ -108,6 +111,9 @@ export class ActivityService {
           await this.jobRepository.queueAll(pendingJobs);
         }
         await this.uploadRepository.setStatus(id, 'parsed');
+        if (takeoutImportId) {
+          this.importProgressStore?.increment(takeoutImportId);
+        }
         return JobStatus.Skipped;
       }
 
@@ -123,7 +129,7 @@ export class ActivityService {
       const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
         const createdId = await this.activityRepository.create(
-          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
+          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport, upload.user_id),
           trx,
         );
         await Promise.all([
@@ -145,11 +151,17 @@ export class ActivityService {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+      if (takeoutImportId) {
+        this.importProgressStore?.increment(takeoutImportId);
+      }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
       await this.uploadRepository.setStatus(id, 'failed', message);
+      if (takeoutImportId) {
+        this.importProgressStore?.increment(takeoutImportId, true);
+      }
       throw error;
     }
 
@@ -158,6 +170,22 @@ export class ActivityService {
 
   @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
   async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
+    const manualChecksum = job.sourceId ? `strava:${job.sourceId}` : `manual:${job.id}`;
+    const existing = await this.uploadRepository.getByChecksum(manualChecksum, job.userId);
+    const legacyExisting =
+      !existing && job.userId && job.sourceId
+        ? await this.uploadRepository.hasManualActivity(
+            { startedAt: new Date(job.startedAt), sport: job.activitySport, elapsedTime: job.elapsedTime },
+            job.userId,
+          )
+        : false;
+    if (existing || legacyExisting) {
+      if (job.takeoutImportId) {
+        this.importProgressStore?.increment(job.takeoutImportId, false, true);
+      }
+      return JobStatus.Skipped;
+    }
+
     const movingTime = job.movingTime ?? null;
     const distance = job.distance ?? null;
     const avgSpeed =
@@ -167,10 +195,11 @@ export class ActivityService {
       await this.uploadRepository.create(
         {
           id: job.id,
-          checksum: `manual:${job.id}`,
+          checksum: manualChecksum,
           original_name: 'Strava manual activity',
           byte_size: 0,
           storage_path: '',
+          user_id: job.userId,
           status: 'parsed',
         },
         trx,
@@ -217,6 +246,9 @@ export class ActivityService {
     const activity = await this.activityRepository.getById(createdId);
     if (activity) {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+    }
+    if (job.takeoutImportId) {
+      this.importProgressStore?.increment(job.takeoutImportId);
     }
     return JobStatus.Success;
   }
@@ -403,12 +435,16 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }) {
+  async listRecent(
+    { cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string },
+    userId?: string,
+  ) {
     const normalizedSearch = search?.trim() || undefined;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
       cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
       search: normalizedSearch,
+      userId,
     });
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -422,11 +458,11 @@ export class ActivityService {
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
-      total: await this.activityRepository.count(normalizedSearch),
+      total: await this.activityRepository.count(normalizedSearch, userId),
     };
   }
 
-  async listBestEfforts(sport: BestEffortSport, type: BestEffortType) {
+  async listBestEfforts(sport: BestEffortSport, type: BestEffortType, userId?: string) {
     const definitions = sport === 'run' ? RUNNING_BEST_EFFORTS : CYCLING_BEST_EFFORTS;
     const selected = definitions.find((effort) => effort.type === type);
     if (!selected) {
@@ -434,8 +470,8 @@ export class ActivityService {
     }
     const sports = [...BEST_EFFORT_SPORTS[sport]];
     const [rows, availableRows] = await Promise.all([
-      this.activityRepository.listBestEfforts(type, sports),
-      this.activityRepository.listAvailableBestEffortTypes(sports),
+      this.activityRepository.listBestEfforts(type, sports, userId),
+      this.activityRepository.listAvailableBestEffortTypes(sports, userId),
     ]);
     const availableTypes = new Set(availableRows.map((row) => row.type));
 
@@ -468,8 +504,8 @@ export class ActivityService {
     };
   }
 
-  async getById(id: string) {
-    const row = await this.activityRepository.getDetailById(id);
+  async getById(id: string, userId?: string) {
+    const row = await this.activityRepository.getDetailById(id, userId);
     if (!row) {
       return;
     }
@@ -513,13 +549,13 @@ export class ActivityService {
     };
   }
 
-  async listMatchedRoutes(id: string) {
-    const activity = await this.activityRepository.getById(id);
+  async listMatchedRoutes(id: string, userId?: string) {
+    const activity = await this.activityRepository.getById(id, userId);
     if (!activity) {
       return;
     }
 
-    const matches = await this.activityRepository.listMatchedRoutes(id);
+    const matches = await this.activityRepository.listMatchedRoutes(id, userId);
     return {
       sourceActivityId: id,
       activities:
@@ -529,13 +565,14 @@ export class ActivityService {
 
   async updateById(
     id: string,
+    userId?: string,
     input: {
       name?: string | null;
       description?: string | null;
       sport?: ActivityType;
       startedAt?: Date;
       excludeFromRankings?: boolean;
-    },
+    } = {},
   ) {
     const mapped: UpdateActivityInput = {};
 
@@ -567,7 +604,7 @@ export class ActivityService {
       mapped.exclude_from_rankings = input.excludeFromRankings;
     }
 
-    const updated = await this.activityRepository.update(id, mapped);
+    const updated = await this.activityRepository.update(id, mapped, userId);
     if (updated && input.excludeFromRankings === true) {
       await Promise.all([
         this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
@@ -589,7 +626,10 @@ export class ActivityService {
     return updatedDto;
   }
 
-  async deleteById(id: string): Promise<boolean> {
+  async deleteById(id: string, userId?: string): Promise<boolean> {
+    if (!(await this.activityRepository.getById(id, userId))) {
+      return false;
+    }
     const status = await this.handleActivityDelete({ id });
     return status !== JobStatus.Skipped;
   }
@@ -672,9 +712,7 @@ export class ActivityService {
               const leftDuration = leftDefinition && 'duration' in leftDefinition ? leftDefinition.duration : 0;
               const rightDuration = rightDefinition && 'duration' in rightDefinition ? rightDefinition.duration : 0;
               return (
-                rightDuration - leftDuration ||
-                left.overallRank - right.overallRank ||
-                left.yearRank - right.yearRank
+                rightDuration - leftDuration || left.overallRank - right.overallRank || left.yearRank - right.yearRank
               );
             }
             const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
@@ -728,10 +766,12 @@ export class ActivityService {
     activityName?: string,
     activityDescription?: string,
     activitySport?: ActivityType,
+    userId?: string | null,
   ): CreateActivityInput {
     return {
       activity: {
         upload_id: uploadId,
+        user_id: userId ?? null,
         sport: activitySport ?? parsed.sport,
         name: activityName ?? parsed.name,
         description: activityDescription ?? null,

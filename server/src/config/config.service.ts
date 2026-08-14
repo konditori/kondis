@@ -121,12 +121,17 @@ export class ConfigService {
   readonly autoMigrate: boolean;
   readonly database: DatabaseConfig;
   readonly jobs: JobsConfig;
+  /** Secret used to sign access tokens. Set KONDIS_AUTH_SECRET in production. */
+  readonly authSecret: string;
 
   constructor() {
     this.port = Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293);
     this.workers = parseWorkers(process.env.KONDIS_WORKERS);
     this.storageDir = process.env.KONDIS_STORAGE_DIR ?? '/data';
     this.autoMigrate = readBoolean('KONDIS_DB_AUTO_MIGRATE', true);
+    // DB_PASSWORD keeps existing single-container installs usable, but a distinct
+    // long random secret is recommended so database credentials can be rotated.
+    this.authSecret = readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret';
 
     this.database = {
       host: readSecret('DB_HOSTNAME') ?? 'localhost',

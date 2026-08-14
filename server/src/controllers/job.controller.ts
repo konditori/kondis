@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { AdminOnly } from 'src/auth';
 import {
   AllJobStatusResponseDto,
   JobCreateDto,
@@ -13,6 +14,7 @@ import { JobService } from 'src/services/job.service';
 
 @ApiTags('jobs')
 @Controller('jobs')
+@AdminOnly()
 export class JobController {
   constructor(private readonly service: JobService) {}
 
