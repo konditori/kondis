@@ -1,0 +1,19 @@
+e2e/src/utils.ts
+  s_0737dd71c8a0c4::t_f863e98ce15a94 36-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "917d4f9aa32691b90633afbb36c79a0dd23ff35c",
+  "prompts": {},
+  "sessions": {
+    "s_0737dd71c8a0c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0027e-7cd7-7370-8fa3-854d6d2e618b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
