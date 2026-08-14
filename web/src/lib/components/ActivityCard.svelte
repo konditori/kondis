@@ -50,7 +50,9 @@
     const label = bestEffortLabel(type);
     const rank = personalRecord?.overallRank ?? 1;
     const ordinal = rank === 1 ? '' : rank === 2 ? '2nd ' : '3rd ';
-    return type.includes('power') || type === 'biggest_climb' || type === 'elevation_gain'
+    if (type === 'longest_ride') return `Your ${ordinal}longest ride!`;
+    if (type === 'biggest_climb') return `Your ${ordinal}biggest climb!`;
+    return type.includes('power') || type === 'elevation_gain'
       ? `Your ${ordinal}best ${label}!`
       : `Your ${ordinal}fastest ${label}!`;
   }
