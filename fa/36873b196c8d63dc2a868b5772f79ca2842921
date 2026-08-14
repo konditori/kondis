@@ -1,0 +1,35 @@
+README.md
+  s_43a91ceba63b0c::t_479d0c39353e7b 41-50
+server/eslint.config.mjs
+  s_43a91ceba63b0c::t_bbbac154b713a9 19-23,97-103
+server/src/imports/lagom-takeout.parser.spec.ts
+  s_43a91ceba63b0c::t_ba625866762052 4,7-10,51,56,64,73-84
+server/src/imports/lagom-takeout.parser.ts
+  s_43a91ceba63b0c::t_383179abb0dff9 57-65,67-70,73-74,77-100,102-105,108-110,112-117,120-125,127-129,131,133-144,146-160,163-171,173-177,194-222,224-227,230-241,244-253,256-258,260-263,265-322,324-327,330-334,337-341,343-362,364-385,388-390
+server/src/services/activity.service.ts
+  s_43a91ceba63b0c::t_d5023bdb0aff02 25,78,115,155,163,173,184,251
+server/src/services/upload.service.ts
+  s_43a91ceba63b0c::t_d90968f4fcef13 14,20,34-35,84,123,151,166,189-215,217-218,221,224
+server/src/state/import-progress.store.ts
+  s_43a91ceba63b0c::t_c75e1ad270f86b 3-5,8,17-18,33
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_43a91ceba63b0c::t_66398e46d0a638 235,238-244,246-248,257-259,262-268,270-301,303-306
+server/test/medium/specs/service/upload.service.spec.ts
+  s_43a91ceba63b0c::t_fb0fa64f821334 228,239
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fa36873b196c8d63dc2a868b5772f79ca2842921",
+  "prompts": {},
+  "sessions": {
+    "s_43a91ceba63b0c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00219-5585-7c02-ad59-e139933901f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
