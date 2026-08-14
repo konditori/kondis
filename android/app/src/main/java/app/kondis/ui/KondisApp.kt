@@ -71,7 +71,6 @@ private val destinations =
     listOf(
         Destination(FeedKey, "Activities", Icons.AutoMirrored.Rounded.DirectionsRun),
         Destination(RecordKey, "Record", Icons.Rounded.AddCircle),
-        Destination(SettingsKey, "Settings", Icons.Rounded.Settings),
         Destination(YouKey, "You", Icons.Rounded.Person),
     )
 
@@ -144,6 +143,10 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                             onNavigate = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
+                            onSettings = {
+                                backStack.clear()
+                                backStack.add(SettingsKey)
+                            },
                         )
                     }
                     entry<ActivityDetailKey> { key ->
@@ -175,6 +178,10 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                             onNavigate = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
+                            onSettings = {
+                                backStack.clear()
+                                backStack.add(SettingsKey)
+                            },
                         )
                     }
                 },

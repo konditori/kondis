@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.MilitaryTech
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -49,11 +50,12 @@ fun BestEffortsRoute(
     onBack: () -> Unit,
     onActivityClick: (String) -> Unit,
     onNavigate: (String, String) -> Unit,
+    onSettings: () -> Unit,
     viewModel: BestEffortsViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(sport, type) { viewModel.load(sport, type) }
     val state by viewModel.state.collectAsStateWithLifecycle()
-    BestEffortsScreen(state, sport, type, units, onBack, onActivityClick, onNavigate)
+    BestEffortsScreen(state, sport, type, units, onBack, onActivityClick, onNavigate, onSettings)
 }
 
 @Composable
@@ -65,6 +67,7 @@ private fun BestEffortsScreen(
     onBack: () -> Unit,
     onActivityClick: (String) -> Unit,
     onNavigate: (String, String) -> Unit,
+    onSettings: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -82,6 +85,9 @@ private fun BestEffortsScreen(
                 Column(Modifier.weight(1f)) {
                     Text("YOU", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
                     Text("Best efforts", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                }
+                IconButton(onClick = onSettings) {
+                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
                 }
             }
         }
