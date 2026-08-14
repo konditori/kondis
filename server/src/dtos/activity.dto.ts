@@ -123,6 +123,7 @@ export const ActivityListResponseSchema = z
           .array(
             z.object({
               type: BestEffortTypeSchema,
+              value: z.number().nonnegative().describe('Best-effort value; watts for power efforts'),
               overallRank: z.number().int().min(1),
               yearRank: z.number().int().min(1).max(3),
             }),
@@ -174,6 +175,7 @@ export const ActivityDetailSchema = ActivitySchema.extend({
     .array(
       z.object({
         type: BestEffortTypeSchema,
+        value: z.number().nonnegative().describe('Best-effort value; watts for power efforts'),
         distance: z.number().positive().describe('Standard effort distance in meters'),
         elapsedTime: z.number().positive().describe('Effort duration in seconds'),
         startTime: z.number().nonnegative().describe('Start offset from activity start in seconds'),

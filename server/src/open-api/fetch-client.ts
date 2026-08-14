@@ -123,6 +123,8 @@ export type ActivityListResponseDtoOutput = {
     topBestEfforts:
       | {
           type: BestEffortType_Output;
+          /** Best-effort value; watts for power efforts */
+          value: number;
           overallRank: number;
           yearRank: number;
         }[]
@@ -230,6 +232,8 @@ export type ActivityDetailDtoOutput = {
   bestEfforts:
     | {
         type: BestEffortType_Output;
+        /** Best-effort value; watts for power efforts */
+        value: number;
         /** Standard effort distance in meters */
         distance: number;
         /** Effort duration in seconds */

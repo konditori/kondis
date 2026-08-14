@@ -177,7 +177,15 @@ private fun AchievementMedal(
 private fun Activity.personalRecord(): BestEffortSummary? =
     topBestEfforts
         ?.filter { effort -> effort.overallRank in 1..3 }
-        ?.maxByOrNull { effort -> bestEffortDistance(effort.type) * 10 - effort.overallRank }
+        ?.let { records ->
+            val powerRecords = records.filter { effort -> effort.type.startsWith("power_") }
+            (if (powerRecords.isNotEmpty()) powerRecords else records)
+                .maxWithOrNull(
+                    compareBy<BestEffortSummary> { powerDuration(it.type) }
+                        .thenBy { bestEffortDistance(it.type) }
+                        .thenByDescending { -it.overallRank },
+                )
+        }
 
 private fun achievementText(effort: BestEffortSummary): String {
     val ordinal =
@@ -196,8 +204,13 @@ private fun achievementText(effort: BestEffortSummary): String {
         }
 
         else -> {
-            val verb = if (effort.type.contains("power") || effort.type == "elevation_gain") "best" else "fastest"
-            "Your $ordinal$verb ${bestEffortLabel(effort.type)}!"
+            if (effort.type.startsWith("power_")) {
+                val duration = powerDurationLabel(effort.type)
+                "Your ${ordinal}highest power output for $duration ever!"
+            } else {
+                val verb = if (effort.type == "elevation_gain") "best" else "fastest"
+                "Your $ordinal$verb ${bestEffortLabel(effort.type)}!"
+            }
         }
     }
 }
@@ -217,6 +230,21 @@ private fun bestEffortLabel(type: String): String =
         "longest_ride" to "Longest ride",
         "biggest_climb" to "Biggest climb",
         "elevation_gain" to "Elevation gain",
+        "power_5s" to "5 sec power",
+        "power_15s" to "15 sec power",
+        "power_30s" to "30 sec power",
+        "power_1m" to "1 min power",
+        "power_2m" to "2 min power",
+        "power_3m" to "3 min power",
+        "power_5m" to "5 min power",
+        "power_8m" to "8 min power",
+        "power_10m" to "10 min power",
+        "power_15m" to "15 min power",
+        "power_20m" to "20 min power",
+        "power_30m" to "30 min power",
+        "power_45m" to "45 min power",
+        "power_1h" to "1 hour power",
+        "power_2h" to "2 hour power",
     )[type] ?: type
 
 private fun bestEffortDistance(type: String): Double =
@@ -233,6 +261,29 @@ private fun bestEffortDistance(type: String): Double =
         "marathon" to 42_195.0,
         "longest_ride" to Double.POSITIVE_INFINITY,
     )[type] ?: 0.0
+
+private fun powerDuration(type: String): Int =
+    Regex("^power_(\\d+)(s|m|h)$").matchEntire(type)?.let { match ->
+        val amount = match.groupValues[1].toInt()
+        amount *
+            when (match.groupValues[2]) {
+                "h" -> 3600
+                "m" -> 60
+                else -> 1
+            }
+    } ?: 0
+
+private fun powerDurationLabel(type: String): String =
+    Regex("^power_(\\d+)(s|m|h)$").matchEntire(type)?.let { match ->
+        val amount = match.groupValues[1]
+        val unit =
+            when (match.groupValues[2]) {
+                "h" -> "hour"
+                "m" -> "minute"
+                else -> "second"
+            }
+        "$amount $unit${if (amount == "1") "" else "s"}"
+    } ?: bestEffortLabel(type).removeSuffix(" power")
 
 private fun rankDescription(rank: Int): String =
     if (rank ==

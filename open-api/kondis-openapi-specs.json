@@ -960,6 +960,11 @@
                       "type": {
                         "$ref": "#/components/schemas/BestEffortType_Output"
                       },
+                      "value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Best-effort value; watts for power efforts"
+                      },
                       "overallRank": {
                         "type": "integer",
                         "minimum": 1,
@@ -973,6 +978,7 @@
                     },
                     "required": [
                       "type",
+                      "value",
                       "overallRank",
                       "yearRank"
                     ],
@@ -1461,10 +1467,15 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {
-                  "$ref": "#/components/schemas/BestEffortType_Output"
-                },
-                "distance": {
+                      "type": {
+                        "$ref": "#/components/schemas/BestEffortType_Output"
+                      },
+                      "value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Best-effort value; watts for power efforts"
+                      },
+                      "distance": {
                   "type": "number",
                   "exclusiveMinimum": true,
                   "description": "Standard effort distance in meters",
@@ -1521,8 +1532,9 @@
                 }
               },
               "required": [
-                "type",
-                "distance",
+                      "type",
+                      "value",
+                      "distance",
                 "elapsedTime",
                 "startTime",
                 "endTime",

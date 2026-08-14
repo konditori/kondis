@@ -49,6 +49,7 @@ data class ActivityMetrics(
 @Serializable
 data class BestEffortSummary(
     val type: String,
+    val value: Double,
     val overallRank: Int,
     val yearRank: Int,
 )
@@ -132,6 +133,7 @@ data class ActivityDetail(
                 bestEfforts?.map { effort ->
                     BestEffortSummary(
                         type = effort.type,
+                        value = effort.value,
                         overallRank = effort.overallRank,
                         yearRank = effort.yearRank,
                     )
@@ -180,6 +182,7 @@ data class RoutePoint(
 @Serializable
 data class BestEffort(
     val type: String,
+    val value: Double,
     val distance: Double,
     val elapsedTime: Double,
     val startTime: Double,

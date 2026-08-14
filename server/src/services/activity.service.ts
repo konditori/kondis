@@ -495,6 +495,7 @@ export class ActivityService {
                 ? [
                     {
                       type: definition.type,
+                      value: effort.value,
                       distance: effort.distance,
                       elapsedTime: effort.elapsed_time,
                       startTime: effort.start_time,
@@ -638,7 +639,7 @@ export class ActivityService {
 
   private async topBestEffortsForActivities(activities: ActivityListRecord[]) {
     const activityIds = new Set(activities.map(({ id }) => id));
-    const result = new Map<string, { type: BestEffortType; overallRank: number; yearRank: number }[]>();
+    const result = new Map<string, { type: BestEffortType; value: number; overallRank: number; yearRank: number }[]>();
     if (activityIds.size === 0) {
       return result;
     }
@@ -650,7 +651,7 @@ export class ActivityService {
         continue;
       }
       const efforts = result.get(row.activity_id) ?? [];
-      efforts.push({ type: definition.type, overallRank: row.overall_rank, yearRank: row.year_rank });
+      efforts.push({ type: definition.type, value: row.value, overallRank: row.overall_rank, yearRank: row.year_rank });
       result.set(row.activity_id, efforts);
     }
 
@@ -659,6 +660,20 @@ export class ActivityService {
         activityId,
         efforts
           .sort((left, right) => {
+            const leftIsPower = left.type.startsWith('power_');
+            const rightIsPower = right.type.startsWith('power_');
+            if (leftIsPower !== rightIsPower) {
+              return leftIsPower ? -1 : 1;
+            }
+            if (leftIsPower && rightIsPower) {
+              const leftDuration = BEST_EFFORT_DEFINITIONS.get(left.type)?.duration ?? 0;
+              const rightDuration = BEST_EFFORT_DEFINITIONS.get(right.type)?.duration ?? 0;
+              return (
+                rightDuration - leftDuration ||
+                left.overallRank - right.overallRank ||
+                left.yearRank - right.yearRank
+              );
+            }
             const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
             const rightDefinition = BEST_EFFORT_DEFINITIONS.get(right.type);
             const leftDistance =
