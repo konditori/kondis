@@ -1,0 +1,31 @@
+server/mise.toml
+  s_43a91ceba63b0c::t_9b9f1039f307c5 10
+server/src/controllers/upload.controller.ts
+  s_43a91ceba63b0c::t_4997b101eb8655 86
+server/test/medium.factory.ts
+  s_43a91ceba63b0c::t_bc1bac969292ca 1-103
+server/test/medium/specs/controller/server.controller.spec.ts
+  s_43a91ceba63b0c::t_9b8986ace2b06c 6-8,10-12
+server/test/medium/specs/jobs/job-system.spec.ts
+  s_43a91ceba63b0c::t_553b92fe92e295 20,23,130
+server/test/medium/specs/service/upload.service.spec.ts
+  s_43a91ceba63b0c::t_5a85b1bd2d0f12 10-11,14,19-20,22,25,36-40,58-63,69,74,210,227-230,233-236,301-420
+server/test/medium/utils.ts
+  s_43a91ceba63b0c::t_657440f12babc9 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "906bc20fa1ef79095931f740625d94892ea6cc05",
+  "prompts": {},
+  "sessions": {
+    "s_43a91ceba63b0c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00219-5585-7c02-ad59-e139933901f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
