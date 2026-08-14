@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.UnitSystem
+import app.kondis.model.formatDateTime
 import app.kondis.ui.components.ActivityCard
 
 @Composable
@@ -47,6 +50,7 @@ fun FeedRoute(
         onSearchChange = viewModel::setSearch,
         onRefresh = viewModel::refresh,
         onLoadMore = viewModel::loadMore,
+        onSyncQueuedWorkouts = viewModel::syncQueuedWorkouts,
         onActivityClick = onActivityClick,
     )
 }
@@ -58,6 +62,7 @@ fun FeedScreen(
     onSearchChange: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
+    onSyncQueuedWorkouts: () -> Unit,
     onActivityClick: (String) -> Unit,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -90,6 +95,12 @@ fun FeedScreen(
                         }
                     }
                 }
+            }
+            item {
+                SyncStatusCard(
+                    queuedWorkouts = state.queuedWorkouts,
+                    onSync = onSyncQueuedWorkouts,
+                )
             }
             item {
                 OutlinedTextField(
@@ -158,6 +169,61 @@ fun FeedScreen(
                         }
                         Text(if (state.loadingMore) "Loading…" else "Load more")
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SyncStatusCard(
+    queuedWorkouts: List<app.kondis.data.QueuedWorkout>,
+    onSync: () -> Unit,
+) {
+    androidx.compose.material3.Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors =
+            androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+    ) {
+        if (queuedWorkouts.isEmpty()) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(Icons.Rounded.CloudDone, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Column {
+                    Text("Everything is uploaded", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Your workouts are safely synced to Kondis.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        } else {
+            Column(Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                        Text(
+                            "${queuedWorkouts.size} ${if (queuedWorkouts.size == 1) "workout" else "workouts"} waiting to sync",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            "They are saved on this device and remain available below.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    TextButton(onClick = onSync) { Text("Sync now") }
+                }
+                queuedWorkouts.forEach { workout ->
+                    Text(
+                        "${workout.title.ifBlank { "Untitled workout" }} · ${formatDateTime(workout.startedAt)}",
+                        modifier = Modifier.padding(start = 36.dp, top = 10.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             }
         }

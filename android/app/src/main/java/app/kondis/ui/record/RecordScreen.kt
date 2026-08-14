@@ -385,7 +385,10 @@ private fun PostRecordingScreen(
                         Text("Uploading activity…", modifier = Modifier.padding(start = 12.dp))
                     }
                 } else if (recording.mode == RecordingMode.Saved) {
-                    Text("Activity saved.", color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "Saved on this device. It will upload when your Kondis server is reachable.",
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 } else {
                     Button(onClick = onSave, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Save activity") }
                     TextButton(onClick = { showDiscardDialog = true }, modifier = Modifier.fillMaxWidth()) {

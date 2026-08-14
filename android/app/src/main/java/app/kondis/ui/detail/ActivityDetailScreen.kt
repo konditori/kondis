@@ -116,6 +116,7 @@ fun ActivityDetailScreen(
         return
     }
 
+    val queuedForSync = activity.id.startsWith("local-")
     var editing by remember(activity.id) { mutableStateOf(false) }
     var showDeleteDialog by remember(activity.id) { mutableStateOf(false) }
     var draftName by remember(activity.id) { mutableStateOf(activity.name.orEmpty()) }
@@ -135,14 +136,34 @@ fun ActivityDetailScreen(
                 activity = activity,
                 units = units,
                 onBack = onBack,
-                onEdit = {
-                    draftName = activity.name.orEmpty()
-                    draftDescription = activity.description.orEmpty()
-                    draftSport = activity.sport
-                    draftExcludeFromRankings = activity.excludeFromRankings
-                    editing = true
-                },
+                onEdit =
+                    if (!queuedForSync) {
+                        {
+                            draftName = activity.name.orEmpty()
+                            draftDescription = activity.description.orEmpty()
+                            draftSport = activity.sport
+                            draftExcludeFromRankings = activity.excludeFromRankings
+                            editing = true
+                        }
+                    } else {
+                        null
+                    },
             )
+        }
+        if (queuedForSync) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "Saved on this device and waiting to sync.",
+                        modifier = Modifier.padding(start = 10.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
         if (editing) {
             item {
@@ -589,7 +610,7 @@ private fun DetailHeader(
     activity: ActivityDetail,
     units: UnitSystem,
     onBack: () -> Unit,
-    onEdit: () -> Unit,
+    onEdit: (() -> Unit)?,
 ) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 20.dp, bottom = 24.dp)) {
@@ -598,7 +619,7 @@ private fun DetailHeader(
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                 }
                 Spacer(Modifier.weight(1f))
-                TextButton(onClick = onEdit) { Text("Edit") }
+                onEdit?.let { TextButton(onClick = it) { Text("Edit") } }
             }
             Column(Modifier.padding(start = 12.dp)) {
                 Text(

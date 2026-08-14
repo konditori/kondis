@@ -3,6 +3,7 @@ package app.kondis.ui.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
+import app.kondis.data.QueuedWorkout
 import app.kondis.model.Activity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,6 +28,7 @@ data class FeedUiState(
     val refreshing: Boolean = false,
     val loadingMore: Boolean = false,
     val errorMessage: String? = null,
+    val queuedWorkouts: List<QueuedWorkout> = emptyList(),
 )
 
 private data class FeedMeta(
@@ -49,7 +51,7 @@ class FeedViewModel
         private val activities = search.flatMapLatest(repository::activities)
 
         val state: StateFlow<FeedUiState> =
-            combine(activities, search, meta) { activities, query, meta ->
+            combine(activities, search, meta, repository.queuedWorkouts()) { activities, query, meta, queuedWorkouts ->
                 FeedUiState(
                     activities = activities,
                     search = query,
@@ -58,6 +60,7 @@ class FeedViewModel
                     refreshing = meta.refreshing,
                     loadingMore = meta.loadingMore,
                     errorMessage = meta.errorMessage,
+                    queuedWorkouts = queuedWorkouts,
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUiState())
 
@@ -92,6 +95,10 @@ class FeedViewModel
                     .onFailure { error -> meta.update { it.copy(errorMessage = error.userMessage()) } }
                 meta.update { it.copy(loadingMore = false) }
             }
+        }
+
+        fun syncQueuedWorkouts() {
+            repository.requestQueuedWorkoutSync()
         }
     }
 
