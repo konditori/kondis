@@ -1,0 +1,63 @@
+open-api/kondis-openapi-specs.json
+  s_43a91ceba63b0c::t_bd1646b4a94e7e 110-134,527-540,556-560,565-566
+server/src/app.module.ts
+  s_43a91ceba63b0c::t_b2f4b899cd9dc3 4
+server/src/auth.ts
+  s_43a91ceba63b0c::t_e5953ba0d4880f 1-9,18-20,36-43,46-52,59-61,63-69,71,73-75
+server/src/controllers/activity.controller.ts
+  s_43a91ceba63b0c::t_2ef3e82deb6625 16,40-43,57-60,67-70,82-85,97-101
+server/src/controllers/auth.controller.ts
+  s_43a91ceba63b0c::t_7a9758462ea2bb 4-5,11-17,28-31,35-37
+server/src/controllers/index.ts
+  s_43a91ceba63b0c::t_31be7d57a3a39b 2,8-15
+server/src/controllers/job.controller.ts
+  s_43a91ceba63b0c::t_20bfee3b1e3565 5
+server/src/controllers/server.controller.ts
+  s_43a91ceba63b0c::t_aad390fbfabee7 5
+server/src/controllers/upload.controller.ts
+  s_43a91ceba63b0c::t_fe3d4e0a806227 1,8,82-91
+server/src/controllers/user.controller.ts
+  s_43a91ceba63b0c::t_0fc0b46c964fe4 4-5,7-12,16-33
+server/src/dtos/upload.dto.ts
+  s_43a91ceba63b0c::t_f7c355c4bd38a7 17,22-35
+server/src/open-api/fetch-client.ts
+  s_43a91ceba63b0c::t_a1464384282def 32-42,378-397
+server/src/repositories/activity.repository.ts
+  s_43a91ceba63b0c::t_730e42988cf2d7 399-409,422-424,451-453,538-540
+server/src/repositories/user.repository.ts
+  s_43a91ceba63b0c::t_9e5762688ee1a8 6-27
+server/src/schema/migrations/1786440063867-AddUsers.ts
+  s_43a91ceba63b0c::t_3f9ba1d7f22925 3-8,15-19
+server/src/schema/tables/user.table.ts
+  s_43a91ceba63b0c::t_9ac967a338f439 1-9
+server/src/services/index.ts
+  s_43a91ceba63b0c::t_d30d583b510e2a 2,8-18
+server/src/services/lagom-import.service.ts
+  s_43a91ceba63b0c::t_82da2f70399237 1-71
+server/src/utils/activity-details.ts
+  s_43a91ceba63b0c::t_688ab46a99a5bb 41-43,70-72,95-97,111-113,119-121,128-130,149-151,162-164
+server/test/medium/specs/service/upload.service.spec.ts
+  s_43a91ceba63b0c::t_0c02066b54a97e 117-118,191,201,245
+web/src/app.css
+  s_43a91ceba63b0c::t_91e85f212196ee 899-916
+web/src/lib/api.ts
+  s_43a91ceba63b0c::t_f9f0d43bd8b3f2 17,43
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_43a91ceba63b0c::t_e4eedb514ce3a5 3,8,16-42,55-57,65,69-73,143-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e568bbafbe1522c21901f10aa9584cf5274f6b3d",
+  "prompts": {},
+  "sessions": {
+    "s_43a91ceba63b0c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00219-5585-7c02-ad59-e139933901f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
