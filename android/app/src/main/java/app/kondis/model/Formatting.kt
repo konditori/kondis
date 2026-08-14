@@ -20,6 +20,29 @@ fun sportLabel(sport: String): String =
         .replace("E Bike", "E-bike")
         .replace("Hiit", "HIIT")
 
+fun defaultWorkoutTitle(
+    sport: String,
+    startedAt: Instant,
+): String {
+    val hour = startedAt.atZone(ZoneId.systemDefault()).hour
+    val timeOfDay =
+        when (hour) {
+            in 5..11 -> "Morning"
+            in 12..16 -> "Afternoon"
+            in 17..21 -> "Evening"
+            else -> "Night"
+        }
+    val activity =
+        when (sport.lowercase(Locale.ROOT)) {
+            "run", "trail_run" -> "Run"
+            "walk", "hike" -> "Walk"
+            "ride", "virtual_ride", "ebike" -> "Ride"
+            "swim" -> "Swim"
+            else -> "Workout"
+        }
+    return "$timeOfDay $activity"
+}
+
 fun formatDistance(
     meters: Double?,
     units: UnitSystem,

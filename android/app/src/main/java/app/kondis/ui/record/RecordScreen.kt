@@ -31,8 +31,8 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,9 +44,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,17 +62,25 @@ import app.kondis.model.Track
 import app.kondis.model.UnitSystem
 import app.kondis.model.formatDistance
 import app.kondis.model.formatDuration
+import app.kondis.model.formatPace
+import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
 import app.kondis.recording.RecordingMode
+import app.kondis.recording.RecordingState
+import app.kondis.recording.distanceMeters
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.components.sportIcon
 
 @Composable
 fun RecordRoute(
     onActivitySaved: (String) -> Unit,
+    onRecordingActiveChanged: (Boolean) -> Unit,
     viewModel: RecordingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.recording.mode) {
+        onRecordingActiveChanged(state.recording.mode != RecordingMode.Idle)
+    }
     androidx.compose.runtime.LaunchedEffect(state.savedActivityId) {
         state.savedActivityId?.let(onActivitySaved)
     }
@@ -142,11 +152,24 @@ fun RecordScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(24.dp))
-        ActivityTypePicker(
-            selectedSport = state.sport,
-            enabled = recording.mode == RecordingMode.Idle,
-            onSportChange = onSportChange,
-        )
+        if (recording.mode == RecordingMode.Idle) {
+            ActivityTypePicker(
+                selectedSport = state.sport,
+                enabled = true,
+                onSportChange = onSportChange,
+            )
+        } else {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                Text("Workout type", style = MaterialTheme.typography.labelMedium)
+                Text(sportLabel(state.sport), style = MaterialTheme.typography.titleMedium)
+            }
+        }
         Spacer(Modifier.weight(1f))
         Box(
             modifier = Modifier.size(220.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
@@ -165,14 +188,12 @@ fun RecordScreen(
                     style = MaterialTheme.typography.displaySmall,
                 )
                 Text(
-                    if (recording.hasLocation) {
-                        "GPS locked"
-                    } else if (recording.mode ==
-                        RecordingMode.Idle
-                    ) {
-                        "Ready"
-                    } else {
-                        "Finding GPS…"
+                    when {
+                        recording.mode == RecordingMode.Idle -> "Ready"
+                        recording.points.isEmpty() -> "Looking for GPS…"
+                        recording.points.last().accuracyMeters <= 10f -> "GPS excellent"
+                        recording.points.last().accuracyMeters <= 30f -> "GPS good"
+                        else -> "GPS weak"
                     },
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
@@ -183,6 +204,11 @@ fun RecordScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             Metric("Distance", formatDistance(recording.distanceMeters, UnitSystem.Metric))
+            if (state.sport in setOf("ride", "mountain_bike_ride", "gravel_ride", "e_bike_ride", "virtual_ride")) {
+                Metric("Speed", formatSpeed(recording.currentSpeedMetersPerSecond(), UnitSystem.Metric))
+            } else {
+                Metric("Pace", formatPace(recording.currentSpeedMetersPerSecond(), UnitSystem.Metric))
+            }
         }
         Spacer(Modifier.weight(1f))
         when (recording.mode) {
@@ -196,47 +222,35 @@ fun RecordScreen(
                 }
             }
 
-            RecordingMode.Recording, RecordingMode.Paused -> {
+            RecordingMode.Recording -> {
+                Button(
+                    onClick = onPause,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                ) {
+                    Icon(Icons.Rounded.Pause, contentDescription = null)
+                    Text("Pause")
+                }
+            }
+
+            RecordingMode.Paused -> {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedButton(
-                                onClick = if (recording.mode == RecordingMode.Recording) onPause else onResume,
-                                modifier = Modifier.weight(1f).height(56.dp),
-                            ) {
-                                Icon(
-                                    if (recording.mode ==
-                                        RecordingMode.Recording
-                                    ) {
-                                        Icons.Rounded.Pause
-                                    } else {
-                                        Icons.Rounded.PlayArrow
-                                    },
-                                    null,
-                                )
-                                Text(if (recording.mode == RecordingMode.Recording) "Pause" else "Resume")
-                            }
-                            Button(
-                                onClick = onFinish,
-                                enabled = recording.hasLocation,
-                                modifier = Modifier.weight(1f).height(56.dp),
-                                colors =
-                                    ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.tertiary,
-                                    ),
-                            ) {
-                                Icon(Icons.Rounded.Stop, null)
-                                Text("Finish")
-                            }
-                        }
-                        TextButton(
-                            onClick = onDiscard,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text("Discard workout")
-                        }
+                    OutlinedButton(
+                        onClick = onResume,
+                        modifier = Modifier.weight(1f).height(56.dp),
+                    ) {
+                        Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                        Text("Resume")
+                    }
+                    Button(
+                        onClick = onFinish,
+                        enabled = recording.hasLocation,
+                        modifier = Modifier.weight(1f).height(56.dp),
+                    ) {
+                        Icon(Icons.Rounded.Stop, contentDescription = null)
+                        Text("Finish")
                     }
                 }
             }
@@ -278,6 +292,17 @@ fun RecordScreen(
     }
 }
 
+private fun RecordingState.currentSpeedMetersPerSecond(): Double? {
+    val previous = points.dropLast(1).lastOrNull() ?: return null
+    val latest = points.lastOrNull() ?: return null
+    val seconds =
+        java.time.Duration
+            .between(previous.recordedAt, latest.recordedAt)
+            .toMillis() / 1_000.0
+    if (seconds <= 0) return null
+    return distanceMeters(previous, latest) / seconds
+}
+
 @Composable
 private fun PostRecordingScreen(
     state: RecordingUiState,
@@ -286,6 +311,7 @@ private fun PostRecordingScreen(
     onDiscard: () -> Unit,
     onDone: () -> Unit,
 ) {
+    var showDiscardDialog by remember { mutableStateOf(false) }
     val recording = state.recording
     val track =
         Track(
@@ -362,10 +388,26 @@ private fun PostRecordingScreen(
                     Text("Activity saved.", color = MaterialTheme.colorScheme.primary)
                 } else {
                     Button(onClick = onSave, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Save activity") }
-                    TextButton(onClick = onDiscard, modifier = Modifier.fillMaxWidth()) { Text("Discard activity") }
+                    TextButton(onClick = { showDiscardDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Discard activity")
+                    }
                 }
             }
         }
+    }
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Discard workout?") },
+            text = { Text("This recording will be permanently deleted and cannot be recovered.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    onDiscard()
+                }) { Text("Discard") }
+            },
+            dismissButton = { TextButton(onClick = { showDiscardDialog = false }) { Text("Keep workout") } },
+        )
     }
 }
 

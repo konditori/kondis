@@ -97,6 +97,14 @@ data class ActivityDetail(
             metrics = metrics,
             createdAt = createdAt,
             updatedAt = updatedAt,
+            topBestEfforts =
+                bestEfforts?.map { effort ->
+                    BestEffortSummary(
+                        type = effort.type,
+                        overallRank = effort.overallRank,
+                        yearRank = effort.yearRank,
+                    )
+                },
             track = track,
         )
 }

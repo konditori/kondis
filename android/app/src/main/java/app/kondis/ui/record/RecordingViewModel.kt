@@ -6,7 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
-import app.kondis.model.sportLabel
+import app.kondis.model.defaultWorkoutTitle
 import app.kondis.recording.GpxWriter
 import app.kondis.recording.RecordingManager
 import app.kondis.recording.RecordingMode
@@ -68,8 +68,8 @@ class RecordingViewModel
         fun resume() = sendServiceAction(RecordingService.ACTION_RESUME)
 
         fun finish() {
-            if (manager.beginSaving() == null) return
-            title.value = sportLabel(sport.value)
+            val snapshot = manager.beginSaving() ?: return
+            title.value = defaultWorkoutTitle(sport.value, snapshot.startedAt ?: Instant.now())
             uploading.value = false
             savedActivityId.value = null
             sendServiceAction(RecordingService.ACTION_STOP)

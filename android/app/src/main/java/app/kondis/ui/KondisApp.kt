@@ -12,6 +12,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -65,7 +68,8 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(FeedKey)
     val current = backStack.lastOrNull()
-    val showNavigation = true
+    var recordingActive by remember { mutableStateOf(false) }
+    val showNavigation = current != RecordKey || !recordingActive
 
     fun navigateBack() {
         if (backStack.size > 1) {
@@ -111,6 +115,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                     }
                     entry<RecordKey> {
                         RecordRoute(
+                            onRecordingActiveChanged = { recordingActive = it },
                             onActivitySaved = { id ->
                                 backStack.clear()
                                 backStack.add(FeedKey)
@@ -125,7 +130,10 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             units = settings.unitSystem,
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
-                            onDeleted = ::navigateBack,
+                            onDeleted = {
+                                backStack.clear()
+                                backStack.add(FeedKey)
+                            },
                         )
                     }
                     entry<MatchedRoutesKey> { key ->
