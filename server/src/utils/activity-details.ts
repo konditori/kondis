@@ -38,7 +38,9 @@ const stream = (streams: DetailStream[], type: string): number[] =>
   streams.find((candidate) => candidate.type === type)?.data ?? [];
 
 const downsample = <T>(points: T[], limit: number): T[] => {
-  if (points.length <= limit) {return points;}
+  if (points.length <= limit) {
+    return points;
+  }
 
   const sampled: T[] = [];
   const step = (points.length - 1) / (limit - 1);
@@ -65,7 +67,9 @@ const interpolateAtDistance = (time: number[], distance: number[], targetDistanc
     ) {
       continue;
     }
-    if (afterDistance === beforeDistance) {return afterTime;}
+    if (afterDistance === beforeDistance) {
+      return afterTime;
+    }
     const ratio = (targetDistance - beforeDistance) / (afterDistance - beforeDistance);
     return beforeTime + ratio * (afterTime - beforeTime);
   }
@@ -88,7 +92,9 @@ const interpolateAtTime = (time: number[], values: number[], targetTime: number)
     ) {
       continue;
     }
-    if (afterTime === beforeTime) {return afterValue;}
+    if (afterTime === beforeTime) {
+      return afterValue;
+    }
     const ratio = (targetTime - beforeTime) / (afterTime - beforeTime);
     return beforeValue + ratio * (afterValue - beforeValue);
   }
@@ -102,20 +108,26 @@ const averageInTimeRange = (time: number[], values: number[], startTime: number,
       included.push(values[index]);
     }
   }
-  if (included.length === 0) {return null;}
+  if (included.length === 0) {
+    return null;
+  }
   return Math.round(included.reduce((total, value) => total + value, 0) / included.length);
 };
 
 const buildSplits = (time: number[], distance: number[], heartrate: number[], altitude: number[]): ActivitySplit[] => {
   const finalDistance = distance.findLast((element) => Number.isFinite(element));
-  if (finalDistance === undefined || !Number.isFinite(finalDistance) || finalDistance <= 0) {return [];}
+  if (finalDistance === undefined || !Number.isFinite(finalDistance) || finalDistance <= 0) {
+    return [];
+  }
 
   const splits: ActivitySplit[] = [];
   for (let startDistance = 0; startDistance < finalDistance; startDistance += KILOMETER) {
     const endDistance = Math.min(startDistance + KILOMETER, finalDistance);
     const startTime = interpolateAtDistance(time, distance, startDistance);
     const endTime = interpolateAtDistance(time, distance, endDistance);
-    if (startTime === null || endTime === null || endTime <= startTime) {continue;}
+    if (startTime === null || endTime === null || endTime <= startTime) {
+      continue;
+    }
 
     const startAltitude = interpolateAtTime(time, altitude, startTime);
     const endAltitude = interpolateAtTime(time, altitude, endTime);
@@ -134,7 +146,9 @@ const buildSplits = (time: number[], distance: number[], heartrate: number[], al
 export const buildActivityAnalysis = (streams: DetailStream[]): ActivityAnalysis | null => {
   const time = stream(streams, 'time');
   const distance = stream(streams, 'distance');
-  if (time.length === 0 || distance.length === 0) {return null;}
+  if (time.length === 0 || distance.length === 0) {
+    return null;
+  }
 
   const altitude = stream(streams, 'altitude');
   const heartrate = stream(streams, 'heartrate');
@@ -145,7 +159,9 @@ export const buildActivityAnalysis = (streams: DetailStream[]): ActivityAnalysis
   const length = Math.min(time.length, distance.length);
 
   for (let index = 0; index < length; index++) {
-    if (!Number.isFinite(time[index]) || !Number.isFinite(distance[index])) {continue;}
+    if (!Number.isFinite(time[index]) || !Number.isFinite(distance[index])) {
+      continue;
+    }
     if (Number.isFinite(altitude[index])) {
       profile.push({
         time: time[index],

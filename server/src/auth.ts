@@ -1,4 +1,12 @@
-import { CanActivate, createParamDecorator, ExecutionContext, ForbiddenException, Injectable, SetMetadata, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  createParamDecorator,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  SetMetadata,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ConfigService } from 'src/config/config.service';
 
@@ -7,8 +15,9 @@ export const PUBLIC = 'kondis:public';
 export const Public = () => SetMetadata(PUBLIC, true);
 export const ADMIN = 'kondis:admin';
 export const AdminOnly = () => SetMetadata(ADMIN, true);
-export const CurrentUser = createParamDecorator((_data: unknown, context: ExecutionContext): AuthenticatedUser =>
-  context.switchToHttp().getRequest<{ user: AuthenticatedUser }>().user,
+export const CurrentUser = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): AuthenticatedUser =>
+    context.switchToHttp().getRequest<{ user: AuthenticatedUser }>().user,
 );
 
 const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -24,25 +33,45 @@ export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const handler = context.getHandler() as object;
     const controller = context.getClass() as object;
-    if (Reflect.getMetadata(PUBLIC, handler) || Reflect.getMetadata(PUBLIC, controller)) return true;
-    const request = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
+    // reflect-metadata augments the standard Reflect object at runtime.
+    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
+    if (Reflect.getMetadata(PUBLIC, handler) || Reflect.getMetadata(PUBLIC, controller)) {
+      return true;
+    }
+    const request = context
+      .switchToHttp()
+      .getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
     const value = request.headers.authorization;
     const token = value?.startsWith('Bearer ') ? value.slice(7) : undefined;
-    if (!token) throw new UnauthorizedException('Sign in is required');
-    const [payload, signature] = token.split('.');
-    if (!payload || !signature) throw new UnauthorizedException('Invalid access token');
+    if (!token) {
+      throw new UnauthorizedException('Sign in is required');
+    }
+    const [payload, signature] = token.split('.', 2);
+    if (!payload || !signature) {
+      throw new UnauthorizedException('Invalid access token');
+    }
     const expected = sign(payload, this.config.authSecret);
     if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
       throw new UnauthorizedException('Invalid access token');
     }
     try {
       const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
-      if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) throw new Error();
-      request.user = { id: parsed.id, email: parsed.email, role: parsed.role, name: parsed.name };
-      if (Reflect.getMetadata(ADMIN, handler) || Reflect.getMetadata(ADMIN, controller)) {
-        if (request.user.role !== 'admin') throw new ForbiddenException('Administrator access is required');
+      if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) {
+        throw new Error('Invalid access token');
       }
+      request.user = { id: parsed.id, email: parsed.email, role: parsed.role, name: parsed.name };
+      // reflect-metadata augments the standard Reflect object at runtime.
+      /* eslint-disable unicorn/no-nonstandard-builtin-properties */
+      if (
+        (Reflect.getMetadata(ADMIN, handler) || Reflect.getMetadata(ADMIN, controller)) &&
+        request.user.role !== 'admin'
+      ) {
+        throw new ForbiddenException('Administrator access is required');
+      }
+      /* eslint-enable unicorn/no-nonstandard-builtin-properties */
       return true;
-    } catch { throw new UnauthorizedException('Invalid or expired access token'); }
+    } catch {
+      throw new UnauthorizedException('Invalid or expired access token');
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable, Optional } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -22,6 +22,7 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
+import { LagomImportService } from 'src/services/lagom-import.service';
 import {
   ACTIVITY_TYPES,
   ActivityType,
@@ -74,6 +75,7 @@ export class ActivityService {
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
+    @Optional() private readonly lagomImportService?: LagomImportService,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -85,6 +87,7 @@ export class ActivityService {
     activityName,
     activityDescription,
     activitySport,
+    takeoutImportId,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
@@ -108,6 +111,9 @@ export class ActivityService {
           await this.jobRepository.queueAll(pendingJobs);
         }
         await this.uploadRepository.setStatus(id, 'parsed');
+        if (takeoutImportId) {
+          this.lagomImportService?.increment(takeoutImportId);
+        }
         return JobStatus.Skipped;
       }
 
@@ -145,11 +151,17 @@ export class ActivityService {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+      if (takeoutImportId) {
+        this.lagomImportService?.increment(takeoutImportId);
+      }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
       await this.uploadRepository.setStatus(id, 'failed', message);
+      if (takeoutImportId) {
+        this.lagomImportService?.increment(takeoutImportId, true);
+      }
       throw error;
     }
 
@@ -158,6 +170,22 @@ export class ActivityService {
 
   @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
   async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
+    const manualChecksum = job.sourceId ? `lagom:${job.sourceId}` : `manual:${job.id}`;
+    const existing = await this.uploadRepository.getByChecksum(manualChecksum, job.userId);
+    const legacyExisting =
+      !existing && job.userId && job.sourceId
+        ? await this.uploadRepository.hasManualActivity(
+            { startedAt: new Date(job.startedAt), sport: job.activitySport, elapsedTime: job.elapsedTime },
+            job.userId,
+          )
+        : false;
+    if (existing || legacyExisting) {
+      if (job.takeoutImportId) {
+        this.lagomImportService?.increment(job.takeoutImportId, false, true);
+      }
+      return JobStatus.Skipped;
+    }
+
     const movingTime = job.movingTime ?? null;
     const distance = job.distance ?? null;
     const avgSpeed =
@@ -167,10 +195,11 @@ export class ActivityService {
       await this.uploadRepository.create(
         {
           id: job.id,
-          checksum: `manual:${job.id}`,
+          checksum: manualChecksum,
           original_name: 'Strava manual activity',
           byte_size: 0,
           storage_path: '',
+          user_id: job.userId,
           status: 'parsed',
         },
         trx,
@@ -217,6 +246,9 @@ export class ActivityService {
     const activity = await this.activityRepository.getById(createdId);
     if (activity) {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+    }
+    if (job.takeoutImportId) {
+      this.lagomImportService?.increment(job.takeoutImportId);
     }
     return JobStatus.Success;
   }
@@ -403,7 +435,10 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }, userId?: string) {
+  async listRecent(
+    { cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string },
+    userId?: string,
+  ) {
     const normalizedSearch = search?.trim() || undefined;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
@@ -529,14 +564,15 @@ export class ActivityService {
   }
 
   async updateById(
-    id: string, userId?: string,
+    id: string,
+    userId?: string,
     input: {
       name?: string | null;
       description?: string | null;
       sport?: ActivityType;
       startedAt?: Date;
       excludeFromRankings?: boolean;
-    },
+    } = {},
   ) {
     const mapped: UpdateActivityInput = {};
 
@@ -591,7 +627,9 @@ export class ActivityService {
   }
 
   async deleteById(id: string, userId?: string): Promise<boolean> {
-    if (!(await this.activityRepository.getById(id, userId))) return false;
+    if (!(await this.activityRepository.getById(id, userId))) {
+      return false;
+    }
     const status = await this.handleActivityDelete({ id });
     return status !== JobStatus.Skipped;
   }
@@ -674,9 +712,7 @@ export class ActivityService {
               const leftDuration = leftDefinition && 'duration' in leftDefinition ? leftDefinition.duration : 0;
               const rightDuration = rightDefinition && 'duration' in rightDefinition ? rightDefinition.duration : 0;
               return (
-                rightDuration - leftDuration ||
-                left.overallRank - right.overallRank ||
-                left.yearRank - right.yearRank
+                rightDuration - leftDuration || left.overallRank - right.overallRank || left.yearRank - right.yearRank
               );
             }
             const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);

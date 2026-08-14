@@ -1,7 +1,7 @@
 import { ConsoleLogger, Module, OnApplicationBootstrap } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { AuthGuard } from 'src/auth';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import { AuthGuard } from 'src/auth';
 
 import { ConfigService } from 'src/config/config.service';
 import { controllers } from 'src/controllers';

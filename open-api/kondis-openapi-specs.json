@@ -107,6 +107,31 @@
         ]
       }
     },
+    "/upload/strava/{id}": {
+      "get": {
+        "operationId": "UploadController_getStravaTakeoutStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current import progress",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TakeoutImportStatusDto_Output" }
+              }
+            }
+          }
+        },
+        "summary": "Get Strava takeout import progress",
+        "tags": ["uploads"]
+      }
+    },
     "/jobs": {
       "get": {
         "operationId": "JobController_getAllJobStatus",
@@ -499,6 +524,20 @@
         ],
         "additionalProperties": false
       },
+      "TakeoutImportStatusDto_Output": {
+        "type": "object",
+        "properties": {
+          "importId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["queued", "processing", "completed", "failed"] },
+          "total": { "type": "integer", "minimum": 0, "nullable": true },
+          "processed": { "type": "integer", "minimum": 0 },
+          "failed": { "type": "integer", "minimum": 0 },
+          "duplicates": { "type": "integer", "minimum": 0 },
+          "error": { "type": "string", "nullable": true }
+        },
+        "required": ["importId", "status", "total", "processed", "failed", "duplicates", "error"],
+        "additionalProperties": false
+      },
       "LagomTakeoutUploadResponseDto_Output": {
         "type": "object",
         "properties": {
@@ -514,11 +553,17 @@
             "enum": [
               true
             ]
+          },
+          "importId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier used to poll import progress"
           }
         },
         "required": [
           "byteSize",
-          "queued"
+          "queued",
+          "importId"
         ],
         "additionalProperties": false
       },

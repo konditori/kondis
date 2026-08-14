@@ -396,7 +396,17 @@ export class ActivityRepository {
       .executeTakeFirst();
   }
 
-  listRecentPage({ limit, cursor, search, userId }: { limit: number; cursor?: ActivityCursor; search?: string; userId?: string }) {
+  listRecentPage({
+    limit,
+    cursor,
+    search,
+    userId,
+  }: {
+    limit: number;
+    cursor?: ActivityCursor;
+    search?: string;
+    userId?: string;
+  }) {
     let query = this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -409,7 +419,9 @@ export class ActivityRepository {
         ).as('metrics'),
       )
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
-    if (userId) query = query.where('activity.user_id', '=', userId);
+    if (userId) {
+      query = query.where('activity.user_id', '=', userId);
+    }
 
     if (search) {
       const pattern = `%${search}%`;
@@ -436,7 +448,9 @@ export class ActivityRepository {
 
   async count(search?: string, userId?: string): Promise<number> {
     let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
-    if (userId) query = query.where('activity.user_id', '=', userId);
+    if (userId) {
+      query = query.where('activity.user_id', '=', userId);
+    }
     if (search) {
       const pattern = `%${search}%`;
       query = query.where(({ or, eb }) =>
@@ -521,7 +535,9 @@ export class ActivityRepository {
   async update(id: string, input: UpdateActivityInput, userId?: string) {
     const updated = await this.db.transaction().execute(async (trx) => {
       let update = trx.updateTable('activity').set(input).where('id', '=', id);
-      if (userId) update = update.where('user_id', '=', userId);
+      if (userId) {
+        update = update.where('user_id', '=', userId);
+      }
       const row = await update.returning('id').executeTakeFirst();
       if (!row || (input.sport === undefined && input.exclude_from_rankings === undefined)) {
         return row;

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
+  import { onDestroy } from "svelte";
   import { Archive, ArrowLeft, Check, LoaderCircle } from "@lucide/svelte";
   import {
     getSdkRequestOptions,
     uploadControllerUploadStravaTakeout,
+    uploadControllerGetStravaTakeoutStatus,
   } from "$lib/api";
 
   let input = $state<HTMLInputElement>();
@@ -11,6 +13,33 @@
   let dragging = $state(false);
   let uploadState = $state<"idle" | "uploading" | "done" | "error">("idle");
   let message = $state("");
+  let processed = $state(0);
+  let total = $state<number | null>(null);
+  let duplicates = $state(0);
+  let progressTimer: ReturnType<typeof setInterval> | undefined;
+
+  onDestroy(() => clearInterval(progressTimer));
+
+  async function pollImport(importId: string) {
+    const status = await uploadControllerGetStravaTakeoutStatus({ id: importId }, getSdkRequestOptions());
+    processed = status.processed;
+    total = status.total;
+    duplicates = status.duplicates;
+    if (status.status === "completed") {
+      clearInterval(progressTimer);
+      uploadState = "done";
+      const imported = processed - status.duplicates - status.failed;
+      const parts = imported > 0 ? [`Imported ${imported} activities`] : [];
+      if (status.duplicates > 0) parts.push(`${status.duplicates} activities were duplicates`);
+      if (status.failed > 0) parts.push(`${status.failed} failed`);
+      message = `${parts.join("; ")}.`;
+      await invalidateAll();
+    } else if (status.status === "failed") {
+      clearInterval(progressTimer);
+      uploadState = "error";
+      message = status.error ?? "Import failed.";
+    }
+  }
 
   function selectFile(selected?: File) {
     if (!selected) return;
@@ -23,6 +52,9 @@
     file = selected;
     uploadState = "idle";
     message = "";
+    processed = 0;
+    total = null;
+    duplicates = 0;
   }
 
   async function upload() {
@@ -30,13 +62,15 @@
     uploadState = "uploading";
     message = "";
     try {
-      await uploadControllerUploadStravaTakeout(
+      const response = await uploadControllerUploadStravaTakeout(
         { body: { file } },
         getSdkRequestOptions(),
       );
-      await invalidateAll();
-      uploadState = "done";
-      message = "Strava takeout queued for import.";
+      message = "Takeout uploaded. Processing activities…";
+      await pollImport(response.importId);
+      if (uploadState === "uploading") {
+        progressTimer = setInterval(() => void pollImport(response.importId), 1000);
+      }
     } catch (error) {
       uploadState = "error";
       message = error instanceof Error ? error.message : "Import failed.";
@@ -106,6 +140,14 @@
     >
       {message}
     </p>{/if}
+  {#if uploadState === "uploading" && total !== null}
+    <div class="upload-progress" aria-live="polite">
+      <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax={total} aria-valuenow={processed}>
+        <span style={`width: ${total === 0 ? 100 : (processed / total) * 100}%`}></span>
+      </div>
+      <small>{processed} of {total} activities processed</small>
+    </div>
+  {/if}
   <button
     class="upload-submit"
     type="button"

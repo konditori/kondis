@@ -896,6 +896,24 @@ button {
 .upload-message.upload-success {
   color: var(--green);
 }
+.upload-progress {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+.upload-progress-track {
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted, #e7e7e7);
+}
+.upload-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent, #2f7d5b);
+  transition: width 250ms ease;
+}
 .upload-submit {
   min-height: 42px;
   display: inline-flex;

@@ -1,4 +1,10 @@
-import { BadRequestException, ConsoleLogger, Injectable, PayloadTooLargeException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConsoleLogger,
+  Injectable,
+  NotFoundException,
+  PayloadTooLargeException,
+} from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -10,6 +16,7 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { LagomImportService } from 'src/services/lagom-import.service';
 import { JobOf, UploadedFileData } from 'src/types';
 import { extractLagomTakeout } from 'src/utils/lagom';
 
@@ -24,6 +31,7 @@ export class UploadService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobRepository,
     private readonly logger: ConsoleLogger,
+    private readonly lagomImportService: LagomImportService = new LagomImportService(),
   ) {
     this.logger.setContext(UploadService.name);
   }
@@ -55,6 +63,7 @@ export class UploadService {
     activityDescription,
     activitySport,
     userId,
+    takeoutImportId,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
@@ -69,21 +78,10 @@ export class UploadService {
 
     const existing = await this.uploadRepository.getByChecksum(checksum, userId);
     if (existing) {
-      if (activityName || activityDescription || activitySport) {
-        await this.jobRepository.queue({
-          name: JobName.ActivityParse,
-          data: {
-            id: existing.id,
-            force: true,
-            ...(activityName && { activityName }),
-            ...(activityDescription && { activityDescription }),
-            ...(activitySport && { activitySport }),
-          },
-        });
-        return JobStatus.Success;
-      }
-
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
+      if (takeoutImportId) {
+        this.lagomImportService.increment(takeoutImportId, false, true);
+      }
       return JobStatus.Skipped;
     }
 
@@ -108,6 +106,7 @@ export class UploadService {
             name: JobName.ActivityParse,
             data: {
               id: created.id,
+              ...(takeoutImportId && { takeoutImportId }),
               ...(activityName && { activityName }),
               ...(activityDescription && { activityDescription }),
               ...(activitySport && { activitySport }),
@@ -119,6 +118,9 @@ export class UploadService {
     } catch (error) {
       const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
+        if (takeoutImportId) {
+          this.lagomImportService.increment(takeoutImportId, false, true);
+        }
         return JobStatus.Skipped;
       }
       throw error;
@@ -144,16 +146,35 @@ export class UploadService {
     const storagePath = this.storageRepository.buildTemporaryPath('.zip');
     await this.storageRepository.write(storagePath, file.buffer);
 
+    const importId = crypto.randomUUID();
+    this.lagomImportService.create(importId, userId ?? '');
     await this.jobRepository.queue({
       name: JobName.LagomTakeoutImport,
       data: {
         originalName: file.originalname,
         storagePath,
+        takeoutImportId: importId,
         userId,
       },
     });
 
-    return { byteSize: file.buffer.length, queued: true };
+    return { byteSize: file.buffer.length, queued: true, importId };
+  }
+
+  getLagomTakeoutStatus(id: string, userId: string) {
+    const importRecord = this.lagomImportService.get(id, userId);
+    if (!importRecord) {
+      throw new NotFoundException('Lagom import not found');
+    }
+    return {
+      importId: importRecord.importId,
+      status: importRecord.status,
+      total: importRecord.total,
+      processed: importRecord.processed,
+      failed: importRecord.failed,
+      duplicates: importRecord.duplicates,
+      error: importRecord.error,
+    };
   }
 
   @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
@@ -161,6 +182,7 @@ export class UploadService {
     originalName,
     storagePath,
     userId,
+    takeoutImportId,
   }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
     const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
@@ -169,6 +191,8 @@ export class UploadService {
           name: JobName.ActivityManualCreate,
           data: {
             id: crypto.randomUUID(),
+            userId,
+            takeoutImportId,
             activityName: activity.name ?? undefined,
             activityDescription: activity.description ?? undefined,
             activitySport: activity.sport ?? 'other',
@@ -184,9 +208,17 @@ export class UploadService {
         activity.description ?? undefined,
         activity.sport ?? undefined,
         userId,
+        takeoutImportId,
       );
       queued += 1;
     });
+
+    if (takeoutImportId) {
+      this.lagomImportService.setProcessing(takeoutImportId, queued);
+    }
+    if (takeoutImportId && takeout.errors.length > 0) {
+      this.lagomImportService.fail(takeoutImportId, `${takeout.errors.length} activities could not be imported`);
+    }
 
     this.logger.log(
       `Processed Strava takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${takeout.errors.length} failed`,
@@ -199,8 +231,9 @@ export class UploadService {
     file: UploadedFileData,
     activityName?: string,
     activityDescription?: string,
-    activitySport: JobOf<JobName.ActivityUpload>['activitySport'] | undefined,
+    activitySport?: JobOf<JobName.ActivityUpload>['activitySport'],
     userId?: string,
+    takeoutImportId?: string,
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
@@ -216,6 +249,7 @@ export class UploadService {
         ...(activityName && { activityName }),
         ...(activityDescription && { activityDescription }),
         ...(activitySport && { activitySport }),
+        ...(takeoutImportId && { takeoutImportId }),
       },
     });
   }

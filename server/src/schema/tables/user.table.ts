@@ -1,5 +1,12 @@
-import { Column, CreateDateColumn, Generated, PrimaryGeneratedColumn, Table, UpdateDateColumn } from 'src/schema/decorators';
-import { Timestamp } from 'src/schema/decorators';
+import {
+  Column,
+  CreateDateColumn,
+  Generated,
+  PrimaryGeneratedColumn,
+  Table,
+  Timestamp,
+  UpdateDateColumn,
+} from 'src/schema/decorators';
 @Table('user')
 export class UserTable {
   @PrimaryGeneratedColumn() id!: Generated<string>;

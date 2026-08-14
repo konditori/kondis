@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { AdminOnly } from 'src/auth';
 import {
   AllJobStatusResponseDto,
   JobCreateDto,
@@ -10,7 +11,6 @@ import {
   QueueStatusReportDto,
 } from 'src/dtos/job.dto';
 import { JobService } from 'src/services/job.service';
-import { AdminOnly } from 'src/auth';
 
 @ApiTags('jobs')
 @Controller('jobs')

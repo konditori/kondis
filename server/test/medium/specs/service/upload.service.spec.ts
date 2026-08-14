@@ -114,16 +114,8 @@ describe('UploadService (medium)', () => {
         activityName: 'A nice workout',
         activitySport: 'roller_ski',
       }),
-    ).resolves.toBe('success');
-    expect(queue).toHaveBeenCalledWith({
-      name: JobName.ActivityParse,
-      data: {
-        id: stored!.id,
-        force: true,
-        activityName: 'A nice workout',
-        activitySport: 'roller_ski',
-      },
-    });
+    ).resolves.toBe('skipped');
+    expect(queue).not.toHaveBeenCalled();
   });
 
   it('stores a real .fit fixture from the queued activity upload', async () => {
@@ -196,7 +188,7 @@ describe('UploadService (medium)', () => {
 
     const first = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(first).toEqual({ byteSize: archive.length, queued: true });
+    expect(first).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
     const [item] = queue.mock.calls[0] as unknown as [
       { name: JobName; data: { originalName: string; storagePath: string } },
@@ -206,6 +198,7 @@ describe('UploadService (medium)', () => {
       data: {
         originalName: 'export.zip',
         storagePath: expect.stringMatching(/^temporary\/.+\.zip$/),
+        takeoutImportId: first.importId,
       },
     });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
@@ -249,7 +242,7 @@ describe('UploadService (medium)', () => {
     queue.mockClear();
     const second = await uploadService.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
 
-    expect(second).toEqual(first);
+    expect(second).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
   });
 

@@ -24,6 +24,7 @@ export type LagomTakeoutActivity = {
   sport: ActivityType | null;
   file: UploadedFileData;
   manual?: {
+    sourceId: string;
     startedAt: string;
     elapsedTime: number;
     movingTime: number | null;
@@ -242,6 +243,7 @@ export const extractLagomTakeout = async (
     throw new Error(`${MANIFEST_NAME} does not contain a Filename column`);
   }
   const nameIndex = headers.indexOf('Activity Name');
+  const activityIdIndex = headers.indexOf('Activity ID');
   const descriptionIndex = headers.indexOf('Activity Description');
   const sportIndex = headers.indexOf('Activity Type');
   const column = (name: string) => headers.indexOf(name);
@@ -290,6 +292,7 @@ export const extractLagomTakeout = async (
           sport,
           file: { originalname: 'manual.activity', buffer: Buffer.alloc(0), size: 0 },
           manual: {
+            sourceId: activityIdIndex === -1 ? `row:${rowNumber}` : row[activityIdIndex]?.trim() || `row:${rowNumber}`,
             startedAt: new Date(startedAt).toISOString(),
             elapsedTime,
             movingTime: number(row, 'Moving Time'),

@@ -13,6 +13,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
+import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import {
   ActivityDetailDto,
   ActivityDto,
@@ -27,7 +28,6 @@ import {
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
 import { ACTIVITY_TYPES } from 'src/types';
-import { AuthenticatedUser, CurrentUser } from 'src/auth';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -37,7 +37,10 @@ export class ActivityController {
   @ApiOperation({ summary: 'List recent activities' })
   @ZodResponse({ status: 200, description: 'Recent activities', type: ActivityListResponseDto })
   @Get()
-  async listRecent(@Query() query: ActivityListQueryDto, @CurrentUser() user: AuthenticatedUser): Promise<ActivityListResponseDto> {
+  async listRecent(
+    @Query() query: ActivityListQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ActivityListResponseDto> {
     return this.service.listRecent(query, user.id);
   }
 
@@ -51,14 +54,20 @@ export class ActivityController {
   @ApiOperation({ summary: 'List best efforts over time for a sport' })
   @ZodResponse({ status: 200, description: 'Best effort history', type: BestEffortListResponseDto })
   @Get('best-efforts/:sport/:type')
-  async listBestEfforts(@Param() params: BestEffortListParamDto, @CurrentUser() user: AuthenticatedUser): Promise<BestEffortListResponseDto> {
+  async listBestEfforts(
+    @Param() params: BestEffortListParamDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<BestEffortListResponseDto> {
     return this.service.listBestEfforts(params.sport, params.type, user.id);
   }
 
   @ApiOperation({ summary: 'Get one activity and its route' })
   @ZodResponse({ status: 200, description: 'Activity details', type: ActivityDetailDto })
   @Get(':id')
-  async getById(@Param() { id }: ActivityIdParamDto, @CurrentUser() user: AuthenticatedUser): Promise<ActivityDetailDto> {
+  async getById(
+    @Param() { id }: ActivityIdParamDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ActivityDetailDto> {
     const activity = await this.service.getById(id, user.id);
     if (!activity) {
       throw new NotFoundException(`Activity ${id} does not exist`);
@@ -70,7 +79,10 @@ export class ActivityController {
   @ApiOperation({ summary: 'List activities matched to the same GPS route' })
   @ZodResponse({ status: 200, description: 'Matched route activities', type: MatchedRouteListResponseDto })
   @Get(':id/matched-routes')
-  async listMatchedRoutes(@Param() { id }: ActivityIdParamDto, @CurrentUser() user: AuthenticatedUser): Promise<MatchedRouteListResponseDto> {
+  async listMatchedRoutes(
+    @Param() { id }: ActivityIdParamDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<MatchedRouteListResponseDto> {
     const matches = await this.service.listMatchedRoutes(id, user.id);
     if (!matches) {
       throw new NotFoundException(`Activity ${id} does not exist`);
@@ -82,7 +94,11 @@ export class ActivityController {
   @ApiOperation({ summary: 'Update one activity' })
   @ZodResponse({ status: 200, description: 'Updated activity', type: ActivityDto })
   @Put(':id')
-  async updateById(@Param() { id }: ActivityIdParamDto, @Body() payload: ActivityUpdateDto, @CurrentUser() user: AuthenticatedUser): Promise<ActivityDto> {
+  async updateById(
+    @Param() { id }: ActivityIdParamDto,
+    @Body() payload: ActivityUpdateDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ActivityDto> {
     const updated = await this.service.updateById(id, user.id, {
       ...payload,
       startedAt: payload.startedAt ? new Date(payload.startedAt) : undefined,

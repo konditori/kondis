@@ -29,6 +29,17 @@ export type LagomTakeoutUploadResponseDtoOutput = {
   byteSize: number;
   /** True when the takeout import was submitted to the queue */
   queued: true;
+  /** Identifier used to poll import progress */
+  importId: string;
+};
+export type TakeoutImportStatusDtoOutput = {
+  importId: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  total: number | null;
+  processed: number;
+  failed: number;
+  duplicates: number;
+  error: string | null;
 };
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */
@@ -362,6 +373,26 @@ export function uploadControllerUploadStravaTakeout(
         body,
       }),
     ),
+  );
+}
+/**
+ * Get Strava takeout import progress
+ */
+export function uploadControllerGetStravaTakeoutStatus(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: TakeoutImportStatusDtoOutput;
+    }>(`/upload/strava/${encodeURIComponent(id)}`, {
+      ...opts,
+    }),
   );
 }
 /**
