@@ -33,15 +33,17 @@ export const utils = {
       headers: { 'content-type': 'application/json' },
       body,
     });
-    const result = (setup.ok
-      ? await setup.json()
-      : await (
-          await fetch(`${serverUrl}/auth/login`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body,
-          })
-        ).json()) as { accessToken: string };
+    let result: { accessToken: string };
+    if (setup.ok) {
+      result = (await setup.json()) as { accessToken: string };
+    } else {
+      const login = await fetch(`${serverUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      });
+      result = (await login.json()) as { accessToken: string };
+    }
 
     defaults.headers = { authorization: `Bearer ${result.accessToken}` };
   },
