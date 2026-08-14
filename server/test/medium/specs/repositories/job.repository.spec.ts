@@ -26,7 +26,7 @@ import { createTestZip } from 'test/utils/zip';
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 const SAMPLE_GPX = Buffer.from('<gpx/>');
 
-describe('job system (medium)', () => {
+describe('JobRepository', () => {
   let testApp: TestApp;
   let db: KondisDatabase;
 

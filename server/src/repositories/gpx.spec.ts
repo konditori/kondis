@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
 
 import { ConsoleLogger } from '@nestjs/common';
+import { describe, expect, it } from 'vitest';
 
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { findStream, parseFitMessages } from 'src/utils/fit';
@@ -9,7 +9,6 @@ import { findStream, parseFitMessages } from 'src/utils/fit';
 import { activityFixtures } from 'test/medium/utils';
 
 const gpxRepository = new GpxRepository(new ConsoleLogger({ logLevels: [] }));
-
 const parsed = () => parseFitMessages(gpxRepository.decode(readFileSync(activityFixtures.sampleRun.path)));
 
 describe('parseFitMessages against a .gpx recording', () => {
@@ -37,7 +36,7 @@ describe('parseFitMessages against a .gpx recording', () => {
     expect(findStream(activity, 'cadence')).toHaveLength(45);
   });
 
-  it('starts and finishes at 181 Fremont', () => {
+  it('starts and finishes at a silly place', () => {
     const activity = parsed();
     const latitude = findStream(activity, 'latitude');
     const longitude = findStream(activity, 'longitude');
