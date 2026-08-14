@@ -127,7 +127,10 @@ export class UploadService {
     return JobStatus.Success;
   }
 
-  async uploadLagomTakeout(file: UploadedFileData | undefined, userId?: string): Promise<LagomTakeoutUploadResponseDto> {
+  async uploadLagomTakeout(
+    file: UploadedFileData | undefined,
+    userId?: string,
+  ): Promise<LagomTakeoutUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -154,7 +157,11 @@ export class UploadService {
   }
 
   @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
-  async handleLagomTakeout({ originalName, storagePath, userId }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
+  async handleLagomTakeout({
+    originalName,
+    storagePath,
+    userId,
+  }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
     const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
       if (activity.manual) {
@@ -175,7 +182,8 @@ export class UploadService {
         activity.file!,
         activity.name ?? undefined,
         activity.description ?? undefined,
-        activity.sport ?? undefined, userId,
+        activity.sport ?? undefined,
+        userId,
       );
       queued += 1;
     });
@@ -191,7 +199,8 @@ export class UploadService {
     file: UploadedFileData,
     activityName?: string,
     activityDescription?: string,
-    activitySport: JobOf<JobName.ActivityUpload>['activitySport'] | undefined, userId?: string,
+    activitySport: JobOf<JobName.ActivityUpload>['activitySport'] | undefined,
+    userId?: string,
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());

@@ -794,6 +794,127 @@ button {
   gap: 7px;
   margin-top: 15px;
 }
+.upload-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  max-width: 780px;
+}
+.upload-choice {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 120px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.upload-choice:hover {
+  border-color: #aeb9af;
+  box-shadow: 0 8px 24px #2334250c;
+  transform: translateY(-1px);
+}
+.upload-choice-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 12px;
+}
+.upload-choice-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.upload-choice-copy strong {
+  font-size: 16px;
+}
+.upload-choice-copy small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+.upload-choice-arrow {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--muted);
+}
+.upload-panel {
+  width: min(600px, 100%);
+}
+.upload-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.upload-back:hover {
+  color: var(--green);
+}
+.upload-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 22px;
+}
+.upload-panel-heading h2 {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.upload-panel-heading p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.upload-panel .drop-zone {
+  min-height: 245px;
+}
+.upload-panel > .upload-row {
+  margin-top: 15px;
+}
+.upload-message {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.upload-message.error {
+  color: #a34227;
+}
+.upload-message.upload-success {
+  color: var(--green);
+}
+.upload-submit {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 0 16px;
+  color: white;
+  background: var(--green);
+  border: 0;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.upload-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 .upload-row {
   display: flex;
   align-items: center;
@@ -2262,6 +2383,9 @@ button {
   }
   .top-search {
     width: min(68vw, 440px);
+  }
+  .upload-choices {
+    grid-template-columns: 1fr;
   }
   .app-main {
     margin-left: 0;

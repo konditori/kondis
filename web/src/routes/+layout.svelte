@@ -1,11 +1,10 @@
 <script lang="ts">
   import "../app.css";
+  import { goto } from "$app/navigation";
   import Sidebar from "$lib/components/Sidebar.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
-  import UploadDialog from "$lib/components/UploadDialog.svelte";
 
   let { children, data } = $props();
-  let uploadOpen = $state(false);
 </script>
 
 <svelte:head
@@ -19,7 +18,6 @@
   {@render children()}
 {:else}
   <Sidebar />
-  <Topbar user={data.user} onUpload={() => (uploadOpen = true)} />
+  <Topbar user={data.user} onUpload={() => void goto("/upload")} />
   <main class="app-main">{@render children()}</main>
-  <UploadDialog bind:open={uploadOpen} eventsUrl={data.eventsUrl} />
 {/if}

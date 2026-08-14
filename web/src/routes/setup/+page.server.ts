@@ -17,7 +17,7 @@ export const actions: Actions = {
     const values = { name, email };
     if (password !== confirmPassword)
       return fail(400, { ...values, error: "Passwords do not match." });
-    const response = await fetch("/api/v1/auth/setup", {
+    const response = await fetch("/api/v1/auth/setup", {    
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name, email, password }),
@@ -26,7 +26,7 @@ export const actions: Actions = {
       return fail(400, {
         ...values,
         error:
-          "Use a name, valid email, and password of at least 10 characters.",
+          "Use a name, valid email, sufficiently long password",
       });
     const result = await response.json();
     cookies.set("kondis_session", result.accessToken, {
