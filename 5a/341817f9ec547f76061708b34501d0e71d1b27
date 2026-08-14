@@ -1,0 +1,37 @@
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_09572ca3a0daa3::t_8d48baa210f0a9 52,136,185
+android/app/src/main/java/app/kondis/ui/components/ActivityComponents.kt
+  s_09572ca3a0daa3::t_9bc0e1a480a2ff 180-188,207-213,233-247,265-287
+android/app/src/test/java/app/kondis/model/ApiModelTest.kt
+  s_09572ca3a0daa3::t_bb6e7097634891 45-50,69-77
+open-api/kondis-openapi-specs.json
+  s_09572ca3a0daa3::t_d5ebe1b2a563b3 963-967,981,1470-1478,1535-1537
+server/src/dtos/activity.dto.ts
+  s_09572ca3a0daa3::t_41267b9d6e98f8 126,178
+server/src/open-api/fetch-client.ts
+  s_09572ca3a0daa3::t_1222f815b757d5 126-127,235-236
+server/src/repositories/activity.repository.ts
+  s_09572ca3a0daa3::t_532b129d66695b 493
+server/src/services/activity.service.ts
+  s_09572ca3a0daa3::t_b5061d9ecf437f 498,642,654,663-676
+web/src/lib/components/ActivityCard.svelte
+  s_09572ca3a0daa3::t_b5c8f66716fdba 39-52,55-56,62-64,70-84,114,116
+web/src/lib/types.ts
+  s_09572ca3a0daa3::t_ed3c08407fb554 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5a341817f9ec547f76061708b34501d0e71d1b27",
+  "prompts": {},
+  "sessions": {
+    "s_09572ca3a0daa3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fff65-f472-7490-b258-6968773210aa",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
