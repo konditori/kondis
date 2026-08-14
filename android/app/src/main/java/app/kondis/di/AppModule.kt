@@ -7,7 +7,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import app.kondis.BuildConfig
 import app.kondis.data.local.ActivityDao
 import app.kondis.data.local.KondisDatabase
-import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,7 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import javax.inject.Singleton
 
-@Module
+@dagger.Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides

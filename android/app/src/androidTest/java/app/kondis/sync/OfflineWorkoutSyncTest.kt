@@ -108,8 +108,8 @@ class OfflineWorkoutSyncTest {
 
     @Test
     fun deletingActivityReturnsToFeed() {
-        check(device.wait(Until.hasObject(By.text("Delete test run")), 10_000))
-        device.findObject(By.text("Delete test run")).click()
+        check(device.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
+        device.findObject(By.textContains("Delete test run")).click()
         check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
 
         device.findObject(By.text("Delete")).click()

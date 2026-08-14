@@ -74,13 +74,9 @@ import app.kondis.ui.components.sportIcon
 @Composable
 fun RecordRoute(
     onActivitySaved: (String) -> Unit,
-    onRecordingActiveChanged: (Boolean) -> Unit,
     viewModel: RecordingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LaunchedEffect(state.recording.mode) {
-        onRecordingActiveChanged(state.recording.mode != RecordingMode.Idle)
-    }
     androidx.compose.runtime.LaunchedEffect(state.savedActivityId) {
         state.savedActivityId?.let(onActivitySaved)
     }
