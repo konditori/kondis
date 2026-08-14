@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -181,7 +182,7 @@ private fun SyncStatusCard(
     onSync: () -> Unit,
 ) {
     androidx.compose.material3.Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag("sync-status"),
         colors =
             androidx.compose.material3.CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -216,7 +217,7 @@ private fun SyncStatusCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    TextButton(onClick = onSync) { Text("Sync now") }
+                    TextButton(onClick = onSync, modifier = Modifier.testTag("sync-now")) { Text("Sync now") }
                 }
                 queuedWorkouts.forEach { workout ->
                     Text(
