@@ -1,0 +1,23 @@
+open-api/kondis-openapi-specs.json
+  s_09572ca3a0daa3::t_eb22d39425fbd1 1470-1478,1535-1537
+server/Dockerfile
+  s_09572ca3a0daa3::t_20cc46b6195394 32-33
+server/src/services/activity.service.ts
+  s_09572ca3a0daa3::t_bfcbed21a95879 670-673
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2c92a96e90e39bae04b1f02992d57e6865b22114",
+  "prompts": {},
+  "sessions": {
+    "s_09572ca3a0daa3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fff65-f472-7490-b258-6968773210aa",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
