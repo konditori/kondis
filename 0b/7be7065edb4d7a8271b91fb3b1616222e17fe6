@@ -1,0 +1,27 @@
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_37d0cd585aa764::t_c3b5381bb44ed8 111-112
+android/app/src/main/java/app/kondis/recording/RecordingModels.kt
+  s_37d0cd585aa764::t_ca2c38830560de 12-14
+android/app/src/main/java/app/kondis/ui/AppViewModel.kt
+  s_37d0cd585aa764::t_a2eebac70a7a6a 7-8,20,28-29
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_37d0cd585aa764::t_3cc4c67af24eaa 15,27,80-82,84-91,94
+android/app/src/test/java/app/kondis/recording/RecordingModeTest.kt
+  s_37d0cd585aa764::t_723d24ab0203dc 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0b7be7065edb4d7a8271b91fb3b1616222e17fe6",
+  "prompts": {},
+  "sessions": {
+    "s_37d0cd585aa764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffe6-77d1-7192-801b-f0f7a4c13002",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
