@@ -1,0 +1,95 @@
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_521094ef456611::t_76a703dfa6ff3b 280
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_521094ef456611::t_f9afc7a16bb1fc 20-23,26
+android/app/src/main/java/app/kondis/data/remote/KondisApiFactory.kt
+  s_521094ef456611::t_3c34db1e5c9299 18,22
+android/app/src/main/java/app/kondis/data/settings/SettingsRepository.kt
+  s_521094ef456611::t_944898fbee9b88 23,51,62,67
+android/app/src/main/java/app/kondis/ui/AppViewModel.kt
+  s_521094ef456611::t_765e001009469b 13,15-17,23-24,35-40
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_521094ef456611::t_41a7e730b961d2 14-22,91-94,208-219
+server/src/app.module.ts
+  s_521094ef456611::t_afaa4d3caab142 2-3,22-23
+server/src/auth.ts
+  s_521094ef456611::t_11eefba5e3557c 1-48
+server/src/config/config.service.ts
+  s_521094ef456611::t_b7d1a017d603d0 124-125,132-134
+server/src/controllers/activity.controller.ts
+  s_521094ef456611::t_b9e62c519edd85 30,40-41,54-55,61-62,73-74,85-86,101-102
+server/src/controllers/auth.controller.ts
+  s_521094ef456611::t_e5b915f4b38021 1-13
+server/src/controllers/index.ts
+  s_521094ef456611::t_e962cbeb8716db 5-6,8
+server/src/controllers/job.controller.ts
+  s_521094ef456611::t_cfc9239e4badea 13,17
+server/src/controllers/server.controller.ts
+  s_521094ef456611::t_21d693738a2ded 7,21
+server/src/controllers/upload.controller.ts
+  s_521094ef456611::t_b9b0a20453cb57 10,43-44,73-74
+server/src/controllers/user.controller.ts
+  s_521094ef456611::t_c2d936a934b191 1-14
+server/src/db/schema.ts
+  s_521094ef456611::t_fae079f3050302 8,11
+server/src/main.ts
+  s_521094ef456611::t_4b3ce586373569 27-28
+server/src/repositories/activity.repository.ts
+  s_521094ef456611::t_8f42556a4e6ac4 195,208,212,234,353,377,399,412,437,439,467,485,509,516,521,523-525
+server/src/repositories/index.ts
+  s_521094ef456611::t_fb91e8e9088c9a 11,24
+server/src/repositories/upload.repository.ts
+  s_521094ef456611::t_590546d741ae1e 24-27
+server/src/repositories/user.repository.ts
+  s_521094ef456611::t_1365348cc5c602 1-12
+server/src/schema/migrations/1786440063867-AddUsers.ts
+  s_521094ef456611::t_791ccd60871114 1-11
+server/src/schema/tables/activity.table.ts
+  s_521094ef456611::t_c79a09be4e3b9d 25-27
+server/src/schema/tables/upload.table.ts
+  s_521094ef456611::t_c61413bdcbfdae 29-31
+server/src/schema/tables/user.table.ts
+  s_521094ef456611::t_6c8f0ff2be062d 1-12
+server/src/services/activity.service.ts
+  s_521094ef456611::t_85afb2edb3b766 126,406,412,426,430,438-439,472-473,517-518,523,532,571,593-594,733,738
+server/src/services/auth.service.ts
+  s_521094ef456611::t_486036d682693c 1-16
+server/src/services/index.ts
+  s_521094ef456611::t_710011bf318e15 6,8
+server/src/services/upload.service.ts
+  s_521094ef456611::t_cb8bc496520244 31,44,57,70,101,120,130,149,157,178,194,203
+server/src/types.ts
+  s_521094ef456611::t_1ca564b1ca7e64 380,413
+web/src/app.css
+  s_521094ef456611::t_b99b200fdda119 2429-2435
+web/src/hooks.server.ts
+  s_521094ef456611::t_246d5d1169c884 8-13
+web/src/routes/+layout.server.ts
+  s_521094ef456611::t_2f8b133cffd3f8 11,13,16-19,29
+web/src/routes/+layout.svelte
+  s_521094ef456611::t_5e9db35642d4b6 12-18
+web/src/routes/login/+page.server.ts
+  s_521094ef456611::t_bd1f73f90697a5 1-18
+web/src/routes/login/+page.svelte
+  s_521094ef456611::t_01e521377be1cf 1-3
+web/src/routes/setup/+page.server.ts
+  s_521094ef456611::t_00eb31f6611056 1-5
+web/src/routes/setup/+page.svelte
+  s_521094ef456611::t_4fe4ce558760b1 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6d5947d1466acdf9c85197aaf9ed50beacd418a3",
+  "prompts": {},
+  "sessions": {
+    "s_521094ef456611": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00058-2d24-7472-b656-88e40ea2485a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
