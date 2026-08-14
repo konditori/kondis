@@ -4,6 +4,7 @@ import app.kondis.model.Activity
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityPage
 import app.kondis.model.ActivityUpdate
+import app.kondis.model.BestEffortHistory
 import app.kondis.model.MatchedRouteHistory
 import app.kondis.model.UploadResponse
 import okhttp3.MultipartBody
@@ -45,6 +46,12 @@ interface KondisApi {
     suspend fun matchedRoutes(
         @Path("id") id: String,
     ): MatchedRouteHistory
+
+    @GET("activities/best-efforts/{sport}/{type}")
+    suspend fun bestEfforts(
+        @Path("sport") sport: String,
+        @Path("type") type: String,
+    ): BestEffortHistory
 
     @Multipart
     @POST("upload/activity")

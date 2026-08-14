@@ -68,6 +68,7 @@ fun ActivityDetailRoute(
     units: UnitSystem,
     onBack: () -> Unit,
     onMatchedRoutes: (String) -> Unit,
+    onBestEfforts: (String, String) -> Unit,
     onDeleted: () -> Unit,
     viewModel: ActivityDetailViewModel = hiltViewModel(),
 ) {
@@ -78,6 +79,7 @@ fun ActivityDetailRoute(
         units,
         onBack,
         onMatchedRoutes,
+        onBestEfforts,
         onDeleted,
         viewModel::update,
         viewModel::delete,
@@ -91,6 +93,7 @@ fun ActivityDetailScreen(
     units: UnitSystem,
     onBack: () -> Unit,
     onMatchedRoutes: (String) -> Unit,
+    onBestEfforts: (String, String) -> Unit,
     onDeleted: () -> Unit,
     onUpdate: (ActivityUpdate) -> Unit,
     onDelete: () -> Unit,
@@ -206,10 +209,21 @@ fun ActivityDetailScreen(
         }
         activity.bestEfforts?.takeIf(List<*>::isNotEmpty)?.let { efforts ->
             item {
-                SectionTitle(
-                    eyebrow = "${if (isCycling(activity.sport)) "CYCLING" else "RUNNING"} PERFORMANCE",
-                    title = "Best efforts",
-                )
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 30.dp, start = 20.dp, end = 12.dp),
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    SectionTitle(
+                        eyebrow = "${if (isCycling(activity.sport)) "CYCLING" else "RUNNING"} PERFORMANCE",
+                        title = "Best efforts",
+                    )
+                    Spacer(Modifier.weight(1f))
+                    TextButton(
+                        onClick = {
+                            onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", efforts.first().type)
+                        },
+                    ) { Text("You") }
+                }
             }
             item {
                 BestEffortsTable(
@@ -217,6 +231,9 @@ fun ActivityDetailScreen(
                     cycling = isCycling(activity.sport),
                     units = units,
                     excludedFromRankings = activity.excludeFromRankings,
+                    onEffortClick = { effort ->
+                        onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", effort.type)
+                    },
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
@@ -336,6 +353,7 @@ private fun BestEffortsTable(
     cycling: Boolean,
     units: UnitSystem,
     excludedFromRankings: Boolean,
+    onEffortClick: (app.kondis.model.BestEffort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val hasHeartRate = efforts.any { it.avgHr != null }
@@ -349,7 +367,7 @@ private fun BestEffortsTable(
         }
         efforts.forEach { effort ->
             val achievement = if (excludedFromRankings) null else achievement(effort)
-            TableRow {
+            TableRow(onClick = { onEffortClick(effort) }) {
                 Row(Modifier.weight(1.45f), verticalAlignment = Alignment.CenterVertically) {
                     if (achievement != null) {
                         Icon(
@@ -408,10 +426,16 @@ private fun TableHeader(content: @Composable androidx.compose.foundation.layout.
 }
 
 @Composable
-private fun TableRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+private fun TableRow(
+    onClick: (() -> Unit)? = null,
+    content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
+) {
     HorizontalDivider()
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 15.dp),
+        Modifier
+            .fillMaxWidth()
+            .then(onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier)
+            .padding(horizontal = 16.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
         content = content,
     )

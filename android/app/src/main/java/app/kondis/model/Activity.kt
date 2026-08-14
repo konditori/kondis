@@ -54,6 +54,37 @@ data class BestEffortSummary(
 )
 
 @Serializable
+data class BestEffortHistory(
+    val sport: String,
+    val type: String,
+    val valueKind: String,
+    val higherIsBetter: Boolean,
+    val distance: Double? = null,
+    val duration: Double? = null,
+    val options: List<BestEffortOption> = emptyList(),
+    val efforts: List<BestEffortHistoryEffort> = emptyList(),
+)
+
+@Serializable
+data class BestEffortOption(
+    val type: String,
+    val valueKind: String,
+)
+
+@Serializable
+data class BestEffortHistoryEffort(
+    val activityId: String,
+    val activityName: String?,
+    val sport: String,
+    val startedAt: String,
+    val elapsedTime: Double,
+    val value: Double,
+    val overallRank: Int,
+    val year: Int,
+    val yearRank: Int,
+)
+
+@Serializable
 data class Track(
     val type: String,
     val coordinates: List<List<Double>>,

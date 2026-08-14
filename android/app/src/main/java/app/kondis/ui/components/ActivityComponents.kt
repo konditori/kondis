@@ -186,13 +186,20 @@ private fun achievementText(effort: BestEffortSummary): String {
             3 -> "3rd "
             else -> ""
         }
-    val verb =
-        if (effort.type.contains("power") || effort.type == "biggest_climb" || effort.type == "elevation_gain") {
-            "best"
-        } else {
-            "fastest"
+    return when (effort.type) {
+        "longest_ride" -> {
+            "Your ${ordinal}longest ride!"
         }
-    return "Your $ordinal$verb ${bestEffortLabel(effort.type)}!"
+
+        "biggest_climb" -> {
+            "Your ${ordinal}biggest climb!"
+        }
+
+        else -> {
+            val verb = if (effort.type.contains("power") || effort.type == "elevation_gain") "best" else "fastest"
+            "Your $ordinal$verb ${bestEffortLabel(effort.type)}!"
+        }
+    }
 }
 
 private fun bestEffortLabel(type: String): String =

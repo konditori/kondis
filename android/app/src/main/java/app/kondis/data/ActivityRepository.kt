@@ -8,6 +8,7 @@ import app.kondis.data.settings.SettingsRepository
 import app.kondis.model.Activity
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityUpdate
+import app.kondis.model.BestEffortHistory
 import app.kondis.model.MatchedRouteHistory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -93,6 +94,11 @@ class ActivityRepository
         }
 
         suspend fun matchedRoutes(id: String): MatchedRouteHistory = api().matchedRoutes(id)
+
+        suspend fun bestEfforts(
+            sport: String,
+            type: String,
+        ): BestEffortHistory = api().bestEfforts(sport, type)
 
         suspend fun uploadGpx(file: File) {
             val request = file.asRequestBody("application/gpx+xml".toMediaType())
