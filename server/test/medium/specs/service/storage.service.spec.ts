@@ -1,28 +1,38 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { ConsoleLogger } from '@nestjs/common';
+import type { ConfigService } from 'src/config/config.service';
 import { JobStatus } from 'src/enum';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
+import type { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { StorageService } from 'src/services/storage.service';
 
-import { createTestApp, type TestApp } from 'test/medium/test-app';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(StorageService.name, () => {
-  let testApp: TestApp;
   let db: ReturnType<typeof createMediumTestDatabase>;
+  let storageDir: string;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
+    storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-storage-service-'));
   });
 
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
+    await rm(storageDir, { recursive: true, force: true });
   });
 
-  const setup = () => ({ sut: testApp.get(StorageService), repository: testApp.get(StorageRepository) });
+  const setup = () => {
+    const repository = new StorageRepository({ storageDir } as ConfigService, new CryptoRepository());
+    const jobs = { getReferencedTemporaryPaths: async () => new Set<string>() } as unknown as JobRepository;
+    return { sut: new StorageService(repository, jobs, new ConsoleLogger()), repository };
+  };
 
   it('deletes files through the configured storage repository', async () => {
     const { sut, repository } = setup();

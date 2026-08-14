@@ -1,26 +1,23 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { type KondisDatabase } from 'src/db/database';
 import type { ActivityDto } from 'src/dtos/activity.dto';
 import { EventRepository } from 'src/repositories/event.repository';
 
-import { createTestApp, type TestApp } from 'test/medium/test-app';
-import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+import { createMediumTestDatabase, getTestDatabaseConfig, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(EventRepository.name, () => {
-  let testApp: TestApp;
-  let db: ReturnType<typeof createMediumTestDatabase>;
+  let db: KondisDatabase;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
   });
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
   });
 
-  const setup = () => ({ sut: testApp.get(EventRepository) });
+  const setup = () => ({ sut: new EventRepository(db, { database: getTestDatabaseConfig() } as never) });
 
   it('publishes activity events through PostgreSQL notifications', async () => {
     const { sut } = setup();

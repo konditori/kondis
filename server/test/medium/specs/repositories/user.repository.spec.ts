@@ -3,24 +3,20 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UserRepository } from 'src/repositories/user.repository';
 
 import { createMediumFactory } from 'test/medium.factory';
-import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(UserRepository.name, () => {
-  let testApp: TestApp;
   let db: ReturnType<typeof createMediumTestDatabase>;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
   });
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
   });
 
-  const setup = () => ({ sut: testApp.get(UserRepository), factory: createMediumFactory(testApp) });
+  const setup = () => ({ sut: new UserRepository(db), factory: createMediumFactory(db) });
 
   it('creates, counts, and finds users', async () => {
     const { sut, factory } = setup();

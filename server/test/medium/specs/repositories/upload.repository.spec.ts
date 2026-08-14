@@ -3,24 +3,20 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UploadRepository } from 'src/repositories/upload.repository';
 
 import { createMediumFactory } from 'test/medium.factory';
-import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(UploadRepository.name, () => {
-  let testApp: TestApp;
   let db: ReturnType<typeof createMediumTestDatabase>;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
   });
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
   });
 
-  const setup = () => ({ sut: testApp.get(UploadRepository), factory: createMediumFactory(testApp) });
+  const setup = () => ({ sut: new UploadRepository(db), factory: createMediumFactory(db) });
 
   it('finds uploads by id and checksum and updates status', async () => {
     const { sut, factory } = setup();

@@ -13,6 +13,7 @@ import { type StorageRepository } from 'src/repositories/storage.repository';
 import { type TcxRepository } from 'src/repositories/tcx.repository';
 import { type UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
+import { newTestService } from 'test/utils';
 
 const UPLOAD_ID = '00000000-0000-4000-8000-000000000001';
 const ACTIVITY_ID = '00000000-0000-4000-8000-000000000002';
@@ -78,8 +79,20 @@ describe('ActivityService', () => {
   const gpxRepository = { decode: decodeGpx } as unknown as GpxRepository;
   const tcxRepository = { decode: decodeTcx } as unknown as TcxRepository;
 
-  const makeService = () =>
-    new ActivityService(
+  const serviceDependencies = [
+    uploadRepository,
+    storageRepository,
+    activityRepository,
+    databaseRepository,
+    eventRepository,
+    jobRepository,
+    fitRepository,
+    gpxRepository,
+    tcxRepository,
+    new ConsoleLogger({ logLevels: [] }),
+  ] as const;
+  const setup = () =>
+    newTestService(ActivityService, serviceDependencies, {
       uploadRepository,
       storageRepository,
       activityRepository,
@@ -89,8 +102,8 @@ describe('ActivityService', () => {
       fitRepository,
       gpxRepository,
       tcxRepository,
-      new ConsoleLogger({ logLevels: [] }),
-    );
+    });
+  const makeService = () => setup().sut;
 
   const decodesTo = (startedAt = new Date('2024-03-01T06:00:00.000Z')) => {
     decode.mockReturnValue({ recordMesgs: [{ timestamp: startedAt, heartRate: 120 }] });

@@ -5,7 +5,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { UploadedFileData } from 'src/types';
 
-import type { TestApp } from 'test/medium/test-app';
+import type { KondisDatabase } from 'src/db/database';
 
 export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFileData => ({
   originalname: filename,
@@ -38,10 +38,10 @@ const defaultMetrics: ActivityMetrics = {
   calories: 700,
 };
 
-export const createMediumFactory = (testApp: TestApp) => {
-  const users = testApp.get(UserRepository);
-  const uploads = testApp.get(UploadRepository);
-  const activities = testApp.get(ActivityRepository);
+export const createMediumFactory = (db: KondisDatabase) => {
+  const users = new UserRepository(db);
+  const uploads = new UploadRepository(db);
+  const activities = new ActivityRepository(db);
 
   const newUser = async (overrides: UserOverrides = {}): Promise<AuthenticatedUser> => {
     const user = await users.create({

@@ -6,6 +6,7 @@ import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType 
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types';
+import { newTestService } from 'test/utils';
 
 const makeConfig = (workers: WorkerType[]): ConfigService =>
   ({ workers, hasWorker: (worker: WorkerType) => workers.includes(worker) }) as ConfigService;
@@ -35,8 +36,14 @@ describe('JobService', () => {
     clearFailed,
   } as unknown as JobRepository;
 
-  const makeService = (workers = [WorkerType.API, WorkerType.JOBS]) =>
-    new JobService(makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] }));
+  const setup = (workers = [WorkerType.API, WorkerType.JOBS]) =>
+    newTestService(
+      JobService,
+      [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })],
+      { jobRepository },
+    );
+
+  const makeService = (workers = [WorkerType.API, WorkerType.JOBS]) => setup(workers).sut;
 
   const captureRunner = async (): Promise<(item: JobItem) => Promise<void>> => {
     await makeService().init();

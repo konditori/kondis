@@ -1,27 +1,40 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { ConsoleLogger } from '@nestjs/common';
+import type { JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 import { QueueCommand, QueueName } from 'src/enum';
 
-import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(JobService.name, () => {
-  let testApp: TestApp;
   let db: ReturnType<typeof createMediumTestDatabase>;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
   });
 
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
   });
 
-  const setup = () => ({ sut: testApp.get(JobService) });
+  const setup = () => {
+    const paused = new Set<QueueName>();
+    const jobs = {
+      getJobCounts: async () => ({ queued: 0, active: 0, completed: 0, failed: 0, total: 0 }),
+      isPaused: (queue: QueueName) => paused.has(queue),
+      pause: async (queue: QueueName) => void paused.add(queue),
+      resume: async (queue: QueueName) => void paused.delete(queue),
+    } as unknown as JobRepository;
+    return {
+      sut: new JobService(
+        { hasWorker: () => false } as never,
+        jobs,
+        new ConsoleLogger(),
+      ),
+    };
+  };
 
   it('reports every configured queue and handles queue commands', async () => {
     const { sut } = setup();

@@ -1,26 +1,29 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { utimes } from 'node:fs/promises';
+import { mkdtemp, rm, utimes } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
+import type { ConfigService } from 'src/config/config.service';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 
-import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(StorageRepository.name, () => {
-  let testApp: TestApp;
   let db: ReturnType<typeof createMediumTestDatabase>;
+  let storageDir: string;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
+    storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-storage-'));
   });
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
+    await rm(storageDir, { recursive: true, force: true });
   });
 
-  const setup = () => ({ sut: testApp.get(StorageRepository) });
+  const setup = () => ({ sut: new StorageRepository({ storageDir } as ConfigService, new CryptoRepository()) });
 
   it('writes, reads, and deletes files in the configured storage directory', async () => {
     const { sut } = setup();

@@ -32,7 +32,7 @@ describe(ActivityService.name, () => {
     uploads = testApp.get(UploadRepository);
     sut = testApp.get(ActivityService);
     jobs = testApp.get(JobRepository);
-    factory = createMediumFactory(testApp);
+    factory = createMediumFactory(db);
   });
 
   beforeEach(async () => {

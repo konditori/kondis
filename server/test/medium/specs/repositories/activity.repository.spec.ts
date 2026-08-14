@@ -3,24 +3,20 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 
 import { createMediumFactory } from 'test/medium.factory';
-import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
 describe(ActivityRepository.name, () => {
-  let testApp: TestApp;
   let db: ReturnType<typeof createMediumTestDatabase>;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
-    testApp = await createTestApp();
   });
   beforeEach(() => resetMediumTestDatabase(db));
   afterAll(async () => {
-    await testApp?.destroy();
     await db?.destroy();
   });
 
-  const setup = () => ({ sut: testApp.get(ActivityRepository), factory: createMediumFactory(testApp) });
+  const setup = () => ({ sut: new ActivityRepository(db), factory: createMediumFactory(db) });
 
   it('creates, reads, updates, and deletes an activity', async () => {
     const { sut, factory } = setup();
