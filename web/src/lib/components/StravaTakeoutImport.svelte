@@ -21,7 +21,10 @@
   onDestroy(() => clearInterval(progressTimer));
 
   async function pollImport(importId: string) {
-    const status = await uploadControllerGetStravaTakeoutStatus({ id: importId }, getSdkRequestOptions());
+    const status = await uploadControllerGetStravaTakeoutStatus(
+      { id: importId },
+      getSdkRequestOptions(),
+    );
     processed = status.processed;
     total = status.total;
     duplicates = status.duplicates;
@@ -30,7 +33,8 @@
       uploadState = "done";
       const imported = processed - status.duplicates - status.failed;
       const parts = imported > 0 ? [`Imported ${imported} activities`] : [];
-      if (status.duplicates > 0) parts.push(`${status.duplicates} activities were duplicates`);
+      if (status.duplicates > 0)
+        parts.push(`${status.duplicates} activities were duplicates`);
       if (status.failed > 0) parts.push(`${status.failed} failed`);
       message = `${parts.join("; ")}.`;
       await invalidateAll();
@@ -69,7 +73,10 @@
       message = "Takeout uploaded. Processing activities…";
       await pollImport(response.importId);
       if (uploadState === "uploading") {
-        progressTimer = setInterval(() => void pollImport(response.importId), 1000);
+        progressTimer = setInterval(
+          () => void pollImport(response.importId),
+          1000,
+        );
       }
     } catch (error) {
       uploadState = "error";
@@ -142,8 +149,15 @@
     </p>{/if}
   {#if uploadState === "uploading" && total !== null}
     <div class="upload-progress" aria-live="polite">
-      <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax={total} aria-valuenow={processed}>
-        <span style={`width: ${total === 0 ? 100 : (processed / total) * 100}%`}></span>
+      <div
+        class="upload-progress-track"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax={total}
+        aria-valuenow={processed}
+      >
+        <span style={`width: ${total === 0 ? 100 : (processed / total) * 100}%`}
+        ></span>
       </div>
       <small>{processed} of {total} activities processed</small>
     </div>

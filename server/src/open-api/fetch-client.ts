@@ -34,7 +34,7 @@ export type LagomTakeoutUploadResponseDtoOutput = {
 };
 export type TakeoutImportStatusDtoOutput = {
   importId: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
+  status: Status;
   total: number | null;
   processed: number;
   failed: number;
@@ -609,6 +609,57 @@ export function activityControllerListMatchedRoutes(
       ...opts,
     }),
   );
+}
+export function authControllerSetupStatus(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/setup', {
+      ...opts,
+    }),
+  );
+}
+export function authControllerSetup(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/setup', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function authControllerLogin(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/login', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function authControllerMe(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/me', {
+      ...opts,
+    }),
+  );
+}
+export function userControllerList(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/users', {
+      ...opts,
+    }),
+  );
+}
+export function userControllerCreate(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/users', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export enum Status {
+  Queued = 'queued',
+  Processing = 'processing',
+  Completed = 'completed',
+  Failed = 'failed',
 }
 export enum Name {
   ReparseFailedUploads = 'reparse-failed-uploads',

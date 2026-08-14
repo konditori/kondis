@@ -19,8 +19,31 @@ if (!serverUrl) {
 export const testAssetDirectory = resolve(import.meta.dirname, '../../test/test-assets');
 
 export const utils = {
-  init: () => {
+  init: async () => {
     defaults.baseUrl = serverUrl;
+
+    const credentials = {
+      email: 'e2e@example.com',
+      name: 'E2E User',
+      password: 'e2e-test-password',
+    };
+    const body = JSON.stringify(credentials);
+    const setup = await fetch(`${serverUrl}/auth/setup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body,
+    });
+    const result = (setup.ok
+      ? await setup.json()
+      : await (
+          await fetch(`${serverUrl}/auth/login`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body,
+          })
+        ).json()) as { accessToken: string };
+
+    defaults.headers = { authorization: `Bearer ${result.accessToken}` };
   },
 
   cleanup: async () => {
@@ -30,7 +53,7 @@ export const utils = {
         return;
       }
 
-      await Promise.all(activities.map(({ id }) => activityControllerDeleteById({ id })));
+      await Promise.all(activities.map(({ id }: { id: string }) => activityControllerDeleteById({ id })));
     }
   },
 
@@ -60,4 +83,4 @@ export const utils = {
   },
 };
 
-utils.init();
+await utils.init();
