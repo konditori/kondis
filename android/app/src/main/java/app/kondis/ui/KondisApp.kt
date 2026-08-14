@@ -155,10 +155,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
-                            onDeleted = {
-                                backStack.clear()
-                                backStack.add(FeedKey)
-                            },
+                            onDeleted = ::navigateBack,
                         )
                     }
                     entry<MatchedRoutesKey> { key ->

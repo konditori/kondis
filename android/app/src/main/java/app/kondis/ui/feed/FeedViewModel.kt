@@ -29,6 +29,7 @@ data class FeedUiState(
     val loadingMore: Boolean = false,
     val errorMessage: String? = null,
     val queuedWorkouts: List<QueuedWorkout> = emptyList(),
+    val showSyncComplete: Boolean = false,
 )
 
 private data class FeedMeta(
@@ -37,6 +38,7 @@ private data class FeedMeta(
     val refreshing: Boolean = false,
     val loadingMore: Boolean = false,
     val errorMessage: String? = null,
+    val syncRequested: Boolean = false,
 )
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -61,12 +63,23 @@ class FeedViewModel
                     loadingMore = meta.loadingMore,
                     errorMessage = meta.errorMessage,
                     queuedWorkouts = queuedWorkouts,
+                    showSyncComplete = meta.syncRequested && queuedWorkouts.isEmpty(),
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUiState())
 
         init {
             viewModelScope.launch {
                 search.debounce(350).distinctUntilChanged().collect { refresh() }
+            }
+            viewModelScope.launch {
+                var hadQueuedWorkouts = false
+                repository.queuedWorkouts().collect { queuedWorkouts ->
+                    if (queuedWorkouts.isNotEmpty()) {
+                        hadQueuedWorkouts = true
+                    } else if (hadQueuedWorkouts) {
+                        meta.update { it.copy(syncRequested = true) }
+                    }
+                }
             }
         }
 
@@ -98,6 +111,7 @@ class FeedViewModel
         }
 
         fun syncQueuedWorkouts() {
+            meta.update { it.copy(syncRequested = true) }
             repository.requestQueuedWorkoutSync()
         }
     }

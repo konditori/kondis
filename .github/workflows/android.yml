@@ -80,7 +80,6 @@ jobs:
 
   instrumented:
     name: Emulator E2E
-    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

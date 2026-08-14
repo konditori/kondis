@@ -97,11 +97,14 @@ fun FeedScreen(
                     }
                 }
             }
-            item {
-                SyncStatusCard(
-                    queuedWorkouts = state.queuedWorkouts,
-                    onSync = onSyncQueuedWorkouts,
-                )
+            if (state.queuedWorkouts.isNotEmpty() || state.showSyncComplete) {
+                item {
+                    SyncStatusCard(
+                        queuedWorkouts = state.queuedWorkouts,
+                        showSyncComplete = state.showSyncComplete,
+                        onSync = onSyncQueuedWorkouts,
+                    )
+                }
             }
             item {
                 OutlinedTextField(
@@ -179,6 +182,7 @@ fun FeedScreen(
 @Composable
 private fun SyncStatusCard(
     queuedWorkouts: List<app.kondis.data.QueuedWorkout>,
+    showSyncComplete: Boolean,
     onSync: () -> Unit,
 ) {
     androidx.compose.material3.Card(
@@ -188,7 +192,7 @@ private fun SyncStatusCard(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
     ) {
-        if (queuedWorkouts.isEmpty()) {
+        if (showSyncComplete) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,

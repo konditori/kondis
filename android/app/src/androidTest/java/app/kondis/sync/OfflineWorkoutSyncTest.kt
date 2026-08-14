@@ -37,6 +37,7 @@ class OfflineWorkoutSyncTest {
     private lateinit var database: KondisDatabase
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val remoteId = "remote-sync-test-activity"
+    private val deleteId = "remote-delete-test-activity"
     private val startedAt = Instant.now().toString()
 
     @Before
@@ -62,6 +63,10 @@ class OfflineWorkoutSyncTest {
                 activity = localActivityEntity(),
                 detail = localDetailEntity(),
                 workout = QueuedWorkoutEntity("local-sync-test", file.absolutePath, "Offline test run", startedAt),
+            )
+            database.activityDao().upsertActivities(listOf(remoteActivityEntity()))
+            database.activityDao().upsertDetail(
+                ActivityDetailEntity(deleteId, deleteDetailJson(), System.currentTimeMillis()),
             )
         }
         database.close()
@@ -101,6 +106,27 @@ class OfflineWorkoutSyncTest {
         verificationDatabase.close()
     }
 
+    @Test
+    fun deletingActivityReturnsToFeed() {
+        check(device.wait(Until.hasObject(By.text("Delete test run")), 10_000))
+        device.findObject(By.text("Delete test run")).click()
+        check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
+
+        device.findObject(By.text("Delete")).click()
+        check(device.wait(Until.hasObject(By.text("Activities")), 10_000))
+        check(!device.hasObject(By.text("Delete activity?")))
+
+        var deleteRequest: RecordedRequest? = null
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+        while (deleteRequest == null && System.nanoTime() < deadline) {
+            val request = server.takeRequest(1, TimeUnit.SECONDS) ?: continue
+            if (request.method == "DELETE" && request.url.encodedPath == "/api/v1/activities/$deleteId") {
+                deleteRequest = request
+            }
+        }
+        check(deleteRequest != null) { "No delete request received" }
+    }
+
     private fun apiDispatcher() =
         object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
@@ -109,12 +135,20 @@ class OfflineWorkoutSyncTest {
                         response(201, "{\"byteSize\":128,\"queued\":true}")
                     }
 
+                    request.method == "DELETE" && request.url.encodedPath == "/api/v1/activities/$deleteId" -> {
+                        response(204, "")
+                    }
+
                     request.method == "GET" && request.url.query == "limit=50" -> {
                         response(200, activityPageJson())
                     }
 
                     request.method == "GET" && request.url.encodedPath == "/api/v1/activities/$remoteId" -> {
                         response(200, activityDetailJson())
+                    }
+
+                    request.method == "GET" && request.url.encodedPath == "/api/v1/activities/$deleteId" -> {
+                        response(200, deleteDetailJson())
                     }
 
                     else -> {
@@ -176,7 +210,23 @@ class OfflineWorkoutSyncTest {
             "Offline test run",
             startedAt,
             startedAt,
-        )}],"nextCursor":null,"total":1}"""
+        )},${activityJson(
+            deleteId,
+            "Delete test run",
+            startedAt,
+            startedAt,
+        )}],"nextCursor":null,"total":2}"""
+
+    private fun remoteActivityEntity() =
+        ActivityEntity(
+            id = deleteId,
+            startedAt = startedAt,
+            searchableText = "delete test run run",
+            payload = activityJson(deleteId, "Delete test run", startedAt, startedAt),
+            isLocal = false,
+        )
+
+    private fun deleteDetailJson() = activityDetailJson(deleteId, "Delete test run")
 
     private fun activityDetailJson(
         id: String = remoteId,
