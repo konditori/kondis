@@ -2,7 +2,7 @@ import { CanActivate, createParamDecorator, ExecutionContext, ForbiddenException
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ConfigService } from 'src/config/config.service';
 
-export type AuthenticatedUser = { id: string; role: 'admin' | 'user'; email: string };
+export type AuthenticatedUser = { id: string; role: 'admin' | 'user'; email: string; name: string };
 export const PUBLIC = 'kondis:public';
 export const Public = () => SetMetadata(PUBLIC, true);
 export const ADMIN = 'kondis:admin';
@@ -38,7 +38,7 @@ export class AuthGuard implements CanActivate {
     try {
       const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
       if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) throw new Error();
-      request.user = { id: parsed.id, email: parsed.email, role: parsed.role };
+      request.user = { id: parsed.id, email: parsed.email, role: parsed.role, name: parsed.name };
       if (Reflect.getMetadata(ADMIN, handler) || Reflect.getMetadata(ADMIN, controller)) {
         if (request.user.role !== 'admin') throw new ForbiddenException('Administrator access is required');
       }

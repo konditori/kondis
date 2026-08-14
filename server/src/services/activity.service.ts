@@ -403,7 +403,7 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }, userId: string) {
+  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }, userId?: string) {
     const normalizedSearch = search?.trim() || undefined;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
@@ -427,7 +427,7 @@ export class ActivityService {
     };
   }
 
-  async listBestEfforts(sport: BestEffortSport, type: BestEffortType, userId: string) {
+  async listBestEfforts(sport: BestEffortSport, type: BestEffortType, userId?: string) {
     const definitions = sport === 'run' ? RUNNING_BEST_EFFORTS : CYCLING_BEST_EFFORTS;
     const selected = definitions.find((effort) => effort.type === type);
     if (!selected) {
@@ -469,7 +469,7 @@ export class ActivityService {
     };
   }
 
-  async getById(id: string, userId: string) {
+  async getById(id: string, userId?: string) {
     const row = await this.activityRepository.getDetailById(id, userId);
     if (!row) {
       return;
@@ -514,7 +514,7 @@ export class ActivityService {
     };
   }
 
-  async listMatchedRoutes(id: string, userId: string) {
+  async listMatchedRoutes(id: string, userId?: string) {
     const activity = await this.activityRepository.getById(id, userId);
     if (!activity) {
       return;
@@ -529,7 +529,7 @@ export class ActivityService {
   }
 
   async updateById(
-    id: string, userId: string,
+    id: string, userId?: string,
     input: {
       name?: string | null;
       description?: string | null;
@@ -590,7 +590,7 @@ export class ActivityService {
     return updatedDto;
   }
 
-  async deleteById(id: string, userId: string): Promise<boolean> {
+  async deleteById(id: string, userId?: string): Promise<boolean> {
     if (!(await this.activityRepository.getById(id, userId))) return false;
     const status = await this.handleActivityDelete({ id });
     return status !== JobStatus.Skipped;

@@ -40,16 +40,16 @@
   );
   const average = $derived(
     validValues.length > 0
-      ? validValues.reduce((sum, value) => sum + value, 0) /
-        validValues.length
+      ? validValues.reduce((sum, value) => sum + value, 0) / validValues.length
       : 0,
   );
   const lower = $derived(validValues.length > 0 ? Math.min(...validValues) : 0);
   const upper = $derived(validValues.length > 0 ? Math.max(...validValues) : 1);
   const spread = $derived(Math.max(upper - lower, upper * 0.04, 1));
   const axisTicks = $derived(
-    Array.from({ length: 5 }, (_, index) =>
-      lower + ((upper - lower) * index) / 4,
+    Array.from(
+      { length: 5 },
+      (_, index) => lower + ((upper - lower) * index) / 4,
     ),
   );
 
@@ -62,10 +62,7 @@
   const chartPoints = $derived(
     efforts.map((effort, index) => ({
       ...effort,
-      x:
-        efforts.length === 1
-          ? 500
-          : 64 + (index / (efforts.length - 1)) * 872,
+      x: efforts.length === 1 ? 500 : 64 + (index / (efforts.length - 1)) * 872,
       y: chartY(effort.chartValue),
     })),
   );
@@ -104,12 +101,8 @@
         : Math.max(...validValues)
       : 0,
   );
-  const fastestY = $derived(
-    chartY(fastest),
-  );
-  const slowestY = $derived(
-    chartY(slowest),
-  );
+  const fastestY = $derived(chartY(fastest));
+  const slowestY = $derived(chartY(slowest));
   const selectedPoint = $derived(
     chartPoints.find((point) => point.id === selectedActivityId) ?? null,
   );
@@ -140,10 +133,9 @@
   }
 
   function axisLabel(value: number): string {
-    return performance(isSpeed ? value : value > 0 ? 1000 / value : null).replace(
-      " min/",
-      "/",
-    );
+    return performance(
+      isSpeed ? value : value > 0 ? 1000 / value : null,
+    ).replace(" min/", "/");
   }
 
   function smoothPath(points: { x: number; y: number }[]): string {
@@ -181,83 +173,185 @@
       <span class="eyebrow">Repeated route</span>
       <h1>Matched {isSpeed ? "rides" : "runs"}</h1>
       <p>
-        Compare your performance across {activities.length} activities
-        on the same route.
+        Compare your performance across {activities.length} activities on the same
+        route.
       </p>
     </div>
   </header>
 
   {#if validValues.length > 0}
-    <section class="matched-route-chart" aria-label="Route performance over time">
+    <section
+      class="matched-route-chart"
+      aria-label="Route performance over time"
+    >
       <div class="matched-route-chart-heading">
-        <div><span class="eyebrow">Progress over time</span><h2>{isSpeed ? "Speed" : "Pace"}</h2></div>
+        <div>
+          <span class="eyebrow">Progress over time</span>
+          <h2>{isSpeed ? "Speed" : "Pace"}</h2>
+        </div>
       </div>
       <div class="matched-chart-wrap">
-      <svg viewBox="0 0 1000 300" role="img" aria-label={`${isSpeed ? "Speed" : "Pace"} for each matched activity`}>
-        <line class="chart-y-axis" x1="48" x2="48" y1="28" y2="270" />
-        <text class="chart-axis-title" x="48" y="20">{isSpeed ? "Speed" : "Pace"}</text>
-        {#each axisTicks as tick}
-          <line class="chart-grid" x1="48" x2="952" y1={chartY(tick)} y2={chartY(tick)} />
-          <line class="chart-y-tick" x1="43" x2="48" y1={chartY(tick)} y2={chartY(tick)} />
-          <text class="chart-axis-label" x="39" y={chartY(tick) + 4} text-anchor="end">{axisLabel(tick)}</text>
-        {/each}
-        <line class="chart-guide chart-fastest" x1="48" x2="952" y1={fastestY} y2={fastestY} />
-        <line class="chart-average" x1="48" x2="952" y1={averageY} y2={averageY} />
-        <line class="chart-guide chart-slowest" x1="48" x2="952" y1={slowestY} y2={slowestY} />
-        <polyline class="chart-line" points={linePoints} />
-        <path class="chart-trend" d={trendPath} />
-        {#each chartPoints as point}
-          <a
-            class="chart-point"
-            class:active={activeActivityId === point.id}
-            class:fastest={point.chartValue === fastest}
-            href={`/activities/${point.id}`}
-            aria-label={`${activityName(point)}, ${performance(point.metrics?.avgSpeed ?? null)}`}
-            onmouseenter={() => (activeActivityId = point.id)}
-            onmouseleave={() => (activeActivityId = null)}
-            onfocus={() => (activeActivityId = point.id)}
-            onblur={() => (activeActivityId = null)}
-            onclick={(event) => {
-              event.preventDefault();
-              selectedActivityId = selectedActivityId === point.id ? null : point.id;
-            }}
+        <svg
+          viewBox="0 0 1000 300"
+          role="img"
+          aria-label={`${isSpeed ? "Speed" : "Pace"} for each matched activity`}
+        >
+          <line class="chart-y-axis" x1="48" x2="48" y1="28" y2="270" />
+          <text class="chart-axis-title" x="48" y="20"
+            >{isSpeed ? "Speed" : "Pace"}</text
           >
-            <circle
-              class:current={point.id === history.sourceActivityId}
-              cx={point.x}
-              cy={point.y}
-              r={point.id === history.sourceActivityId || activeActivityId === point.id ? 9 : 6}
+          {#each axisTicks as tick}
+            <line
+              class="chart-grid"
+              x1="48"
+              x2="952"
+              y1={chartY(tick)}
+              y2={chartY(tick)}
             />
-            <title>{activityName(point)} · {performance(point.metrics?.avgSpeed ?? null)}</title>
-          </a>
-        {/each}
-        {#if selectedPoint}
-          <line class="chart-selection-line" x1={selectedPoint.x} x2={selectedPoint.x} y1="28" y2="270" />
-          <circle class="chart-selection-point" cx={selectedPoint.x} cy={selectedPoint.y} r="8" />
-          <g class="chart-selection-tooltip" transform={`translate(${tooltipX(selectedPoint.x)} 18)`}>
-            <rect width="190" height="58" rx="2" />
-            <text x="12" y="22" class="chart-selection-name">{activityName(selectedPoint)}</text>
-            <text x="12" y="44" class="chart-selection-value">{performance(selectedPoint.metrics?.avgSpeed ?? null)}</text>
-            <text x="104" y="44" class="chart-selection-difference">{difference(selectedPoint.chartValue)}</text>
-          </g>
-        {/if}
-      </svg>
-      <aside class="chart-stat-labels" aria-label="Performance summary">
-        <span class="fastest">Fastest<strong>{displayChartValue(fastest)}</strong></span>
-        <span class="average">All-time avg<strong>{displayChartValue(average)}</strong></span>
-        <span class="slowest">Slowest<strong>{displayChartValue(slowest)}</strong></span>
-      </aside>
+            <line
+              class="chart-y-tick"
+              x1="43"
+              x2="48"
+              y1={chartY(tick)}
+              y2={chartY(tick)}
+            />
+            <text
+              class="chart-axis-label"
+              x="39"
+              y={chartY(tick) + 4}
+              text-anchor="end">{axisLabel(tick)}</text
+            >
+          {/each}
+          <line
+            class="chart-guide chart-fastest"
+            x1="48"
+            x2="952"
+            y1={fastestY}
+            y2={fastestY}
+          />
+          <line
+            class="chart-average"
+            x1="48"
+            x2="952"
+            y1={averageY}
+            y2={averageY}
+          />
+          <line
+            class="chart-guide chart-slowest"
+            x1="48"
+            x2="952"
+            y1={slowestY}
+            y2={slowestY}
+          />
+          <polyline class="chart-line" points={linePoints} />
+          <path class="chart-trend" d={trendPath} />
+          {#each chartPoints as point}
+            <a
+              class="chart-point"
+              class:active={activeActivityId === point.id}
+              class:fastest={point.chartValue === fastest}
+              href={`/activities/${point.id}`}
+              aria-label={`${activityName(point)}, ${performance(point.metrics?.avgSpeed ?? null)}`}
+              onmouseenter={() => (activeActivityId = point.id)}
+              onmouseleave={() => (activeActivityId = null)}
+              onfocus={() => (activeActivityId = point.id)}
+              onblur={() => (activeActivityId = null)}
+              onclick={(event) => {
+                event.preventDefault();
+                selectedActivityId =
+                  selectedActivityId === point.id ? null : point.id;
+              }}
+            >
+              <circle
+                class:current={point.id === history.sourceActivityId}
+                cx={point.x}
+                cy={point.y}
+                r={point.id === history.sourceActivityId ||
+                activeActivityId === point.id
+                  ? 9
+                  : 6}
+              />
+              <title
+                >{activityName(point)} · {performance(
+                  point.metrics?.avgSpeed ?? null,
+                )}</title
+              >
+            </a>
+          {/each}
+          {#if selectedPoint}
+            <line
+              class="chart-selection-line"
+              x1={selectedPoint.x}
+              x2={selectedPoint.x}
+              y1="28"
+              y2="270"
+            />
+            <circle
+              class="chart-selection-point"
+              cx={selectedPoint.x}
+              cy={selectedPoint.y}
+              r="8"
+            />
+            <g
+              class="chart-selection-tooltip"
+              transform={`translate(${tooltipX(selectedPoint.x)} 18)`}
+            >
+              <rect width="190" height="58" rx="2" />
+              <text x="12" y="22" class="chart-selection-name"
+                >{activityName(selectedPoint)}</text
+              >
+              <text x="12" y="44" class="chart-selection-value"
+                >{performance(selectedPoint.metrics?.avgSpeed ?? null)}</text
+              >
+              <text x="104" y="44" class="chart-selection-difference"
+                >{difference(selectedPoint.chartValue)}</text
+              >
+            </g>
+          {/if}
+        </svg>
+        <aside class="chart-stat-labels" aria-label="Performance summary">
+          <span class="fastest"
+            >Fastest<strong>{displayChartValue(fastest)}</strong></span
+          >
+          <span class="average"
+            >All-time avg<strong>{displayChartValue(average)}</strong></span
+          >
+          <span class="slowest"
+            >Slowest<strong>{displayChartValue(slowest)}</strong></span
+          >
+        </aside>
       </div>
-      <div class="matched-chart-range"><span>{localDate(efforts[0].startedAt)}</span><span>{localDate(efforts.at(-1)!.startedAt)}</span></div>
-      <div class="matched-chart-legend"><strong>{activities.length} activities</strong><span><i class="trend-swatch"></i>Trending average</span><span><i class="effort-swatch"></i>Each effort</span></div>
+      <div class="matched-chart-range">
+        <span>{localDate(efforts[0].startedAt)}</span><span
+          >{localDate(efforts.at(-1)!.startedAt)}</span
+        >
+      </div>
+      <div class="matched-chart-legend">
+        <strong>{activities.length} activities</strong><span
+          ><i class="trend-swatch"></i>Trending average</span
+        ><span><i class="effort-swatch"></i>Each effort</span>
+      </div>
     </section>
   {/if}
 
   <section class="matched-route-list">
-    <div class="section-heading"><div><span class="eyebrow">Every effort</span><h2>{activities.length} activities</h2></div></div>
-    <div class="matched-route-table" role="table" aria-label="Matched route activities">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Every effort</span>
+        <h2>{activities.length} activities</h2>
+      </div>
+    </div>
+    <div
+      class="matched-route-table"
+      role="table"
+      aria-label="Matched route activities"
+    >
       <div class="matched-route-row matched-route-table-header" role="row">
-        <span role="columnheader">Date</span><span role="columnheader">Activity</span><span role="columnheader">{isSpeed ? "Speed" : "Pace"}</span><span role="columnheader">vs average</span><span role="columnheader">Moving time</span><span></span>
+        <span role="columnheader">Date</span><span role="columnheader"
+          >Activity</span
+        ><span role="columnheader">{isSpeed ? "Speed" : "Pace"}</span><span
+          role="columnheader">vs average</span
+        ><span role="columnheader">Moving time</span><span></span>
       </div>
       {#each [...efforts].reverse() as effort}
         <a
@@ -273,10 +367,28 @@
           onblur={() => (activeActivityId = null)}
         >
           <span role="cell">{localDate(effort.startedAt)}</span>
-          <span role="cell"><strong>{activityName(effort)}</strong>{#if effort.id === history.sourceActivityId}<small>This {isSpeed ? "ride" : "run"}</small>{/if}</span>
-          <span role="cell">{performance(effort.metrics?.avgSpeed ?? null)}</span>
-          <span class:better={isSpeed ? effort.chartValue > average : effort.chartValue < average} role="cell">{difference(effort.chartValue)}</span>
-          <span class="matched-time" role="cell"><Timer size={15} />{effort.metrics ? effortDuration(effort.metrics.movingTime ?? effort.metrics.elapsedTime) : '—'}</span>
+          <span role="cell"
+            ><strong>{activityName(effort)}</strong
+            >{#if effort.id === history.sourceActivityId}<small
+                >This {isSpeed ? "ride" : "run"}</small
+              >{/if}</span
+          >
+          <span role="cell"
+            >{performance(effort.metrics?.avgSpeed ?? null)}</span
+          >
+          <span
+            class:better={isSpeed
+              ? effort.chartValue > average
+              : effort.chartValue < average}
+            role="cell">{difference(effort.chartValue)}</span
+          >
+          <span class="matched-time" role="cell"
+            ><Timer size={15} />{effort.metrics
+              ? effortDuration(
+                  effort.metrics.movingTime ?? effort.metrics.elapsedTime,
+                )
+              : "—"}</span
+          >
           <ChevronRight size={17} />
         </a>
       {/each}

@@ -28,7 +28,7 @@ export class UploadService {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadActivity(file: UploadedFileData | undefined, userId: string): Promise<FitUploadResponseDto> {
+  async uploadActivity(file: UploadedFileData | undefined, userId?: string): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -127,7 +127,7 @@ export class UploadService {
     return JobStatus.Success;
   }
 
-  async uploadLagomTakeout(file: UploadedFileData | undefined, userId: string): Promise<LagomTakeoutUploadResponseDto> {
+  async uploadLagomTakeout(file: UploadedFileData | undefined, userId?: string): Promise<LagomTakeoutUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -191,7 +191,7 @@ export class UploadService {
     file: UploadedFileData,
     activityName?: string,
     activityDescription?: string,
-    activitySport: JobOf<JobName.ActivityUpload>['activitySport'] | undefined, userId: string,
+    activitySport: JobOf<JobName.ActivityUpload>['activitySport'] | undefined, userId?: string,
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
@@ -200,7 +200,7 @@ export class UploadService {
     await this.jobRepository.queue({
       name: JobName.ActivityUpload,
       data: {
-        userId,
+        ...(userId && { userId }),
         originalName: file.originalname,
         storagePath,
         checksum,

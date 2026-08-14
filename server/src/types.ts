@@ -377,7 +377,7 @@ export interface IEntityJob extends IBaseJob {
 }
 
 export interface IActivityUploadJob {
-  userId: string;
+  userId?: string;
   originalName: string;
   storagePath: string;
   checksum: string;
@@ -410,7 +410,7 @@ export interface IManualActivityJob extends IEntityJob {
 }
 
 export interface ILagomTakeoutImportJob {
-  userId: string;
+  userId?: string;
   originalName: string;
   storagePath: string;
 }

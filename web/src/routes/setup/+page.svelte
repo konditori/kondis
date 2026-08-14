@@ -1,3 +1,47 @@
-<script lang="ts">let { form } = $props();</script>
-<svelte:head><title>Set up Kondis</title></svelte:head>
-<main class="auth-page"><section><h1>Set up Kondis</h1><p>Create the first account. It is the administrator, as in Immich’s initial setup flow.</p><form method="POST" action="?/setup"><label>Name<input required name="name" autocomplete="name" /></label><label>Email<input required type="email" name="email" autocomplete="email" /></label><label>Password<input required minlength="10" type="password" name="password" autocomplete="new-password" /></label>{#if form?.error}<p class="error">{form.error}</p>{/if}<button>Create administrator</button></form></section></main>
+<script lang="ts">
+  let { form } = $props();
+</script>
+
+<svelte:head><title>Welcome to Kondis</title></svelte:head>
+<main class="auth-page">
+  <section>
+    <h1>Welcome to Kondis 😰</h1>
+    <p>Please create your account</p>
+    <form method="POST" action="?/setup">
+      <label
+        >Name<input
+          required
+          name="name"
+          autocomplete="name"
+          value={form?.name ?? ""}
+        /></label
+      ><label
+        >Email<input
+          required
+          type="email"
+          name="email"
+          autocomplete="email"
+          value={form?.email ?? ""}
+        /></label
+      ><label
+        >Password<input
+          required
+          minlength="10"
+          type="password"
+          name="password"
+          autocomplete="new-password"
+        /></label
+      ><label
+        >Confirm password<input
+          required
+          minlength="10"
+          type="password"
+          name="confirmPassword"
+          autocomplete="new-password"
+        /></label
+      >{#if form?.error}<p class="error">{form.error}</p>{/if}<button
+        >Set up</button
+      >
+    </form>
+  </section>
+</main>

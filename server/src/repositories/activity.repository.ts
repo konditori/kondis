@@ -396,7 +396,7 @@ export class ActivityRepository {
       .executeTakeFirst();
   }
 
-  listRecentPage({ limit, cursor, search, userId }: { limit: number; cursor?: ActivityCursor; search?: string; userId: string }) {
+  listRecentPage({ limit, cursor, search, userId }: { limit: number; cursor?: ActivityCursor; search?: string; userId?: string }) {
     let query = this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -409,7 +409,7 @@ export class ActivityRepository {
         ).as('metrics'),
       )
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
-    query = query.where('activity.user_id', '=', userId);
+    if (userId) query = query.where('activity.user_id', '=', userId);
 
     if (search) {
       const pattern = `%${search}%`;
@@ -434,9 +434,9 @@ export class ActivityRepository {
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
-  async count(search: string | undefined, userId: string): Promise<number> {
+  async count(search?: string, userId?: string): Promise<number> {
     let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
-    query = query.where('activity.user_id', '=', userId);
+    if (userId) query = query.where('activity.user_id', '=', userId);
     if (search) {
       const pattern = `%${search}%`;
       query = query.where(({ or, eb }) =>
@@ -464,7 +464,7 @@ export class ActivityRepository {
       .execute();
   }
 
-  listBestEfforts(type: BestEffortType, sports: ActivityType[], userId: string) {
+  listBestEfforts(type: BestEffortType, sports: ActivityType[], userId?: string) {
     return this.db
       .selectFrom('activity_best_effort')
       .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
@@ -482,7 +482,7 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.type', '=', type)
       .where('activity.sport', 'in', sports)
-      .where('activity.user_id', '=', userId)
+      .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
       .orderBy('activity.started_at', 'asc')
       .orderBy('activity.id', 'asc')
@@ -506,14 +506,14 @@ export class ActivityRepository {
       .execute();
   }
 
-  listAvailableBestEffortTypes(sports: ActivityType[], userId: string) {
+  listAvailableBestEffortTypes(sports: ActivityType[], userId?: string) {
     return this.db
       .selectFrom('activity_best_effort')
       .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
       .select('activity_best_effort.type')
       .distinct()
       .where('activity.sport', 'in', sports)
-      .where('activity.user_id', '=', userId)
+      .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
       .execute();
   }

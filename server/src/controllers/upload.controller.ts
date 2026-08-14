@@ -40,7 +40,7 @@ export class UploadController {
       limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0 },
     }),
   )
-  async uploadActivity(@UploadedFile() file?: UploadedFileData, @CurrentUser() user: AuthenticatedUser): Promise<FitUploadResponseDto> {
+  async uploadActivity(@UploadedFile() file: UploadedFileData | undefined, @CurrentUser() user: AuthenticatedUser): Promise<FitUploadResponseDto> {
     return this.service.uploadActivity(file, user.id);
   }
 
@@ -70,7 +70,7 @@ export class UploadController {
       limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0 },
     }),
   )
-  async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData, @CurrentUser() user: AuthenticatedUser): Promise<LagomTakeoutUploadResponseDto> {
+  async uploadStravaTakeout(@UploadedFile() uploadedFile: UploadedFileData | undefined, @CurrentUser() user: AuthenticatedUser): Promise<LagomTakeoutUploadResponseDto> {
     return this.service.uploadLagomTakeout(uploadedFile, user.id);
   }
 }
