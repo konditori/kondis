@@ -1,0 +1,53 @@
+android/app/build.gradle.kts
+  s_37d0cd585aa764::t_8d969ab41af1d3 120-121,131
+android/app/schemas/app.kondis.data.local.KondisDatabase/2.json
+  s_37d0cd585aa764::t_7be40b5ab88bda 1-127
+android/app/src/main/AndroidManifest.xml
+  s_37d0cd585aa764::t_bdb3db8b88b2f8 2,24-32
+android/app/src/main/java/app/kondis/KondisApplication.kt
+  s_37d0cd585aa764::t_f85fcbf17fd83b 4-6,8,11-24
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_37d0cd585aa764::t_49e8fe24cdc730 3-9,13,18,22-25,37,46-52,57,73-84,142-252,282-317,319,331-332
+android/app/src/main/java/app/kondis/data/local/ActivityDao.kt
+  s_37d0cd585aa764::t_68e047e03b9d52 34-48,55-56,60,63-86
+android/app/src/main/java/app/kondis/data/local/ActivityEntity.kt
+  s_37d0cd585aa764::t_e7c4aa7ffd35de 12,21-29
+android/app/src/main/java/app/kondis/data/local/KondisDatabase.kt
+  s_37d0cd585aa764::t_c5091957768134 7-8
+android/app/src/main/java/app/kondis/di/AppModule.kt
+  s_37d0cd585aa764::t_0d81dfdb275ea5 5-6,50,55-72
+android/app/src/main/java/app/kondis/sync/WorkoutSyncWorker.kt
+  s_37d0cd585aa764::t_9810c533300b2b 1-21
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_37d0cd585aa764::t_21e1852ec80937 130
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_37d0cd585aa764::t_479a6f6c00e0d7 119,139-150,153-167,613,622
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_37d0cd585aa764::t_c29570afd7ac83 53,66,80,89,94-95
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_37d0cd585aa764::t_b664b9da5f52f3 14,16,37,53,65,99-104,177-231
+android/app/src/main/java/app/kondis/ui/feed/FeedViewModel.kt
+  s_37d0cd585aa764::t_65120bbcc9d4df 6,31,54,63,99-102
+android/app/src/main/java/app/kondis/ui/record/RecordScreen.kt
+  s_37d0cd585aa764::t_48afa62bcb01d3 388-391
+android/app/src/main/java/app/kondis/ui/record/RecordingViewModel.kt
+  s_37d0cd585aa764::t_1d361030a9791b 92
+android/gradle/libs.versions.toml
+  s_37d0cd585aa764::t_5bd6af2efb9731 13,42-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f5724eef11e3317bed8a5468d88cabdafc626a27",
+  "prompts": {},
+  "sessions": {
+    "s_37d0cd585aa764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffe6-77d1-7192-801b-f0f7a4c13002",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
