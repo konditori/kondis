@@ -1,8 +1,12 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
-import { extractLagomTakeout } from 'src/utils/lagom';
+import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createTestZip } from 'test/utils/zip';
+
+const lagomTakeoutParser = new LagomTakeoutParser();
+const extractLagomTakeout = (...args: Parameters<LagomTakeoutParser['extractLagomTakeout']>) =>
+  lagomTakeoutParser.extractLagomTakeout(...args);
 
 describe('extractLagomTakeout', () => {
   it('reads the manifest and decompresses supported activity files', async () => {
@@ -44,26 +48,38 @@ describe('extractLagomTakeout', () => {
     ]);
   });
 
-  it('creates a summary activity for a manual CSV row without a file', async () => {
+  it('uses the CSV Activity ID as a stable identity for manual activities', async () => {
     const archive = createTestZip({
       'activities.csv': Buffer.from(
         [
           'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance,Average Speed,Elevation Gain,Calories',
-          '1,"Aug 10, 2016, 5:00:00 PM",10/08/2016,Run,,1495,1495,4.70,4700,2.95,0,624',
+          '12345,"Aug 10, 2016, 5:00:00 PM",10/08/2016,Run,,1495,1495,4.70,4700,2.95,0,624',
         ].join('\n'),
       ),
     });
 
     const result = await extractLagomTakeout(archive);
 
-    expect(result.skipped).toBe(0);
     expect(result.activities[0]?.manual).toMatchObject({
+      sourceId: '12345',
       elapsedTime: 1495,
       distance: 4700,
       avgSpeed: 2.95,
       calories: 624,
     });
     expect(result.activities[0]?.sport).toBe('run');
+  });
+
+  it('uses the row number when a manual row has no Activity ID', async () => {
+    const archive = createTestZip({
+      'activities.csv': Buffer.from(
+        ['Activity Date,Activity Name,Activity Type,Filename,Elapsed Time', 'Aug 10, 2016, Run,,60'].join('\n'),
+      ),
+    });
+
+    const result = await extractLagomTakeout(archive);
+
+    expect(result.activities[0]?.manual?.sourceId).toBe('row:2');
   });
 
   it('hands a manual CSV activity to the import callback', async () => {

@@ -225,6 +225,7 @@ describe('UploadService (medium)', () => {
         activityName: 'Run',
         activityDescription: 'Forest loop',
         activitySport: 'roller_ski',
+        takeoutImportId: item.data.takeoutImportId,
       },
     });
     expect(gpxJob).toEqual({
@@ -235,6 +236,7 @@ describe('UploadService (medium)', () => {
         checksum: crypto.xxHash(gpx),
         activityName: 'Ride',
         activitySport: 'ride',
+        takeoutImportId: item.data.takeoutImportId,
       },
     });
     await expect(storageRepository.read(fitJob.data.storagePath)).resolves.toEqual(fit);

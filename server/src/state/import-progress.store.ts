@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-export type LagomImportStatus = 'queued' | 'processing' | 'completed' | 'failed';
-export type LagomImportProgress = {
+export type ImportProgressStatus = 'queued' | 'processing' | 'completed' | 'failed';
+
+export type ImportProgress = {
   importId: string;
   userId: string;
-  status: LagomImportStatus;
+  status: ImportProgressStatus;
   total: number | null;
   processed: number;
   failed: number;
@@ -13,8 +14,8 @@ export type LagomImportProgress = {
 };
 
 @Injectable()
-export class LagomImportService {
-  private readonly imports = new Map<string, LagomImportProgress>();
+export class ImportProgressStore {
+  private readonly imports = new Map<string, ImportProgress>();
 
   create(importId: string, userId: string): void {
     this.imports.set(importId, {
@@ -29,7 +30,7 @@ export class LagomImportService {
     });
   }
 
-  get(importId: string, userId: string): LagomImportProgress | undefined {
+  get(importId: string, userId: string): ImportProgress | undefined {
     const progress = this.imports.get(importId);
     return progress?.userId === userId ? progress : undefined;
   }

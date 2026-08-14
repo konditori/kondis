@@ -22,7 +22,7 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
-import { LagomImportService } from 'src/services/lagom-import.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 import {
   ACTIVITY_TYPES,
   ActivityType,
@@ -75,7 +75,7 @@ export class ActivityService {
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
-    @Optional() private readonly lagomImportService?: LagomImportService,
+    @Optional() private readonly importProgressStore?: ImportProgressStore,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -112,7 +112,7 @@ export class ActivityService {
         }
         await this.uploadRepository.setStatus(id, 'parsed');
         if (takeoutImportId) {
-          this.lagomImportService?.increment(takeoutImportId);
+          this.importProgressStore?.increment(takeoutImportId);
         }
         return JobStatus.Skipped;
       }
@@ -152,7 +152,7 @@ export class ActivityService {
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
       if (takeoutImportId) {
-        this.lagomImportService?.increment(takeoutImportId);
+        this.importProgressStore?.increment(takeoutImportId);
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
@@ -160,7 +160,7 @@ export class ActivityService {
 
       await this.uploadRepository.setStatus(id, 'failed', message);
       if (takeoutImportId) {
-        this.lagomImportService?.increment(takeoutImportId, true);
+        this.importProgressStore?.increment(takeoutImportId, true);
       }
       throw error;
     }
@@ -170,7 +170,7 @@ export class ActivityService {
 
   @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
   async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
-    const manualChecksum = job.sourceId ? `lagom:${job.sourceId}` : `manual:${job.id}`;
+    const manualChecksum = job.sourceId ? `strava:${job.sourceId}` : `manual:${job.id}`;
     const existing = await this.uploadRepository.getByChecksum(manualChecksum, job.userId);
     const legacyExisting =
       !existing && job.userId && job.sourceId
@@ -181,7 +181,7 @@ export class ActivityService {
         : false;
     if (existing || legacyExisting) {
       if (job.takeoutImportId) {
-        this.lagomImportService?.increment(job.takeoutImportId, false, true);
+        this.importProgressStore?.increment(job.takeoutImportId, false, true);
       }
       return JobStatus.Skipped;
     }
@@ -248,7 +248,7 @@ export class ActivityService {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
     if (job.takeoutImportId) {
-      this.lagomImportService?.increment(job.takeoutImportId);
+      this.importProgressStore?.increment(job.takeoutImportId);
     }
     return JobStatus.Success;
   }

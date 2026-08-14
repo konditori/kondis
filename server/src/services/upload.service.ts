@@ -11,14 +11,14 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
+import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { LagomImportService } from 'src/services/lagom-import.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 import { JobOf, UploadedFileData } from 'src/types';
-import { extractLagomTakeout } from 'src/utils/lagom';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -31,7 +31,8 @@ export class UploadService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobRepository,
     private readonly logger: ConsoleLogger,
-    private readonly lagomImportService: LagomImportService = new LagomImportService(),
+    private readonly lagomTakeoutParser: LagomTakeoutParser = new LagomTakeoutParser(),
+    private readonly importProgressStore: ImportProgressStore = new ImportProgressStore(),
   ) {
     this.logger.setContext(UploadService.name);
   }
@@ -80,7 +81,7 @@ export class UploadService {
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
       if (takeoutImportId) {
-        this.lagomImportService.increment(takeoutImportId, false, true);
+        this.importProgressStore.increment(takeoutImportId, false, true);
       }
       return JobStatus.Skipped;
     }
@@ -119,7 +120,7 @@ export class UploadService {
       const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId) {
-          this.lagomImportService.increment(takeoutImportId, false, true);
+          this.importProgressStore.increment(takeoutImportId, false, true);
         }
         return JobStatus.Skipped;
       }
@@ -147,7 +148,7 @@ export class UploadService {
     await this.storageRepository.write(storagePath, file.buffer);
 
     const importId = crypto.randomUUID();
-    this.lagomImportService.create(importId, userId ?? '');
+    this.importProgressStore.create(importId, userId ?? '');
     await this.jobRepository.queue({
       name: JobName.LagomTakeoutImport,
       data: {
@@ -162,7 +163,7 @@ export class UploadService {
   }
 
   getLagomTakeoutStatus(id: string, userId: string) {
-    const importRecord = this.lagomImportService.get(id, userId);
+    const importRecord = this.importProgressStore.get(id, userId);
     if (!importRecord) {
       throw new NotFoundException('Lagom import not found');
     }
@@ -185,39 +186,42 @@ export class UploadService {
     takeoutImportId,
   }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
-    const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
-      if (activity.manual) {
-        await this.jobRepository.queue({
-          name: JobName.ActivityManualCreate,
-          data: {
-            id: crypto.randomUUID(),
-            userId,
-            takeoutImportId,
-            activityName: activity.name ?? undefined,
-            activityDescription: activity.description ?? undefined,
-            activitySport: activity.sport ?? 'other',
-            ...activity.manual,
-          },
-        });
+    const takeout = await this.lagomTakeoutParser.extractLagomTakeout(
+      await this.storageRepository.read(storagePath),
+      async (activity) => {
+        if (activity.manual) {
+          await this.jobRepository.queue({
+            name: JobName.ActivityManualCreate,
+            data: {
+              id: crypto.randomUUID(),
+              userId,
+              takeoutImportId,
+              activityName: activity.name ?? undefined,
+              activityDescription: activity.description ?? undefined,
+              activitySport: activity.sport ?? 'other',
+              ...activity.manual,
+            },
+          });
+          queued += 1;
+          return;
+        }
+        await this.queueActivityUpload(
+          activity.file!,
+          activity.name ?? undefined,
+          activity.description ?? undefined,
+          activity.sport ?? undefined,
+          userId,
+          takeoutImportId,
+        );
         queued += 1;
-        return;
-      }
-      await this.queueActivityUpload(
-        activity.file!,
-        activity.name ?? undefined,
-        activity.description ?? undefined,
-        activity.sport ?? undefined,
-        userId,
-        takeoutImportId,
-      );
-      queued += 1;
-    });
+      },
+    );
 
     if (takeoutImportId) {
-      this.lagomImportService.setProcessing(takeoutImportId, queued);
+      this.importProgressStore.setProcessing(takeoutImportId, queued);
     }
     if (takeoutImportId && takeout.errors.length > 0) {
-      this.lagomImportService.fail(takeoutImportId, `${takeout.errors.length} activities could not be imported`);
+      this.importProgressStore.fail(takeoutImportId, `${takeout.errors.length} activities could not be imported`);
     }
 
     this.logger.log(

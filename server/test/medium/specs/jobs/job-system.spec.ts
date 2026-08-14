@@ -232,13 +232,20 @@ describe('job system (medium)', () => {
         ),
         'activities/run.fit.gz': gzipSync(fit),
       });
-      await uploads.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
+      const updatedResult = await uploads.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
+      expect(uploads.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+
       expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
-        name: 'Updated hike',
-        description: 'Updated description',
-        sport: 'hike',
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
       });
 
       const iceSkateArchive = createTestZip({
@@ -247,14 +254,56 @@ describe('job system (medium)', () => {
         ),
         'activities/run.fit.gz': gzipSync(fit),
       });
-      await uploads.uploadLagomTakeout(makeUploadedFile('ice-skate-export.zip', iceSkateArchive));
+      const iceSkateResult = await uploads.uploadLagomTakeout(
+        makeUploadedFile('ice-skate-export.zip', iceSkateArchive),
+      );
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
-        name: 'Evening skate',
-        description: 'Frozen lake',
-        sport: 'ice_skate',
+      await expect(uploads.getLagomTakeoutStatus(iceSkateResult.importId, '')).resolves.toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
       });
+
+      expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
+        name: 'Forest walk',
+        description: 'A walk in the woods',
+        sport: 'roller_ski',
+      });
+    });
+
+    it('deduplicates manual activities using the takeout Activity ID', async () => {
+      const archive = createTestZip({
+        'activities.csv': Buffer.from(
+          [
+            'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Moving Time,Distance,Distance',
+            'manual-1,"Aug 10, 2016, 5:00:00 PM",Gym,Weight Training,,600,600,0,0',
+          ].join('\n'),
+        ),
+      });
+
+      const first = await uploads.uploadLagomTakeout(makeUploadedFile('manual.zip', archive));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+      const second = await uploads.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive));
+      await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      expect(uploads.getLagomTakeoutStatus(first.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 0,
+        status: 'completed',
+      });
+      expect(uploads.getLagomTakeoutStatus(second.importId, '')).toMatchObject({
+        total: 1,
+        processed: 1,
+        duplicates: 1,
+        status: 'completed',
+      });
+
+      const manualUpload = await uploadRepository.getByChecksum('strava:manual-1');
+      expect(manualUpload).toBeDefined();
+      expect(await activityRepository.getByUploadId(manualUpload!.id)).toBeDefined();
     });
 
     it('deletes the activity, the upload and the file', async () => {

@@ -16,6 +16,11 @@ const noRelativeImports = {
   message: 'Relative imports are not allowed.',
 };
 
+const noServiceToServiceImports = {
+  group: ['src/services/*'],
+  message: 'Services must not import other services. Depend on a repository or a lower-level module instead.',
+};
+
 export default typescriptEslint.config([
   eslintPluginUnicorn.configs.recommended,
   eslintPluginPrettierRecommended,
@@ -87,6 +92,13 @@ export default typescriptEslint.config([
           varsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: ['src/services/**/*.ts'],
+    ignores: ['src/services/index.ts', 'src/services/**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [noRelativeImports, noServiceToServiceImports] }],
     },
   },
 ]);
