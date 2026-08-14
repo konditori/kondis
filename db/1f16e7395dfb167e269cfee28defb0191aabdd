@@ -1,0 +1,63 @@
+server/src/services/activity.service.spec.ts
+  s_43a91ceba63b0c::t_24f2544f54dd1b 16,82-95,105-106
+server/src/services/auth.service.spec.ts
+  s_43a91ceba63b0c::t_79eee648f2648e 1-72
+server/src/services/job.service.spec.ts
+  s_43a91ceba63b0c::t_78606d3692700d 9,39-46
+server/src/services/server.service.spec.ts
+  s_43a91ceba63b0c::t_2e46c2c6050a2c 3-4,6,8-10,12
+server/src/services/storage.service.spec.ts
+  s_43a91ceba63b0c::t_ff2bf74d288e28 6-19,23,26-27
+server/src/services/upload.service.spec.ts
+  s_43a91ceba63b0c::t_40dca8ead52370 2-38,41-43,45-50,53-54,56-58
+server/test/medium.factory.ts
+  s_0737dd71c8a0c4::t_5798e3c8ee64c5 8,41-44
+server/test/medium/specs/repositories/activity.repository.spec.ts
+  s_0737dd71c8a0c4::t_9f895db925b3e0 19
+server/test/medium/specs/repositories/database.repository.spec.ts
+  s_0737dd71c8a0c4::t_e7c21795bdeea8 19
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_0737dd71c8a0c4::t_d238da72f0263e 3,7,10,20
+server/test/medium/specs/repositories/storage.repository.spec.ts
+  s_0737dd71c8a0c4::t_9d3526db7ada04 2-4,6-7,14,18,23,26
+server/test/medium/specs/repositories/upload.repository.spec.ts
+  s_0737dd71c8a0c4::t_0477b21cccefc2 19
+server/test/medium/specs/repositories/user.repository.spec.ts
+  s_0737dd71c8a0c4::t_e118bdccad9a6b 19
+server/test/medium/specs/service/activity.service.spec.ts
+  s_0737dd71c8a0c4::t_0e0c5f92618e6f 35
+server/test/medium/specs/service/auth.service.spec.ts
+  s_0737dd71c8a0c4::t_65ebc65201edd0 4,11-13,17-18,26
+server/test/medium/specs/service/job.service.spec.ts
+  s_0737dd71c8a0c4::t_b4ed0c2a4a18d8 3-4,22-37
+server/test/medium/specs/service/server.service.spec.ts
+  s_0737dd71c8a0c4::t_55f490a794a908 7
+server/test/medium/specs/service/storage.service.spec.ts
+  s_0737dd71c8a0c4::t_c3a0386abf279e 3-4,6-7,11-13,18,22,28,31-35
+server/test/utils.ts
+  s_43a91ceba63b0c::t_73d06a9ec2a238 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "db1f16e7395dfb167e269cfee28defb0191aabdd",
+  "prompts": {},
+  "sessions": {
+    "s_0737dd71c8a0c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0027e-7cd7-7370-8fa3-854d6d2e618b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_43a91ceba63b0c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00219-5585-7c02-ad59-e139933901f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
