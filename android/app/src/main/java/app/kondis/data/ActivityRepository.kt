@@ -7,6 +7,7 @@ import app.kondis.data.remote.KondisApiFactory
 import app.kondis.data.settings.SettingsRepository
 import app.kondis.model.Activity
 import app.kondis.model.ActivityDetail
+import app.kondis.model.MatchedRouteHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -72,6 +73,8 @@ class ActivityRepository
                 ),
             )
         }
+
+        suspend fun matchedRoutes(id: String): MatchedRouteHistory = api().matchedRoutes(id)
 
         suspend fun uploadGpx(file: File) {
             val request = file.asRequestBody("application/gpx+xml".toMediaType())

@@ -2,6 +2,7 @@ package app.kondis.data.remote
 
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityPage
+import app.kondis.model.MatchedRouteHistory
 import app.kondis.model.UploadResponse
 import okhttp3.MultipartBody
 import retrofit2.http.GET
@@ -23,6 +24,11 @@ interface KondisApi {
     suspend fun activity(
         @Path("id") id: String,
     ): ActivityDetail
+
+    @GET("activities/{id}/matched-routes")
+    suspend fun matchedRoutes(
+        @Path("id") id: String,
+    ): MatchedRouteHistory
 
     @Multipart
     @POST("upload/activity")

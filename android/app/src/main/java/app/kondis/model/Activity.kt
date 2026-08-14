@@ -101,6 +101,12 @@ data class ActivityAnalysis(
 )
 
 @Serializable
+data class MatchedRouteHistory(
+    val sourceActivityId: String,
+    val activities: List<Activity>?,
+)
+
+@Serializable
 data class ActivitySplit(
     val distance: Double,
     val elapsedTime: Double,

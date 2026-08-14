@@ -22,6 +22,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.kondis.ui.detail.ActivityDetailRoute
+import app.kondis.ui.detail.MatchedRoutesRoute
 import app.kondis.ui.feed.FeedRoute
 import app.kondis.ui.record.RecordRoute
 import app.kondis.ui.settings.SettingsRoute
@@ -38,6 +39,11 @@ private data object SettingsKey : NavKey
 
 @Serializable
 private data class ActivityDetailKey(
+    val id: String,
+) : NavKey
+
+@Serializable
+private data class MatchedRoutesKey(
     val id: String,
 ) : NavKey
 
@@ -59,7 +65,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(FeedKey)
     val current = backStack.lastOrNull()
-    val showNavigation = current !is ActivityDetailKey
+    val showNavigation = current !is ActivityDetailKey && current !is MatchedRoutesKey
 
     Scaffold(
         bottomBar = {
@@ -101,6 +107,15 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             id = key.id,
                             units = settings.unitSystem,
                             onBack = { backStack.removeLastOrNull() },
+                            onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
+                        )
+                    }
+                    entry<MatchedRoutesKey> { key ->
+                        MatchedRoutesRoute(
+                            id = key.id,
+                            units = settings.unitSystem,
+                            onBack = { backStack.removeLastOrNull() },
+                            onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                         )
                     }
                 },
