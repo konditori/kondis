@@ -56,16 +56,24 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.kondis.model.Track
 import app.kondis.model.UnitSystem
 import app.kondis.model.formatDistance
 import app.kondis.model.formatDuration
 import app.kondis.model.sportLabel
 import app.kondis.recording.RecordingMode
+import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.components.sportIcon
 
 @Composable
-fun RecordRoute(viewModel: RecordingViewModel = hiltViewModel()) {
+fun RecordRoute(
+    onActivitySaved: (String) -> Unit,
+    viewModel: RecordingViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(state.savedActivityId) {
+        state.savedActivityId?.let(onActivitySaved)
+    }
     val context = LocalContext.current
     val permissions =
         buildList {
@@ -92,6 +100,8 @@ fun RecordRoute(viewModel: RecordingViewModel = hiltViewModel()) {
         onPause = viewModel::pause,
         onResume = viewModel::resume,
         onFinish = viewModel::finish,
+        onTitleChange = viewModel::setTitle,
+        onSaveReview = viewModel::saveReview,
         onDiscard = viewModel::discard,
         onReset = viewModel::reset,
     )
@@ -105,10 +115,22 @@ fun RecordScreen(
     onPause: () -> Unit,
     onResume: () -> Unit,
     onFinish: () -> Unit,
+    onTitleChange: (String) -> Unit,
+    onSaveReview: () -> Unit,
     onDiscard: () -> Unit,
     onReset: () -> Unit,
 ) {
     val recording = state.recording
+    if (recording.mode == RecordingMode.Saving || recording.mode == RecordingMode.Saved) {
+        PostRecordingScreen(
+            state = state,
+            onTitleChange = onTitleChange,
+            onSave = onSaveReview,
+            onDiscard = onDiscard,
+            onDone = onReset,
+        )
+        return
+    }
     Column(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,7 +183,6 @@ fun RecordScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             Metric("Distance", formatDistance(recording.distanceMeters, UnitSystem.Metric))
-            Metric("Points", recording.points.size.toString())
         }
         Spacer(Modifier.weight(1f))
         when (recording.mode) {
@@ -257,6 +278,97 @@ fun RecordScreen(
     }
 }
 
+@Composable
+private fun PostRecordingScreen(
+    state: RecordingUiState,
+    onTitleChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDiscard: () -> Unit,
+    onDone: () -> Unit,
+) {
+    val recording = state.recording
+    val track =
+        Track(
+            type = "LineString",
+            coordinates = recording.points.map { point -> listOf(point.longitude, point.latitude) },
+        )
+    androidx.compose.foundation.lazy.LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding =
+            androidx.compose.foundation.layout
+                .PaddingValues(bottom = 28.dp),
+    ) {
+        item {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 8.dp, top = 12.dp, end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    if (recording.mode == RecordingMode.Saved) "Workout saved" else "Save activity",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                if (recording.mode == RecordingMode.Saved) {
+                    TextButton(onClick = onDone) { Text("Done") }
+                }
+            }
+        }
+        item {
+            if (recording.points.size > 1) {
+                StaticRoutePreview(
+                    track = track,
+                    modifier = Modifier.fillMaxWidth().height(300.dp).padding(top = 12.dp),
+                )
+            } else {
+                Text(
+                    "No GPS trace was captured for this activity.",
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 32.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        item {
+            Column(Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
+                Text("Activity title", style = MaterialTheme.typography.labelLarge)
+                OutlinedTextField(
+                    value = state.title,
+                    onValueChange = onTitleChange,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    enabled = !state.uploading && recording.mode != RecordingMode.Saved,
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                )
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    Metric("Distance", formatDistance(recording.distanceMeters, UnitSystem.Metric))
+                    Metric("Time", formatDuration(recording.elapsedSeconds.toDouble()))
+                }
+            }
+        }
+        item {
+            Column(Modifier.padding(horizontal = 20.dp)) {
+                if (state.uploading) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(22.dp))
+                        Text("Uploading activity…", modifier = Modifier.padding(start = 12.dp))
+                    }
+                } else if (recording.mode == RecordingMode.Saved) {
+                    Text("Activity saved.", color = MaterialTheme.colorScheme.primary)
+                } else {
+                    Button(onClick = onSave, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Save activity") }
+                    TextButton(onClick = onDiscard, modifier = Modifier.fillMaxWidth()) { Text("Discard activity") }
+                }
+            }
+        }
+    }
+}
+
 private val commonRecordSports =
     listOf(
         "run",
@@ -335,7 +447,7 @@ private val allRecordSports =
     )
 
 @Composable
-private fun ActivityTypePicker(
+fun ActivityTypePicker(
     selectedSport: String,
     enabled: Boolean,
     onSportChange: (String) -> Unit,

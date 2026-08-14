@@ -10,6 +10,7 @@ class GpxWriter
             destination: File,
             recording: RecordingState,
             sport: String,
+            title: String = sport,
         ): File {
             require(recording.points.isNotEmpty()) { "A workout needs at least one GPS point" }
             val points =
@@ -29,7 +30,7 @@ class GpxWriter
                 """<?xml version="1.0" encoding="UTF-8"?>
             |<gpx version="1.1" creator="Kondis Android" xmlns="http://www.topografix.com/GPX/1/1">
             |  <metadata><time>${recording.startedAt}</time></metadata>
-            |  <trk><name>${sport.xmlEscape()}</name><type>${sport.xmlEscape()}</type><trkseg>
+            |  <trk><name>${title.xmlEscape()}</name><type>${sport.xmlEscape()}</type><trkseg>
             |$points
             |  </trkseg></trk>
             |</gpx>

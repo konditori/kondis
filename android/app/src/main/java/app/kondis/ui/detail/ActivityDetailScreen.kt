@@ -20,19 +20,26 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MilitaryTech
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.ActivityDetail
+import app.kondis.model.ActivityUpdate
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
 import app.kondis.model.formatDateTime
@@ -51,6 +59,7 @@ import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
 import app.kondis.ui.components.ActivityStat
 import app.kondis.ui.components.StaticRoutePreview
+import app.kondis.ui.record.ActivityTypePicker
 import app.kondis.ui.theme.KondisOrange
 
 @Composable
@@ -59,11 +68,21 @@ fun ActivityDetailRoute(
     units: UnitSystem,
     onBack: () -> Unit,
     onMatchedRoutes: (String) -> Unit,
+    onDeleted: () -> Unit,
     viewModel: ActivityDetailViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(id) { viewModel.load(id) }
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ActivityDetailScreen(state, units, onBack, onMatchedRoutes, viewModel::refresh)
+    ActivityDetailScreen(
+        state,
+        units,
+        onBack,
+        onMatchedRoutes,
+        onDeleted,
+        viewModel::update,
+        viewModel::delete,
+        viewModel::refresh,
+    )
 }
 
 @Composable
@@ -72,6 +91,9 @@ fun ActivityDetailScreen(
     units: UnitSystem,
     onBack: () -> Unit,
     onMatchedRoutes: (String) -> Unit,
+    onDeleted: () -> Unit,
+    onUpdate: (ActivityUpdate) -> Unit,
+    onDelete: () -> Unit,
     onRefresh: () -> Unit,
 ) {
     val activity = state.activity
@@ -91,11 +113,64 @@ fun ActivityDetailScreen(
         return
     }
 
+    var editing by remember(activity.id) { mutableStateOf(false) }
+    var showDeleteDialog by remember(activity.id) { mutableStateOf(false) }
+    var draftName by remember(activity.id) { mutableStateOf(activity.name.orEmpty()) }
+    var draftDescription by remember(activity.id) { mutableStateOf(activity.description.orEmpty()) }
+    var draftSport by remember(activity.id) { mutableStateOf(activity.sport) }
+    var draftExcludeFromRankings by remember(activity.id) { mutableStateOf(activity.excludeFromRankings) }
+    LaunchedEffect(state.deleted) {
+        if (state.deleted) onDeleted()
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
-        item { DetailHeader(activity, units, onBack) }
+        item {
+            DetailHeader(
+                activity = activity,
+                units = units,
+                onBack = onBack,
+                onEdit = {
+                    draftName = activity.name.orEmpty()
+                    draftDescription = activity.description.orEmpty()
+                    draftSport = activity.sport
+                    draftExcludeFromRankings = activity.excludeFromRankings
+                    editing = true
+                },
+            )
+        }
+        if (editing) {
+            item {
+                ActivityEditor(
+                    name = draftName,
+                    description = draftDescription,
+                    sport = draftSport,
+                    excludeFromRankings = draftExcludeFromRankings,
+                    saving = state.saving,
+                    deleting = state.deleting,
+                    error = state.mutationError,
+                    onNameChange = { draftName = it },
+                    onDescriptionChange = { draftDescription = it },
+                    onSportChange = { draftSport = it },
+                    onExcludeChange = { draftExcludeFromRankings = it },
+                    onCancel = { editing = false },
+                    onSave = {
+                        onUpdate(
+                            ActivityUpdate(
+                                name = draftName.trim().ifBlank { null },
+                                description = draftDescription.trim().ifBlank { null },
+                                sport = draftSport,
+                                excludeFromRankings = draftExcludeFromRankings,
+                            ),
+                        )
+                        editing = false
+                    },
+                    onDelete = { showDeleteDialog = true },
+                )
+            }
+        }
         activity.track?.takeIf { it.coordinates.size > 1 }?.let { track ->
             item { StaticRoutePreview(track, Modifier.fillMaxWidth().height(280.dp)) }
         }
@@ -146,6 +221,22 @@ fun ActivityDetailScreen(
                 )
             }
         }
+    }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!state.deleting) showDeleteDialog = false },
+            title = { Text("Delete activity?") },
+            text = { Text("This will permanently delete this workout and its analysis.") },
+            confirmButton = {
+                TextButton(
+                    onClick = onDelete,
+                    enabled = !state.deleting,
+                ) { Text(if (state.deleting) "Deleting…" else "Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }, enabled = !state.deleting) { Text("Cancel") }
+            },
+        )
     }
 }
 
@@ -408,11 +499,16 @@ private fun DetailHeader(
     activity: ActivityDetail,
     units: UnitSystem,
     onBack: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 20.dp, bottom = 24.dp)) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = onEdit) { Text("Edit") }
             }
             Column(Modifier.padding(start = 12.dp)) {
                 Text(
@@ -470,6 +566,63 @@ private fun DetailHeader(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ActivityEditor(
+    name: String,
+    description: String,
+    sport: String,
+    excludeFromRankings: Boolean,
+    saving: Boolean,
+    deleting: Boolean,
+    error: String?,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onSportChange: (String) -> Unit,
+    onExcludeChange: (Boolean) -> Unit,
+    onCancel: () -> Unit,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+        Text("Edit activity", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            label = { Text("Name") },
+            placeholder = { Text("Activity name") },
+            singleLine = true,
+            enabled = !saving && !deleting,
+        )
+        ActivityTypePicker(
+            selectedSport = sport,
+            enabled = !saving && !deleting,
+            onSportChange = onSportChange,
+        )
+        OutlinedTextField(
+            value = description,
+            onValueChange = onDescriptionChange,
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            label = { Text("Description") },
+            placeholder = { Text("Add a description") },
+            minLines = 3,
+            enabled = !saving && !deleting,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+            Checkbox(checked = excludeFromRankings, onCheckedChange = onExcludeChange, enabled = !saving && !deleting)
+            Text("Exclude from rankings")
+        }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp)) }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onDelete, enabled = !saving && !deleting) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+            }
+            TextButton(onClick = onCancel, enabled = !saving && !deleting) { Text("Cancel") }
+            Button(onClick = onSave, enabled = !saving && !deleting) { Text(if (saving) "Saving…" else "Save") }
         }
     }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
 import app.kondis.model.ActivityDetail
+import app.kondis.model.ActivityUpdate
 import app.kondis.ui.feed.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -17,6 +18,10 @@ data class DetailUiState(
     val activity: ActivityDetail? = null,
     val loading: Boolean = false,
     val errorMessage: String? = null,
+    val saving: Boolean = false,
+    val deleting: Boolean = false,
+    val mutationError: String? = null,
+    val deleted: Boolean = false,
 )
 
 @HiltViewModel
@@ -52,6 +57,33 @@ class ActivityDetailViewModel
                         mutableState.value = mutableState.value.copy(errorMessage = error.userMessage())
                     }
                 mutableState.value = mutableState.value.copy(loading = false)
+            }
+        }
+
+        fun update(update: ActivityUpdate) {
+            val id = activityId ?: return
+            viewModelScope.launch {
+                mutableState.value = mutableState.value.copy(saving = true, mutationError = null)
+                runCatching { repository.updateActivity(id, update) }
+                    .onFailure { error ->
+                        mutableState.value =
+                            mutableState.value.copy(mutationError = error.userMessage())
+                    }
+                mutableState.value = mutableState.value.copy(saving = false)
+            }
+        }
+
+        fun delete() {
+            val id = activityId ?: return
+            viewModelScope.launch {
+                mutableState.value = mutableState.value.copy(deleting = true, mutationError = null)
+                runCatching { repository.deleteActivity(id) }
+                    .onSuccess { mutableState.value = mutableState.value.copy(deleted = true) }
+                    .onFailure { error ->
+                        mutableState.value =
+                            mutableState.value.copy(mutationError = error.userMessage())
+                    }
+                mutableState.value = mutableState.value.copy(deleting = false)
             }
         }
     }

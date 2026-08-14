@@ -65,7 +65,16 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(FeedKey)
     val current = backStack.lastOrNull()
-    val showNavigation = current !is ActivityDetailKey && current !is MatchedRoutesKey
+    val showNavigation = true
+
+    fun navigateBack() {
+        if (backStack.size > 1) {
+            backStack.removeAt(backStack.lastIndex)
+        } else {
+            backStack.clear()
+            backStack.add(FeedKey)
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -91,7 +100,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
         NavDisplay(
             backStack = backStack,
             modifier = Modifier.padding(contentPadding),
-            onBack = { backStack.removeLastOrNull() },
+            onBack = ::navigateBack,
             entryProvider =
                 entryProvider {
                     entry<FeedKey> {
@@ -100,21 +109,30 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                         )
                     }
-                    entry<RecordKey> { RecordRoute() }
+                    entry<RecordKey> {
+                        RecordRoute(
+                            onActivitySaved = { id ->
+                                backStack.clear()
+                                backStack.add(FeedKey)
+                                backStack.add(ActivityDetailKey(id))
+                            },
+                        )
+                    }
                     entry<SettingsKey> { SettingsRoute() }
                     entry<ActivityDetailKey> { key ->
                         ActivityDetailRoute(
                             id = key.id,
                             units = settings.unitSystem,
-                            onBack = { backStack.removeLastOrNull() },
+                            onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
+                            onDeleted = ::navigateBack,
                         )
                     }
                     entry<MatchedRoutesKey> { key ->
                         MatchedRoutesRoute(
                             id = key.id,
                             units = settings.unitSystem,
-                            onBack = { backStack.removeLastOrNull() },
+                            onBack = ::navigateBack,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                         )
                     }

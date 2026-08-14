@@ -31,6 +31,12 @@ interface ActivityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDetail(detail: ActivityDetailEntity)
 
+    @Query("DELETE FROM activities WHERE id = :id")
+    suspend fun deleteActivity(id: String)
+
+    @Query("DELETE FROM activity_details WHERE id = :id")
+    suspend fun deleteDetail(id: String)
+
     @Query("DELETE FROM activities")
     suspend fun clearActivities()
 

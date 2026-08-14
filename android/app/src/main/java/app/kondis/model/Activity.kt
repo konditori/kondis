@@ -20,6 +20,14 @@ data class Activity(
 )
 
 @Serializable
+data class ActivityUpdate(
+    val name: String? = null,
+    val description: String? = null,
+    val excludeFromRankings: Boolean? = null,
+    val sport: String? = null,
+)
+
+@Serializable
 data class ActivityMetrics(
     val elapsedTime: Double,
     val movingTime: Double?,

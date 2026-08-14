@@ -7,7 +7,9 @@ import app.kondis.data.remote.KondisApiFactory
 import app.kondis.data.settings.SettingsRepository
 import app.kondis.model.Activity
 import app.kondis.model.ActivityDetail
+import app.kondis.model.ActivityUpdate
 import app.kondis.model.MatchedRouteHistory
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,6 +18,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import java.time.Duration
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -74,11 +78,48 @@ class ActivityRepository
             )
         }
 
+        suspend fun updateActivity(
+            id: String,
+            update: ActivityUpdate,
+        ) {
+            api().updateActivity(id, update)
+            refreshDetail(id)
+        }
+
+        suspend fun deleteActivity(id: String) {
+            api().deleteActivity(id)
+            activityDao.deleteActivity(id)
+            activityDao.deleteDetail(id)
+        }
+
         suspend fun matchedRoutes(id: String): MatchedRouteHistory = api().matchedRoutes(id)
 
         suspend fun uploadGpx(file: File) {
             val request = file.asRequestBody("application/gpx+xml".toMediaType())
             api().uploadActivity(MultipartBody.Part.createFormData("file", file.name, request))
+        }
+
+        suspend fun findRecentlyUploadedActivity(
+            startedAt: String,
+            title: String,
+        ): String? {
+            val expected = runCatching { Instant.parse(startedAt) }.getOrNull() ?: return null
+            repeat(20) { attempt ->
+                val activities = api().activities(limit = 50).activities
+                val match =
+                    activities
+                        .filter { activity ->
+                            val actual =
+                                runCatching { Instant.parse(activity.startedAt) }.getOrNull() ?: return@filter false
+                            Duration.between(expected, actual).abs().seconds <= 120 &&
+                                (activity.name == title || activity.name == null)
+                        }.minByOrNull { activity ->
+                            Duration.between(expected, Instant.parse(activity.startedAt)).abs().toMillis()
+                        }
+                if (match != null) return match.id
+                if (attempt < 19) delay(1_000)
+            }
+            return null
         }
 
         suspend fun checkConnection() {

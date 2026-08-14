@@ -1,13 +1,18 @@
 package app.kondis.data.remote
 
+import app.kondis.model.Activity
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityPage
+import app.kondis.model.ActivityUpdate
 import app.kondis.model.MatchedRouteHistory
 import app.kondis.model.UploadResponse
 import okhttp3.MultipartBody
+import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -24,6 +29,17 @@ interface KondisApi {
     suspend fun activity(
         @Path("id") id: String,
     ): ActivityDetail
+
+    @PUT("activities/{id}")
+    suspend fun updateActivity(
+        @Path("id") id: String,
+        @Body update: ActivityUpdate,
+    ): Activity
+
+    @DELETE("activities/{id}")
+    suspend fun deleteActivity(
+        @Path("id") id: String,
+    )
 
     @GET("activities/{id}/matched-routes")
     suspend fun matchedRoutes(
