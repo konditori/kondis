@@ -34,6 +34,7 @@ export type Activity = {
   topBestEfforts?:
     | {
         type: string;
+        value: number;
         overallRank: number;
         yearRank: number;
       }[]
@@ -68,6 +69,7 @@ export type ActivityDetail = Activity & {
   bestEfforts:
     | {
         type: string;
+        value: number;
         distance: number;
         elapsedTime: number;
         startTime: number;

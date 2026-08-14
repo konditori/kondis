@@ -42,7 +42,12 @@ class ApiModelTest {
                     },
                     "createdAt": "2026-08-13T06:01:00Z",
                     "updatedAt": "2026-08-13T06:01:00Z",
-                    "topBestEfforts": null,
+                    "topBestEfforts": [{
+                      "type": "power_30m",
+                      "value": 287.4,
+                      "overallRank": 1,
+                      "yearRank": 1
+                    }],
                     "track": null
                   }],
                   "nextCursor": null,
@@ -59,6 +64,15 @@ class ApiModelTest {
                 .single()
                 .metrics
                 ?.distance ?: 0.0,
+            0.0,
+        )
+        assertEquals(
+            287.4,
+            page.activities
+                .single()
+                .topBestEfforts
+                ?.single()
+                ?.value ?: 0.0,
             0.0,
         )
         assertNull(page.nextCursor)

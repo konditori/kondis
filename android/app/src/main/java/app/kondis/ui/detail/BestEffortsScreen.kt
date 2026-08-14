@@ -271,6 +271,21 @@ private fun effortLabel(type: String): String =
         "15k" to "15K",
         "longest_ride" to "Longest ride",
         "biggest_climb" to "Biggest climb",
+        "power_5s" to "5 sec power",
+        "power_15s" to "15 sec power",
+        "power_30s" to "30 sec power",
+        "power_1m" to "1 min power",
+        "power_2m" to "2 min power",
+        "power_3m" to "3 min power",
+        "power_5m" to "5 min power",
+        "power_8m" to "8 min power",
+        "power_10m" to "10 min power",
+        "power_15m" to "15 min power",
+        "power_20m" to "20 min power",
+        "power_30m" to "30 min power",
+        "power_45m" to "45 min power",
+        "power_1h" to "1 hour power",
+        "power_2h" to "2 hour power",
     )[type] ?: type
 
 private fun rankColor(rank: Int) =

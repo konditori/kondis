@@ -996,6 +996,8 @@ button {
   background: #f97316;
 }
 .activity-profile {
+  width: min(1120px, calc(100% - 72px));
+  margin: 0 auto;
   grid-column: 1 / -1;
   min-width: 0;
   padding: 22px 18px 14px;
@@ -1003,6 +1005,9 @@ button {
   border: 1px solid var(--line);
   border-radius: 17px;
   box-shadow: 0 12px 40px #23342510;
+}
+.activity-visuals .activity-profile {
+  width: 100%;
 }
 .activity-profile-heading {
   display: flex;
@@ -1650,6 +1655,10 @@ button {
 .best-effort-row.no-heart-rate {
   grid-template-columns: minmax(230px, 1.5fr) repeat(3, minmax(105px, 1fr));
 }
+.power-best-effort-table .best-effort-header,
+.power-best-effort-table .best-effort-row {
+  grid-template-columns: 42px repeat(3, minmax(105px, 1fr));
+}
 .best-effort-header {
   min-height: 52px;
   color: var(--muted);
@@ -2161,6 +2170,7 @@ button {
   .detail-header,
   .map-panel,
   .activity-visuals,
+  .activity-profile,
   .metrics-section,
   .route-match-summary,
   .splits-section,
@@ -2287,6 +2297,9 @@ button {
     width: 100%;
     height: 52vh;
     min-height: 380px;
+  }
+  .activity-visuals .activity-profile {
+    width: 100%;
   }
   .activity-profile {
     grid-column: 1;

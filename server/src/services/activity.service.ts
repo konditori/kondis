@@ -57,7 +57,8 @@ const BEST_EFFORT_DEFINITIONS = new Map(
 // Materialize once at module load; TypeScript's configured lib does not expose Iterator#toArray yet.
 // eslint-disable-next-line unicorn/prefer-iterator-to-array
 const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].filter(
-  (definition): definition is typeof definition & { distance: number } => 'distance' in definition,
+  (definition): definition is typeof definition & ({ distance: number } | { duration: number }) =>
+    'distance' in definition || definition.type.startsWith('power_'),
 );
 
 @Injectable()
@@ -495,6 +496,7 @@ export class ActivityService {
                 ? [
                     {
                       type: definition.type,
+                      value: effort.value,
                       distance: effort.distance,
                       elapsedTime: effort.elapsed_time,
                       startTime: effort.start_time,
@@ -638,7 +640,7 @@ export class ActivityService {
 
   private async topBestEffortsForActivities(activities: ActivityListRecord[]) {
     const activityIds = new Set(activities.map(({ id }) => id));
-    const result = new Map<string, { type: BestEffortType; overallRank: number; yearRank: number }[]>();
+    const result = new Map<string, { type: BestEffortType; value: number; overallRank: number; yearRank: number }[]>();
     if (activityIds.size === 0) {
       return result;
     }
@@ -650,7 +652,7 @@ export class ActivityService {
         continue;
       }
       const efforts = result.get(row.activity_id) ?? [];
-      efforts.push({ type: definition.type, overallRank: row.overall_rank, yearRank: row.year_rank });
+      efforts.push({ type: definition.type, value: row.value, overallRank: row.overall_rank, yearRank: row.year_rank });
       result.set(row.activity_id, efforts);
     }
 
@@ -659,6 +661,22 @@ export class ActivityService {
         activityId,
         efforts
           .sort((left, right) => {
+            const leftIsPower = left.type.startsWith('power_');
+            const rightIsPower = right.type.startsWith('power_');
+            if (leftIsPower !== rightIsPower) {
+              return leftIsPower ? -1 : 1;
+            }
+            if (leftIsPower && rightIsPower) {
+              const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
+              const rightDefinition = BEST_EFFORT_DEFINITIONS.get(right.type);
+              const leftDuration = leftDefinition && 'duration' in leftDefinition ? leftDefinition.duration : 0;
+              const rightDuration = rightDefinition && 'duration' in rightDefinition ? rightDefinition.duration : 0;
+              return (
+                rightDuration - leftDuration ||
+                left.overallRank - right.overallRank ||
+                left.yearRank - right.yearRank
+              );
+            }
             const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
             const rightDefinition = BEST_EFFORT_DEFINITIONS.get(right.type);
             const leftDistance =

@@ -36,25 +36,50 @@
     { label: 'Elevation', value: elevation(activity.metrics?.elevationGain ?? null, unitSystem) },
   ]);
   const personalRecord = $derived(
-    activity.topBestEfforts
-      ?.slice()
-      .filter(({ overallRank }) => overallRank >= 1 && overallRank <= 3)
-      .sort(
-        (left, right) =>
-          bestEffortDistance(right.type) - bestEffortDistance(left.type) ||
-          left.overallRank - right.overallRank,
-      )[0] ?? null,
+    (() => {
+      const records = activity.topBestEfforts
+        ?.slice()
+        .filter(({ overallRank }) => overallRank >= 1 && overallRank <= 3)
+        ?? [];
+      const powerRecords = records.filter(({ type }) => type.startsWith('power_'));
+      return (powerRecords.length ? powerRecords : records)
+        .sort(
+          (left, right) =>
+            powerDuration(right.type) - powerDuration(left.type) ||
+            bestEffortDistance(right.type) - bestEffortDistance(left.type) ||
+            left.overallRank - right.overallRank,
+        )[0] ?? null;
+    })(),
   );
 
-  function achievementText(type: string): string {
+  function achievementText(effort: NonNullable<Activity['topBestEfforts']>[number]): string {
+    const { type } = effort;
     const label = bestEffortLabel(type);
     const rank = personalRecord?.overallRank ?? 1;
     const ordinal = rank === 1 ? '' : rank === 2 ? '2nd ' : '3rd ';
     if (type === 'longest_ride') return `Your ${ordinal}longest ride!`;
     if (type === 'biggest_climb') return `Your ${ordinal}biggest climb!`;
+    if (type.startsWith('power_')) {
+      return `Your ${ordinal}highest power output for ${powerDurationLabel(type)} ever!`;
+    }
     return type.includes('power') || type === 'elevation_gain'
       ? `Your ${ordinal}best ${label}!`
       : `Your ${ordinal}fastest ${label}!`;
+  }
+
+  function powerDuration(type: string): number {
+    const match = /^power_(\d+)(s|m|h)$/.exec(type);
+    if (!match) return 0;
+    const [, amount, unit] = match;
+    return Number(amount) * (unit === 'h' ? 3600 : unit === 'm' ? 60 : 1);
+  }
+
+  function powerDurationLabel(type: string): string {
+    const match = /^power_(\d+)(s|m|h)$/.exec(type);
+    if (!match) return bestEffortLabel(type).replace(' power', '');
+    const [, amount, unit] = match;
+    const label = unit === 'h' ? 'hour' : unit === 'm' ? 'minute' : 'second';
+    return `${amount} ${label}${amount === '1' ? '' : 's'}`;
   }
 
   function openActivity(event: MouseEvent) {
@@ -86,9 +111,9 @@
     </div>
   </a>
   {#if personalRecord}
-    <div class="activity-pr-banner" aria-label={`Overall rank ${personalRecord.overallRank}: ${achievementText(personalRecord.type)}`}>
+    <div class="activity-pr-banner" aria-label={`Overall rank ${personalRecord.overallRank}: ${achievementText(personalRecord)}`}>
       <span class={`activity-pr-badge rank-${personalRecord.overallRank}`} aria-hidden="true"><Medal size={25} /><small>{personalRecord.overallRank === 1 ? 'PR' : personalRecord.overallRank}</small></span>
-      <strong>{achievementText(personalRecord.type)}</strong>
+      <strong>{achievementText(personalRecord)}</strong>
     </div>
   {/if}
   {#if activity.track}

@@ -490,6 +490,7 @@ export class ActivityRepository {
       .select([
         'activity_best_effort.activity_id',
         'activity_best_effort.type',
+        'activity_best_effort.value',
         'activity_best_effort.overall_rank',
         'activity_best_effort.year_rank',
       ])
