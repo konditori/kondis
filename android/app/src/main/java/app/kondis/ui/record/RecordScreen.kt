@@ -6,10 +6,10 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,28 +17,40 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.GpsFixed
 import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -47,7 +59,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.UnitSystem
 import app.kondis.model.formatDistance
 import app.kondis.model.formatDuration
+import app.kondis.model.sportLabel
 import app.kondis.recording.RecordingMode
+import app.kondis.ui.components.sportIcon
 
 @Composable
 fun RecordRoute(viewModel: RecordingViewModel = hiltViewModel()) {
@@ -106,16 +120,11 @@ fun RecordScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(24.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("run" to "Run", "ride" to "Ride", "walk" to "Walk", "hike" to "Hike").forEach { (value, label) ->
-                FilterChip(
-                    selected = state.sport == value,
-                    onClick = { onSportChange(value) },
-                    enabled = recording.mode == RecordingMode.Idle,
-                    label = { Text(label) },
-                )
-            }
-        }
+        ActivityTypePicker(
+            selectedSport = state.sport,
+            enabled = recording.mode == RecordingMode.Idle,
+            onSportChange = onSportChange,
+        )
         Spacer(Modifier.weight(1f))
         Box(
             modifier = Modifier.size(220.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
@@ -244,6 +253,238 @@ fun RecordScreen(
                     ) { Text("Dismiss") }
                 }
             }
+        }
+    }
+}
+
+private val commonRecordSports =
+    listOf(
+        "run",
+        "ride",
+        "walk",
+        "hike",
+        "swim",
+        "trail_run",
+        "mountain_bike_ride",
+        "gravel_ride",
+        "e_bike_ride",
+        "virtual_ride",
+        "rowing",
+        "canoeing",
+    )
+
+private val allRecordSports =
+    listOf(
+        "alpine_ski",
+        "backcountry_ski",
+        "badminton",
+        "basketball",
+        "canoeing",
+        "cricket",
+        "cross_country_ski",
+        "crossfit",
+        "dance",
+        "e_bike_ride",
+        "elliptical",
+        "e_mountain_bike_ride",
+        "golf",
+        "gravel_ride",
+        "handcycle",
+        "high_intensity_interval_training",
+        "hike",
+        "ice_skate",
+        "inline_skate",
+        "kayaking",
+        "kitesurf",
+        "mountain_bike_ride",
+        "padel",
+        "physical_therapy",
+        "pickleball",
+        "pilates",
+        "racquetball",
+        "ride",
+        "rock_climbing",
+        "roller_ski",
+        "rowing",
+        "run",
+        "sail",
+        "skateboard",
+        "snowboard",
+        "snowshoe",
+        "soccer",
+        "squash",
+        "stair_stepper",
+        "stand_up_paddling",
+        "surfing",
+        "swim",
+        "table_tennis",
+        "tennis",
+        "trail_run",
+        "velomobile",
+        "virtual_ride",
+        "virtual_row",
+        "virtual_run",
+        "volleyball",
+        "walk",
+        "weight_training",
+        "wheelchair",
+        "windsurf",
+        "workout",
+        "yoga",
+        "other",
+    )
+
+@Composable
+private fun ActivityTypePicker(
+    selectedSport: String,
+    enabled: Boolean,
+    onSportChange: (String) -> Unit,
+) {
+    var open = remember { mutableStateOf(false) }
+    OutlinedButton(
+        onClick = { open.value = true },
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+        shape = RoundedCornerShape(16.dp),
+        contentPadding =
+            androidx.compose.foundation.layout
+                .PaddingValues(horizontal = 16.dp),
+    ) {
+        Icon(sportIcon(selectedSport), contentDescription = null)
+        Text(
+            sportLabel(selectedSport),
+            modifier = Modifier.weight(1f).padding(start = 12.dp),
+            textAlign = TextAlign.Start,
+        )
+        Icon(Icons.Rounded.ExpandMore, contentDescription = "Choose activity type")
+    }
+    if (open.value) {
+        ActivityTypeSheet(
+            selectedSport = selectedSport,
+            onDismiss = { open.value = false },
+            onSelect = { sport ->
+                onSportChange(sport)
+                open.value = false
+            },
+        )
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun ActivityTypeSheet(
+    selectedSport: String,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit,
+) {
+    var query = remember { mutableStateOf("") }
+    val normalizedQuery = query.value.trim()
+    val common =
+        commonRecordSports.filter {
+            normalizedQuery.isBlank() ||
+                sportLabel(it).contains(normalizedQuery, ignoreCase = true)
+        }
+    val more =
+        allRecordSports
+            .filterNot(commonRecordSports::contains)
+            .filter { normalizedQuery.isBlank() || sportLabel(it).contains(normalizedQuery, ignoreCase = true) }
+            .sortedBy(::sportLabel)
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Choose a sport", style = MaterialTheme.typography.headlineSmall)
+                    Text("Select what you’re about to record", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, contentDescription = "Close") }
+            }
+            OutlinedTextField(
+                value = query.value,
+                onValueChange = { query.value = it },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                placeholder = { Text("Search sports") },
+                shape = RoundedCornerShape(14.dp),
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding =
+                    androidx.compose.foundation.layout
+                        .PaddingValues(top = 16.dp, bottom = 32.dp),
+            ) {
+                if (common.isNotEmpty()) {
+                    item {
+                        Text(
+                            "Popular",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(vertical = 8.dp),
+                        )
+                    }
+                    items(
+                        common,
+                        key = { "popular-$it" },
+                    ) { sport -> ActivityTypeRow(sport, selectedSport == sport, onSelect) }
+                }
+                if (more.isNotEmpty()) {
+                    item {
+                        Text(
+                            "More activities",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+                        )
+                    }
+                    items(
+                        more,
+                        key = { "more-$it" },
+                    ) { sport -> ActivityTypeRow(sport, selectedSport == sport, onSelect) }
+                }
+                if (common.isEmpty() &&
+                    more.isEmpty()
+                ) {
+                    item {
+                        Text(
+                            "No sports found",
+                            modifier = Modifier.padding(vertical = 24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityTypeRow(
+    sport: String,
+    selected: Boolean,
+    onSelect: (String) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable { onSelect(sport) }.padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            sportIcon(sport),
+            contentDescription = null,
+            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(28.dp),
+        )
+        Text(
+            sportLabel(sport),
+            modifier = Modifier.weight(1f).padding(start = 16.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+        )
+        if (selected) {
+            Icon(
+                Icons.Rounded.Check,
+                contentDescription = "Selected",
+                tint = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
