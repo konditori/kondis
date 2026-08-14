@@ -1,0 +1,21 @@
+android/app/src/main/java/app/kondis/model/Formatting.kt
+  s_5fbbf259e433ed::t_5f0c60b2d7728c 23-45
+android/app/src/main/java/app/kondis/ui/record/RecordingViewModel.kt
+  s_5fbbf259e433ed::t_17215764911218 9,71-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "90cd346976f65512ca83d3e7052dcc7105d72284",
+  "prompts": {},
+  "sessions": {
+    "s_5fbbf259e433ed": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffee9-c64c-7941-aead-4f734f5af452",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
