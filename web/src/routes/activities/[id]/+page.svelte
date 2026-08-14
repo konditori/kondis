@@ -33,6 +33,8 @@
   const hasElevation = $derived(activity.metrics?.elevationGain != null || activity.metrics?.elevationLoss != null);
   const hasGpsRoute = $derived((activity.track?.coordinates.length ?? 0) > 0);
   const hasBestEffortHeartRate = $derived(activity.bestEfforts?.some((effort) => effort.avgHr != null) ?? false);
+  const distanceBestEfforts = $derived(activity.bestEfforts?.filter((effort) => !effort.type.startsWith('power_')) ?? []);
+  const powerBestEfforts = $derived(activity.bestEfforts?.filter((effort) => effort.type.startsWith('power_')) ?? []);
   const hasActivityAnalysis = $derived(activity.analysis !== null);
   const hasSplitHeartRate = $derived(activity.analysis?.splits.some((split) => split.avgHr != null) ?? false);
   type HighlightRange = { startTime: number; endTime: number; label: string; pointTime?: number };
@@ -225,8 +227,10 @@
   </header>
 
   {#if hasGpsRoute}
-    <div class:activity-visuals={hasActivityAnalysis}>
-      {#if hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
+    <div class:activity-visuals={
+      !isCyclingEffort && hasActivityAnalysis && (activity.analysis?.splits.length ?? 0) > 0
+    }>
+      {#if !isCyclingEffort && hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
         <section class="splits-section splits-section-visual">
           <div class="split-table-wrap">
             <div class="split-table" role="table" aria-label="Activity kilometre splits">
@@ -263,7 +267,7 @@
     </div>
   {/if}
 
-  {#if !hasGpsRoute && hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
+  {#if !isCyclingEffort && !hasGpsRoute && hasActivityAnalysis && activity.analysis && activity.analysis.splits.length > 0}
     <section class="splits-section">
       <div class="split-table-wrap">
         <div class="split-table" role="table" aria-label="Activity kilometre splits">
@@ -311,7 +315,7 @@
   {#if activity.bestEfforts && activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
       <div class="section-heading"><div><span class="eyebrow">{isCyclingEffort ? 'Cycling' : 'Running'} performance</span><h2>Best efforts</h2>{#if activity.excludeFromRankings}<p class="best-efforts-excluded-note">Shown for this activity only; excluded from rankings.</p>{/if}</div></div>
-      <div class="best-effort-table-wrap">
+      {#if distanceBestEfforts.length > 0}<div class="best-effort-table-wrap">
         <div class="best-effort-table" role="table" aria-label="Distance best efforts">
           <div class="best-effort-header" class:no-heart-rate={!hasBestEffortHeartRate} role="row">
             <div role="columnheader"><strong>Distance</strong></div>
@@ -320,7 +324,7 @@
             {#if hasBestEffortHeartRate}<div role="columnheader"><strong>Heart Rate</strong></div>{/if}
             <div role="columnheader"><strong>Elev</strong></div>
         </div>
-        {#each activity.bestEfforts as effort}
+        {#each distanceBestEfforts as effort}
           {@const achievement = activity.excludeFromRankings ? null : bestEffortAchievement(effort)}
           <a class="best-effort-row" class:no-heart-rate={!hasBestEffortHeartRate} class:highlighted={highlightedRange?.startTime === effort.startTime && highlightedRange?.endTime === effort.endTime} role="row" href={`/best-efforts/${isCyclingEffort ? 'ride' : 'run'}/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`} onpointerenter={() => highlight(effort.startTime, effort.endTime, bestEffortLabel(effort.type))} onpointerleave={clearHighlight} onfocus={() => highlight(effort.startTime, effort.endTime, bestEffortLabel(effort.type))} onblur={clearHighlight}>
             <div class="effort-distance" role="cell">
@@ -344,7 +348,25 @@
           </a>
         {/each}
         </div>
-      </div>
+      </div>{/if}
+      {#if powerBestEfforts.length > 0}
+        <div class="best-effort-table-wrap">
+          <div class="best-effort-table power-best-effort-table" role="table" aria-label="Power best efforts">
+            <div class="best-effort-header" role="row"><div role="columnheader"></div><div role="columnheader"><strong>Time</strong></div><div role="columnheader"><strong>Power</strong></div><div role="columnheader"><strong>Elev</strong></div></div>
+            {#each powerBestEfforts as effort}
+              {@const achievement = activity.excludeFromRankings ? null : bestEffortAchievement(effort)}
+              <a class="best-effort-row" role="row" href={`/best-efforts/ride/${effort.type}`} aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ''}. View best effort history`}>
+                <div class="effort-distance" role="cell">
+                  {#if achievement}<span class={`effort-medal achievement-rank-${achievement.rank}`} aria-hidden="true"><Medal size={31} /><small>{achievement.rank === 1 ? 'PR' : achievement.rank}</small></span>{/if}
+                </div>
+                <div role="cell">{bestEffortLabel(effort.type).replace(' power', '')}</div>
+                <div role="cell">{Math.round(effort.value)} W</div>
+                <div role="cell">{elevation(effort.elevationChange, data.unitSystem)}</div>
+              </a>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </section>
   {/if}
 </div>

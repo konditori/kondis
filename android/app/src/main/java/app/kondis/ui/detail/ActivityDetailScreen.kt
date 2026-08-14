@@ -186,15 +186,17 @@ fun ActivityDetailScreen(
                 )
             }
         }
-        activity.analysis?.splits?.takeIf(List<*>::isNotEmpty)?.let { splits ->
-            item { SectionTitle(eyebrow = "ACTIVITY ANALYSIS", title = "Splits") }
-            item {
-                SplitsTable(
-                    splits = splits,
-                    cycling = isCycling(activity.sport),
-                    units = units,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+        if (!isCycling(activity.sport)) {
+            activity.analysis?.splits?.takeIf(List<*>::isNotEmpty)?.let { splits ->
+                item { SectionTitle(eyebrow = "ACTIVITY ANALYSIS", title = "Splits") }
+                item {
+                    SplitsTable(
+                        splits = splits,
+                        cycling = false,
+                        units = units,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
             }
         }
         if (activity.matchedRouteCount != null && activity.matchedRouteCount > 1) {
@@ -208,6 +210,8 @@ fun ActivityDetailScreen(
             }
         }
         activity.bestEfforts?.takeIf(List<*>::isNotEmpty)?.let { efforts ->
+            val distanceEfforts = efforts.filterNot { it.type.startsWith("power_") }
+            val powerEfforts = efforts.filter { it.type.startsWith("power_") }
             item {
                 Row(
                     Modifier.fillMaxWidth().padding(top = 30.dp, start = 20.dp, end = 12.dp),
@@ -225,17 +229,29 @@ fun ActivityDetailScreen(
                     ) { Text("You") }
                 }
             }
-            item {
-                BestEffortsTable(
-                    efforts = efforts,
-                    cycling = isCycling(activity.sport),
-                    units = units,
-                    excludedFromRankings = activity.excludeFromRankings,
-                    onEffortClick = { effort ->
-                        onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", effort.type)
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+            if (distanceEfforts.isNotEmpty()) {
+                item {
+                    BestEffortsTable(
+                        efforts = distanceEfforts,
+                        cycling = isCycling(activity.sport),
+                        units = units,
+                        excludedFromRankings = activity.excludeFromRankings,
+                        onEffortClick = { effort ->
+                            onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", effort.type)
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            }
+            if (powerEfforts.isNotEmpty()) {
+                item {
+                    PowerBestEffortsTable(
+                        efforts = powerEfforts,
+                        excludedFromRankings = activity.excludeFromRankings,
+                        units = units,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
             }
         }
     }
@@ -407,6 +423,41 @@ private fun BestEffortsTable(
 }
 
 @Composable
+private fun PowerBestEffortsTable(
+    efforts: List<app.kondis.model.BestEffort>,
+    excludedFromRankings: Boolean,
+    units: UnitSystem,
+    modifier: Modifier = Modifier,
+) {
+    DetailTable(modifier) {
+        TableHeader {
+            TableCell("", .35f, bold = true)
+            TableCell("Time", 1f, bold = true)
+            TableCell("Power", 1.2f, bold = true)
+            TableCell("Elev", .9f, bold = true)
+        }
+        efforts.forEach { effort ->
+            val rank = if (excludedFromRankings) null else achievement(effort)
+            TableRow(onClick = {}) {
+                if (rank != null) {
+                    Icon(
+                        Icons.Rounded.MilitaryTech,
+                        contentDescription = null,
+                        tint = rankColor(rank),
+                        modifier = Modifier.size(28.dp),
+                    )
+                } else {
+                    Spacer(Modifier.width(28.dp))
+                }
+                TableCell(bestEffortLabel(effort.type).removeSuffix(" power"), 1f)
+                TableCell("${effort.value.toInt()} W", 1.2f)
+                TableCell(formatElevation(effort.elevationChange, units), .9f)
+            }
+        }
+    }
+}
+
+@Composable
 private fun DetailTable(
     modifier: Modifier = Modifier,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
@@ -482,6 +533,21 @@ private fun bestEffortLabel(type: String): String =
         "50k" to "50K",
         "longest_ride" to "Longest ride",
         "biggest_climb" to "Biggest climb",
+        "power_5s" to "5 sec power",
+        "power_15s" to "15 sec power",
+        "power_30s" to "30 sec power",
+        "power_1m" to "1 min power",
+        "power_2m" to "2 min power",
+        "power_3m" to "3 min power",
+        "power_5m" to "5 min power",
+        "power_8m" to "8 min power",
+        "power_10m" to "10 min power",
+        "power_15m" to "15 min power",
+        "power_20m" to "20 min power",
+        "power_30m" to "30 min power",
+        "power_45m" to "45 min power",
+        "power_1h" to "1 hour power",
+        "power_2h" to "2 hour power",
     ).getOrDefault(type, type)
 
 private fun achievement(effort: app.kondis.model.BestEffort): Int? =

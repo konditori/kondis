@@ -57,7 +57,8 @@ const BEST_EFFORT_DEFINITIONS = new Map(
 // Materialize once at module load; TypeScript's configured lib does not expose Iterator#toArray yet.
 // eslint-disable-next-line unicorn/prefer-iterator-to-array
 const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].filter(
-  (definition): definition is typeof definition & { distance: number } => 'distance' in definition,
+  (definition): definition is typeof definition & ({ distance: number } | { duration: number }) =>
+    'distance' in definition || definition.type.startsWith('power_'),
 );
 
 @Injectable()
