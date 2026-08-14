@@ -17,6 +17,7 @@ allowBuilds:
   # SWC compiles TypeScript for the dev server and CLI scripts. Unlike esbuild (tsx) it
   # supports emitDecoratorMetadata, which NestJS constructor injection depends on.
   '@swc/core': true
+  bcrypt: true
   cpu-features: false
   esbuild: false
   protobufjs: false
