@@ -1,0 +1,21 @@
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_5fbbf259e433ed::t_cb3b3e05c155c2 146-149,181-184
+android/app/src/main/java/app/kondis/ui/detail/BestEffortsScreen.kt
+  s_5fbbf259e433ed::t_05a04620ac0052 18,53,58,70,89-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f4dfeee65f1fbddcf21a8c5e727e74b4e7b7ba99",
+  "prompts": {},
+  "sessions": {
+    "s_5fbbf259e433ed": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffee9-c64c-7941-aead-4f734f5af452",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
