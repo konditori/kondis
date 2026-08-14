@@ -1,0 +1,21 @@
+e2e/src/utils.ts
+  s_0737dd71c8a0c4::t_ad6ecef4e8d1bc 22,24-46,56,86
+web/src/routes/settings/settings.spec.ts
+  s_0737dd71c8a0c4::t_433dee32f92de8 15-16,21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b2667300aed32ee67c106b07c65bd6344ce37443",
+  "prompts": {},
+  "sessions": {
+    "s_0737dd71c8a0c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0027e-7cd7-7370-8fa3-854d6d2e618b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
