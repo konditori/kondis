@@ -4,7 +4,20 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.ktlint)
 }
+
+val releaseKeystore = providers.environmentVariable("KONDIS_SIGNING_KEYSTORE")
+val releaseStorePassword = providers.environmentVariable("KONDIS_SIGNING_STORE_PASSWORD")
+val releaseKeyAlias = providers.environmentVariable("KONDIS_SIGNING_KEY_ALIAS")
+val releaseKeyPassword = providers.environmentVariable("KONDIS_SIGNING_KEY_PASSWORD")
+val hasReleaseSigning =
+    listOf(
+        releaseKeystore,
+        releaseStorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword,
+    ).all { it.isPresent }
 
 android {
     namespace = "app.kondis"
@@ -22,10 +35,22 @@ android {
         buildConfigField("String", "DEFAULT_API_URL", "\"http://10.0.2.2:2293/api/v1/\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseKeystore.get())
+                storePassword = releaseStorePassword.get()
+                keyAlias = releaseKeyAlias.get()
+                keyPassword = releaseKeyPassword.get()
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -54,6 +79,20 @@ android {
         warningsAsErrors = true
         disable += setOf("ObsoleteSdkInt")
     }
+}
+
+kotlin {
+    compilerOptions {
+        allWarningsAsErrors.set(true)
+        progressiveMode.set(true)
+    }
+}
+
+ktlint {
+    android.set(true)
+    ignoreFailures.set(false)
+    outputToConsole.set(true)
+    version.set("1.8.0")
 }
 
 ksp {

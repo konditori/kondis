@@ -128,14 +128,22 @@ fun ActivityDetailScreen(
 }
 
 @Composable
-private fun DetailHeader(activity: ActivityDetail, units: UnitSystem, onBack: () -> Unit) {
+private fun DetailHeader(
+    activity: ActivityDetail,
+    units: UnitSystem,
+    onBack: () -> Unit,
+) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 20.dp, bottom = 24.dp)) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
             }
             Column(Modifier.padding(start = 12.dp)) {
-                Text(sportLabel(activity.sport), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                Text(
+                    sportLabel(activity.sport),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
                 Text(activity.summary().displayName(), style = MaterialTheme.typography.displaySmall)
                 Text(
                     formatDateTime(activity.startedAt),
@@ -151,16 +159,39 @@ private fun DetailHeader(activity: ActivityDetail, units: UnitSystem, onBack: ()
                     ActivityStat("Moving time", formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
                     ActivityStat(
                         if (activity.sport.contains("run")) "Pace" else "Avg speed",
-                        if (activity.sport.contains("run")) formatPace(metrics?.avgSpeed, units) else formatSpeed(metrics?.avgSpeed, units),
+                        if (activity.sport.contains(
+                                "run",
+                            )
+                        ) {
+                            formatPace(metrics?.avgSpeed, units)
+                        } else {
+                            formatSpeed(metrics?.avgSpeed, units)
+                        },
                     )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    ActivityStat("Elevation", formatElevation(activity.metrics?.elevationGain, units), Modifier.weight(1f))
-                    ActivityStat("Avg heart rate", activity.metrics?.avgHr?.let { "$it bpm" } ?: "—", Modifier.weight(1f))
-                    ActivityStat("Calories", activity.metrics?.calories?.let { "${it.toInt()} kcal" } ?: "—", Modifier.weight(1f))
+                    ActivityStat(
+                        "Elevation",
+                        formatElevation(activity.metrics?.elevationGain, units),
+                        Modifier.weight(1f),
+                    )
+                    ActivityStat(
+                        "Avg heart rate",
+                        activity.metrics?.avgHr?.let {
+                            "$it bpm"
+                        } ?: "—",
+                        Modifier.weight(1f),
+                    )
+                    ActivityStat(
+                        "Calories",
+                        activity.metrics?.calories?.let {
+                            "${it.toInt()} kcal"
+                        } ?: "—",
+                        Modifier.weight(1f),
+                    )
                 }
             }
         }

@@ -19,7 +19,6 @@ import androidx.core.app.NotificationCompat
 import app.kondis.MainActivity
 import app.kondis.R
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,9 +27,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class RecordingService : Service(), LocationListener {
+class RecordingService :
+    Service(),
+    LocationListener {
     @Inject lateinit var recordingManager: RecordingManager
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -43,7 +45,11 @@ class RecordingService : Service(), LocationListener {
         createNotificationChannel()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         when (intent?.action) {
             ACTION_PAUSE -> pause()
             ACTION_RESUME -> resume()
@@ -58,9 +64,14 @@ class RecordingService : Service(), LocationListener {
     override fun onLocationChanged(location: Location) = recordingManager.addLocation(location)
 
     @Deprecated("Required by LocationListener below API 31")
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) = Unit
+    override fun onStatusChanged(
+        provider: String?,
+        status: Int,
+        extras: Bundle?,
+    ) = Unit
 
     override fun onProviderEnabled(provider: String) = Unit
+
     override fun onProviderDisabled(provider: String) = Unit
 
     override fun onDestroy() {
@@ -97,12 +108,13 @@ class RecordingService : Service(), LocationListener {
 
     private fun startTicker() {
         if (ticker?.isActive == true) return
-        ticker = scope.launch {
-            while (isActive) {
-                recordingManager.tick()
-                delay(1_000)
+        ticker =
+            scope.launch {
+                while (isActive) {
+                    recordingManager.tick()
+                    delay(1_000)
+                }
             }
-        }
     }
 
     private fun startLocationUpdates() {
@@ -132,17 +144,26 @@ class RecordingService : Service(), LocationListener {
     private fun stopLocationUpdates() = locationManager.removeUpdates(this)
 
     private fun notification(): Notification {
-        val contentIntent = PendingIntent.getActivity(
-            this,
-            0,
-            Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val contentIntent =
+            PendingIntent.getActivity(
+                this,
+                0,
+                Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+        return NotificationCompat
+            .Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher)
             .setContentTitle(getString(R.string.recording_notification_title))
-            .setContentText(if (recordingManager.state.value.mode == RecordingMode.Paused) "Workout paused" else "Tap to view your workout")
-            .setContentIntent(contentIntent)
+            .setContentText(
+                if (recordingManager.state.value.mode ==
+                    RecordingMode.Paused
+                ) {
+                    "Workout paused"
+                } else {
+                    "Tap to view your workout"
+                },
+            ).setContentIntent(contentIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_WORKOUT)
@@ -150,11 +171,12 @@ class RecordingService : Service(), LocationListener {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            getString(R.string.recording_channel_name),
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply { description = getString(R.string.recording_channel_description) }
+        val channel =
+            NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.recording_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply { description = getString(R.string.recording_channel_description) }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 

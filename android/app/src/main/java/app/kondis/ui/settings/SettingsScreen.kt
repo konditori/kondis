@@ -70,7 +70,14 @@ fun SettingsScreen(
         state.message?.let { message ->
             Text(
                 message,
-                color = if (message == "Connected successfully") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                color =
+                    if (message ==
+                        "Connected successfully"
+                    ) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
             )
         }
         Text("Units", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 18.dp))
@@ -80,11 +87,12 @@ fun SettingsScreen(
                     selected = state.settings.unitSystem == units,
                     onClick = { onUnitChange(units) },
                     label = { Text(if (units == UnitSystem.Metric) "Metric" else "Imperial") },
-                    leadingIcon = if (state.settings.unitSystem == units) {
-                        { Icon(Icons.Rounded.CheckCircle, null) }
-                    } else {
-                        null
-                    },
+                    leadingIcon =
+                        if (state.settings.unitSystem == units) {
+                            { Icon(Icons.Rounded.CheckCircle, null) }
+                        } else {
+                            null
+                        },
                 )
             }
         }
@@ -95,4 +103,3 @@ fun SettingsScreen(
         )
     }
 }
-

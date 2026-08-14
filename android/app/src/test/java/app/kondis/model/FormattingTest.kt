@@ -1,10 +1,10 @@
 package app.kondis.model
 
-import java.util.Locale
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.util.Locale
 
 class FormattingTest {
     private lateinit var originalLocale: Locale
@@ -39,4 +39,3 @@ class FormattingTest {
         assertEquals("5:00 /km", formatPace(1_000.0 / 300.0, UnitSystem.Metric))
     }
 }
-

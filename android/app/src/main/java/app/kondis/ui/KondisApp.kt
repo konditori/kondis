@@ -1,5 +1,6 @@
 package app.kondis.ui
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.AddCircle
@@ -11,7 +12,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -37,15 +37,22 @@ private data object RecordKey : NavKey
 private data object SettingsKey : NavKey
 
 @Serializable
-private data class ActivityDetailKey(val id: String) : NavKey
+private data class ActivityDetailKey(
+    val id: String,
+) : NavKey
 
-private data class Destination(val key: NavKey, val label: String, val icon: ImageVector)
-
-private val destinations = listOf(
-    Destination(FeedKey, "Activities", Icons.AutoMirrored.Rounded.DirectionsRun),
-    Destination(RecordKey, "Record", Icons.Rounded.AddCircle),
-    Destination(SettingsKey, "Settings", Icons.Rounded.Settings),
+private data class Destination(
+    val key: NavKey,
+    val label: String,
+    val icon: ImageVector,
 )
+
+private val destinations =
+    listOf(
+        Destination(FeedKey, "Activities", Icons.AutoMirrored.Rounded.DirectionsRun),
+        Destination(RecordKey, "Record", Icons.Rounded.AddCircle),
+        Destination(SettingsKey, "Settings", Icons.Rounded.Settings),
+    )
 
 @Composable
 fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -79,23 +86,24 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
             backStack = backStack,
             modifier = Modifier.padding(contentPadding),
             onBack = { backStack.removeLastOrNull() },
-            entryProvider = entryProvider {
-                entry<FeedKey> {
-                    FeedRoute(
-                        units = settings.unitSystem,
-                        onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
-                    )
-                }
-                entry<RecordKey> { RecordRoute() }
-                entry<SettingsKey> { SettingsRoute() }
-                entry<ActivityDetailKey> { key ->
-                    ActivityDetailRoute(
-                        id = key.id,
-                        units = settings.unitSystem,
-                        onBack = { backStack.removeLastOrNull() },
-                    )
-                }
-            },
+            entryProvider =
+                entryProvider {
+                    entry<FeedKey> {
+                        FeedRoute(
+                            units = settings.unitSystem,
+                            onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
+                        )
+                    }
+                    entry<RecordKey> { RecordRoute() }
+                    entry<SettingsKey> { SettingsRoute() }
+                    entry<ActivityDetailKey> { key ->
+                        ActivityDetailRoute(
+                            id = key.id,
+                            units = settings.unitSystem,
+                            onBack = { backStack.removeLastOrNull() },
+                        )
+                    }
+                },
         )
     }
 }

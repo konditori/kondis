@@ -10,39 +10,43 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
     @Provides
     @Singleton
-    fun provideJson(): Json = Json {
-        ignoreUnknownKeys = true
-        explicitNulls = false
-        encodeDefaults = true
-    }
-
-    @Provides
-    @Singleton
-    fun provideHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .apply {
-            if (BuildConfig.DEBUG) {
-                addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
-            }
+    fun provideJson(): Json =
+        Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            encodeDefaults = true
         }
-        .build()
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): KondisDatabase = Room
-        .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-        .build()
+    fun provideHttpClient(): OkHttpClient =
+        OkHttpClient
+            .Builder()
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+                }
+            }.build()
+
+    @Provides
+    @Singleton
+    fun provideDatabase(
+        @ApplicationContext context: Context,
+    ): KondisDatabase =
+        Room
+            .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
+            .build()
 
     @Provides
     fun provideActivityDao(database: KondisDatabase): ActivityDao = database.activityDao()
 }
-

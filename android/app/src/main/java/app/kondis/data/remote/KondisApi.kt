@@ -20,10 +20,13 @@ interface KondisApi {
     ): ActivityPage
 
     @GET("activities/{id}")
-    suspend fun activity(@Path("id") id: String): ActivityDetail
+    suspend fun activity(
+        @Path("id") id: String,
+    ): ActivityDetail
 
     @Multipart
     @POST("upload/activity")
-    suspend fun uploadActivity(@Part file: MultipartBody.Part): UploadResponse
+    suspend fun uploadActivity(
+        @Part file: MultipartBody.Part,
+    ): UploadResponse
 }
-

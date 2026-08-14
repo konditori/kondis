@@ -17,4 +17,3 @@ data class ActivityDetailEntity(
     val payload: String,
     val cachedAt: Long,
 )
-

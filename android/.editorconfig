@@ -11,3 +11,10 @@ trim_trailing_whitespace = true
 [*.{xml,toml}]
 indent_size = 4
 
+[*.{kt,kts}]
+ktlint_code_style = ktlint_official
+max_line_length = 120
+
+[app/src/main/java/app/kondis/ui/**/*.kt]
+# Compose APIs intentionally use PascalCase, unlike ordinary Kotlin functions.
+ktlint_standard_function-naming = disabled

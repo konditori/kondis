@@ -44,10 +44,33 @@ Plain HTTP is supported for local self-hosting. Use HTTPS whenever traffic leave
 ## Verify
 
 ```bash
-./gradlew testDebugUnitTest :app:assembleDebug :app:lintDebug
+./gradlew ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
 ```
 
 The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+
+Use `./gradlew ktlintFormat` to automatically fix most Kotlin formatting failures.
+
+## Continuous integration and delivery
+
+The Android GitHub Actions workflow runs ktlint, Android lint, unit tests, and both debug and minified
+release builds. Kotlin compiler warnings and Android lint warnings fail the build. Successful builds on
+`main` publish a downloadable debug APK in the workflow run.
+
+In GitHub branch protection, require the `Android / Lint, Test & Build` status check before merging.
+Dependabot checks the Gradle and GitHub Actions dependencies weekly and opens grouped update pull requests.
+
+Tags matching `android-v*` also create a signed GitHub prerelease. Configure these repository secrets
+before creating a release tag:
+
+- `ANDROID_SIGNING_KEY_BASE64`: the release JKS keystore encoded with `base64`
+- `ANDROID_SIGNING_STORE_PASSWORD`: the keystore password
+- `ANDROID_SIGNING_KEY_ALIAS`: the signing-key alias
+- `ANDROID_SIGNING_KEY_PASSWORD`: the signing-key password
+
+For example, release version `0.2.0` with `git tag android-v0.2.0` followed by
+`git push origin android-v0.2.0`. Keep the original keystore and passwords backed up securely: Android
+updates must be signed with the same key.
 
 ## Architecture
 
@@ -72,4 +95,3 @@ Keep Android-specific behavior inside `data`, `recording`, and `ui` packages. In
 Starting a workout must happen while the app is visible. Android then allows the location foreground service to continue through screen-off and background use. Finishing writes a GPX file to private app storage and uploads it. A failed upload leaves the GPX on the device rather than deleting workout data.
 
 The next reliability milestone should checkpoint active recordings to disk and retry saved uploads with WorkManager, so process death and long offline periods are fully covered.
-

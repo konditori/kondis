@@ -76,20 +76,21 @@ data class ActivityDetail(
     val bestEfforts: List<BestEffort>?,
     val matchedRouteCount: Int?,
 ) {
-    fun summary() = Activity(
-        id = id,
-        uploadId = uploadId,
-        sport = sport,
-        name = name,
-        description = description,
-        excludeFromRankings = excludeFromRankings,
-        startedAt = startedAt,
-        timezoneOffsetMinutes = timezoneOffsetMinutes,
-        metrics = metrics,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-        track = track,
-    )
+    fun summary() =
+        Activity(
+            id = id,
+            uploadId = uploadId,
+            sport = sport,
+            name = name,
+            description = description,
+            excludeFromRankings = excludeFromRankings,
+            startedAt = startedAt,
+            timezoneOffsetMinutes = timezoneOffsetMinutes,
+            metrics = metrics,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+            track = track,
+        )
 }
 
 @Serializable
@@ -118,7 +119,10 @@ data class ProfilePoint(
 )
 
 @Serializable
-data class RoutePoint(val time: Double, val coordinate: List<Double>)
+data class RoutePoint(
+    val time: Double,
+    val coordinate: List<Double>,
+)
 
 @Serializable
 data class BestEffort(
@@ -135,4 +139,7 @@ data class BestEffort(
 )
 
 @Serializable
-data class UploadResponse(val byteSize: Long, val queued: Boolean)
+data class UploadResponse(
+    val byteSize: Long,
+    val queued: Boolean,
+)

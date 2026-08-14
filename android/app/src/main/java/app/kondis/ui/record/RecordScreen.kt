@@ -53,20 +53,23 @@ import app.kondis.recording.RecordingMode
 fun RecordRoute(viewModel: RecordingViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val permissions = buildList {
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
-    }.toTypedArray()
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
-        if (results[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
-            viewModel.start()
+    val permissions =
+        buildList {
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
+        }.toTypedArray()
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            if (results[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+                viewModel.start()
+            }
         }
-    }
-    val hasLocationPermission = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-    ) == PackageManager.PERMISSION_GRANTED
+    val hasLocationPermission =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
 
     RecordScreen(
         state = state,
@@ -131,7 +134,15 @@ fun RecordScreen(
                     style = MaterialTheme.typography.displaySmall,
                 )
                 Text(
-                    if (recording.hasLocation) "GPS locked" else if (recording.mode == RecordingMode.Idle) "Ready" else "Finding GPS…",
+                    if (recording.hasLocation) {
+                        "GPS locked"
+                    } else if (recording.mode ==
+                        RecordingMode.Idle
+                    ) {
+                        "Ready"
+                    } else {
+                        "Finding GPS…"
+                    },
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
@@ -145,61 +156,103 @@ fun RecordScreen(
         }
         Spacer(Modifier.weight(1f))
         when (recording.mode) {
-            RecordingMode.Idle -> Button(
-                onClick = onStart,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-            ) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = null)
-                Text("Start workout", modifier = Modifier.padding(start = 8.dp))
-            }
-            RecordingMode.Recording, RecordingMode.Paused -> Row(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(
-                            onClick = if (recording.mode == RecordingMode.Recording) onPause else onResume,
-                            modifier = Modifier.weight(1f).height(56.dp),
-                        ) {
-                            Icon(if (recording.mode == RecordingMode.Recording) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null)
-                            Text(if (recording.mode == RecordingMode.Recording) "Pause" else "Resume")
-                        }
-                        Button(
-                            onClick = onFinish,
-                            enabled = recording.hasLocation,
-                            modifier = Modifier.weight(1f).height(56.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                        ) {
-                            Icon(Icons.Rounded.Stop, null)
-                            Text("Finish")
-                        }
-                    }
-                    TextButton(onClick = onDiscard, modifier = Modifier.fillMaxWidth()) { Text("Discard workout") }
+            RecordingMode.Idle -> {
+                Button(
+                    onClick = onStart,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                ) {
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                    Text("Start workout", modifier = Modifier.padding(start = 8.dp))
                 }
             }
-            RecordingMode.Saving -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator()
-                Text("Saving and syncing workout…", modifier = Modifier.padding(top = 12.dp))
+
+            RecordingMode.Recording, RecordingMode.Paused -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedButton(
+                                onClick = if (recording.mode == RecordingMode.Recording) onPause else onResume,
+                                modifier = Modifier.weight(1f).height(56.dp),
+                            ) {
+                                Icon(
+                                    if (recording.mode ==
+                                        RecordingMode.Recording
+                                    ) {
+                                        Icons.Rounded.Pause
+                                    } else {
+                                        Icons.Rounded.PlayArrow
+                                    },
+                                    null,
+                                )
+                                Text(if (recording.mode == RecordingMode.Recording) "Pause" else "Resume")
+                            }
+                            Button(
+                                onClick = onFinish,
+                                enabled = recording.hasLocation,
+                                modifier = Modifier.weight(1f).height(56.dp),
+                                colors =
+                                    ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiary,
+                                    ),
+                            ) {
+                                Icon(Icons.Rounded.Stop, null)
+                                Text("Finish")
+                            }
+                        }
+                        TextButton(
+                            onClick = onDiscard,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Discard workout")
+                        }
+                    }
+                }
             }
-            RecordingMode.Saved -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
-                Text("Workout saved", style = MaterialTheme.typography.titleLarge)
-                Button(onClick = onReset, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text("Done") }
+
+            RecordingMode.Saving -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Text("Saving and syncing workout…", modifier = Modifier.padding(top = 12.dp))
+                }
             }
-            RecordingMode.Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    recording.errorMessage ?: "Recording failed",
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                )
-                Button(onClick = onReset, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text("Dismiss") }
+
+            RecordingMode.Saved -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Rounded.Check,
+                        null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(36.dp),
+                    )
+                    Text("Workout saved", style = MaterialTheme.typography.titleLarge)
+                    Button(onClick = onReset, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text("Done") }
+                }
+            }
+
+            RecordingMode.Error -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        recording.errorMessage ?: "Recording failed",
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                    )
+                    Button(
+                        onClick = onReset,
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    ) { Text("Dismiss") }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Metric(label: String, value: String) {
+private fun Metric(
+    label: String,
+    value: String,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.headlineMedium)
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)

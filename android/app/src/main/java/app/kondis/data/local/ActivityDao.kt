@@ -17,7 +17,10 @@ interface ActivityDao {
         LIMIT :limit
         """,
     )
-    fun observeActivities(query: String, limit: Int = 250): Flow<List<ActivityEntity>>
+    fun observeActivities(
+        query: String,
+        limit: Int = 250,
+    ): Flow<List<ActivityEntity>>
 
     @Query("SELECT * FROM activity_details WHERE id = :id")
     fun observeDetail(id: String): Flow<ActivityDetailEntity?>
@@ -37,4 +40,3 @@ interface ActivityDao {
         upsertActivities(activities)
     }
 }
-

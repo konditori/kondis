@@ -1,8 +1,8 @@
 package app.kondis.recording
 
-import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.Instant
 
 class RecordingModelsTest {
     @Test
@@ -14,4 +14,3 @@ class RecordingModelsTest {
         assertEquals(111.2, distanceMeters(start, end), 0.5)
     }
 }
-

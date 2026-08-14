@@ -31,14 +31,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.createBitmap
 import app.kondis.model.Track
-import java.io.File
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.floor
-import kotlin.math.ln
-import kotlin.math.pow
-import kotlin.math.tan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -48,9 +42,19 @@ import kotlinx.coroutines.withContext
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.floor
+import kotlin.math.ln
+import kotlin.math.pow
+import kotlin.math.tan
 
 @Composable
-fun StaticRoutePreview(track: Track, modifier: Modifier = Modifier) {
+fun StaticRoutePreview(
+    track: Track,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current.applicationContext
     val density = LocalDensity.current.density
     var size by remember { mutableStateOf(IntSize.Zero) }
@@ -62,9 +66,10 @@ fun StaticRoutePreview(track: Track, modifier: Modifier = Modifier) {
     }
 
     Box(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f))
-            .onSizeChanged { size = it },
+        modifier =
+            modifier
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f))
+                .onSizeChanged { size = it },
     ) {
         bitmap?.let {
             Image(
@@ -84,32 +89,43 @@ fun StaticRoutePreview(track: Track, modifier: Modifier = Modifier) {
 }
 
 private object StaticOsmRenderer {
-    private const val tileSize = 256
-    private const val maxLatitude = 85.05112878
-    private val renderSlots = Semaphore(2)
-    private val tileMemoryCache = object : LruCache<String, Bitmap>(32 * 1024) {
-        override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / 1024
-    }
+    private const val TILE_SIZE = 256
+    private const val MAX_LATITUDE = 85.05112878
+    private val RENDER_SLOTS = Semaphore(2)
+    private val TILE_MEMORY_CACHE =
+        object : LruCache<String, Bitmap>(32 * 1024) {
+            override fun sizeOf(
+                key: String,
+                value: Bitmap,
+            ): Int = value.byteCount / 1024
+        }
+
     @Volatile private var httpClient: OkHttpClient? = null
 
-    suspend fun render(context: Context, track: Track, size: IntSize, density: Float): Bitmap =
-        renderSlots.withPermit {
+    suspend fun render(
+        context: Context,
+        track: Track,
+        size: IntSize,
+        density: Float,
+    ): Bitmap =
+        RENDER_SLOTS.withPermit {
             withContext(Dispatchers.IO) {
-                val coordinates = track.coordinates
-                    .asSequence()
-                    .filter { it.size >= 2 && it[0].isFinite() && it[1].isFinite() }
-                    .map { Coordinate(it[0].coerceIn(-180.0, 180.0), it[1].coerceIn(-maxLatitude, maxLatitude)) }
-                    .toList()
-                    .downsampleCoordinates(600)
+                val coordinates =
+                    track.coordinates
+                        .asSequence()
+                        .filter { it.size >= 2 && it[0].isFinite() && it[1].isFinite() }
+                        .map { Coordinate(it[0].coerceIn(-180.0, 180.0), it[1].coerceIn(-MAX_LATITUDE, MAX_LATITUDE)) }
+                        .toList()
+                        .downsampleCoordinates(600)
                 if (coordinates.size < 2) return@withContext emptyMap(size)
 
                 val viewport = viewportFor(coordinates, size, (24f * density).toDouble())
                 val output = emptyMap(size)
                 val canvas = Canvas(output)
-                val firstTileX = floor(viewport.left / tileSize).toInt()
-                val lastTileX = floor((viewport.left + size.width - 1) / tileSize).toInt()
-                val firstTileY = floor(viewport.top / tileSize).toInt()
-                val lastTileY = floor((viewport.top + size.height - 1) / tileSize).toInt()
+                val firstTileX = floor(viewport.left / TILE_SIZE).toInt()
+                val lastTileX = floor((viewport.left + size.width - 1) / TILE_SIZE).toInt()
+                val firstTileY = floor(viewport.top / TILE_SIZE).toInt()
+                val lastTileY = floor((viewport.top + size.height - 1) / TILE_SIZE).toInt()
                 val tileCount = 1 shl viewport.zoom
 
                 for (tileY in firstTileY..lastTileY) {
@@ -120,8 +136,8 @@ private object StaticOsmRenderer {
                         loadTile(context, viewport.zoom, wrappedX, tileY)?.let { tile ->
                             canvas.drawBitmap(
                                 tile,
-                                (tileX * tileSize - viewport.left).toFloat(),
-                                (tileY * tileSize - viewport.top).toFloat(),
+                                (tileX * TILE_SIZE - viewport.left).toFloat(),
+                                (tileY * TILE_SIZE - viewport.top).toFloat(),
                                 null,
                             )
                         }
@@ -133,13 +149,17 @@ private object StaticOsmRenderer {
             }
         }
 
-    private fun emptyMap(size: IntSize): Bitmap = Bitmap.createBitmap(
-        size.width.coerceAtLeast(1),
-        size.height.coerceAtLeast(1),
-        Bitmap.Config.ARGB_8888,
-    ).apply { eraseColor(Color.rgb(225, 236, 226)) }
+    private fun emptyMap(size: IntSize): Bitmap =
+        createBitmap(
+            size.width.coerceAtLeast(1),
+            size.height.coerceAtLeast(1),
+        ).apply { eraseColor(Color.rgb(225, 236, 226)) }
 
-    private fun viewportFor(coordinates: List<Coordinate>, size: IntSize, padding: Double): Viewport {
+    private fun viewportFor(
+        coordinates: List<Coordinate>,
+        size: IntSize,
+        padding: Double,
+    ): Viewport {
         var selectedZoom = 1
         for (zoom in 18 downTo 1) {
             val projected = coordinates.map { project(it, zoom) }
@@ -156,7 +176,12 @@ private object StaticOsmRenderer {
         return Viewport(selectedZoom, centerX - size.width / 2.0, centerY - size.height / 2.0)
     }
 
-    private fun drawRoute(canvas: Canvas, coordinates: List<Coordinate>, viewport: Viewport, density: Float) {
+    private fun drawRoute(
+        canvas: Canvas,
+        coordinates: List<Coordinate>,
+        viewport: Viewport,
+        density: Float,
+    ) {
         val path = Path()
         coordinates.forEachIndexed { index, coordinate ->
             val point = project(coordinate, viewport.zoom)
@@ -164,23 +189,28 @@ private object StaticOsmRenderer {
             val y = (point.y - viewport.top).toFloat()
             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        val outline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE
-            style = Paint.Style.STROKE
-            strokeWidth = 7f * density
-            strokeCap = Paint.Cap.ROUND
-            strokeJoin = Paint.Join.ROUND
-        }
-        val route = Paint(outline).apply {
-            color = Color.rgb(22, 101, 52)
-            strokeWidth = 4f * density
-        }
+        val outline =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                style = Paint.Style.STROKE
+                strokeWidth = 7f * density
+                strokeCap = Paint.Cap.ROUND
+                strokeJoin = Paint.Join.ROUND
+            }
+        val route =
+            Paint(outline).apply {
+                color = Color.rgb(22, 101, 52)
+                strokeWidth = 4f * density
+            }
         canvas.drawPath(path, outline)
         canvas.drawPath(path, route)
     }
 
-    private fun project(coordinate: Coordinate, zoom: Int): PixelPoint {
-        val worldSize = tileSize * 2.0.pow(zoom)
+    private fun project(
+        coordinate: Coordinate,
+        zoom: Int,
+    ): PixelPoint {
+        val worldSize = TILE_SIZE * 2.0.pow(zoom)
         val latitudeRadians = coordinate.latitude * PI / 180.0
         return PixelPoint(
             x = (coordinate.longitude + 180.0) / 360.0 * worldSize,
@@ -188,27 +218,36 @@ private object StaticOsmRenderer {
         )
     }
 
-    private fun loadTile(context: Context, zoom: Int, x: Int, y: Int): Bitmap? {
+    private fun loadTile(
+        context: Context,
+        zoom: Int,
+        x: Int,
+        y: Int,
+    ): Bitmap? {
         val key = "$zoom/$x/$y"
-        tileMemoryCache.get(key)?.let { return it }
-        val request = Request.Builder()
-            .url("https://tile.openstreetmap.org/$key.png")
-            .header("User-Agent", "${context.packageName}/0.1")
-            .build()
+        TILE_MEMORY_CACHE.get(key)?.let { return it }
+        val request =
+            Request
+                .Builder()
+                .url("https://tile.openstreetmap.org/$key.png")
+                .header("User-Agent", "${context.packageName}/0.1")
+                .build()
         return runCatching {
             client(context).newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@use null
-                BitmapFactory.decodeStream(response.body.byteStream())?.also { tileMemoryCache.put(key, it) }
+                BitmapFactory.decodeStream(response.body.byteStream())?.also { TILE_MEMORY_CACHE.put(key, it) }
             }
         }.getOrNull()
     }
 
-    private fun client(context: Context): OkHttpClient = httpClient ?: synchronized(this) {
-        httpClient ?: OkHttpClient.Builder()
-            .cache(Cache(File(context.cacheDir, "osm-static-tiles"), 32L * 1024 * 1024))
-            .build()
-            .also { httpClient = it }
-    }
+    private fun client(context: Context): OkHttpClient =
+        httpClient ?: synchronized(this) {
+            httpClient ?: OkHttpClient
+                .Builder()
+                .cache(Cache(File(context.cacheDir, "osm-static-tiles"), 32L * 1024 * 1024))
+                .build()
+                .also { httpClient = it }
+        }
 }
 
 private fun List<Coordinate>.downsampleCoordinates(maxPoints: Int): List<Coordinate> {
@@ -217,6 +256,18 @@ private fun List<Coordinate>.downsampleCoordinates(maxPoints: Int): List<Coordin
     return List(maxPoints) { index -> this[(index * step).toInt()] }
 }
 
-private data class Coordinate(val longitude: Double, val latitude: Double)
-private data class PixelPoint(val x: Double, val y: Double)
-private data class Viewport(val zoom: Int, val left: Double, val top: Double)
+private data class Coordinate(
+    val longitude: Double,
+    val latitude: Double,
+)
+
+private data class PixelPoint(
+    val x: Double,
+    val y: Double,
+)
+
+private data class Viewport(
+    val zoom: Int,
+    val left: Double,
+    val top: Double,
+)

@@ -68,7 +68,8 @@ fun FeedScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Activities", style = MaterialTheme.typography.displaySmall)
                     Text(
-                        state.total?.let { "$it ${if (it == 1) "workout" else "workouts"}" } ?: "Your private training log",
+                        state.total?.let { "$it ${if (it == 1) "workout" else "workouts"}" }
+                            ?: "Your private training log",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -117,7 +118,11 @@ fun FeedScreen(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
-                            if (state.search.isBlank()) "Record a workout or connect to your Kondis server." else "Try a different name or sport.",
+                            if (state.search.isBlank()) {
+                                "Record a workout or connect to your Kondis server."
+                            } else {
+                                "Try a different name or sport."
+                            },
                             modifier = Modifier.padding(top = 8.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -144,4 +149,3 @@ fun FeedScreen(
         }
     }
 }
-

@@ -11,4 +11,3 @@ import androidx.room.RoomDatabase
 abstract class KondisDatabase : RoomDatabase() {
     abstract fun activityDao(): ActivityDao
 }
-
