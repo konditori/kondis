@@ -9,6 +9,9 @@ import kotlin.math.sqrt
 
 enum class RecordingMode { Idle, Recording, Paused, Saving, Saved, Error }
 
+val RecordingMode.isActive: Boolean
+    get() = this == RecordingMode.Recording || this == RecordingMode.Paused || this == RecordingMode.Saving
+
 data class TrackPoint(
     val latitude: Double,
     val longitude: Double,

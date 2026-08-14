@@ -12,10 +12,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -25,6 +24,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.kondis.recording.isActive
 import app.kondis.ui.detail.ActivityDetailRoute
 import app.kondis.ui.detail.BestEffortsRoute
 import app.kondis.ui.detail.MatchedRoutesRoute
@@ -77,12 +77,21 @@ private val destinations =
 @Composable
 fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
-    val backStack = rememberNavBackStack(FeedKey)
+    val recording by viewModel.recording.collectAsStateWithLifecycle()
+    val recordingActive = recording.mode.isActive
+    val backStack = rememberNavBackStack(if (recordingActive) RecordKey else FeedKey)
     val current = backStack.lastOrNull()
-    var recordingActive by remember { mutableStateOf(false) }
-    val showNavigation = current != RecordKey || !recordingActive
+    val showNavigation = !recordingActive && current != RecordKey
+
+    LaunchedEffect(recordingActive) {
+        if (recordingActive && backStack.lastOrNull() != RecordKey) {
+            backStack.clear()
+            backStack.add(RecordKey)
+        }
+    }
 
     fun navigateBack() {
+        if (recordingActive) return
         if (backStack.size > 1) {
             backStack.removeAt(backStack.lastIndex)
         } else {
@@ -126,11 +135,9 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                     }
                     entry<RecordKey> {
                         RecordRoute(
-                            onRecordingActiveChanged = { recordingActive = it },
-                            onActivitySaved = { id ->
+                            onActivitySaved = {
                                 backStack.clear()
                                 backStack.add(FeedKey)
-                                backStack.add(ActivityDetailKey(id))
                             },
                         )
                     }
@@ -156,10 +163,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
-                            onDeleted = {
-                                backStack.clear()
-                                backStack.add(FeedKey)
-                            },
+                            onDeleted = ::navigateBack,
                         )
                     }
                     entry<MatchedRoutesKey> { key ->

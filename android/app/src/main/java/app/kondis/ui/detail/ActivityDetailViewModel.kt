@@ -50,6 +50,7 @@ class ActivityDetailViewModel
 
         fun refresh() {
             val id = activityId ?: return
+            if (id.startsWith(LOCAL_ACTIVITY_ID_PREFIX)) return
             viewModelScope.launch {
                 mutableState.value = mutableState.value.copy(loading = true, errorMessage = null)
                 runCatching { repository.refreshDetail(id) }
@@ -62,6 +63,7 @@ class ActivityDetailViewModel
 
         fun update(update: ActivityUpdate) {
             val id = activityId ?: return
+            if (id.startsWith(LOCAL_ACTIVITY_ID_PREFIX)) return
             viewModelScope.launch {
                 mutableState.value = mutableState.value.copy(saving = true, mutationError = null)
                 runCatching { repository.updateActivity(id, update) }
@@ -75,6 +77,7 @@ class ActivityDetailViewModel
 
         fun delete() {
             val id = activityId ?: return
+            if (id.startsWith(LOCAL_ACTIVITY_ID_PREFIX)) return
             viewModelScope.launch {
                 mutableState.value = mutableState.value.copy(deleting = true, mutationError = null)
                 runCatching { repository.deleteActivity(id) }
@@ -83,7 +86,10 @@ class ActivityDetailViewModel
                         mutableState.value =
                             mutableState.value.copy(mutationError = error.userMessage())
                     }
+
                 mutableState.value = mutableState.value.copy(deleting = false)
             }
         }
     }
+
+private const val LOCAL_ACTIVITY_ID_PREFIX = "local-"

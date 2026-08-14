@@ -7,7 +7,7 @@ The native Android client for Kondis. It is an offline-friendly Jetpack Compose 
 - Activity feed with search, pagination, offline Room cache, route previews, and metric/imperial formatting
 - Activity details with route, summary metrics, and kilometre splits
 - Foreground GPS recording with pause/resume, elapsed time, distance filtering, and a persistent notification
-- GPX generation and upload through the existing `POST /api/v1/upload/activity` endpoint
+- GPX generation, durable Room queueing, WorkManager retry, and upload through the existing `POST /api/v1/upload/activity` endpoint
 - Configurable self-hosted server URL and unit preference through DataStore
 - Light/dark Material 3 UI, edge-to-edge layout, adaptive icon, and Navigation 3 state restoration
 
@@ -53,9 +53,9 @@ Use `./gradlew ktlintFormat` to automatically fix most Kotlin formatting failure
 
 ## Continuous integration and delivery
 
-The Android GitHub Actions workflow runs ktlint, Android lint, unit tests, and both debug and minified
-release builds. Kotlin compiler warnings and Android lint warnings fail the build. Successful builds on
-`main` publish a downloadable debug APK in the workflow run.
+The Android GitHub Actions workflow runs ktlint, Android lint, unit tests, an emulator end-to-end sync
+test, and both debug and minified release builds. Kotlin compiler warnings and Android lint warnings fail
+the build. Successful builds on `main` publish a downloadable debug APK in the workflow run.
 
 In GitHub branch protection, require the `Android / Lint, Test & Build` status check before merging.
 Dependabot checks the Gradle and GitHub Actions dependencies weekly and opens grouped update pull requests.
@@ -92,6 +92,6 @@ Keep Android-specific behavior inside `data`, `recording`, and `ui` packages. In
 
 ## Recording notes
 
-Starting a workout must happen while the app is visible. Android then allows the location foreground service to continue through screen-off and background use. Finishing writes a GPX file to private app storage and uploads it. A failed upload leaves the GPX on the device rather than deleting workout data.
+Starting a workout must happen while the app is visible. Android then allows the location foreground service to continue through screen-off and background use. Finishing writes a GPX file to private app storage and queues the workout in Room. WorkManager uploads queued files when connectivity is available; a failed upload leaves both the GPX and the local workout visible until a later retry succeeds.
 
-The next reliability milestone should checkpoint active recordings to disk and retry saved uploads with WorkManager, so process death and long offline periods are fully covered.
+The next reliability milestone should checkpoint active recordings to disk, so process death during an active workout is fully covered.

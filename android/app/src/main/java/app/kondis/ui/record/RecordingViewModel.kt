@@ -89,9 +89,7 @@ class RecordingViewModel
                     val timestamp = snapshot.startedAt ?: Instant.now()
                     val file = File(directory, "kondis-${timestamp.toEpochMilli()}.gpx")
                     gpxWriter.write(file, snapshot, sport.value, title.value)
-                    activityRepository.uploadGpx(file)
-                    file.delete()
-                    activityRepository.findRecentlyUploadedActivity(snapshot.startedAt.toString(), title.value)
+                    activityRepository.queueRecordedWorkout(file, snapshot, sport.value, title.value)
                 }.onSuccess {
                     uploading.value = false
                     manager.saved()

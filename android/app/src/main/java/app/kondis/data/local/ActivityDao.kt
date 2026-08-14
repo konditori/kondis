@@ -31,18 +31,57 @@ interface ActivityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDetail(detail: ActivityDetailEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertQueuedWorkout(workout: QueuedWorkoutEntity)
+
+    @Query("SELECT * FROM queued_workouts ORDER BY startedAt DESC")
+    fun observeQueuedWorkouts(): Flow<List<QueuedWorkoutEntity>>
+
+    @Query("SELECT * FROM queued_workouts ORDER BY startedAt ASC")
+    suspend fun queuedWorkouts(): List<QueuedWorkoutEntity>
+
+    @Query("UPDATE queued_workouts SET uploadStarted = 1 WHERE localActivityId = :id")
+    suspend fun markUploadStarted(id: String)
+
+    @Query("DELETE FROM queued_workouts WHERE localActivityId = :id")
+    suspend fun deleteQueuedWorkout(id: String)
+
     @Query("DELETE FROM activities WHERE id = :id")
     suspend fun deleteActivity(id: String)
 
     @Query("DELETE FROM activity_details WHERE id = :id")
     suspend fun deleteDetail(id: String)
 
-    @Query("DELETE FROM activities")
-    suspend fun clearActivities()
+    @Query("DELETE FROM activities WHERE isLocal = 0")
+    suspend fun clearRemoteActivities()
 
     @Transaction
     suspend fun replaceActivities(activities: List<ActivityEntity>) {
-        clearActivities()
+        clearRemoteActivities()
         upsertActivities(activities)
+    }
+
+    @Transaction
+    suspend fun saveQueuedWorkout(
+        activity: ActivityEntity,
+        detail: ActivityDetailEntity,
+        workout: QueuedWorkoutEntity,
+    ) {
+        upsertActivities(listOf(activity))
+        upsertDetail(detail)
+        upsertQueuedWorkout(workout)
+    }
+
+    @Transaction
+    suspend fun replaceQueuedWorkout(
+        localActivityId: String,
+        activity: ActivityEntity,
+        detail: ActivityDetailEntity,
+    ) {
+        deleteActivity(localActivityId)
+        deleteDetail(localActivityId)
+        deleteQueuedWorkout(localActivityId)
+        upsertActivities(listOf(activity))
+        upsertDetail(detail)
     }
 }
