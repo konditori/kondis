@@ -1,0 +1,55 @@
+.github/workflows/test.yml
+  s_43a91ceba63b0c::t_fda55416896128 214-237
+server/mise.toml
+  s_43a91ceba63b0c::t_e0caf0678c1d75 8-11,14
+server/src/repositories/crypto.repository.spec.ts
+  s_43a91ceba63b0c::t_8340784bf45c59 1-16
+server/src/repositories/fit.spec.ts
+  s_43a91ceba63b0c::t_5621a5cdf9ba53 4,10,48-94
+server/src/repositories/gpx.spec.ts
+  s_43a91ceba63b0c::t_61dc7f9296170d 4,39
+server/src/repositories/tcx.spec.ts
+  s_43a91ceba63b0c::t_847b4d3e7c929b 4,9,14-35
+server/test/medium/specs/repositories/activity.repository.spec.ts
+  s_43a91ceba63b0c::t_3ec4f63903323a 1-49
+server/test/medium/specs/repositories/database.repository.spec.ts
+  s_43a91ceba63b0c::t_ee8c343696eb1f 1-57
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_43a91ceba63b0c::t_8a0dd4c62487f0 1-43
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_43a91ceba63b0c::t_a260c3be8d7c80 29
+server/test/medium/specs/repositories/storage.repository.spec.ts
+  s_43a91ceba63b0c::t_5cad004288820e 1-50
+server/test/medium/specs/repositories/upload.repository.spec.ts
+  s_43a91ceba63b0c::t_46e365501e29e7 1-52
+server/test/medium/specs/repositories/user.repository.spec.ts
+  s_43a91ceba63b0c::t_b8bb39b624771b 1-35
+server/test/medium/specs/service/activity.service.spec.ts
+  s_43a91ceba63b0c::t_a9e23b4fa9ba68 17,22,33,36,46-84,97,109,119,134,139,163,193,221,224,231,250,270,272,287-289,306,335,359,407-408,414,421,433,446,456,474,477,479,482,484,494,507-508,516,526,541,554-555
+server/test/medium/specs/service/auth.service.spec.ts
+  s_43a91ceba63b0c::t_c93e5244022649 1-68
+server/test/medium/specs/service/job.service.spec.ts
+  s_43a91ceba63b0c::t_d8e26b08974d25 1-38
+server/test/medium/specs/service/server.service.spec.ts
+  s_43a91ceba63b0c::t_7450597d30d27e 1-18
+server/test/medium/specs/service/storage.service.spec.ts
+  s_43a91ceba63b0c::t_d59d016a4baac5 1-41
+server/test/medium/specs/service/upload.service.spec.ts
+  s_43a91ceba63b0c::t_f21345728c51ae 33,37,50,60,86,115,124,128,144,161,174,181,205,224,267,275,279,288,298,305,327,347,352,370,375,398,400,403,409
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4f1a7e766cc9a28953af0fdfc5567fd72ad452c0",
+  "prompts": {},
+  "sessions": {
+    "s_43a91ceba63b0c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00219-5585-7c02-ad59-e139933901f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
