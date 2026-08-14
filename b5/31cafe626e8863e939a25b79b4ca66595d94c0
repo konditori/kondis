@@ -1,0 +1,19 @@
+android/app/src/main/java/app/kondis/ui/record/RecordScreen.kt
+  s_5fbbf259e433ed::t_0d86bdd2a5d02c 9,20-21,23,26-27,32,37,39,41,43,48-49,53,62,64,123-127,260-491
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b531cafe626e8863e939a25b79b4ca66595d94c0",
+  "prompts": {},
+  "sessions": {
+    "s_5fbbf259e433ed": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffee9-c64c-7941-aead-4f734f5af452",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
