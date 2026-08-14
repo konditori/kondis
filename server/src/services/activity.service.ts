@@ -667,8 +667,10 @@ export class ActivityService {
               return leftIsPower ? -1 : 1;
             }
             if (leftIsPower && rightIsPower) {
-              const leftDuration = BEST_EFFORT_DEFINITIONS.get(left.type)?.duration ?? 0;
-              const rightDuration = BEST_EFFORT_DEFINITIONS.get(right.type)?.duration ?? 0;
+              const leftDefinition = BEST_EFFORT_DEFINITIONS.get(left.type);
+              const rightDefinition = BEST_EFFORT_DEFINITIONS.get(right.type);
+              const leftDuration = leftDefinition && 'duration' in leftDefinition ? leftDefinition.duration : 0;
+              const rightDuration = rightDefinition && 'duration' in rightDefinition ? rightDefinition.duration : 0;
               return (
                 rightDuration - leftDuration ||
                 left.overallRank - right.overallRank ||

@@ -29,7 +29,8 @@ COPY e2e/package.json ./e2e/package.json
 RUN pnpm install --frozen-lockfile
 
 COPY ./server ./server/
-RUN pnpm --filter ./server build && \
+RUN rm -rf ./server/dist && \
+    pnpm --filter ./server build && \
     pnpm --filter ./server --prod deploy /output/server-pruned
 
 FROM builder AS server
