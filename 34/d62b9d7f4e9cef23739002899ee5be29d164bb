@@ -1,0 +1,21 @@
+android/app/src/main/AndroidManifest.xml
+  s_37d0cd585aa764::t_12d246a994447a 27
+android/gradle/libs.versions.toml
+  s_37d0cd585aa764::t_a041618204a3d8 13,27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "34d62b9d7f4e9cef23739002899ee5be29d164bb",
+  "prompts": {},
+  "sessions": {
+    "s_37d0cd585aa764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffe6-77d1-7192-801b-f0f7a4c13002",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
