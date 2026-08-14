@@ -1,0 +1,29 @@
+.github/workflows/android.yml
+  s_37d0cd585aa764::t_28aa5f44e2b62f 81-139,143
+android/README.md
+  s_37d0cd585aa764::t_2514537cc433f8 10,56-58,95,97
+android/app/build.gradle.kts
+  s_37d0cd585aa764::t_8f065084ee7560 153,155
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_37d0cd585aa764::t_b61fbe35578a60 1-194
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_37d0cd585aa764::t_469ffab56444dc 33,185,220
+android/gradle/libs.versions.toml
+  s_37d0cd585aa764::t_410ca4b4d7c52e 17,27,63,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5addd35469c498a716a27fd9e6dba6c4246a953e",
+  "prompts": {},
+  "sessions": {
+    "s_37d0cd585aa764": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffe6-77d1-7192-801b-f0f7a4c13002",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
