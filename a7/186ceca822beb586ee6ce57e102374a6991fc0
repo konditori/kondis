@@ -1,0 +1,31 @@
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_5fbbf259e433ed::t_1438170cdb435d 11,98-102
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_5fbbf259e433ed::t_d9de66f2fc8f1d 7,50-55
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_5fbbf259e433ed::t_a17210e4a84d53 56-86
+android/app/src/main/java/app/kondis/ui/components/ActivityComponents.kt
+  s_5fbbf259e433ed::t_f8fb058cee86ce 189-191,193-202
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_5fbbf259e433ed::t_7e26cefeae328d 71,82,96,212-226,234-236,356,370,429-432,435-438
+android/app/src/main/java/app/kondis/ui/detail/BestEffortsViewModel.kt
+  s_5fbbf259e433ed::t_f9b7d3c0eba270 1-45
+web/src/lib/components/ActivityCard.svelte
+  s_5fbbf259e433ed::t_a47d6f9e8cc31d 53-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a7186ceca822beb586ee6ce57e102374a6991fc0",
+  "prompts": {},
+  "sessions": {
+    "s_5fbbf259e433ed": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffee9-c64c-7941-aead-4f734f5af452",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
