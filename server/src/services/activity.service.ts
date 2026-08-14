@@ -123,7 +123,7 @@ export class ActivityService {
       const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
         const createdId = await this.activityRepository.create(
-          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport),
+          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport, upload.user_id),
           trx,
         );
         await Promise.all([
@@ -403,12 +403,13 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }) {
+  async listRecent({ cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string }, userId: string) {
     const normalizedSearch = search?.trim() || undefined;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
       cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
       search: normalizedSearch,
+      userId,
     });
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -422,11 +423,11 @@ export class ActivityService {
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
-      total: await this.activityRepository.count(normalizedSearch),
+      total: await this.activityRepository.count(normalizedSearch, userId),
     };
   }
 
-  async listBestEfforts(sport: BestEffortSport, type: BestEffortType) {
+  async listBestEfforts(sport: BestEffortSport, type: BestEffortType, userId: string) {
     const definitions = sport === 'run' ? RUNNING_BEST_EFFORTS : CYCLING_BEST_EFFORTS;
     const selected = definitions.find((effort) => effort.type === type);
     if (!selected) {
@@ -434,8 +435,8 @@ export class ActivityService {
     }
     const sports = [...BEST_EFFORT_SPORTS[sport]];
     const [rows, availableRows] = await Promise.all([
-      this.activityRepository.listBestEfforts(type, sports),
-      this.activityRepository.listAvailableBestEffortTypes(sports),
+      this.activityRepository.listBestEfforts(type, sports, userId),
+      this.activityRepository.listAvailableBestEffortTypes(sports, userId),
     ]);
     const availableTypes = new Set(availableRows.map((row) => row.type));
 
@@ -468,8 +469,8 @@ export class ActivityService {
     };
   }
 
-  async getById(id: string) {
-    const row = await this.activityRepository.getDetailById(id);
+  async getById(id: string, userId: string) {
+    const row = await this.activityRepository.getDetailById(id, userId);
     if (!row) {
       return;
     }
@@ -513,13 +514,13 @@ export class ActivityService {
     };
   }
 
-  async listMatchedRoutes(id: string) {
-    const activity = await this.activityRepository.getById(id);
+  async listMatchedRoutes(id: string, userId: string) {
+    const activity = await this.activityRepository.getById(id, userId);
     if (!activity) {
       return;
     }
 
-    const matches = await this.activityRepository.listMatchedRoutes(id);
+    const matches = await this.activityRepository.listMatchedRoutes(id, userId);
     return {
       sourceActivityId: id,
       activities:
@@ -528,7 +529,7 @@ export class ActivityService {
   }
 
   async updateById(
-    id: string,
+    id: string, userId: string,
     input: {
       name?: string | null;
       description?: string | null;
@@ -567,7 +568,7 @@ export class ActivityService {
       mapped.exclude_from_rankings = input.excludeFromRankings;
     }
 
-    const updated = await this.activityRepository.update(id, mapped);
+    const updated = await this.activityRepository.update(id, mapped, userId);
     if (updated && input.excludeFromRankings === true) {
       await Promise.all([
         this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
@@ -589,7 +590,8 @@ export class ActivityService {
     return updatedDto;
   }
 
-  async deleteById(id: string): Promise<boolean> {
+  async deleteById(id: string, userId: string): Promise<boolean> {
+    if (!(await this.activityRepository.getById(id, userId))) return false;
     const status = await this.handleActivityDelete({ id });
     return status !== JobStatus.Skipped;
   }
@@ -728,10 +730,12 @@ export class ActivityService {
     activityName?: string,
     activityDescription?: string,
     activitySport?: ActivityType,
+    userId?: string | null,
   ): CreateActivityInput {
     return {
       activity: {
         upload_id: uploadId,
+        user_id: userId ?? null,
         sport: activitySport ?? parsed.sport,
         name: activityName ?? parsed.name,
         description: activityDescription ?? null,

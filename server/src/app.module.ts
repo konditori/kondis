@@ -1,5 +1,6 @@
 import { ConsoleLogger, Module, OnApplicationBootstrap } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { AuthGuard } from 'src/auth';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 import { ConfigService } from 'src/config/config.service';
@@ -18,6 +19,8 @@ import { JobService } from 'src/services/job.service';
     ...databaseProviders,
     ...repositories,
     ...services,
+    AuthGuard,
+    { provide: APP_GUARD, useExisting: AuthGuard },
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,

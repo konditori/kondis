@@ -27,6 +27,7 @@ import {
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
 import { ACTIVITY_TYPES } from 'src/types';
+import { AuthenticatedUser, CurrentUser } from 'src/auth';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -36,8 +37,8 @@ export class ActivityController {
   @ApiOperation({ summary: 'List recent activities' })
   @ZodResponse({ status: 200, description: 'Recent activities', type: ActivityListResponseDto })
   @Get()
-  async listRecent(@Query() query: ActivityListQueryDto): Promise<ActivityListResponseDto> {
-    return this.service.listRecent(query);
+  async listRecent(@Query() query: ActivityListQueryDto, @CurrentUser() user: AuthenticatedUser): Promise<ActivityListResponseDto> {
+    return this.service.listRecent(query, user.id);
   }
 
   @ApiOperation({ summary: 'List activity types and their behavior' })
@@ -50,15 +51,15 @@ export class ActivityController {
   @ApiOperation({ summary: 'List best efforts over time for a sport' })
   @ZodResponse({ status: 200, description: 'Best effort history', type: BestEffortListResponseDto })
   @Get('best-efforts/:sport/:type')
-  async listBestEfforts(@Param() params: BestEffortListParamDto): Promise<BestEffortListResponseDto> {
-    return this.service.listBestEfforts(params.sport, params.type);
+  async listBestEfforts(@Param() params: BestEffortListParamDto, @CurrentUser() user: AuthenticatedUser): Promise<BestEffortListResponseDto> {
+    return this.service.listBestEfforts(params.sport, params.type, user.id);
   }
 
   @ApiOperation({ summary: 'Get one activity and its route' })
   @ZodResponse({ status: 200, description: 'Activity details', type: ActivityDetailDto })
   @Get(':id')
-  async getById(@Param() { id }: ActivityIdParamDto): Promise<ActivityDetailDto> {
-    const activity = await this.service.getById(id);
+  async getById(@Param() { id }: ActivityIdParamDto, @CurrentUser() user: AuthenticatedUser): Promise<ActivityDetailDto> {
+    const activity = await this.service.getById(id, user.id);
     if (!activity) {
       throw new NotFoundException(`Activity ${id} does not exist`);
     }
@@ -69,8 +70,8 @@ export class ActivityController {
   @ApiOperation({ summary: 'List activities matched to the same GPS route' })
   @ZodResponse({ status: 200, description: 'Matched route activities', type: MatchedRouteListResponseDto })
   @Get(':id/matched-routes')
-  async listMatchedRoutes(@Param() { id }: ActivityIdParamDto): Promise<MatchedRouteListResponseDto> {
-    const matches = await this.service.listMatchedRoutes(id);
+  async listMatchedRoutes(@Param() { id }: ActivityIdParamDto, @CurrentUser() user: AuthenticatedUser): Promise<MatchedRouteListResponseDto> {
+    const matches = await this.service.listMatchedRoutes(id, user.id);
     if (!matches) {
       throw new NotFoundException(`Activity ${id} does not exist`);
     }
@@ -81,8 +82,8 @@ export class ActivityController {
   @ApiOperation({ summary: 'Update one activity' })
   @ZodResponse({ status: 200, description: 'Updated activity', type: ActivityDto })
   @Put(':id')
-  async updateById(@Param() { id }: ActivityIdParamDto, @Body() payload: ActivityUpdateDto): Promise<ActivityDto> {
-    const updated = await this.service.updateById(id, {
+  async updateById(@Param() { id }: ActivityIdParamDto, @Body() payload: ActivityUpdateDto, @CurrentUser() user: AuthenticatedUser): Promise<ActivityDto> {
+    const updated = await this.service.updateById(id, user.id, {
       ...payload,
       startedAt: payload.startedAt ? new Date(payload.startedAt) : undefined,
       excludeFromRankings: payload.excludeFromRankings,
@@ -97,8 +98,8 @@ export class ActivityController {
   @ApiOperation({ summary: 'Delete one activity' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
-  async deleteById(@Param() { id }: ActivityIdParamDto): Promise<void> {
-    const deleted = await this.service.deleteById(id);
+  async deleteById(@Param() { id }: ActivityIdParamDto, @CurrentUser() user: AuthenticatedUser): Promise<void> {
+    const deleted = await this.service.deleteById(id, user.id);
     if (!deleted) {
       throw new NotFoundException(`Activity ${id} does not exist`);
     }

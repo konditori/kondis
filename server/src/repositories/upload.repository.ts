@@ -21,8 +21,10 @@ export class UploadRepository {
     return this.db.selectFrom('upload').selectAll().where('id', '=', id).executeTakeFirst();
   }
 
-  getByChecksum(checksum: string): Promise<Upload | undefined> {
-    return this.db.selectFrom('upload').selectAll().where('checksum', '=', checksum).executeTakeFirst();
+  getByChecksum(checksum: string, userId?: string): Promise<Upload | undefined> {
+    let query = this.db.selectFrom('upload').selectAll().where('checksum', '=', checksum);
+    if (userId) query = query.where('user_id', '=', userId);
+    return query.executeTakeFirst();
   }
 
   async setStatus(id: string, status: UploadStatus, error: string | null = null): Promise<void> {

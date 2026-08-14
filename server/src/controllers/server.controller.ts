@@ -4,6 +4,7 @@ import { ZodResponse } from 'nestjs-zod';
 
 import { PingResponseDto } from 'src/dtos/ping.dto';
 import { ServerService } from 'src/services/server.service';
+import { Public } from 'src/auth';
 
 @ApiTags('server')
 @Controller()
@@ -17,6 +18,7 @@ export class ServerController {
     type: PingResponseDto,
   })
   @Get('ping')
+  @Public()
   ping(): PingResponseDto {
     return this.service.ping();
   }

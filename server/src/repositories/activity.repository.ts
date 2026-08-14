@@ -192,7 +192,7 @@ export class ActivityRepository {
     return id;
   }
 
-  getById(id: string) {
+  getById(id: string, userId?: string) {
     return this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -205,10 +205,11 @@ export class ActivityRepository {
         ).as('metrics'),
       )
       .where('activity.id', '=', id)
+      .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .executeTakeFirst();
   }
 
-  getDetailById(id: string) {
+  getDetailById(id: string, userId?: string) {
     return this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -230,6 +231,7 @@ export class ActivityRepository {
           .as('matched_route_count'),
       )
       .where('activity.id', '=', id)
+      .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .executeTakeFirst();
   }
 
@@ -348,7 +350,7 @@ export class ActivityRepository {
     return true;
   }
 
-  async listMatchedRoutes(activityId: string): Promise<ActivityRecord[]> {
+  async listMatchedRoutes(activityId: string, userId?: string): Promise<ActivityRecord[]> {
     const rows = await this.db
       .selectFrom('activity_route_match')
       .select('matched_activity_id')
@@ -372,6 +374,7 @@ export class ActivityRepository {
         ).as('metrics'),
       )
       .where('activity.id', 'in', ids)
+      .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .orderBy('activity.started_at', 'asc')
       .orderBy('activity.id', 'asc')
       .execute();
@@ -393,7 +396,7 @@ export class ActivityRepository {
       .executeTakeFirst();
   }
 
-  listRecentPage({ limit, cursor, search }: { limit: number; cursor?: ActivityCursor; search?: string }) {
+  listRecentPage({ limit, cursor, search, userId }: { limit: number; cursor?: ActivityCursor; search?: string; userId: string }) {
     let query = this.db
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
@@ -406,6 +409,7 @@ export class ActivityRepository {
         ).as('metrics'),
       )
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
+    query = query.where('activity.user_id', '=', userId);
 
     if (search) {
       const pattern = `%${search}%`;
@@ -430,8 +434,9 @@ export class ActivityRepository {
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
-  async count(search?: string): Promise<number> {
+  async count(search: string | undefined, userId: string): Promise<number> {
     let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
+    query = query.where('activity.user_id', '=', userId);
     if (search) {
       const pattern = `%${search}%`;
       query = query.where(({ or, eb }) =>
@@ -459,7 +464,7 @@ export class ActivityRepository {
       .execute();
   }
 
-  listBestEfforts(type: BestEffortType, sports: ActivityType[]) {
+  listBestEfforts(type: BestEffortType, sports: ActivityType[], userId: string) {
     return this.db
       .selectFrom('activity_best_effort')
       .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
@@ -477,6 +482,7 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.type', '=', type)
       .where('activity.sport', 'in', sports)
+      .where('activity.user_id', '=', userId)
       .where('activity.exclude_from_rankings', '=', false)
       .orderBy('activity.started_at', 'asc')
       .orderBy('activity.id', 'asc')
@@ -500,20 +506,23 @@ export class ActivityRepository {
       .execute();
   }
 
-  listAvailableBestEffortTypes(sports: ActivityType[]) {
+  listAvailableBestEffortTypes(sports: ActivityType[], userId: string) {
     return this.db
       .selectFrom('activity_best_effort')
       .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
       .select('activity_best_effort.type')
       .distinct()
       .where('activity.sport', 'in', sports)
+      .where('activity.user_id', '=', userId)
       .where('activity.exclude_from_rankings', '=', false)
       .execute();
   }
 
-  async update(id: string, input: UpdateActivityInput) {
+  async update(id: string, input: UpdateActivityInput, userId?: string) {
     const updated = await this.db.transaction().execute(async (trx) => {
-      const row = await trx.updateTable('activity').set(input).where('id', '=', id).returning('id').executeTakeFirst();
+      let update = trx.updateTable('activity').set(input).where('id', '=', id);
+      if (userId) update = update.where('user_id', '=', userId);
+      const row = await update.returning('id').executeTakeFirst();
       if (!row || (input.sport === undefined && input.exclude_from_rankings === undefined)) {
         return row;
       }

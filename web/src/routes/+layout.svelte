@@ -9,6 +9,10 @@
 
 <svelte:head><title>Kondis</title><meta name="description" content="Your self-hosted activity archive" /></svelte:head>
 
-<Sidebar onUpload={() => (uploadOpen = true)} />
-<main class="app-main">{@render children()}</main>
-<UploadDialog bind:open={uploadOpen} eventsUrl={data.eventsUrl} />
+{#if !data.authenticated}
+  {@render children()}
+{:else}
+  <Sidebar onUpload={() => (uploadOpen = true)} />
+  <main class="app-main">{@render children()}</main>
+  <UploadDialog bind:open={uploadOpen} eventsUrl={data.eventsUrl} />
+{/if}

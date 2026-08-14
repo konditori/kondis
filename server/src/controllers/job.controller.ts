@@ -10,9 +10,11 @@ import {
   QueueStatusReportDto,
 } from 'src/dtos/job.dto';
 import { JobService } from 'src/services/job.service';
+import { AdminOnly } from 'src/auth';
 
 @ApiTags('jobs')
 @Controller('jobs')
+@AdminOnly()
 export class JobController {
   constructor(private readonly service: JobService) {}
 

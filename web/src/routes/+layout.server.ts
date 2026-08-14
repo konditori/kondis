@@ -8,9 +8,15 @@ import {
   type ActivityTypeSettingsOutput,
 } from "$lib/api";
 import { activityEventsUrl, getServerSdkRequestOptions } from "$lib/server/api";
+import { apiUrl } from "$lib/server/api";
 import type { LayoutServerLoad } from "./$types";
+import { redirect } from "@sveltejs/kit";
 
 export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
+  if (url && url.pathname !== "/login" && url.pathname !== "/setup") {
+    const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));
+    if (!me.ok) throw redirect(303, "/login");
+  }
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
     activityTypes = await activityControllerListTypes(
@@ -20,6 +26,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
     // Activity pages already surface API availability; keep settings usable.
   }
   const result = {
+    authenticated: !url || (url.pathname !== "/login" && url.pathname !== "/setup"),
     unitSystem:
       parseUnitSystem(cookies.get(UNIT_SYSTEM_COOKIE)) ?? DEFAULT_UNIT_SYSTEM,
     activityTypes,

@@ -28,7 +28,7 @@ export class UploadService {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadActivity(file?: UploadedFileData): Promise<FitUploadResponseDto> {
+  async uploadActivity(file: UploadedFileData | undefined, userId: string): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -41,7 +41,7 @@ export class UploadService {
       throw new PayloadTooLargeException(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
     }
 
-    await this.queueActivityUpload(file);
+    await this.queueActivityUpload(file, undefined, undefined, undefined, userId);
 
     return { byteSize: file.buffer.length, queued: true };
   }
@@ -54,6 +54,7 @@ export class UploadService {
     activityName,
     activityDescription,
     activitySport,
+    userId,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
@@ -66,7 +67,7 @@ export class UploadService {
       throw new Error(`Activity upload checksum mismatch: expected ${checksum}, got ${actualChecksum}`);
     }
 
-    const existing = await this.uploadRepository.getByChecksum(checksum);
+    const existing = await this.uploadRepository.getByChecksum(checksum, userId);
     if (existing) {
       if (activityName || activityDescription || activitySport) {
         await this.jobRepository.queue({
@@ -97,6 +98,7 @@ export class UploadService {
             original_name: originalName,
             byte_size: buffer.length,
             storage_path: permanentStoragePath,
+            user_id: userId,
           },
           trx,
         );
@@ -115,7 +117,7 @@ export class UploadService {
         );
       });
     } catch (error) {
-      const raced = await this.uploadRepository.getByChecksum(checksum);
+      const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
         return JobStatus.Skipped;
       }
@@ -125,7 +127,7 @@ export class UploadService {
     return JobStatus.Success;
   }
 
-  async uploadLagomTakeout(file?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
+  async uploadLagomTakeout(file: UploadedFileData | undefined, userId: string): Promise<LagomTakeoutUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -144,6 +146,7 @@ export class UploadService {
       data: {
         originalName: file.originalname,
         storagePath,
+        userId,
       },
     });
 
@@ -151,7 +154,7 @@ export class UploadService {
   }
 
   @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
-  async handleLagomTakeout({ originalName, storagePath }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
+  async handleLagomTakeout({ originalName, storagePath, userId }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
     let queued = 0;
     const takeout = await extractLagomTakeout(await this.storageRepository.read(storagePath), async (activity) => {
       if (activity.manual) {
@@ -172,7 +175,7 @@ export class UploadService {
         activity.file!,
         activity.name ?? undefined,
         activity.description ?? undefined,
-        activity.sport ?? undefined,
+        activity.sport ?? undefined, userId,
       );
       queued += 1;
     });
@@ -188,7 +191,7 @@ export class UploadService {
     file: UploadedFileData,
     activityName?: string,
     activityDescription?: string,
-    activitySport?: JobOf<JobName.ActivityUpload>['activitySport'],
+    activitySport: JobOf<JobName.ActivityUpload>['activitySport'] | undefined, userId: string,
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
@@ -197,6 +200,7 @@ export class UploadService {
     await this.jobRepository.queue({
       name: JobName.ActivityUpload,
       data: {
+        userId,
         originalName: file.originalname,
         storagePath,
         checksum,

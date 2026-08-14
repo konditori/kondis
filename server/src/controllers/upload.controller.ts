@@ -7,6 +7,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
 import { UploadedFileData } from 'src/types';
+import { AuthenticatedUser, CurrentUser } from 'src/auth';
 
 @ApiTags('uploads')
 @Controller()
@@ -39,8 +40,8 @@ export class UploadController {
       limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0 },
     }),
   )
-  async uploadActivity(@UploadedFile() file?: UploadedFileData): Promise<FitUploadResponseDto> {
-    return this.service.uploadActivity(file);
+  async uploadActivity(@UploadedFile() file?: UploadedFileData, @CurrentUser() user: AuthenticatedUser): Promise<FitUploadResponseDto> {
+    return this.service.uploadActivity(file, user.id);
   }
 
   @ApiOperation({ summary: 'Import activities from a Strava takeout ZIP archive' })
@@ -69,7 +70,7 @@ export class UploadController {
       limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0 },
     }),
   )
-  async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData): Promise<LagomTakeoutUploadResponseDto> {
-    return this.service.uploadLagomTakeout(uploadedFile);
+  async uploadStravaTakeout(@UploadedFile() uploadedFile?: UploadedFileData, @CurrentUser() user: AuthenticatedUser): Promise<LagomTakeoutUploadResponseDto> {
+    return this.service.uploadLagomTakeout(uploadedFile, user.id);
   }
 }
