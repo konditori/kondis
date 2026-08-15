@@ -8,6 +8,11 @@
     sportIcon,
   } from "$lib/activity-types";
   import { bestEffortDistance, bestEffortLabel } from "$lib/best-efforts";
+  import {
+    achievementMedalLabel,
+    achievementRank,
+    distinctAchievementEfforts,
+  } from "$lib/activity-achievements";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import type { ActivityTypeSettingsOutput } from "$lib/api";
   import type { Activity } from "$lib/types";
@@ -161,14 +166,17 @@
       </p>
       {#if activity.topBestEfforts?.length}
         <div class="activity-achievements">
-          {#each activity.topBestEfforts as effort}
+          {#each distinctAchievementEfforts(activity.topBestEfforts) as effort}
             <span
-              class={`activity-achievement rank-${effort.yearRank}`}
-              title={`${bestEffortLabel(effort.type)}: ${effort.yearRank === 1 ? "personal record for the year" : `#${effort.yearRank} for the year`}`}
-              aria-label={`${bestEffortLabel(effort.type)}: ${effort.yearRank === 1 ? "personal record for the year" : `number ${effort.yearRank} for the year`} `}
-              ><Medal size={15} /></span
+              class={`activity-achievement rank-${achievementRank(effort)}`}
+              title={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
+              aria-label={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
+              ><Medal size={18} /></span
             >
           {/each}
+          <span class="activity-achievement-count">
+            {activity.achievementCount ?? activity.topBestEfforts.length}
+          </span>
         </div>
       {/if}
     </div>

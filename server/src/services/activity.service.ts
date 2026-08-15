@@ -449,13 +449,23 @@ export class ActivityService {
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
     const last = page.at(-1);
-    const topBestEfforts = await this.topBestEffortsForActivities(page);
+    const [topBestEfforts, achievementCounts] = await Promise.all([
+      this.topBestEffortsForActivities(page),
+      page.length
+        ? this.activityRepository.countTopBestEfforts([...new Set(page.map(({ id }) => id))])
+        : Promise.resolve([]),
+    ]);
+    const achievementCountByActivity = new Map(
+      achievementCounts.map(({ activity_id, achievement_count }) => [activity_id, achievement_count]),
+    );
 
     return {
       activities: page.map((row) => ({
         ...this.toActivityDto(row),
         track: this.toTrack(row.track_geojson),
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
+        achievementCount:
+          row.best_efforts_computed_at === null ? null : (achievementCountByActivity.get(row.id) ?? 0),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(normalizedSearch, userId),
@@ -697,6 +707,7 @@ export class ActivityService {
     }
 
     for (const [activityId, efforts] of result) {
+      const seenRanks = new Set<number>();
       result.set(
         activityId,
         efforts
@@ -732,6 +743,14 @@ export class ActivityService {
             return (
               rightDistance - leftDistance || left.overallRank - right.overallRank || left.yearRank - right.yearRank
             );
+          })
+          .filter((effort) => {
+            const rank = effort.overallRank <= 3 ? effort.overallRank : effort.yearRank;
+            if (seenRanks.has(rank)) {
+              return false;
+            }
+            seenRanks.add(rank);
+            return true;
           })
           .slice(0, 3),
       );

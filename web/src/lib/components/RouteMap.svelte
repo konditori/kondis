@@ -9,6 +9,7 @@
     compact = false,
     showEndpoints = true,
     route = [],
+    medals = [],
     highlight = null,
     onPointHover,
   }: {
@@ -17,6 +18,14 @@
     compact?: boolean;
     showEndpoints?: boolean;
     route?: { time: number; coordinate: [number, number] }[];
+    medals?: {
+      type: string;
+      rank: number;
+      endTime: number;
+      distance: number;
+      isPower: boolean;
+      label: string;
+    }[];
     highlight?: {
       startTime: number;
       endTime: number;
@@ -34,6 +43,95 @@
   let routeLines = $state<
     { line: import("leaflet").Polyline; opacity: number }[]
   >([]);
+  let medalMarkers: import("leaflet").Marker[] = [];
+
+  function medalCoordinate(endTime: number): [number, number] | null {
+    if (route.length === 0) return null;
+    const exact = route.find((point) => point.time === endTime);
+    if (exact) return exact.coordinate;
+    for (let index = 1; index < route.length; index++) {
+      const before = route[index - 1]!;
+      const after = route[index]!;
+      if (endTime < before.time || endTime > after.time) continue;
+      if (after.time === before.time) return after.coordinate;
+      const ratio = (endTime - before.time) / (after.time - before.time);
+      return [
+        before.coordinate[0] +
+          ratio * (after.coordinate[0] - before.coordinate[0]),
+        before.coordinate[1] +
+          ratio * (after.coordinate[1] - before.coordinate[1]),
+      ];
+    }
+    return route.reduce((closest, point) =>
+      Math.abs(point.time - endTime) < Math.abs(closest.time - endTime)
+        ? point
+        : closest,
+    ).coordinate;
+  }
+
+  function escapeHtml(value: string): string {
+    return value.replace(
+      /[&<>\"']/g,
+      (character) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[character]!,
+    );
+  }
+
+  function medalIcon(L: typeof import("leaflet"), rank: number, label: string) {
+    const color = rank === 1 ? "#efaa00" : rank === 2 ? "#7b8583" : "#be6739";
+    return L.divIcon({
+      className: "route-medal-marker",
+      html: `<span style="--medal-color:${color}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.21 15 2.66 7.14A2 2 0 0 1 4.3 4h15.4a2 2 0 0 1 1.64 3.14L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><circle cx="12" cy="16" r="6"/><path d="M12 18v-4"/><path d="m9.5 16 2.5-2 2.5 2"/></svg><strong>${escapeHtml(label)}</strong><em>Lifetime</em></span>`,
+      iconSize: [190, 38],
+      iconAnchor: [16, 36],
+    });
+  }
+
+  $effect(() => {
+    if (!map || !leaflet) return;
+    const renderMedals = () => {
+      for (const marker of medalMarkers) marker.remove();
+      const placed: import("leaflet").Point[] = [];
+      medalMarkers = medals
+        .slice()
+        .sort((left, right) => {
+          if (
+            !left.isPower &&
+            !right.isPower &&
+            left.distance !== right.distance
+          ) {
+            return right.distance - left.distance;
+          }
+          return left.rank - right.rank;
+        })
+        .flatMap((medal) => {
+          const coordinate = medalCoordinate(medal.endTime);
+          if (!coordinate) return [];
+          const point = map!.latLngToLayerPoint([coordinate[1], coordinate[0]]);
+          if (placed.some((other) => point.distanceTo(other) < 44)) return [];
+          placed.push(point);
+          return leaflet!
+            .marker([coordinate[1], coordinate[0]], {
+              icon: medalIcon(leaflet!, medal.rank, medal.label),
+              title: `${medal.label} medal`,
+              interactive: false,
+              zIndexOffset: 500,
+            })
+            .addTo(map!);
+        });
+    };
+    renderMedals();
+    map.on("zoomend", renderMedals);
+    return () => {
+      map?.off("zoomend", renderMedals);
+    };
+  });
 
   $effect(() => {
     if (
@@ -297,6 +395,7 @@
       highlightEnd = undefined;
       highlightPoint = undefined;
       routeLines = [];
+      medalMarkers = [];
     };
   });
 </script>

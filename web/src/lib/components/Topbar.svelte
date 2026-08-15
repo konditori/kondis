@@ -6,7 +6,9 @@
     Plus,
     Search,
     Settings,
+    X,
   } from "@lucide/svelte";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
 
   let {
@@ -14,7 +16,10 @@
     onUpload,
   }: { user?: { name: string; email: string }; onUpload: () => void } =
     $props();
-  let search = $state(page.url.searchParams.get("search") ?? "");
+  let search = $state("");
+  let searchOpen = $state(false);
+  let searchInput = $state<HTMLInputElement>();
+  let searchForm = $state<HTMLFormElement>();
   let menu: HTMLDetailsElement;
   let plusMenu: HTMLDetailsElement;
   let menuOpen = $state(false);
@@ -34,7 +39,16 @@
   const initial = $derived(accountName.slice(0, 1).toUpperCase());
 
   $effect(() => {
-    const clear = () => (search = "");
+    const initialSearch = page.url.searchParams.get("search") ?? "";
+    search = initialSearch;
+    if (initialSearch.length > 0) searchOpen = true;
+  });
+
+  $effect(() => {
+    const clear = () => {
+      search = "";
+      searchOpen = false;
+    };
     window.addEventListener("kondis:clear-search", clear);
     return () => window.removeEventListener("kondis:clear-search", clear);
   });
@@ -48,6 +62,14 @@
   }
 
   function handleWindowClick(event: MouseEvent) {
+    const target = event.target as Element;
+    if (
+      searchOpen &&
+      searchForm &&
+      !searchForm.contains(target) &&
+      !target.closest(".search-toggle")
+    )
+      searchOpen = false;
     if (menuOpen && !menu.contains(event.target as Node)) closeMenu();
     if (plusMenuOpen && !plusMenu.contains(event.target as Node))
       closePlusMenu();
@@ -64,29 +86,76 @@
       plusMenu.querySelector("summary")?.focus();
     }
   }
+
+  function openSearch() {
+    searchOpen = true;
+    requestAnimationFrame(() => searchInput?.focus());
+  }
+
+  function updateSearch() {
+    window.dispatchEvent(new CustomEvent("kondis:search", { detail: search }));
+  }
+
+  function clearSearch() {
+    search = "";
+    window.dispatchEvent(new CustomEvent("kondis:search", { detail: "" }));
+    if (page.url.search) {
+      void goto("/", { replaceState: true }).then(() => {
+        searchOpen = true;
+        requestAnimationFrame(() => searchInput?.focus());
+      });
+    } else {
+      requestAnimationFrame(() => searchInput?.focus());
+    }
+  }
 </script>
 
 <svelte:window onclick={handleWindowClick} onkeydown={handleWindowKeydown} />
 
 <header class="topbar">
-  <form
-    class="top-search"
-    action="/"
-    method="GET"
-    role="search"
-    onsubmit={() =>
-      window.dispatchEvent(
-        new CustomEvent("kondis:search", { detail: search }),
-      )}
-  >
-    <Search size={18} />
-    <input
-      bind:value={search}
-      name="search"
-      placeholder="Search activities"
+  {#if searchOpen}
+    <form
+      bind:this={searchForm}
+      class="top-search"
+      action="/"
+      method="GET"
+      role="search"
+      onsubmit={(event) => {
+        event.preventDefault();
+        updateSearch();
+      }}
+    >
+      <Search size={18} />
+      <input
+        bind:this={searchInput}
+        bind:value={search}
+        name="search"
+        placeholder="Search activities"
+        aria-label="Search activities"
+        oninput={updateSearch}
+      />
+      {#if search}
+        <button
+          class="top-search-clear"
+          type="button"
+          aria-label="Clear search"
+          title="Clear search"
+          onclick={clearSearch}
+        >
+          <X size={17} />
+        </button>
+      {/if}
+    </form>
+  {:else}
+    <button
+      class="search-toggle"
+      type="button"
       aria-label="Search activities"
-    />
-  </form>
+      onclick={openSearch}
+    >
+      <Search size={21} />
+    </button>
+  {/if}
 
   <details bind:this={plusMenu} bind:open={plusMenuOpen} class="plus-menu">
     <summary aria-label="Add activity"><Plus size={20} /></summary>

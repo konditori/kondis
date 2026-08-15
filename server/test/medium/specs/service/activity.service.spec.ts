@@ -40,14 +40,19 @@ describe(ActivityService.name, () => {
     testUser = await factory.newUser();
   });
 
-  const createActivity = (startedAt: Date, name: string, streams: ActivityStreamInput[] = []) =>
-    factory.newActivity(testUser.id, startedAt, name, streams);
+  const createActivity = (
+    startedAt: Date,
+    name: string,
+    streams: ActivityStreamInput[] = [],
+    sport: 'run' | 'ride' = 'run',
+  ) => factory.newActivity(testUser.id, startedAt, name, streams, {}, sport);
 
   const serviceApi = {
-    listRecent: (query: Parameters<ActivityService['listRecent']>[0]) =>
-      sut.listRecent(query, testUser.id),
-    listBestEfforts: (params: { sport: Parameters<ActivityService['listBestEfforts']>[0]; type: Parameters<ActivityService['listBestEfforts']>[1] }) =>
-      sut.listBestEfforts(params.sport, params.type, testUser.id),
+    listRecent: (query: Parameters<ActivityService['listRecent']>[0]) => sut.listRecent(query, testUser.id),
+    listBestEfforts: (params: {
+      sport: Parameters<ActivityService['listBestEfforts']>[0];
+      type: Parameters<ActivityService['listBestEfforts']>[1];
+    }) => sut.listBestEfforts(params.sport, params.type, testUser.id),
     getById: async ({ id }: { id: string }) => {
       const activity = await sut.getById(id, testUser.id);
       if (!activity) {
@@ -142,7 +147,7 @@ describe(ActivityService.name, () => {
       expect(second.total).toBe(3);
     });
 
-    it('includes up to three yearly podium efforts for each activity', async () => {
+    it('includes up to three distinct achievement ranks for each activity', async () => {
       await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'fastest', [
         { type: 'distance', data: [0, 400, 1000] },
         { type: 'time', data: [0, 100, 250] },
@@ -164,10 +169,28 @@ describe(ActivityService.name, () => {
       const second = response.activities.find(({ id }) => id === secondId);
       const fourth = response.activities.find(({ name }) => name === 'fourth');
 
-      expect(second?.topBestEfforts).toHaveLength(3);
+      expect(second?.topBestEfforts).toHaveLength(1);
       expect(second?.topBestEfforts?.every(({ overallRank }) => overallRank === 2)).toBe(true);
       expect(second?.topBestEfforts?.every(({ yearRank }) => yearRank === 2)).toBe(true);
       expect(fourth?.topBestEfforts).toEqual([]);
+    });
+
+    it('includes power medals in the activity summary', async () => {
+      const activityId = await createActivity(
+        new Date('2024-05-01T08:00:00.000Z'),
+        'ride with power medals',
+        [
+          { type: 'distance', data: [0, 5000, 10_000] },
+          { type: 'time', data: [0, 600, 1200] },
+          { type: 'power', data: Array.from({ length: 31 }, (_, index) => (index >= 10 ? 300 : 100)) },
+        ],
+        'ride',
+      );
+
+      const activity = (await serviceApi.listRecent({ limit: 50 })).activities.find(({ id }) => id === activityId);
+
+      expect(activity?.topBestEfforts?.some(({ type }) => type.startsWith('power_'))).toBe(true);
+      expect(activity?.achievementCount).toBeGreaterThan(activity?.topBestEfforts?.length ?? 0);
     });
   });
 

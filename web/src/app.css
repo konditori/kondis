@@ -83,11 +83,10 @@ button {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  color: white;
-  background: var(--green);
-  border-radius: 10px 10px 10px 3px;
+  width: 38px;
+  height: 38px;
+  font-size: 30px;
+  line-height: 1;
 }
 .sidebar nav {
   display: grid;
@@ -139,6 +138,24 @@ button {
   background: var(--surface);
   color: var(--muted);
 }
+.search-toggle {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.search-toggle:hover,
+.search-toggle:focus-visible {
+  color: var(--green-dark);
+  background: var(--green-soft);
+  outline: 0;
+}
 .top-search:focus-within {
   border-color: #8bae94;
   box-shadow: 0 0 0 3px #16653413;
@@ -151,6 +168,25 @@ button {
   background: transparent;
   color: #1c211d;
   font-size: 14px;
+}
+.top-search-clear {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.top-search-clear:hover,
+.top-search-clear:focus-visible {
+  color: var(--green-dark);
+  background: var(--green-soft);
+  outline: 0;
 }
 .plus-menu {
   position: relative;
@@ -579,25 +615,28 @@ button {
 .activity-achievements {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   margin-top: 8px;
 }
 .activity-achievement {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 20px;
   display: grid;
   place-items: center;
   color: #8a5905;
-  background: #fff2d5;
-  border-radius: 6px;
 }
 .activity-achievement.rank-2 {
   color: #5d6866;
-  background: #edf0ef;
 }
 .activity-achievement.rank-3 {
   color: #88502d;
-  background: #fae8dc;
+}
+.activity-achievement-count {
+  margin-left: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 .activity-feed-stats {
   display: grid;
@@ -1267,6 +1306,59 @@ button {
 }
 .map-key .highlight-dot {
   background: #f97316;
+}
+.route-medal-marker {
+  width: 190px !important;
+  height: 38px !important;
+  background: transparent;
+  border: 0;
+}
+.route-medal-marker > span {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 38px;
+  color: var(--medal-color);
+  filter: drop-shadow(0 2px 3px #19251a99);
+}
+.route-medal-marker svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+.route-medal-marker strong {
+  position: absolute;
+  top: 2px;
+  left: 34px;
+  max-width: 158px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow:
+    0 1px 2px #19251a,
+    0 0 3px #19251a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.route-medal-marker em {
+  position: absolute;
+  top: 16px;
+  left: 34px;
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.15;
+  text-shadow:
+    0 1px 2px #19251a,
+    0 0 3px #19251a;
 }
 .activity-profile {
   width: min(1120px, calc(100% - 72px));

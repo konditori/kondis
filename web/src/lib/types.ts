@@ -39,6 +39,7 @@ export type Activity = {
         yearRank: number;
       }[]
     | null;
+  achievementCount?: number | null;
 };
 
 export type ActivityPage = {

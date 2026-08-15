@@ -4,6 +4,7 @@
     CloudOff,
     LoaderCircle,
   } from "@lucide/svelte";
+  import { goto } from "$app/navigation";
   import { tick } from "svelte";
   import { page } from "$app/state";
   import type { Snapshot } from "@sveltejs/kit";
@@ -74,23 +75,47 @@
     if (!search) {
       searchPage = null;
       searchLoading = false;
+      const url = new URL(page.url);
+      if (url.searchParams.has("search")) {
+        url.searchParams.delete("search");
+        void goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+      }
       return;
     }
 
     searchLoading = true;
-    void activityControllerListRecent({ search }, getSdkRequestOptions())
-      .then((page) => {
-        if (generation !== searchGeneration) return;
-        searchPage = page as ActivityPage;
-        searchCursor = searchPage.nextCursor;
-        searchTotal = searchPage.total;
-      })
-      .catch(() => {
-        if (generation === searchGeneration) searchError = true;
-      })
-      .finally(() => {
-        if (generation === searchGeneration) searchLoading = false;
-      });
+    const timer = setTimeout(() => {
+      const url = new URL(page.url);
+      url.searchParams.set("search", search);
+      if (url.href !== page.url.href) {
+        void goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+      }
+
+      void activityControllerListRecent({ search }, getSdkRequestOptions())
+        .then((page) => {
+          if (generation !== searchGeneration) return;
+          const nextPage = page as ActivityPage;
+          const sameActivities =
+            searchPage &&
+            searchPage.total === nextPage.total &&
+            searchPage.activities.length === nextPage.activities.length &&
+            searchPage.activities.every(
+              (activity, index) =>
+                activity.id === nextPage.activities[index]?.id,
+            );
+          if (!sameActivities) searchPage = nextPage;
+          searchCursor = nextPage.nextCursor;
+          searchTotal = nextPage.total;
+        })
+        .catch(() => {
+          if (generation === searchGeneration) searchError = true;
+        })
+        .finally(() => {
+          if (generation === searchGeneration) searchLoading = false;
+        });
+    }, 50);
+
+    return () => clearTimeout(timer);
   });
 
   $effect(() =>

@@ -110,6 +110,37 @@
       effort.type.startsWith("power_"),
     ) ?? [],
   );
+  const mapMedals = $derived(
+    activity.excludeFromRankings
+      ? []
+      : (activity.bestEfforts ?? [])
+          .filter(
+            (effort) => effort.overallRank >= 1 && effort.overallRank <= 3,
+          )
+          .flatMap((effort) => {
+            const achievement = bestEffortAchievement(effort);
+            return achievement && achievement.rank === effort.overallRank
+              ? [
+                  {
+                    type: effort.type,
+                    rank: effort.overallRank,
+                    endTime: effort.endTime,
+                    distance: effort.distance,
+                    isPower: effort.type.startsWith("power_"),
+                    label: effort.type.startsWith("power_")
+                      ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
+                      : `${
+                          effort.overallRank === 1
+                            ? "Fastest"
+                            : effort.overallRank === 2
+                              ? "2nd fastest"
+                              : "3rd fastest"
+                        } ${bestEffortLabel(effort.type)}`,
+                  },
+                ]
+              : [];
+          }),
+  );
   const hasActivityAnalysis = $derived(activity.analysis !== null);
   const hasSplitHeartRate = $derived(
     activity.analysis?.splits.some((split) => split.avgHr != null) ?? false,
@@ -552,6 +583,7 @@
             coordinates={activity.track?.coordinates ?? null}
             mode={mapStyle}
             route={activity.analysis?.route ?? []}
+            medals={mapMedals}
             highlight={mapHighlight}
             onPointHover={highlightGraphPoint}
           />
