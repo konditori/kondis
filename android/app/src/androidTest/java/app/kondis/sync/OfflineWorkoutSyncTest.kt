@@ -142,7 +142,6 @@ class OfflineWorkoutSyncTest {
 
         device.findObject(By.text("Delete")).click()
         check(device.wait(Until.gone(By.text("Delete activity?")), 10_000))
-        UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
         check(device.wait(Until.hasObject(By.text("Activities")), 10_000))
 
         var deleteRequest: RecordedRequest? = null
