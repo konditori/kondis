@@ -125,9 +125,17 @@
                     type: effort.type,
                     rank: effort.overallRank,
                     endTime: effort.endTime,
+                    distance: effort.distance,
+                    isPower: effort.type.startsWith("power_"),
                     label: effort.type.startsWith("power_")
                       ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
-                      : bestEffortLabel(effort.type),
+                      : `${
+                          effort.overallRank === 1
+                            ? "Fastest"
+                            : effort.overallRank === 2
+                              ? "2nd fastest"
+                              : "3rd fastest"
+                        } ${bestEffortLabel(effort.type)}`,
                   },
                 ]
               : [];

@@ -18,7 +18,14 @@
     compact?: boolean;
     showEndpoints?: boolean;
     route?: { time: number; coordinate: [number, number] }[];
-    medals?: { type: string; rank: number; endTime: number; label: string }[];
+    medals?: {
+      type: string;
+      rank: number;
+      endTime: number;
+      distance: number;
+      isPower: boolean;
+      label: string;
+    }[];
     highlight?: {
       startTime: number;
       endTime: number;
@@ -93,7 +100,16 @@
       const placed: import("leaflet").Point[] = [];
       medalMarkers = medals
         .slice()
-        .sort((left, right) => left.rank - right.rank)
+        .sort((left, right) => {
+          if (
+            !left.isPower &&
+            !right.isPower &&
+            left.distance !== right.distance
+          ) {
+            return right.distance - left.distance;
+          }
+          return left.rank - right.rank;
+        })
         .flatMap((medal) => {
           const coordinate = medalCoordinate(medal.endTime);
           if (!coordinate) return [];
