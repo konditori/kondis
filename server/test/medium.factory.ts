@@ -3,7 +3,7 @@ import type { ActivityMetrics, ActivityStreamInput } from 'src/repositories/acti
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
-import type { UploadedFileData } from 'src/types';
+import type { ActivityType, UploadedFileData } from 'src/types';
 
 import type { KondisDatabase } from 'src/db/database';
 
@@ -66,6 +66,7 @@ export const createMediumFactory = (db: KondisDatabase) => {
     name: string,
     streams: ActivityStreamInput[] = [],
     metrics: Partial<ActivityMetrics> | null = {},
+    sport: ActivityType = 'run',
   ): Promise<string> => {
     const upload = await uploads.create({
       checksum: crypto.randomUUID().replaceAll('-', ''),
@@ -78,7 +79,7 @@ export const createMediumFactory = (db: KondisDatabase) => {
     const id = await activities.create({
       activity: {
         upload_id: upload.id,
-        sport: 'run',
+        sport,
         name,
         started_at: startedAt,
         timezone_offset_minutes: 0,

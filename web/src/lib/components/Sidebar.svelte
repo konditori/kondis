@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Activity, HeartPulse, Trophy } from "@lucide/svelte";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
 
   const items = [
@@ -13,11 +14,13 @@
   ];
 
   function goHome(event: MouseEvent) {
-    // The activities search is local page state, so navigating to the current
-    // route would otherwise leave the existing results rendered.
     if (page.url.pathname === "/") {
       event.preventDefault();
-      window.dispatchEvent(new Event("kondis:clear-search"));
+      if (page.url.search) {
+        void goto("/", { replaceState: true });
+      } else {
+        window.dispatchEvent(new Event("kondis:clear-search"));
+      }
     }
   }
 </script>

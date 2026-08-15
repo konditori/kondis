@@ -140,6 +140,7 @@ export type ActivityListResponseDtoOutput = {
           yearRank: number;
         }[]
       | null;
+    achievementCount: number | null;
     /** Simplified GPS route as GeoJSON */
     track: {
       type: Type;
