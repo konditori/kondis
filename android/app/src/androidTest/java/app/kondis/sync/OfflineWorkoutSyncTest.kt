@@ -50,7 +50,7 @@ class OfflineWorkoutSyncTest {
         server.start()
         runBlocking {
             SettingsRepository(context).apply {
-                setServerUrl("http://10.0.2.2:${server.port}/api/v1/")
+                setServerUrl(server.url("/api/v1/").toString())
                 setAccessToken("offline-sync-test-token")
             }
         }
@@ -142,6 +142,7 @@ class OfflineWorkoutSyncTest {
 
         device.findObject(By.text("Delete")).click()
         check(device.wait(Until.gone(By.text("Delete activity?")), 10_000))
+        UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(10)
         check(device.wait(Until.hasObject(By.text("Activities")), 10_000))
 
         var deleteRequest: RecordedRequest? = null
