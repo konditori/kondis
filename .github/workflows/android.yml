@@ -5,12 +5,28 @@ on:
   pull_request:
     paths:
       - android/**
+      - server/**
+      - open-api/**
+      - test/**
+      - packages/postgres/**
+      - docker/**
+      - package.json
+      - pnpm-lock.yaml
+      - mise.toml
       - .github/workflows/android.yml
   push:
     branches: [main]
     tags: ['android-v*']
     paths:
       - android/**
+      - server/**
+      - open-api/**
+      - test/**
+      - packages/postgres/**
+      - docker/**
+      - package.json
+      - pnpm-lock.yaml
+      - mise.toml
       - .github/workflows/android.yml
 
 concurrency:
@@ -123,7 +139,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           working-directory: ./android
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
           script: >-
             ./gradlew $GRADLE_ARGS
