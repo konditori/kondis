@@ -8,6 +8,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import app.kondis.MainActivity
 import app.kondis.data.local.ActivityDetailEntity
@@ -37,7 +39,7 @@ class OfflineWorkoutSyncTest {
     private lateinit var database: KondisDatabase
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val remoteId = "remote-sync-test-activity"
-    private val deleteId = "remote-delete-test-activity"
+    private val deleteId = "zzzz-remote-delete-test-activity"
     private val startedAt = Instant.now().toString()
 
     @Before
@@ -46,7 +48,12 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
-        runBlocking { SettingsRepository(context).setServerUrl(server.url("/api/v1/").toString()) }
+        runBlocking {
+            SettingsRepository(context).apply {
+                setServerUrl(server.url("/api/v1/").toString())
+                setAccessToken("offline-sync-test-token")
+            }
+        }
 
         database =
             Room
@@ -82,10 +89,15 @@ class OfflineWorkoutSyncTest {
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
         check(device.wait(Until.hasObject(By.textContains("workout waiting to sync")), 10_000))
-        check(device.hasObject(By.text("Offline test run")))
+        val feed = UiScrollable(UiSelector().scrollable(true))
+        feed.scrollTextIntoView("Offline test run")
+        check(device.hasObject(By.textContains("Offline test run")))
+        feed.scrollToBeginning(10)
 
         device.findObject(By.text("Sync now")).click()
-        check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 20_000))
+        check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 20_000)) {
+            "Sync did not complete; server requests=${server.requestCount}"
+        }
 
         var upload: RecordedRequest? = null
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
@@ -108,13 +120,29 @@ class OfflineWorkoutSyncTest {
 
     @Test
     fun deletingActivityReturnsToFeed() {
-        check(device.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
+        val uiDevice = device
+        check(uiDevice.wait(Until.hasObject(By.textContains("workout waiting to sync")), 10_000))
+        var deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
+        repeat(5) {
+            if (!deleteActivityVisible) {
+                val centerX = uiDevice.displayWidth / 2
+                uiDevice.swipe(centerX, uiDevice.displayHeight * 3 / 4, centerX, uiDevice.displayHeight / 4, 10)
+                deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
+            }
+        }
+        check(deleteActivityVisible)
+        check(uiDevice.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
         device.findObject(By.textContains("Delete test run")).click()
+        check(device.wait(Until.hasObject(By.text("Edit")), 5_000))
+        device.findObject(By.text("Edit")).click()
+        check(device.wait(Until.hasObject(By.text("Edit activity")), 5_000))
+        UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Delete")
+        device.findObject(By.text("Delete")).click()
         check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
 
         device.findObject(By.text("Delete")).click()
+        check(device.wait(Until.gone(By.text("Delete activity?")), 10_000))
         check(device.wait(Until.hasObject(By.text("Activities")), 10_000))
-        check(!device.hasObject(By.text("Delete activity?")))
 
         var deleteRequest: RecordedRequest? = null
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)

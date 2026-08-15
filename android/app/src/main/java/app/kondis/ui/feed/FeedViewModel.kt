@@ -112,7 +112,12 @@ class FeedViewModel
 
         fun syncQueuedWorkouts() {
             meta.update { it.copy(syncRequested = true) }
-            repository.requestQueuedWorkoutSync()
+            viewModelScope.launch {
+                val remainsQueued = repository.syncQueuedWorkouts()
+                if (remainsQueued) {
+                    repository.requestQueuedWorkoutSync()
+                }
+            }
         }
     }
 
