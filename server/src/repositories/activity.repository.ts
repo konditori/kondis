@@ -516,7 +516,32 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity.exclude_from_rankings', '=', false)
-      .where('activity_best_effort.year_rank', '<=', 3)
+      .where((eb) =>
+        eb.or([
+          eb('activity_best_effort.overall_rank', '<=', 3),
+          eb('activity_best_effort.year_rank', '<=', 3),
+        ]),
+      )
+      .execute();
+  }
+
+  countTopBestEfforts(activityIds: string[]) {
+    return this.db
+      .selectFrom('activity_best_effort')
+      .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
+      .select([
+        'activity_best_effort.activity_id',
+        sql<number>`count(*)::int`.as('achievement_count'),
+      ])
+      .where('activity_best_effort.activity_id', 'in', activityIds)
+      .where('activity.exclude_from_rankings', '=', false)
+      .where((eb) =>
+        eb.or([
+          eb('activity_best_effort.overall_rank', '<=', 3),
+          eb('activity_best_effort.year_rank', '<=', 3),
+        ]),
+      )
+      .groupBy('activity_best_effort.activity_id')
       .execute();
   }
 

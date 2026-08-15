@@ -130,6 +130,7 @@ export const ActivityListResponseSchema = z
           )
           .max(3)
           .nullable(),
+        achievementCount: z.number().int().nonnegative().nullable(),
         track: ActivityTrackSchema.nullable().describe('Simplified GPS route as GeoJSON'),
       }),
     ),

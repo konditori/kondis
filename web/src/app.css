@@ -139,6 +139,24 @@ button {
   background: var(--surface);
   color: var(--muted);
 }
+.search-toggle {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.search-toggle:hover,
+.search-toggle:focus-visible {
+  color: var(--green-dark);
+  background: var(--green-soft);
+  outline: 0;
+}
 .top-search:focus-within {
   border-color: #8bae94;
   box-shadow: 0 0 0 3px #16653413;
@@ -579,25 +597,28 @@ button {
 .activity-achievements {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   margin-top: 8px;
 }
 .activity-achievement {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 20px;
   display: grid;
   place-items: center;
   color: #8a5905;
-  background: #fff2d5;
-  border-radius: 6px;
 }
 .activity-achievement.rank-2 {
   color: #5d6866;
-  background: #edf0ef;
 }
 .activity-achievement.rank-3 {
   color: #88502d;
-  background: #fae8dc;
+}
+.activity-achievement-count {
+  margin-left: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 .activity-feed-stats {
   display: grid;
