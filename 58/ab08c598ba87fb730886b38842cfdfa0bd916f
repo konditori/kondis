@@ -1,0 +1,27 @@
+server/src/schema/migrations/1786832276000-AddActivitySearchTrigramIndexes.ts
+  s_b7be3eddcf88a1::t_f574185e34abe1 1-23
+web/src/app.css
+  s_b7be3eddcf88a1::t_b9e3b0755729ff 86-89,172-190
+web/src/lib/components/Sidebar.svelte
+  s_b7be3eddcf88a1::t_61aa9ed58443c1 2,17-20,26,37,47
+web/src/lib/components/Topbar.svelte
+  s_b7be3eddcf88a1::t_6f218e398230c3 9,11,44,94-110,123-126,135,137-147
+web/src/routes/+page.svelte
+  s_b7be3eddcf88a1::t_98a1a32f2fde2c 7,78-82,87-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "58ab08c598ba87fb730886b38842cfdfa0bd916f",
+  "prompts": {},
+  "sessions": {
+    "s_b7be3eddcf88a1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00761-f0df-73b1-acda-46e819550bd8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
