@@ -1158,6 +1158,12 @@
                   },
                   "nullable": true
                 },
+                "achievementCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "nullable": true
+                },
                 "track": {
                   "type": "object",
                   "properties": {
@@ -1204,6 +1210,7 @@
                 "createdAt",
                 "updatedAt",
                 "topBestEfforts",
+                "achievementCount",
                 "track"
               ],
               "additionalProperties": false

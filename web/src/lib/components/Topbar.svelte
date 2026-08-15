@@ -6,7 +6,9 @@
     Plus,
     Search,
     Settings,
+    X,
   } from "@lucide/svelte";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
 
   let {
@@ -39,7 +41,7 @@
   $effect(() => {
     const initialSearch = page.url.searchParams.get("search") ?? "";
     search = initialSearch;
-    searchOpen = initialSearch.length > 0;
+    if (initialSearch.length > 0) searchOpen = true;
   });
 
   $effect(() => {
@@ -89,6 +91,23 @@
     searchOpen = true;
     requestAnimationFrame(() => searchInput?.focus());
   }
+
+  function updateSearch() {
+    window.dispatchEvent(new CustomEvent("kondis:search", { detail: search }));
+  }
+
+  function clearSearch() {
+    search = "";
+    window.dispatchEvent(new CustomEvent("kondis:search", { detail: "" }));
+    if (page.url.search) {
+      void goto("/", { replaceState: true }).then(() => {
+        searchOpen = true;
+        requestAnimationFrame(() => searchInput?.focus());
+      });
+    } else {
+      requestAnimationFrame(() => searchInput?.focus());
+    }
+  }
 </script>
 
 <svelte:window onclick={handleWindowClick} onkeydown={handleWindowKeydown} />
@@ -101,10 +120,10 @@
       action="/"
       method="GET"
       role="search"
-      onsubmit={() =>
-        window.dispatchEvent(
-          new CustomEvent("kondis:search", { detail: search }),
-        )}
+      onsubmit={(event) => {
+        event.preventDefault();
+        updateSearch();
+      }}
     >
       <Search size={18} />
       <input
@@ -113,7 +132,19 @@
         name="search"
         placeholder="Search activities"
         aria-label="Search activities"
+        oninput={updateSearch}
       />
+      {#if search}
+        <button
+          class="top-search-clear"
+          type="button"
+          aria-label="Clear search"
+          title="Clear search"
+          onclick={clearSearch}
+        >
+          <X size={17} />
+        </button>
+      {/if}
     </form>
   {:else}
     <button

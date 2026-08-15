@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, HeartPulse, Trophy } from "@lucide/svelte";
+  import { Activity, Trophy } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
 
@@ -14,20 +14,16 @@
   ];
 
   function goHome(event: MouseEvent) {
-    if (page.url.pathname === "/") {
-      event.preventDefault();
-      if (page.url.search) {
-        void goto("/", { replaceState: true });
-      } else {
-        window.dispatchEvent(new Event("kondis:clear-search"));
-      }
-    }
+    event.preventDefault();
+    window.dispatchEvent(new Event("kondis:clear-search"));
+    if (page.url.pathname !== "/" || page.url.search)
+      void goto("/", { replaceState: true });
   }
 </script>
 
 <aside class="sidebar">
   <a class="brand" href="/" onclick={goHome} aria-label="Kondis home">
-    <span class="brand-mark"><HeartPulse size={22} strokeWidth={2.5} /></span>
+    <span class="brand-mark" aria-hidden="true">😰</span>
     <span>kondis</span>
   </a>
 
@@ -38,6 +34,7 @@
           ? page.url.pathname.startsWith(item.section)
           : page.url.pathname === item.href}
         href={item.href}
+        onclick={item.href === "/" ? goHome : undefined}
       >
         <item.icon size={19} />
         {item.label}
@@ -47,7 +44,7 @@
 </aside>
 
 <nav class="mobile-nav" aria-label="Mobile navigation">
-  <a class:active={page.url.pathname === "/"} href="/"
+  <a class:active={page.url.pathname === "/"} href="/" onclick={goHome}
     ><Activity size={21} /><span>Activities</span></a
   >
   <a
