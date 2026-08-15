@@ -87,7 +87,7 @@ class OfflineWorkoutSyncTest {
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
         check(device.wait(Until.hasObject(By.textContains("workout waiting to sync")), 10_000))
-        check(device.hasObject(By.text("Offline test run")))
+        check(device.hasObject(By.textContains("Offline test run")))
 
         device.findObject(By.text("Sync now")).click()
         check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 20_000))
@@ -115,6 +115,10 @@ class OfflineWorkoutSyncTest {
     fun deletingActivityReturnsToFeed() {
         check(device.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
         device.findObject(By.textContains("Delete test run")).click()
+        check(device.wait(Until.hasObject(By.text("Edit")), 5_000))
+        device.findObject(By.text("Edit")).click()
+        check(device.wait(Until.hasObject(By.text("Edit activity")), 5_000))
+        device.findObject(By.text("Delete")).click()
         check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
 
         device.findObject(By.text("Delete")).click()
