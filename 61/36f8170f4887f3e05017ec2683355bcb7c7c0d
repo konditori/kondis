@@ -1,0 +1,25 @@
+web/src/app.css
+  s_26659495f35b74::t_af0cb99f2125ea 1344-1346,1359-1361
+web/src/lib/components/RouteMap.svelte
+  s_26659495f35b74::t_e62a6bed5d9883 52-55,69-75,79
+web/src/routes/+page.svelte
+  s_26659495f35b74::t_953a4881d79d2b 103-104
+web/src/routes/activities/[id]/+page.svelte
+  s_26659495f35b74::t_f1f9037fba405d 118,121-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6136f8170f4887f3e05017ec2683355bcb7c7c0d",
+  "prompts": {},
+  "sessions": {
+    "s_26659495f35b74": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0078a-a4e6-7691-8c59-fed76d48fc3c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
