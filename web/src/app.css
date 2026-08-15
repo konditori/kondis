@@ -1307,6 +1307,55 @@ button {
 .map-key .highlight-dot {
   background: #f97316;
 }
+.route-medal-marker {
+  width: 190px !important;
+  height: 38px !important;
+  background: transparent;
+  border: 0;
+}
+.route-medal-marker > span {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 38px;
+  color: var(--medal-color);
+  filter: drop-shadow(0 2px 3px #19251a99);
+}
+.route-medal-marker svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+.route-medal-marker strong {
+  position: absolute;
+  top: 2px;
+  left: 34px;
+  max-width: 158px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow: 0 1px 2px #19251a, 0 0 3px #19251a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.route-medal-marker em {
+  position: absolute;
+  top: 16px;
+  left: 34px;
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.15;
+  text-shadow: 0 1px 2px #19251a, 0 0 3px #19251a;
+}
 .activity-profile {
   width: min(1120px, calc(100% - 72px));
   margin: 0 auto;
