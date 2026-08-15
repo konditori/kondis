@@ -47,8 +47,7 @@ class SettingsRepository
                             preferences[UNIT_SYSTEM]
                                 ?.let { value -> UnitSystem.entries.firstOrNull { it.name == value } }
                                 ?: UnitSystem.Metric,
-                    )
-                        .copy(accessToken = preferences[ACCESS_TOKEN])
+                    ).copy(accessToken = preferences[ACCESS_TOKEN])
                 }
 
         suspend fun setServerUrl(url: String) {
@@ -59,7 +58,18 @@ class SettingsRepository
         suspend fun setUnitSystem(unitSystem: UnitSystem) {
             context.settingsDataStore.edit { it[UNIT_SYSTEM] = unitSystem.name }
         }
-        suspend fun setAccessToken(token: String?) { context.settingsDataStore.edit { preferences -> if (token == null) preferences.remove(ACCESS_TOKEN) else preferences[ACCESS_TOKEN] = token } }
+
+        suspend fun setAccessToken(token: String?) {
+            context.settingsDataStore.edit { preferences ->
+                if (token ==
+                    null
+                ) {
+                    preferences.remove(ACCESS_TOKEN)
+                } else {
+                    preferences[ACCESS_TOKEN] = token
+                }
+            }
+        }
 
         private companion object {
             val SERVER_URL = stringPreferencesKey("server_url")

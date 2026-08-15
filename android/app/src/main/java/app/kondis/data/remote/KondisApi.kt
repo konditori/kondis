@@ -7,6 +7,7 @@ import app.kondis.model.ActivityUpdate
 import app.kondis.model.BestEffortHistory
 import app.kondis.model.MatchedRouteHistory
 import app.kondis.model.UploadResponse
+import kotlinx.serialization.Serializable
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -17,13 +18,22 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
-import kotlinx.serialization.Serializable
 
-@Serializable data class LoginRequest(val email: String, val password: String)
-@Serializable data class LoginResponse(val accessToken: String)
+@Serializable data class LoginRequest(
+    val email: String,
+    val password: String,
+)
+
+@Serializable data class LoginResponse(
+    val accessToken: String,
+)
 
 interface KondisApi {
-    @POST("auth/login") suspend fun login(@Body request: LoginRequest): LoginResponse
+    @POST("auth/login")
+    suspend fun login(
+        @Body request: LoginRequest,
+    ): LoginResponse
+
     @GET("activities")
     suspend fun activities(
         @Query("cursor") cursor: String? = null,

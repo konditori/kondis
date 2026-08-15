@@ -277,7 +277,8 @@ class ActivityRepository
             api().activities(limit = 1)
         }
 
-        private suspend fun api() = settingsRepository.settings.first().let { apiFactory.create(it.serverUrl, it.accessToken) }
+        private suspend fun api() =
+            settingsRepository.settings.first().let { apiFactory.create(it.serverUrl, it.accessToken) }
 
         private fun toEntity(
             activity: Activity,

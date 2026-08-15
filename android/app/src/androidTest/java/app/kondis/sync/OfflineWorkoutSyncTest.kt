@@ -46,7 +46,12 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
-        runBlocking { SettingsRepository(context).setServerUrl(server.url("/api/v1/").toString()) }
+        runBlocking {
+            SettingsRepository(context).apply {
+                setServerUrl(server.url("/api/v1/").toString())
+                setAccessToken("offline-sync-test-token")
+            }
+        }
 
         database =
             Room
