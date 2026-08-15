@@ -1,0 +1,51 @@
+server/src/dtos/activity.dto.ts
+  s_b7be3eddcf88a1::t_8ce52f148238ee 133
+server/src/open-api/fetch-client.ts
+  s_b7be3eddcf88a1::t_a1cbeb0b86bc8d 143
+server/src/repositories/activity.repository.ts
+  s_b7be3eddcf88a1::t_661ab85b5e438d 519-544
+server/src/services/activity.service.ts
+  s_b7be3eddcf88a1::t_d5a2171c129101 452-460,467-468,710,747-754
+server/test/medium.factory.ts
+  s_b7be3eddcf88a1::t_63d12682dbc547 6,69,82
+server/test/medium/specs/service/activity.service.spec.ts
+  s_b7be3eddcf88a1::t_56d5d4ed04e819 43-48,51-55,150,172,177-194
+web/src/app.css
+  s_b7be3eddcf88a1::t_d1b8118d6655ca 142-159,600-601,605-606,616-621
+web/src/lib/activity-achievements.spec.ts
+  s_b7be3eddcf88a1::t_c78c49fb269b18 1-38
+web/src/lib/activity-achievements.ts
+  s_b7be3eddcf88a1::t_aae50bd147efde 1-31
+web/src/lib/components/ActivityCard.svelte
+  s_b7be3eddcf88a1::t_59534714663aec 11-15,169,171-174,177-179
+web/src/lib/components/Sidebar.svelte
+  s_18977d0c6aac15::t_c8458feafcfc0a 3,19-23
+web/src/lib/components/Topbar.svelte
+  s_18977d0c6aac15::t_7b12a9c039dede 17-20,40-49,63-70,87-91,97-121,123-127
+web/src/lib/types.ts
+  s_b7be3eddcf88a1::t_8a58c947d9c875 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e5ef94fd0e0712c2019ce5bc6e1dd284df479c2b",
+  "prompts": {},
+  "sessions": {
+    "s_18977d0c6aac15": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0075b-9f54-7d32-b292-5fd3318600c0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b7be3eddcf88a1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00761-f0df-73b1-acda-46e819550bd8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
