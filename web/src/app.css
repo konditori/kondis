@@ -1341,7 +1341,9 @@ button {
   font-size: 11px;
   font-weight: 700;
   line-height: 1.15;
-  text-shadow: 0 1px 2px #19251a, 0 0 3px #19251a;
+  text-shadow:
+    0 1px 2px #19251a,
+    0 0 3px #19251a;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1354,7 +1356,9 @@ button {
   font-style: normal;
   font-weight: 600;
   line-height: 1.15;
-  text-shadow: 0 1px 2px #19251a, 0 0 3px #19251a;
+  text-shadow:
+    0 1px 2px #19251a,
+    0 0 3px #19251a;
 }
 .activity-profile {
   width: min(1120px, calc(100% - 72px));

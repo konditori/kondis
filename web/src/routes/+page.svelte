@@ -100,7 +100,8 @@
             searchPage.total === nextPage.total &&
             searchPage.activities.length === nextPage.activities.length &&
             searchPage.activities.every(
-              (activity, index) => activity.id === nextPage.activities[index]?.id,
+              (activity, index) =>
+                activity.id === nextPage.activities[index]?.id,
             );
           if (!sameActivities) searchPage = nextPage;
           searchCursor = nextPage.nextCursor;

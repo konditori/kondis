@@ -115,24 +115,23 @@
       ? []
       : (activity.bestEfforts ?? [])
           .filter(
-            (effort) =>
-              effort.overallRank >= 1 && effort.overallRank <= 3,
+            (effort) => effort.overallRank >= 1 && effort.overallRank <= 3,
           )
           .flatMap((effort) => {
-          const achievement = bestEffortAchievement(effort);
-          return achievement && achievement.rank === effort.overallRank
-            ? [
-                {
-                  type: effort.type,
-                  rank: effort.overallRank,
-                  endTime: effort.endTime,
-                  label: effort.type.startsWith("power_")
-                    ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
-                    : bestEffortLabel(effort.type),
-                },
-              ]
-            : [];
-        }),
+            const achievement = bestEffortAchievement(effort);
+            return achievement && achievement.rank === effort.overallRank
+              ? [
+                  {
+                    type: effort.type,
+                    rank: effort.overallRank,
+                    endTime: effort.endTime,
+                    label: effort.type.startsWith("power_")
+                      ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
+                      : bestEffortLabel(effort.type),
+                  },
+                ]
+              : [];
+          }),
   );
   const hasActivityAnalysis = $derived(activity.analysis !== null);
   const hasSplitHeartRate = $derived(

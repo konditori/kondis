@@ -49,8 +49,10 @@
       if (after.time === before.time) return after.coordinate;
       const ratio = (endTime - before.time) / (after.time - before.time);
       return [
-        before.coordinate[0] + ratio * (after.coordinate[0] - before.coordinate[0]),
-        before.coordinate[1] + ratio * (after.coordinate[1] - before.coordinate[1]),
+        before.coordinate[0] +
+          ratio * (after.coordinate[0] - before.coordinate[0]),
+        before.coordinate[1] +
+          ratio * (after.coordinate[1] - before.coordinate[1]),
       ];
     }
     return route.reduce((closest, point) =>
@@ -64,17 +66,17 @@
     return value.replace(
       /[&<>\"']/g,
       (character) =>
-        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-          character
-        ]!,
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[character]!,
     );
   }
 
-  function medalIcon(
-    L: typeof import("leaflet"),
-    rank: number,
-    label: string,
-  ) {
+  function medalIcon(L: typeof import("leaflet"), rank: number, label: string) {
     const color = rank === 1 ? "#efaa00" : rank === 2 ? "#7b8583" : "#be6739";
     return L.divIcon({
       className: "route-medal-marker",
