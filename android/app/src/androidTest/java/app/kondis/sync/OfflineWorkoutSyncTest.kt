@@ -48,7 +48,7 @@ class OfflineWorkoutSyncTest {
         server.start()
         runBlocking {
             SettingsRepository(context).apply {
-                setServerUrl(server.url("/api/v1/").toString())
+                setServerUrl("http://10.0.2.2:${server.port}/api/v1/")
                 setAccessToken("offline-sync-test-token")
             }
         }
