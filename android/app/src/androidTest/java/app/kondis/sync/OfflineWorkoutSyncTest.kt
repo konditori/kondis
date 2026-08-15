@@ -8,6 +8,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import app.kondis.MainActivity
 import app.kondis.data.local.ActivityDetailEntity
@@ -87,6 +89,7 @@ class OfflineWorkoutSyncTest {
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
         check(device.wait(Until.hasObject(By.textContains("workout waiting to sync")), 10_000))
+        UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Offline test run")
         check(device.hasObject(By.textContains("Offline test run")))
 
         device.findObject(By.text("Sync now")).click()
