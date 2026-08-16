@@ -12,4 +12,6 @@ export const UPLOAD_LIMITS = {
   manifestRecordBytes: 64 * 1024,
   activityRecords: 1_000_000,
   activityLaps: 10_000,
+  imageFileBytes: 25 * MEBIBYTE,
+  imagePixels: 100_000_000,
 } as const;

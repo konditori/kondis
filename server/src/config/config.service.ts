@@ -24,6 +24,7 @@ export type JobsConfig = {
 const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QueueName.ActivityParsing]: 2,
   [QueueName.BackgroundTask]: 2,
+  [QueueName.ImageProcessing]: 2,
   [QueueName.Storage]: 2,
 };
 

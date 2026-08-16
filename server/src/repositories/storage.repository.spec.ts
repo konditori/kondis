@@ -20,6 +20,13 @@ describe('StorageRepository', () => {
     await rm(storageDir, { recursive: true, force: true });
   });
 
+  it('shards workout and image paths', () => {
+    expect(repository.buildPath('abcdef0123456789', '.fit')).toBe('activities/ab/cd/abcdef0123456789.fit');
+    expect(repository.buildImagePath('6ffe851c-920e-4615-844f-fcdfc40a8de7', 'original', '.jpg')).toBe(
+      'images/6f/fe/6ffe851c-920e-4615-844f-fcdfc40a8de7/original.jpg',
+    );
+  });
+
   it('deletes only expired temporary files', async () => {
     const expired = repository.buildTemporaryPath('.zip');
     const referenced = repository.buildTemporaryPath('.zip');

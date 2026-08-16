@@ -34,6 +34,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
         onServerUrlChange = viewModel::setServerUrlDraft,
         onUnitChange = viewModel::setUnits,
         onSave = viewModel::saveAndTest,
+        onSignOut = viewModel::signOut,
     )
 }
 
@@ -43,6 +44,7 @@ fun SettingsScreen(
     onServerUrlChange: (String) -> Unit,
     onUnitChange: (UnitSystem) -> Unit,
     onSave: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -101,5 +103,6 @@ fun SettingsScreen(
             "Activity data stays in your Kondis installation. Cached activities and unfinished GPX recordings remain in this app's private storage.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Button(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Sign out and switch account") }
     }
 }

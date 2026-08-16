@@ -2,9 +2,11 @@ import { BadRequestException, ConsoleLogger, Injectable, Optional } from '@nestj
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { ActivityImage } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
 import { ActivitySchema } from 'src/dtos/activity.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
+import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import {
   ActivityListRecord,
   ActivityMetrics,
@@ -76,6 +78,7 @@ export class ActivityService {
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
     @Optional() private readonly importProgressStore?: ImportProgressStore,
+    @Optional() private readonly activityImageRepository?: ActivityImageRepository,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -88,6 +91,7 @@ export class ActivityService {
     activityDescription,
     activitySport,
     takeoutImportId,
+    images,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
     if (!upload) {
@@ -111,6 +115,9 @@ export class ActivityService {
           await this.jobRepository.queueAll(pendingJobs);
         }
         await this.uploadRepository.setStatus(id, 'parsed');
+        if (images?.length) {
+          await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
+        }
         if (takeoutImportId) {
           this.importProgressStore?.increment(takeoutImportId);
         }
@@ -142,6 +149,12 @@ export class ActivityService {
             { transaction: trx },
           ),
         ]);
+        if (images?.length) {
+          await this.jobRepository.queue(
+            { name: JobName.ActivityImageAttach, data: { uploadId: id, images } },
+            { transaction: trx },
+          );
+        }
         return createdId;
       });
 
@@ -180,6 +193,12 @@ export class ActivityService {
           )
         : false;
     if (existing || legacyExisting) {
+      if (existing && job.images?.length) {
+        await this.jobRepository.queue({
+          name: JobName.ActivityImageAttach,
+          data: { uploadId: existing.id, images: job.images },
+        });
+      }
       if (job.takeoutImportId) {
         this.importProgressStore?.increment(job.takeoutImportId, false, true);
       }
@@ -241,6 +260,12 @@ export class ActivityService {
         trx,
       );
       await this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx });
+      if (job.images?.length) {
+        await this.jobRepository.queue(
+          { name: JobName.ActivityImageAttach, data: { uploadId: job.id, images: job.images } },
+          { transaction: trx },
+        );
+      }
       return id;
     });
     const activity = await this.activityRepository.getById(createdId);
@@ -415,6 +440,12 @@ export class ActivityService {
     }
 
     const upload = await this.uploadRepository.getById(activity.upload_id);
+    const activityImages = this.activityImageRepository
+      ? await this.activityImageRepository.listForUpload(activity.upload_id)
+      : [];
+    const imageFiles = this.activityImageRepository
+      ? await Promise.all(activityImages.map((image) => this.activityImageRepository!.getFiles(image.id)))
+      : [];
 
     await this.databaseRepository.withTransaction(async (trx) => {
       // Cascades to the activity, its streams and its laps.
@@ -422,7 +453,12 @@ export class ActivityService {
 
       if (upload) {
         await this.jobRepository.queue(
-          { name: JobName.FileDelete, data: { paths: [upload.storage_path] } },
+          {
+            name: JobName.FileDelete,
+            data: {
+              paths: [upload.storage_path, ...imageFiles.flat().map((file) => file.storage_path)].filter(Boolean),
+            },
+          },
           { transaction: trx },
         );
       }
@@ -451,21 +487,24 @@ export class ActivityService {
     const last = page.at(-1);
     const [topBestEfforts, achievementCounts] = await Promise.all([
       this.topBestEffortsForActivities(page),
-      page.length
+      page.length > 0
         ? this.activityRepository.countTopBestEfforts([...new Set(page.map(({ id }) => id))])
         : Promise.resolve([]),
     ]);
     const achievementCountByActivity = new Map(
       achievementCounts.map(({ activity_id, achievement_count }) => [activity_id, achievement_count]),
     );
+    const imagesByActivity = await Promise.all(
+      page.map((row) => this.listImageDtos(row.upload_id, userId)),
+    );
 
     return {
-      activities: page.map((row) => ({
+      activities: page.map((row, index) => ({
         ...this.toActivityDto(row),
         track: this.toTrack(row.track_geojson),
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
-        achievementCount:
-          row.best_efforts_computed_at === null ? null : (achievementCountByActivity.get(row.id) ?? 0),
+        achievementCount: row.best_efforts_computed_at === null ? null : (achievementCountByActivity.get(row.id) ?? 0),
+        images: imagesByActivity[index],
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(normalizedSearch, userId),
@@ -522,9 +561,10 @@ export class ActivityService {
 
     const supportsActivityAnalysis =
       BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.has(row.sport);
-    const [storedEfforts, streams] = await Promise.all([
+    const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
+      this.activityImageRepository?.listForUpload(row.upload_id, userId) ?? Promise.resolve([]),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
 
@@ -556,6 +596,34 @@ export class ActivityService {
                   ]
                 : [];
             }),
+      images: await Promise.all(images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image))),
+    };
+  }
+
+  private async listImageDtos(uploadId: string, userId?: string) {
+    if (!this.activityImageRepository) {
+      return [];
+    }
+    const images = await this.activityImageRepository.listForUpload(uploadId, userId);
+    return Promise.all(images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)));
+  }
+
+  private async toImageDto(image: ActivityImage) {
+    const files = (await this.activityImageRepository?.getFiles(image.id)) ?? [];
+    return {
+      id: image.id,
+      caption: image.caption,
+      sortOrder: image.sort_order,
+      width: image.width,
+      height: image.height,
+      status: image.status,
+      thumbnail: files.some((file) => file.variant === 'thumbnail')
+        ? `/api/v1/activity-images/${image.id}/thumbnail`
+        : null,
+      preview: files.some((file) => file.variant === 'preview') ? `/api/v1/activity-images/${image.id}/preview` : null,
+      original: files.some((file) => file.variant === 'original')
+        ? `/api/v1/activity-images/${image.id}/original`
+        : null,
     };
   }
 

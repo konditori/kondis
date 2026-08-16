@@ -2675,6 +2675,11 @@ button {
     height: 52vh;
     min-height: 380px;
   }
+  .activity-photo-slide figure {
+    height: 52vh;
+    min-height: 380px;
+    border-radius: 13px;
+  }
   .activity-visuals .activity-profile {
     width: 100%;
   }
@@ -2831,4 +2836,121 @@ button {
 }
 .error {
   color: #b42318;
+}
+
+.activity-visual-carousel {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+.activity-visual-empty-actions {
+  width: min(1120px, calc(100% - 72px));
+  margin: 1.5rem auto 0;
+  text-align: right;
+}
+.activity-visual-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.activity-visual-carousel-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.activity-visual-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.activity-visual-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+}
+.activity-visual-controls button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+}
+.activity-visual-controls button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.activity-visual-controls span {
+  min-width: 3rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.activity-visual-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.photo-upload-button {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-weight: 650;
+}
+.photo-upload-button input {
+  display: none;
+}
+.activity-photo-slide figure {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  height: 440px;
+  border-radius: 17px;
+  background: var(--surface-muted);
+}
+.activity-photo-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #111;
+}
+.activity-photo-slide figcaption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  color: white;
+  background: rgb(0 0 0 / 0.65);
+}
+.photo-delete {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.25rem 0.45rem;
+  background: rgb(0 0 0 / 0.65);
+  color: white;
+  cursor: pointer;
+}
+.activity-visual-hint {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
 }

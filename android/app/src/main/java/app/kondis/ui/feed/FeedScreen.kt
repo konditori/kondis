@@ -1,5 +1,6 @@
 package app.kondis.ui.feed
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,7 @@ fun FeedRoute(
         onLoadMore = viewModel::loadMore,
         onSyncQueuedWorkouts = viewModel::syncQueuedWorkouts,
         onActivityClick = onActivityClick,
+        onLoadImage = viewModel::loadImage,
     )
 }
 
@@ -65,6 +67,7 @@ fun FeedScreen(
     onLoadMore: () -> Unit,
     onSyncQueuedWorkouts: () -> Unit,
     onActivityClick: (String) -> Unit,
+    onLoadImage: suspend (String) -> Bitmap? = { null },
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     PullToRefreshBox(
@@ -159,7 +162,12 @@ fun FeedScreen(
                 }
             }
             items(state.activities, key = { it.id }) { activity ->
-                ActivityCard(activity, units, onClick = { onActivityClick(activity.id) })
+                ActivityCard(
+                    activity,
+                    units,
+                    onClick = { onActivityClick(activity.id) },
+                    onLoadImage = onLoadImage,
+                )
             }
             if (state.nextCursor != null) {
                 item {

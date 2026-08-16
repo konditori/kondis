@@ -3,6 +3,7 @@
     ArrowLeft,
     CalendarDays,
     Check,
+    ChevronLeft,
     ChevronRight,
     Clock3,
     Flame,
@@ -22,6 +23,8 @@
   import {
     activityControllerDeleteById,
     activityControllerUpdateById,
+    activityImageDelete,
+    activityImageUpload,
     ActivityUpdateSport,
     getSdkRequestOptions,
     Sport,
@@ -154,6 +157,21 @@
   let highlightedRange = $state<HighlightRange | null>(null);
   let graphPointTime = $state<number | null>(null);
   let refreshPending = false;
+  let imageUploading = $state(false);
+  let imageError = $state("");
+  let visualCarousel = $state<HTMLDivElement>();
+  let visualPage = $state(0);
+  const visualPageCount = $derived(
+    (hasGpsRoute ? 1 : 0) +
+      activity.images.filter(
+        (image) => image.preview || image.original || image.thumbnail,
+      ).length,
+  );
+  $effect(() => {
+    if (visualPage >= visualPageCount) {
+      visualPage = Math.max(0, visualPageCount - 1);
+    }
+  });
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -417,6 +435,62 @@
       deleting = false;
     }
   }
+
+  async function uploadImages(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const files = [...(input.files ?? [])];
+    input.value = "";
+    if (!files.length) return;
+    imageUploading = true;
+    imageError = "";
+    try {
+      await Promise.all(
+        files.map((file) => activityImageUpload(activity.id, file)),
+      );
+      await invalidateAll();
+    } catch {
+      imageError = "One or more photos could not be uploaded.";
+    } finally {
+      imageUploading = false;
+    }
+  }
+
+  async function deleteImage(imageId: string) {
+    if (!window.confirm("Delete this photo?")) return;
+    try {
+      await activityImageDelete(activity.id, imageId);
+      await invalidateAll();
+    } catch {
+      imageError = "Could not delete the photo.";
+    }
+  }
+
+  function updateVisualPage() {
+    if (!visualCarousel) return;
+    const slides = [...visualCarousel.children] as HTMLElement[];
+    const nearest = slides.reduce(
+      (best, slide, index) =>
+        Math.abs(slide.offsetLeft - visualCarousel!.scrollLeft) <
+        Math.abs(slides[best]!.offsetLeft - visualCarousel!.scrollLeft)
+          ? index
+          : best,
+      0,
+    );
+    visualPage = nearest;
+  }
+
+  function scrollVisual(direction: -1 | 1) {
+    if (!visualCarousel) return;
+    const slides = [...visualCarousel.children] as HTMLElement[];
+    const next = Math.max(
+      0,
+      Math.min(visualPage + direction, slides.length - 1),
+    );
+    const slide = slides[next];
+    if (!slide) return;
+    visualCarousel.scrollTo({ left: slide.offsetLeft, behavior: "smooth" });
+    visualPage = next;
+  }
 </script>
 
 <svelte:head><title>{activityName(activity)} · Kondis</title></svelte:head>
@@ -504,7 +578,21 @@
       </p>{/if}
   </header>
 
-  {#if hasGpsRoute}
+  {#if !hasGpsRoute && activity.images.length === 0}
+    <div class="activity-visual-empty-actions">
+      <label class="photo-upload-button">
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+          multiple
+          onchange={uploadImages}
+        />
+        {imageUploading ? "Uploading…" : "Add photos"}
+      </label>
+    </div>
+  {/if}
+
+  {#if hasGpsRoute || activity.images.length > 0}
     <div
       class:activity-visuals={!isCyclingEffort &&
         hasActivityAnalysis &&
@@ -577,26 +665,108 @@
           </div>
         </section>
       {/if}
-      <section class="map-panel">
-        {#key mapStyle}
-          <RouteMap
-            coordinates={activity.track?.coordinates ?? null}
-            mode={mapStyle}
-            route={activity.analysis?.route ?? []}
-            medals={mapMedals}
-            highlight={mapHighlight}
-            onPointHover={highlightGraphPoint}
-          />
-        {/key}
-        {#if activity.track && mapStyle === ActivityMapStyle.Route}
-          <div class="map-key">
-            <span><i class="start-dot"></i> Start</span><span
-              ><i class="finish-dot"></i> Finish</span
+      <section
+        class="activity-visual-carousel"
+        aria-label="Activity map and photos"
+      >
+        <div class="activity-visual-toolbar">
+          <span class="eyebrow">Activity visuals</span>
+          <label class="photo-upload-button">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              multiple
+              onchange={uploadImages}
+            />
+            {imageUploading ? "Uploading…" : "Add photos"}
+          </label>
+        </div>
+        <div
+          class="activity-visual-carousel-track"
+          role="region"
+          aria-label="Swipeable activity visuals"
+          bind:this={visualCarousel}
+          onscroll={updateVisualPage}
+        >
+          {#if hasGpsRoute}
+            <div class="activity-visual-slide">
+              <section class="map-panel">
+                {#key mapStyle}
+                  <RouteMap
+                    coordinates={activity.track?.coordinates ?? null}
+                    mode={mapStyle}
+                    route={activity.analysis?.route ?? []}
+                    medals={mapMedals}
+                    highlight={mapHighlight}
+                    onPointHover={highlightGraphPoint}
+                  />
+                {/key}
+                {#if activity.track && mapStyle === ActivityMapStyle.Route}
+                  <div class="map-key">
+                    <span><i class="start-dot"></i> Start</span><span
+                      ><i class="finish-dot"></i> Finish</span
+                    >
+                  </div>
+                {/if}
+              </section>
+            </div>
+          {/if}
+          {#each activity.images as image (image.id)}
+            {#if image.preview || image.original || image.thumbnail}
+              <div class="activity-visual-slide activity-photo-slide">
+                <figure>
+                  <a
+                    href={image.original ?? image.preview ?? image.thumbnail}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <img
+                      src={image.preview ?? image.original ?? image.thumbnail}
+                      alt={image.caption ?? "Activity photo"}
+                    />
+                  </a>
+                  {#if image.caption}<figcaption>
+                      {image.caption}
+                    </figcaption>{/if}
+                  <button
+                    type="button"
+                    class="photo-delete"
+                    onclick={() => void deleteImage(image.id)}>Delete</button
+                  >
+                </figure>
+              </div>
+            {/if}
+          {/each}
+        </div>
+        {#if visualPageCount > 1}
+          <div
+            class="activity-visual-controls"
+            aria-label="Visual carousel controls"
+          >
+            <button
+              type="button"
+              aria-label="Previous visual"
+              onclick={() => scrollVisual(-1)}
+              disabled={visualPage === 0}><ChevronLeft size={17} /></button
+            >
+            <span aria-live="polite">{visualPage + 1} / {visualPageCount}</span>
+            <button
+              type="button"
+              aria-label="Next visual"
+              onclick={() => scrollVisual(1)}
+              disabled={visualPage === visualPageCount - 1}
+              ><ChevronRight size={17} /></button
             >
           </div>
         {/if}
+        {#if activity.images.length > 0}<p class="activity-visual-hint">
+            Swipe to view photos
+          </p>{/if}
+        {#if imageError}<p class="metadata-error" role="alert">
+            {imageError}
+          </p>{/if}
       </section>
-      {#if hasActivityAnalysis}
+      {#if hasGpsRoute && hasActivityAnalysis}
         <ActivityProfile
           points={activity.analysis?.profile ?? []}
           selection={highlightedRange}

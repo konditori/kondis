@@ -21,6 +21,7 @@ allowBuilds:
   cpu-features: false
   esbuild: false
   protobufjs: false
+  sharp: true
   ssh2: false
   # Native binary resolver behind eslint-import-resolver-typescript, which import-x/no-cycle
   # needs in order to follow `src/*` path-alias imports.

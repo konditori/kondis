@@ -14,12 +14,18 @@ export class StorageRepository {
 
   buildPath(checksum: string, extension: string): string {
     const suffix = extension.startsWith('.') ? extension : `.${extension}`;
-    return join(checksum.slice(0, 2), checksum.slice(2, 4), `${checksum}${suffix}`);
+    return join('activities', checksum.slice(0, 2), checksum.slice(2, 4), `${checksum}${suffix}`);
   }
 
   buildTemporaryPath(extension: string): string {
     const suffix = extension.startsWith('.') ? extension : `.${extension}`;
     return join('temporary', `${this.crypto.uuid()}${suffix}`);
+  }
+
+  buildImagePath(imageId: string, variant: 'original' | 'thumbnail' | 'preview', extension: string): string {
+    const suffix = extension.startsWith('.') ? extension : `.${extension}`;
+    const shard = imageId.replaceAll('-', '');
+    return join('images', shard.slice(0, 2), shard.slice(2, 4), imageId, `${variant}${suffix}`);
   }
 
   absolutePath(relativePath: string): string {

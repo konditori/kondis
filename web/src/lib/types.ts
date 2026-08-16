@@ -42,6 +42,18 @@ export type Activity = {
   achievementCount?: number | null;
 };
 
+export type ActivityImage = {
+  id: string;
+  caption: string | null;
+  sortOrder: number;
+  width: number | null;
+  height: number | null;
+  status: "pending" | "ready" | "failed";
+  thumbnail: string | null;
+  preview: string | null;
+  original: string | null;
+};
+
 export type ActivityPage = {
   activities: Activity[];
   nextCursor: string | null;
@@ -49,6 +61,7 @@ export type ActivityPage = {
 };
 
 export type ActivityDetail = Activity & {
+  images: ActivityImage[];
   matchedRouteCount: number | null;
   analysis: {
     splits: {

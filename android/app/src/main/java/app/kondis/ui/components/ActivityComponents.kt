@@ -1,17 +1,24 @@
 package app.kondis.ui.components
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsBike
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
@@ -27,13 +34,20 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import app.kondis.model.Activity
+import app.kondis.model.ActivityImage
 import app.kondis.model.BestEffortSummary
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
@@ -48,6 +62,7 @@ fun ActivityCard(
     activity: Activity,
     units: UnitSystem,
     onClick: () -> Unit,
+    onLoadImage: suspend (String) -> Bitmap? = { null },
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -126,12 +141,100 @@ fun ActivityCard(
                     )
                 }
             }
-            activity.track?.takeIf { it.coordinates.size > 1 }?.let { track ->
+            ActivityCardVisualPager(activity, onLoadImage)
+        }
+    }
+}
+
+@Composable
+private fun ActivityCardVisualPager(
+    activity: Activity,
+    onLoadImage: suspend (String) -> Bitmap?,
+) {
+    val hasMap =
+        activity.track
+            ?.coordinates
+            ?.size
+            ?.let { it > 1 } == true
+    val pageCount = (if (hasMap) 1 else 0) + activity.images.size
+    if (pageCount == 0) return
+
+    val pagerState = rememberPagerState(pageCount = { pageCount })
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxWidth().height(190.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp),
+        pageSpacing = 8.dp,
+    ) { page ->
+        if (hasMap && page == 0) {
+            activity.track.let { track ->
                 StaticRoutePreview(
                     track = track,
-                    modifier = Modifier.fillMaxWidth().height(170.dp),
+                    modifier = Modifier.fillMaxWidth().height(190.dp),
                 )
             }
+        } else {
+            ActivityImageSlide(
+                image = activity.images[page - if (hasMap) 1 else 0],
+                onLoadImage = onLoadImage,
+                modifier = Modifier.fillMaxWidth().height(190.dp),
+            )
+        }
+    }
+    if (pageCount > 1) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            repeat(pageCount) { page ->
+                Surface(
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 3.dp)
+                            .size(if (page == pagerState.currentPage) 18.dp else 6.dp, 6.dp),
+                    shape = RoundedCornerShape(3.dp),
+                    color =
+                        if (page == pagerState.currentPage) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
+                ) {}
+            }
+        }
+    }
+}
+
+@Composable
+fun ActivityImageSlide(
+    image: ActivityImage,
+    onLoadImage: suspend (String) -> Bitmap?,
+    modifier: Modifier = Modifier,
+) {
+    val path = image.preview ?: image.original ?: image.thumbnail
+    val bitmap by produceState<Bitmap?>(initialValue = null, key1 = path) {
+        value = path?.let { runCatching { onLoadImage(it) }.getOrNull() }
+    }
+    Box(modifier = modifier.clip(RoundedCornerShape(12.dp))) {
+        bitmap?.let {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = image.caption ?: "Activity photo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        image.caption?.takeIf(String::isNotBlank)?.let { caption ->
+            Text(
+                text = caption,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.65f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
         }
     }
 }

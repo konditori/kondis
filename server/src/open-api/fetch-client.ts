@@ -66,6 +66,7 @@ export type QueueStatusReportDtoOutput = {
 export type AllJobStatusResponseDtoOutput = {
   activityParsing: QueueStatusReportDtoOutput;
   backgroundTask: QueueStatusReportDtoOutput;
+  imageProcessing: QueueStatusReportDtoOutput;
   storage: QueueStatusReportDtoOutput;
 };
 export type JobCreateDto = {
@@ -184,6 +185,17 @@ export type BestEffortListResponseDtoOutput = {
     yearRank: number;
   }[];
 };
+export type ActivityImageDtoOutput = {
+  id: string;
+  caption: string | null;
+  sortOrder: number;
+  width: number | null;
+  height: number | null;
+  status: Status2;
+  thumbnail: string | null;
+  preview: string | null;
+  original: string | null;
+};
 export type ActivityDetailDtoOutput = {
   /** Activity id */
   id: string;
@@ -206,6 +218,7 @@ export type ActivityDetailDtoOutput = {
   createdAt: string;
   /** Last update timestamp in ISO-8601 format */
   updatedAt: string;
+  images: ActivityImageDtoOutput[];
   /** GPS route as GeoJSON */
   track: {
     type: Type;
@@ -306,6 +319,11 @@ export type ActivityDtoOutput = {
 export type MatchedRouteListResponseDtoOutput = {
   sourceActivityId: string;
   activities: ActivityDtoOutput[] | null;
+};
+export type ActivityImageListDtoOutput = ActivityImageDtoOutput[];
+export type ActivityImageUpdateDto = {
+  caption?: string | null;
+  sortOrder?: number;
 };
 /**
  * Health check endpoint
@@ -611,6 +629,118 @@ export function activityControllerListMatchedRoutes(
     }),
   );
 }
+/**
+ * Upload an image to an activity
+ */
+export function activityImageControllerUpload(
+  {
+    id,
+    body,
+  }: {
+    id: string;
+    body: {
+      file: Blob;
+      caption?: string;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: ActivityImageDtoOutput;
+    }>(
+      `/activities/${encodeURIComponent(id)}/images`,
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+/**
+ * List ready images attached to an activity
+ */
+export function activityImageControllerList(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityImageListDtoOutput;
+    }>(`/activities/${encodeURIComponent(id)}/images`, {
+      ...opts,
+    }),
+  );
+}
+export function activityImageControllerUpdate(
+  {
+    activityId,
+    imageId,
+    activityImageUpdateDto,
+  }: {
+    activityId: string;
+    imageId: string;
+    activityImageUpdateDto: ActivityImageUpdateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityImageDtoOutput;
+    }>(
+      `/activities/${encodeURIComponent(activityId)}/images/${encodeURIComponent(imageId)}`,
+      oazapfts.json({
+        ...opts,
+        method: 'PATCH',
+        body: activityImageUpdateDto,
+      }),
+    ),
+  );
+}
+export function activityImageControllerDelete(
+  {
+    activityId,
+    imageId,
+  }: {
+    activityId: string;
+    imageId: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/images/${encodeURIComponent(imageId)}`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+/**
+ * Read an image variant
+ */
+export function activityImageControllerFile(
+  {
+    imageId,
+    variant,
+  }: {
+    imageId: string;
+    variant: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/activity-images/${encodeURIComponent(imageId)}/${encodeURIComponent(variant)}`, {
+      ...opts,
+    }),
+  );
+}
 export function authControllerSetupStatus(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchText('/auth/setup', {
@@ -669,6 +799,7 @@ export enum Name {
 export enum QueueName {
   ActivityParsing = 'activityParsing',
   BackgroundTask = 'backgroundTask',
+  ImageProcessing = 'imageProcessing',
   Storage = 'storage',
 }
 export enum Command {
@@ -847,6 +978,11 @@ export enum BestEffortValueKind_Output {
   Distance = 'distance',
   Elevation = 'elevation',
   Power = 'power',
+}
+export enum Status2 {
+  Pending = 'pending',
+  Ready = 'ready',
+  Failed = 'failed',
 }
 export enum ActivityUpdateDtoActivityType {
   AlpineSki = 'alpine_ski',

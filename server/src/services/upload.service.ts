@@ -65,6 +65,7 @@ export class UploadService {
     activitySport,
     userId,
     takeoutImportId,
+    images,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
@@ -80,6 +81,12 @@ export class UploadService {
     const existing = await this.uploadRepository.getByChecksum(checksum, userId);
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
+      if (images?.length) {
+        await this.jobRepository.queue({
+          name: JobName.ActivityParse,
+          data: { id: existing.id, images, takeoutImportId },
+        });
+      }
       if (takeoutImportId) {
         this.importProgressStore.increment(takeoutImportId, false, true);
       }
@@ -107,6 +114,7 @@ export class UploadService {
             name: JobName.ActivityParse,
             data: {
               id: created.id,
+              ...(images?.length && { images }),
               ...(takeoutImportId && { takeoutImportId }),
               ...(activityName && { activityName }),
               ...(activityDescription && { activityDescription }),
@@ -200,6 +208,7 @@ export class UploadService {
               activityDescription: activity.description ?? undefined,
               activitySport: activity.sport ?? 'other',
               ...activity.manual,
+              images: await this.stageImages(activity.images),
             },
           });
           queued += 1;
@@ -212,6 +221,7 @@ export class UploadService {
           activity.sport ?? undefined,
           userId,
           takeoutImportId,
+          activity.images,
         );
         queued += 1;
       },
@@ -238,10 +248,12 @@ export class UploadService {
     activitySport?: JobOf<JobName.ActivityUpload>['activitySport'],
     userId?: string,
     takeoutImportId?: string,
+    images: { file: UploadedFileData; caption: string | null; sortOrder: number }[] = [],
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
     await this.storageRepository.write(storagePath, file.buffer);
+    const stagedImages = await this.stageImages(images);
 
     await this.jobRepository.queue({
       name: JobName.ActivityUpload,
@@ -254,7 +266,32 @@ export class UploadService {
         ...(activityDescription && { activityDescription }),
         ...(activitySport && { activitySport }),
         ...(takeoutImportId && { takeoutImportId }),
+        ...(stagedImages.length > 0 && { images: stagedImages }),
       },
     });
+  }
+
+  private async stageImages(images: { file: UploadedFileData; caption: string | null; sortOrder: number }[]) {
+    const staged: {
+      originalName: string;
+      storagePath: string;
+      checksum: string;
+      caption?: string;
+      sortOrder: number;
+    }[] = [];
+    for (const image of images) {
+      const storagePath = this.storageRepository.buildTemporaryPath(
+        extname(image.file.originalname).toLowerCase() || '.bin',
+      );
+      await this.storageRepository.write(storagePath, image.file.buffer);
+      staged.push({
+        originalName: image.file.originalname,
+        storagePath,
+        checksum: this.cryptoRepository.xxHash(image.file.buffer),
+        ...(image.caption && { caption: image.caption }),
+        sortOrder: image.sortOrder,
+      });
+    }
+    return staged;
   }
 }

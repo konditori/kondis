@@ -1,6 +1,10 @@
 package app.kondis.data
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -23,15 +27,19 @@ import app.kondis.model.Track
 import app.kondis.recording.RecordingState
 import app.kondis.sync.WorkoutSyncWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.net.URI
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -137,6 +145,35 @@ class ActivityRepository
         suspend fun uploadGpx(file: File) {
             val request = file.asRequestBody("application/gpx+xml".toMediaType())
             api().uploadActivity(MultipartBody.Part.createFormData("file", file.name, request))
+        }
+
+        suspend fun uploadImages(
+            activityId: String,
+            uris: List<Uri>,
+        ) {
+            for (uri in uris) {
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: continue
+                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                val body = bytes.toRequestBody(mimeType.toMediaType())
+                val name = uri.lastPathSegment ?: "photo.jpg"
+                api().uploadActivityImage(activityId, MultipartBody.Part.createFormData("file", name, body))
+            }
+            refreshDetail(activityId)
+        }
+
+        suspend fun loadActivityImage(path: String): Bitmap? {
+            val settings = settingsRepository.settings.first()
+            val url = URI(settings.serverUrl).resolve(path).toString()
+            return runCatching {
+                withContext(Dispatchers.IO) {
+                    apiFactory.create(settings.serverUrl, settings.accessToken).activityImage(url).use { body ->
+                        val bytes = body.bytes()
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    }
+                }
+            }.onFailure { error ->
+                Log.w("Kondis", "Unable to load activity image $url", error)
+            }.getOrNull()
         }
 
         /** Stores the workout before any network request, so it cannot be lost while offline. */

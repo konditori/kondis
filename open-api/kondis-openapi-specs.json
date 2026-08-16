@@ -479,6 +479,197 @@
         ]
       }
     },
+    "/activities/{id}/images": {
+      "post": {
+        "operationId": "ActivityImageController_upload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "caption": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image processing was queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityImageDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Upload an image to an activity",
+        "tags": [
+          "activity-images"
+        ]
+      },
+      "get": {
+        "operationId": "ActivityImageController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity images",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityImageListDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List ready images attached to an activity",
+        "tags": [
+          "activity-images"
+        ]
+      }
+    },
+    "/activities/{activityId}/images/{imageId}": {
+      "patch": {
+        "operationId": "ActivityImageController_update",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityImageUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated activity image",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityImageDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "activity-images"
+        ]
+      },
+      "delete": {
+        "operationId": "ActivityImageController_delete",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "activity-images"
+        ]
+      }
+    },
+    "/activity-images/{imageId}/{variant}": {
+      "get": {
+        "operationId": "ActivityImageController_file",
+        "parameters": [
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variant",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Read an image variant",
+        "tags": [
+          "activity-images"
+        ]
+      }
+    },
     "/auth/setup": {
       "get": {
         "operationId": "AuthController_setupStatus",
@@ -782,6 +973,9 @@
           "backgroundTask": {
             "$ref": "#/components/schemas/QueueStatusReportDto_Output"
           },
+          "imageProcessing": {
+            "$ref": "#/components/schemas/QueueStatusReportDto_Output"
+          },
           "storage": {
             "$ref": "#/components/schemas/QueueStatusReportDto_Output"
           }
@@ -789,6 +983,7 @@
         "required": [
           "activityParsing",
           "backgroundTask",
+          "imageProcessing",
           "storage"
         ],
         "additionalProperties": false
@@ -1195,6 +1390,12 @@
                   "additionalProperties": false,
                   "description": "Simplified GPS route as GeoJSON",
                   "nullable": true
+                },
+                "images": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityImageDto_Output"
+                  }
                 }
               },
               "required": [
@@ -1211,7 +1412,8 @@
                 "updatedAt",
                 "topBestEfforts",
                 "achievementCount",
-                "track"
+                "track",
+                "images"
               ],
               "additionalProperties": false
             }
@@ -1415,6 +1617,69 @@
         ],
         "additionalProperties": false
       },
+      "ActivityImageDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "failed"
+            ]
+          },
+          "thumbnail": {
+            "type": "string",
+            "nullable": true
+          },
+          "preview": {
+            "type": "string",
+            "nullable": true
+          },
+          "original": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "caption",
+          "sortOrder",
+          "width",
+          "height",
+          "status",
+          "thumbnail",
+          "preview",
+          "original"
+        ],
+        "additionalProperties": false
+      },
       "ActivityDetailDto_Output": {
         "type": "object",
         "properties": {
@@ -1480,6 +1745,12 @@
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
             "description": "Last update timestamp in ISO-8601 format"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityImageDto_Output"
+            }
           },
           "track": {
             "type": "object",
@@ -1747,6 +2018,7 @@
           "metrics",
           "createdAt",
           "updatedAt",
+          "images",
           "track",
           "analysis",
           "bestEfforts",
@@ -1952,11 +2224,33 @@
           }
         }
       },
+      "ActivityImageListDto_Output": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ActivityImageDto_Output"
+        }
+      },
+      "ActivityImageUpdateDto": {
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string",
+            "maxLength": 10000,
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        }
+      },
       "QueueName": {
         "type": "string",
         "enum": [
           "activityParsing",
           "backgroundTask",
+          "imageProcessing",
           "storage"
         ],
         "description": "Queue name"

@@ -6,6 +6,7 @@ export enum WorkerType {
 export enum QueueName {
   ActivityParsing = 'activityParsing',
   BackgroundTask = 'backgroundTask',
+  ImageProcessing = 'imageProcessing',
   Storage = 'storage',
 }
 
@@ -19,6 +20,10 @@ export enum JobName {
   ActivityManualCreate = 'ActivityManualCreate',
   ActivityParseQueueAll = 'ActivityParseQueueAll',
   ActivityDelete = 'ActivityDelete',
+  ActivityImageIngest = 'ActivityImageIngest',
+  ActivityImageAttach = 'ActivityImageAttach',
+  ActivityImageGenerateThumbnails = 'ActivityImageGenerateThumbnails',
+  ActivityImageGenerateQueueAll = 'ActivityImageGenerateQueueAll',
   LagomTakeoutImport = 'LagomTakeoutImport',
   FileDelete = 'FileDelete',
   TemporaryFileCleanup = 'TemporaryFileCleanup',

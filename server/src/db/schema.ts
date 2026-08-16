@@ -1,5 +1,7 @@
 import type { Insertable, Selectable, Updateable } from 'kysely';
 import { ActivityBestEffortTable } from 'src/schema/tables/activity-best-effort.table';
+import { ActivityImageFileTable } from 'src/schema/tables/activity-image-file.table';
+import { ActivityImageTable } from 'src/schema/tables/activity-image.table';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityStreamTable } from 'src/schema/tables/activity-stream.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
@@ -13,6 +15,8 @@ export interface DB {
   activity: ActivityTable;
   activity_best_effort: ActivityBestEffortTable;
   activity_metric: ActivityMetricTable;
+  activity_image: ActivityImageTable;
+  activity_image_file: ActivityImageFileTable;
   activity_stream: ActivityStreamTable;
   activity_route_match: ActivityRouteMatchTable;
   lap: LapTable;
@@ -30,6 +34,12 @@ export type UploadUpdate = Updateable<UploadTable>;
 export type Activity = Selectable<ActivityTable>;
 export type NewActivity = Insertable<ActivityTable>;
 export type ActivityUpdate = Updateable<ActivityTable>;
+
+export type ActivityImage = Selectable<ActivityImageTable>;
+export type NewActivityImage = Insertable<ActivityImageTable>;
+export type ActivityImageUpdate = Updateable<ActivityImageTable>;
+export type ActivityImageFile = Selectable<ActivityImageFileTable>;
+export type NewActivityImageFile = Insertable<ActivityImageFileTable>;
 
 export type ActivityBestEffort = Selectable<ActivityBestEffortTable>;
 export type NewActivityBestEffort = Insertable<ActivityBestEffortTable>;

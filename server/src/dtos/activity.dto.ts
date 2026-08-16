@@ -1,6 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
+import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
 import { ACTIVITY_TYPE_IDS, AverageMetric, BEST_EFFORT_TYPES, BestEffortGroup } from 'src/types';
 
 export const ActivityTypeSchema = z
@@ -132,6 +133,7 @@ export const ActivityListResponseSchema = z
           .nullable(),
         achievementCount: z.number().int().nonnegative().nullable(),
         track: ActivityTrackSchema.nullable().describe('Simplified GPS route as GeoJSON'),
+        images: z.array(ActivityImageSchema),
       }),
     ),
     nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
@@ -170,6 +172,7 @@ export const BestEffortListResponseSchema = z
   .meta({ id: 'BestEffortListResponseDto' });
 
 export const ActivityDetailSchema = ActivitySchema.extend({
+  images: z.array(ActivityImageSchema),
   track: ActivityTrackSchema.nullable().describe('GPS route as GeoJSON'),
   analysis: ActivityAnalysisSchema.nullable().describe('Split, profile, and route data for activity analysis'),
   bestEfforts: z

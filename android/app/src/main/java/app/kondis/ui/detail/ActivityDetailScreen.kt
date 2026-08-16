@@ -1,7 +1,13 @@
 package app.kondis.ui.detail
 
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,13 +19,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MilitaryTech
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,6 +41,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,15 +50,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.ActivityDetail
+import app.kondis.model.ActivityImage
 import app.kondis.model.ActivityUpdate
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
@@ -57,6 +75,7 @@ import app.kondis.model.formatElevation
 import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
+import app.kondis.ui.components.ActivityImageSlide
 import app.kondis.ui.components.ActivityStat
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.record.ActivityTypePicker
@@ -74,6 +93,10 @@ fun ActivityDetailRoute(
 ) {
     LaunchedEffect(id) { viewModel.load(id) }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val imagePicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+            viewModel.uploadImages(uris)
+        }
     ActivityDetailScreen(
         state,
         units,
@@ -84,6 +107,8 @@ fun ActivityDetailRoute(
         viewModel::update,
         viewModel::delete,
         viewModel::refresh,
+        onAddImages = { imagePicker.launch("image/*") },
+        onLoadImage = viewModel::loadImage,
     )
 }
 
@@ -98,6 +123,8 @@ fun ActivityDetailScreen(
     onUpdate: (ActivityUpdate) -> Unit,
     onDelete: () -> Unit,
     onRefresh: () -> Unit,
+    onAddImages: () -> Unit,
+    onLoadImage: suspend (String) -> Bitmap?,
 ) {
     val activity = state.activity
     if (activity == null) {
@@ -136,6 +163,7 @@ fun ActivityDetailScreen(
                 activity = activity,
                 units = units,
                 onBack = onBack,
+                onLoadImage = onLoadImage,
                 onEdit =
                     if (!queuedForSync) {
                         {
@@ -195,8 +223,15 @@ fun ActivityDetailScreen(
                 )
             }
         }
-        activity.track?.takeIf { it.coordinates.size > 1 }?.let { track ->
-            item { StaticRoutePreview(track, Modifier.fillMaxWidth().height(280.dp)) }
+        if (!queuedForSync) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    OutlinedButton(onClick = onAddImages) { Text("Add photos") }
+                }
+            }
         }
         activity.description?.takeIf(String::isNotBlank)?.let { description ->
             item {
@@ -610,71 +645,215 @@ private fun DetailHeader(
     activity: ActivityDetail,
     units: UnitSystem,
     onBack: () -> Unit,
+    onLoadImage: suspend (String) -> Bitmap?,
     onEdit: (() -> Unit)?,
 ) {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.padding(start = 8.dp, top = 8.dp, end = 20.dp, bottom = 24.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+    val hasMap =
+        activity.track
+            ?.coordinates
+            ?.size
+            ?.let { it > 1 } == true
+    val firstImage = activity.images.firstOrNull()
+    val firstImagePath = firstImage?.preview ?: firstImage?.original ?: firstImage?.thumbnail
+    val firstImageBitmap by produceState<Bitmap?>(initialValue = null, key1 = firstImagePath) {
+        value = firstImagePath?.let { runCatching { onLoadImage(it) }.getOrNull() }
+    }
+    var showImages by remember(activity.id) { mutableStateOf(false) }
+
+    Column {
+        if (hasMap) {
+            Box(Modifier.fillMaxWidth().height(360.dp)) {
+                activity.track.let { track ->
+                    StaticRoutePreview(track = track, modifier = Modifier.fillMaxSize())
                 }
-                Spacer(Modifier.weight(1f))
-                onEdit?.let { TextButton(onClick = it) { Text("Edit") } }
-            }
-            Column(Modifier.padding(start = 12.dp)) {
-                Text(
-                    sportLabel(activity.sport),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Text(activity.summary().displayName(), style = MaterialTheme.typography.displaySmall)
-                Text(
-                    formatDateTime(activity.startedAt),
-                    modifier = Modifier.padding(top = 5.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val metrics = activity.metrics
-                    ActivityStat("Distance", formatDistance(metrics?.distance, units))
-                    ActivityStat("Moving time", formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
-                    ActivityStat(
-                        if (activity.sport.contains("run")) "Pace" else "Avg speed",
-                        if (activity.sport.contains(
-                                "run",
+                    IconButton(
+                        onClick = onBack,
+                        modifier =
+                            Modifier.background(
+                                MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
+                                CircleShape,
+                            ),
+                    ) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    }
+                    Spacer(Modifier.weight(1f))
+                    onEdit?.let { TextButton(onClick = it) { Text("Edit") } }
+                    IconButton(
+                        onClick = {},
+                        modifier =
+                            Modifier.background(
+                                MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
+                                CircleShape,
+                            ),
+                    ) {
+                        Icon(Icons.Rounded.BookmarkBorder, contentDescription = "Bookmark activity")
+                    }
+                    IconButton(
+                        onClick = {},
+                        modifier =
+                            Modifier.background(
+                                MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
+                                CircleShape,
+                            ),
+                    ) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                    }
+                }
+                if (firstImage != null) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(14.dp)
+                                .size(76.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { showImages = true },
+                    ) {
+                        firstImageBitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "Open activity photos",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
                             )
-                        ) {
-                            formatPace(metrics?.avgSpeed, units)
-                        } else {
-                            formatSpeed(metrics?.avgSpeed, units)
-                        },
-                    )
+                        }
+                        if (activity.images.size > 1) {
+                            Text(
+                                text = "+${activity.images.size - 1}",
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f))
+                                        .padding(horizontal = 5.dp, vertical = 2.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+            }
+        }
+        Surface(color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.padding(start = 8.dp, top = if (hasMap) 18.dp else 8.dp, end = 20.dp, bottom = 24.dp)) {
+                if (!hasMap) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
+                        Spacer(Modifier.weight(1f))
+                        onEdit?.let { TextButton(onClick = it) { Text("Edit") } }
+                    }
+                }
+                Column(Modifier.padding(start = 12.dp)) {
+                    Text(
+                        sportLabel(activity.sport),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Text(activity.summary().displayName(), style = MaterialTheme.typography.displaySmall)
+                    Text(
+                        formatDateTime(activity.startedAt),
+                        modifier = Modifier.padding(top = 5.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        val metrics = activity.metrics
+                        ActivityStat("Distance", formatDistance(metrics?.distance, units))
+                        ActivityStat("Moving time", formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
+                        ActivityStat(
+                            if (activity.sport.contains("run")) "Pace" else "Avg speed",
+                            if (activity.sport.contains(
+                                    "run",
+                                )
+                            ) {
+                                formatPace(metrics?.avgSpeed, units)
+                            } else {
+                                formatSpeed(metrics?.avgSpeed, units)
+                            },
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        ActivityStat(
+                            "Elevation",
+                            formatElevation(activity.metrics?.elevationGain, units),
+                            Modifier.weight(1f),
+                        )
+                        ActivityStat(
+                            "Avg heart rate",
+                            activity.metrics?.avgHr?.let {
+                                "$it bpm"
+                            } ?: "—",
+                            Modifier.weight(1f),
+                        )
+                        ActivityStat(
+                            "Calories",
+                            activity.metrics?.calories?.let {
+                                "${it.toInt()} kcal"
+                            } ?: "—",
+                            Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+        if (showImages) {
+            Dialog(onDismissRequest = { showImages = false }) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surface,
                 ) {
-                    ActivityStat(
-                        "Elevation",
-                        formatElevation(activity.metrics?.elevationGain, units),
-                        Modifier.weight(1f),
-                    )
-                    ActivityStat(
-                        "Avg heart rate",
-                        activity.metrics?.avgHr?.let {
-                            "$it bpm"
-                        } ?: "—",
-                        Modifier.weight(1f),
-                    )
-                    ActivityStat(
-                        "Calories",
-                        activity.metrics?.calories?.let {
-                            "${it.toInt()} kcal"
-                        } ?: "—",
-                        Modifier.weight(1f),
-                    )
+                    Column(Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Photos", style = MaterialTheme.typography.titleLarge)
+                            Spacer(Modifier.weight(1f))
+                            TextButton(onClick = { showImages = false }) { Text("Close") }
+                        }
+                        val pagerState = rememberPagerState(pageCount = { activity.images.size })
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxWidth().height(420.dp),
+                            pageSpacing = 8.dp,
+                        ) { page ->
+                            ActivityImageSlide(
+                                image = activity.images[page],
+                                onLoadImage = onLoadImage,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                        if (activity.images.size > 1) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                                horizontalArrangement = Arrangement.Center,
+                            ) {
+                                repeat(activity.images.size) { page ->
+                                    Surface(
+                                        modifier =
+                                            Modifier
+                                                .padding(horizontal = 3.dp)
+                                                .size(if (page == pagerState.currentPage) 18.dp else 6.dp, 6.dp),
+                                        shape = RoundedCornerShape(3.dp),
+                                        color =
+                                            if (page == pagerState.currentPage) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.outlineVariant
+                                            },
+                                    ) {}
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

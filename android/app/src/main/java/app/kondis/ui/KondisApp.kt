@@ -11,6 +11,7 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
@@ -85,10 +86,15 @@ private val destinations =
 @Composable
 fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val loginError by viewModel.loginError.collectAsStateWithLifecycle()
     val recording by viewModel.recording.collectAsStateWithLifecycle()
     val recordingActive = recording.mode.isActive
     if (settings.accessToken == null) {
-        LoginScreen(onLogin = viewModel::login)
+        LoginScreen(
+            serverUrl = settings.serverUrl,
+            errorMessage = loginError,
+            onLogin = viewModel::login,
+        )
         return
     }
     val backStack = rememberNavBackStack(if (recordingActive) RecordKey else FeedKey)
@@ -206,7 +212,12 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun LoginScreen(onLogin: (String, String) -> Unit) {
+private fun LoginScreen(
+    serverUrl: String,
+    errorMessage: String?,
+    onLogin: (String, String, String) -> Unit,
+) {
+    var serverUrlDraft by remember(serverUrl) { mutableStateOf(serverUrl) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     Column(
@@ -215,10 +226,18 @@ private fun LoginScreen(onLogin: (String, String) -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text("Sign in to Kondis")
+        OutlinedTextField(
+            value = serverUrlDraft,
+            onValueChange = { serverUrlDraft = it },
+            label = { Text("API base URL") },
+            supportingText = { Text("For a phone, use the server's LAN address and include /api/v1") },
+            singleLine = true,
+        )
         OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
+        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Button(onClick = {
-            onLogin(email, password)
-        }, enabled = email.isNotBlank() && password.isNotBlank()) { Text("Sign in") }
+            onLogin(serverUrlDraft, email, password)
+        }, enabled = serverUrlDraft.isNotBlank() && email.isNotBlank() && password.isNotBlank()) { Text("Sign in") }
     }
 }
