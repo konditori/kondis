@@ -1,0 +1,115 @@
+android/README.md
+  s_52d61c110de895::t_f527e46476c740 40
+android/app/build.gradle.kts
+  s_52d61c110de895::t_469dbcb5c56825 30-31,35-36
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_52d61c110de895::t_f2d36d4a9aa7a7 4-7,30,35,40,42,150-178
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_52d61c110de895::t_c6f77741c2097c 5,13-14,24-25,36-42,49-51,91-110
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_52d61c110de895::t_a8f09f7220fc8a 20-33,132,157
+android/app/src/main/java/app/kondis/ui/AppViewModel.kt
+  s_52d61c110de895::t_404c7687c7ed93 12,18,29-32,42-55,57,61-70
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_52d61c110de895::t_8f85a1e47e08a8 14,89,93-97,215-220,229-235,238,240-241
+android/app/src/main/java/app/kondis/ui/components/ActivityComponents.kt
+  s_52d61c110de895::t_5713a615cd65d5 3-4,10,13,18-19,21,37,40-41,44-45,47,50,65,144-170,173,176-237
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_52d61c110de895::t_b0c76794b611f7 3-4,95-108
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_52d61c110de895::t_e54e97113b2870 3,57,70,165-170
+android/app/src/main/java/app/kondis/ui/feed/FeedViewModel.kt
+  s_52d61c110de895::t_61c5c8eeca7a5f 3,123-124
+android/app/src/main/java/app/kondis/ui/settings/SettingsScreen.kt
+  s_52d61c110de895::t_d91b726ed10094 37,47,106
+android/app/src/main/java/app/kondis/ui/settings/SettingsViewModel.kt
+  s_52d61c110de895::t_2871170e8824de 56-59
+pnpm-lock.yaml
+  s_52d61c110de895::t_7447142c80b730 104-106,504-656,2023-2026,3151-3154,3854-3949,5142-5143,6311-6341
+pnpm-workspace.yaml
+  s_52d61c110de895::t_61147f1047dc5e 24
+server/package.json
+  s_52d61c110de895::t_a8264ed420e78c 46
+server/src/config/config.service.spec.ts
+  s_52d61c110de895::t_e4a17ed4946b3f 60
+server/src/config/config.service.ts
+  s_52d61c110de895::t_7efbe99308500f 27
+server/src/config/upload-limits.ts
+  s_52d61c110de895::t_b8013f45bc52c2 15-16
+server/src/controllers/activity-image.controller.ts
+  s_52d61c110de895::t_745d7c3994beaa 1-102
+server/src/controllers/index.ts
+  s_52d61c110de895::t_d9f60054b316f4 1,14
+server/src/db/schema.ts
+  s_52d61c110de895::t_dcdba231759ea1 3-4,18-19,38-43
+server/src/dtos/activity-image.dto.ts
+  s_52d61c110de895::t_710a9384cb50a4 1-27
+server/src/dtos/activity.dto.ts
+  s_52d61c110de895::t_706c4cb80c431d 4,136,175
+server/src/enum.ts
+  s_52d61c110de895::t_c1d304ff5f482d 9,23-26
+server/src/imports/lagom-takeout.parser.spec.ts
+  s_52d61c110de895::t_51af8f8a65a62d 12-43
+server/src/imports/lagom-takeout.parser.ts
+  s_52d61c110de895::t_c1a95800e9c9f6 13-14,28,45-50,278-299,327-338,414-425,445-498
+server/src/open-api/fetch-client.ts
+  s_52d61c110de895::t_f34ccd5797248b 69,188-198,221,323-327,632-743,802,982-986
+server/src/repositories/activity-image.repository.ts
+  s_52d61c110de895::t_eb561a2fb90514 1-107
+server/src/repositories/index.ts
+  s_52d61c110de895::t_0ea885b06936ef 1,16
+server/src/repositories/job.repository.ts
+  s_52d61c110de895::t_d29ca5ab7b49e2 31,44-47,187,190,358-373
+server/src/repositories/storage.repository.spec.ts
+  s_52d61c110de895::t_05a1cbf73982f0 23-29
+server/src/repositories/storage.repository.ts
+  s_52d61c110de895::t_0a05e95a67416a 17,25-30
+server/src/schema/migrations/1786908179000-AddActivityImages.ts
+  s_52d61c110de895::t_8090251605e3a2 1-53
+server/src/schema/tables/activity-image-file.table.ts
+  s_52d61c110de895::t_3a3408617b5e51 1-28
+server/src/schema/tables/activity-image.table.ts
+  s_52d61c110de895::t_161be3ed3f9de5 1-59
+server/src/services/activity-image.service.ts
+  s_52d61c110de895::t_05b769df0ec2ef 1-369
+server/src/services/index.ts
+  s_52d61c110de895::t_4b91a99d863e74 1,9-17
+server/src/services/upload.service.ts
+  s_52d61c110de895::t_7d6a65bf84560f 68,84-89,117,211,224,251,256,269,273-296
+server/src/types.ts
+  s_52d61c110de895::t_f21694add6760e 388-396,404,425,445-448,456-468
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_52d61c110de895::t_8843ee4320c288 91-100
+web/src/app.css
+  s_52d61c110de895::t_b7223996b3febd 2678-2682,2840-2956
+web/src/lib/api.ts
+  s_98aa28185237d1::t_c9caf197f9cb8b 27-53
+web/src/lib/types.ts
+  s_98aa28185237d1::t_a44301b07a24c2 45-56,64
+web/src/routes/activities/[id]/+page.svelte
+  s_52d61c110de895::t_57b256aabff974 6,26-27,160-174,438-493,581-595,668-758,762-767,769
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f187dd085e180b331d69ad2eae8d3f3a9822fe03",
+  "prompts": {},
+  "sessions": {
+    "s_52d61c110de895": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00bed-5cd7-7921-ad2b-fe9bb4eb633a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_98aa28185237d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00bed-5d22-7552-be99-afa9f339da7f",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
