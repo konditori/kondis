@@ -1,0 +1,19 @@
+android/app/src/androidTest/java/app/kondis/ui/detail/ActivityPhotoViewerTest.kt
+  s_2f90ecf1bace68::t_5e8d7a08c1efc8 1-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b65e53f6feac33130d106f4b8755581d3001492b",
+  "prompts": {},
+  "sessions": {
+    "s_2f90ecf1bace68": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00c8f-404b-7111-a813-0f5b3b4bb2e9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
