@@ -1,6 +1,7 @@
 package app.kondis.ui.components
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,7 +28,6 @@ import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Hiking
 import androidx.compose.material.icons.rounded.Kayaking
 import androidx.compose.material.icons.rounded.Landscape
-import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.Pool
 import androidx.compose.material.icons.rounded.Sports
 import androidx.compose.material3.Card
@@ -42,10 +42,21 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.kondis.model.Activity
 import app.kondis.model.ActivityImage
 import app.kondis.model.BestEffortSummary
@@ -96,11 +107,23 @@ fun ActivityCard(
                     if (achievements.isNotEmpty()) {
                         Row(
                             modifier = Modifier.padding(top = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            achievements.forEach { effort ->
-                                AchievementBadge(effort)
-                            }
+                            achievements
+                                .distinctBy { achievementRank(it) }
+                                .take(3)
+                                .forEach { effort ->
+                                    AchievementBadge(effort)
+                                }
+                            Text(
+                                achievements.size.toString(),
+                                modifier = Modifier.padding(start = 2.dp),
+                                fontSize = 13.sp,
+                                lineHeight = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold,
+                            )
                         }
                     }
                     Spacer(Modifier.height(16.dp))
@@ -210,18 +233,25 @@ fun ActivityImageSlide(
     image: ActivityImage,
     onLoadImage: suspend (String) -> Bitmap?,
     modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop,
+    roundedCorners: Boolean = true,
 ) {
     val path = image.preview ?: image.original ?: image.thumbnail
     val bitmap by produceState<Bitmap?>(initialValue = null, key1 = path) {
         value = path?.let { runCatching { onLoadImage(it) }.getOrNull() }
     }
-    Box(modifier = modifier.clip(RoundedCornerShape(12.dp))) {
+    Box(
+        modifier =
+            modifier.then(
+                if (roundedCorners) Modifier.clip(RoundedCornerShape(12.dp)) else Modifier,
+            ),
+    ) {
         bitmap?.let {
             Image(
                 bitmap = it.asImageBitmap(),
                 contentDescription = image.caption ?: "Activity photo",
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
+                contentScale = contentScale,
             )
         }
         image.caption?.takeIf(String::isNotBlank)?.let { caption ->
@@ -242,15 +272,65 @@ fun ActivityImageSlide(
 @Composable
 private fun AchievementBadge(effort: BestEffortSummary) {
     Box(
-        modifier = Modifier.size(28.dp).background(achievementBackground(effort.yearRank), MaterialTheme.shapes.small),
+        modifier = Modifier.size(width = 22.dp, height = 24.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            Icons.Rounded.MilitaryTech,
-            contentDescription = "${bestEffortLabel(effort.type)}: ${rankDescription(effort.yearRank)}",
-            tint = achievementColor(effort.yearRank),
-            modifier = Modifier.size(18.dp),
+        MedalIcon(
+            tint = achievementColor(achievementRank(effort)),
+            contentDescription = "${bestEffortLabel(effort.type)}: ${rankDescription(achievementRank(effort))}",
+            modifier = Modifier.fillMaxSize(),
         )
+    }
+}
+
+private fun achievementRank(effort: BestEffortSummary): Int =
+    if (effort.overallRank in 1..3) effort.overallRank else effort.yearRank
+
+@Composable
+fun MedalIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+) {
+    Canvas(
+        modifier =
+            modifier.then(
+                contentDescription?.let {
+                    Modifier.semantics { this.contentDescription = it }
+                } ?: Modifier,
+            ),
+    ) {
+        val scale = minOf(size.width / 24f, size.height / 24f)
+        val offsetX = (size.width - 24f * scale) / 2f
+        val offsetY = (size.height - 24f * scale) / 2f
+        val stroke = Stroke(width = 1.9f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+
+        withTransform({
+            translate(offsetX, offsetY)
+            scale(scale, scale)
+        }) {
+            val ribbon =
+                Path().apply {
+                    moveTo(7.21f, 15f)
+                    lineTo(2.66f, 7.14f)
+                    quadraticTo(2f, 6f, 4.3f, 4f)
+                    lineTo(19.7f, 4f)
+                    quadraticTo(22f, 6f, 21.34f, 7.14f)
+                    lineTo(16.79f, 15f)
+                }
+            drawPath(ribbon, tint, style = stroke)
+            drawLine(tint, Offset(11f, 12f), Offset(5.12f, 2.2f), strokeWidth = stroke.width, cap = stroke.cap)
+            drawLine(tint, Offset(13f, 12f), Offset(18.88f, 2.2f), strokeWidth = stroke.width, cap = stroke.cap)
+            drawCircle(tint, radius = 6f, center = Offset(12f, 16f), style = stroke)
+            drawLine(tint, Offset(12f, 18f), Offset(12f, 14f), strokeWidth = stroke.width, cap = stroke.cap)
+            val notch =
+                Path().apply {
+                    moveTo(9.5f, 16f)
+                    lineTo(12f, 14f)
+                    lineTo(14.5f, 16f)
+                }
+            drawPath(notch, tint, style = stroke)
+        }
     }
 }
 
@@ -260,11 +340,9 @@ private fun AchievementMedal(
     showRank: Boolean,
 ) {
     Box(contentAlignment = Alignment.Center) {
-        Icon(
-            Icons.Rounded.MilitaryTech,
-            contentDescription = null,
+        MedalIcon(
             tint = achievementColor(rank),
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(width = 34.dp, height = 38.dp),
         )
         if (showRank) {
             Text(
@@ -400,18 +478,15 @@ private fun rankDescription(rank: Int): String =
 private fun achievementColor(rank: Int) =
     when (rank) {
         2 -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFA7B0B5)
+            Color(0xFF7B8583)
         }
 
         3 -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFB87333)
+            Color(0xFFBE6739)
         }
 
         else -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFF59E0B)
+            Color(0xFFEFAA00)
         }
     }
 

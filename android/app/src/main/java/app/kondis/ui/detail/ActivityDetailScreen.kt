@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,9 +28,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Map
-import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -56,11 +57,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.ActivityDetail
@@ -77,6 +82,7 @@ import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
 import app.kondis.ui.components.ActivityImageSlide
 import app.kondis.ui.components.ActivityStat
+import app.kondis.ui.components.MedalIcon
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.record.ActivityTypePicker
 import app.kondis.ui.theme.KondisOrange
@@ -442,16 +448,14 @@ private fun BestEffortsTable(
             TableRow(onClick = { onEffortClick(effort) }) {
                 Row(Modifier.weight(1.45f), verticalAlignment = Alignment.CenterVertically) {
                     if (achievement != null) {
-                        Icon(
-                            Icons.Rounded.MilitaryTech,
-                            contentDescription = null,
+                        MedalIcon(
                             tint = rankColor(achievement),
-                            modifier = Modifier.size(28.dp),
+                            modifier = Modifier.size(width = 34.dp, height = 38.dp),
                         )
                     } else if (!excludedFromRankings && efforts.any { achievement(it) != null }) {
-                        Spacer(Modifier.width(28.dp))
+                        Spacer(Modifier.width(34.dp))
                     }
-                    Column(Modifier.padding(start = 6.dp)) {
+                    Column(Modifier.weight(1f).padding(start = 6.dp)) {
                         Text(bestEffortLabel(effort.type), fontWeight = FontWeight.Bold)
                         achievement?.let {
                             Text(
@@ -496,14 +500,12 @@ private fun PowerBestEffortsTable(
             val rank = if (excludedFromRankings) null else achievement(effort)
             TableRow(onClick = {}) {
                 if (rank != null) {
-                    Icon(
-                        Icons.Rounded.MilitaryTech,
-                        contentDescription = null,
+                    MedalIcon(
                         tint = rankColor(rank),
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(width = 34.dp, height = 38.dp),
                     )
                 } else {
-                    Spacer(Modifier.width(28.dp))
+                    Spacer(Modifier.width(34.dp))
                 }
                 TableCell(bestEffortLabel(effort.type).removeSuffix(" power"), 1f)
                 TableCell("${effort.value.toInt()} W", 1.2f)
@@ -626,17 +628,15 @@ private fun achievementText(effort: app.kondis.model.BestEffort): String =
 private fun rankColor(rank: Int) =
     when (rank) {
         1 -> {
-            KondisOrange
+            Color(0xFFEFAA00)
         }
 
         2 -> {
-            androidx.compose.ui.graphics
-                .Color(0xFF87908D)
+            Color(0xFF7B8583)
         }
 
         else -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFE2A500)
+            Color(0xFFBE6739)
         }
     }
 
@@ -807,56 +807,139 @@ private fun DetailHeader(
             }
         }
         if (showImages) {
-            Dialog(onDismissRequest = { showImages = false }) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surface,
+            ActivityPhotoViewer(
+                activity = activity,
+                onLoadImage = onLoadImage,
+                onDismiss = { showImages = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActivityPhotoViewer(
+    activity: ActivityDetail,
+    onLoadImage: suspend (String) -> Bitmap?,
+    onDismiss: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        val pagerState = rememberPagerState(pageCount = { activity.images.size })
+        val track = activity.track?.takeIf { it.coordinates.size > 1 }
+
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.Black),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize().padding(top = 60.dp, bottom = 76.dp),
+                pageSpacing = 16.dp,
+            ) { page ->
+                ActivityImageSlide(
+                    image = activity.images[page],
+                    onLoadImage = onLoadImage,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .semantics {
+                                contentDescription = "Photo ${page + 1} of ${activity.images.size}"
+                            },
+                    contentScale = ContentScale.Fit,
+                    roundedCorners = false,
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ViewerIconButton(onClick = onDismiss, contentDescription = "Close photos") {
+                    Icon(Icons.Rounded.Close, contentDescription = null)
+                }
+                Spacer(Modifier.weight(1f))
+                ViewerIconButton(onClick = {}, contentDescription = "Bookmark activity") {
+                    Icon(Icons.Rounded.BookmarkBorder, contentDescription = null)
+                }
+                ViewerIconButton(onClick = {}, contentDescription = "More options") {
+                    Icon(Icons.Rounded.MoreVert, contentDescription = null)
+                }
+            }
+
+            if (track != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .navigationBarsPadding()
+                            .padding(start = 18.dp, bottom = 18.dp),
                 ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Photos", style = MaterialTheme.typography.titleLarge)
-                            Spacer(Modifier.weight(1f))
-                            TextButton(onClick = { showImages = false }) { Text("Close") }
-                        }
-                        val pagerState = rememberPagerState(pageCount = { activity.images.size })
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxWidth().height(420.dp),
-                            pageSpacing = 8.dp,
-                        ) { page ->
-                            ActivityImageSlide(
-                                image = activity.images[page],
-                                onLoadImage = onLoadImage,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-                        if (activity.images.size > 1) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                                horizontalArrangement = Arrangement.Center,
-                            ) {
-                                repeat(activity.images.size) { page ->
-                                    Surface(
-                                        modifier =
-                                            Modifier
-                                                .padding(horizontal = 3.dp)
-                                                .size(if (page == pagerState.currentPage) 18.dp else 6.dp, 6.dp),
-                                        shape = RoundedCornerShape(3.dp),
-                                        color =
-                                            if (page == pagerState.currentPage) {
-                                                MaterialTheme.colorScheme.primary
-                                            } else {
-                                                MaterialTheme.colorScheme.outlineVariant
-                                            },
-                                    ) {}
-                                }
-                            }
-                        }
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(86.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black)
+                                .clickable(onClick = onDismiss)
+                                .semantics { contentDescription = "Return to activity" },
+                    ) {
+                        StaticRoutePreview(
+                            track = track,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+
+            if (activity.images.size > 1) {
+                Row(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .navigationBarsPadding()
+                            .padding(bottom = 18.dp),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    repeat(activity.images.size) { page ->
+                        Surface(
+                            modifier =
+                                Modifier
+                                    .padding(horizontal = 3.dp)
+                                    .size(if (page == pagerState.currentPage) 18.dp else 6.dp, 6.dp),
+                            shape = RoundedCornerShape(3.dp),
+                            color =
+                                if (page == pagerState.currentPage) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    Color.White
+                                        .copy(alpha = 0.45f)
+                                },
+                        ) {}
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ViewerIconButton(
+    onClick: () -> Unit,
+    contentDescription: String,
+    content: @Composable () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier =
+            Modifier
+                .background(
+                    Color.Black
+                        .copy(alpha = 0.78f),
+                    CircleShape,
+                ).semantics { this.contentDescription = contentDescription },
+    ) {
+        content()
     }
 }
 
