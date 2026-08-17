@@ -150,20 +150,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
           script: |
-            set +e
-            ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" :app:connectedDebugAndroidTest
-            status=$?
-            if [ "$status" -ne 0 ]; then
-              echo ""
-              echo "==== Instrumented test failure details ===="
-              find app/build/outputs/androidTest-results app/build/reports/androidTests \
-                -type f \( -name '*.xml' -o -name '*.html' -o -name '*.txt' \) \
-                -print 2>/dev/null || true
-              find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null \
-                | xargs -0 -r grep -H -E '<failure|<error|message=' || true
-              echo "==== End instrumented test failure details ===="
-            fi
-            exit "$status"
+            ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" :app:connectedDebugAndroidTest || { echo "==== Instrumented test failure details ===="; find app/build/outputs/androidTest-results app/build/reports/androidTests -type f \( -name '*.xml' -o -name '*.html' -o -name '*.txt' \) -print 2>/dev/null || true; find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null | xargs -0 -r grep -H -E '<failure|<error|message=' || true; echo "==== End instrumented test failure details ===="; exit 1; }
 
       - name: Upload emulator test artifacts
         if: always()
