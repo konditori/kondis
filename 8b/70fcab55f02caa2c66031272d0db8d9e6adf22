@@ -1,0 +1,19 @@
+web/src/lib/components/UserAvatar.svelte
+  s_93fa422c08afa6::t_9fc3b08b9403d1 11-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8b70fcab55f02caa2c66031272d0db8d9e6adf22",
+  "prompts": {},
+  "sessions": {
+    "s_93fa422c08afa6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0113d-40d1-75c1-9004-2e133fd22c58",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
