@@ -1,0 +1,25 @@
+.github/workflows/test.yml
+  s_c74e98c9f2c8b4::t_44c0f02b2d88ee 195,230
+README.md
+  s_c74e98c9f2c8b4::t_7a08b97356e14e 43-44,47,50-72
+mise.toml
+  s_c74e98c9f2c8b4::t_d6b8c60c46c3bf 36-49
+package.json
+  s_c74e98c9f2c8b4::t_a93bbbba0a91f6 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0760fe1d73641a5fdc924384c289b5ae42903c49",
+  "prompts": {},
+  "sessions": {
+    "s_c74e98c9f2c8b4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00cbb-154b-7633-8c37-c09249f28896",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
