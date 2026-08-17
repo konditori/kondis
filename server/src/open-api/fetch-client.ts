@@ -109,6 +109,17 @@ export type ActivityMetricDtoOutput = {
   /** Calories in kcal */
   calories: number | null;
 };
+export type ActivityImageDtoOutput = {
+  id: string;
+  caption: string | null;
+  sortOrder: number;
+  width: number | null;
+  height: number | null;
+  status: Status2;
+  thumbnail: string | null;
+  preview: string | null;
+  original: string | null;
+};
 export type ActivityListResponseDtoOutput = {
   activities: {
     /** Activity id */
@@ -185,17 +196,6 @@ export type BestEffortListResponseDtoOutput = {
     year: number;
     yearRank: number;
   }[];
-};
-export type ActivityImageDtoOutput = {
-  id: string;
-  caption: string | null;
-  sortOrder: number;
-  width: number | null;
-  height: number | null;
-  status: Status2;
-  thumbnail: string | null;
-  preview: string | null;
-  original: string | null;
 };
 export type ActivityDetailDtoOutput = {
   /** Activity id */
@@ -913,6 +913,11 @@ export enum BestEffortType_Output {
 export enum Type {
   LineString = 'LineString',
 }
+export enum Status2 {
+  Pending = 'pending',
+  Ready = 'ready',
+  Failed = 'failed',
+}
 export enum AverageMetric {
   None = 'none',
   Pace = 'pace',
@@ -979,11 +984,6 @@ export enum BestEffortValueKind_Output {
   Distance = 'distance',
   Elevation = 'elevation',
   Power = 'power',
-}
-export enum Status2 {
-  Pending = 'pending',
-  Ready = 'ready',
-  Failed = 'failed',
 }
 export enum ActivityUpdateDtoActivityType {
   AlpineSki = 'alpine_ski',

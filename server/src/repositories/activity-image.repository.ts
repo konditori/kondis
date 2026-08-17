@@ -85,7 +85,7 @@ export class ActivityImageRepository {
       .then(() => {});
   }
 
-  streamForThumbnailGeneration(force = false) {
+  listForThumbnailGeneration(force = false) {
     let query = this.db
       .selectFrom('activity_image')
       .select('id')
@@ -102,6 +102,6 @@ export class ActivityImageRepository {
         ),
       );
     }
-    return query.orderBy('id').stream();
+    return query.orderBy('id').execute();
   }
 }

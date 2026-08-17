@@ -343,7 +343,8 @@ export class ActivityImageService {
 
   @OnJob({ name: JobName.ActivityImageGenerateQueueAll, queue: QueueName.BackgroundTask })
   async handleQueueAll({ force = false }: JobOf<JobName.ActivityImageGenerateQueueAll>): Promise<JobStatus> {
-    for await (const row of this.images.streamForThumbnailGeneration(force)) {
+    const rows = await this.images.listForThumbnailGeneration(force);
+    for (const row of rows) {
       await this.jobs.queue({ name: JobName.ActivityImageGenerateThumbnails, data: { id: row.id } });
     }
     return JobStatus.Success;

@@ -1247,6 +1247,69 @@
           "power_2h"
         ]
       },
+      "ActivityImageDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "failed"
+            ]
+          },
+          "thumbnail": {
+            "type": "string",
+            "nullable": true
+          },
+          "preview": {
+            "type": "string",
+            "nullable": true
+          },
+          "original": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "caption",
+          "sortOrder",
+          "width",
+          "height",
+          "status",
+          "thumbnail",
+          "preview",
+          "original"
+        ],
+        "additionalProperties": false
+      },
       "ActivityListResponseDto_Output": {
         "type": "object",
         "properties": {
@@ -1614,69 +1677,6 @@
           "duration",
           "options",
           "efforts"
-        ],
-        "additionalProperties": false
-      },
-      "ActivityImageDto_Output": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "caption": {
-            "type": "string",
-            "nullable": true
-          },
-          "sortOrder": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "width": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991,
-            "nullable": true
-          },
-          "height": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991,
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "ready",
-              "failed"
-            ]
-          },
-          "thumbnail": {
-            "type": "string",
-            "nullable": true
-          },
-          "preview": {
-            "type": "string",
-            "nullable": true
-          },
-          "original": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "caption",
-          "sortOrder",
-          "width",
-          "height",
-          "status",
-          "thumbnail",
-          "preview",
-          "original"
         ],
         "additionalProperties": false
       },
