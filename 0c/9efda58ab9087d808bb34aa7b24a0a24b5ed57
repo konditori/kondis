@@ -1,0 +1,59 @@
+README.md
+  s_2268c308703caf::t_c7c4a9b420c58e 57-80
+android/README.md
+  s_2268c308703caf::t_8708d9168f2d43 50-54
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_2268c308703caf::t_2c7fde92973edd 13,43,125,145
+android/app/src/main/java/app/kondis/ui/components/ActivityComponents.kt
+  s_2268c308703caf::t_ce9b04243501ea 106-113
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_2268c308703caf::t_c09d7b701ba80f 42,160,182,212,220,229,770-777,967,975,1009-1014
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_2268c308703caf::t_78b1ca948e5732 89
+server/src/controllers/activity.controller.ts
+  s_2268c308703caf::t_dbb8530fca81f1 24,31,55-61,114
+server/src/dtos/activity.dto.ts
+  s_2268c308703caf::t_b3a1683e93efe6 5,20,45-46,78,219,235-239
+server/src/imports/lagom-takeout.parser.ts
+  s_2268c308703caf::t_2b489262061f02 8,27,279,318,329,417
+server/src/open-api/fetch-client.ts
+  s_2268c308703caf::t_703a809f132d4e 136,211-213,298,312,492-493,498-499,513-514,822-834
+server/src/repositories/activity.repository.ts
+  s_2268c308703caf::t_9c73468be7d971 18,66,244,254,406-407,413-414,439,444-450,463,475,479-484,522,541,561,581
+server/src/schema/migrations/1787000000000-AddActivityTags.ts
+  s_2268c308703caf::t_3ca59009a172d7 1-21
+server/src/schema/tables/activity.table.ts
+  s_2268c308703caf::t_b59c7e2d386895 40-42
+server/src/services/activity.service.ts
+  s_2268c308703caf::t_397779b8bbcd15 30-31,95,142,236,479,483-486,492-493,520,574,588,664,697-711,718,884,893
+server/src/services/upload.service.ts
+  s_2268c308703caf::t_bc0d2b20acbe4a 66,88,123,212,228,256,273
+server/src/types.ts
+  s_2268c308703caf::t_109f44bd91b47b 10-42,420,437,448
+web/src/app.css
+  s_2268c308703caf::t_3fcf1d0c3b4b99 3114-3120
+web/src/lib/components/ActivityCard.svelte
+  s_2268c308703caf::t_3c3571441079d1 167-169
+web/src/lib/types.ts
+  s_2268c308703caf::t_6e26d098c32e4b 4,13
+web/src/routes/+page.svelte
+  s_2268c308703caf::t_4bd8de7bc2a2fa 57
+web/src/routes/activities/[id]/+page.svelte
+  s_2268c308703caf::t_459dd371a665cf 69-71,77-79,96,122,311,411-412,505,523-533,564-566,836,865,950
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0c9efda58ab9087d808bb34aa7b24a0a24b5ed57",
+  "prompts": {},
+  "sessions": {
+    "s_2268c308703caf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f28-8181-7bb0-be01-cd188e72c925",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
