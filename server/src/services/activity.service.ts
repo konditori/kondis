@@ -448,7 +448,8 @@ export class ActivityService {
           this.eventRepository.emit('ActivityUpdate', this.toActivityDto(updated)),
           this.eventRepository.emit('ActivityBestEffortsAvailable', {
             id,
-            bestEfforts: updated.best_efforts_computed_at === null ? null : this.toDetailBestEfforts(storedEfforts),
+            bestEfforts:
+              updated.best_efforts_computed_at === null ? null : this.toDetailBestEfforts(storedEfforts, updated.sport),
           }),
         ]);
       }
@@ -611,7 +612,7 @@ export class ActivityService {
       track,
       analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
       matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),
-      bestEfforts: row.best_efforts_computed_at === null ? null : this.toDetailBestEfforts(storedEfforts),
+      bestEfforts: row.best_efforts_computed_at === null ? null : this.toDetailBestEfforts(storedEfforts, row.sport),
       images: await Promise.all(
         images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)),
       ),
@@ -789,8 +790,14 @@ export class ActivityService {
 
   private toDetailBestEfforts(
     storedEfforts: Awaited<ReturnType<ActivityRepository['getBestEfforts']>>,
+    sport: ActivityType,
   ): NonNullable<ActivityDetailDto['bestEfforts']> {
+    const allowedTypes = new Set(
+      (BEST_EFFORT_SPORTS.run.includes(sport) ? RUNNING_BEST_EFFORTS : CYCLING_ANALYSIS_SPORTS.has(sport) ? CYCLING_BEST_EFFORTS : [])
+        .map((definition) => definition.type),
+    );
     return DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
+      if (!allowedTypes.has(definition.type)) return [];
       const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
       return effort
         ? [

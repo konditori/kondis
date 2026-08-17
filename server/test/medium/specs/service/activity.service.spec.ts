@@ -501,7 +501,7 @@ describe(ActivityService.name, () => {
       await serviceApi.updateById({ id: activityId }, { sport: 'ride' });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
       const rideActivity = await serviceApi.getById({ id: activityId });
-      expect(rideActivity.bestEfforts).toEqual([]);
+      expect(rideActivity.bestEfforts?.map(({ type }) => type)).toEqual(['longest_ride', 'elevation_gain']);
 
       await serviceApi.updateById({ id: activityId }, { sport: 'run' });
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
