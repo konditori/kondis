@@ -1,0 +1,35 @@
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_c74e98c9f2c8b4::t_3a6d7ab39364ee 162-168
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_c74e98c9f2c8b4::t_bf054266ee7493 714-715
+android/gradle/libs.versions.toml
+  s_c74e98c9f2c8b4::t_cbcfd695ee9cf0 16-17
+server/src/open-api/fetch-client.ts
+  s_c74e98c9f2c8b4::t_920d5c81449315 150
+web/src/app.css
+  s_c74e98c9f2c8b4::t_cbedf93cdcb45b 702-713,719-722,726-876,2801-2811
+web/src/lib/components/ActivityCard.svelte
+  s_c74e98c9f2c8b4::t_5c0c2a28b7b67e 208-254
+web/src/lib/components/ImageLightbox.svelte
+  s_c74e98c9f2c8b4::t_f530e6462df71e 1-92
+web/src/lib/types.ts
+  s_c74e98c9f2c8b4::t_0f6897236fd3d2 34
+web/src/routes/activities/[id]/+page.svelte
+  s_c74e98c9f2c8b4::t_a4a427067f4b99 42,165-170,172,718,722-726,732,1036-1042
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "295002b4c136f9f5b1193295866e4377b9f1045d",
+  "prompts": {},
+  "sessions": {
+    "s_c74e98c9f2c8b4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00cbb-154b-7633-8c37-c09249f28896",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
