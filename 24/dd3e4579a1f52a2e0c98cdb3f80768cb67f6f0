@@ -1,0 +1,131 @@
+e2e/mise.toml
+  s_91118fd1a14252::t_aaa712c8b2f9e9 34-36
+e2e/package.json
+  s_91118fd1a14252::t_68114dbe0c6943 12
+e2e/src/utils.ts
+  s_91118fd1a14252::t_30fe5abcc095d1 38,46
+mise.toml
+  s_91118fd1a14252::t_761a94f35388c6 19-21
+package.json
+  s_91118fd1a14252::t_4b25a4a2816165 8-15
+pnpm-lock.yaml
+  s_91118fd1a14252::t_105210d2fece9e 10-17,838-963,2805-2817,4095-4153,5907-5928
+server/mise.toml
+  s_91118fd1a14252::t_2058c08f3a0492 28-30
+server/package.json
+  s_91118fd1a14252::t_e381578bfe86f2 18
+server/src/auth.ts
+  s_91118fd1a14252::t_15d1a66c00c787 34,36,60
+server/src/imports/lagom-takeout.parser.ts
+  s_91118fd1a14252::t_dcc320d19c7f51 139,167,249
+server/src/repositories/fit.repository.ts
+  s_91118fd1a14252::t_107743fe5fb4fd 98,145
+server/src/repositories/gpx.repository.ts
+  s_91118fd1a14252::t_12cede6bdc1bd5 146,306
+server/src/repositories/job.repository.ts
+  s_91118fd1a14252::t_7f77c5fcc3a62f 71,126,191,309,485
+server/src/repositories/storage.repository.ts
+  s_91118fd1a14252::t_94c02b3120a3d0 61
+server/src/repositories/tcx.repository.ts
+  s_91118fd1a14252::t_9e7083cc2a3a56 178
+server/src/schema/decorators.ts
+  s_91118fd1a14252::t_279431f16c44df 18,49
+server/src/services/job.service.ts
+  s_91118fd1a14252::t_6c506d4619283b 49
+tools/oxlint/anti-slop/index.ts
+  s_91118fd1a14252::t_5eb9dac26c9e80 1-41
+tools/oxlint/anti-slop/rules/no-chained-type-assertions.ts
+  s_91118fd1a14252::t_f66958307d8644 1-77
+tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.test.ts
+  s_91118fd1a14252::t_7e3935f755f4a2 1-32
+tools/oxlint/anti-slop/rules/no-conditional-empty-object-spread.ts
+  s_91118fd1a14252::t_db4d3067b9fcd2 1-49
+tools/oxlint/anti-slop/rules/no-known-value-widening.test.ts
+  s_91118fd1a14252::t_935663eebd7cd5 1-114
+tools/oxlint/anti-slop/rules/no-known-value-widening.ts
+  s_91118fd1a14252::t_ca4083f4d0ae22 1-247
+tools/oxlint/anti-slop/rules/no-module-mocking.test.ts
+  s_91118fd1a14252::t_2a722780466601 1-28
+tools/oxlint/anti-slop/rules/no-module-mocking.ts
+  s_91118fd1a14252::t_98e6fff5f786ab 1-91
+tools/oxlint/anti-slop/rules/no-object-parameters.test.ts
+  s_91118fd1a14252::t_f3c1fe8c3fd513 1-32
+tools/oxlint/anti-slop/rules/no-object-parameters.ts
+  s_91118fd1a14252::t_2d139b879632f4 1-126
+tools/oxlint/anti-slop/rules/no-reflect-apply.test.ts
+  s_91118fd1a14252::t_ee0c34f08b28c1 1-19
+tools/oxlint/anti-slop/rules/no-reflect-apply.ts
+  s_91118fd1a14252::t_171506e10cb303 1-28
+tools/oxlint/anti-slop/rules/no-reflect-get.test.ts
+  s_91118fd1a14252::t_6390c8c84533a3 1-20
+tools/oxlint/anti-slop/rules/no-reflect-get.ts
+  s_91118fd1a14252::t_e97b9aab902558 1-28
+tools/oxlint/anti-slop/rules/no-runtime-typeof.test.ts
+  s_91118fd1a14252::t_9f33453436dce9 1-42
+tools/oxlint/anti-slop/rules/no-runtime-typeof.ts
+  s_91118fd1a14252::t_db5a770be15216 1-67
+tools/oxlint/anti-slop/rules/no-shape-in-symbol-names.ts
+  s_91118fd1a14252::t_8718dd05dc8eb8 1-39
+tools/oxlint/anti-slop/rules/no-unknown-parameters.ts
+  s_91118fd1a14252::t_beb6e92750c47b 1-83
+tools/oxlint/anti-slop/rules/no-unknown-returns.test.ts
+  s_91118fd1a14252::t_3f81a8d8548e74 1-33
+tools/oxlint/anti-slop/rules/no-unknown-returns.ts
+  s_91118fd1a14252::t_292a004e97222e 1-115
+tools/oxlint/anti-slop/rules/no-unknown-type-aliases.test.ts
+  s_91118fd1a14252::t_86aaeea1c693fb 1-18
+tools/oxlint/anti-slop/rules/no-unknown-type-aliases.ts
+  s_91118fd1a14252::t_0050b0252e43e5 1-70
+tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.test.ts
+  s_91118fd1a14252::t_af4221df89f3d7 1-103
+tools/oxlint/anti-slop/rules/no-unsafe-dictionary-type.ts
+  s_91118fd1a14252::t_072934ef31c97d 1-134
+tools/oxlint/anti-slop/rules/no-widen-then-assert.test.ts
+  s_91118fd1a14252::t_f62b2d4a792f7b 1-19
+tools/oxlint/anti-slop/rules/no-widen-then-assert.ts
+  s_91118fd1a14252::t_0b305503b2384d 1-366
+tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.test.ts
+  s_91118fd1a14252::t_85d7546c0d69a3 1-29
+tools/oxlint/anti-slop/rules/require-safety-comment-for-type-assertion.ts
+  s_91118fd1a14252::t_34d40dba1065b6 1-62
+tools/oxlint/anti-slop/shared/dictionary-types.ts
+  s_91118fd1a14252::t_02429356e10869 1-502
+tools/oxlint/anti-slop/shared/lexical-type-parameters.ts
+  s_91118fd1a14252::t_bc7fd26bd8351b 1-61
+tools/oxlint/anti-slop/shared/reflect-method.ts
+  s_91118fd1a14252::t_60b5630d39ef11 1-35
+web/mise.toml
+  s_91118fd1a14252::t_f4a2b4e9c0afcb 16-18
+web/package.json
+  s_91118fd1a14252::t_0ad27e21f49736 11
+web/src/lib/components/ActivityProfile.svelte
+  s_91118fd1a14252::t_0928cd809e5e76 137
+web/src/lib/realtime.ts
+  s_91118fd1a14252::t_023dcc928e5aa5 28
+web/src/routes/+layout.server.ts
+  s_91118fd1a14252::t_1b660eb0958a9c 27,50
+web/src/routes/+page.server.ts
+  s_91118fd1a14252::t_22ae978c1c138e 9
+web/src/routes/activities/[id]/+page.server.ts
+  s_91118fd1a14252::t_0d0c8cb7e892e3 9,16
+web/src/routes/activities/[id]/matched-routes/+page.server.ts
+  s_91118fd1a14252::t_4b7ca86e14f9e5 9,16
+web/src/routes/best-efforts/[sport]/[distance]/+page.server.ts
+  s_91118fd1a14252::t_6ba51297c66ee3 17,20,22,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "24dd3e4579a1f52a2e0c98cdb3f80768cb67f6f0",
+  "prompts": {},
+  "sessions": {
+    "s_91118fd1a14252": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ef2-715f-79f3-8bea-1d3beecfd1ab",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
