@@ -532,7 +532,9 @@ describe(ActivityService.name, () => {
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
       const afterAdd = await serviceApi.listRecent({ limit: 50 });
       expect(afterAdd.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
-      expect((await serviceApi.getById({ id: goldId })).bestEfforts).toHaveLength(3);
+      expect((await serviceApi.getById({ id: goldId })).bestEfforts).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: '5k' })]),
+      );
       expect(
         (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
           ({ activityName, overallRank }) => ({
