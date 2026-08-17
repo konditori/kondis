@@ -73,8 +73,8 @@ fun ActivityCard(
     activity: Activity,
     units: UnitSystem,
     onClick: () -> Unit,
-    onLoadImage: suspend (String) -> Bitmap? = { null },
     modifier: Modifier = Modifier,
+    onLoadImage: suspend (String) -> Bitmap? = { null },
 ) {
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),

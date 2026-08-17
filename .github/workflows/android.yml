@@ -36,7 +36,7 @@ concurrency:
 permissions: {}
 
 env:
-  GRADLE_ARGS: --no-daemon --stacktrace --warning-mode=fail
+  GRADLE_ARGS: --no-daemon --warning-mode=fail --console=plain
 
 jobs:
   test:
@@ -141,10 +141,23 @@ jobs:
           working-directory: ./android
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
-          script: >-
-            ./gradlew $GRADLE_ARGS
-            -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts"
-            :app:connectedDebugAndroidTest
+          script: |
+            set +e
+            ./gradlew $GRADLE_ARGS \
+              -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" \
+              :app:connectedDebugAndroidTest
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              echo ""
+              echo "==== Instrumented test failure details ===="
+              find app/build/outputs/androidTest-results app/build/reports/androidTests \
+                -type f \( -name '*.xml' -o -name '*.html' -o -name '*.txt' \) \
+                -print 2>/dev/null || true
+              find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null \
+                | xargs -0 -r grep -H -E '<failure|<error|message=' || true
+              echo "==== End instrumented test failure details ===="
+            fi
+            exit "$status"
 
       - name: Upload emulator test artifacts
         if: always()
