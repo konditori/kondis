@@ -1,0 +1,47 @@
+open-api/kondis-openapi-specs.json
+  s_0b587ecc57e1fc::t_ac70c5ab5188ff 1144,2263
+server/src/repositories/activity.repository.ts
+  s_0b587ecc57e1fc::t_d2e81d75a31d9b 36-37,246,256,447-450,466-471,488-491,550,559,563,588-591,595-606,648-729
+server/src/repositories/event.repository.ts
+  s_0b587ecc57e1fc::t_60f191f4724722 9,16,22-24,33
+server/src/schema/migrations/1787000000000-AddActivityTags.ts
+  s_0b587ecc57e1fc::t_9cb0b73404a40a 11
+server/src/services/activity.service.spec.ts
+  s_0b587ecc57e1fc::t_bcf5af35572895 43,74,128,146,405,418-421
+server/src/services/activity.service.ts
+  s_0b587ecc57e1fc::t_f083e34b5afbff 7,30,142-150,438-441,443-449,496-502,506-509,533,610-613,716-735,786-810
+server/test/medium/specs/service/activity.service.spec.ts
+  s_0b587ecc57e1fc::t_303ebad5109387 78,228,512-570
+web/src/lib/components/ActivityCard.svelte
+  s_0b587ecc57e1fc::t_c6b649de7221c6 171-172
+web/src/lib/components/ImageLightbox.svelte
+  s_0b587ecc57e1fc::t_a209b672668af8 62
+web/src/lib/components/UploadForm.svelte
+  s_0b587ecc57e1fc::t_bda2d8b7c78c71 43-44,47
+web/src/lib/realtime.ts
+  s_0b587ecc57e1fc::t_d79564b939f294 1,3-11,17,36-37,39-41
+web/src/lib/types.ts
+  s_0b587ecc57e1fc::t_02d33b6ef06509 13
+web/src/routes/+page.svelte
+  s_0b587ecc57e1fc::t_e7612de2cf0c56 124-126
+web/src/routes/activities/[id]/+page.svelte
+  s_0b587ecc57e1fc::t_e9b57c02a1fdb1 21,58-60,64-66,99,291-292,295-299,301,597-598
+web/src/routes/best-efforts/[sport]/[distance]/+page.svelte
+  s_0b587ecc57e1fc::t_7ab5c63a855916 22-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7a12b896f5298f568a139ca29fe388e239922e6e",
+  "prompts": {},
+  "sessions": {
+    "s_0b587ecc57e1fc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00fbd-d205-7811-aeba-f7f356488926",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
