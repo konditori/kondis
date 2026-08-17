@@ -1,0 +1,81 @@
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_8773703c815d4f::t_891f6cf69c5717 19,44-80,90-116
+android/app/src/main/java/app/kondis/recording/LiveTrackingRepository.kt
+  s_8773703c815d4f::t_18cd69d7bf3bb8 1-138
+android/app/src/main/java/app/kondis/recording/RecordingService.kt
+  s_8773703c815d4f::t_591999b73d3028 38-39,59,86,91-95,102-104,111-113,128-132,206,209
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_8773703c815d4f::t_dee527416c8b9b 156,158
+android/app/src/main/java/app/kondis/ui/record/RecordScreen.kt
+  s_8773703c815d4f::t_b118639da8f9e2 112,128,224-235
+android/app/src/main/java/app/kondis/ui/record/RecordingViewModel.kt
+  s_8773703c815d4f::t_5d0a2a8e3ebf21 11,45,66,77,115,120-123,127,129-132
+open-api/kondis-openapi-specs.json
+  s_8773703c815d4f::t_90dcbb54790b1b 229-488,1330-1409,1473-1696
+server/src/controllers/activity.controller.ts
+  s_8773703c815d4f::t_9d6d475281ae2e 16,24,51,60-63
+server/src/controllers/index.ts
+  s_8773703c815d4f::t_b735e297f30adb 5,14
+server/src/controllers/live-workout.controller.ts
+  s_8773703c815d4f::t_c15010d36ea534 1-88
+server/src/db/schema.ts
+  s_8773703c815d4f::t_87062205664c8b 9-10,25-26,60-64
+server/src/dtos/live-workout.dto.ts
+  s_8773703c815d4f::t_d44d2fa7f1ccb3 1-80
+server/src/open-api/fetch-client.ts
+  s_8773703c815d4f::t_f5ba5084bce68d 80-122,161,536-697,1108-1177,1234
+server/src/repositories/index.ts
+  s_8773703c815d4f::t_8a61845b22d9aa 9,24
+server/src/repositories/live-workout.repository.ts
+  s_8773703c815d4f::t_30266ecde2f571 1-141
+server/src/schema/migrations/1787100000000-AddLiveWorkouts.ts
+  s_8773703c815d4f::t_ca1c17445c889c 1-47
+server/src/schema/tables/live-workout-point.table.ts
+  s_8773703c815d4f::t_5e76f95e8bb2f9 1-25
+server/src/schema/tables/live-workout.table.ts
+  s_8773703c815d4f::t_02792595fcc352 1-60
+server/src/services/index.ts
+  s_8773703c815d4f::t_1ca25ccde0eb31 5,14
+server/src/services/live-workout.service.spec.ts
+  s_8773703c815d4f::t_87452a024f4220 1-99
+server/src/services/live-workout.service.ts
+  s_8773703c815d4f::t_105892bbcad7a9 1-150
+server/test/medium/specs/repositories/live-workout.repository.spec.ts
+  s_8773703c815d4f::t_b775c98de96aec 1-63
+server/test/medium/test-db.ts
+  s_8773703c815d4f::t_33ae8417a0dd5f 36
+web/src/lib/components/LiveRouteMap.svelte
+  s_8773703c815d4f::t_29c94f8100fad1 1-77
+web/src/lib/components/LiveWorkoutView.svelte
+  s_8773703c815d4f::t_e2a7cfd8435729 1-192
+web/src/lib/types.ts
+  s_8773703c815d4f::t_7d40692fa3c9ed 141-153
+web/src/routes/+layout.server.ts
+  s_8773703c815d4f::t_f05668b29f31f2 19-25,46-49
+web/src/routes/+page.server.ts
+  s_8773703c815d4f::t_b7408e550b6f68 3-4,9-12,18,26
+web/src/routes/live/[token]/+page.server.ts
+  s_8773703c815d4f::t_0ad49f7fcef823 1-16
+web/src/routes/live/[token]/+page.svelte
+  s_8773703c815d4f::t_3989e63e646651 1-16
+web/src/routes/live/session/[id]/+page.server.ts
+  s_8773703c815d4f::t_6132fad6d7cce9 1-12
+web/src/routes/live/session/[id]/+page.svelte
+  s_8773703c815d4f::t_5fd1b36fc4321e 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1a882c3dbc8e49cdc257ae98a01af69c0df1f72c",
+  "prompts": {},
+  "sessions": {
+    "s_8773703c815d4f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01002-8eb3-7112-a566-e574feb8dda6",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
