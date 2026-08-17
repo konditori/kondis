@@ -620,7 +620,7 @@ export class ActivityService {
 
     return {
       ...this.toActivityDto(row),
-      ...(athlete ? { athlete } : {}),
+      ...(athlete && { athlete }),
       track,
       analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
       matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),

@@ -20,7 +20,8 @@ export function distinctAchievementEfforts<T extends AchievementEffort>(
   efforts: T[],
 ): T[] {
   const seenRanks = new Set<number>();
-  return efforts
+  return [...efforts]
+    .sort((a, b) => achievementRank(a) - achievementRank(b))
     .filter((effort) => {
       const rank = achievementRank(effort);
       if (seenRanks.has(rank)) return false;

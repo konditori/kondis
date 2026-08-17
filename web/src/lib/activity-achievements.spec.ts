@@ -29,6 +29,16 @@ describe("activity achievements", () => {
     ).toEqual([1, 2, 3]);
   });
 
+  it("orders medals gold, silver, then bronze", () => {
+    expect(
+      distinctAchievementEfforts([
+        effort(3, 3),
+        effort(1, 1),
+        effort(2, 2),
+      ]).map(achievementRank),
+    ).toEqual([1, 2, 3]);
+  });
+
   it("labels the three medal ranks", () => {
     expect([1, 2, 3].map(achievementMedalLabel)).toEqual([
       "Gold medal",

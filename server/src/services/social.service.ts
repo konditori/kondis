@@ -2,8 +2,6 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { sql } from 'kysely';
 import { KYSELY, KondisDatabase } from 'src/db/database';
 import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
-// Feed composition reuses the existing activity pagination/DTO pipeline.
-// eslint-disable-next-line no-restricted-imports
 import { ActivityService } from 'src/services/activity.service';
 
 @Injectable()

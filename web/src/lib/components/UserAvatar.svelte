@@ -8,7 +8,12 @@
   const initial = $derived(name.trim().slice(0, 1).toUpperCase() || "?");
 </script>
 
-<span class="user-avatar" style={`--avatar-size: ${size}px`} aria-label={name}>
+<span
+  class="user-avatar"
+  style={`--avatar-size: ${size}px`}
+  aria-label={name}
+  title={name}
+>
   {#if src && !failed}
     <img {src} alt="" onerror={() => (failed = true)} />
   {:else}
