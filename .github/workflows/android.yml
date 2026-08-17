@@ -151,9 +151,7 @@ jobs:
           disable-animations: true
           script: |
             set +e
-            ./gradlew $GRADLE_ARGS \
-              -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" \
-              :app:connectedDebugAndroidTest
+            ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" :app:connectedDebugAndroidTest
             status=$?
             if [ "$status" -ne 0 ]; then
               echo ""
