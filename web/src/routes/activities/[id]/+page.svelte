@@ -4,6 +4,7 @@
     Check,
     ChevronLeft,
     ChevronRight,
+    Clock3,
     Flame,
     Gauge,
     HeartPulse,
@@ -502,15 +503,19 @@
           src={activity.athlete?.avatarUrl}
           size={80}
         />
-        <span class="detail-sport"><Icon size={27} /></span>
       </div>
       <div class="detail-title">
         <h1>{activity.athlete?.name ?? "You"}</h1>
         <p class="detail-timestamp">
-          {localDate(activity.startedAt)} · {localTime(activity.startedAt)} · {activityTypeLabel(
-            data.activityTypes,
-            activity.sport,
-          )}
+          {localDate(activity.startedAt)} · {localTime(activity.startedAt)}
+          <span
+            class="activity-sport-inline"
+            class:running-sport={["run", "trail_run", "virtual_run"].includes(
+              activity.sport,
+            )}
+            aria-label={activityTypeLabel(data.activityTypes, activity.sport)}
+            ><Icon size={17} /></span
+          >
         </p>
         <h2>{activityName(activity)}</h2>
       </div>

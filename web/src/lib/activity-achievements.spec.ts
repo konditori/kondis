@@ -3,6 +3,7 @@ import {
   achievementMedalLabel,
   achievementRank,
   distinctAchievementEfforts,
+  shouldShowAchievementCount,
 } from "./activity-achievements";
 
 const effort = (overallRank: number, yearRank: number, type = "10k") => ({
@@ -34,5 +35,25 @@ describe("activity achievements", () => {
       "Silver medal",
       "Bronze medal",
     ]);
+  });
+
+  it.each([
+    [1, [effort(1, 1)]],
+    [2, [effort(2, 2), effort(3, 3)]],
+    [3, [effort(1, 1), effort(2, 2), effort(3, 3)]],
+  ])("hides redundant count for %s medal display", (count, efforts) => {
+    expect(shouldShowAchievementCount(count, efforts)).toBe(false);
+  });
+
+  it("keeps the count when two medals are not silver and bronze", () => {
+    expect(shouldShowAchievementCount(2, [effort(1, 1), effort(2, 2)])).toBe(
+      true,
+    );
+  });
+
+  it("keeps the count when three medals do not show the full podium", () => {
+    expect(shouldShowAchievementCount(3, [effort(1, 1), effort(2, 2)])).toBe(
+      true,
+    );
   });
 });

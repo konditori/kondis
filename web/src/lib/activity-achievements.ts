@@ -29,3 +29,17 @@ export function distinctAchievementEfforts<T extends AchievementEffort>(
     })
     .slice(0, 3);
 }
+
+export function shouldShowAchievementCount(
+  count: number,
+  efforts: AchievementEffort[],
+): boolean {
+  if (count <= 1) return false;
+
+  const ranks = new Set(
+    distinctAchievementEfforts(efforts).map(achievementRank),
+  );
+  if (count === 2 && ranks.has(2) && ranks.has(3)) return false;
+  if (count === 3 && [1, 2, 3].every((rank) => ranks.has(rank))) return false;
+  return true;
+}

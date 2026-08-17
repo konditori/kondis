@@ -12,6 +12,7 @@
     achievementMedalLabel,
     achievementRank,
     distinctAchievementEfforts,
+    shouldShowAchievementCount,
   } from "$lib/activity-achievements";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
@@ -88,6 +89,9 @@
       value: elevation(activity.metrics?.elevationGain ?? null, unitSystem),
     },
   ]);
+  const achievementCount = $derived(
+    activity.achievementCount ?? activity.topBestEfforts?.length ?? 0,
+  );
   const personalRecord = $derived(
     (() => {
       const records =
@@ -187,6 +191,7 @@
 <article class="activity-card">
   <a
     class="activity-card-summary"
+    class:has-description={Boolean(activity.description)}
     href={`/activities/${activity.id}`}
     onclick={openActivity}
   >
@@ -196,24 +201,26 @@
         src={activity.athlete?.avatarUrl}
         size={54}
       />
-      <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
     </div>
     <div class="activity-primary">
-      <div class="activity-title">
-        <h3>{activity.athlete?.name ?? "You"}</h3>
+      <div class="activity-title activity-name-title">
+        <h3>{activityName(activity)}</h3>
         <ArrowUpRight size={17} />
       </div>
       <p>
         <span
-          >{localDate(activity.startedAt)} · {localTime(activity.startedAt)} · {activityTypeLabel(
-            activityTypes,
-            activity.sport,
+          >{localDate(activity.startedAt)} · {localTime(
+            activity.startedAt,
           )}</span
+        ><span
+          class="activity-sport-inline"
+          class:running-sport={["run", "trail_run", "virtual_run"].includes(
+            activity.sport,
+          )}
+          aria-label={activityTypeLabel(activityTypes, activity.sport)}
+          ><Icon size={16} strokeWidth={1.8} /></span
         >
       </p>
-      <div class="activity-title activity-name-title">
-        <h3>{activityName(activity)}</h3>
-      </div>
       {#if activity.tags?.length}<div
           class="activity-tags"
           aria-label="Activity tags"
@@ -222,23 +229,29 @@
               >{tag.replaceAll("_", " ")}</span
             >{/each}
         </div>{/if}
-      {#if activity.topBestEfforts?.length}
-        <div class="activity-achievements">
-          {#each distinctAchievementEfforts(activity.topBestEfforts) as effort}
+    </div>
+    {#if activity.description}
+      <p class="activity-card-description">{activity.description}</p>
+    {/if}
+    <div class="activity-feed-stats">
+      <div
+        class="activity-stat activity-medal-stat"
+        aria-label={`${achievementCount} medals`}
+      >
+        <div class="activity-medal-value">
+          {#if shouldShowAchievementCount(achievementCount, activity.topBestEfforts ?? [])}<strong
+              >{achievementCount}</strong
+            >{/if}
+          {#each distinctAchievementEfforts(activity.topBestEfforts ?? []) as effort}
             <span
               class={`activity-achievement rank-${achievementRank(effort)}`}
               title={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
               aria-label={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
-              ><Medal size={18} /></span
+              ><Medal size={20} /></span
             >
           {/each}
-          <span class="activity-achievement-count">
-            {activity.achievementCount ?? activity.topBestEfforts.length}
-          </span>
         </div>
-      {/if}
-    </div>
-    <div class="activity-feed-stats">
+      </div>
       {#each stats as stat}
         <div class="activity-stat">
           <strong>{stat.value}</strong><small>{stat.label}</small>
@@ -261,26 +274,6 @@
         ></span
       >
       <strong>{achievementText(personalRecord)}</strong>
-    </div>
-  {/if}
-  {#if likeCount > 0 || activity.commentCount !== undefined}
-    <div class="activity-social-row">
-      <button
-        class:liked
-        type="button"
-        class="activity-social-button"
-        onclick={toggleLike}
-        disabled={likeBusy}
-        aria-label={liked ? "Unlike activity" : "Like activity"}
-        ><Heart size={17} fill={liked ? "currentColor" : "none"} />
-        {likeCount}</button
-      >
-      <a
-        class="activity-social-button"
-        href={`/activities/${activity.id}#comments`}
-        onclick={openActivity}
-        ><MessageCircle size={17} /> {activity.commentCount ?? 0}</a
-      >
     </div>
   {/if}
   {#if activity.track || activity.images?.length}
@@ -330,5 +323,25 @@
         {/if}
       </div>
     </a>
+  {/if}
+  {#if likeCount > 0 || activity.commentCount !== undefined}
+    <div class="activity-social-row">
+      <button
+        class:liked
+        type="button"
+        class="activity-social-button"
+        onclick={toggleLike}
+        disabled={likeBusy}
+        aria-label={liked ? "Unlike activity" : "Like activity"}
+        ><Heart size={17} fill={liked ? "currentColor" : "none"} />
+        {likeCount}</button
+      >
+      <a
+        class="activity-social-button"
+        href={`/activities/${activity.id}#comments`}
+        onclick={openActivity}
+        ><MessageCircle size={17} /> {activity.commentCount ?? 0}</a
+      >
+    </div>
   {/if}
 </article>

@@ -899,16 +899,29 @@ button {
 }
 .activity-card-summary {
   display: grid;
-  grid-template-columns: 68px minmax(220px, 1fr) minmax(360px, 1.45fr);
+  grid-template-columns: 68px minmax(220px, 1fr) max-content;
+  grid-template-rows: auto;
+  align-content: start;
   align-items: start;
-  gap: 18px;
+  column-gap: 18px;
+  row-gap: 0;
   min-height: 132px;
   padding: 20px 22px 18px 20px;
 }
+.activity-card-summary.has-description {
+  grid-template-rows: auto auto;
+}
+.activity-card-summary:not(.has-description) {
+  min-height: 0;
+  height: auto;
+  box-sizing: border-box;
+  padding-block: 20px;
+}
 .activity-card-identity {
   display: flex;
+  grid-row: 1 / span 2;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 .user-avatar {
@@ -936,9 +949,13 @@ button {
   place-items: center;
   width: 38px;
   height: 38px;
-  color: var(--green);
-  background: var(--green-soft);
+  color: #111;
+  background: transparent;
   border-radius: 50%;
+}
+.sport-badge.running-sport svg,
+.detail-sport.running-sport svg {
+  transform: scaleX(-1);
 }
 .activity-primary {
   min-width: 0;
@@ -949,11 +966,20 @@ button {
   gap: 5px;
 }
 .activity-name-title {
-  margin-top: 15px;
+  margin-top: 0;
 }
 .activity-name-title h3 {
   font-size: 23px;
   font-weight: 650;
+}
+.activity-card-description {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  margin: 6px 0 0;
+  padding-right: 14px;
+  color: var(--text);
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 .profile-picture-upload {
   cursor: pointer;
@@ -982,36 +1008,26 @@ button {
   font-size: 12px;
   text-transform: capitalize;
 }
-.activity-achievements {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px;
-  margin-top: 8px;
+.activity-sport-inline {
+  display: inline-flex;
+  margin-left: 8px;
+  vertical-align: middle;
+  color: #111;
 }
-.activity-achievement {
-  width: 18px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  color: #8a5905;
-}
-.activity-achievement.rank-2 {
-  color: #5d6866;
-}
-.activity-achievement.rank-3 {
-  color: #88502d;
-}
-.activity-achievement-count {
-  margin-left: 3px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
+.activity-sport-inline.running-sport svg {
+  transform: scaleX(-1);
 }
 .activity-feed-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
   align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+.activity-feed-stats > :first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 .activity-pr-banner {
   display: flex;
@@ -1051,9 +1067,10 @@ button {
 }
 .activity-stat {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  min-width: 0;
-  padding: 3px 15px;
+  min-width: max-content;
+  padding: 3px 10px;
   border-left: 1px solid #e4e6e0;
 }
 .activity-stat strong {
@@ -1068,6 +1085,32 @@ button {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
+.activity-medal-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-height: 28px;
+}
+.activity-achievement {
+  display: grid;
+  width: 20px;
+  height: 22px;
+  place-items: center;
+  color: #f59e0b;
+}
+.activity-achievement.rank-2 {
+  color: #5d6866;
+}
+.activity-achievement.rank-3 {
+  color: #88502d;
+}
+.activity-medal-value strong {
+  margin-right: 3px;
+  color: #111;
+  font-size: 18px;
+  font-weight: 600;
 }
 .activity-card-media {
   display: grid;
@@ -3004,6 +3047,9 @@ button {
         minmax(150px, 0.55fr)
       );
   }
+  .activity-card-summary:not(.has-description) {
+    height: auto;
+  }
   .activity-feed-stats {
     grid-column: 2 / -1;
     margin-top: 3px;
@@ -3172,7 +3218,9 @@ button {
     height: 42px;
   }
   .activity-feed-stats {
+    display: grid;
     grid-column: 1 / -1;
+    grid-row: auto;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-top: 3px;
   }
@@ -3180,6 +3228,7 @@ button {
     display: none;
   }
   .activity-stat {
+    min-width: 0;
     padding: 4px 10px;
   }
   .activity-stat:first-child {

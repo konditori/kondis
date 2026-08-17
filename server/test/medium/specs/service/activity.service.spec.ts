@@ -36,7 +36,7 @@ describe(ActivityService.name, () => {
   });
 
   beforeEach(async () => {
-    await resetMediumTestDatabase(db);
+    await resetMediumTestDatabase(db, jobs);
     testUser = await factory.newUser();
   });
 

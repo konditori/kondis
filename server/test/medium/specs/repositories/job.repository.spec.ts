@@ -54,7 +54,7 @@ describe('JobRepository', () => {
   }, 60_000);
 
   beforeEach(async () => {
-    await resetMediumTestDatabase(db);
+    await resetMediumTestDatabase(db, jobs);
   });
 
   afterAll(async () => {

@@ -206,6 +206,10 @@ export class JobRepository implements OnApplicationShutdown {
 
     const boss = await this.getBoss();
     await boss.offWork(queue);
+    // offWork stops fetching new jobs but lets an in-flight handler finish. Wait for
+    // those handlers before reporting the queue paused so callers can safely perform
+    // maintenance such as truncating tables used by the job.
+    await this.waitForQueueIdle(queue);
     this.logger.log(`Paused queue: ${queue}`);
   }
 
@@ -264,6 +268,19 @@ export class JobRepository implements OnApplicationShutdown {
     for (;;) {
       const counts = await Promise.all(names.map((queue) => this.getJobCounts(queue)));
       if (counts.every(({ active, ready }) => active === 0 && ready === 0)) {
+        return;
+      }
+
+      await delay(COMPLETION_POLL_MS);
+    }
+  }
+
+  async waitForQueueIdle(...queues: QueueName[]): Promise<void> {
+    const names = queues.length > 0 ? queues : Object.values(QueueName);
+
+    for (;;) {
+      const counts = await Promise.all(names.map((queue) => this.getJobCounts(queue)));
+      if (counts.every(({ active }) => active === 0)) {
         return;
       }
 

@@ -18,7 +18,7 @@ import { UploadService } from 'src/services/upload.service';
 
 import { makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
-import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
+import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 import { activityFixtures } from 'test/medium/utils';
 import { createTestZip } from 'test/utils/zip';
 
@@ -65,8 +65,7 @@ describe(UploadService.name, () => {
 
   beforeEach(async () => {
     queue.mockClear();
-    await truncateAllTables(db);
-    await Promise.all(Object.values(QueueName).map((queueName) => jobsRepository.empty(queueName)));
+    await resetMediumTestDatabase(db, jobsRepository);
   });
 
   afterAll(async () => {
