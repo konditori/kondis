@@ -6,22 +6,22 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 import { ConfigService } from 'src/config/config.service';
 import { KYSELY, KondisDatabase } from 'src/db/database';
-import type { ActivityDto } from 'src/dtos/activity.dto';
+import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 
 const EVENT_CHANNEL = 'kondis_realtime';
 
 type EventMap = {
   ActivityCreate: [activity: ActivityDto];
   ActivityUpdate: [activity: ActivityDto];
+  ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
 };
 
 export type EmitEvent = keyof EventMap;
 export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
-type WebsocketEvent = {
-  type: 'activity.created' | 'activity.updated';
-  activity: ActivityDto;
-};
+type WebsocketEvent =
+  | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
+  | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> };
 
 type EventSerializers = {
   [T in EmitEvent]: (...args: ArgsOf<T>) => WebsocketEvent;
@@ -30,6 +30,7 @@ type EventSerializers = {
 const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
+  ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
 };
 
 @Injectable()

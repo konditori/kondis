@@ -1021,7 +1021,6 @@ private fun ActivityEditor(
                 "with_pet" to "With Pet",
                 "competition" to "Competition",
                 "for_a_cause" to "For a Cause",
-                "bad_gps" to "Bad GPS",
             ).forEach { (tag, label) ->
                 FilterChip(selected = tag in tags, onClick = {
                     onTagsChange(

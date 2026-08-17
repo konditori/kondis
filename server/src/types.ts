@@ -17,7 +17,6 @@ export const ACTIVITY_TAG_IDS = [
   'with_pet',
   'with_kid',
   'for_a_cause',
-  'bad_gps',
 ] as const;
 export type ActivityTag = (typeof ACTIVITY_TAG_IDS)[number];
 
@@ -37,7 +36,6 @@ export const ACTIVITY_TAGS: readonly ActivityTagSettings[] = [
   { tag: 'with_pet', label: 'With Pet', sports: 'all' },
   { tag: 'with_kid', label: 'With Kid', sports: 'all' },
   { tag: 'for_a_cause', label: 'For a Cause', sports: 'all' },
-  { tag: 'bad_gps', label: 'Bad GPS', sports: 'all' },
 ];
 
 export enum BestEffortGroup {

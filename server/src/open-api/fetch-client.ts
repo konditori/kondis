@@ -910,7 +910,6 @@ export enum ActivityTag_Output {
   WithPet = 'with_pet',
   WithKid = 'with_kid',
   ForACause = 'for_a_cause',
-  BadGps = 'bad_gps',
 }
 export enum BestEffortType_Output {
   $400M = '400m',
@@ -1039,7 +1038,6 @@ export enum ActivityUpdateDtoActivityTag {
   WithPet = 'with_pet',
   WithKid = 'with_kid',
   ForACause = 'for_a_cause',
-  BadGps = 'bad_gps',
 }
 export enum ActivityUpdateDtoActivityType {
   AlpineSki = 'alpine_ski',

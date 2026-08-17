@@ -18,7 +18,7 @@
     X,
     Zap,
   } from "@lucide/svelte";
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import {
     activityControllerDeleteById,
@@ -55,9 +55,15 @@
 
   let { data } = $props();
   let updatedActivity = $state<Activity | null>(null);
+  let updatedBestEfforts = $state<ActivityDetail["bestEfforts"] | undefined>(
+    undefined,
+  );
   const activity = $derived<ActivityDetail>({
     ...data.activity,
     ...(updatedActivity ?? {}),
+    ...(updatedBestEfforts === undefined
+      ? {}
+      : { bestEfforts: updatedBestEfforts }),
   });
   let editing = $state(false);
   let saving = $state(false);
@@ -77,7 +83,6 @@
     with_pet: "With Pet",
     with_kid: "With Kid",
     for_a_cause: "For a Cause",
-    bad_gps: "Bad GPS",
   };
   const availableTags = $derived(
     (Object.keys(tagLabels) as Activity["tags"][number][]).filter(
@@ -91,9 +96,7 @@
   );
   let draftSport = $state<Activity["sport"]>(Sport.Other);
   const Icon = $derived(sportIcon(activity.sport));
-  const excludedFromRankings = $derived(
-    activity.excludeFromRankings || activity.tags?.includes("bad_gps") === true,
-  );
+  const excludedFromRankings = $derived(activity.excludeFromRankings);
   const activitySettings = $derived(
     activityTypeSettings(data.activityTypes, activity.sport),
   );
@@ -178,7 +181,6 @@
   };
   let highlightedRange = $state<HighlightRange | null>(null);
   let graphPointTime = $state<number | null>(null);
-  let refreshPending = false;
   let imageCarousel = $state<HTMLDivElement>();
   let imagePage = $state(0);
   const viewableImages = $derived(
@@ -286,22 +288,17 @@
   $effect(() => {
     const unsubscribe = subscribeToActivityEvents(
       data.eventsUrl,
-      (updated, type) => {
-        if (
-          type !== "activity.updated" ||
-          updated.id !== activity.id ||
-          refreshPending
-        ) {
+      (event) => {
+        if (event.activity.id !== activity.id) {
           return;
         }
-        refreshPending = true;
-        void invalidateAll().finally(() => {
-          refreshPending = false;
-        });
+        if (event.type === "activity.best-efforts.available") {
+          updatedBestEfforts = event.activity.bestEfforts;
+        } else if (event.type === "activity.updated") {
+          updatedActivity = { ...(updatedActivity ?? {}), ...event.activity };
+        }
       },
-      () => {
-        void invalidateAll();
-      },
+      () => {},
     );
     return unsubscribe;
   });
@@ -432,7 +429,6 @@
       )) as Activity;
       updatedActivity = updated;
       editing = false;
-      void invalidateAll();
     } catch {
       editError = "Could not save the activity. Please try again.";
     } finally {
@@ -598,9 +594,8 @@
         class="activity-tags"
         aria-label="Activity tags"
       >
-        {#each activity.tags as tag}<span
-            class:tag-warning={tag === "bad_gps"}
-            class="activity-tag">{tagLabels[tag]}</span
+        {#each activity.tags as tag}<span class="activity-tag"
+            >{tagLabels[tag]}</span
           >{/each}
       </div>{/if}
     {#if activity.description}<p class="activity-description">

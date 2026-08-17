@@ -10,8 +10,7 @@ export type ActivityTag =
   | "recovery"
   | "with_pet"
   | "with_kid"
-  | "for_a_cause"
-  | "bad_gps";
+  | "for_a_cause";
 
 export type Activity = {
   id: string;

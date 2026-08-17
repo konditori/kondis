@@ -8,7 +8,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     ALTER TABLE activity
       ADD CONSTRAINT activity_tags_check CHECK (
-        tags <@ ARRAY['race','long_run','commute','workout','competition','recovery','with_pet','with_kid','for_a_cause','bad_gps']::text[]
+        tags <@ ARRAY['race','long_run','commute','workout','competition','recovery','with_pet','with_kid','for_a_cause']::text[]
       )
   `.execute(db);
   await sql`CREATE INDEX activity_tags_idx ON activity USING GIN (tags)`.execute(db);

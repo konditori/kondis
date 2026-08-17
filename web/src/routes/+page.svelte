@@ -121,7 +121,9 @@
   $effect(() =>
     subscribeToActivityEvents(
       data.eventsUrl,
-      (activity) => {
+      (event) => {
+        if (event.type === "activity.best-efforts.available") return;
+        const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(
             ({ uploadId }) => uploadId !== activity.uploadId,

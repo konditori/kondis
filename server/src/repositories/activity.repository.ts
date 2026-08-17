@@ -33,6 +33,8 @@ const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
 const ROUTE_MIN_LENGTH_RATIO = 0.88;
 const ROUTE_MAX_LENGTH_RATIO = 1.14;
 const ROUTE_FRECHET_TOLERANCE_METERS = 200;
+const UNRANKED = 2_147_483_647;
+const RANKING_UPDATE_BATCH_SIZE = 1000;
 
 // Heavy geo/vector columns fetched separately (e.g. via ST_AsGeoJSON) instead of by default.
 const ACTIVITY_EXCLUDED_COLUMNS = new Set<keyof Activity>(['track', 'detail_track', 'route_embedding']);
@@ -241,7 +243,7 @@ export class ActivityRepository {
         SELECT id, sport, track, route_embedding, kondis_normalize_route(track) AS normalized_track
         FROM activity
         WHERE id = ${activityId}::uuid
-          AND NOT ('bad_gps' = ANY(tags))
+          AND exclude_from_rankings = false
           AND track IS NOT NULL
           AND route_embedding IS NOT NULL
       ), candidates AS MATERIALIZED (
@@ -251,7 +253,7 @@ export class ActivityRepository {
         WHERE candidate.sport = source.sport
           AND candidate.track IS NOT NULL
           AND candidate.route_embedding IS NOT NULL
-          AND NOT ('bad_gps' = ANY(candidate.tags))
+          AND candidate.exclude_from_rankings = false
           AND ST_DWithin(candidate.track, source.track, ${ROUTE_PREFILTER_RADIUS_METERS})
         ORDER BY candidate.route_embedding <-> source.route_embedding
         LIMIT ${ROUTE_CANDIDATE_LIMIT}
@@ -442,9 +444,10 @@ export class ActivityRepository {
     }
 
     if (tags?.length) {
-      const expression = tagMatch === 'all'
-        ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
-        : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
+      const expression =
+        tagMatch === 'all'
+          ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
+          : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
       query = query.where(expression);
     }
 
@@ -460,7 +463,12 @@ export class ActivityRepository {
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
-  async count(search?: string, userId?: string, tags?: ActivityTag[], tagMatch: 'any' | 'all' = 'any'): Promise<number> {
+  async count(
+    search?: string,
+    userId?: string,
+    tags?: ActivityTag[],
+    tagMatch: 'any' | 'all' = 'any',
+  ): Promise<number> {
     let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
     if (userId) {
       query = query.where('activity.user_id', '=', userId);
@@ -477,9 +485,10 @@ export class ActivityRepository {
       );
     }
     if (tags?.length) {
-      const expression = tagMatch === 'all'
-        ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
-        : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
+      const expression =
+        tagMatch === 'all'
+          ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
+          : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
       query = query.where(expression);
     }
     const row = await query.executeTakeFirstOrThrow();
@@ -519,7 +528,6 @@ export class ActivityRepository {
       .where('activity.sport', 'in', sports)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
-      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .orderBy('activity.started_at', 'asc')
       .orderBy('activity.id', 'asc')
       .execute();
@@ -538,12 +546,8 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity.exclude_from_rankings', '=', false)
-      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .where((eb) =>
-        eb.or([
-          eb('activity_best_effort.overall_rank', '<=', 3),
-          eb('activity_best_effort.year_rank', '<=', 3),
-        ]),
+        eb.or([eb('activity_best_effort.overall_rank', '<=', 3), eb('activity_best_effort.year_rank', '<=', 3)]),
       )
       .execute();
   }
@@ -552,18 +556,11 @@ export class ActivityRepository {
     return this.db
       .selectFrom('activity_best_effort')
       .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
-      .select([
-        'activity_best_effort.activity_id',
-        sql<number>`count(*)::int`.as('achievement_count'),
-      ])
+      .select(['activity_best_effort.activity_id', sql<number>`count(*)::int`.as('achievement_count')])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity.exclude_from_rankings', '=', false)
-      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .where((eb) =>
-        eb.or([
-          eb('activity_best_effort.overall_rank', '<=', 3),
-          eb('activity_best_effort.year_rank', '<=', 3),
-        ]),
+        eb.or([eb('activity_best_effort.overall_rank', '<=', 3), eb('activity_best_effort.year_rank', '<=', 3)]),
       )
       .groupBy('activity_best_effort.activity_id')
       .execute();
@@ -578,7 +575,6 @@ export class ActivityRepository {
       .where('activity.sport', 'in', sports)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
-      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .execute();
   }
 
@@ -589,21 +585,26 @@ export class ActivityRepository {
         update = update.where('user_id', '=', userId);
       }
       const row = await update.returning('id').executeTakeFirst();
-      if (!row || (input.sport === undefined && input.exclude_from_rankings === undefined)) {
+      if (
+        !row ||
+        (input.sport === undefined && input.tags === undefined && input.exclude_from_rankings === undefined)
+      ) {
         return row;
       }
 
-      if (input.sport === undefined && input.exclude_from_rankings !== undefined) {
-        return row;
+      // Best-effort computation is deliberately queued by ActivityService. Keep
+      // existing efforts visible while queued work runs, but invalidate route
+      // matches immediately when sport or ranking exclusion changes.
+      if (input.sport !== undefined || input.exclude_from_rankings !== undefined) {
+        await trx.deleteFrom('activity_route_match').where('activity_id', '=', id).execute();
+        await trx.deleteFrom('activity_route_match').where('matched_activity_id', '=', id).execute();
+        await trx.updateTable('activity').set({ route_matches_computed_at: null }).where('id', '=', id).execute();
       }
-      await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
-      await trx.deleteFrom('activity_route_match').where('activity_id', '=', id).execute();
-      await trx.deleteFrom('activity_route_match').where('matched_activity_id', '=', id).execute();
-      await trx
-        .updateTable('activity')
-        .set({ best_efforts_computed_at: null, route_matches_computed_at: null })
-        .where('id', '=', id)
-        .execute();
+
+      if (input.sport !== undefined) {
+        await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
+        await trx.updateTable('activity').set({ best_efforts_computed_at: null }).where('id', '=', id).execute();
+      }
       return row;
     });
     return updated ? this.getById(updated.id) : undefined;
@@ -644,7 +645,88 @@ export class ActivityRepository {
   }
 
   async refreshBestEffortRankings(): Promise<void> {
-    await sql`SELECT kondis_refresh_best_effort_rankings()`.execute(this.db);
+    await this.db.transaction().execute(async (trx) => {
+      // Jobs are exclusive, but the lock also protects this invariant when this repository
+      // is used outside the worker (for example, in maintenance tooling).
+      await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:best-effort-rankings'))`.execute(trx);
+
+      const rows = await trx
+        .selectFrom('activity_best_effort')
+        .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
+        .select([
+          'activity_best_effort.activity_id',
+          'activity_best_effort.type',
+          'activity_best_effort.value',
+          'activity_best_effort.value_kind',
+          'activity.sport',
+          'activity.started_at',
+          'activity.timezone_offset_minutes',
+          'activity.exclude_from_rankings',
+          'activity.tags',
+        ])
+        .execute();
+
+      const efforts = rows.map((row) => {
+        const startedAt = new Date(row.started_at);
+        startedAt.setUTCMinutes(startedAt.getUTCMinutes() + (row.timezone_offset_minutes ?? 0));
+        return {
+          ...row,
+          year: startedAt.getUTCFullYear(),
+          overallRank: UNRANKED,
+          yearRank: UNRANKED,
+          eligible: !row.exclude_from_rankings,
+          sportGroup: ['run', 'trail_run', 'virtual_run'].includes(row.sport) ? 'run' : 'ride',
+        };
+      });
+
+      const addToGroup = <T>(groups: Map<string, T[]>, key: string, effort: T): void => {
+        const group = groups.get(key) ?? [];
+        group.push(effort);
+        groups.set(key, group);
+      };
+      const overallGroups = new Map<string, typeof efforts>();
+      const yearGroups = new Map<string, typeof efforts>();
+      for (const effort of efforts) {
+        if (!effort.eligible) continue;
+        addToGroup(overallGroups, `${effort.sportGroup}:${effort.type}`, effort);
+        addToGroup(yearGroups, `${effort.sportGroup}:${effort.type}:${effort.year}`, effort);
+      }
+
+      const rank = (groups: Map<string, typeof efforts>, property: 'overallRank' | 'yearRank'): void => {
+        for (const group of groups.values()) {
+          group
+            .sort((left, right) => {
+              const valueOrder = left.value_kind === 'duration' ? left.value - right.value : right.value - left.value;
+              return valueOrder || left.activity_id.localeCompare(right.activity_id);
+            })
+            .forEach((effort, index) => {
+              effort[property] = index + 1;
+            });
+        }
+      };
+      rank(overallGroups, 'overallRank');
+      rank(yearGroups, 'yearRank');
+
+      for (let index = 0; index < efforts.length; index += RANKING_UPDATE_BATCH_SIZE) {
+        const batch = efforts.slice(index, index + RANKING_UPDATE_BATCH_SIZE);
+        await sql`
+          UPDATE activity_best_effort AS effort
+          SET
+            year = ranked.year,
+            overall_rank = ranked.overall_rank,
+            year_rank = ranked.year_rank
+          FROM (VALUES ${sql.join(
+            batch.map(
+              (effort) =>
+                sql`(${effort.activity_id}::uuid, ${effort.type}::text, ${effort.year}::integer, ${effort.overallRank}::integer, ${effort.yearRank}::integer)`,
+            ),
+          )}) AS ranked(activity_id, type, year, overall_rank, year_rank)
+          WHERE (effort.activity_id, effort.type) = (ranked.activity_id, ranked.type)
+            AND (effort.year, effort.overall_rank, effort.year_rank)
+              IS DISTINCT FROM (ranked.year, ranked.overall_rank, ranked.year_rank)
+        `.execute(trx);
+      }
+    });
   }
 
   private async insertBestEfforts(
