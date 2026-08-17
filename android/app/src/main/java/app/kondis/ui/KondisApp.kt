@@ -153,9 +153,9 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                     }
                     entry<RecordKey> {
                         RecordRoute(
-                            onActivitySaved = {
+                            onActivitySaved = { id ->
                                 backStack.clear()
-                                backStack.add(FeedKey)
+                                backStack.add(ActivityDetailKey(id))
                             },
                         )
                     }

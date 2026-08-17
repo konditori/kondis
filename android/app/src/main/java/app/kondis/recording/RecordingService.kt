@@ -35,6 +35,8 @@ class RecordingService :
     LocationListener {
     @Inject lateinit var recordingManager: RecordingManager
 
+    @Inject lateinit var liveTracking: LiveTrackingRepository
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var locationManager: LocationManager
     private var ticker: Job? = null
@@ -54,7 +56,7 @@ class RecordingService :
             ACTION_PAUSE -> pause()
             ACTION_RESUME -> resume()
             ACTION_STOP -> stop()
-            else -> start()
+            else -> start(intent?.getStringExtra(EXTRA_SPORT) ?: "run")
         }
         return START_NOT_STICKY
     }
@@ -81,23 +83,34 @@ class RecordingService :
         super.onDestroy()
     }
 
-    private fun start() {
+    private fun start(sport: String) {
         recordingManager.start()
         startForeground(NOTIFICATION_ID, notification())
         startLocationUpdates()
         startTicker()
+        recordingManager.state.value.startedAt?.let { startedAt ->
+            scope.launch(Dispatchers.IO) {
+                runCatching { liveTracking.start(sport, startedAt) }
+            }
+        }
     }
 
     private fun pause() {
         recordingManager.pause()
         stopLocationUpdates()
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification())
+        scope.launch(Dispatchers.IO) {
+            runCatching { liveTracking.updateState("paused", recordingManager.state.value) }
+        }
     }
 
     private fun resume() {
         recordingManager.resume()
         startLocationUpdates()
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification())
+        scope.launch(Dispatchers.IO) {
+            runCatching { liveTracking.updateState("recording", recordingManager.state.value) }
+        }
     }
 
     private fun stop() {
@@ -112,6 +125,11 @@ class RecordingService :
             scope.launch {
                 while (isActive) {
                     recordingManager.tick()
+                    if (recordingManager.state.value.elapsedSeconds % LIVE_SYNC_SECONDS == 0L) {
+                        scope.launch(Dispatchers.IO) {
+                            runCatching { liveTracking.sync(recordingManager.state.value) }
+                        }
+                    }
                     delay(1_000)
                 }
             }
@@ -185,7 +203,9 @@ class RecordingService :
         const val ACTION_PAUSE = "app.kondis.recording.PAUSE"
         const val ACTION_RESUME = "app.kondis.recording.RESUME"
         const val ACTION_STOP = "app.kondis.recording.STOP"
+        const val EXTRA_SPORT = "app.kondis.recording.SPORT"
         private const val CHANNEL_ID = "workout_recording"
         private const val NOTIFICATION_ID = 2293
+        private const val LIVE_SYNC_SECONDS = 10L
     }
 }

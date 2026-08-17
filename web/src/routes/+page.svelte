@@ -9,9 +9,19 @@
   import { page } from "$app/state";
   import type { Snapshot } from "@sveltejs/kit";
   import ActivityCard from "$lib/components/ActivityCard.svelte";
+  import RouteMap from "$lib/components/RouteMap.svelte";
   import { activityControllerListRecent, getSdkRequestOptions } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import type { Activity, ActivityPage } from "$lib/types";
+  import { activityTypeLabel, sportIcon } from "$lib/activity-types";
+  import {
+    distance,
+    duration,
+    elevation,
+    localDate,
+    localTime,
+    pace,
+  } from "$lib/format";
 
   let { data } = $props();
   let query = $state(page.url.searchParams.get("search") ?? "");
@@ -269,6 +279,77 @@
         ><strong>Server unavailable</strong> Start the Kondis API to load your activities.</span
       >
     </div>
+  {/if}
+
+  {#if data.liveWorkouts.length}
+    <section class="live-workout-list" aria-label="Live workouts">
+      {#each data.liveWorkouts as workout (workout.id)}
+        {@const Icon = sportIcon(workout.sport)}
+        {@const averageSpeed =
+          workout.elapsedSeconds > 0
+            ? workout.distanceMeters / workout.elapsedSeconds
+            : null}
+        <article class="activity-card live-activity-card">
+          <a class="activity-card-summary" href={`/live/session/${workout.id}`}>
+            <div class="sport-badge">
+              <Icon size={24} strokeWidth={1.8} />
+              <span
+                class:paused={workout.status === "paused"}
+                class="live-beacon"
+                aria-label="Live recording"
+              ></span>
+            </div>
+            <div class="activity-primary">
+              <div class="activity-title">
+                <h3>{activityTypeLabel(data.activityTypes, workout.sport)}</h3>
+              </div>
+              <p>
+                {localDate(workout.startedAt)} · {localTime(workout.startedAt)} ·
+                {workout.status === "paused" ? "Paused" : "Live"}
+              </p>
+            </div>
+            <div class="activity-feed-stats">
+              <div class="activity-stat">
+                <strong
+                  >{distance(workout.distanceMeters, data.unitSystem)}</strong
+                ><small>Distance</small>
+              </div>
+              <div class="activity-stat">
+                <strong>{pace(averageSpeed, data.unitSystem)}</strong><small
+                  >Pace</small
+                >
+              </div>
+              <div class="activity-stat">
+                <strong>{duration(workout.elapsedSeconds)}</strong><small
+                  >Moving time</small
+                >
+              </div>
+              <div class="activity-stat">
+                <strong>{elevation(null, data.unitSystem)}</strong><small
+                  >Elevation</small
+                >
+              </div>
+            </div>
+          </a>
+          {#if workout.route.length >= 2}
+            <a
+              class="activity-card-media-link"
+              href={`/live/session/${workout.id}`}
+            >
+              <div class="activity-card-media">
+                <div class="activity-card-map live-list-map">
+                  <RouteMap
+                    coordinates={workout.route}
+                    compact
+                    showEndpoints={false}
+                  />
+                </div>
+              </div>
+            </a>
+          {/if}
+        </article>
+      {/each}
+    </section>
   {/if}
 
   {#if displayedActivities.length}

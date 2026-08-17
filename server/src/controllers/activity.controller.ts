@@ -13,15 +13,15 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
-import { AuthenticatedUser, CurrentUser } from 'src/auth';
+import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
 import {
   ActivityDetailDto,
   ActivityDto,
   ActivityIdParamDto,
   ActivityListQueryDto,
   ActivityListResponseDto,
-  ActivityTypeListResponseDto,
   ActivityTagListResponseDto,
+  ActivityTypeListResponseDto,
   ActivityUpdateDto,
   BestEffortListParamDto,
   BestEffortListResponseDto,
@@ -48,6 +48,7 @@ export class ActivityController {
   @ApiOperation({ summary: 'List activity types and their behavior' })
   @ZodResponse({ status: 200, description: 'Activity type settings', type: ActivityTypeListResponseDto })
   @Get('types')
+  @Public()
   listTypes(): ActivityTypeListResponseDto {
     return [...ACTIVITY_TYPES];
   }
@@ -56,7 +57,10 @@ export class ActivityController {
   @ZodResponse({ status: 200, description: 'Activity tag settings', type: ActivityTagListResponseDto })
   @Get('tags')
   listTags(): ActivityTagListResponseDto {
-    return ACTIVITY_TAGS.map((tag) => ({ ...tag, sports: tag.sports === 'all' ? 'all' : [...tag.sports] })) as unknown as ActivityTagListResponseDto;
+    return ACTIVITY_TAGS.map((tag) => ({
+      ...tag,
+      sports: tag.sports === 'all' ? 'all' : [...tag.sports],
+    })) as unknown as ActivityTagListResponseDto;
   }
 
   @ApiOperation({ summary: 'List best efforts over time for a sport' })
