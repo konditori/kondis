@@ -440,7 +440,7 @@
     const nearest = slides.reduce(
       (best, slide, index) =>
         Math.abs(slide.offsetLeft - imageCarousel!.scrollLeft) <
-          Math.abs(slides[best]!.offsetLeft - imageCarousel!.scrollLeft)
+        Math.abs(slides[best]!.offsetLeft - imageCarousel!.scrollLeft)
           ? index
           : best,
       0,
@@ -581,7 +581,10 @@
         {/each}
       </div>
       {#if imagePageCount > 1}
-        <div class="activity-visual-controls" aria-label="Photo carousel controls">
+        <div
+          class="activity-visual-controls"
+          aria-label="Photo carousel controls"
+        >
           <button
             type="button"
             aria-label="Previous photo"
@@ -690,7 +693,8 @@
             <div class="map-key">
               <span><i class="start-dot"></i> Start</span><span
                 ><i class="finish-dot"></i> Finish</span
-              ></div>
+              >
+            </div>
           {/if}
         </section>
       </section>
