@@ -231,7 +231,15 @@ export const ACTIVITY_TYPES = [
 
 export type ActivityType = (typeof ACTIVITY_TYPES)[number]['type'];
 
-export const ACTIVITY_TYPE_IDS = ACTIVITY_TYPES.map(({ type }) => type) as [ActivityType, ...ActivityType[]];
+const asNonEmptyArray = <T>(values: readonly T[]): [T, ...T[]] => {
+  const [first, ...rest] = values;
+  if (first === undefined) {
+    throw new Error('Expected at least one value');
+  }
+  return [first, ...rest];
+};
+
+export const ACTIVITY_TYPE_IDS = asNonEmptyArray(ACTIVITY_TYPES.map(({ type }) => type));
 
 export const RUNNING_BEST_EFFORTS = [
   { type: '400m', distance: 400, valueKind: 'duration', higherIsBetter: false },
@@ -300,9 +308,9 @@ export type BestEffort = {
   valueKind: BestEffortValueKind;
 };
 
-export const BEST_EFFORT_TYPES = [
+export const BEST_EFFORT_TYPES = asNonEmptyArray([
   ...new Set([...RUNNING_BEST_EFFORTS.map(({ type }) => type), ...CYCLING_BEST_EFFORTS.map(({ type }) => type)]),
-] as [BestEffortType, ...BestEffortType[]];
+]);
 
 export type UploadedFileData = {
   originalname: string;

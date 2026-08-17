@@ -16,6 +16,9 @@ pnpm = "11.20.0"
 pin = true
 lockfile = true
 
+[tasks.lint-oxlint]
+run = "pnpm lint:oxlint"
+
 [tasks.dev]
 dir = "docker"
 interactive = true

@@ -56,7 +56,7 @@ export const toName = (value?: string | number | null): string | null => {
   if (value === undefined || value === null) {
     return null;
   }
-  return typeof value === 'string' ? value : String(value);
+  return String(value);
 };
 
 const heartRate = (value?: number | null): number | null => {

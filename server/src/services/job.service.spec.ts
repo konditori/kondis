@@ -37,11 +37,9 @@ describe('JobService', () => {
   } as unknown as JobRepository;
 
   const setup = (workers = [WorkerType.API, WorkerType.JOBS]) =>
-    newTestService(
-      JobService,
-      [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })],
-      { jobRepository },
-    );
+    newTestService(JobService, [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })], {
+      jobRepository,
+    });
 
   const makeService = (workers = [WorkerType.API, WorkerType.JOBS]) => setup(workers).sut;
 

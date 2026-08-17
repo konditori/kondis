@@ -94,6 +94,7 @@
       void activityControllerListRecent({ search }, getSdkRequestOptions())
         .then((page) => {
           if (generation !== searchGeneration) return;
+          // SAFETY: The generated client endpoint returns the ActivityPage API contract.
           const nextPage = page as ActivityPage;
           const sameActivities =
             searchPage &&
@@ -137,6 +138,7 @@
   $effect(() => {
     const handleClearSearch = () => clearSearch();
     const handleSearch = (event: Event) => {
+      // SAFETY: The only registered kondis:search producer dispatches CustomEvent<string>.
       query = String((event as CustomEvent<string>).detail ?? "");
     };
     window.addEventListener("kondis:clear-search", handleClearSearch);
@@ -149,6 +151,7 @@
 
   async function refreshRecent() {
     try {
+      // SAFETY: The generated client endpoint returns the ActivityPage API contract.
       const page = (await activityControllerListRecent(
         {},
         getSdkRequestOptions(),
@@ -174,6 +177,7 @@
     loading = true;
     loadError = false;
     try {
+      // SAFETY: The generated client endpoint returns the ActivityPage API contract.
       const page = (await activityControllerListRecent(
         hasSearch
           ? { cursor: searchCursor!, search: query.trim() }

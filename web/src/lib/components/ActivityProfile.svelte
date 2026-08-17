@@ -134,6 +134,7 @@
   };
 
   function handleGraphMove(event: PointerEvent) {
+    // SAFETY: This handler is attached to the SVG graph element.
     const svg = event.currentTarget as SVGSVGElement;
     const bounds = svg.getBoundingClientRect();
     const graphX = ((event.clientX - bounds.left) / bounds.width) * width;

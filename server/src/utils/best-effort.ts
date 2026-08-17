@@ -7,6 +7,7 @@ import {
 } from 'src/types';
 
 type DistanceTimePoint = { distance: number; time: number };
+type CumulativePower = { energy: number; invalidDuration: number };
 
 const buildPoints = (distance: number[], time: number[]): DistanceTimePoint[] => {
   const points: DistanceTimePoint[] = [];
@@ -234,7 +235,7 @@ export const computeCyclingPowerBestEfforts = (power: number[], time: number[]):
     invalidDuration[index] = invalidDuration[index - 1] + (Number.isFinite(points[index - 1].power) ? 0 : duration);
   }
 
-  const cumulativeAt = (targetTime: number): { energy: number; invalidDuration: number } => {
+  const cumulativeAt = (targetTime: number): CumulativePower => {
     let low = 0;
     let high = points.length - 1;
     while (low < high) {

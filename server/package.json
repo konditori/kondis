@@ -15,6 +15,7 @@
     "format": "prettier --cache --check .",
     "format:fix": "prettier --cache --write --list-different .",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
+    "lint:oxlint": "pnpm --dir .. exec oxlint --config ./oxlint.config.ts server/src server/test",
     "lint:fix": "pnpm run lint --fix",
     "check": "tsc --noEmit",
     "test": "vitest run",

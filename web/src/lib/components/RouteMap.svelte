@@ -3,6 +3,9 @@
   import { MapPinOff } from "@lucide/svelte";
   import { ActivityMapStyle } from "$lib/activity-types";
 
+  type RoutePoint = { time: number; coordinate: [number, number] };
+  type ClosestRoutePoint = { point: RoutePoint; distance: number };
+
   let {
     coordinates,
     mode = ActivityMapStyle.Route,
@@ -17,7 +20,7 @@
     mode?: ActivityMapStyle;
     compact?: boolean;
     showEndpoints?: boolean;
-    route?: { time: number; coordinate: [number, number] }[];
+    route?: RoutePoint[];
     medals?: {
       type: string;
       rank: number;
@@ -71,7 +74,7 @@
 
   function escapeHtml(value: string): string {
     return value.replace(
-      /[&<>\"']/g,
+      /[&<>"']/g,
       (character) =>
         ({
           "&": "&amp;",
@@ -310,14 +313,15 @@
                 ? { point: candidate, distance: candidateDistance }
                 : closest;
             },
-            { point: route[0], distance: Number.POSITIVE_INFINITY } as {
-              point: (typeof route)[number];
-              distance: number;
-            },
+            {
+              point: route[0]!,
+              distance: Number.POSITIVE_INFINITY,
+            } satisfies ClosestRoutePoint,
           );
           onPointHover?.(nearest.point);
         };
         hitArea.on("mousemove mouseover", (event) =>
+          // SAFETY: Leaflet emits LeafletMouseEvent values for mousemove and mouseover on a polyline.
           updatePoint(event as import("leaflet").LeafletMouseEvent),
         );
         hitArea.on("mouseout", () => onPointHover?.(null));

@@ -6,12 +6,14 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   try {
+    // SAFETY: The generated client endpoint returns the MatchedRouteHistory API contract.
     const history = (await activityControllerListMatchedRoutes(
       { id: params.id },
       getServerSdkRequestOptions(locals.kondisFetch),
     )) as MatchedRouteHistory;
     return { history };
   } catch (requestError) {
+    // SAFETY: Generated client errors expose an optional HTTP status code.
     const status = (requestError as { status?: number }).status;
     if (status === 404) error(404, "Activity not found");
     error(503, "Could not load matched routes");

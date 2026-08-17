@@ -15,6 +15,7 @@ const noopClassDecorator = (target: DecoratorTarget): void => {
 
 // Registers the decorated property on its class so column lists can be derived from the schema instead of hand-copied.
 const registerColumn = (target: DecoratorTarget, propertyKey: string | symbol): void => {
+  // SAFETY: Decorators receive a class prototype whose constructor carries this module's column symbol.
   const ctor = (target as { constructor: ColumnCarrier }).constructor;
   if (!Object.prototype.hasOwnProperty.call(ctor, COLUMNS)) {
     ctor[COLUMNS] = [];
@@ -45,4 +46,5 @@ export const Check = (_options?: object) => noopClassDecorator;
 
 // Single source of truth for a table's column names, derived from its @Column-decorated fields.
 export const getColumns = <T>(ctor: TableConstructor & { new (...arguments_: never[]): T }): (keyof T)[] =>
+  // SAFETY: registerColumn writes only string property names under COLUMNS on this constructor.
   ((ctor as unknown as ColumnCarrier)[COLUMNS] ?? []) as (keyof T)[];

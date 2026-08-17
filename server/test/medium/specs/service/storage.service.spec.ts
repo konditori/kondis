@@ -30,7 +30,7 @@ describe(StorageService.name, () => {
 
   const setup = () => {
     const repository = new StorageRepository({ storageDir } as ConfigService, new CryptoRepository());
-    const jobs = { getReferencedTemporaryPaths: async () => new Set<string>() } as unknown as JobRepository;
+    const jobs = { getReferencedTemporaryPaths: () => Promise.resolve(new Set<string>()) } as unknown as JobRepository;
     return { sut: new StorageService(repository, jobs, new ConsoleLogger()), repository };
   };
 

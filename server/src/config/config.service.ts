@@ -21,11 +21,11 @@ export type JobsConfig = {
   cron: boolean;
 };
 
-const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
+const DEFAULT_CONCURRENCY = {
   [QueueName.ActivityParsing]: 2,
   [QueueName.BackgroundTask]: 2,
   [QueueName.Storage]: 2,
-};
+} as const satisfies Record<QueueName, number>;
 
 const readSecret = (name: string): string | undefined => {
   const filePath = process.env[`${name}_FILE`];
@@ -95,6 +95,7 @@ const parseWorkers = (raw: string | undefined): WorkerType[] => {
     throw new Error('KONDIS_WORKERS was set but contained no valid worker names.');
   }
 
+  // SAFETY: Every requested value was validated against the WorkerType set above.
   return requested as WorkerType[];
 };
 
@@ -108,6 +109,7 @@ const parseConcurrency = (): Record<QueueName, number> => {
     readPositiveInteger(concurrencyEnvVar(queue), fallback || DEFAULT_CONCURRENCY[queue]),
   ]);
 
+  // SAFETY: entries are constructed from every QueueName with a validated numeric concurrency value.
   return Object.fromEntries(entries) as Record<QueueName, number>;
 };
 

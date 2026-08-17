@@ -143,6 +143,7 @@ export class GpxRepository {
       throw new GpxDecodeError('File is not a valid GPX file: missing gpx root element');
     }
 
+    // SAFETY: getDocument confirms that the parsed XML has a GPX root before projecting its supported fields.
     return gpx as GpxDocument;
   }
 
@@ -302,6 +303,7 @@ export class GpxRepository {
 }
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  // SAFETY: The object and non-null checks establish a record-like value for XML traversal.
   typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
 
 const asArray = <T>(value: MaybeArray<T>): T[] => {

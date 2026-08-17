@@ -30,6 +30,7 @@ const byName = (a: { name: string }, b: { name: string }): number => (a.name < b
 
 const readPackageManifest = (directory: string): Record<string, unknown> => {
   try {
+    // SAFETY: package.json is parsed only to inspect package-manager controlled manifest fields.
     return JSON.parse(readFileSync(join(directory, 'package.json'), 'utf8')) as Record<string, unknown>;
   } catch {
     return {};
@@ -80,6 +81,7 @@ const collectNotices = (packages: PnpmLicensePackage[]): { notices: Notice[]; mi
     }
 
     const manifest = readPackageManifest(pkg.paths[0]);
+    // SAFETY: npm package manifests define optionalDependencies as a string-to-string dependency map.
     const optional = Object.keys((manifest.optionalDependencies as Record<string, string> | undefined) ?? {});
     const licenseTexts = readLicenseTexts(pkg.paths[0]);
 
@@ -171,6 +173,7 @@ async function run(): Promise<void> {
     maxBuffer: 64 * 1024 * 1024,
   });
 
+  // SAFETY: pnpm licenses --json emits a map from package identifiers to license package records.
   const grouped = JSON.parse(raw) as Record<string, PnpmLicensePackage[]>;
   const { notices, missingText } = collectNotices(Object.values(grouped).flat());
 

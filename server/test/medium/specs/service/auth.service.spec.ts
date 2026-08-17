@@ -2,8 +2,8 @@ import { ConflictException } from '@nestjs/common';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
-import { AuthService } from 'src/services/auth.service';
 import { UserRepository } from 'src/repositories/user.repository';
+import { AuthService } from 'src/services/auth.service';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
@@ -12,7 +12,7 @@ describe(AuthService.name, () => {
   let users: UserRepository;
   let sut: AuthService;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     db = createMediumTestDatabase();
     users = new UserRepository(db);
     sut = new AuthService(users, { authSecret: 'medium-test-secret' } as never);

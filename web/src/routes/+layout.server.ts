@@ -24,6 +24,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
         throw redirect(303, "/setup");
       throw redirect(303, "/login");
     }
+    // SAFETY: /api/v1/auth/me returns the authenticated-user contract after the successful response check above.
     user = (await me.json()) as typeof user;
   }
   let activityTypes: ActivityTypeSettingsOutput[] = [];
@@ -46,6 +47,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
     // Some unit tests call the load function with only the fields they exercise.
     // SvelteKit always supplies `url` at runtime, so keep the page-data contract
     // string-valued without forcing those minimal fixtures to construct one.
+    // SAFETY: This test-only branch is unreachable in SvelteKit, which always supplies a URL.
     return result as typeof result & { eventsUrl: string };
   }
   return { ...result, eventsUrl: activityEventsUrl(url) };

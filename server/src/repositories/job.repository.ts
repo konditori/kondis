@@ -68,6 +68,7 @@ export class JobRepository implements OnApplicationShutdown {
       const instance = this.moduleRef.get<Record<string, unknown>>(Service, { strict: false });
 
       for (const methodName of getMethodNames(instance)) {
+        // SAFETY: @OnJob metadata is considered only for service methods with the JobStatus handler contract.
         const handler = instance[methodName] as ((data: never) => Promise<JobStatus>) | undefined;
         if (typeof handler !== 'function') {
           continue;
@@ -122,6 +123,7 @@ export class JobRepository implements OnApplicationShutdown {
       return Promise.resolve(JobStatus.Skipped);
     }
 
+    // SAFETY: handlers are registered against the same JobName key that determines the JobOf payload.
     return item.handler(data as JobOf<T> as never);
   }
 
@@ -186,6 +188,7 @@ export class JobRepository implements OnApplicationShutdown {
         [],
       );
 
+      // SAFETY: The SQL query aliases its sole selected field as storage_path.
       for (const row of rows as { storage_path: unknown }[]) {
         if (typeof row.storage_path === 'string' && row.storage_path.startsWith('temporary/')) {
           paths.add(row.storage_path);
@@ -303,6 +306,7 @@ export class JobRepository implements OnApplicationShutdown {
       [name],
     );
 
+    // SAFETY: The count query selects every JobCounts field with integer values.
     const row = rows.at(0) as JobCounts | undefined;
     if (!row) {
       return empty;
@@ -478,6 +482,7 @@ export class JobRepository implements OnApplicationShutdown {
       throw new Error('Received a job before workers were started');
     }
 
+    // SAFETY: StoredJob values are created from JobItem instances before being handed to pg-boss.
     return this.onJobRun({ name: job.data.name, data: job.data.data } as JobItem);
   }
 

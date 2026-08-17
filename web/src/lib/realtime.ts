@@ -25,6 +25,7 @@ export function subscribeToActivityEvents(
     };
     socket.onmessage = ({ data }) => {
       try {
+        // SAFETY: The server's realtime endpoint serializes ActivityEvent payloads as JSON.
         const event = JSON.parse(String(data)) as Partial<ActivityEvent>;
         if (
           (event.type === "activity.created" ||

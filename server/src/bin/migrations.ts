@@ -58,7 +58,7 @@ const main = async (): Promise<void> => {
   }
 };
 
-void main().catch((error: unknown) => {
+void main().catch((error) => {
   console.error('[migrations] failed:', error);
   process.exitCode = 1;
 });

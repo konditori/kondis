@@ -41,7 +41,7 @@ async function run(): Promise<void> {
   console.log(`OpenAPI schema written to ${outputPath}`);
 }
 
-run().catch((error: unknown) => {
+run().catch((error) => {
   console.error('Failed to generate the OpenAPI schema:', error);
   process.exitCode = 1;
 });

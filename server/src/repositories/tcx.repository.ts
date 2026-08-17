@@ -175,6 +175,7 @@ export class TcxRepository {
 }
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  // SAFETY: The object and non-null checks establish a record-like value for XML traversal.
   typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
 
 const asArray = <T>(value: MaybeArray<T>): T[] => {

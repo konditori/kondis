@@ -136,6 +136,7 @@ export class LagomTakeoutParser {
     const chunks: Buffer[] = [];
     let byteSize = 0;
     for await (const value of entry.stream()) {
+      // SAFETY: unzipper streams yield Buffer-compatible byte chunks.
       const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value as Uint8Array);
       byteSize += chunk.length;
       if (byteSize > maximumBytes) {
@@ -163,6 +164,7 @@ export class LagomTakeoutParser {
     try {
       return Buffer.from(gunzipSync(contents, { maxOutputLength: UPLOAD_LIMITS.activityFileBytes }));
     } catch (error) {
+      // SAFETY: Node zlib errors expose the optional runtime error code.
       if ((error as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE') {
         throw new TakeoutLimitError(`GZIP activity exceeded ${UPLOAD_LIMITS.activityFileBytes} expanded bytes`, {
           cause: error,
@@ -244,6 +246,7 @@ export class LagomTakeoutParser {
     const manifestPath = manifests[0];
     const archiveRoot = manifestPath.slice(0, -MANIFEST_NAME.length);
     const manifest = await this.readEntry(entries.get(manifestPath)!, UPLOAD_LIMITS.manifestBytes);
+    // SAFETY: csv-parse returns arrays of string fields with the default non-column mode used here.
     const rows = parse(manifest.toString('utf8'), {
       bom: true,
       relax_column_count: true,

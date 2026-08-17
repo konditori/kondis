@@ -14,14 +14,18 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   let history: BestEffortHistory;
   try {
+    // SAFETY: The generated client endpoint returns the BestEffortHistory API contract.
     history = (await activityControllerListBestEfforts(
       {
+        // SAFETY: The route guard above narrows sport to the two API-supported values.
         sport: params.sport as BestEffortSportInput,
+        // SAFETY: The generated endpoint validates the route distance against its BestEffortType enum.
         $type: params.distance as BestEffortType,
       },
       getServerSdkRequestOptions(locals.kondisFetch),
     )) as BestEffortHistory;
   } catch (requestError) {
+    // SAFETY: Generated client errors expose an optional HTTP status code.
     if ((requestError as { status?: number }).status === 400)
       error(404, "Best effort not found");
     return { history: null, unavailable: true };

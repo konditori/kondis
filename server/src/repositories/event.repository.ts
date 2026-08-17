@@ -46,6 +46,7 @@ export class EventRepository implements OnApplicationShutdown {
   ) {}
 
   async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
+    // SAFETY: eventSerializers is keyed by every EmitEvent and each serializer accepts that event's argument tuple.
     const serialize = eventSerializers[event] as (...values: ArgsOf<T>) => WebsocketEvent;
     const payload = JSON.stringify(serialize(...args));
     await sql`SELECT pg_notify(${EVENT_CHANNEL}, ${payload})`.execute(this.db);
@@ -91,7 +92,7 @@ export class EventRepository implements OnApplicationShutdown {
     this.listener = undefined;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = undefined;
-      void this.connectListener().catch((error: unknown) => {
+      void this.connectListener().catch((error) => {
         this.logger.error(
           `Could not reconnect event listener: ${error instanceof Error ? error.message : String(error)}`,
         );

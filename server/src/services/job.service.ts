@@ -46,6 +46,7 @@ export class JobService {
     const queues = Object.values(QueueName);
     const reports = await Promise.all(queues.map((queue) => this.getJobStatus(queue)));
 
+    // SAFETY: queues and reports share order and contain one QueueStatusReport for every QueueName.
     return Object.fromEntries(queues.map((queue, index) => [queue, reports[index]])) as AllJobStatusResponse;
   }
 

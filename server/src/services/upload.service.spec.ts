@@ -8,8 +8,8 @@ import type { DatabaseRepository } from 'src/repositories/database.repository';
 import type { JobRepository } from 'src/repositories/job.repository';
 import type { StorageRepository } from 'src/repositories/storage.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 import { UploadService } from 'src/services/upload.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 import { newTestService } from 'test/utils';
 
 describe(UploadService.name, () => {
@@ -27,12 +27,7 @@ describe(UploadService.name, () => {
     lagomTakeoutParser: new LagomTakeoutParser(),
     importProgressStore: new ImportProgressStore(),
   };
-  const setup = () =>
-    newTestService(
-      UploadService,
-      Object.values(mocks),
-      mocks,
-    );
+  const setup = () => newTestService(UploadService, Object.values(mocks), mocks);
 
   beforeEach(() => {
     vi.clearAllMocks();

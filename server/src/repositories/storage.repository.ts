@@ -58,6 +58,7 @@ export class StorageRepository {
     try {
       entries = await readdir(directory, { withFileTypes: true });
     } catch (error) {
+      // SAFETY: Node filesystem errors expose the optional POSIX error code.
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];
       }

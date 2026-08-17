@@ -20,8 +20,8 @@
   let searchOpen = $state(false);
   let searchInput = $state<HTMLInputElement>();
   let searchForm = $state<HTMLFormElement>();
-  let menu: HTMLDetailsElement;
-  let plusMenu: HTMLDetailsElement;
+  let menu = $state<HTMLDetailsElement>();
+  let plusMenu = $state<HTMLDetailsElement>();
   let menuOpen = $state(false);
   let plusMenuOpen = $state(false);
   const accountName = $derived.by(() => {
@@ -62,6 +62,7 @@
   }
 
   function handleWindowClick(event: MouseEvent) {
+    // SAFETY: Window click events have an Element target when they reach this document-level handler.
     const target = event.target as Element;
     if (
       searchOpen &&
@@ -70,8 +71,10 @@
       !target.closest(".search-toggle")
     )
       searchOpen = false;
-    if (menuOpen && !menu.contains(event.target as Node)) closeMenu();
-    if (plusMenuOpen && !plusMenu.contains(event.target as Node))
+    // SAFETY: EventTarget is a Node for events dispatched by the document.
+    if (menuOpen && menu && !menu.contains(event.target as Node)) closeMenu();
+    // SAFETY: EventTarget is a Node for events dispatched by the document.
+    if (plusMenuOpen && plusMenu && !plusMenu.contains(event.target as Node))
       closePlusMenu();
   }
 
@@ -79,11 +82,11 @@
     if (event.key !== "Escape") return;
     if (menuOpen) {
       closeMenu();
-      menu.querySelector("summary")?.focus();
+      menu?.querySelector("summary")?.focus();
     }
     if (plusMenuOpen) {
       closePlusMenu();
-      plusMenu.querySelector("summary")?.focus();
+      plusMenu?.querySelector("summary")?.focus();
     }
   }
 

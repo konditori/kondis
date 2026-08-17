@@ -31,7 +31,9 @@ export const createAccessToken = (user: AuthenticatedUser, secret: string) => {
 export class AuthGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}
   canActivate(context: ExecutionContext): boolean {
+    // SAFETY: Nest returns the route handler function, which is a valid Reflect metadata target.
     const handler = context.getHandler() as object;
+    // SAFETY: Nest returns the controller constructor, which is a valid Reflect metadata target.
     const controller = context.getClass() as object;
     // reflect-metadata augments the standard Reflect object at runtime.
     // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
@@ -55,6 +57,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid access token');
     }
     try {
+      // SAFETY: The signed payload was created by createAccessToken and is checked for required fields below.
       const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
       if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) {
         throw new Error('Invalid access token');

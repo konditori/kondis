@@ -2,9 +2,9 @@ import { BadRequestException, ConflictException, UnauthorizedException } from '@
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AuthService } from 'src/services/auth.service';
 import type { ConfigService } from 'src/config/config.service';
 import type { UserRepository } from 'src/repositories/user.repository';
+import { AuthService } from 'src/services/auth.service';
 import { newTestService } from 'test/utils';
 
 describe(AuthService.name, () => {

@@ -1,4 +1,4 @@
-const BEST_EFFORT_LABELS: Readonly<Record<string, string>> = {
+const BEST_EFFORT_LABELS = {
   "400m": "400 m",
   "1k": "1K",
   half_mile: "1/2 mile",
@@ -39,10 +39,13 @@ const BEST_EFFORT_LABELS: Readonly<Record<string, string>> = {
   power_45m: "45 min power",
   power_1h: "1 hour power",
   power_2h: "2 hour power",
-};
+} as const satisfies Readonly<Record<string, string>>;
 
 export function bestEffortLabel(type: string): string {
-  return BEST_EFFORT_LABELS[type] ?? type;
+  return (
+    Object.entries(BEST_EFFORT_LABELS).find(([key]) => key === type)?.[1] ??
+    type
+  );
 }
 
 export function bestEffortRecordName(type: string): string {
@@ -50,7 +53,7 @@ export function bestEffortRecordName(type: string): string {
   return type === "1_mile" ? "mile" : label;
 }
 
-const BEST_EFFORT_DISTANCES: Readonly<Record<string, number>> = {
+const BEST_EFFORT_DISTANCES = {
   "400m": 400,
   "1k": 1000,
   half_mile: 804.672,
@@ -66,8 +69,11 @@ const BEST_EFFORT_DISTANCES: Readonly<Record<string, number>> = {
   marathon: 42_195,
   "50k": 50_000,
   longest_ride: Number.POSITIVE_INFINITY,
-};
+} as const satisfies Readonly<Record<string, number>>;
 
 export function bestEffortDistance(type: string): number {
-  return BEST_EFFORT_DISTANCES[type] ?? 0;
+  return (
+    Object.entries(BEST_EFFORT_DISTANCES).find(([key]) => key === type)?.[1] ??
+    0
+  );
 }

@@ -55,7 +55,7 @@
   let updatedActivity = $state<Activity | null>(null);
   const activity = $derived<ActivityDetail>({
     ...data.activity,
-    ...(updatedActivity ?? {}),
+    ...updatedActivity,
   });
   let editing = $state(false);
   let saving = $state(false);
@@ -377,13 +377,18 @@
     saving = true;
     editError = "";
     try {
+      const sport = Object.values(ActivityUpdateSport).find(
+        (candidate) => String(candidate) === draftSport,
+      );
+      if (!sport) throw new Error("Selected activity type is not supported");
+      // SAFETY: The generated update endpoint returns the updated Activity API contract.
       const updated = (await activityControllerUpdateById(
         {
           id: activity.id,
           activityUpdateDto: {
             name: draftName.trim() || null,
             description: draftDescription.trim() || null,
-            sport: draftSport as unknown as ActivityUpdateSport,
+            sport,
             excludeFromRankings: draftExcludeFromRankings,
           },
         },

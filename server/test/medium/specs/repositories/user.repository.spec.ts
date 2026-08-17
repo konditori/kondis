@@ -8,7 +8,7 @@ import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/t
 describe(UserRepository.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     db = createMediumTestDatabase();
   });
   beforeEach(() => resetMediumTestDatabase(db));

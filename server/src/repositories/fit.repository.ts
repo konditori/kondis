@@ -95,6 +95,7 @@ export class FitRepository {
     let failure: string | undefined;
 
     try {
+      // SAFETY: Buffer<ArrayBuffer> is the byte representation required by fit-file-parser.
       this.fitParser.parse(contents as Buffer<ArrayBuffer>, (error, data) => {
         failure = error;
         decoded = data;
@@ -141,6 +142,7 @@ export class FitRepository {
       for (const [key, value] of Object.entries(message)) {
         renamed[this.toCamelCase(key)] = value;
       }
+      // SAFETY: camelCaseMessages preserves the parsed message values while only renaming their keys.
       return renamed as T;
     });
   }

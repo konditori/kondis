@@ -8,7 +8,7 @@ import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/t
 describe(DatabaseRepository.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     db = createMediumTestDatabase();
   });
   beforeEach(() => resetMediumTestDatabase(db));
@@ -22,12 +22,15 @@ describe(DatabaseRepository.name, () => {
     const { sut, users } = setup();
 
     await sut.withTransaction(async (trx) => {
-      await trx.insertInto('user').values({
-        email: 'transaction@example.com',
-        name: 'Transaction User',
-        password_hash: 'hash',
-        role: 'user',
-      }).execute();
+      await trx
+        .insertInto('user')
+        .values({
+          email: 'transaction@example.com',
+          name: 'Transaction User',
+          password_hash: 'hash',
+          role: 'user',
+        })
+        .execute();
     });
 
     await expect(users.findByEmail('transaction@example.com')).resolves.toBeDefined();
@@ -38,12 +41,15 @@ describe(DatabaseRepository.name, () => {
 
     await expect(
       sut.withTransaction(async (trx) => {
-        await trx.insertInto('user').values({
-          email: 'rollback@example.com',
-          name: 'Rollback User',
-          password_hash: 'hash',
-          role: 'user',
-        }).execute();
+        await trx
+          .insertInto('user')
+          .values({
+            email: 'rollback@example.com',
+            name: 'Rollback User',
+            password_hash: 'hash',
+            role: 'user',
+          })
+          .execute();
         throw new Error('rollback');
       }),
     ).rejects.toThrow('rollback');

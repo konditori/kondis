@@ -35,6 +35,7 @@ export const utils = {
     });
     let result: { accessToken: string };
     if (setup.ok) {
+      // SAFETY: The setup endpoint's successful response contains an accessToken.
       result = (await setup.json()) as { accessToken: string };
     } else {
       const login = await fetch(`${serverUrl}/auth/login`, {
@@ -42,6 +43,7 @@ export const utils = {
         headers: { 'content-type': 'application/json' },
         body,
       });
+      // SAFETY: The login endpoint's successful response contains an accessToken.
       result = (await login.json()) as { accessToken: string };
     }
 

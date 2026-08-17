@@ -6,6 +6,7 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ locals, url }) => {
   const eventsUrl = activityEventsUrl(url);
   try {
+    // SAFETY: The generated client endpoint returns the ActivityPage API contract.
     const body = (await activityControllerListRecent(
       {},
       getServerSdkRequestOptions(locals.kondisFetch),

@@ -40,6 +40,7 @@ import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
 export type BestEffortSport = 'run' | 'ride';
+type ActivityCursor = { startedAt: Date; id: string };
 
 const BEST_EFFORT_SPORTS = {
   run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(({ type }) => type),
@@ -451,7 +452,7 @@ export class ActivityService {
     const last = page.at(-1);
     const [topBestEfforts, achievementCounts] = await Promise.all([
       this.topBestEffortsForActivities(page),
-      page.length
+      page.length > 0
         ? this.activityRepository.countTopBestEfforts([...new Set(page.map(({ id }) => id))])
         : Promise.resolve([]),
     ]);
@@ -464,8 +465,7 @@ export class ActivityService {
         ...this.toActivityDto(row),
         track: this.toTrack(row.track_geojson),
         topBestEfforts: row.best_efforts_computed_at === null ? null : (topBestEfforts.get(row.id) ?? []),
-        achievementCount:
-          row.best_efforts_computed_at === null ? null : (achievementCountByActivity.get(row.id) ?? 0),
+        achievementCount: row.best_efforts_computed_at === null ? null : (achievementCountByActivity.get(row.id) ?? 0),
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(normalizedSearch, userId),
@@ -677,6 +677,7 @@ export class ActivityService {
   }
 
   private toTrack(trackGeoJson: string | null): { type: 'LineString'; coordinates: [number, number][] } | null {
+    // SAFETY: trackGeoJson is written by this service from LineString GeoJSON coordinates.
     return trackGeoJson ? (JSON.parse(trackGeoJson) as { type: 'LineString'; coordinates: [number, number][] }) : null;
   }
 
@@ -762,7 +763,7 @@ export class ActivityService {
     return Buffer.from(JSON.stringify([this.toIsoString(startedAt), id])).toString('base64url');
   }
 
-  private decodeActivityCursor(cursor: string): { startedAt: Date; id: string } {
+  private decodeActivityCursor(cursor: string): ActivityCursor {
     try {
       const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
       if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== 'string' || typeof value[1] !== 'string') {

@@ -187,7 +187,8 @@ describe(ActivityService.name, () => {
         'ride',
       );
 
-      const activity = (await serviceApi.listRecent({ limit: 50 })).activities.find(({ id }) => id === activityId);
+      const activities = await serviceApi.listRecent({ limit: 50 });
+      const activity = activities.activities.find(({ id }) => id === activityId);
 
       expect(activity?.topBestEfforts?.some(({ type }) => type.startsWith('power_'))).toBe(true);
       expect(activity?.achievementCount).toBeGreaterThan(activity?.topBestEfforts?.length ?? 0);

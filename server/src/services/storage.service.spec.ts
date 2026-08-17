@@ -11,11 +11,7 @@ const setup = () => {
     jobRepository: { getReferencedTemporaryPaths: vi.fn(() => Promise.resolve(new Set(['temporary/pending.fit']))) },
     logger: new ConsoleLogger({ logLevels: [] }),
   };
-  return newTestService(
-    StorageService,
-    [mocks.storageRepository, mocks.jobRepository, mocks.logger],
-    mocks,
-  );
+  return newTestService(StorageService, [mocks.storageRepository, mocks.jobRepository, mocks.logger], mocks);
 };
 
 describe('StorageService', () => {

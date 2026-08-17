@@ -2,8 +2,8 @@ import { exec, spawn } from 'node:child_process';
 import { setTimeout } from 'node:timers';
 
 const setup = async () => {
-  let _resolve: () => unknown;
-  let _reject: (error: Error) => unknown;
+  let _resolve: () => void;
+  let _reject: (error: Error) => void;
 
   const ready = new Promise<void>((resolve, reject) => {
     _resolve = resolve;
