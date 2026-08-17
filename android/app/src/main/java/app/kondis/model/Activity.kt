@@ -19,6 +19,18 @@ data class Activity(
     val topBestEfforts: List<BestEffortSummary>? = null,
     val track: Track? = null,
     val images: List<ActivityImage> = emptyList(),
+    val userId: String? = null,
+    val athlete: SocialUser? = null,
+    val likeCount: Int = 0,
+    val commentCount: Int = 0,
+    val viewerLiked: Boolean = false,
+)
+
+@Serializable
+data class SocialUser(
+    val id: String,
+    val name: String,
+    val avatarUrl: String? = null,
 )
 
 @Serializable
@@ -133,6 +145,11 @@ data class ActivityDetail(
     val bestEfforts: List<BestEffort>?,
     val matchedRouteCount: Int?,
     val images: List<ActivityImage> = emptyList(),
+    val userId: String? = null,
+    val athlete: SocialUser? = null,
+    val likeCount: Int = 0,
+    val commentCount: Int = 0,
+    val viewerLiked: Boolean = false,
 ) {
     fun summary() =
         Activity(
@@ -159,6 +176,11 @@ data class ActivityDetail(
                 },
             track = track,
             images = images,
+            userId = userId,
+            athlete = athlete,
+            likeCount = likeCount,
+            commentCount = commentCount,
+            viewerLiked = viewerLiked,
         )
 }
 

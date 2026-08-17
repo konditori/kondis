@@ -1,10 +1,60 @@
 <script lang="ts">
-  import { Check, Gauge, Ruler } from "@lucide/svelte";
+  import { Camera, Check, Gauge, Ruler, Trash2 } from "@lucide/svelte";
   import { untrack } from "svelte";
   import type { UnitSystem } from "$lib/units";
+  import UserAvatar from "$lib/components/UserAvatar.svelte";
 
   let { data, form } = $props();
   let selected = $state<UnitSystem>(untrack(() => data.unitSystem));
+  let avatarUrl = $state<string | null>(
+    untrack(
+      () =>
+        (data.user as { avatarUrl?: string | null } | undefined)?.avatarUrl ??
+        null,
+    ),
+  );
+  let avatarBusy = $state(false);
+  let avatarError = $state("");
+
+  async function uploadAvatar(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    avatarBusy = true;
+    avatarError = "";
+    const body = new FormData();
+    body.append("file", file);
+    try {
+      const response = await fetch("/api/v1/users/me/avatar", {
+        method: "POST",
+        body,
+      });
+      if (!response.ok) throw new Error();
+      const result = (await response.json()) as { avatarUrl: string };
+      avatarUrl = `${result.avatarUrl}?v=${Date.now()}`;
+    } catch {
+      avatarError = "Could not save that profile picture.";
+    } finally {
+      avatarBusy = false;
+      input.value = "";
+    }
+  }
+
+  async function removeAvatar() {
+    avatarBusy = true;
+    avatarError = "";
+    try {
+      const response = await fetch("/api/v1/users/me/avatar", {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error();
+      avatarUrl = null;
+    } catch {
+      avatarError = "Could not remove the profile picture.";
+    } finally {
+      avatarBusy = false;
+    }
+  }
 </script>
 
 <svelte:head><title>Settings · Kondis</title></svelte:head>
@@ -71,4 +121,34 @@
         >{/if}
     </div>
   </form>
+  <section class="settings-panel profile-picture-panel">
+    <div class="settings-heading">
+      <UserAvatar name={data.user?.name ?? "You"} src={avatarUrl} size={72} />
+      <div>
+        <h2>Profile picture</h2>
+        <p>Shown next to your name on activities and profiles.</p>
+      </div>
+    </div>
+    <div class="settings-actions">
+      <label class="metadata-save profile-picture-upload">
+        <Camera size={17} />
+        {avatarBusy ? "Saving…" : "Choose picture"}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
+          onchange={uploadAvatar}
+          disabled={avatarBusy}
+        />
+      </label>
+      {#if avatarUrl}<button
+          class="metadata-cancel"
+          type="button"
+          onclick={removeAvatar}
+          disabled={avatarBusy}><Trash2 size={17} /> Remove</button
+        >{/if}
+    </div>
+    {#if avatarError}<p class="settings-error" role="alert">
+        {avatarError}
+      </p>{/if}
+  </section>
 </div>

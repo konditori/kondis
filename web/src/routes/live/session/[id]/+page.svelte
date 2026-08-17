@@ -11,6 +11,6 @@
     endpoint={`/api/v1/live-workouts/${data.workout.id}`}
     activityTypes={data.activityTypes}
     unitSystem={data.unitSystem}
-    allowSharing={true}
+    allowSharing={data.workout.canShare}
   />
 </div>

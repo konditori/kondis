@@ -1,11 +1,9 @@
 <script lang="ts">
   import {
     ArrowLeft,
-    CalendarDays,
     Check,
     ChevronLeft,
     ChevronRight,
-    Clock3,
     Flame,
     Gauge,
     HeartPulse,
@@ -37,8 +35,10 @@
   } from "$lib/activity-types";
   import { bestEffortLabel, bestEffortRecordName } from "$lib/best-efforts";
   import ActivityProfile from "$lib/components/ActivityProfile.svelte";
+  import ActivityComments from "$lib/components/ActivityComments.svelte";
   import ImageLightbox from "$lib/components/ImageLightbox.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
+  import UserAvatar from "$lib/components/UserAvatar.svelte";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import {
     activityName,
@@ -496,12 +496,23 @@
       ><ArrowLeft size={18} /> All activities</a
     >
     <div class="detail-heading">
-      <span class="detail-sport"><Icon size={27} /></span>
+      <div class="detail-identity">
+        <UserAvatar
+          name={activity.athlete?.name ?? "You"}
+          src={activity.athlete?.avatarUrl}
+          size={80}
+        />
+        <span class="detail-sport"><Icon size={27} /></span>
+      </div>
       <div class="detail-title">
-        <span class="eyebrow"
-          >{activityTypeLabel(data.activityTypes, activity.sport)}</span
-        >
-        <h1>{activityName(activity)}</h1>
+        <h1>{activity.athlete?.name ?? "You"}</h1>
+        <p class="detail-timestamp">
+          {localDate(activity.startedAt)} · {localTime(activity.startedAt)} · {activityTypeLabel(
+            data.activityTypes,
+            activity.sport,
+          )}
+        </p>
+        <h2>{activityName(activity)}</h2>
       </div>
       <button
         class="edit-metadata-button"
@@ -591,10 +602,6 @@
           </p>{/if}
       </form>
     {/if}
-    <div class="detail-date">
-      <span><CalendarDays size={17} />{localDate(activity.startedAt)}</span
-      ><span><Clock3 size={17} />{localTime(activity.startedAt)}</span>
-    </div>
     {#if activity.tags?.length}<div
         class="activity-tags"
         aria-label="Activity tags"
@@ -1026,3 +1033,4 @@
     onClose={() => (selectedImageIndex = null)}
   />
 {/if}
+<ActivityComments {activity} />

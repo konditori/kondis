@@ -14,7 +14,13 @@ import { redirect } from "@sveltejs/kit";
 
 export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   let user:
-    | { id: string; email: string; name: string; role: "admin" | "user" }
+    | {
+        id: string;
+        email: string;
+        name: string;
+        role: "admin" | "user";
+        avatarUrl: string | null;
+      }
     | undefined;
   const publicLiveView = url?.pathname.startsWith("/live/") ?? false;
   if (

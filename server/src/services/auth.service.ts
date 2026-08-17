@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
-import { createAccessToken } from 'src/auth';
+import { createAccessToken, createActivityEventsTicket } from 'src/auth';
 import { ConfigService } from 'src/config/config.service';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
@@ -41,6 +41,9 @@ export class AuthService {
     }
     return this.issue(user, false);
   }
+  createActivityEventsTicket(userId: string) {
+    return createActivityEventsTicket(userId, this.config.authSecret);
+  }
   async create(email: string, name: string, password: string, role: 'admin' | 'user') {
     if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 10 || !name.trim()) {
       throw new BadRequestException('Use a name, valid email, and password of at least 10 characters');
@@ -63,7 +66,13 @@ export class AuthService {
     return {
       accessToken: createAccessToken(user, this.config.authSecret),
       setup,
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        avatarUrl: 'avatar_path' in user && user.avatar_path ? `/api/v1/users/${user.id}/avatar` : null,
+      },
     };
   }
 }

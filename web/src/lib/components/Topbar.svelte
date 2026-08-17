@@ -10,12 +10,15 @@
   } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import UserAvatar from "$lib/components/UserAvatar.svelte";
 
   let {
     user,
     onUpload,
-  }: { user?: { name: string; email: string }; onUpload: () => void } =
-    $props();
+  }: {
+    user?: { name: string; email: string; avatarUrl?: string | null };
+    onUpload: () => void;
+  } = $props();
   let search = $state("");
   let searchOpen = $state(false);
   let searchInput = $state<HTMLInputElement>();
@@ -177,7 +180,7 @@
 
   <details bind:this={menu} bind:open={menuOpen} class="user-menu">
     <summary aria-label="Open account menu">
-      <span class="user-initial" aria-hidden="true">{initial}</span>
+      <UserAvatar name={accountName} src={user?.avatarUrl} size={42} />
     </summary>
     <div class="user-menu-popover">
       <div class="user-menu-identity">

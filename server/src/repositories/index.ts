@@ -11,6 +11,7 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 
 export const repositories = [
   ActivityRepository,
@@ -26,4 +27,5 @@ export const repositories = [
   TcxRepository,
   UploadRepository,
   UserRepository,
+  SocialRepository,
 ];

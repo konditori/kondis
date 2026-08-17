@@ -82,6 +82,7 @@ export type LiveWorkoutDtoOutput = {
   sport: ActivityType_Output;
   startedAt: string;
   status: Status2;
+  canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
   lastSequence: number;
@@ -169,6 +170,16 @@ export type ActivityListResponseDtoOutput = {
     id: string;
     /** Source upload id */
     uploadId: string;
+    /** Activity owner id */
+    userId?: string | null;
+    athlete?: {
+      id: string;
+      name: string;
+      avatarUrl: string | null;
+    };
+    likeCount?: number;
+    commentCount?: number;
+    viewerLiked?: boolean;
     sport: ActivityType_Output;
     /** Activity name */
     name: string | null;
@@ -252,6 +263,16 @@ export type ActivityDetailDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
+  /** Activity owner id */
+  userId?: string | null;
+  athlete?: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+  likeCount?: number;
+  commentCount?: number;
+  viewerLiked?: boolean;
   sport: ActivityType_Output;
   /** Activity name */
   name: string | null;
@@ -353,6 +374,16 @@ export type ActivityDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
+  /** Activity owner id */
+  userId?: string | null;
+  athlete?: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+  likeCount?: number;
+  commentCount?: number;
+  viewerLiked?: boolean;
   sport: ActivityType_Output;
   /** Activity name */
   name: string | null;
@@ -381,6 +412,82 @@ export type ActivityImageListDtoOutput = ActivityImageDtoOutput[];
 export type ActivityImageUpdateDto = {
   caption?: string | null;
   sortOrder?: number;
+};
+export type ActivityEventsTicketDtoOutput = {
+  token: string;
+  expiresAt: string;
+};
+export type PeopleListDtoOutput = {
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+  relation: {
+    following: boolean;
+    incomingRequest: boolean;
+    outgoingRequest: boolean;
+    blockedByViewer: boolean;
+    blockedViewer: boolean;
+  };
+}[];
+export type PersonDtoOutput = {
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+  relation: {
+    following: boolean;
+    incomingRequest: boolean;
+    outgoingRequest: boolean;
+    blockedByViewer: boolean;
+    blockedViewer: boolean;
+  };
+};
+export type RequestListDtoOutput = {
+  id: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+}[];
+export type LikeStateDtoOutput = {
+  liked: boolean;
+  likeCount: number;
+};
+export type CommentListDtoOutput = {
+  comments: {
+    id: string;
+    body: string;
+    createdAt: string;
+    updatedAt: string;
+    user: {
+      id: string;
+      name: string;
+      avatarUrl: string | null;
+    };
+  }[];
+  nextCursor: string | null;
+};
+export type CommentCreateDto = {
+  body: string;
+};
+export type CommentDtoOutput = {
+  id: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+};
+export type CommentUpdateDto = {
+  body: string;
 };
 /**
  * Health check endpoint
@@ -1009,6 +1116,17 @@ export function authControllerMe(opts?: Oazapfts.RequestOpts) {
     }),
   );
 }
+export function authControllerActivityEventsTicket(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: ActivityEventsTicketDtoOutput;
+    }>('/auth/activity-events-ticket', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
 export function userControllerList(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchText('/users', {
@@ -1021,6 +1139,425 @@ export function userControllerCreate(opts?: Oazapfts.RequestOpts) {
     oazapfts.fetchText('/users', {
       ...opts,
       method: 'POST',
+    }),
+  );
+}
+export function socialControllerPeople(
+  {
+    query,
+  }: {
+    query: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: PeopleListDtoOutput;
+    }>(
+      `/people${QS.query(
+        QS.explode({
+          query,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
+  );
+}
+export function socialControllerPerson(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: PersonDtoOutput;
+    }>(`/people/${encodeURIComponent(id)}`, {
+      ...opts,
+    }),
+  );
+}
+export function socialControllerActivities(
+  {
+    id,
+    cursor,
+    limit,
+    search,
+    tags,
+    tagMatch,
+  }: {
+    id: string;
+    cursor?: string;
+    limit?: number;
+    search?: string;
+    tags?: string;
+    tagMatch?: 'any' | 'all';
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityListResponseDtoOutput;
+    }>(
+      `/people/${encodeURIComponent(id)}/activities${QS.query(
+        QS.explode({
+          cursor,
+          limit,
+          search,
+          tags,
+          tagMatch,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
+  );
+}
+export function socialControllerSend(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow-request`, {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function socialControllerCancel(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow-request`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function socialControllerUnfollow(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function socialControllerBlock(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/block`, {
+      ...opts,
+      method: 'PUT',
+    }),
+  );
+}
+export function socialControllerUnblock(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/block`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function socialControllerRequests(
+  {
+    direction,
+  }: {
+    direction?: 'incoming' | 'outgoing';
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: RequestListDtoOutput;
+    }>(
+      `/follow-requests${QS.query(
+        QS.explode({
+          direction,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
+  );
+}
+export function socialControllerAccept(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/follow-requests/${encodeURIComponent(id)}/accept`, {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function socialControllerIgnore(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/follow-requests/${encodeURIComponent(id)}`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function socialControllerFeed(
+  {
+    cursor,
+    limit,
+    search,
+    tags,
+    tagMatch,
+  }: {
+    cursor?: string;
+    limit?: number;
+    search?: string;
+    tags?: string;
+    tagMatch?: 'any' | 'all';
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityListResponseDtoOutput;
+    }>(
+      `/feed${QS.query(
+        QS.explode({
+          cursor,
+          limit,
+          search,
+          tags,
+          tagMatch,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
+  );
+}
+export function socialControllerLike(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LikeStateDtoOutput;
+    }>(`/activities/${encodeURIComponent(id)}/like`, {
+      ...opts,
+      method: 'PUT',
+    }),
+  );
+}
+export function socialControllerUnlike(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LikeStateDtoOutput;
+    }>(`/activities/${encodeURIComponent(id)}/like`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function socialControllerComments(
+  {
+    id,
+    cursor,
+    limit,
+  }: {
+    id: string;
+    cursor: string;
+    limit: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: CommentListDtoOutput;
+    }>(
+      `/activities/${encodeURIComponent(id)}/comments${QS.query(
+        QS.explode({
+          cursor,
+          limit,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
+  );
+}
+export function socialControllerComment(
+  {
+    id,
+    commentCreateDto,
+  }: {
+    id: string;
+    commentCreateDto: CommentCreateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: CommentDtoOutput;
+    }>(
+      `/activities/${encodeURIComponent(id)}/comments`,
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: commentCreateDto,
+      }),
+    ),
+  );
+}
+export function socialControllerUpdateComment(
+  {
+    activityId,
+    commentId,
+    commentUpdateDto,
+  }: {
+    activityId: string;
+    commentId: string;
+    commentUpdateDto: CommentUpdateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: CommentDtoOutput;
+    }>(
+      `/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`,
+      oazapfts.json({
+        ...opts,
+        method: 'PATCH',
+        body: commentUpdateDto,
+      }),
+    ),
+  );
+}
+export function socialControllerDeleteComment(
+  {
+    activityId,
+    commentId,
+  }: {
+    activityId: string;
+    commentId: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function userAvatarControllerUpload(
+  {
+    body,
+  }: {
+    body: {
+      file: Blob;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(
+      '/users/me/avatar',
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+export function userAvatarControllerDelete(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/users/me/avatar', {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function userAvatarControllerFile(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/users/${encodeURIComponent(id)}/avatar`, {
+      ...opts,
     }),
   );
 }

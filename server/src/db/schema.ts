@@ -1,14 +1,19 @@
 import type { Insertable, Selectable, Updateable } from 'kysely';
 import { ActivityBestEffortTable } from 'src/schema/tables/activity-best-effort.table';
+import { ActivityCommentTable } from 'src/schema/tables/activity-comment.table';
 import { ActivityImageFileTable } from 'src/schema/tables/activity-image-file.table';
 import { ActivityImageTable } from 'src/schema/tables/activity-image.table';
+import { ActivityLikeTable } from 'src/schema/tables/activity-like.table';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityStreamTable } from 'src/schema/tables/activity-stream.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
+import { FollowRequestTable } from 'src/schema/tables/follow-request.table';
 import { LapTable } from 'src/schema/tables/lap.table';
 import { LiveWorkoutPointTable } from 'src/schema/tables/live-workout-point.table';
 import { LiveWorkoutTable } from 'src/schema/tables/live-workout.table';
 import { UploadTable } from 'src/schema/tables/upload.table';
+import { UserBlockTable } from 'src/schema/tables/user-block.table';
+import { UserFollowTable } from 'src/schema/tables/user-follow.table';
 import { UserTable } from 'src/schema/tables/user.table';
 
 export interface DB {
@@ -24,6 +29,11 @@ export interface DB {
   lap: LapTable;
   live_workout: LiveWorkoutTable;
   live_workout_point: LiveWorkoutPointTable;
+  follow_request: FollowRequestTable;
+  user_follow: UserFollowTable;
+  user_block: UserBlockTable;
+  activity_like: ActivityLikeTable;
+  activity_comment: ActivityCommentTable;
 }
 
 export interface ActivityRouteMatchTable {
@@ -61,5 +71,10 @@ export type LiveWorkout = Selectable<LiveWorkoutTable>;
 export type NewLiveWorkout = Insertable<LiveWorkoutTable>;
 export type LiveWorkoutPoint = Selectable<LiveWorkoutPointTable>;
 export type NewLiveWorkoutPoint = Insertable<LiveWorkoutPointTable>;
+export type FollowRequest = Selectable<FollowRequestTable>;
+export type UserFollow = Selectable<UserFollowTable>;
+export type UserBlock = Selectable<UserBlockTable>;
+export type ActivityLike = Selectable<ActivityLikeTable>;
+export type ActivityComment = Selectable<ActivityCommentTable>;
 
 export { type StreamType, type UploadStatus } from 'src/types';

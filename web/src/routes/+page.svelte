@@ -10,7 +10,7 @@
   import type { Snapshot } from "@sveltejs/kit";
   import ActivityCard from "$lib/components/ActivityCard.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
-  import { activityControllerListRecent, getSdkRequestOptions } from "$lib/api";
+  import { socialControllerFeed, getSdkRequestOptions } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import type { Activity, ActivityPage } from "$lib/types";
   import { activityTypeLabel, sportIcon } from "$lib/activity-types";
@@ -61,7 +61,7 @@
   const displayedNextCursor = $derived(hasSearch ? searchCursor : nextCursor);
   const displayedTotal = $derived(hasSearch ? (searchTotal ?? 0) : total);
   const heading = $derived(
-    hasSearch ? `Search results for “${query.trim()}”` : "Activities",
+    hasSearch ? `Search results for “${query.trim()}”` : "Home",
   );
   const resultSummary = $derived(
     `${displayedTotal} ${displayedTotal === 1 ? "activity" : "activities"} found`,
@@ -101,7 +101,7 @@
         void goto(url, { replaceState: true, keepFocus: true, noScroll: true });
       }
 
-      void activityControllerListRecent({ search }, getSdkRequestOptions())
+      void socialControllerFeed({ search }, getSdkRequestOptions())
         .then((page) => {
           if (generation !== searchGeneration) return;
           const nextPage = page as ActivityPage;
@@ -161,7 +161,7 @@
 
   async function refreshRecent() {
     try {
-      const page = (await activityControllerListRecent(
+      const page = (await socialControllerFeed(
         {},
         getSdkRequestOptions(),
       )) as ActivityPage;
@@ -186,7 +186,7 @@
     loading = true;
     loadError = false;
     try {
-      const page = (await activityControllerListRecent(
+      const page = (await socialControllerFeed(
         hasSearch
           ? { cursor: searchCursor!, search: query.trim() }
           : { cursor: nextCursor! },

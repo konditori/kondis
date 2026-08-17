@@ -13,5 +13,6 @@ export const UPLOAD_LIMITS = {
   activityRecords: 1_000_000,
   activityLaps: 10_000,
   imageFileBytes: 25 * MEBIBYTE,
+  avatarFileBytes: 10 * MEBIBYTE,
   imagePixels: 100_000_000,
 } as const;

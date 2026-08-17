@@ -4,8 +4,10 @@ import { AuthService } from 'src/services/auth.service';
 import { JobService } from 'src/services/job.service';
 import { LiveWorkoutService } from 'src/services/live-workout.service';
 import { ServerService } from 'src/services/server.service';
+import { SocialService } from 'src/services/social.service';
 import { StorageService } from 'src/services/storage.service';
 import { UploadService } from 'src/services/upload.service';
+import { UserAvatarService } from 'src/services/user-avatar.service';
 
 export const services = [
   ActivityService,
@@ -16,4 +18,6 @@ export const services = [
   StorageService,
   UploadService,
   AuthService,
+  SocialService,
+  UserAvatarService,
 ];

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowUpRight, Medal } from "@lucide/svelte";
+  import { ArrowUpRight, Heart, Medal, MessageCircle } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import {
     AverageMetric,
@@ -14,8 +14,14 @@
     distinctAchievementEfforts,
   } from "$lib/activity-achievements";
   import RouteMap from "$lib/components/RouteMap.svelte";
+  import UserAvatar from "$lib/components/UserAvatar.svelte";
   import type { ActivityTypeSettingsOutput } from "$lib/api";
   import type { Activity } from "$lib/types";
+  import {
+    getSdkRequestOptions,
+    socialControllerLike,
+    socialControllerUnlike,
+  } from "$lib/api";
   import type { UnitSystem } from "$lib/units";
   import {
     activityName,
@@ -37,6 +43,13 @@
     activityTypes: ActivityTypeSettingsOutput[];
     unitSystem: UnitSystem;
   } = $props();
+  let liked = $state(false);
+  let likeCount = $state(0);
+  let likeBusy = $state(false);
+  $effect(() => {
+    liked = activity.viewerLiked ?? false;
+    likeCount = activity.likeCount ?? 0;
+  });
   const Icon = $derived(sportIcon(activity.sport));
   const settings = $derived(
     activityTypeSettings(activityTypes, activity.sport),
@@ -142,6 +155,33 @@
       });
     }
   }
+
+  async function toggleLike(event: MouseEvent) {
+    event.stopPropagation();
+    if (likeBusy) return;
+    likeBusy = true;
+    const next = !liked;
+    liked = next;
+    likeCount += next ? 1 : -1;
+    try {
+      const result = next
+        ? await socialControllerLike(
+            { id: activity.id },
+            getSdkRequestOptions(),
+          )
+        : await socialControllerUnlike(
+            { id: activity.id },
+            getSdkRequestOptions(),
+          );
+      liked = result.liked;
+      likeCount = result.likeCount;
+    } catch {
+      liked = !next;
+      likeCount += next ? -1 : 1;
+    } finally {
+      likeBusy = false;
+    }
+  }
 </script>
 
 <article class="activity-card">
@@ -150,10 +190,17 @@
     href={`/activities/${activity.id}`}
     onclick={openActivity}
   >
-    <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
+    <div class="activity-card-identity">
+      <UserAvatar
+        name={activity.athlete?.name ?? "You"}
+        src={activity.athlete?.avatarUrl}
+        size={54}
+      />
+      <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
+    </div>
     <div class="activity-primary">
       <div class="activity-title">
-        <h3>{activityName(activity)}</h3>
+        <h3>{activity.athlete?.name ?? "You"}</h3>
         <ArrowUpRight size={17} />
       </div>
       <p>
@@ -164,6 +211,9 @@
           )}</span
         >
       </p>
+      <div class="activity-title activity-name-title">
+        <h3>{activityName(activity)}</h3>
+      </div>
       {#if activity.tags?.length}<div
           class="activity-tags"
           aria-label="Activity tags"
@@ -211,6 +261,26 @@
         ></span
       >
       <strong>{achievementText(personalRecord)}</strong>
+    </div>
+  {/if}
+  {#if likeCount > 0 || activity.commentCount !== undefined}
+    <div class="activity-social-row">
+      <button
+        class:liked
+        type="button"
+        class="activity-social-button"
+        onclick={toggleLike}
+        disabled={likeBusy}
+        aria-label={liked ? "Unlike activity" : "Like activity"}
+        ><Heart size={17} fill={liked ? "currentColor" : "none"} />
+        {likeCount}</button
+      >
+      <a
+        class="activity-social-button"
+        href={`/activities/${activity.id}#comments`}
+        onclick={openActivity}
+        ><MessageCircle size={17} /> {activity.commentCount ?? 0}</a
+      >
     </div>
   {/if}
   {#if activity.track || activity.images?.length}

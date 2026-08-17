@@ -1029,6 +1029,27 @@
         ]
       }
     },
+    "/auth/activity-events-ticket": {
+      "post": {
+        "operationId": "AuthController_activityEventsTicket",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Short-lived ticket for the activity event WebSocket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityEventsTicketDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/users": {
       "get": {
         "operationId": "UserController_list",
@@ -1052,6 +1073,707 @@
         },
         "tags": [
           "User"
+        ]
+      }
+    },
+    "/people": {
+      "get": {
+        "operationId": "SocialController_people",
+        "parameters": [
+          {
+            "name": "query",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "People available to follow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeopleListDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/people/{id}": {
+      "get": {
+        "operationId": "SocialController_person",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public person profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/people/{id}/activities": {
+      "get": {
+        "operationId": "SocialController_activities",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum activities to return",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Text to search in activity name, description, or sport",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated activity tags to include",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tagMatch",
+            "required": false,
+            "in": "query",
+            "description": "Whether any or all requested tags must match",
+            "schema": {
+              "default": "any",
+              "type": "string",
+              "enum": [
+                "any",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visible activities for a person",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/people/{id}/follow-request": {
+      "post": {
+        "operationId": "SocialController_send",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      },
+      "delete": {
+        "operationId": "SocialController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/people/{id}/follow": {
+      "delete": {
+        "operationId": "SocialController_unfollow",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/people/{id}/block": {
+      "put": {
+        "operationId": "SocialController_block",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      },
+      "delete": {
+        "operationId": "SocialController_unblock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/follow-requests": {
+      "get": {
+        "operationId": "SocialController_requests",
+        "parameters": [
+          {
+            "name": "direction",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "incoming",
+              "type": "string",
+              "enum": [
+                "incoming",
+                "outgoing"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Follow requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestListDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/follow-requests/{id}/accept": {
+      "post": {
+        "operationId": "SocialController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/follow-requests/{id}": {
+      "delete": {
+        "operationId": "SocialController_ignore",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/feed": {
+      "get": {
+        "operationId": "SocialController_feed",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor returned by the previous page",
+            "schema": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum activities to return",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Text to search in activity name, description, or sport",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated activity tags to include",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tagMatch",
+            "required": false,
+            "in": "query",
+            "description": "Whether any or all requested tags must match",
+            "schema": {
+              "default": "any",
+              "type": "string",
+              "enum": [
+                "any",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/activities/{id}/like": {
+      "put": {
+        "operationId": "SocialController_like",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like an activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStateDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      },
+      "delete": {
+        "operationId": "SocialController_unlike",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unlike an activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStateDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/activities/{id}/comments": {
+      "get": {
+        "operationId": "SocialController_comments",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentListDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      },
+      "post": {
+        "operationId": "SocialController_comment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Add an activity comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/activities/{activityId}/comments/{commentId}": {
+      "patch": {
+        "operationId": "SocialController_updateComment",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Edit an activity comment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      },
+      "delete": {
+        "operationId": "SocialController_deleteComment",
+        "parameters": [
+          {
+            "name": "activityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Social"
+        ]
+      }
+    },
+    "/users/me/avatar": {
+      "post": {
+        "operationId": "UserAvatarController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "user avatars"
+        ]
+      },
+      "delete": {
+        "operationId": "UserAvatarController_delete",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "user avatars"
+        ]
+      }
+    },
+    "/users/{id}/avatar": {
+      "get": {
+        "operationId": "UserAvatarController_file",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "user avatars"
         ]
       }
     }
@@ -1352,6 +2074,9 @@
               "discarded"
             ]
           },
+          "canShare": {
+            "type": "boolean"
+          },
           "elapsedSeconds": {
             "type": "integer",
             "minimum": 0,
@@ -1398,6 +2123,7 @@
           "sport",
           "startedAt",
           "status",
+          "canShare",
           "elapsedSeconds",
           "distanceMeters",
           "lastSequence",
@@ -1953,6 +2679,49 @@
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                   "description": "Source upload id"
                 },
+                "userId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "description": "Activity owner id",
+                  "nullable": true
+                },
+                "athlete": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "avatarUrl"
+                  ],
+                  "additionalProperties": false
+                },
+                "likeCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "commentCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "viewerLiked": {
+                  "type": "boolean"
+                },
                 "sport": {
                   "$ref": "#/components/schemas/ActivityType_Output"
                 },
@@ -2362,6 +3131,49 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "description": "Source upload id"
           },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Activity owner id",
+            "nullable": true
+          },
+          "athlete": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatarUrl": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "avatarUrl"
+            ],
+            "additionalProperties": false
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "commentCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "viewerLiked": {
+            "type": "boolean"
+          },
           "sport": {
             "$ref": "#/components/schemas/ActivityType_Output"
           },
@@ -2716,6 +3528,49 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "description": "Source upload id"
           },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "description": "Activity owner id",
+            "nullable": true
+          },
+          "athlete": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatarUrl": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "avatarUrl"
+            ],
+            "additionalProperties": false
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "commentCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "viewerLiked": {
+            "type": "boolean"
+          },
           "sport": {
             "$ref": "#/components/schemas/ActivityType_Output"
           },
@@ -2948,6 +3803,366 @@
             "maximum": 9007199254740991
           }
         }
+      },
+      "ActivityEventsTicketDto_Output": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 20
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "PeopleListDto_Output": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "user": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "avatarUrl"
+              ],
+              "additionalProperties": false
+            },
+            "relation": {
+              "type": "object",
+              "properties": {
+                "following": {
+                  "type": "boolean"
+                },
+                "incomingRequest": {
+                  "type": "boolean"
+                },
+                "outgoingRequest": {
+                  "type": "boolean"
+                },
+                "blockedByViewer": {
+                  "type": "boolean"
+                },
+                "blockedViewer": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "following",
+                "incomingRequest",
+                "outgoingRequest",
+                "blockedByViewer",
+                "blockedViewer"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "user",
+            "relation"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "PersonDto_Output": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatarUrl": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "avatarUrl"
+            ],
+            "additionalProperties": false
+          },
+          "relation": {
+            "type": "object",
+            "properties": {
+              "following": {
+                "type": "boolean"
+              },
+              "incomingRequest": {
+                "type": "boolean"
+              },
+              "outgoingRequest": {
+                "type": "boolean"
+              },
+              "blockedByViewer": {
+                "type": "boolean"
+              },
+              "blockedViewer": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "following",
+              "incomingRequest",
+              "outgoingRequest",
+              "blockedByViewer",
+              "blockedViewer"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "user",
+          "relation"
+        ],
+        "additionalProperties": false
+      },
+      "RequestListDto_Output": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+            },
+            "user": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "avatarUrl"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "createdAt",
+            "user"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "LikeStateDto_Output": {
+        "type": "object",
+        "properties": {
+          "liked": {
+            "type": "boolean"
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "liked",
+          "likeCount"
+        ],
+        "additionalProperties": false
+      },
+      "CommentListDto_Output": {
+        "type": "object",
+        "properties": {
+          "comments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "body": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "user": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "avatarUrl"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "body",
+                "createdAt",
+                "updatedAt",
+                "user"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "comments",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "CommentCreateDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "body"
+        ]
+      },
+      "CommentDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "avatarUrl": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "avatarUrl"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "body",
+          "createdAt",
+          "updatedAt",
+          "user"
+        ],
+        "additionalProperties": false
+      },
+      "CommentUpdateDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "body"
+        ]
       },
       "QueueName": {
         "type": "string",

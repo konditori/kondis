@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Logger, Post, UnauthorizedException } from '@nestjs/common';
+import { ZodResponse } from 'nestjs-zod';
 import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
+import { ActivityEventsTicketDto } from 'src/dtos/auth.dto';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { z } from 'zod';
@@ -35,6 +37,21 @@ export class AuthController {
     if (!storedUser) {
       throw new UnauthorizedException('Account no longer exists');
     }
-    return { id: storedUser.id, email: storedUser.email, name: storedUser.name, role: storedUser.role };
+    return {
+      id: storedUser.id,
+      email: storedUser.email,
+      name: storedUser.name,
+      role: storedUser.role,
+      avatarUrl: storedUser.avatar_path ? `/api/v1/users/${storedUser.id}/avatar` : null,
+    };
+  }
+  @Post('activity-events-ticket')
+  @ZodResponse({
+    status: 201,
+    description: 'Short-lived ticket for the activity event WebSocket',
+    type: ActivityEventsTicketDto,
+  })
+  activityEventsTicket(@CurrentUser() user: AuthenticatedUser): ActivityEventsTicketDto {
+    return this.service.createActivityEventsTicket(user.id);
   }
 }
