@@ -39,6 +39,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -156,6 +157,7 @@ fun ActivityDetailScreen(
     var draftDescription by remember(activity.id) { mutableStateOf(activity.description.orEmpty()) }
     var draftSport by remember(activity.id) { mutableStateOf(activity.sport) }
     var draftExcludeFromRankings by remember(activity.id) { mutableStateOf(activity.excludeFromRankings) }
+    var draftTags by remember(activity.id) { mutableStateOf(activity.tags) }
     LaunchedEffect(state.deleted) {
         if (state.deleted) onDeleted()
     }
@@ -177,6 +179,7 @@ fun ActivityDetailScreen(
                             draftDescription = activity.description.orEmpty()
                             draftSport = activity.sport
                             draftExcludeFromRankings = activity.excludeFromRankings
+                            draftTags = activity.tags
                             editing = true
                         }
                     } else {
@@ -206,6 +209,7 @@ fun ActivityDetailScreen(
                     description = draftDescription,
                     sport = draftSport,
                     excludeFromRankings = draftExcludeFromRankings,
+                    tags = draftTags,
                     saving = state.saving,
                     deleting = state.deleting,
                     error = state.mutationError,
@@ -213,6 +217,7 @@ fun ActivityDetailScreen(
                     onDescriptionChange = { draftDescription = it },
                     onSportChange = { draftSport = it },
                     onExcludeChange = { draftExcludeFromRankings = it },
+                    onTagsChange = { draftTags = it },
                     onCancel = { editing = false },
                     onSave = {
                         onUpdate(
@@ -221,6 +226,7 @@ fun ActivityDetailScreen(
                                 description = draftDescription.trim().ifBlank { null },
                                 sport = draftSport,
                                 excludeFromRankings = draftExcludeFromRankings,
+                                tags = draftTags,
                             ),
                         )
                         editing = false
@@ -761,6 +767,14 @@ private fun DetailHeader(
                         modifier = Modifier.padding(top = 5.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (activity.tags.isNotEmpty()) {
+                        Text(
+                            activity.tags.joinToString(" · ") { it.replace('_', ' ').replaceFirstChar { character -> character.titlecase() } },
+                            modifier = Modifier.padding(top = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -950,6 +964,7 @@ private fun ActivityEditor(
     description: String,
     sport: String,
     excludeFromRankings: Boolean,
+    tags: List<String>,
     saving: Boolean,
     deleting: Boolean,
     error: String?,
@@ -957,6 +972,7 @@ private fun ActivityEditor(
     onDescriptionChange: (String) -> Unit,
     onSportChange: (String) -> Unit,
     onExcludeChange: (Boolean) -> Unit,
+    onTagsChange: (List<String>) -> Unit,
     onCancel: () -> Unit,
     onSave: () -> Unit,
     onDelete: () -> Unit,
@@ -989,6 +1005,12 @@ private fun ActivityEditor(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
             Checkbox(checked = excludeFromRankings, onCheckedChange = onExcludeChange, enabled = !saving && !deleting)
             Text("Exclude from rankings")
+        }
+        Text("Tags", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+            listOf("race" to "Race", "commute" to "Commute", "workout" to "Workout", "recovery" to "Recovery", "with_kid" to "With Kid", "with_pet" to "With Pet", "competition" to "Competition", "for_a_cause" to "For a Cause", "bad_gps" to "Bad GPS").forEach { (tag, label) ->
+                FilterChip(selected = tag in tags, onClick = { onTagsChange(if (tag in tags) tags - tag else tags + tag) }, label = { Text(label) }, enabled = !saving && !deleting)
+            }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp)) }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {

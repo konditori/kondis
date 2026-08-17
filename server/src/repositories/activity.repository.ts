@@ -15,7 +15,7 @@ import {
 import { getColumns } from 'src/schema/decorators';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
-import { ActivityType, BestEffortGroup, BestEffortType } from 'src/types';
+import { ActivityTag, ActivityType, BestEffortGroup, BestEffortType } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
   computeBiggestClimb,
@@ -63,7 +63,7 @@ export type ActivityListRecord = ActivityRecord & { track_geojson: string | null
 
 export type UpdateActivityInput = Pick<
   ActivityUpdate,
-  'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings'
+  'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings' | 'tags'
 >;
 
 export type ActivityCursor = {
@@ -241,6 +241,7 @@ export class ActivityRepository {
         SELECT id, sport, track, route_embedding, kondis_normalize_route(track) AS normalized_track
         FROM activity
         WHERE id = ${activityId}::uuid
+          AND NOT ('bad_gps' = ANY(tags))
           AND track IS NOT NULL
           AND route_embedding IS NOT NULL
       ), candidates AS MATERIALIZED (
@@ -250,6 +251,7 @@ export class ActivityRepository {
         WHERE candidate.sport = source.sport
           AND candidate.track IS NOT NULL
           AND candidate.route_embedding IS NOT NULL
+          AND NOT ('bad_gps' = ANY(candidate.tags))
           AND ST_DWithin(candidate.track, source.track, ${ROUTE_PREFILTER_RADIUS_METERS})
         ORDER BY candidate.route_embedding <-> source.route_embedding
         LIMIT ${ROUTE_CANDIDATE_LIMIT}
@@ -401,11 +403,15 @@ export class ActivityRepository {
     cursor,
     search,
     userId,
+    tags,
+    tagMatch = 'any',
   }: {
     limit: number;
     cursor?: ActivityCursor;
     search?: string;
     userId?: string;
+    tags?: ActivityTag[];
+    tagMatch?: 'any' | 'all';
   }) {
     let query = this.db
       .selectFrom('activity')
@@ -430,8 +436,16 @@ export class ActivityRepository {
           eb('activity.name', 'ilike', pattern),
           eb('activity.description', 'ilike', pattern),
           sql<boolean>`activity.sport ILIKE ${pattern}`,
+          sql<boolean>`activity.tags::text ILIKE ${pattern}`,
         ]),
       );
+    }
+
+    if (tags?.length) {
+      const expression = tagMatch === 'all'
+        ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
+        : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
+      query = query.where(expression);
     }
 
     if (cursor) {
@@ -446,7 +460,7 @@ export class ActivityRepository {
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
   }
 
-  async count(search?: string, userId?: string): Promise<number> {
+  async count(search?: string, userId?: string, tags?: ActivityTag[], tagMatch: 'any' | 'all' = 'any'): Promise<number> {
     let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
     if (userId) {
       query = query.where('activity.user_id', '=', userId);
@@ -458,8 +472,15 @@ export class ActivityRepository {
           eb('activity.name', 'ilike', pattern),
           eb('activity.description', 'ilike', pattern),
           sql<boolean>`activity.sport ILIKE ${pattern}`,
+          sql<boolean>`activity.tags::text ILIKE ${pattern}`,
         ]),
       );
+    }
+    if (tags?.length) {
+      const expression = tagMatch === 'all'
+        ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
+        : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
+      query = query.where(expression);
     }
     const row = await query.executeTakeFirstOrThrow();
     return Number(row.count);
@@ -498,6 +519,7 @@ export class ActivityRepository {
       .where('activity.sport', 'in', sports)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
+      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .orderBy('activity.started_at', 'asc')
       .orderBy('activity.id', 'asc')
       .execute();
@@ -516,6 +538,7 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity.exclude_from_rankings', '=', false)
+      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .where((eb) =>
         eb.or([
           eb('activity_best_effort.overall_rank', '<=', 3),
@@ -535,6 +558,7 @@ export class ActivityRepository {
       ])
       .where('activity_best_effort.activity_id', 'in', activityIds)
       .where('activity.exclude_from_rankings', '=', false)
+      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .where((eb) =>
         eb.or([
           eb('activity_best_effort.overall_rank', '<=', 3),
@@ -554,6 +578,7 @@ export class ActivityRepository {
       .where('activity.sport', 'in', sports)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
+      .where(sql<boolean>`NOT ('bad_gps' = ANY(activity.tags))`)
       .execute();
   }
 

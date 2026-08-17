@@ -133,6 +133,7 @@ export type ActivityListResponseDtoOutput = {
     description: string | null;
     /** Exclude from rankings */
     excludeFromRankings: boolean;
+    tags: ActivityTag_Output[];
     /** Start time in ISO-8601 format */
     startedAt: string;
     /** Minutes east of UTC */
@@ -207,8 +208,9 @@ export type ActivityDetailDtoOutput = {
   name: string | null;
   /** Activity description */
   description: string | null;
-  /** Exclude from rankings */
-  excludeFromRankings: boolean;
+    /** Exclude from rankings */
+    excludeFromRankings: boolean;
+    tags: ActivityTag_Output[];
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -293,6 +295,7 @@ export type ActivityUpdateDto = {
   sport?: ActivityUpdateDtoActivityType;
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
+  tags?: ActivityTag_Output[];
 };
 export type ActivityDtoOutput = {
   /** Activity id */
@@ -306,6 +309,7 @@ export type ActivityDtoOutput = {
   description: string | null;
   /** Exclude from rankings */
   excludeFromRankings: boolean;
+  tags: ActivityTag_Output[];
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -485,10 +489,14 @@ export function activityControllerListRecent(
     cursor,
     limit,
     search,
+    tags,
+    tagMatch,
   }: {
     cursor?: string;
     limit?: number;
     search?: string;
+    tags?: string;
+    tagMatch?: 'any' | 'all';
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -502,6 +510,8 @@ export function activityControllerListRecent(
           cursor,
           limit,
           search,
+          tags,
+          tagMatch,
         }),
       )}`,
       {
@@ -809,6 +819,19 @@ export enum Command {
   Empty = 'empty',
   ClearFailed = 'clear-failed',
 }
+export enum ActivityTag_Output {
+  Race = 'race',
+  LongRun = 'long_run',
+  Commute = 'commute',
+  Workout = 'workout',
+  Competition = 'competition',
+  Recovery = 'recovery',
+  WithPet = 'with_pet',
+  WithKid = 'with_kid',
+  ForACause = 'for_a_cause',
+  BadGps = 'bad_gps',
+}
+
 export enum ActivityType_Output {
   AlpineSki = 'alpine_ski',
   BackcountrySki = 'backcountry_ski',

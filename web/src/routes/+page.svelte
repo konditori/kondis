@@ -54,7 +54,7 @@
     hasSearch ? `Search results for “${query.trim()}”` : "Activities",
   );
   const resultSummary = $derived(
-    `${displayedTotal} ${displayedTotal === 1 ? "workout" : "workouts"} found`,
+    `${displayedTotal} ${displayedTotal === 1 ? "activity" : "activities"} found`,
   );
 
   $effect(() => {

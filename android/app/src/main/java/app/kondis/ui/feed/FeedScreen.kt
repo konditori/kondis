@@ -86,7 +86,7 @@ fun FeedScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Activities", style = MaterialTheme.typography.displaySmall)
                         Text(
-                            state.total?.let { "$it ${if (it == 1) "workout" else "workouts"}" }
+                            state.total?.let { "$it ${if (it == 1) "activity" else "activities"}" }
                                 ?: "Your private training log",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

@@ -27,6 +27,8 @@ import { Timestamp } from 'src/schema/decorators';
 import { ImportProgressStore } from 'src/state/import-progress.store';
 import {
   ACTIVITY_TYPES,
+  ACTIVITY_TAG_IDS,
+  ActivityTag,
   ActivityType,
   BestEffortGroup,
   BestEffortType,
@@ -90,6 +92,7 @@ export class ActivityService {
     activityName,
     activityDescription,
     activitySport,
+    activityTags,
     takeoutImportId,
     images,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
@@ -136,7 +139,7 @@ export class ActivityService {
       const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
         const createdId = await this.activityRepository.create(
-          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport, upload.user_id),
+          this.toCreateInput(id, parsed, activityName, activityDescription, activitySport, upload.user_id, activityTags),
           trx,
         );
         await Promise.all([
@@ -230,6 +233,7 @@ export class ActivityService {
             sport: job.activitySport,
             name: job.activityName ?? null,
             description: job.activityDescription ?? null,
+            tags: job.activityTags ?? [],
             started_at: new Date(job.startedAt),
             timezone_offset_minutes: null,
           },
@@ -472,15 +476,21 @@ export class ActivityService {
   }
 
   async listRecent(
-    { cursor, limit = 50, search }: { cursor?: string; limit?: number; search?: string },
+    { cursor, limit = 50, search, tags: tagQuery, tagMatch = 'any' }: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
     userId?: string,
   ) {
     const normalizedSearch = search?.trim() || undefined;
+    const tags = tagQuery?.split(',').map((tag) => tag.trim()).filter(Boolean) as ActivityTag[] | undefined;
+    if (tags?.some((tag) => !ACTIVITY_TAG_IDS.includes(tag))) {
+      throw new BadRequestException('Unknown activity tag');
+    }
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
       cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
       search: normalizedSearch,
       userId,
+      tags,
+      tagMatch,
     });
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
@@ -507,7 +517,7 @@ export class ActivityService {
         images: imagesByActivity[index],
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
-      total: await this.activityRepository.count(normalizedSearch, userId),
+      total: await this.activityRepository.count(normalizedSearch, userId, tags, tagMatch),
     };
   }
 
@@ -561,6 +571,7 @@ export class ActivityService {
 
     const supportsActivityAnalysis =
       BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.has(row.sport);
+    const excludedFromRankings = row.exclude_from_rankings || row.tags.includes('bad_gps');
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
@@ -574,7 +585,7 @@ export class ActivityService {
       analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
       matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),
       bestEfforts:
-        row.best_efforts_computed_at === null
+        excludedFromRankings || row.best_efforts_computed_at === null
           ? null
           : DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
               const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
@@ -650,6 +661,7 @@ export class ActivityService {
       sport?: ActivityType;
       startedAt?: Date;
       excludeFromRankings?: boolean;
+      tags?: ActivityTag[];
     } = {},
   ) {
     const mapped: UpdateActivityInput = {};
@@ -682,13 +694,28 @@ export class ActivityService {
       mapped.exclude_from_rankings = input.excludeFromRankings;
     }
 
+    if (input.tags !== undefined) {
+      const current = await this.activityRepository.getById(id, userId);
+      if (!current) return;
+      const tags = [...new Set(input.tags)];
+      if (tags.some((tag) => !ACTIVITY_TAG_IDS.includes(tag))) {
+        throw new BadRequestException('Unknown activity tag');
+      }
+      const sport = input.sport ?? current.sport;
+      const longRun = tags.includes('long_run');
+      if (longRun && !['run', 'trail_run', 'virtual_run'].includes(sport)) {
+        throw new BadRequestException('Long Run is only available for run activities');
+      }
+      mapped.tags = tags;
+    }
+
     const updated = await this.activityRepository.update(id, mapped, userId);
     if (updated && input.excludeFromRankings === true) {
       await Promise.all([
         this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
         this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} }),
       ]);
-    } else if (updated && (input.sport !== undefined || input.excludeFromRankings === false)) {
+    } else if (updated && (input.sport !== undefined || input.excludeFromRankings === false || input.tags !== undefined)) {
       await Promise.all([
         this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }),
         this.jobRepository.queue({ name: JobName.ActivityRouteMatchCompute, data: { id } }),
@@ -854,6 +881,7 @@ export class ActivityService {
     activityDescription?: string,
     activitySport?: ActivityType,
     userId?: string | null,
+    activityTags: ActivityTag[] = [],
   ): CreateActivityInput {
     return {
       activity: {
@@ -862,6 +890,7 @@ export class ActivityService {
         sport: activitySport ?? parsed.sport,
         name: activityName ?? parsed.name,
         description: activityDescription ?? null,
+        tags: activityTags,
         started_at: parsed.startedAt,
         timezone_offset_minutes: parsed.timezoneOffset,
       },

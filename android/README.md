@@ -47,6 +47,11 @@ Plain HTTP is supported for local self-hosting. Use HTTPS whenever traffic leave
 ./gradlew ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
 ```
 
+The repository uses mise for its pinned JavaScript/server toolchain. If you are
+starting from a fresh checkout, run `mise install` from the repository root before
+starting the backend. Android verification itself runs through the Gradle wrapper;
+use Android Studio's JDK 17+ or another JDK 17+ installation.
+
 The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
 Use `./gradlew ktlintFormat` to automatically fix most Kotlin formatting failures.

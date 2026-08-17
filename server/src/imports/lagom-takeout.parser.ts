@@ -5,7 +5,7 @@ import { parse } from 'csv-parse/sync';
 import { Open, type File as ZipEntry } from 'unzipper';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { ActivityType, UploadedFileData } from 'src/types';
+import type { ActivityTag, ActivityType, UploadedFileData } from 'src/types';
 import { toActivityType } from 'src/utils/activity';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
@@ -24,6 +24,7 @@ export type LagomTakeoutActivity = {
   name: string | null;
   description: string | null;
   sport: ActivityType | null;
+  tags: ActivityTag[];
   file: UploadedFileData;
   images: LagomTakeoutMedia[];
   manual?: {
@@ -275,6 +276,7 @@ export class LagomTakeoutParser {
     const activityIdIndex = headers.indexOf('Activity ID');
     const descriptionIndex = headers.indexOf('Activity Description');
     const sportIndex = headers.indexOf('Activity Type');
+    const commuteIndex = headers.indexOf('Commute');
     const mediaIndex = headers.indexOf('Media');
     const mediaCaptions = new Map<string, string | null>();
     const mediaManifestPath = `${archiveRoot}${MEDIA_MANIFEST_NAME}`;
@@ -313,6 +315,7 @@ export class LagomTakeoutParser {
       const description = descriptionIndex === -1 ? null : row[descriptionIndex]?.trim() || null;
       const manifestSport = sportIndex === -1 ? '' : (row[sportIndex]?.trim() ?? '');
       const sport = manifestSport ? toActivityType(manifestSport) : null;
+      const tags: ActivityTag[] = commuteIndex !== -1 && ['true', '1', 'yes'].includes((row[commuteIndex] ?? '').trim().toLowerCase()) ? ['commute'] : [];
       if (!filename) {
         const startedAt = row[this.column(headers, 'Activity Date')]?.trim();
         const elapsedTime = this.number(headers, row, 'Elapsed Time');
@@ -323,6 +326,7 @@ export class LagomTakeoutParser {
             name,
             description,
             sport,
+            tags,
             file: { originalname: 'manual.activity', buffer: Buffer.alloc(0), size: 0 },
             images: await this.readMedia(
               row[mediaIndex] ?? '',
@@ -410,6 +414,7 @@ export class LagomTakeoutParser {
           name,
           description,
           sport,
+          tags,
           file: { originalname, buffer, size: buffer.length },
           images: await this.readMedia(
             row[mediaIndex] ?? '',

@@ -7,6 +7,39 @@ export enum AverageMetric {
   Speed = 'speed',
 }
 
+export const ACTIVITY_TAG_IDS = [
+  'race',
+  'long_run',
+  'commute',
+  'workout',
+  'competition',
+  'recovery',
+  'with_pet',
+  'with_kid',
+  'for_a_cause',
+  'bad_gps',
+] as const;
+export type ActivityTag = (typeof ACTIVITY_TAG_IDS)[number];
+
+export type ActivityTagSettings = {
+  tag: ActivityTag;
+  label: string;
+  sports: readonly string[] | 'all';
+};
+
+export const ACTIVITY_TAGS: readonly ActivityTagSettings[] = [
+  { tag: 'race', label: 'Race', sports: 'all' },
+  { tag: 'long_run', label: 'Long Run', sports: ['run', 'trail_run', 'virtual_run'] },
+  { tag: 'commute', label: 'Commute', sports: 'all' },
+  { tag: 'workout', label: 'Workout', sports: 'all' },
+  { tag: 'competition', label: 'Competition', sports: 'all' },
+  { tag: 'recovery', label: 'Recovery', sports: 'all' },
+  { tag: 'with_pet', label: 'With Pet', sports: 'all' },
+  { tag: 'with_kid', label: 'With Kid', sports: 'all' },
+  { tag: 'for_a_cause', label: 'For a Cause', sports: 'all' },
+  { tag: 'bad_gps', label: 'Bad GPS', sports: 'all' },
+];
+
 export enum BestEffortGroup {
   None = 'none',
   Run = 'run',
@@ -384,6 +417,7 @@ export interface IActivityUploadJob {
   activityName?: string;
   activityDescription?: string;
   activitySport?: ActivityType;
+  activityTags?: ActivityTag[];
   takeoutImportId?: string;
   images?: IActivityImageStage[];
 }
@@ -400,6 +434,7 @@ export interface IActivityParseJob extends IEntityJob {
   activityName?: string;
   activityDescription?: string;
   activitySport?: ActivityType;
+  activityTags?: ActivityTag[];
   takeoutImportId?: string;
   images?: IActivityImageStage[];
 }
@@ -410,6 +445,7 @@ export interface IManualActivityJob extends IEntityJob {
   activityName?: string;
   activityDescription?: string;
   activitySport: ActivityType;
+  activityTags?: ActivityTag[];
   startedAt: string;
   elapsedTime: number;
   movingTime?: number | null;

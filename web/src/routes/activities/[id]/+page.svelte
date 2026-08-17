@@ -66,11 +66,17 @@
   let draftName = $state("");
   let draftDescription = $state("");
   let draftExcludeFromRankings = $state(false);
+  let draftTags = $state<Activity["tags"]>([]);
+  const tagLabels: Record<Activity["tags"][number], string> = { race: "Race", long_run: "Long Run", commute: "Commute", workout: "Workout", competition: "Competition", recovery: "Recovery", with_pet: "With Pet", with_kid: "With Kid", for_a_cause: "For a Cause", bad_gps: "Bad GPS" };
+  const availableTags = $derived((Object.keys(tagLabels) as Activity["tags"][number][]).filter((tag) => tag !== "long_run" || ["run", "trail_run", "virtual_run"].includes(draftSport)));
   const activityTypeOptionsList = $derived(
     activityTypeOptions(data.activityTypes),
   );
   let draftSport = $state<Activity["sport"]>(Sport.Other);
   const Icon = $derived(sportIcon(activity.sport));
+  const excludedFromRankings = $derived(
+    activity.excludeFromRankings || activity.tags?.includes("bad_gps") === true,
+  );
   const activitySettings = $derived(
     activityTypeSettings(data.activityTypes, activity.sport),
   );
@@ -87,7 +93,7 @@
     ].includes(activity.sport),
   );
   const hasBestEffortAchievements = $derived(
-    !activity.excludeFromRankings &&
+    !excludedFromRankings &&
       (activity.bestEfforts?.some(
         (effort) => bestEffortAchievement(effort) !== null,
       ) ??
@@ -113,7 +119,7 @@
     ) ?? [],
   );
   const mapMedals = $derived(
-    activity.excludeFromRankings
+    excludedFromRankings
       ? []
       : (activity.bestEfforts ?? [])
           .filter(
@@ -302,6 +308,7 @@
     draftDescription = activity.description ?? "";
     draftSport = activity.sport;
     draftExcludeFromRankings = activity.excludeFromRankings;
+    draftTags = [...(activity.tags ?? [])];
     editError = "";
     editing = true;
   }
@@ -401,7 +408,8 @@
             description: draftDescription.trim() || null,
             sport: draftSport as unknown as ActivityUpdateSport,
             excludeFromRankings: draftExcludeFromRankings,
-          },
+            tags: draftTags,
+          } as never,
         },
         getSdkRequestOptions(),
       )) as Activity;
@@ -494,7 +502,7 @@
           /></label
         >
         <label
-          ><span>Activity type</span><select bind:value={draftSport}
+          ><span>Activity type</span><select bind:value={draftSport} onchange={() => { if (!["run", "trail_run", "virtual_run"].includes(draftSport)) draftTags = draftTags.filter((tag) => tag !== "long_run"); }}
             >{#each activityTypeOptionsList as option}<option
                 value={option.value}>{option.label}</option
               >{/each}</select
@@ -512,6 +520,17 @@
             bind:checked={draftExcludeFromRankings}
           /><span>Exclude from rankings</span></label
         >
+        <fieldset class="metadata-tags">
+          <legend>Tags</legend>
+          <div class="tag-options">
+            {#each availableTags as tag}
+              <label class="tag-option">
+                <input type="checkbox" checked={draftTags.includes(tag)} onchange={(event) => draftTags = (event.currentTarget as HTMLInputElement).checked ? [...draftTags, tag] : draftTags.filter((value) => value !== tag)} />
+                <span>{tagLabels[tag]}</span>
+              </label>
+            {/each}
+          </div>
+        </fieldset>
         <div class="metadata-actions">
           <button
             type="button"
@@ -542,6 +561,9 @@
       <span><CalendarDays size={17} />{localDate(activity.startedAt)}</span
       ><span><Clock3 size={17} />{localTime(activity.startedAt)}</span>
     </div>
+    {#if activity.tags?.length}<div class="activity-tags" aria-label="Activity tags">
+      {#each activity.tags as tag}<span class:tag-warning={tag === "bad_gps"} class="activity-tag">{tagLabels[tag]}</span>{/each}
+    </div>{/if}
     {#if activity.description}<p class="activity-description">
         {activity.description}
       </p>{/if}
@@ -811,7 +833,7 @@
             >{isCyclingEffort ? "Cycling" : "Running"} performance</span
           >
           <h2>Best efforts</h2>
-          {#if activity.excludeFromRankings}<p
+          {#if excludedFromRankings}<p
               class="best-efforts-excluded-note"
             >
               Shown for this activity only; excluded from rankings.
@@ -840,7 +862,7 @@
               <div role="columnheader"><strong>Elev</strong></div>
             </div>
             {#each distanceBestEfforts as effort}
-              {@const achievement = activity.excludeFromRankings
+              {@const achievement = excludedFromRankings
                 ? null
                 : bestEffortAchievement(effort)}
               <a
@@ -925,7 +947,7 @@
               <div role="columnheader"><strong>Elev</strong></div>
             </div>
             {#each powerBestEfforts as effort}
-              {@const achievement = activity.excludeFromRankings
+              {@const achievement = excludedFromRankings
                 ? null
                 : bestEffortAchievement(effort)}
               <a
