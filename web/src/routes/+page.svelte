@@ -54,7 +54,7 @@
     hasSearch ? `Search results for “${query.trim()}”` : "Activities",
   );
   const resultSummary = $derived(
-    `${displayedTotal} ${displayedTotal === 1 ? "workout" : "workouts"} found`,
+    `${displayedTotal} ${displayedTotal === 1 ? "activity" : "activities"} found`,
   );
 
   $effect(() => {
@@ -121,7 +121,9 @@
   $effect(() =>
     subscribeToActivityEvents(
       data.eventsUrl,
-      (activity) => {
+      (event) => {
+        if (event.type === "activity.best-efforts.available") return;
+        const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(
             ({ uploadId }) => uploadId !== activity.uploadId,

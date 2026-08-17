@@ -54,6 +54,30 @@ use Testcontainers, so `docker info` must succeed first. The matching typecheck 
 mise run //:ci:server-medium-typecheck
 ```
 
+### Toolchain and local verification
+
+Kondis uses [mise](https://mise.jdx.dev/) for the pinned JavaScript toolchain. Run
+`mise install` once on a new checkout, then invoke Node and pnpm through mise (or
+use the repository's mise tasks). Do not rely on globally installed Node or pnpm:
+
+```bash
+mise install
+mise exec -- node --version
+mise exec -- pnpm --version
+mise run //server:check
+mise run //server:test
+```
+
+The Android client uses the Gradle wrapper and requires JDK 17 or newer. From
+`android/`, run the full local verification with:
+
+```bash
+./gradlew ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleDebug
+```
+
+The root-qualified mise task names are also used for dependency installation,
+tests, and generated API clients.
+
 Use the root-qualified `//:` commands above instead of relying on the current
 directory; `server` has similarly named component tasks for internal composition.
 

@@ -40,11 +40,11 @@
       }, 60_000);
       unsubscribe = subscribeToActivityEvents(
         eventsUrl,
-        (activity, type) => {
-          if (type !== "activity.created") return;
+        (event) => {
+          if (event.type !== "activity.created") return;
           clearTimeout(timeout);
           unsubscribe?.();
-          resolve(activity);
+          resolve(event.activity);
         },
         () => {},
       );

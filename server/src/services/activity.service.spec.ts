@@ -40,6 +40,7 @@ describe('ActivityService', () => {
   const recomputeBestEfforts = vi.fn<(id: string) => Promise<boolean>>();
   const recomputeRouteMatches = vi.fn<(id: string) => Promise<boolean>>();
   const refreshBestEffortRankings = vi.fn(async () => {});
+  const getBestEfforts = vi.fn();
 
   const withTransaction = vi.fn(async (fn: (trx: unknown) => Promise<unknown>) => fn('trx'));
   const emitEvent = vi.fn(async () => {});
@@ -70,6 +71,7 @@ describe('ActivityService', () => {
     recomputeBestEfforts,
     recomputeRouteMatches,
     refreshBestEffortRankings,
+    getBestEfforts,
   } as unknown as ActivityRepository;
 
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
@@ -123,6 +125,7 @@ describe('ActivityService', () => {
               description: null,
               started_at: new Date('2024-03-01T06:00:00.000Z'),
               timezone_offset_minutes: null,
+              tags: [],
               metrics_computed_at: null,
               best_efforts_computed_at: null,
               exclude_from_rankings: false,
@@ -140,6 +143,7 @@ describe('ActivityService', () => {
     setMetrics.mockResolvedValue(true);
     recomputeBestEfforts.mockResolvedValue(true);
     recomputeRouteMatches.mockResolvedValue(true);
+    getBestEfforts.mockResolvedValue([]);
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
@@ -398,6 +402,7 @@ describe('ActivityService', () => {
         description: null,
         started_at: new Date('2024-03-01T06:00:00.000Z'),
         timezone_offset_minutes: null,
+        tags: [],
         metrics_computed_at: null,
         best_efforts_computed_at: new Date(),
         exclude_from_rankings: false,
@@ -410,6 +415,10 @@ describe('ActivityService', () => {
       await expect(makeService().handleActivityBestEffortRank({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
 
       expect(emitEvent).toHaveBeenCalledWith('ActivityUpdate', expect.objectContaining({ id: ACTIVITY_ID }));
+      expect(emitEvent).toHaveBeenCalledWith('ActivityBestEffortsAvailable', {
+        id: ACTIVITY_ID,
+        bestEfforts: [],
+      });
     });
   });
 

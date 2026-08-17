@@ -1,6 +1,16 @@
 import type { Sport } from "$lib/api";
 
 export type ActivityType = Sport;
+export type ActivityTag =
+  | "race"
+  | "long_run"
+  | "commute"
+  | "workout"
+  | "competition"
+  | "recovery"
+  | "with_pet"
+  | "with_kid"
+  | "for_a_cause";
 
 export type Activity = {
   id: string;
@@ -9,6 +19,7 @@ export type Activity = {
   name: string | null;
   description: string | null;
   excludeFromRankings: boolean;
+  tags: ActivityTag[];
   startedAt: string;
   timezoneOffsetMinutes: number | null;
   metrics: {

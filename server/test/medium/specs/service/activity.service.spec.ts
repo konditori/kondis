@@ -75,6 +75,7 @@ describe(ActivityService.name, () => {
         sport?: 'run' | 'ride' | 'trail_run';
         startedAt?: string;
         excludeFromRankings?: boolean;
+        tags?: ('race' | 'long_run')[];
       },
     ) => {
       const updated = await sut.updateById(id, testUser.id, {
@@ -224,7 +225,7 @@ describe(ActivityService.name, () => {
     });
 
     it('removes an excluded podium activity and reranks the remaining efforts', async () => {
-      const goldId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'bad GPS gold', [
+      const goldId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'excluded gold', [
         { type: 'distance', data: [0, 5000] },
         { type: 'time', data: [0, 1300] },
       ]);
@@ -506,6 +507,67 @@ describe(ActivityService.name, () => {
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
       const runActivity = await serviceApi.getById({ id: activityId });
       expect(runActivity.bestEfforts).toHaveLength(3);
+    });
+
+    it('queues ranking exclusion changes and refreshes the activity feed podium', async () => {
+      const goldId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'gold', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1300] },
+      ]);
+      await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'silver', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1400] },
+      ]);
+      await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'bronze', [
+        { type: 'distance', data: [0, 5000] },
+        { type: 'time', data: [0, 1500] },
+      ]);
+
+      await serviceApi.updateById({ id: goldId }, { excludeFromRankings: true });
+
+      // The request only updates metadata. Recalculation must happen in the worker.
+      const immediatelyHidden = await serviceApi.listRecent({ limit: 50 });
+      expect(immediatelyHidden.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
+
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      const afterAdd = await serviceApi.listRecent({ limit: 50 });
+      expect(afterAdd.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
+      expect((await serviceApi.getById({ id: goldId })).bestEfforts).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: '5k' })]),
+      );
+      expect(
+        (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
+          ({ activityName, overallRank }) => ({
+            activityName,
+            overallRank,
+          }),
+        ),
+      ).toEqual([
+        { activityName: 'silver', overallRank: 1 },
+        { activityName: 'bronze', overallRank: 2 },
+      ]);
+
+      await serviceApi.updateById({ id: goldId }, { excludeFromRankings: false });
+      // Re-enabling ranking also queues recomputation and ranking; do not rely on the
+      // request thread to make the old podium correct.
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+
+      const afterRemove = await serviceApi.listRecent({ limit: 50 });
+      expect(afterRemove.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual(
+        expect.arrayContaining([expect.objectContaining({ overallRank: 1 })]),
+      );
+      expect(
+        (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
+          ({ activityName, overallRank }) => ({
+            activityName,
+            overallRank,
+          }),
+        ),
+      ).toEqual([
+        { activityName: 'gold', overallRank: 1 },
+        { activityName: 'silver', overallRank: 2 },
+        { activityName: 'bronze', overallRank: 3 },
+      ]);
     });
 
     it('refreshes persisted ranking years after the activity date changes', async () => {

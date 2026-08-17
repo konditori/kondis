@@ -63,6 +63,7 @@ export class UploadService {
     activityName,
     activityDescription,
     activitySport,
+    activityTags,
     userId,
     takeoutImportId,
     images,
@@ -84,7 +85,7 @@ export class UploadService {
       if (images?.length) {
         await this.jobRepository.queue({
           name: JobName.ActivityParse,
-          data: { id: existing.id, images, takeoutImportId },
+          data: { id: existing.id, images, takeoutImportId, activityTags },
         });
       }
       if (takeoutImportId) {
@@ -119,6 +120,7 @@ export class UploadService {
               ...(activityName && { activityName }),
               ...(activityDescription && { activityDescription }),
               ...(activitySport && { activitySport }),
+              ...(activityTags?.length && { activityTags }),
             },
           },
           { transaction: trx },
@@ -207,6 +209,7 @@ export class UploadService {
               activityName: activity.name ?? undefined,
               activityDescription: activity.description ?? undefined,
               activitySport: activity.sport ?? 'other',
+              activityTags: activity.tags,
               ...activity.manual,
               images: await this.stageImages(activity.images),
             },
@@ -222,6 +225,7 @@ export class UploadService {
           userId,
           takeoutImportId,
           activity.images,
+          activity.tags,
         );
         queued += 1;
       },
@@ -249,6 +253,7 @@ export class UploadService {
     userId?: string,
     takeoutImportId?: string,
     images: { file: UploadedFileData; caption: string | null; sortOrder: number }[] = [],
+    activityTags: JobOf<JobName.ActivityUpload>['activityTags'] = [],
   ): Promise<void> {
     const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
@@ -265,6 +270,7 @@ export class UploadService {
         ...(activityName && { activityName }),
         ...(activityDescription && { activityDescription }),
         ...(activitySport && { activitySport }),
+        ...(activityTags?.length && { activityTags }),
         ...(takeoutImportId && { takeoutImportId }),
         ...(stagedImages.length > 0 && { images: stagedImages }),
       },

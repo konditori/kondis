@@ -19,8 +19,9 @@
     if (!data.eventsUrl) return;
     return subscribeToActivityEvents(
       data.eventsUrl,
-      (_activity, type) => {
-        if (type === "activity.updated") void invalidateAll();
+      (event) => {
+        if (event.type === "activity.best-efforts.available")
+          void invalidateAll();
       },
       () => {},
     );

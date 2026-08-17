@@ -103,6 +103,18 @@ fun ActivityCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (activity.tags.isNotEmpty()) {
+                        Text(
+                            activity.tags.joinToString(" · ") {
+                                it.replace('_', ' ').replaceFirstChar { character ->
+                                    character.titlecase()
+                                }
+                            },
+                            modifier = Modifier.padding(top = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     val achievements = activity.topBestEfforts.orEmpty()
                     if (achievements.isNotEmpty()) {
                         Row(

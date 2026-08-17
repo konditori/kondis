@@ -59,11 +59,7 @@
       if (event.key === "Escape") onClose();
     }}
   >
-    <div
-      class="image-lightbox-content"
-      onclick={(event) => event.stopPropagation()}
-      onpointerdown={(event) => event.stopPropagation()}
-    >
+    <div class="image-lightbox-content">
       {#if images.length > 1}
         <button
           class="image-lightbox-nav image-lightbox-prev"

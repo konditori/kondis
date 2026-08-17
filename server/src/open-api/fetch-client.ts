@@ -133,6 +133,8 @@ export type ActivityListResponseDtoOutput = {
     description: string | null;
     /** Exclude from rankings */
     excludeFromRankings: boolean;
+    /** Activity tags */
+    tags: ActivityTag_Output[];
     /** Start time in ISO-8601 format */
     startedAt: string;
     /** Minutes east of UTC */
@@ -172,6 +174,11 @@ export type ActivityTypeSettingsOutput = {
   bestEffortGroup: BestEffortGroup;
 };
 export type ActivityTypeListResponseDtoOutput = ActivityTypeSettingsOutput[];
+export type ActivityTagListResponseDtoOutput = {
+  tag: ActivityTag_Output;
+  label: string;
+  sports: 'all' | ActivityType_Output[];
+}[];
 export type BestEffortListResponseDtoOutput = {
   sport: BestEffortSport_Output;
   type: BestEffortType_Output;
@@ -209,6 +216,8 @@ export type ActivityDetailDtoOutput = {
   description: string | null;
   /** Exclude from rankings */
   excludeFromRankings: boolean;
+  /** Activity tags */
+  tags: ActivityTag_Output[];
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -290,6 +299,8 @@ export type ActivityUpdateDto = {
   description?: string | null;
   /** Exclude from rankings */
   excludeFromRankings?: boolean;
+  /** Replace the activity tags */
+  tags?: ActivityUpdateDtoActivityTag[];
   sport?: ActivityUpdateDtoActivityType;
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
@@ -306,6 +317,8 @@ export type ActivityDtoOutput = {
   description: string | null;
   /** Exclude from rankings */
   excludeFromRankings: boolean;
+  /** Activity tags */
+  tags: ActivityTag_Output[];
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -485,10 +498,14 @@ export function activityControllerListRecent(
     cursor,
     limit,
     search,
+    tags,
+    tagMatch,
   }: {
     cursor?: string;
     limit?: number;
     search?: string;
+    tags?: string;
+    tagMatch?: 'any' | 'all';
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -502,6 +519,8 @@ export function activityControllerListRecent(
           cursor,
           limit,
           search,
+          tags,
+          tagMatch,
         }),
       )}`,
       {
@@ -519,6 +538,19 @@ export function activityControllerListTypes(opts?: Oazapfts.RequestOpts) {
       status: 200;
       data: ActivityTypeListResponseDtoOutput;
     }>('/activities/types', {
+      ...opts,
+    }),
+  );
+}
+/**
+ * List activity tags and their applicability
+ */
+export function activityControllerListTags(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityTagListResponseDtoOutput;
+    }>('/activities/tags', {
       ...opts,
     }),
   );
@@ -868,6 +900,17 @@ export enum ActivityType_Output {
   Yoga = 'yoga',
   Other = 'other',
 }
+export enum ActivityTag_Output {
+  Race = 'race',
+  LongRun = 'long_run',
+  Commute = 'commute',
+  Workout = 'workout',
+  Competition = 'competition',
+  Recovery = 'recovery',
+  WithPet = 'with_pet',
+  WithKid = 'with_kid',
+  ForACause = 'for_a_cause',
+}
 export enum BestEffortType_Output {
   $400M = '400m',
   $1K = '1k',
@@ -984,6 +1027,17 @@ export enum BestEffortValueKind_Output {
   Distance = 'distance',
   Elevation = 'elevation',
   Power = 'power',
+}
+export enum ActivityUpdateDtoActivityTag {
+  Race = 'race',
+  LongRun = 'long_run',
+  Commute = 'commute',
+  Workout = 'workout',
+  Competition = 'competition',
+  Recovery = 'recovery',
+  WithPet = 'with_pet',
+  WithKid = 'with_kid',
+  ForACause = 'for_a_cause',
 }
 export enum ActivityUpdateDtoActivityType {
   AlpineSki = 'alpine_ski',

@@ -21,13 +21,14 @@ import {
   ActivityListQueryDto,
   ActivityListResponseDto,
   ActivityTypeListResponseDto,
+  ActivityTagListResponseDto,
   ActivityUpdateDto,
   BestEffortListParamDto,
   BestEffortListResponseDto,
   MatchedRouteListResponseDto,
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
-import { ACTIVITY_TYPES } from 'src/types';
+import { ACTIVITY_TAGS, ACTIVITY_TYPES } from 'src/types';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -49,6 +50,13 @@ export class ActivityController {
   @Get('types')
   listTypes(): ActivityTypeListResponseDto {
     return [...ACTIVITY_TYPES];
+  }
+
+  @ApiOperation({ summary: 'List activity tags and their applicability' })
+  @ZodResponse({ status: 200, description: 'Activity tag settings', type: ActivityTagListResponseDto })
+  @Get('tags')
+  listTags(): ActivityTagListResponseDto {
+    return ACTIVITY_TAGS.map((tag) => ({ ...tag, sports: tag.sports === 'all' ? 'all' : [...tag.sports] })) as unknown as ActivityTagListResponseDto;
   }
 
   @ApiOperation({ summary: 'List best efforts over time for a sport' })
@@ -103,6 +111,7 @@ export class ActivityController {
       ...payload,
       startedAt: payload.startedAt ? new Date(payload.startedAt) : undefined,
       excludeFromRankings: payload.excludeFromRankings,
+      tags: payload.tags,
     });
     if (!updated) {
       throw new NotFoundException(`Activity ${id} does not exist`);

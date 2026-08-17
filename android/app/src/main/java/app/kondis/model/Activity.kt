@@ -10,6 +10,7 @@ data class Activity(
     val name: String?,
     val description: String?,
     val excludeFromRankings: Boolean,
+    val tags: List<String> = emptyList(),
     val startedAt: String,
     val timezoneOffsetMinutes: Int?,
     val metrics: ActivityMetrics?,
@@ -39,6 +40,7 @@ data class ActivityUpdate(
     val description: String? = null,
     val excludeFromRankings: Boolean? = null,
     val sport: String? = null,
+    val tags: List<String>? = null,
 )
 
 @Serializable
@@ -120,6 +122,7 @@ data class ActivityDetail(
     val name: String?,
     val description: String?,
     val excludeFromRankings: Boolean,
+    val tags: List<String> = emptyList(),
     val startedAt: String,
     val timezoneOffsetMinutes: Int?,
     val metrics: ActivityMetrics?,
@@ -139,6 +142,7 @@ data class ActivityDetail(
             name = name,
             description = description,
             excludeFromRankings = excludeFromRankings,
+            tags = tags,
             startedAt = startedAt,
             timezoneOffsetMinutes = timezoneOffsetMinutes,
             metrics = metrics,

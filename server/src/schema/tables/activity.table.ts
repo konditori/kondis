@@ -37,6 +37,9 @@ export class ActivityTable {
   @Column({ type: 'boolean' })
   exclude_from_rankings!: Generated<boolean>;
 
+  @Column({ type: 'text[]' })
+  tags!: Generated<string[]>;
+
   @Column({ type: 'timestamp' })
   started_at!: Timestamp;
 

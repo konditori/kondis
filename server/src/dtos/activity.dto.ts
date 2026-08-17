@@ -2,7 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
-import { ACTIVITY_TYPE_IDS, AverageMetric, BEST_EFFORT_TYPES, BestEffortGroup } from 'src/types';
+import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, AverageMetric, BEST_EFFORT_TYPES, BestEffortGroup } from 'src/types';
 
 export const ActivityTypeSchema = z
   .enum(ACTIVITY_TYPE_IDS)
@@ -17,6 +17,7 @@ export const ActivityTypeSettingsSchema = z
   })
   .meta({ id: 'ActivityTypeSettings' });
 export const ActivityTypeListResponseSchema = z.array(ActivityTypeSettingsSchema);
+export const ActivityTagSchema = z.enum(ACTIVITY_TAG_IDS).meta({ id: 'ActivityTag' });
 const BestEffortTypeSchema = z.enum(BEST_EFFORT_TYPES).meta({ id: 'BestEffortType' });
 const BestEffortValueKindSchema = z
   .enum(['duration', 'distance', 'elevation', 'power'])
@@ -41,6 +42,8 @@ export const ActivityListQuerySchema = z
     cursor: z.string().min(1).optional().describe('Opaque cursor returned by the previous page'),
     limit: z.coerce.number().int().min(1).max(100).default(50).describe('Maximum activities to return'),
     search: z.string().trim().max(200).optional().describe('Text to search in activity name, description, or sport'),
+    tags: z.string().trim().optional().describe('Comma-separated activity tags to include'),
+    tagMatch: z.enum(['any', 'all']).default('any').describe('Whether any or all requested tags must match'),
   })
   .meta({ id: 'ActivityListQueryDto' });
 
@@ -72,6 +75,7 @@ export const ActivitySchema = z
     name: z.string().nullable().describe('Activity name'),
     description: z.string().nullable().describe('Activity description'),
     excludeFromRankings: z.boolean().describe('Exclude from rankings'),
+    tags: z.array(ActivityTagSchema).describe('Activity tags'),
     startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
     timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
     metrics: ActivityMetricSchema.nullable().describe('Derived metrics, or null while computation is pending'),
@@ -212,6 +216,7 @@ export const ActivityUpdateSchema = z
     name: z.string().trim().min(1).max(200).nullable().optional().describe('Display name for the activity'),
     description: z.string().trim().max(10_000).nullable().optional().describe('Description for the activity'),
     excludeFromRankings: z.boolean().optional().describe('Exclude from rankings'),
+    tags: z.array(ActivityTagSchema).optional().describe('Replace the activity tags'),
     sport: ActivityTypeSchema.optional(),
     startedAt: z.string().datetime().optional().describe('Updated start time in ISO-8601 format'),
   })
@@ -227,6 +232,11 @@ export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
 export class MatchedRouteListResponseDto extends createZodDto(MatchedRouteListResponseSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
 export class ActivityTypeListResponseDto extends createZodDto(ActivityTypeListResponseSchema) {}
+export class ActivityTagListResponseDto extends createZodDto(z.array(z.object({
+  tag: ActivityTagSchema,
+  label: z.string(),
+  sports: z.union([z.literal('all'), z.array(ActivityTypeSchema)]),
+}))) {}
 export class BestEffortListParamDto extends createZodDto(BestEffortListParamSchema) {}
 export class BestEffortListResponseDto extends createZodDto(BestEffortListResponseSchema) {}
 export class ActivityUpdateDto extends createZodDto(ActivityUpdateSchema) {}
