@@ -1,3 +1,4 @@
+import { ActivityImageController } from 'src/controllers/activity-image.controller';
 import { ActivityController } from 'src/controllers/activity.controller';
 import { AuthController } from 'src/controllers/auth.controller';
 import { JobController } from 'src/controllers/job.controller';
@@ -10,6 +11,7 @@ export const controllers = [
   UploadController,
   JobController,
   ActivityController,
+  ActivityImageController,
   AuthController,
   UserController,
 ];

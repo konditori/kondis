@@ -1,5 +1,7 @@
 package app.kondis.ui.detail
 
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
@@ -90,6 +92,20 @@ class ActivityDetailViewModel
                 mutableState.value = mutableState.value.copy(deleting = false)
             }
         }
+
+        fun uploadImages(uris: List<Uri>) {
+            val id = activityId ?: return
+            if (id.startsWith(LOCAL_ACTIVITY_ID_PREFIX) || uris.isEmpty()) return
+            viewModelScope.launch {
+                runCatching { repository.uploadImages(id, uris) }
+                    .onFailure { error ->
+                        mutableState.value =
+                            mutableState.value.copy(mutationError = error.userMessage())
+                    }
+            }
+        }
+
+        suspend fun loadImage(path: String): Bitmap? = repository.loadActivityImage(path)
     }
 
 private const val LOCAL_ACTIVITY_ID_PREFIX = "local-"

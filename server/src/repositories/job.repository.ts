@@ -28,6 +28,7 @@ export type QueueJobOptions = {
 const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
   [QueueName.ActivityParsing]: 'exclusive',
   [QueueName.BackgroundTask]: 'exclusive',
+  [QueueName.ImageProcessing]: 'standard',
   [QueueName.Storage]: 'standard',
 };
 
@@ -39,6 +40,10 @@ const CRON_JOBS: { item: JobItem; cron: string }[] = [
   {
     item: { name: JobName.TemporaryFileCleanup, data: {} },
     cron: '0 4 * * *',
+  },
+  {
+    item: { name: JobName.ActivityImageGenerateQueueAll, data: { force: false } },
+    cron: '30 4 * * *',
   },
 ];
 
@@ -179,10 +184,10 @@ export class JobRepository implements OnApplicationShutdown {
 
       const table = `"${this.config.jobs.schema}"."${queue.table}"`;
       const { rows } = await boss.getDb().executeSql(
-        `SELECT data #>> '{data,storagePath}' AS storage_path
+        `SELECT jsonb_path_query(data, '$.**.storagePath') #>> '{}' AS storage_path
          FROM ${table}
          WHERE state IN ('created', 'retry', 'active')
-           AND data #>> '{data,storagePath}' IS NOT NULL`,
+           AND jsonb_path_exists(data, '$.**.storagePath')`,
         [],
       );
 
@@ -348,6 +353,22 @@ export class JobRepository implements OnApplicationShutdown {
 
       case JobName.ActivityDelete: {
         return { singletonKey: `${item.name}:${item.data.id}` };
+      }
+
+      case JobName.ActivityImageIngest: {
+        return { singletonKey: `${item.name}:${item.data.imageId}` };
+      }
+
+      case JobName.ActivityImageAttach: {
+        return { singletonKey: `${item.name}:${item.data.uploadId}` };
+      }
+
+      case JobName.ActivityImageGenerateThumbnails: {
+        return { singletonKey: `${item.name}:${item.data.id}` };
+      }
+
+      case JobName.ActivityImageGenerateQueueAll: {
+        return { singletonKey: item.name };
       }
 
       case JobName.LagomTakeoutImport: {

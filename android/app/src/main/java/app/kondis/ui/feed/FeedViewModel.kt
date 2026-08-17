@@ -1,5 +1,6 @@
 package app.kondis.ui.feed
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
@@ -119,6 +120,8 @@ class FeedViewModel
                 }
             }
         }
+
+        suspend fun loadImage(path: String): Bitmap? = repository.loadActivityImage(path)
     }
 
 internal fun Throwable.userMessage(): String =

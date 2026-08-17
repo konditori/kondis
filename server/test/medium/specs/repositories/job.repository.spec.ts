@@ -88,6 +88,16 @@ describe('JobRepository', () => {
       [JobName.ActivityParse]: { name: JobName.ActivityParse, data: { id: MISSING_UUID } },
       [JobName.ActivityParseQueueAll]: { name: JobName.ActivityParseQueueAll, data: { force: false } },
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
+      [JobName.ActivityImageIngest]: {
+        name: JobName.ActivityImageIngest,
+        data: { imageId: MISSING_UUID, uploadId: MISSING_UUID, storagePath: 'temporary/missing.jpg', originalName: 'missing.jpg', checksum: 'missing' },
+      },
+      [JobName.ActivityImageAttach]: { name: JobName.ActivityImageAttach, data: { uploadId: MISSING_UUID, images: [] } },
+      [JobName.ActivityImageGenerateThumbnails]: {
+        name: JobName.ActivityImageGenerateThumbnails,
+        data: { id: MISSING_UUID },
+      },
+      [JobName.ActivityImageGenerateQueueAll]: { name: JobName.ActivityImageGenerateQueueAll, data: { force: false } },
       [JobName.LagomTakeoutImport]: {
         name: JobName.LagomTakeoutImport,
         data: {

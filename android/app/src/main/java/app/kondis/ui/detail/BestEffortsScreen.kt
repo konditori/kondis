@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -41,6 +42,7 @@ import app.kondis.model.formatDuration
 import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
+import app.kondis.ui.components.MedalIcon
 
 @Composable
 fun BestEffortsRoute(
@@ -215,7 +217,10 @@ private fun EffortCard(
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             if (effort.overallRank <= 3) {
-                Icon(Icons.Rounded.MilitaryTech, contentDescription = null, tint = rankColor(effort.overallRank))
+                MedalIcon(
+                    tint = rankColor(effort.overallRank),
+                    modifier = Modifier.size(width = 34.dp, height = 38.dp),
+                )
             }
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(effort.activityName ?: sportLabel(effort.sport), fontWeight = FontWeight.Bold)
@@ -291,17 +296,14 @@ private fun effortLabel(type: String): String =
 private fun rankColor(rank: Int) =
     when (rank) {
         1 -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFF59E0B)
+            Color(0xFFEFAA00)
         }
 
         2 -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFA7B0B5)
+            Color(0xFF7B8583)
         }
 
         else -> {
-            androidx.compose.ui.graphics
-                .Color(0xFFB87333)
+            Color(0xFFBE6739)
         }
     }

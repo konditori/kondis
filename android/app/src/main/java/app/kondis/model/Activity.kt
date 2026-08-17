@@ -17,6 +17,20 @@ data class Activity(
     val updatedAt: String,
     val topBestEfforts: List<BestEffortSummary>? = null,
     val track: Track? = null,
+    val images: List<ActivityImage> = emptyList(),
+)
+
+@Serializable
+data class ActivityImage(
+    val id: String,
+    val caption: String? = null,
+    val sortOrder: Int = 0,
+    val width: Int? = null,
+    val height: Int? = null,
+    val status: String = "ready",
+    val thumbnail: String? = null,
+    val preview: String? = null,
+    val original: String? = null,
 )
 
 @Serializable
@@ -115,6 +129,7 @@ data class ActivityDetail(
     val analysis: ActivityAnalysis?,
     val bestEfforts: List<BestEffort>?,
     val matchedRouteCount: Int?,
+    val images: List<ActivityImage> = emptyList(),
 ) {
     fun summary() =
         Activity(
@@ -139,6 +154,7 @@ data class ActivityDetail(
                     )
                 },
             track = track,
+            images = images,
         )
 }
 

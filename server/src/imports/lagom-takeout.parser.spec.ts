@@ -9,6 +9,38 @@ const extractLagomTakeout = (...args: Parameters<LagomTakeoutParser['extractLago
   lagomTakeoutParser.extractLagomTakeout(...args);
 
 describe('extractLagomTakeout', () => {
+  it('imports English Strava media in activity order with captions', async () => {
+    const image = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+    const archive = createTestZip({
+      'activities.csv': Buffer.from(
+        [
+          'Activity ID,Activity Date,Activity Name,Activity Type,Filename,Elapsed Time,Media',
+          '1,"Aug 10, 2016, 5:00:00 PM",Run,Run,activities/run.gpx,60,"media/one.png|media/two.png"',
+        ].join('\n'),
+      ),
+      'media.csv': Buffer.from('Media Filename,Media Caption\nmedia/one.png,Front\nmedia/two.png,Back\n'),
+      'activities/run.gpx': Buffer.from('gpx contents'),
+      'media/one.png': image,
+      'media/two.png': image,
+    });
+
+    const result = await extractLagomTakeout(archive);
+
+    expect(
+      result.activities[0]?.images.map(({ caption, sortOrder, file }) => ({
+        caption,
+        sortOrder,
+        name: file.originalname,
+      })),
+    ).toEqual([
+      { caption: 'Front', sortOrder: 0, name: 'one.png' },
+      { caption: 'Back', sortOrder: 1, name: 'two.png' },
+    ]);
+  });
+
   it('reads the manifest and decompresses supported activity files', async () => {
     const archive = createTestZip({
       'export/activities.csv': {

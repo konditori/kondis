@@ -37,7 +37,7 @@ Open this directory in Android Studio and run the `app` configuration, or use:
 ./gradlew :app:installDebug
 ```
 
-The default API URL is `http://10.0.2.2:2293/api/v1/`, which reaches the host machine from the Android Emulator. For a physical device, open Settings in the app and enter an address the device can reach, such as `http://192.168.1.20:2293/api/v1/`.
+The default API URL is `http://10.0.2.2:2293/api/v1/`, which reaches the host machine from the Android Emulator. For a physical device, enter the server URL on the sign-in screen or in Settings, such as `http://192.168.1.20:2293/api/v1/`. A build-time default can also be supplied with `./gradlew -Pkondis.apiUrl=https://kondis.example/api/v1/ :app:assembleRelease`.
 
 Plain HTTP is supported for local self-hosting. Use HTTPS whenever traffic leaves a trusted local network.
 

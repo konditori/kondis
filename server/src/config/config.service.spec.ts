@@ -57,7 +57,7 @@ describe('ConfigService', () => {
       process.env.KONDIS_JOB_CONCURRENCY = '7';
 
       const { concurrency } = new ConfigService().jobs;
-      expect(Object.values(concurrency)).toEqual([7, 7, 7]);
+      expect(Object.values(concurrency)).toEqual([7, 7, 7, 7]);
     });
 
     it('lets a per-queue override win over the global one', () => {

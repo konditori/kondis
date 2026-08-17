@@ -3,6 +3,7 @@
     ArrowLeft,
     CalendarDays,
     Check,
+    ChevronLeft,
     ChevronRight,
     Clock3,
     Flame,
@@ -36,6 +37,7 @@
   } from "$lib/activity-types";
   import { bestEffortLabel, bestEffortRecordName } from "$lib/best-efforts";
   import ActivityProfile from "$lib/components/ActivityProfile.svelte";
+  import ImageLightbox from "$lib/components/ImageLightbox.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import {
@@ -154,6 +156,20 @@
   let highlightedRange = $state<HighlightRange | null>(null);
   let graphPointTime = $state<number | null>(null);
   let refreshPending = false;
+  let imageCarousel = $state<HTMLDivElement>();
+  let imagePage = $state(0);
+  const viewableImages = $derived(
+    activity.images.filter(
+      (image) => image.preview || image.original || image.thumbnail,
+    ),
+  );
+  let selectedImageIndex = $state<number | null>(null);
+  const imagePageCount = $derived(viewableImages.length);
+  $effect(() => {
+    if (imagePage >= imagePageCount) {
+      imagePage = Math.max(0, imagePageCount - 1);
+    }
+  });
   const averageMetricStats = $derived(
     averageMetric === AverageMetric.None
       ? []
@@ -417,6 +433,33 @@
       deleting = false;
     }
   }
+
+  function updateImagePage() {
+    if (!imageCarousel) return;
+    const slides = [...imageCarousel.children] as HTMLElement[];
+    const nearest = slides.reduce(
+      (best, slide, index) =>
+        Math.abs(slide.offsetLeft - imageCarousel!.scrollLeft) <
+        Math.abs(slides[best]!.offsetLeft - imageCarousel!.scrollLeft)
+          ? index
+          : best,
+      0,
+    );
+    imagePage = nearest;
+  }
+
+  function scrollImages(direction: -1 | 1) {
+    if (!imageCarousel) return;
+    const slides = [...imageCarousel.children] as HTMLElement[];
+    const next = Math.max(
+      0,
+      Math.min(imagePage + direction, slides.length - 1),
+    );
+    const slide = slides[next];
+    if (!slide) return;
+    imageCarousel.scrollTo({ left: slide.offsetLeft, behavior: "smooth" });
+    imagePage = next;
+  }
 </script>
 
 <svelte:head><title>{activityName(activity)} · Kondis</title></svelte:head>
@@ -504,6 +547,63 @@
       </p>{/if}
   </header>
 
+  {#if viewableImages.length > 0}
+    <section
+      class="activity-image-carousel"
+      class:activity-image-carousel-locked={selectedImageIndex !== null}
+      inert={selectedImageIndex !== null}
+      aria-label="Activity photos"
+    >
+      <div
+        class="activity-visual-carousel-track"
+        role="region"
+        aria-label="Swipeable activity photos"
+        bind:this={imageCarousel}
+        onscroll={updateImagePage}
+      >
+        {#each viewableImages as image, imageIndex (image.id)}
+          <div class="activity-visual-slide activity-photo-slide">
+            <figure>
+              <button
+                type="button"
+                class="activity-photo-open"
+                aria-label={image.caption ?? "Open activity photo"}
+                onclick={() => (selectedImageIndex = imageIndex)}
+              >
+                <img
+                  src={image.preview ?? image.thumbnail ?? image.original}
+                  alt={image.caption ?? "Activity photo"}
+                />
+              </button>
+              {#if image.caption}<figcaption>{image.caption}</figcaption>{/if}
+            </figure>
+          </div>
+        {/each}
+      </div>
+      {#if imagePageCount > 1}
+        <div
+          class="activity-visual-controls"
+          aria-label="Photo carousel controls"
+        >
+          <button
+            type="button"
+            aria-label="Previous photo"
+            onclick={() => scrollImages(-1)}
+            disabled={imagePage === 0}><ChevronLeft size={17} /></button
+          >
+          <span aria-live="polite">{imagePage + 1} / {imagePageCount}</span>
+          <button
+            type="button"
+            aria-label="Next photo"
+            onclick={() => scrollImages(1)}
+            disabled={imagePage === imagePageCount - 1}
+            ><ChevronRight size={17} /></button
+          >
+        </div>
+      {/if}
+    </section>
+  {/if}
+
   {#if hasGpsRoute}
     <div
       class:activity-visuals={!isCyclingEffort &&
@@ -577,26 +677,28 @@
           </div>
         </section>
       {/if}
-      <section class="map-panel">
-        {#key mapStyle}
-          <RouteMap
-            coordinates={activity.track?.coordinates ?? null}
-            mode={mapStyle}
-            route={activity.analysis?.route ?? []}
-            medals={mapMedals}
-            highlight={mapHighlight}
-            onPointHover={highlightGraphPoint}
-          />
-        {/key}
-        {#if activity.track && mapStyle === ActivityMapStyle.Route}
-          <div class="map-key">
-            <span><i class="start-dot"></i> Start</span><span
-              ><i class="finish-dot"></i> Finish</span
-            >
-          </div>
-        {/if}
+      <section class="activity-map-section" aria-label="Activity route">
+        <section class="map-panel">
+          {#key mapStyle}
+            <RouteMap
+              coordinates={activity.track?.coordinates ?? null}
+              mode={mapStyle}
+              route={activity.analysis?.route ?? []}
+              medals={mapMedals}
+              highlight={mapHighlight}
+              onPointHover={highlightGraphPoint}
+            />
+          {/key}
+          {#if activity.track && mapStyle === ActivityMapStyle.Route}
+            <div class="map-key">
+              <span><i class="start-dot"></i> Start</span><span
+                ><i class="finish-dot"></i> Finish</span
+              >
+            </div>
+          {/if}
+        </section>
       </section>
-      {#if hasActivityAnalysis}
+      {#if hasGpsRoute && hasActivityAnalysis}
         <ActivityProfile
           points={activity.analysis?.profile ?? []}
           selection={highlightedRange}
@@ -858,3 +960,10 @@
     </section>
   {/if}
 </div>
+{#if selectedImageIndex !== null}
+  <ImageLightbox
+    images={viewableImages}
+    initialIndex={selectedImageIndex}
+    onClose={() => (selectedImageIndex = null)}
+  />
+{/if}

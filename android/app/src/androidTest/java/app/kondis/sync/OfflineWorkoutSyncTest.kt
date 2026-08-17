@@ -135,9 +135,11 @@ class OfflineWorkoutSyncTest {
         device.findObject(By.textContains("Delete test run")).click()
         check(device.wait(Until.hasObject(By.text("Edit")), 5_000))
         device.findObject(By.text("Edit")).click()
+        check(UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Edit activity"))
         check(device.wait(Until.hasObject(By.text("Edit activity")), 5_000))
-        UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Delete")
-        device.findObject(By.text("Delete")).click()
+        UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)
+        check(device.wait(Until.hasObject(By.desc("Delete activity")), 5_000))
+        device.findObject(By.desc("Delete activity")).click()
         check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
 
         device.findObject(By.text("Delete")).click()
@@ -159,6 +161,13 @@ class OfflineWorkoutSyncTest {
         object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
                 when {
+                    request.method == "GET" && request.url.encodedPath == "/api/v1/auth/me" -> {
+                        response(
+                            200,
+                            "{\"id\":\"offline-sync-test-user\",\"email\":\"test@example.com\",\"name\":\"Offline Test\",\"role\":\"user\"}",
+                        )
+                    }
+
                     request.method == "POST" && request.url.encodedPath == "/api/v1/upload/activity" -> {
                         response(201, "{\"byteSize\":128,\"queued\":true}")
                     }

@@ -10,6 +10,8 @@ import { toActivityType } from 'src/utils/activity';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 const MANIFEST_NAME = 'activities.csv';
+const MEDIA_MANIFEST_NAME = 'media.csv';
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif', '.avif']);
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06_05_4b_50;
 const END_OF_CENTRAL_DIRECTORY_BYTES = 22;
 const MAX_ZIP_COMMENT_BYTES = 0xff_ff;
@@ -23,6 +25,7 @@ export type LagomTakeoutActivity = {
   description: string | null;
   sport: ActivityType | null;
   file: UploadedFileData;
+  images: LagomTakeoutMedia[];
   manual?: {
     sourceId: string;
     startedAt: string;
@@ -37,6 +40,12 @@ export type LagomTakeoutActivity = {
     maxHr: number | null;
     calories: number | null;
   };
+};
+
+export type LagomTakeoutMedia = {
+  file: UploadedFileData;
+  caption: string | null;
+  sortOrder: number;
 };
 
 export type LagomTakeoutError = {
@@ -266,6 +275,28 @@ export class LagomTakeoutParser {
     const activityIdIndex = headers.indexOf('Activity ID');
     const descriptionIndex = headers.indexOf('Activity Description');
     const sportIndex = headers.indexOf('Activity Type');
+    const mediaIndex = headers.indexOf('Media');
+    const mediaCaptions = new Map<string, string | null>();
+    const mediaManifestPath = `${archiveRoot}${MEDIA_MANIFEST_NAME}`;
+    if (entries.has(mediaManifestPath)) {
+      const mediaManifest = await this.readEntry(entries.get(mediaManifestPath)!, UPLOAD_LIMITS.manifestBytes);
+      const mediaRows = parse(mediaManifest.toString('utf8'), {
+        bom: true,
+        relax_column_count: true,
+        max_record_size: UPLOAD_LIMITS.manifestRecordBytes,
+      }) as string[][];
+      const mediaHeaders = mediaRows.shift() ?? [];
+      const mediaFilenameIndex = mediaHeaders.indexOf('Media Filename');
+      const mediaCaptionIndex = mediaHeaders.indexOf('Media Caption');
+      if (mediaFilenameIndex !== -1) {
+        for (const mediaRow of mediaRows) {
+          const path = this.normalizeArchivePath(mediaRow[mediaFilenameIndex]?.trim() ?? '');
+          if (path) {
+            mediaCaptions.set(path, mediaCaptionIndex === -1 ? null : mediaRow[mediaCaptionIndex]?.trim() || null);
+          }
+        }
+      }
+    }
     const result: LagomTakeoutContents = {
       totalActivities: rows.length,
       skipped: 0,
@@ -293,6 +324,18 @@ export class LagomTakeoutParser {
             description,
             sport,
             file: { originalname: 'manual.activity', buffer: Buffer.alloc(0), size: 0 },
+            images: await this.readMedia(
+              row[mediaIndex] ?? '',
+              archiveRoot,
+              entries,
+              mediaCaptions,
+              rowNumber,
+              result,
+              () => expandedBytes,
+              (value) => {
+                expandedBytes = value;
+              },
+            ),
             manual: {
               sourceId:
                 activityIdIndex === -1 ? `row:${rowNumber}` : row[activityIdIndex]?.trim() || `row:${rowNumber}`,
@@ -368,6 +411,18 @@ export class LagomTakeoutParser {
           description,
           sport,
           file: { originalname, buffer, size: buffer.length },
+          images: await this.readMedia(
+            row[mediaIndex] ?? '',
+            archiveRoot,
+            entries,
+            mediaCaptions,
+            rowNumber,
+            result,
+            () => expandedBytes,
+            (value) => {
+              expandedBytes = value;
+            },
+          ),
         };
       } catch (error) {
         if (error instanceof TakeoutLimitError) {
@@ -386,5 +441,59 @@ export class LagomTakeoutParser {
     }
 
     return result;
+  };
+
+  private readonly readMedia = async (
+    value: string,
+    archiveRoot: string,
+    entries: Map<string, ZipEntry>,
+    captions: Map<string, string | null>,
+    rowNumber: number,
+    result: LagomTakeoutContents,
+    getExpandedBytes: () => number,
+    setExpandedBytes: (value: number) => void,
+  ): Promise<LagomTakeoutMedia[]> => {
+    const paths = value
+      .split('|')
+      .map((path) => this.normalizeArchivePath(path.trim()))
+      .filter((path): path is string => !!path);
+    const media: LagomTakeoutMedia[] = [];
+    for (const [sortOrder, normalized] of paths.entries()) {
+      if (!IMAGE_EXTENSIONS.has(extname(normalized).toLowerCase())) {
+        continue;
+      }
+      const entryPath = `${archiveRoot}${normalized}`;
+      const entry = entries.get(entryPath);
+      if (!entry) {
+        result.errors.push({
+          row: rowNumber,
+          filename: normalized,
+          message: 'Media file is missing from the ZIP archive',
+        });
+        continue;
+      }
+      try {
+        const buffer = await this.readEntry(entry, UPLOAD_LIMITS.imageFileBytes);
+        const expandedBytes = getExpandedBytes() + buffer.length;
+        if (expandedBytes > UPLOAD_LIMITS.zipExpandedBytes) {
+          throw new TakeoutLimitError(
+            `Takeout media exceeds the ${UPLOAD_LIMITS.zipExpandedBytes}-byte expanded size limit`,
+          );
+        }
+        setExpandedBytes(expandedBytes);
+        media.push({
+          file: { originalname: basename(normalized), buffer, size: buffer.length },
+          caption: captions.get(normalized) ?? null,
+          sortOrder,
+        });
+      } catch (error) {
+        if (error instanceof TakeoutLimitError) {
+          throw error;
+        }
+        const message = error instanceof Error ? error.message : String(error);
+        result.errors.push({ row: rowNumber, filename: normalized, message: `Could not read media: ${message}` });
+      }
+    }
+    return media;
   };
 }

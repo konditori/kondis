@@ -53,6 +53,10 @@ class SettingsViewModel
             viewModelScope.launch { settingsRepository.setUnitSystem(units) }
         }
 
+        fun signOut() {
+            viewModelScope.launch { settingsRepository.setAccessToken(null) }
+        }
+
         fun saveAndTest() {
             if (checking.value) return
             viewModelScope.launch {

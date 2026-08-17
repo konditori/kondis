@@ -191,11 +191,8 @@ jobs:
       - name: Setup Mise
         uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
 
-      - name: Install dependencies
-        run: mise run //server:install
-
       - name: Run medium tests
-        run: mise run test-medium
+        run: mise run //:ci:server-medium
 
       - name: Capture Docker logs
         if: failure()
@@ -229,11 +226,8 @@ jobs:
       - name: Setup Mise
         uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
 
-      - name: Install dependencies
-        run: mise run //server:install
-
       - name: Typecheck medium tests
-        run: mise run test-medium-typecheck
+        run: mise run //:ci:server-medium-typecheck
 
   e2e-tests:
     name: End-to-End Tests
