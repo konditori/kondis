@@ -1,7 +1,17 @@
 import type { Sport } from "$lib/api";
 
 export type ActivityType = Sport;
-export type ActivityTag = "race" | "long_run" | "commute" | "workout" | "competition" | "recovery" | "with_pet" | "with_kid" | "for_a_cause" | "bad_gps";
+export type ActivityTag =
+  | "race"
+  | "long_run"
+  | "commute"
+  | "workout"
+  | "competition"
+  | "recovery"
+  | "with_pet"
+  | "with_kid"
+  | "for_a_cause"
+  | "bad_gps";
 
 export type Activity = {
   id: string;

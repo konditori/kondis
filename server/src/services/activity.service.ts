@@ -571,7 +571,6 @@ export class ActivityService {
 
     const supportsActivityAnalysis =
       BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.has(row.sport);
-    const excludedFromRankings = row.exclude_from_rankings || row.tags.includes('bad_gps');
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
@@ -585,7 +584,7 @@ export class ActivityService {
       analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
       matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),
       bestEfforts:
-        excludedFromRankings || row.best_efforts_computed_at === null
+        row.best_efforts_computed_at === null
           ? null
           : DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
               const effort = storedEfforts.find((candidate) => candidate.type === definition.type);

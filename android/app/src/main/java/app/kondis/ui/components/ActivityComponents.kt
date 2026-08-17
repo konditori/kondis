@@ -105,7 +105,11 @@ fun ActivityCard(
                     )
                     if (activity.tags.isNotEmpty()) {
                         Text(
-                            activity.tags.joinToString(" · ") { it.replace('_', ' ').replaceFirstChar { character -> character.titlecase() } },
+                            activity.tags.joinToString(" · ") {
+                                it.replace('_', ' ').replaceFirstChar { character ->
+                                    character.titlecase()
+                                }
+                            },
                             modifier = Modifier.padding(top = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,

@@ -261,6 +261,29 @@
               "maxLength": 200,
               "type": "string"
             }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated activity tags to include",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tagMatch",
+            "required": false,
+            "in": "query",
+            "description": "Whether any or all requested tags must match",
+            "schema": {
+              "default": "any",
+              "type": "string",
+              "enum": [
+                "any",
+                "all"
+              ]
+            }
           }
         ],
         "responses": {
@@ -298,6 +321,28 @@
           }
         },
         "summary": "List activity types and their behavior",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/activities/tags": {
+      "get": {
+        "operationId": "ActivityController_listTags",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Activity tag settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTagListResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List activity tags and their applicability",
         "tags": [
           "activities"
         ]
@@ -1085,6 +1130,21 @@
         ],
         "description": "Activity sport type"
       },
+      "ActivityTag_Output": {
+        "type": "string",
+        "enum": [
+          "race",
+          "long_run",
+          "commute",
+          "workout",
+          "competition",
+          "recovery",
+          "with_pet",
+          "with_kid",
+          "for_a_cause",
+          "bad_gps"
+        ]
+      },
       "ActivityMetricDto_Output": {
         "type": "object",
         "properties": {
@@ -1347,6 +1407,13 @@
                   "type": "boolean",
                   "description": "Exclude from rankings"
                 },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityTag_Output"
+                  },
+                  "description": "Activity tags"
+                },
                 "startedAt": {
                   "type": "string",
                   "format": "date-time",
@@ -1468,6 +1535,7 @@
                 "name",
                 "description",
                 "excludeFromRankings",
+                "tags",
                 "startedAt",
                 "timezoneOffsetMinutes",
                 "metrics",
@@ -1539,6 +1607,42 @@
         "type": "array",
         "items": {
           "$ref": "#/components/schemas/ActivityTypeSettings_Output"
+        }
+      },
+      "ActivityTagListResponseDto_Output": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "tag": {
+              "$ref": "#/components/schemas/ActivityTag_Output"
+            },
+            "label": {
+              "type": "string"
+            },
+            "sports": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "all"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityType_Output"
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "tag",
+            "label",
+            "sports"
+          ],
+          "additionalProperties": false
         }
       },
       "BestEffortSport_Output": {
@@ -1711,6 +1815,13 @@
           "excludeFromRankings": {
             "type": "boolean",
             "description": "Exclude from rankings"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityTag_Output"
+            },
+            "description": "Activity tags"
           },
           "startedAt": {
             "type": "string",
@@ -2013,6 +2124,7 @@
           "name",
           "description",
           "excludeFromRankings",
+          "tags",
           "startedAt",
           "timezoneOffsetMinutes",
           "metrics",
@@ -2058,6 +2170,13 @@
             "type": "boolean",
             "description": "Exclude from rankings"
           },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityTag_Output"
+            },
+            "description": "Activity tags"
+          },
           "startedAt": {
             "type": "string",
             "format": "date-time",
@@ -2100,6 +2219,7 @@
           "name",
           "description",
           "excludeFromRankings",
+          "tags",
           "startedAt",
           "timezoneOffsetMinutes",
           "metrics",
@@ -2129,6 +2249,21 @@
           "activities"
         ],
         "additionalProperties": false
+      },
+      "ActivityUpdateDtoActivityTag": {
+        "type": "string",
+        "enum": [
+          "race",
+          "long_run",
+          "commute",
+          "workout",
+          "competition",
+          "recovery",
+          "with_pet",
+          "with_kid",
+          "for_a_cause",
+          "bad_gps"
+        ]
       },
       "ActivityUpdateDtoActivityType": {
         "type": "string",
@@ -2212,6 +2347,13 @@
           "excludeFromRankings": {
             "description": "Exclude from rankings",
             "type": "boolean"
+          },
+          "tags": {
+            "description": "Replace the activity tags",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityUpdateDtoActivityTag"
+            }
           },
           "sport": {
             "$ref": "#/components/schemas/ActivityUpdateDtoActivityType"

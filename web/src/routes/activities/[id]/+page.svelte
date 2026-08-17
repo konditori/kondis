@@ -67,8 +67,25 @@
   let draftDescription = $state("");
   let draftExcludeFromRankings = $state(false);
   let draftTags = $state<Activity["tags"]>([]);
-  const tagLabels: Record<Activity["tags"][number], string> = { race: "Race", long_run: "Long Run", commute: "Commute", workout: "Workout", competition: "Competition", recovery: "Recovery", with_pet: "With Pet", with_kid: "With Kid", for_a_cause: "For a Cause", bad_gps: "Bad GPS" };
-  const availableTags = $derived((Object.keys(tagLabels) as Activity["tags"][number][]).filter((tag) => tag !== "long_run" || ["run", "trail_run", "virtual_run"].includes(draftSport)));
+  const tagLabels: Record<Activity["tags"][number], string> = {
+    race: "Race",
+    long_run: "Long Run",
+    commute: "Commute",
+    workout: "Workout",
+    competition: "Competition",
+    recovery: "Recovery",
+    with_pet: "With Pet",
+    with_kid: "With Kid",
+    for_a_cause: "For a Cause",
+    bad_gps: "Bad GPS",
+  };
+  const availableTags = $derived(
+    (Object.keys(tagLabels) as Activity["tags"][number][]).filter(
+      (tag) =>
+        tag !== "long_run" ||
+        ["run", "trail_run", "virtual_run"].includes(draftSport),
+    ),
+  );
   const activityTypeOptionsList = $derived(
     activityTypeOptions(data.activityTypes),
   );
@@ -502,7 +519,12 @@
           /></label
         >
         <label
-          ><span>Activity type</span><select bind:value={draftSport} onchange={() => { if (!["run", "trail_run", "virtual_run"].includes(draftSport)) draftTags = draftTags.filter((tag) => tag !== "long_run"); }}
+          ><span>Activity type</span><select
+            bind:value={draftSport}
+            onchange={() => {
+              if (!["run", "trail_run", "virtual_run"].includes(draftSport))
+                draftTags = draftTags.filter((tag) => tag !== "long_run");
+            }}
             >{#each activityTypeOptionsList as option}<option
                 value={option.value}>{option.label}</option
               >{/each}</select
@@ -524,8 +546,19 @@
           <legend>Tags</legend>
           <div class="tag-options">
             {#each availableTags as tag}
-              <label class="tag-option">
-                <input type="checkbox" checked={draftTags.includes(tag)} onchange={(event) => draftTags = (event.currentTarget as HTMLInputElement).checked ? [...draftTags, tag] : draftTags.filter((value) => value !== tag)} />
+              <label
+                class:tag-selected={draftTags.includes(tag)}
+                class="tag-option"
+              >
+                <input
+                  type="checkbox"
+                  checked={draftTags.includes(tag)}
+                  onchange={(event) =>
+                    (draftTags = (event.currentTarget as HTMLInputElement)
+                      .checked
+                      ? [...draftTags, tag]
+                      : draftTags.filter((value) => value !== tag))}
+                />
                 <span>{tagLabels[tag]}</span>
               </label>
             {/each}
@@ -561,9 +594,15 @@
       <span><CalendarDays size={17} />{localDate(activity.startedAt)}</span
       ><span><Clock3 size={17} />{localTime(activity.startedAt)}</span>
     </div>
-    {#if activity.tags?.length}<div class="activity-tags" aria-label="Activity tags">
-      {#each activity.tags as tag}<span class:tag-warning={tag === "bad_gps"} class="activity-tag">{tagLabels[tag]}</span>{/each}
-    </div>{/if}
+    {#if activity.tags?.length}<div
+        class="activity-tags"
+        aria-label="Activity tags"
+      >
+        {#each activity.tags as tag}<span
+            class:tag-warning={tag === "bad_gps"}
+            class="activity-tag">{tagLabels[tag]}</span
+          >{/each}
+      </div>{/if}
     {#if activity.description}<p class="activity-description">
         {activity.description}
       </p>{/if}
@@ -833,9 +872,7 @@
             >{isCyclingEffort ? "Cycling" : "Running"} performance</span
           >
           <h2>Best efforts</h2>
-          {#if excludedFromRankings}<p
-              class="best-efforts-excluded-note"
-            >
+          {#if excludedFromRankings}<p class="best-efforts-excluded-note">
               Shown for this activity only; excluded from rankings.
             </p>{/if}
         </div>

@@ -164,9 +164,15 @@
           )}</span
         >
       </p>
-      {#if activity.tags?.length}<div class="activity-tags" aria-label="Activity tags">
-        {#each activity.tags as tag}<span class:tag-warning={tag === "bad_gps"} class="activity-tag">{tag.replaceAll("_", " ")}</span>{/each}
-      </div>{/if}
+      {#if activity.tags?.length}<div
+          class="activity-tags"
+          aria-label="Activity tags"
+        >
+          {#each activity.tags as tag}<span
+              class:tag-warning={tag === "bad_gps"}
+              class="activity-tag">{tag.replaceAll("_", " ")}</span
+            >{/each}
+        </div>{/if}
       {#if activity.topBestEfforts?.length}
         <div class="activity-achievements">
           {#each distinctAchievementEfforts(activity.topBestEfforts) as effort}

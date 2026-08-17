@@ -38,8 +38,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -769,7 +769,11 @@ private fun DetailHeader(
                     )
                     if (activity.tags.isNotEmpty()) {
                         Text(
-                            activity.tags.joinToString(" · ") { it.replace('_', ' ').replaceFirstChar { character -> character.titlecase() } },
+                            activity.tags.joinToString(" · ") {
+                                it.replace('_', ' ').replaceFirstChar { character ->
+                                    character.titlecase()
+                                }
+                            },
                             modifier = Modifier.padding(top = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
@@ -1008,8 +1012,28 @@ private fun ActivityEditor(
         }
         Text("Tags", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            listOf("race" to "Race", "commute" to "Commute", "workout" to "Workout", "recovery" to "Recovery", "with_kid" to "With Kid", "with_pet" to "With Pet", "competition" to "Competition", "for_a_cause" to "For a Cause", "bad_gps" to "Bad GPS").forEach { (tag, label) ->
-                FilterChip(selected = tag in tags, onClick = { onTagsChange(if (tag in tags) tags - tag else tags + tag) }, label = { Text(label) }, enabled = !saving && !deleting)
+            listOf(
+                "race" to "Race",
+                "commute" to "Commute",
+                "workout" to "Workout",
+                "recovery" to "Recovery",
+                "with_kid" to "With Kid",
+                "with_pet" to "With Pet",
+                "competition" to "Competition",
+                "for_a_cause" to "For a Cause",
+                "bad_gps" to "Bad GPS",
+            ).forEach { (tag, label) ->
+                FilterChip(selected = tag in tags, onClick = {
+                    onTagsChange(
+                        if (tag in
+                            tags
+                        ) {
+                            tags - tag
+                        } else {
+                            tags + tag
+                        },
+                    )
+                }, label = { Text(label) }, enabled = !saving && !deleting)
             }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp)) }
