@@ -1,0 +1,35 @@
+server/src/repositories/job.repository.ts
+  s_93fa422c08afa6::t_9815a4c5616e10 209-212,278-290
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_93fa422c08afa6::t_333988663ca52e 57
+server/test/medium/specs/service/activity.service.spec.ts
+  s_93fa422c08afa6::t_1b2fd720c3b5a0 39
+server/test/medium/specs/service/upload.service.spec.ts
+  s_93fa422c08afa6::t_7f6ac5650eb097 21,68
+server/test/medium/test-db.ts
+  s_93fa422c08afa6::t_1fc5e26b67c026 4-5,56-70
+web/src/lib/activity-achievements.spec.ts
+  s_93fa422c08afa6::t_b666d25f81fb7a 6,39-58
+web/src/lib/activity-achievements.ts
+  s_93fa422c08afa6::t_7e9e276f6d86db 32-45
+web/src/lib/components/ActivityCard.svelte
+  s_93fa422c08afa6::t_db9a361bff7e26 15,92-94,194,206-207,212-213,215-221,232-245,250,254,327-346
+web/src/routes/activities/[id]/+page.svelte
+  s_93fa422c08afa6::t_baa6ead6008efe 7,510-518
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c5e5f40b6f7a10eee9b61ca7cdcd440a76c9af1e",
+  "prompts": {},
+  "sessions": {
+    "s_93fa422c08afa6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0113d-40d1-75c1-9004-2e133fd22c58",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
