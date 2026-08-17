@@ -40,13 +40,36 @@ Review and implement both `up` and `down` in every generated migration before ap
 
 ### Medium tests
 
-Run the server's medium integration tests with:
+The CI-equivalent server integration suite is a root-level Mise task. Run it from
+any directory in the repository with:
 
 ```bash
-mise run //server:test-medium
+mise run //:ci:server-medium
 ```
 
-These tests use Testcontainers and require a working container runtime.
+It installs the server dependencies and runs the same medium suite as CI. The tests
+use Testcontainers, so `docker info` must succeed first. The matching typecheck is:
+
+```bash
+mise run //:ci:server-medium-typecheck
+```
+
+Use the root-qualified `//:` commands above instead of relying on the current
+directory; `server` has similarly named component tasks for internal composition.
+
+### Generated CI artifacts
+
+These files are checked for drift in CI. Regenerate them before pushing changes to
+the API or production server dependencies:
+
+```bash
+mise run //server:install
+(cd open-api && mise run //:open-api)
+mise run //:third-party-licenses
+```
+
+The generated files are committed: `open-api/kondis-openapi-specs.json`,
+`server/src/open-api/fetch-client.ts`, and `THIRD-PARTY-LICENSES.md`.
 
 ## License
 

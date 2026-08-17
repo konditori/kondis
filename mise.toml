@@ -33,6 +33,20 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 [tasks.e2e]
 run = { task = "//e2e:test" }
 
+[tasks."ci:server-medium"]
+description = "Install server dependencies and run the CI medium-test suite (requires Docker)"
+run = [
+  { task = "//server:install" },
+  { task = "//server:test-medium" },
+]
+
+[tasks."ci:server-medium-typecheck"]
+description = "Install server dependencies and typecheck the medium-test suite"
+run = [
+  { task = "//server:install" },
+  { task = "//server:test-medium-typecheck" },
+]
+
 [tasks.e2e-update]
 run = { task = "//e2e:test" }
 
