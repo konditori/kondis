@@ -39,6 +39,7 @@
   } from "$lib/activity-types";
   import { bestEffortLabel, bestEffortRecordName } from "$lib/best-efforts";
   import ActivityProfile from "$lib/components/ActivityProfile.svelte";
+  import ImageLightbox from "$lib/components/ImageLightbox.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import {
@@ -161,11 +162,14 @@
   let imageError = $state("");
   let visualCarousel = $state<HTMLDivElement>();
   let visualPage = $state(0);
+  const viewableImages = $derived(
+    activity.images.filter(
+      (image) => image.preview || image.original || image.thumbnail,
+    ),
+  );
+  let selectedImageIndex = $state<number | null>(null);
   const visualPageCount = $derived(
-    (hasGpsRoute ? 1 : 0) +
-      activity.images.filter(
-        (image) => image.preview || image.original || image.thumbnail,
-      ).length,
+    (hasGpsRoute ? 1 : 0) + viewableImages.length,
   );
   $effect(() => {
     if (visualPage >= visualPageCount) {
@@ -711,20 +715,21 @@
               </section>
             </div>
           {/if}
-          {#each activity.images as image (image.id)}
+          {#each viewableImages as image, imageIndex (image.id)}
             {#if image.preview || image.original || image.thumbnail}
               <div class="activity-visual-slide activity-photo-slide">
                 <figure>
-                  <a
-                    href={image.original ?? image.preview ?? image.thumbnail}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    class="activity-photo-open"
+                    aria-label={image.caption ?? "Open activity photo"}
+                    onclick={() => (selectedImageIndex = imageIndex)}
                   >
                     <img
                       src={image.preview ?? image.original ?? image.thumbnail}
                       alt={image.caption ?? "Activity photo"}
                     />
-                  </a>
+                  </button>
                   {#if image.caption}<figcaption>
                       {image.caption}
                     </figcaption>{/if}
@@ -1028,3 +1033,10 @@
     </section>
   {/if}
 </div>
+{#if selectedImageIndex !== null}
+  <ImageLightbox
+    images={viewableImages}
+    initialIndex={selectedImageIndex}
+    onClose={() => (selectedImageIndex = null)}
+  />
+{/if}

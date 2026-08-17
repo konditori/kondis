@@ -711,7 +711,8 @@ private fun DetailHeader(
                                 .padding(14.dp)
                                 .size(76.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .clickable { showImages = true },
+                                .clickable { showImages = true }
+                                .semantics { contentDescription = "Open activity photos" },
                     ) {
                         firstImageBitmap?.let {
                             Image(

@@ -159,6 +159,13 @@ class OfflineWorkoutSyncTest {
         object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
                 when {
+                    request.method == "GET" && request.url.encodedPath == "/api/v1/auth/me" -> {
+                        response(
+                            200,
+                            "{\"id\":\"offline-sync-test-user\",\"email\":\"test@example.com\",\"name\":\"Offline Test\",\"role\":\"user\"}",
+                        )
+                    }
+
                     request.method == "POST" && request.url.encodedPath == "/api/v1/upload/activity" -> {
                         response(201, "{\"byteSize\":128,\"queued\":true}")
                     }

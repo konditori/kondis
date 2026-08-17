@@ -205,13 +205,52 @@
       <strong>{achievementText(personalRecord)}</strong>
     </div>
   {/if}
-  {#if activity.track}
-    <div class="activity-card-map">
-      <RouteMap
-        coordinates={activity.track.coordinates}
-        compact
-        showEndpoints={false}
-      />
-    </div>
+  {#if activity.track || activity.images?.length}
+    <a
+      class="activity-card-media-link"
+      href={`/activities/${activity.id}`}
+      onclick={openActivity}
+    >
+      <div
+        class:activity-card-media-split={Boolean(
+          activity.track && activity.images?.length === 1,
+        )}
+        class="activity-card-media"
+      >
+        {#if activity.track}
+          <div class="activity-card-map">
+            <RouteMap
+              coordinates={activity.track.coordinates}
+              compact
+              showEndpoints={false}
+            />
+          </div>
+        {/if}
+        {#if activity.images?.length}
+          <div
+            class:activity-card-images-with-map={Boolean(activity.track)}
+            class:activity-card-images-two={activity.images.length === 2}
+            class="activity-card-images"
+            aria-label={`${activity.images.length} activity ${activity.images.length === 1 ? "image" : "images"}`}
+          >
+            {#each activity.images.slice(0, 6) as image}
+              {@const imageUrl =
+                image.preview ?? image.original ?? image.thumbnail}
+              {#if imageUrl}
+                <span class="activity-card-image">
+                  <img
+                    src={imageUrl}
+                    alt={image.caption ?? ""}
+                    width={image.width ?? undefined}
+                    height={image.height ?? undefined}
+                    loading="lazy"
+                  />
+                </span>
+              {/if}
+            {/each}
+          </div>
+        {/if}
+      </div>
+    </a>
   {/if}
 </article>

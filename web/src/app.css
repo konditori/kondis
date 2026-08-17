@@ -699,13 +699,180 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
+.activity-card-media {
+  display: grid;
+}
+.activity-card-media-link {
+  display: block;
+  color: inherit;
+}
+.activity-card-media-split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  background: #edf0ea;
+}
 .activity-card-map {
   height: 235px;
   border-top: 1px solid #edf0ea;
   background: #e6e8e1;
 }
+.activity-card-media-split .activity-card-map {
+  height: clamp(280px, 34vw, 520px);
+  border-top: 0;
+}
 .activity-card-map .route-map {
   pointer-events: none;
+}
+.activity-card-images {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: clamp(240px, 30vw, 420px);
+  gap: 4px;
+  padding: 4px;
+  border-top: 1px solid #edf0ea;
+  background: #edf0ea;
+}
+.activity-card-images-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.activity-card-media-split .activity-card-images {
+  grid-template-columns: 1fr;
+  grid-auto-rows: auto;
+  gap: 0;
+  padding: 0;
+  border-top: 0;
+}
+.activity-card-image {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  min-height: 0;
+  background: #e6e8e1;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+.activity-card-image:only-child {
+  grid-column: 1 / -1;
+  height: min(420px, 38vw);
+  min-height: 240px;
+}
+.activity-card-media-split .activity-card-image:only-child {
+  height: clamp(280px, 34vw, 520px);
+  min-height: 0;
+}
+.activity-card-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+.activity-card-image:hover img {
+  transform: scale(1.03);
+}
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: #101510d9;
+  cursor: zoom-out;
+}
+.image-lightbox-content {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  max-width: min(1200px, 100%);
+  max-height: 100%;
+  cursor: default;
+}
+.image-lightbox-content img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 90px);
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 18px 70px #0008;
+}
+.image-lightbox-content p {
+  max-width: 100%;
+  margin-top: 10px;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+}
+.image-lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #fff;
+  background: #101510b3;
+  border: 1px solid #ffffff55;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.image-lightbox-close:hover,
+.image-lightbox-close:focus-visible {
+  background: #101510e6;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.image-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #fff;
+  background: #101510b3;
+  border: 1px solid #ffffff55;
+  border-radius: 50%;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.image-lightbox-prev {
+  left: 12px;
+}
+.image-lightbox-next {
+  right: 12px;
+}
+.image-lightbox-nav:hover,
+.image-lightbox-nav:focus-visible {
+  background: #101510e6;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.image-lightbox-counter {
+  position: absolute;
+  right: 50%;
+  bottom: 12px;
+  padding: 4px 9px;
+  color: #fff;
+  background: #101510b3;
+  border-radius: 999px;
+  font-size: 12px;
+  transform: translateX(50%);
+}
+.activity-photo-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
 }
 .route-map-compact .leaflet-control-attribution {
   padding: 1px 4px;
@@ -2630,6 +2797,17 @@ button {
   }
   .activity-card-map {
     height: 210px;
+  }
+  .activity-card-media-split {
+    grid-template-columns: 1fr;
+  }
+  .activity-card-media-split .activity-card-map,
+  .activity-card-media-split .activity-card-image:only-child {
+    height: 260px;
+  }
+  .activity-card-images {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 260px;
   }
   .activity-pr-banner {
     min-height: 76px;

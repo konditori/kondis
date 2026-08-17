@@ -147,6 +147,7 @@ export type ActivityListResponseDtoOutput = {
       type: Type;
       coordinates: [number, number][];
     } | null;
+    images: ActivityImageDtoOutput[];
   }[];
   /** Cursor for the next page, or null at the end */
   nextCursor: string | null;

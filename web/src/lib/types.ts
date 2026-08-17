@@ -31,6 +31,7 @@ export type Activity = {
   createdAt: string;
   updatedAt: string;
   track: { type: "LineString"; coordinates: [number, number][] } | null;
+  images: ActivityImage[];
   topBestEfforts?:
     | {
         type: string;
