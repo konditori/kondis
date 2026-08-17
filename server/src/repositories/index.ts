@@ -6,6 +6,7 @@ import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
+import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -20,6 +21,7 @@ export const repositories = [
   FitRepository,
   GpxRepository,
   JobRepository,
+  LiveWorkoutRepository,
   StorageRepository,
   TcxRepository,
   UploadRepository,

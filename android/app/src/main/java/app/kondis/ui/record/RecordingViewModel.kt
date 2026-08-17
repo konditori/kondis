@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
 import app.kondis.model.defaultWorkoutTitle
 import app.kondis.recording.GpxWriter
+import app.kondis.recording.LiveTrackingRepository
 import app.kondis.recording.RecordingManager
 import app.kondis.recording.RecordingMode
 import app.kondis.recording.RecordingService
@@ -41,6 +42,7 @@ class RecordingViewModel
         private val manager: RecordingManager,
         private val gpxWriter: GpxWriter,
         private val activityRepository: ActivityRepository,
+        private val liveTracking: LiveTrackingRepository,
     ) : ViewModel() {
         private val sport = MutableStateFlow("run")
         private val title = MutableStateFlow("")
@@ -61,7 +63,7 @@ class RecordingViewModel
             if (manager.state.value.mode == RecordingMode.Idle) sport.value = value
         }
 
-        fun start() = sendServiceAction(RecordingService.ACTION_START, foreground = true)
+        fun start() = sendServiceAction(RecordingService.ACTION_START, foreground = true, sport = sport.value)
 
         fun pause() = sendServiceAction(RecordingService.ACTION_PAUSE)
 
@@ -72,6 +74,7 @@ class RecordingViewModel
             title.value = defaultWorkoutTitle(sport.value, snapshot.startedAt ?: Instant.now())
             uploading.value = false
             savedActivityId.value = null
+            viewModelScope.launch { runCatching { liveTracking.updateState("ended", snapshot) } }
             sendServiceAction(RecordingService.ACTION_STOP)
         }
 
@@ -109,15 +112,24 @@ class RecordingViewModel
         }
 
         fun discard() {
+            viewModelScope.launch { runCatching { liveTracking.discard() } }
             sendServiceAction(RecordingService.ACTION_STOP)
             manager.reset()
+        }
+
+        fun shareLive() {
+            viewModelScope.launch { runCatching { liveTracking.share() } }
         }
 
         private fun sendServiceAction(
             action: String,
             foreground: Boolean = false,
+            sport: String? = null,
         ) {
-            val intent = Intent(context, RecordingService::class.java).setAction(action)
+            val intent =
+                Intent(context, RecordingService::class.java)
+                    .setAction(action)
+                    .apply { sport?.let { putExtra(RecordingService.EXTRA_SPORT, it) } }
             if (foreground) ContextCompat.startForegroundService(context, intent) else context.startService(intent)
         }
     }

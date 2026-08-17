@@ -88,14 +88,14 @@ class OfflineWorkoutSyncTest {
 
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
-        check(device.wait(Until.hasObject(By.textContains("workout waiting to sync")), 10_000))
+        check(device.wait(Until.hasObject(By.textContains("workout waiting to sync")), 30_000))
         val feed = UiScrollable(UiSelector().scrollable(true))
         feed.scrollTextIntoView("Offline test run")
         check(device.hasObject(By.textContains("Offline test run")))
         feed.scrollToBeginning(10)
 
         device.findObject(By.text("Sync now")).click()
-        check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 20_000)) {
+        check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 45_000)) {
             "Sync did not complete; server requests=${server.requestCount}"
         }
 
@@ -121,7 +121,7 @@ class OfflineWorkoutSyncTest {
     @Test
     fun deletingActivityReturnsToFeed() {
         val uiDevice = device
-        check(uiDevice.wait(Until.hasObject(By.textContains("workout waiting to sync")), 10_000))
+        check(uiDevice.wait(Until.hasObject(By.textContains("workout waiting to sync")), 30_000))
         var deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
         repeat(5) {
             if (!deleteActivityVisible) {

@@ -109,6 +109,7 @@ fun RecordRoute(
         onTitleChange = viewModel::setTitle,
         onSaveReview = viewModel::saveReview,
         onDiscard = viewModel::discard,
+        onShareLive = viewModel::shareLive,
         onReset = viewModel::reset,
     )
 }
@@ -124,6 +125,7 @@ fun RecordScreen(
     onTitleChange: (String) -> Unit,
     onSaveReview: () -> Unit,
     onDiscard: () -> Unit,
+    onShareLive: () -> Unit,
     onReset: () -> Unit,
 ) {
     val recording = state.recording
@@ -219,12 +221,18 @@ fun RecordScreen(
             }
 
             RecordingMode.Recording -> {
-                Button(
-                    onClick = onPause,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                ) {
-                    Icon(Icons.Rounded.Pause, contentDescription = null)
-                    Text("Pause")
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = onPause,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                    ) {
+                        Icon(Icons.Rounded.Pause, contentDescription = null)
+                        Text("Pause")
+                    }
+                    TextButton(
+                        onClick = onShareLive,
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp),
+                    ) { Text("Share live tracking") }
                 }
             }
 

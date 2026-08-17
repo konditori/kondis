@@ -138,3 +138,16 @@ export type BestEffortHistory = {
     yearRank: number;
   }[];
 };
+
+export type LiveWorkout = {
+  id: string;
+  sport: ActivityType;
+  startedAt: string;
+  status: "recording" | "paused" | "ended" | "discarded";
+  elapsedSeconds: number;
+  distanceMeters: number;
+  lastSequence: number;
+  lastPointAt: string | null;
+  lastReceivedAt: string | null;
+  route: [number, number][];
+};

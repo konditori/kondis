@@ -6,6 +6,8 @@ import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityStreamTable } from 'src/schema/tables/activity-stream.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
 import { LapTable } from 'src/schema/tables/lap.table';
+import { LiveWorkoutPointTable } from 'src/schema/tables/live-workout-point.table';
+import { LiveWorkoutTable } from 'src/schema/tables/live-workout.table';
 import { UploadTable } from 'src/schema/tables/upload.table';
 import { UserTable } from 'src/schema/tables/user.table';
 
@@ -20,6 +22,8 @@ export interface DB {
   activity_stream: ActivityStreamTable;
   activity_route_match: ActivityRouteMatchTable;
   lap: LapTable;
+  live_workout: LiveWorkoutTable;
+  live_workout_point: LiveWorkoutPointTable;
 }
 
 export interface ActivityRouteMatchTable {
@@ -52,5 +56,10 @@ export type NewActivityStream = Insertable<ActivityStreamTable>;
 
 export type Lap = Selectable<LapTable>;
 export type NewLap = Insertable<LapTable>;
+
+export type LiveWorkout = Selectable<LiveWorkoutTable>;
+export type NewLiveWorkout = Insertable<LiveWorkoutTable>;
+export type LiveWorkoutPoint = Selectable<LiveWorkoutPointTable>;
+export type NewLiveWorkoutPoint = Insertable<LiveWorkoutPointTable>;
 
 export { type StreamType, type UploadStatus } from 'src/types';

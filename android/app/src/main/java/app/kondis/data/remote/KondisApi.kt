@@ -16,6 +16,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
@@ -40,6 +41,43 @@ import retrofit2.http.Url
     val role: String,
 )
 
+@Serializable data class LiveWorkoutCreateRequest(
+    val clientSessionId: String,
+    val sport: String,
+    val startedAt: String,
+)
+
+@Serializable data class LivePointRequest(
+    val sequence: Int,
+    val recordedAt: String,
+    val latitude: Double,
+    val longitude: Double,
+    val altitude: Double? = null,
+    val accuracyMeters: Float,
+)
+
+@Serializable data class LiveWorkoutPointsRequest(
+    val points: List<LivePointRequest>,
+    val elapsedSeconds: Long,
+    val distanceMeters: Double,
+)
+
+@Serializable data class LiveWorkoutStateRequest(
+    val status: String,
+    val elapsedSeconds: Long,
+    val distanceMeters: Double,
+)
+
+@Serializable data class LiveWorkoutResponse(
+    val id: String,
+    val lastSequence: Int,
+)
+
+@Serializable data class LiveWorkoutShareResponse(
+    val token: String,
+    val expiresAt: String? = null,
+)
+
 interface KondisApi {
     @POST("auth/login")
     suspend fun login(
@@ -48,6 +86,33 @@ interface KondisApi {
 
     @GET("auth/me")
     suspend fun me(): CurrentUserResponse
+
+    @POST("live-workouts")
+    suspend fun createLiveWorkout(
+        @Body request: LiveWorkoutCreateRequest,
+    ): LiveWorkoutResponse
+
+    @POST("live-workouts/{id}/points")
+    suspend fun uploadLivePoints(
+        @Path("id") id: String,
+        @Body request: LiveWorkoutPointsRequest,
+    ): LiveWorkoutResponse
+
+    @PATCH("live-workouts/{id}")
+    suspend fun updateLiveWorkout(
+        @Path("id") id: String,
+        @Body request: LiveWorkoutStateRequest,
+    ): LiveWorkoutResponse
+
+    @POST("live-workouts/{id}/share")
+    suspend fun createLiveWorkoutShare(
+        @Path("id") id: String,
+    ): LiveWorkoutShareResponse
+
+    @DELETE("live-workouts/{id}")
+    suspend fun discardLiveWorkout(
+        @Path("id") id: String,
+    )
 
     @GET("activities")
     suspend fun activities(

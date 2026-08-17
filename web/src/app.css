@@ -534,6 +534,210 @@ button {
   display: grid;
   gap: 10px;
 }
+.live-workout-list {
+  display: grid;
+  gap: 9px;
+  margin: -18px 0 28px;
+}
+.live-list-heading,
+.live-workout-card,
+.live-workout-card > div,
+.live-status,
+.live-share-button {
+  display: flex;
+  align-items: center;
+}
+.live-list-heading {
+  gap: 7px;
+  color: #b45309;
+  font-size: 13px;
+}
+.live-workout-card {
+  gap: 13px;
+  padding: 15px 18px;
+  background: #fffdf7;
+  border: 1px solid #f4d69a;
+  border-radius: 13px;
+}
+.live-workout-card > div:first-of-type {
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.live-workout-card > div:not(:first-of-type) {
+  min-width: 84px;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.live-workout-card strong {
+  font-size: 14px;
+}
+.live-workout-card span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e11d48;
+  box-shadow: 0 0 0 4px #e11d4818;
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+.live-dot.paused {
+  background: #d97706;
+  animation: none;
+}
+.live-activity-card .sport-badge {
+  position: relative;
+}
+.live-list-map {
+  position: relative;
+}
+.live-beacon {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: #e11d48;
+  box-shadow: 0 0 0 3px #e11d4826;
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+.live-beacon.paused {
+  background: #d97706;
+  animation: none;
+}
+.live-open {
+  margin-left: 12px;
+  color: var(--green) !important;
+  font-weight: 700;
+}
+@keyframes live-pulse {
+  50% {
+    transform: scale(0.75);
+    opacity: 0.65;
+  }
+}
+.live-workout-view {
+  width: min(1060px, 100%);
+  margin: 0 auto;
+}
+.live-workout-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.live-workout-heading h1 {
+  margin-top: 8px;
+  font-size: clamp(29px, 4vw, 43px);
+  letter-spacing: -1.8px;
+}
+.live-workout-heading > div > span {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.live-status {
+  width: fit-content;
+  gap: 6px;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+.live-status.live {
+  color: #be123c;
+}
+.live-share-button {
+  gap: 8px;
+  padding: 10px 13px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  border: 1px solid #b8d5bd;
+  border-radius: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.live-share-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.live-share-link {
+  display: grid;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 12px 14px;
+  color: #14532d;
+  background: var(--green-soft);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.live-share-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #3f6448;
+}
+.live-stats {
+  display: flex;
+  gap: 10px;
+  margin: 30px 0 15px;
+}
+.live-stats div {
+  display: grid;
+  gap: 3px;
+  min-width: 130px;
+  padding: 14px 17px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.live-stats strong {
+  font-size: 20px;
+  letter-spacing: -0.7px;
+}
+.live-stats span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.live-route-map {
+  width: 100%;
+  height: min(62vh, 600px);
+  min-height: 360px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.live-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 120px;
+  color: var(--muted);
+  background: #eef2ec;
+  border-radius: 0 0 14px 14px;
+}
+.public-live-page {
+  width: min(1060px, calc(100% - 40px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px 0 65px;
+}
+.public-live-brand {
+  display: inline-block;
+  margin-bottom: 48px;
+  color: var(--green-dark);
+  font-size: 19px;
+  font-weight: 800;
+}
 .load-more {
   min-height: 80px;
   display: flex;

@@ -226,6 +226,266 @@
         ]
       }
     },
+    "/live-workouts": {
+      "get": {
+        "operationId": "LiveWorkoutController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Active workouts for the signed-in user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutListDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      },
+      "post": {
+        "operationId": "LiveWorkoutController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveWorkoutCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created or resumed live workout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      }
+    },
+    "/live-workouts/shared/{token}": {
+      "get": {
+        "operationId": "LiveWorkoutController_getShared",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Live workout visible through a share link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      }
+    },
+    "/live-workouts/{id}": {
+      "get": {
+        "operationId": "LiveWorkoutController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Live workout for its owner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      },
+      "patch": {
+        "operationId": "LiveWorkoutController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveWorkoutStateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated live workout state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      },
+      "delete": {
+        "operationId": "LiveWorkoutController_discard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      }
+    },
+    "/live-workouts/{id}/points": {
+      "post": {
+        "operationId": "LiveWorkoutController_points",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveWorkoutPointsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Accepted a batch of live GPS points",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutAckDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      }
+    },
+    "/live-workouts/{id}/share": {
+      "post": {
+        "operationId": "LiveWorkoutController_share",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created a revocable public live tracking token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveWorkoutShareDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      },
+      "delete": {
+        "operationId": "LiveWorkoutController_revokeShare",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "live workouts"
+        ]
+      }
+    },
     "/activities": {
       "get": {
         "operationId": "ActivityController_listRecent",
@@ -1067,6 +1327,86 @@
           "command"
         ]
       },
+      "LiveWorkoutDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/ActivityType_Output"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "recording",
+              "paused",
+              "ended",
+              "discarded"
+            ]
+          },
+          "elapsedSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "distanceMeters": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lastSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "lastPointAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "nullable": true
+          },
+          "lastReceivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "nullable": true
+          },
+          "route": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "sport",
+          "startedAt",
+          "status",
+          "elapsedSeconds",
+          "distanceMeters",
+          "lastSequence",
+          "lastPointAt",
+          "lastReceivedAt",
+          "route"
+        ],
+        "additionalProperties": false
+      },
       "ActivityType_Output": {
         "type": "string",
         "enum": [
@@ -1129,6 +1469,230 @@
           "other"
         ],
         "description": "Activity sport type"
+      },
+      "LiveWorkoutListDto_Output": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+        }
+      },
+      "LiveWorkoutCreateDtoActivityType": {
+        "type": "string",
+        "enum": [
+          "alpine_ski",
+          "backcountry_ski",
+          "badminton",
+          "basketball",
+          "canoeing",
+          "cricket",
+          "cross_country_ski",
+          "crossfit",
+          "dance",
+          "e_bike_ride",
+          "elliptical",
+          "e_mountain_bike_ride",
+          "golf",
+          "gravel_ride",
+          "handcycle",
+          "high_intensity_interval_training",
+          "hike",
+          "ice_skate",
+          "inline_skate",
+          "kayaking",
+          "kitesurf",
+          "mountain_bike_ride",
+          "padel",
+          "physical_therapy",
+          "pickleball",
+          "pilates",
+          "racquetball",
+          "ride",
+          "rock_climbing",
+          "roller_ski",
+          "rowing",
+          "run",
+          "sail",
+          "skateboard",
+          "snowboard",
+          "snowshoe",
+          "soccer",
+          "squash",
+          "stair_stepper",
+          "stand_up_paddling",
+          "surfing",
+          "swim",
+          "table_tennis",
+          "tennis",
+          "trail_run",
+          "velomobile",
+          "virtual_ride",
+          "virtual_row",
+          "virtual_run",
+          "volleyball",
+          "walk",
+          "weight_training",
+          "wheelchair",
+          "windsurf",
+          "workout",
+          "yoga",
+          "other"
+        ],
+        "description": "Activity sport type"
+      },
+      "LiveWorkoutCreateDto": {
+        "type": "object",
+        "properties": {
+          "clientSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "sport": {
+            "$ref": "#/components/schemas/LiveWorkoutCreateDtoActivityType"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          }
+        },
+        "required": [
+          "clientSessionId",
+          "sport",
+          "startedAt"
+        ]
+      },
+      "LiveWorkoutPointsDto": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sequence": {
+                  "type": "integer",
+                  "exclusiveMinimum": true,
+                  "maximum": 9007199254740991,
+                  "minimum": 0
+                },
+                "recordedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "latitude": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "longitude": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180
+                },
+                "altitude": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "accuracyMeters": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "sequence",
+                "recordedAt",
+                "latitude",
+                "longitude",
+                "accuracyMeters"
+              ]
+            }
+          },
+          "elapsedSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "distanceMeters": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "points",
+          "elapsedSeconds",
+          "distanceMeters"
+        ]
+      },
+      "LiveWorkoutAckDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "lastSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "lastSequence"
+        ],
+        "additionalProperties": false
+      },
+      "LiveWorkoutStateDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "recording",
+              "paused",
+              "ended"
+            ]
+          },
+          "elapsedSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "distanceMeters": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "status",
+          "elapsedSeconds",
+          "distanceMeters"
+        ]
+      },
+      "LiveWorkoutShareDto_Output": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 20
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            "nullable": true
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "additionalProperties": false
       },
       "ActivityTag_Output": {
         "type": "string",

@@ -155,15 +155,20 @@
                     endTime: effort.endTime,
                     distance: effort.distance,
                     isPower: effort.type.startsWith("power_"),
-                    label: effort.type.startsWith("power_")
-                      ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
-                      : `${
-                          effort.overallRank === 1
-                            ? "Fastest"
-                            : effort.overallRank === 2
-                              ? "2nd fastest"
-                              : "3rd fastest"
-                        } ${bestEffortLabel(effort.type)}`,
+                    label:
+                      effort.type === "biggest_climb" ||
+                      effort.type === "elevation_gain" ||
+                      effort.type === "longest_ride"
+                        ? bestEffortLabel(effort.type)
+                        : effort.type.startsWith("power_")
+                          ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
+                          : `${
+                              effort.overallRank === 1
+                                ? "Fastest"
+                                : effort.overallRank === 2
+                                  ? "2nd fastest"
+                                  : "3rd fastest"
+                            } ${bestEffortLabel(effort.type)}`,
                   },
                 ]
               : [];

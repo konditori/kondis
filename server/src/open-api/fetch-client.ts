@@ -77,6 +77,49 @@ export type QueueCommandDto = {
   /** Operation to perform on the queue */
   command: Command;
 };
+export type LiveWorkoutDtoOutput = {
+  id: string;
+  sport: ActivityType_Output;
+  startedAt: string;
+  status: Status2;
+  elapsedSeconds: number;
+  distanceMeters: number;
+  lastSequence: number;
+  lastPointAt: string | null;
+  lastReceivedAt: string | null;
+  route: [number, number][];
+};
+export type LiveWorkoutListDtoOutput = LiveWorkoutDtoOutput[];
+export type LiveWorkoutCreateDto = {
+  clientSessionId: string;
+  sport: LiveWorkoutCreateDtoActivityType;
+  startedAt: string;
+};
+export type LiveWorkoutStateDto = {
+  status: Status3;
+  elapsedSeconds: number;
+  distanceMeters: number;
+};
+export type LiveWorkoutPointsDto = {
+  points: {
+    sequence: number;
+    recordedAt: string;
+    latitude: number;
+    longitude: number;
+    altitude?: number | null;
+    accuracyMeters: number;
+  }[];
+  elapsedSeconds: number;
+  distanceMeters: number;
+};
+export type LiveWorkoutAckDtoOutput = {
+  id: string;
+  lastSequence: number;
+};
+export type LiveWorkoutShareDtoOutput = {
+  token: string;
+  expiresAt: string | null;
+};
 export type ActivityMetricDtoOutput = {
   /** Elapsed duration in seconds */
   elapsedTime: number;
@@ -115,7 +158,7 @@ export type ActivityImageDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status2;
+  status: Status4;
   thumbnail: string | null;
   preview: string | null;
   original: string | null;
@@ -488,6 +531,168 @@ export function jobControllerRunQueueCommand(
         body: queueCommandDto,
       }),
     ),
+  );
+}
+export function liveWorkoutControllerList(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LiveWorkoutListDtoOutput;
+    }>('/live-workouts', {
+      ...opts,
+    }),
+  );
+}
+export function liveWorkoutControllerCreate(
+  {
+    liveWorkoutCreateDto,
+  }: {
+    liveWorkoutCreateDto: LiveWorkoutCreateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: LiveWorkoutDtoOutput;
+    }>(
+      '/live-workouts',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: liveWorkoutCreateDto,
+      }),
+    ),
+  );
+}
+export function liveWorkoutControllerGetShared(
+  {
+    token,
+  }: {
+    token: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LiveWorkoutDtoOutput;
+    }>(`/live-workouts/shared/${encodeURIComponent(token)}`, {
+      ...opts,
+    }),
+  );
+}
+export function liveWorkoutControllerGet(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LiveWorkoutDtoOutput;
+    }>(`/live-workouts/${encodeURIComponent(id)}`, {
+      ...opts,
+    }),
+  );
+}
+export function liveWorkoutControllerUpdate(
+  {
+    id,
+    liveWorkoutStateDto,
+  }: {
+    id: string;
+    liveWorkoutStateDto: LiveWorkoutStateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LiveWorkoutDtoOutput;
+    }>(
+      `/live-workouts/${encodeURIComponent(id)}`,
+      oazapfts.json({
+        ...opts,
+        method: 'PATCH',
+        body: liveWorkoutStateDto,
+      }),
+    ),
+  );
+}
+export function liveWorkoutControllerDiscard(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}`, {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function liveWorkoutControllerPoints(
+  {
+    id,
+    liveWorkoutPointsDto,
+  }: {
+    id: string;
+    liveWorkoutPointsDto: LiveWorkoutPointsDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: LiveWorkoutAckDtoOutput;
+    }>(
+      `/live-workouts/${encodeURIComponent(id)}/points`,
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: liveWorkoutPointsDto,
+      }),
+    ),
+  );
+}
+export function liveWorkoutControllerShare(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: LiveWorkoutShareDtoOutput;
+    }>(`/live-workouts/${encodeURIComponent(id)}/share`, {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function liveWorkoutControllerRevokeShare(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}/share`, {
+      ...opts,
+      method: 'DELETE',
+    }),
   );
 }
 /**
@@ -900,6 +1105,76 @@ export enum ActivityType_Output {
   Yoga = 'yoga',
   Other = 'other',
 }
+export enum Status2 {
+  Recording = 'recording',
+  Paused = 'paused',
+  Ended = 'ended',
+  Discarded = 'discarded',
+}
+export enum LiveWorkoutCreateDtoActivityType {
+  AlpineSki = 'alpine_ski',
+  BackcountrySki = 'backcountry_ski',
+  Badminton = 'badminton',
+  Basketball = 'basketball',
+  Canoeing = 'canoeing',
+  Cricket = 'cricket',
+  CrossCountrySki = 'cross_country_ski',
+  Crossfit = 'crossfit',
+  Dance = 'dance',
+  EBikeRide = 'e_bike_ride',
+  Elliptical = 'elliptical',
+  EMountainBikeRide = 'e_mountain_bike_ride',
+  Golf = 'golf',
+  GravelRide = 'gravel_ride',
+  Handcycle = 'handcycle',
+  HighIntensityIntervalTraining = 'high_intensity_interval_training',
+  Hike = 'hike',
+  IceSkate = 'ice_skate',
+  InlineSkate = 'inline_skate',
+  Kayaking = 'kayaking',
+  Kitesurf = 'kitesurf',
+  MountainBikeRide = 'mountain_bike_ride',
+  Padel = 'padel',
+  PhysicalTherapy = 'physical_therapy',
+  Pickleball = 'pickleball',
+  Pilates = 'pilates',
+  Racquetball = 'racquetball',
+  Ride = 'ride',
+  RockClimbing = 'rock_climbing',
+  RollerSki = 'roller_ski',
+  Rowing = 'rowing',
+  Run = 'run',
+  Sail = 'sail',
+  Skateboard = 'skateboard',
+  Snowboard = 'snowboard',
+  Snowshoe = 'snowshoe',
+  Soccer = 'soccer',
+  Squash = 'squash',
+  StairStepper = 'stair_stepper',
+  StandUpPaddling = 'stand_up_paddling',
+  Surfing = 'surfing',
+  Swim = 'swim',
+  TableTennis = 'table_tennis',
+  Tennis = 'tennis',
+  TrailRun = 'trail_run',
+  Velomobile = 'velomobile',
+  VirtualRide = 'virtual_ride',
+  VirtualRow = 'virtual_row',
+  VirtualRun = 'virtual_run',
+  Volleyball = 'volleyball',
+  Walk = 'walk',
+  WeightTraining = 'weight_training',
+  Wheelchair = 'wheelchair',
+  Windsurf = 'windsurf',
+  Workout = 'workout',
+  Yoga = 'yoga',
+  Other = 'other',
+}
+export enum Status3 {
+  Recording = 'recording',
+  Paused = 'paused',
+  Ended = 'ended',
+}
 export enum ActivityTag_Output {
   Race = 'race',
   LongRun = 'long_run',
@@ -956,7 +1231,7 @@ export enum BestEffortType_Output {
 export enum Type {
   LineString = 'LineString',
 }
-export enum Status2 {
+export enum Status4 {
   Pending = 'pending',
   Ready = 'ready',
   Failed = 'failed',

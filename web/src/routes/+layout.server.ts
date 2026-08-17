@@ -16,7 +16,13 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   let user:
     | { id: string; email: string; name: string; role: "admin" | "user" }
     | undefined;
-  if (url && url.pathname !== "/login" && url.pathname !== "/setup") {
+  const publicLiveView = url?.pathname.startsWith("/live/") ?? false;
+  if (
+    url &&
+    url.pathname !== "/login" &&
+    url.pathname !== "/setup" &&
+    !publicLiveView
+  ) {
     const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));
     if (!me.ok) {
       const setup = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
@@ -37,7 +43,10 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   const result = {
     user,
     authenticated:
-      !url || (url.pathname !== "/login" && url.pathname !== "/setup"),
+      !url ||
+      (url.pathname !== "/login" &&
+        url.pathname !== "/setup" &&
+        !publicLiveView),
     unitSystem:
       parseUnitSystem(cookies.get(UNIT_SYSTEM_COOKIE)) ?? DEFAULT_UNIT_SYSTEM,
     activityTypes,
