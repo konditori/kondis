@@ -1,0 +1,77 @@
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_93fa422c08afa6::t_09d75fdfbb8996 94,107
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_93fa422c08afa6::t_8e0f0e665271aa 124-130
+server/src/auth.spec.ts
+  s_93fa422c08afa6::t_f32ba664177680 1-33
+server/src/auth.ts
+  s_93fa422c08afa6::t_eedbf00dc91103 14,26-29,35-60,84
+server/src/controllers/social.controller.ts
+  s_93fa422c08afa6::t_9a1c27db3b348d 1-135
+server/src/db/schema.ts
+  s_93fa422c08afa6::t_983ff9d6327b4f 3,6,10,15-16,32-36,74-78
+server/src/dtos/activity.dto.ts
+  s_93fa422c08afa6::t_3e796540164bbf 5,75-79,241-249
+server/src/dtos/auth.dto.ts
+  s_93fa422c08afa6::t_d8d0fe314027c5 1-11
+server/src/dtos/live-workout.dto.ts
+  s_93fa422c08afa6::t_4b32f8ded8fb99 22
+server/src/main.ts
+  s_93fa422c08afa6::t_6a5f01a0066d4e 10,28
+server/src/repositories/activity.repository.ts
+  s_93fa422c08afa6::t_4a076ee8e17f73 408,416,435-451,490,496-512,727-729,736-742
+server/src/repositories/event.repository.ts
+  s_93fa422c08afa6::t_e830acbb725256 7,43,59-69,79,88,117-121,123,128-157
+server/src/repositories/index.ts
+  s_93fa422c08afa6::t_f4e5a6ba9cca92 14,30
+server/src/repositories/live-workout.repository.ts
+  s_93fa422c08afa6::t_c99bcf44d92f88 2,48-70
+server/src/schema/migrations/1787200000000-AddSocial.ts
+  s_93fa422c08afa6::t_784138a2ad4ae7 1-61
+server/src/schema/migrations/1787300000000-RemoveUserHandles.ts
+  s_93fa422c08afa6::t_ef3b9071ec9ffb 1-10
+server/src/schema/tables/activity-comment.table.ts
+  s_93fa422c08afa6::t_7f4dc5cfb7c657 1-19
+server/src/schema/tables/activity-like.table.ts
+  s_93fa422c08afa6::t_f2bd10c6cd91e1 1-8
+server/src/schema/tables/follow-request.table.ts
+  s_93fa422c08afa6::t_645ce839b34f2f 1-9
+server/src/schema/tables/user-block.table.ts
+  s_93fa422c08afa6::t_4310a00325aa56 1-8
+server/src/schema/tables/user-follow.table.ts
+  s_93fa422c08afa6::t_0ceaf3b315e332 1-8
+server/src/services/activity-image.service.ts
+  s_93fa422c08afa6::t_6bff4ce6d7b0f0 21,47,136-137,140,196,200-203
+server/src/services/activity.service.ts
+  s_93fa422c08afa6::t_acc83f6f6e2d61 23,89,511,521,526-527,543-545,556,603-606,616,619,623,719-721,810-815,818-820
+server/src/services/live-workout.service.ts
+  s_93fa422c08afa6::t_fbfd4447528851 5,20-23,35,39-40,44-48,52,103,106,136,146
+web/src/lib/api.ts
+  s_93fa422c08afa6::t_d8b5754fbac4a2 18-35,89-106
+web/src/lib/components/Sidebar.svelte
+  s_93fa422c08afa6::t_b8f8a16f127793 2,7,14,49,55-57
+web/src/lib/realtime.ts
+  s_93fa422c08afa6::t_4f8fec92918ab6 25-53,74,78
+web/src/routes/+page.server.ts
+  s_93fa422c08afa6::t_54a73eb3be4b89 1-6,17
+web/src/routes/+page.svelte
+  s_93fa422c08afa6::t_b6ff278ae18012 13,64,104,164,189
+web/src/routes/live/session/[id]/+page.svelte
+  s_93fa422c08afa6::t_64aaa512e8c039 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "557b27f07104aa3795f790c357a897055139e206",
+  "prompts": {},
+  "sessions": {
+    "s_93fa422c08afa6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0113d-40d1-75c1-9004-2e133fd22c58",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
