@@ -70,7 +70,7 @@ jobs:
       - name: Kotlin style
         run: ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" ktlintCheck
 
-      - name: Android lint, unit tests and APK builds
+      - name: Android lint, unit tests and debug APK build
         if: ${{ !cancelled() }}
         run: >-
           ./gradlew $GRADLE_ARGS
@@ -78,6 +78,14 @@ jobs:
           :app:lintDebug
           :app:testDebugUnitTest
           :app:assembleDebug
+
+      # Run release assembly separately: AGP lint reads generated sources, and combining it
+      # with release KSP work in one task graph can race on a clean or incremental checkout.
+      - name: Assemble release APK
+        if: ${{ !cancelled() }}
+        run: >-
+          ./gradlew $GRADLE_ARGS
+          -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts"
           :app:assembleRelease
 
       - name: Upload diagnostic reports

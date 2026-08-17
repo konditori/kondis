@@ -992,7 +992,11 @@ private fun ActivityEditor(
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp)) }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
-            TextButton(onClick = onDelete, enabled = !saving && !deleting) {
+            TextButton(
+                onClick = onDelete,
+                enabled = !saving && !deleting,
+                modifier = Modifier.semantics { contentDescription = "Delete activity" },
+            ) {
                 Text("Delete", color = MaterialTheme.colorScheme.error)
             }
             TextButton(onClick = onCancel, enabled = !saving && !deleting) { Text("Cancel") }

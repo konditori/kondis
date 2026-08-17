@@ -137,8 +137,9 @@ class OfflineWorkoutSyncTest {
         device.findObject(By.text("Edit")).click()
         check(UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Edit activity"))
         check(device.wait(Until.hasObject(By.text("Edit activity")), 5_000))
-        UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Delete")
-        device.findObject(By.text("Delete")).click()
+        UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)
+        check(device.wait(Until.hasObject(By.desc("Delete activity")), 5_000))
+        device.findObject(By.desc("Delete activity")).click()
         check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
 
         device.findObject(By.text("Delete")).click()
