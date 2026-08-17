@@ -22,6 +22,9 @@
 
   $effect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
+      if (!["Escape", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
       if (event.key === "Escape") onClose();
       if (event.key === "ArrowLeft")
         currentIndex = (currentIndex - 1 + images.length) % images.length;
@@ -30,6 +33,14 @@
     };
     document.addEventListener("keydown", handleKeydown);
     return () => document.removeEventListener("keydown", handleKeydown);
+  });
+
+  $effect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   });
 </script>
 
@@ -44,10 +55,15 @@
       if (event.target === event.currentTarget) onClose();
     }}
     onkeydown={(event) => {
+      event.stopPropagation();
       if (event.key === "Escape") onClose();
     }}
   >
-    <div class="image-lightbox-content">
+    <div
+      class="image-lightbox-content"
+      onclick={(event) => event.stopPropagation()}
+      onpointerdown={(event) => event.stopPropagation()}
+    >
       {#if images.length > 1}
         <button
           class="image-lightbox-nav image-lightbox-prev"

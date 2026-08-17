@@ -867,11 +867,14 @@ button {
   transform: translateX(50%);
 }
 .activity-photo-open {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
+  height: 100%;
   padding: 0;
   border: 0;
-  background: transparent;
+  background: #000;
   cursor: zoom-in;
 }
 .route-map-compact .leaflet-control-attribution {
@@ -2714,6 +2717,7 @@ button {
   .detail-header,
   .map-panel,
   .activity-visuals,
+  .activity-image-carousel,
   .activity-profile,
   .metrics-section,
   .route-match-summary,
@@ -3016,22 +3020,16 @@ button {
   color: #b42318;
 }
 
-.activity-visual-carousel {
-  grid-column: 1 / -1;
-  width: 100%;
+.activity-image-carousel {
   min-width: 0;
-}
-.activity-visual-empty-actions {
   width: min(1120px, calc(100% - 72px));
-  margin: 1.5rem auto 0;
-  text-align: right;
+  margin: 0 auto 2rem;
 }
-.activity-visual-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+.activity-image-carousel-locked {
+  pointer-events: none;
+}
+.activity-map-section {
+  min-width: 0;
 }
 .activity-visual-carousel-track {
   display: flex;
@@ -3078,32 +3076,24 @@ button {
   min-width: 0;
   scroll-snap-align: start;
 }
-.photo-upload-button {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  padding: 0.55rem 0.9rem;
-  cursor: pointer;
-  font-weight: 650;
-}
-.photo-upload-button input {
-  display: none;
-}
 .activity-photo-slide figure {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   overflow: hidden;
   height: 440px;
   border-radius: 17px;
-  background: var(--surface-muted);
+  background: #000;
 }
 .activity-photo-slide img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
-  background: #111;
 }
 .activity-photo-slide figcaption {
   position: absolute;
@@ -3114,17 +3104,6 @@ button {
   font-size: 0.8rem;
   color: white;
   background: rgb(0 0 0 / 0.65);
-}
-.photo-delete {
-  position: absolute;
-  top: 0.45rem;
-  right: 0.45rem;
-  border: 0;
-  border-radius: 999px;
-  padding: 0.25rem 0.45rem;
-  background: rgb(0 0 0 / 0.65);
-  color: white;
-  cursor: pointer;
 }
 .activity-visual-hint {
   margin: 0.6rem 0 0;
