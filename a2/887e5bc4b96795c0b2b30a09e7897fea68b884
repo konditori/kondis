@@ -1,0 +1,23 @@
+web/mise.toml
+  s_25d4ef7bd02e0f::t_dec984f4312291 26
+web/package.json
+  s_25d4ef7bd02e0f::t_3c574bbb9cc5de 12
+web/vite.config.ts
+  s_25d4ef7bd02e0f::t_3e540501722148 7-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a2887e5bc4b96795c0b2b30a09e7897fea68b884",
+  "prompts": {},
+  "sessions": {
+    "s_25d4ef7bd02e0f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ccb049b2-271d-44a5-9eb8-f0796985f7b2",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
