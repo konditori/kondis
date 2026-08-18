@@ -1,0 +1,35 @@
+server/src/auth.ts
+  s_500e6d05b5955c::t_d9b1e1372ec2d1 13-19,98-104
+server/src/controllers/auth.controller.ts
+  s_500e6d05b5955c::t_9bb5b58c7e4a73 8-19,34,45-62,72-73
+server/src/dtos/social.dto.ts
+  s_500e6d05b5955c::t_2f7980c0216f2a 6-7
+server/src/repositories/social.repository.ts
+  s_500e6d05b5955c::t_7fd55ae34bf719 5,36,45,52,55-56,281-282,292-299,340-345,348-349
+server/src/schema/tables/user.table.ts
+  s_500e6d05b5955c::t_50163ab96f14d0 14-15
+server/src/services/auth.service.ts
+  s_500e6d05b5955c::t_f7b131fdca6612 19,26,44-55,59-68,75-76,85-88,90-99,104-105
+server/src/services/social.service.ts
+  s_500e6d05b5955c::t_3eeb0ec8c3dc03 74-79,137-138,160-165
+web/src/routes/+page.svelte
+  s_500e6d05b5955c::t_efb9c31e1a3a3a 364
+web/src/routes/login/+page.svelte
+  s_500e6d05b5955c::t_f60d7a17cd1f4f 27-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7dc1d6f69679a9ee138db3658a210162629922bb",
+  "prompts": {},
+  "sessions": {
+    "s_500e6d05b5955c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01399-8552-7e53-b309-6957c039b29a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
