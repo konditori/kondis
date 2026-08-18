@@ -264,8 +264,6 @@ export type ActivityDetailDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
-  /** Original uploaded activity file name, or null when no source file is available */
-  originalFileName: string | null;
   /** Activity owner id */
   userId?: string | null;
   athlete?: {
@@ -296,6 +294,8 @@ export type ActivityDetailDtoOutput = {
   createdAt: string;
   /** Last update timestamp in ISO-8601 format */
   updatedAt: string;
+  /** Original uploaded activity file name, or null when no source file is available */
+  originalFileName: string | null;
   images: ActivityImageDtoOutput[];
   /** GPS route as GeoJSON */
   track: {
@@ -987,6 +987,23 @@ export function activityControllerDeleteById(
     oazapfts.fetchText(`/activities/${encodeURIComponent(id)}`, {
       ...opts,
       method: 'DELETE',
+    }),
+  );
+}
+/**
+ * Download the original activity file
+ */
+export function activityControllerDownloadOriginal(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/activities/${encodeURIComponent(id)}/original`, {
+      ...opts,
     }),
   );
 }
