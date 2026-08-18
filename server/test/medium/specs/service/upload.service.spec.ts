@@ -422,7 +422,11 @@ describe(UploadService.name, () => {
       });
 
       await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-picture.zip', archive), user.id);
-      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+      await jobsRepository.waitForQueueCompletion(
+        QueueName.BackgroundTask,
+        QueueName.ActivityParsing,
+        QueueName.ImageProcessing,
+      );
 
       const storedUser = await userRepository.findById(user.id);
       expect(storedUser).toMatchObject({
