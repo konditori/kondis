@@ -28,11 +28,11 @@ export const utils = {
       lastName: 'User',
       password: 'e2e-test-password',
     };
-    const body = JSON.stringify(credentials);
+    const setupToken = process.env.KONDIS_SETUP_TOKEN ?? 'e2e-setup-token';
     const setup = await fetch(`${serverUrl}/auth/setup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body,
+      body: JSON.stringify({ ...credentials, setupToken }),
     });
     let result: { accessToken: string };
     if (setup.ok) {
@@ -41,7 +41,7 @@ export const utils = {
       const login = await fetch(`${serverUrl}/auth/login`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body,
+        body: JSON.stringify(credentials),
       });
       result = (await login.json()) as { accessToken: string };
     }
