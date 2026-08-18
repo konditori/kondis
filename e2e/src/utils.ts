@@ -24,7 +24,8 @@ export const utils = {
 
     const credentials = {
       email: 'e2e@example.com',
-      name: 'E2E User',
+      firstName: 'E2E',
+      lastName: 'User',
       password: 'e2e-test-password',
     };
     const body = JSON.stringify(credentials);
