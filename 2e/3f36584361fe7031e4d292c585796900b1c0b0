@@ -1,0 +1,33 @@
+server/src/services/social.service.spec.ts
+  s_500e6d05b5955c::t_a6df6c6dc8c5eb 1-36
+server/src/services/social.service.ts
+  s_500e6d05b5955c::t_16779c06f1dbb8 145-161,164-165,241-245,247
+server/test/medium/specs/service/social.service.spec.ts
+  s_500e6d05b5955c::t_f3850698cb15d1 1-75
+web/src/app.css
+  s_500e6d05b5955c::t_aebc50887ffe2d 520,570-571,576-591,596-668
+web/src/lib/components/ActivityComments.svelte
+  s_500e6d05b5955c::t_b7b6d2d4c345fb 2-9,15,17,19,22-23,38-40,43,46-53,61,68,73,79,87-122,124-125,136,153-156,158-163,165-171,173-203,205-236
+web/src/lib/format.spec.ts
+  s_500e6d05b5955c::t_f6b4296d184213 9,27-36
+web/src/lib/format.ts
+  s_500e6d05b5955c::t_aa2eb38e81aff1 152-181
+web/src/routes/activities/[id]/+page.svelte
+  s_500e6d05b5955c::t_5a0372a1656f88 1042
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2e3f36584361fe7031e4d292c585796900b1c0b0",
+  "prompts": {},
+  "sessions": {
+    "s_500e6d05b5955c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01399-8552-7e53-b309-6957c039b29a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
