@@ -1,0 +1,25 @@
+server/src/controllers/social.controller.ts
+  s_93fa422c08afa6::t_489c8cb8fb4480 16,21-24,41,88
+server/src/repositories/social.repository.ts
+  s_93fa422c08afa6::t_1420b438b50766 6-11,17-32
+server/src/services/activity.service.ts
+  s_93fa422c08afa6::t_179383fb839dd0 1,23,560-610
+server/src/services/social.service.ts
+  s_93fa422c08afa6::t_37684290313cd2 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c3ffcf625a932d8444c40484ca719efaad6b36b2",
+  "prompts": {},
+  "sessions": {
+    "s_93fa422c08afa6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0113d-40d1-75c1-9004-2e133fd22c58",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
