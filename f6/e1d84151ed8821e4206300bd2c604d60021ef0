@@ -1,0 +1,67 @@
+open-api/kondis-openapi-specs.json
+  s_500e6d05b5955c::t_a2c86183157861 1647-1727,4149-4284
+server/src/controllers/social.controller.ts
+  s_500e6d05b5955c::t_b7c89f3e074506 11-13,106-123
+server/src/controllers/user.controller.ts
+  s_500e6d05b5955c::t_dad5d0f5ac2b4d 73-75
+server/src/db/schema.ts
+  s_500e6d05b5955c::t_7a987ddd646fe2 14,38,81
+server/src/dtos/social.dto.ts
+  s_500e6d05b5955c::t_084e1de3c1a158 35-49,61-63
+server/src/open-api/fetch-client.ts
+  s_500e6d05b5955c::t_cec84b1648353b 467-492,1518-1569,2015-2019
+server/src/repositories/event.repository.ts
+  s_500e6d05b5955c::t_ea101a81dffd21 18-32,40-42,52-53,150-161
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_500e6d05b5955c::t_7b07635a00efd8 269-271,351-353,356-369,373
+server/src/schema/tables/notification.table.ts
+  s_500e6d05b5955c::t_c1bc39d6a07ac7 1-12
+server/src/services/activity.service.spec.ts
+  s_500e6d05b5955c::t_52dd53232b21a5 44,76,149,156-164
+server/src/services/activity.service.ts
+  s_500e6d05b5955c::t_cfb40ea399e7e4 671,682-692
+server/src/services/social.service.spec.ts
+  s_500e6d05b5955c::t_14eaeca473092e 5,8-10,12-14,16
+server/src/services/social.service.ts
+  s_500e6d05b5955c::t_03b19791dfc0cf 4,12,39,44-46,105-106,110,114-117,198-199,211,264-365
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_500e6d05b5955c::t_509fc50d7b3c8d 40-59
+server/test/medium/specs/service/activity.service.spec.ts
+  s_500e6d05b5955c::t_8f2fe6dbfb4740 585-594,642-649
+server/test/medium/specs/service/social.service.spec.ts
+  s_500e6d05b5955c::t_98a540807eb5ca 75-152
+web/src/lib/activity-access.spec.ts
+  s_500e6d05b5955c::t_99a45ab8a4d7b1 1-11
+web/src/lib/activity-access.ts
+  s_500e6d05b5955c::t_06e042eeefa446 1-6
+web/src/lib/api.ts
+  s_500e6d05b5955c::t_5ea23bf8bf3e26 36-38,110-112
+web/src/lib/components/Topbar.svelte
+  s_500e6d05b5955c::t_f1e57d84628643 4,14,16-25,27,31,40,49,52-71,109-153,166-167,180-183,256-305
+web/src/lib/notifications.spec.ts
+  s_500e6d05b5955c::t_6685cec6d0c235 1-49
+web/src/lib/notifications.ts
+  s_500e6d05b5955c::t_2cc9f214077412 1-29
+web/src/lib/realtime.ts
+  s_500e6d05b5955c::t_be2dca44780f1d 13-24,31,73-85
+web/src/routes/+layout.svelte
+  s_500e6d05b5955c::t_6281e2995e90b1 21-25
+web/src/routes/notifications/+page.svelte
+  s_500e6d05b5955c::t_ca7c8871572b3c 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f6e1d84151ed8821e4206300bd2c604d60021ef0",
+  "prompts": {},
+  "sessions": {
+    "s_500e6d05b5955c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01399-8552-7e53-b309-6957c039b29a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
