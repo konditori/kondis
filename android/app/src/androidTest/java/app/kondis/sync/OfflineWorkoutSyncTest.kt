@@ -49,18 +49,20 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
-        accountKey = "${server.url("/api/v1/")}|offline-sync-test-user"
+        val serverUrl = server.url("/api/v1/").toString()
+        accountKey = "$serverUrl|offline-sync-test-user"
         runBlocking {
             SettingsRepository(context).apply {
-                setServerUrl(server.url("/api/v1/").toString())
+                setServerUrl(serverUrl)
                 setAccessToken("offline-sync-test-token")
+                setAccountId("offline-sync-test-user")
             }
         }
 
         database =
             Room
                 .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-                .addMigrations(TEST_MIGRATION_1_2)
+                .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
                 .build()
         val file =
             File(context.filesDir, "recordings/sync-test.gpx").apply {
@@ -121,7 +123,7 @@ class OfflineWorkoutSyncTest {
         val verificationDatabase =
             Room
                 .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-                .addMigrations(TEST_MIGRATION_1_2)
+                .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
                 .build()
             runBlocking { check(verificationDatabase.activityDao().queuedWorkouts(accountKey).isEmpty()) }
         verificationDatabase.close()
@@ -221,6 +223,52 @@ class OfflineWorkoutSyncTest {
                             title TEXT NOT NULL,
                             startedAt TEXT NOT NULL,
                             uploadStarted INTEGER NOT NULL DEFAULT 0
+                        )
+                        """.trimIndent(),
+                    )
+                }
+            }
+
+        val TEST_MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("DROP TABLE queued_workouts")
+                    db.execSQL("DROP TABLE activity_details")
+                    db.execSQL("DROP TABLE activities")
+                    db.execSQL(
+                        """
+                        CREATE TABLE activities (
+                            accountKey TEXT NOT NULL,
+                            id TEXT NOT NULL,
+                            startedAt TEXT NOT NULL,
+                            searchableText TEXT NOT NULL,
+                            payload TEXT NOT NULL,
+                            isLocal INTEGER NOT NULL,
+                            PRIMARY KEY(accountKey, id)
+                        )
+                        """.trimIndent(),
+                    )
+                    db.execSQL(
+                        """
+                        CREATE TABLE activity_details (
+                            accountKey TEXT NOT NULL,
+                            id TEXT NOT NULL,
+                            payload TEXT NOT NULL,
+                            cachedAt INTEGER NOT NULL,
+                            PRIMARY KEY(accountKey, id)
+                        )
+                        """.trimIndent(),
+                    )
+                    db.execSQL(
+                        """
+                        CREATE TABLE queued_workouts (
+                            accountKey TEXT NOT NULL,
+                            localActivityId TEXT NOT NULL,
+                            gpxPath TEXT NOT NULL,
+                            title TEXT NOT NULL,
+                            startedAt TEXT NOT NULL,
+                            uploadStarted INTEGER NOT NULL,
+                            PRIMARY KEY(accountKey, localActivityId)
                         )
                         """.trimIndent(),
                     )
