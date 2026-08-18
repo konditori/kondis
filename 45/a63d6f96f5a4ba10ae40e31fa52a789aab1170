@@ -1,0 +1,149 @@
+.github/workflows/test.yml
+  s_d90663450a2c12::t_94b0f47fdc9b51 77-79,141-143
+THIRD-PARTY-LICENSES.md
+  s_d90663450a2c12::t_4c205ae9fc324a 15,666-697,3124,5056,5061,6209-6240
+android/app/src/debug/AndroidManifest.xml
+  s_d90663450a2c12::t_cc49d186c1856d 1-7
+android/app/src/main/AndroidManifest.xml
+  s_d90663450a2c12::t_fba53932923b64 22
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_d90663450a2c12::t_1fdebe63066f2e 19,35-36,65,76-80,83-86,89-100,104-105,107,109,118-120,125-127,130,147-150,201,242,245,252,276-277,282-283,289-291,293,295,298,309,315-320,324,345-364,368,371,418-422
+android/app/src/main/java/app/kondis/data/local/ActivityDao.kt
+  s_d90663450a2c12::t_d51b9978c2fc16 15-16,22,27-31,42-43,45-46,48-52,54-58,60-64,66-70,72-73,76-80,97,102-104
+android/app/src/main/java/app/kondis/data/local/ActivityEntity.kt
+  s_d90663450a2c12::t_04e59413836f45 5,7-8,15,17-18,23,25-26
+android/app/src/main/java/app/kondis/data/local/KondisDatabase.kt
+  s_d90663450a2c12::t_3d43918ccadc49 8
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_d90663450a2c12::t_672ed2a8a02d83 35-39,45-46
+android/app/src/main/java/app/kondis/data/remote/KondisApiFactory.kt
+  s_d90663450a2c12::t_d8b052c83c1054 3,48-51,53-58
+android/app/src/main/java/app/kondis/data/settings/SettingsRepository.kt
+  s_d90663450a2c12::t_658a6ed9f803d1 24-27,53,58-64,77,84-97,102
+android/app/src/main/java/app/kondis/di/AppModule.kt
+  s_d90663450a2c12::t_11a3d26eaa37e8 10-11,51,57-60,78-125
+android/app/src/main/java/app/kondis/recording/RecordingManager.kt
+  s_d90663450a2c12::t_209aa9ab5d67c1 16-20,23-24,26-29,34-35,44,51,60-64,75,85,91,96,103,111-112
+android/app/src/main/java/app/kondis/recording/RecordingService.kt
+  s_d90663450a2c12::t_0a33e9f6976014 56,60,62,88,92-115
+android/app/src/main/java/app/kondis/recording/RecordingStore.kt
+  s_d90663450a2c12::t_fcbd68bc40cd38 1-127
+android/app/src/main/java/app/kondis/ui/AppViewModel.kt
+  s_d90663450a2c12::t_a642292d65e3a2 52,67
+android/app/src/test/java/app/kondis/data/remote/KondisApiFactoryTest.kt
+  s_d90663450a2c12::t_615b02a1c78e73 1-18
+android/app/src/test/java/app/kondis/recording/RecordingPersistenceTest.kt
+  s_d90663450a2c12::t_4108313ffe6e0a 1-58
+docker/env.example
+  s_d90663450a2c12::t_1d18dfbdc595be 9-13
+open-api/kondis-openapi-specs.json
+  s_d90663450a2c12::t_10e13ea0462058 2522
+pnpm-lock.yaml
+  s_d90663450a2c12::t_98ff026d94631a 8-10,108-109,208-210,511-513,517-519,523-529,533-534,538-539,544-545,550-551,556-557,562-563,568-569,574-575,580-581,586-588,593-595,600-602,607-609,614-616,621-623,628-630,635-637,642-648,651-653,657-659,663-665,1037-1072,1231-1232,1234,1456-1458,1968-1970,2548-2551,2568-2570,2578-2580,2610-2612,2940-2942,3162-3166,3178,3206,3226-3233,3367-3370,3940,3942,3945,3947-3952,3955,3958,3961,3964,3967,3970,3973,3976,3979,3982,3985,3987,3990,3992,3995,3997,4000,4002,4005,4007,4010,4012,4015,4017,4020,4022,4025,4030-4035,4038,4041,4157,4330-4364,4456,4458-4461,4463,4687-4688,5188-5189,5830-5833,5847-5848,5853-5856,5883,6147-6148,6362-6368,6468,6474-6499,6644-6645
+pnpm-workspace.yaml
+  s_d90663450a2c12::t_f536d639924a5c 14-16
+server/package.json
+  s_d90663450a2c12::t_4ab95771e99e33 46
+server/src/auth.spec.ts
+  s_d90663450a2c12::t_4736154dc631a3 1,4-6,8-14,50-93
+server/src/auth.ts
+  s_d90663450a2c12::t_d4a3defb0b000c 12,70-74,97,99,106-126
+server/src/config/config.service.ts
+  s_d90663450a2c12::t_7516c70192841e 127-130,140-141
+server/src/controllers/activity-image.controller.ts
+  s_d90663450a2c12::t_e52f4aac9179a1 25,46
+server/src/controllers/auth.controller.ts
+  s_d90663450a2c12::t_f47d7f355e4e90 14,30-33,37-44
+server/src/controllers/upload.controller.ts
+  s_d90663450a2c12::t_9631b8be97c1c7 4,6-7,13-18,48,53,82,87
+server/src/controllers/user.controller.ts
+  s_d90663450a2c12::t_141056cb6390ff 26,92
+server/src/dtos/live-workout.dto.ts
+  s_d90663450a2c12::t_865df30c0abd66 64
+server/src/imports/lagom-takeout.parser.ts
+  s_d90663450a2c12::t_7576868a2b58e2 9,29,48,56
+server/src/open-api/fetch-client.ts
+  s_d90663450a2c12::t_ec86f4b05f6dff 122
+server/src/repositories/activity.repository.ts
+  s_d90663450a2c12::t_9e751f87558861 293-294,298-308,323-328
+server/src/repositories/live-workout.repository.ts
+  s_d90663450a2c12::t_ad1b1ec234d204 51,63,126
+server/src/repositories/storage.repository.spec.ts
+  s_d90663450a2c12::t_e547bdad0d0019 24-26
+server/src/repositories/storage.repository.ts
+  s_d90663450a2c12::t_a013cbd41423a8 2,15,17,54-67
+server/src/repositories/user.repository.ts
+  s_d90663450a2c12::t_84523b6d47e032 2,4-12,57,60-70
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_d90663450a2c12::t_0f893efdeec5ff 78,91,293-294
+server/src/schema/migrations/1787040000000-RequireActivityOwnership.ts
+  s_d90663450a2c12::t_e59aeb4b5b2447 1-27
+server/src/schema/tables/activity.table.ts
+  s_d90663450a2c12::t_d1dd2b7a611610 25-26
+server/src/schema/tables/upload.table.ts
+  s_d90663450a2c12::t_2ee0e8906655d1 29-30
+server/src/services/activity-image.service.ts
+  s_d90663450a2c12::t_7acf860a52db70 24,53-58
+server/src/services/activity.service.ts
+  s_d90663450a2c12::t_1a47b0fa509ca0 150,202-205,207,209,212,241,250,1014,1023
+server/src/services/auth.service.spec.ts
+  s_d90663450a2c12::t_86d64cb20b99c5 1,14,16-21,36-43,88-113
+server/src/services/auth.service.ts
+  s_d90663450a2c12::t_342e78eaef2342 1-8,10,23-25,30,33-42,63-65,81-82,86,92-104
+server/src/services/live-workout.service.spec.ts
+  s_d90663450a2c12::t_23d90adbf4a076 99-108
+server/src/services/live-workout.service.ts
+  s_d90663450a2c12::t_31b33b43600644 16,20,41,108-110
+server/src/services/upload.service.spec.ts
+  s_d90663450a2c12::t_03209e77e5a139 16,19,24,42,53-69
+server/src/services/upload.service.ts
+  s_d90663450a2c12::t_f41eb197fbe26e 9,25,45,52,55-56,60,62,69,78-80,87-89,107,153,158,161-162,167,170,181,207-209,234,246,273,278,282-283,289,292,303-317
+server/src/services/user.service.ts
+  s_d90663450a2c12::t_9a26bd956b41a5 11,24
+server/src/types/jobs.ts
+  s_d90663450a2c12::t_5d629ea97feee6 16
+server/src/types/uploads.ts
+  s_d90663450a2c12::t_fe6003bd0a3d9c 1,6-9
+server/test/medium.factory.ts
+  s_d90663450a2c12::t_69cae2285b7626 7,11
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_d90663450a2c12::t_5dba604d599a80 20,41,59-60,221,317,371,406
+server/test/medium/specs/repositories/live-workout.repository.spec.ts
+  s_d90663450a2c12::t_d215a13d7fbeb9 51
+server/test/medium/specs/repositories/upload.repository.spec.ts
+  s_d90663450a2c12::t_b1f579ece27d70 39-40,46,53
+server/test/medium/specs/service/upload.service.spec.ts
+  s_d90663450a2c12::t_c5282fa7bae650 44,68-69,86,174,181-183,205,267,275,288-290,297-299,305,327,347-350,373,441,443
+web/package.json
+  s_d90663450a2c12::t_efb6d861e0bf1f 19
+web/src/routes/api/[...path]/+server.ts
+  s_d90663450a2c12::t_aae303fdc64ba1 17-18,23-25
+web/src/routes/login/+page.server.ts
+  s_d90663450a2c12::t_f752d08345c8b4 7-10,12-15
+web/src/routes/login/+page.svelte
+  s_d90663450a2c12::t_e58df5e3754de9 29-33
+web/src/routes/register/+page.server.ts
+  s_d90663450a2c12::t_c66b7b863f89ea 2-10
+web/src/routes/setup/+page.server.ts
+  s_d90663450a2c12::t_0623bd620cec63 17,25-31,36
+web/src/routes/setup/+page.svelte
+  s_d90663450a2c12::t_86de354e10be6f 12-18
+web/svelte.config.js
+  s_d90663450a2c12::t_92b3a23c4437a4 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "45a63d6f96f5a4ba10ae40e31fa52a789aab1170",
+  "prompts": {},
+  "sessions": {
+    "s_d90663450a2c12": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0162e-448e-7382-95d9-54834b24b395",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
