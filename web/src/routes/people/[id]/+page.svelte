@@ -102,7 +102,9 @@
 
 <svelte:head
   ><title
-    >{profile ? `${userDisplayName(profile.user)} · Kondis` : "Profile · Kondis"}</title
+    >{profile
+      ? `${userDisplayName(profile.user)} · Kondis`
+      : "Profile · Kondis"}</title
   ></svelte:head
 >
 

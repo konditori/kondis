@@ -32,6 +32,7 @@
     elevation,
     localDate,
     localTime,
+    ordinal,
     pace,
     speed,
   } from "$lib/format";
@@ -116,7 +117,8 @@
     })(),
   );
   const activityOwner = $derived(
-    viewerId && (activity.userId === viewerId || activity.athlete?.id === viewerId)
+    viewerId &&
+      (activity.userId === viewerId || activity.athlete?.id === viewerId)
       ? "Your"
       : activity.athlete
         ? userPossessiveName(activity.athlete)
@@ -129,15 +131,17 @@
     const { type } = effort;
     const label = bestEffortLabel(type);
     const rank = personalRecord?.overallRank ?? 1;
-    const ordinal = rank === 1 ? "" : rank === 2 ? "2nd " : "3rd ";
-    if (type === "longest_ride") return `${activityOwner} ${ordinal}longest ride!`;
-    if (type === "biggest_climb") return `${activityOwner} ${ordinal}biggest climb!`;
+    const rankLabel = rank === 1 ? "" : `${ordinal(rank)} `;
+    if (type === "longest_ride")
+      return `${activityOwner} ${rankLabel}longest ride!`;
+    if (type === "biggest_climb")
+      return `${activityOwner} ${rankLabel}biggest climb!`;
     if (type.startsWith("power_")) {
-      return `${activityOwner} ${ordinal}highest power output for ${powerDurationLabel(type)} ever!`;
+      return `${activityOwner} ${rankLabel}highest power output for ${powerDurationLabel(type)} ever!`;
     }
     return type.includes("power") || type === "elevation_gain"
-      ? `${activityOwner} ${ordinal}best ${label}!`
-      : `${activityOwner} ${ordinal}fastest ${label}!`;
+      ? `${activityOwner} ${rankLabel}best ${label}!`
+      : `${activityOwner} ${rankLabel}fastest ${label}!`;
   }
 
   function powerDuration(type: string): number {

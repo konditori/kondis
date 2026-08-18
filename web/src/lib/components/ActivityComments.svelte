@@ -99,7 +99,9 @@
     <div class="comment-list">
       {#each comments as comment (comment.id)}<article class="comment-row">
           <div class="person-copy">
-            <strong>{userDisplayName(comment.user)}</strong><span>{comment.body}</span>
+            <strong>{userDisplayName(comment.user)}</strong><span
+              >{comment.body}</span
+            >
           </div>
           <button
             class="icon-button"

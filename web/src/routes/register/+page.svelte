@@ -49,6 +49,8 @@
         >Create account</button
       >
     </form>
-    <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+    <p class="auth-switch">
+      Already have an account? <a href="/login">Sign in</a>
+    </p>
   </section>
 </main>

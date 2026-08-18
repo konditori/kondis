@@ -55,9 +55,7 @@ export const load: PageServerLoad = async ({ locals }) => {
           sport: history.sport,
           type: option.type,
           valueKind: option.valueKind,
-          best: best
-            ? { value: best.value, startedAt: best.startedAt }
-            : null,
+          best: best ? { value: best.value, startedAt: best.startedAt } : null,
         };
       }),
     ),

@@ -2764,9 +2764,14 @@ button {
   border-bottom: 1px solid #edf0ea;
   color: #273029;
 }
-.best-efforts-index-row:last-child { border-bottom: 0; }
+.best-efforts-index-row:last-child {
+  border-bottom: 0;
+}
 .best-efforts-index-row time,
-.best-efforts-index-empty { color: var(--muted); font-size: 13px; }
+.best-efforts-index-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
 .best-efforts-index-value {
   color: var(--green);
   font-weight: 750;

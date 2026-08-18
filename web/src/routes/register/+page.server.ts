@@ -22,7 +22,8 @@ export const actions: Actions = {
     if (!response.ok)
       return fail(400, {
         ...values,
-        error: "Use first and last names, a valid email, and a password of at least 10 characters.",
+        error:
+          "Use first and last names, a valid email, and a password of at least 10 characters.",
       });
 
     const result = await response.json();

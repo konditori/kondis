@@ -35,10 +35,16 @@
       const response = await fetch("/api/v1/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim() }),
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        }),
       });
       if (!response.ok) throw new Error();
-      const saved = (await response.json()) as { firstName: string; lastName: string };
+      const saved = (await response.json()) as {
+        firstName: string;
+        lastName: string;
+      };
       firstName = saved.firstName;
       lastName = saved.lastName;
       window.location.reload();
@@ -111,11 +117,19 @@
     <div class="settings-name-fields">
       <label class="settings-field">
         <span>First name</span>
-        <input bind:value={firstName} maxlength="80" autocomplete="given-name" />
+        <input
+          bind:value={firstName}
+          maxlength="80"
+          autocomplete="given-name"
+        />
       </label>
       <label class="settings-field">
         <span>Last name</span>
-        <input bind:value={lastName} maxlength="80" autocomplete="family-name" />
+        <input
+          bind:value={lastName}
+          maxlength="80"
+          autocomplete="family-name"
+        />
       </label>
     </div>
     <div class="settings-actions">

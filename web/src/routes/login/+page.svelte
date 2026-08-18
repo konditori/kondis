@@ -24,7 +24,10 @@
         /></label
       >{#if form?.error}<p class="error">{form.error}</p>{/if}<button
         >Sign in</button
-      ></form>
-    <p class="auth-switch">Don't have an account? <a href="/register">Create one</a></p>
+      >
+    </form>
+    <p class="auth-switch">
+      Don't have an account? <a href="/register">Create one</a>
+    </p>
   </section>
 </main>

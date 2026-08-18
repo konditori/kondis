@@ -26,7 +26,8 @@ export const actions: Actions = {
     if (!response.ok)
       return fail(400, {
         ...values,
-        error: "Use first and last names, a valid email, and a sufficiently long password",
+        error:
+          "Use first and last names, a valid email, and a sufficiently long password",
       });
     const result = await response.json();
     cookies.set("kondis_session", result.accessToken, {

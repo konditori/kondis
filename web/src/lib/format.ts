@@ -43,6 +43,21 @@ export function duration(seconds: number | null): string {
   return `${minutes}:${remainder.toString().padStart(2, "0")}`;
 }
 
+export function ordinal(value: number): string {
+  const lastTwoDigits = value % 100;
+  const suffix =
+    lastTwoDigits >= 11 && lastTwoDigits <= 13
+      ? "th"
+      : value % 10 === 1
+        ? "st"
+        : value % 10 === 2
+          ? "nd"
+          : value % 10 === 3
+            ? "rd"
+            : "th";
+  return `${value}${suffix}`;
+}
+
 export function speed(value: number | null, unitSystem: UnitSystem): string {
   if (value == null) return "—";
   return unitSystem === "metric"
