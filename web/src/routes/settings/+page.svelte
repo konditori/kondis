@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { Camera, Check, Gauge, Ruler, Trash2, UserRound } from "@lucide/svelte";
+  import {
+    Camera,
+    Check,
+    Gauge,
+    Ruler,
+    Trash2,
+    UserRound,
+  } from "@lucide/svelte";
   import { untrack } from "svelte";
   import type { UnitSystem } from "$lib/units";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
@@ -102,10 +109,16 @@
       <input bind:value={name} maxlength="80" autocomplete="name" />
     </label>
     <div class="settings-actions">
-      <button type="button" onclick={saveName} disabled={nameBusy || !name.trim()}>
-        <Check size={17} /> {nameBusy ? "Saving…" : "Save name"}
+      <button
+        type="button"
+        onclick={saveName}
+        disabled={nameBusy || !name.trim()}
+      >
+        <Check size={17} />
+        {nameBusy ? "Saving…" : "Save name"}
       </button>
-      {#if nameError}<span class="settings-error" role="alert">{nameError}</span>{/if}
+      {#if nameError}<span class="settings-error" role="alert">{nameError}</span
+        >{/if}
     </div>
   </section>
 

@@ -6,7 +6,7 @@
   const items = [
     { href: "/", label: "Home", icon: Activity, section: null },
     {
-      href: "/best-efforts/run/5k",
+      href: "/best-efforts",
       label: "Best efforts",
       icon: Trophy,
       section: "/best-efforts",
@@ -50,7 +50,7 @@
   >
   <a
     class:active={page.url.pathname.startsWith("/best-efforts")}
-    href="/best-efforts/run/5k"><Trophy size={21} /><span>Best efforts</span></a
+    href="/best-efforts"><Trophy size={21} /><span>Best efforts</span></a
   >
   <a class:active={page.url.pathname.startsWith("/people")} href="/people"
     ><Users size={21} /><span>People</span></a

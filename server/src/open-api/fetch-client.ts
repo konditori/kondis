@@ -1142,6 +1142,14 @@ export function userControllerCreate(opts?: Oazapfts.RequestOpts) {
     }),
   );
 }
+export function userControllerUpdateMe(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/users/me', {
+      ...opts,
+      method: 'PATCH',
+    }),
+  );
+}
 export function userControllerUploadAvatar(
   {
     body,

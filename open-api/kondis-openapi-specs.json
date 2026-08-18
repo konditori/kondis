@@ -1076,6 +1076,20 @@
         ]
       }
     },
+    "/users/me": {
+      "patch": {
+        "operationId": "UserController_updateMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/users/me/avatar": {
       "post": {
         "operationId": "UserController_uploadAvatar",
