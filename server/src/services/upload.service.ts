@@ -6,6 +6,7 @@ import {
   Optional,
   PayloadTooLargeException,
 } from '@nestjs/common';
+import { rm } from 'node:fs/promises';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -21,7 +22,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ImportProgressStore } from 'src/state/import-progress.store';
 import { JobOf } from 'src/types/jobs';
-import { UploadedFileData } from 'src/types/uploads';
+import { BufferedUploadedFileData, UploadedFileData } from 'src/types/uploads';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -41,29 +42,31 @@ export class UploadService {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadActivity(file: UploadedFileData | undefined, userId?: string): Promise<FitUploadResponseDto> {
+  async uploadActivity(file: UploadedFileData | undefined, userId: string): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
 
     const extension = extname(file.originalname).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
+      await this.discardUploadedFile(file);
       throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
     }
-    if (file.buffer.length > UPLOAD_LIMITS.activityFileBytes) {
+    if (file.size > UPLOAD_LIMITS.activityFileBytes) {
+      await this.discardUploadedFile(file);
       throw new PayloadTooLargeException(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
     }
 
-    await this.queueActivityUpload(file, undefined, undefined, undefined, userId);
+    await this.queueActivityUpload(file, userId);
 
-    return { byteSize: file.buffer.length, queued: true };
+    return { byteSize: file.size, queued: true };
   }
 
   @OnJob({ name: JobName.ActivityUpload, queue: QueueName.BackgroundTask })
   async handleActivityUpload({
     originalName,
     storagePath,
-    checksum,
+    checksum: expectedChecksum,
     activityName,
     activityDescription,
     activitySport,
@@ -72,15 +75,18 @@ export class UploadService {
     takeoutImportId,
     images,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
+    if (!userId) {
+      throw new Error('Activity upload job has no owner');
+    }
     const extension = extname(originalName).toLowerCase();
     if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
       throw new Error(`Unsupported activity upload extension: ${extension || 'none'}`);
     }
 
     const buffer = await this.storageRepository.read(storagePath);
-    const actualChecksum = this.cryptoRepository.xxHash(buffer);
-    if (actualChecksum !== checksum) {
-      throw new Error(`Activity upload checksum mismatch: expected ${checksum}, got ${actualChecksum}`);
+    const checksum = this.cryptoRepository.xxHash(buffer);
+    if (expectedChecksum && checksum !== expectedChecksum) {
+      throw new Error(`Activity upload checksum mismatch: expected ${expectedChecksum}, got ${checksum}`);
     }
 
     const existing = await this.uploadRepository.getByChecksum(checksum, userId);
@@ -98,7 +104,7 @@ export class UploadService {
       return JobStatus.Skipped;
     }
 
-    const permanentStoragePath = this.storageRepository.buildPath(checksum, extension);
+    const permanentStoragePath = this.storageRepository.buildPath(userId, checksum, extension);
     await this.storageRepository.write(permanentStoragePath, buffer);
 
     try {
@@ -144,25 +150,24 @@ export class UploadService {
     return JobStatus.Success;
   }
 
-  async uploadLagomTakeout(
-    file: UploadedFileData | undefined,
-    userId?: string,
-  ): Promise<LagomTakeoutUploadResponseDto> {
+  async uploadLagomTakeout(file: UploadedFileData | undefined, userId: string): Promise<LagomTakeoutUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
     if (extname(file.originalname).toLowerCase() !== '.zip') {
+      await this.discardUploadedFile(file);
       throw new BadRequestException('Only a Strava takeout .zip file is accepted');
     }
-    if (file.buffer.length > UPLOAD_LIMITS.takeoutFileBytes) {
+    if (file.size > UPLOAD_LIMITS.takeoutFileBytes) {
+      await this.discardUploadedFile(file);
       throw new PayloadTooLargeException(`Takeout file exceeds ${UPLOAD_LIMITS.takeoutFileBytes} bytes`);
     }
 
     const storagePath = this.storageRepository.buildTemporaryPath('.zip');
-    await this.storageRepository.write(storagePath, file.buffer);
+    await this.stageUploadedFile(file, storagePath);
 
     const importId = crypto.randomUUID();
-    this.importProgressStore.create(importId, userId ?? '');
+    this.importProgressStore.create(importId, userId);
     await this.jobRepository.queue({
       name: JobName.LagomTakeoutImport,
       data: {
@@ -173,7 +178,7 @@ export class UploadService {
       },
     });
 
-    return { byteSize: file.buffer.length, queued: true, importId };
+    return { byteSize: file.size, queued: true, importId };
   }
 
   getLagomTakeoutStatus(id: string, userId: string) {
@@ -199,6 +204,9 @@ export class UploadService {
     userId,
     takeoutImportId,
   }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
+    if (!userId) {
+      throw new Error('Takeout import job has no owner');
+    }
     let queued = 0;
     const takeout = await this.lagomTakeoutParser.extractLagomTakeout(
       await this.storageRepository.read(storagePath),
@@ -223,10 +231,10 @@ export class UploadService {
         }
         await this.queueActivityUpload(
           activity.file!,
+          userId,
           activity.name ?? undefined,
           activity.description ?? undefined,
           activity.sport ?? undefined,
-          userId,
           takeoutImportId,
           activity.images,
           activity.tags,
@@ -235,7 +243,7 @@ export class UploadService {
       },
     );
 
-    if (userId && takeout.profile) {
+    if (takeout.profile) {
       if (takeout.profile.firstName && takeout.profile.lastName && this.userRepository) {
         await this.userRepository.setNameParts(userId, takeout.profile.firstName, takeout.profile.lastName);
       }
@@ -262,26 +270,26 @@ export class UploadService {
 
   private async queueActivityUpload(
     file: UploadedFileData,
+    userId: string,
     activityName?: string,
     activityDescription?: string,
     activitySport?: JobOf<JobName.ActivityUpload>['activitySport'],
-    userId?: string,
     takeoutImportId?: string,
-    images: { file: UploadedFileData; caption: string | null; sortOrder: number }[] = [],
+    images: { file: BufferedUploadedFileData; caption: string | null; sortOrder: number }[] = [],
     activityTags: JobOf<JobName.ActivityUpload>['activityTags'] = [],
   ): Promise<void> {
-    const checksum = this.cryptoRepository.xxHash(file.buffer);
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
-    await this.storageRepository.write(storagePath, file.buffer);
+    await this.stageUploadedFile(file, storagePath);
+    const checksum = file.buffer ? this.cryptoRepository.xxHash(file.buffer) : undefined;
     const stagedImages = await this.stageImages(images);
 
     await this.jobRepository.queue({
       name: JobName.ActivityUpload,
       data: {
-        ...(userId && { userId }),
+        userId,
         originalName: file.originalname,
         storagePath,
-        checksum,
+        ...(checksum && { checksum }),
         ...(activityName && { activityName }),
         ...(activityDescription && { activityDescription }),
         ...(activitySport && { activitySport }),
@@ -292,7 +300,21 @@ export class UploadService {
     });
   }
 
-  private async stageImages(images: { file: UploadedFileData; caption: string | null; sortOrder: number }[]) {
+  private async stageUploadedFile(file: UploadedFileData, storagePath: string): Promise<void> {
+    if ('buffer' in file && file.buffer) {
+      await this.storageRepository.write(storagePath, file.buffer);
+      return;
+    }
+    await this.storageRepository.importFile(file.path, storagePath);
+  }
+
+  private async discardUploadedFile(file: UploadedFileData): Promise<void> {
+    if ('path' in file && file.path) {
+      await rm(file.path, { force: true });
+    }
+  }
+
+  private async stageImages(images: { file: BufferedUploadedFileData; caption: string | null; sortOrder: number }[]) {
     const staged: {
       originalName: string;
       storagePath: string;

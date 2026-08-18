@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,10 +11,14 @@ describe(AuthService.name, () => {
   const findByEmail = vi.fn();
   const count = vi.fn();
   const create = vi.fn();
-  const adoptOrphanedData = vi.fn(async () => {});
+  const createInitialAdmin = vi.fn();
 
-  const users = { findByEmail, count, create, adoptOrphanedData } as unknown as UserRepository;
-  const config = { authSecret: 'unit-test-secret' } as ConfigService;
+  const users = { findByEmail, count, create, createInitialAdmin } as unknown as UserRepository;
+  const config = {
+    authSecret: 'unit-test-secret',
+    setupToken: 'unit-test-setup-token',
+    registrationEnabled: false,
+  } as ConfigService;
   const setup = () => newTestService(AuthService, [users, config], { users, config });
 
   beforeEach(() => {
@@ -27,6 +31,14 @@ describe(AuthService.name, () => {
       first_name: 'User',
       last_name: 'Test',
       role: 'user',
+      password_hash: 'hash',
+    });
+    createInitialAdmin.mockResolvedValue({
+      id: 'admin-1',
+      email: 'admin@example.com',
+      first_name: 'Admin',
+      last_name: 'Test',
+      role: 'admin',
       password_hash: 'hash',
     });
   });
@@ -72,5 +84,31 @@ describe(AuthService.name, () => {
       accessToken: expect.any(String),
     });
     await expect(sut.login('user@example.com', 'wrong password')).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('requires the setup token and delegates the first-admin race to one atomic repository operation', async () => {
+    const { sut } = setup();
+
+    await expect(
+      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'wrong-token'),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(
+      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'unit-test-setup-token'),
+    ).resolves.toMatchObject({ setup: true, user: { role: 'admin' } });
+    expect(createInitialAdmin).toHaveBeenCalledOnce();
+
+    createInitialAdmin.mockResolvedValueOnce(undefined);
+    await expect(
+      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'unit-test-setup-token'),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('disables public registration by default', async () => {
+    const { sut } = setup();
+
+    await expect(sut.register('user@example.com', 'User', 'Test', 'long enough password')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(create).not.toHaveBeenCalled();
   });
 });

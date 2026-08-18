@@ -11,6 +11,7 @@ const credentials = z.object({
   lastName: z.string().optional(),
   password: z.string(),
 });
+const setupCredentials = credentials.extend({ setupToken: z.string().min(1) });
 const registrationCredentials = z.object({
   email: z.string(),
   firstName: z.string(),
@@ -26,12 +27,21 @@ export class AuthController {
     private readonly users: UserRepository,
   ) {}
   @Public() @Get('setup') setupStatus() {
-    return this.service.setupStatus();
+    return this.service.setupStatus().then((status) => ({
+      ...status,
+      registrationEnabled: this.service.registrationEnabled,
+    }));
   }
   @Public() @Post('setup') setup(@Body() body: unknown) {
     try {
-      const value = credentials.parse(body);
-      return this.service.setup(value.email, value.firstName ?? '', value.lastName ?? '', value.password);
+      const value = setupCredentials.parse(body);
+      return this.service.setup(
+        value.email,
+        value.firstName ?? '',
+        value.lastName ?? '',
+        value.password,
+        value.setupToken,
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Initial setup request rejected: ${message}`, error instanceof Error ? error.stack : undefined);

@@ -16,6 +16,7 @@ import app.kondis.data.local.ActivityDetailEntity
 import app.kondis.data.local.ActivityEntity
 import app.kondis.data.local.QueuedWorkoutEntity
 import app.kondis.data.remote.KondisApiFactory
+import app.kondis.data.settings.AppSettings
 import app.kondis.data.settings.SettingsRepository
 import app.kondis.model.Activity
 import app.kondis.model.ActivityDetail
@@ -31,6 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -59,6 +62,7 @@ data class QueuedWorkout(
 )
 
 @Singleton
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class ActivityRepository
     @Inject
     constructor(
@@ -69,33 +73,40 @@ class ActivityRepository
         private val json: Json,
     ) {
         fun activities(search: String): Flow<List<Activity>> =
-            activityDao
-                .observeActivities(search.trim().lowercase())
-                .map { rows -> rows.mapNotNull { row -> decodeActivity(row.payload) } }
+            settingsRepository.settings
+                .flatMapLatest { settings ->
+                    settings.accountKey?.let { activityDao.observeActivities(it, search.trim().lowercase()) }
+                        ?: flowOf(emptyList())
+                }.map { rows -> rows.mapNotNull { row -> decodeActivity(row.payload) } }
 
         fun detail(id: String): Flow<ActivityDetail?> =
-            activityDao
-                .observeDetail(id)
-                .map { row -> row?.let { decodeDetail(it.payload) } }
+            settingsRepository.settings
+                .flatMapLatest { settings ->
+                    settings.accountKey?.let { activityDao.observeDetail(it, id) } ?: flowOf(null)
+                }.map { row -> row?.let { decodeDetail(it.payload) } }
 
         fun queuedWorkouts(): Flow<List<QueuedWorkout>> =
-            activityDao.observeQueuedWorkouts().map { workouts ->
-                workouts.map {
-                    QueuedWorkout(
-                        localActivityId = it.localActivityId,
-                        title = it.title,
-                        startedAt = it.startedAt,
-                        waitingForServer = it.uploadStarted,
-                    )
+            settingsRepository.settings
+                .flatMapLatest { settings ->
+                    settings.accountKey?.let(activityDao::observeQueuedWorkouts) ?: flowOf(emptyList())
+                }.map { workouts ->
+                    workouts.map {
+                        QueuedWorkout(
+                            localActivityId = it.localActivityId,
+                            title = it.title,
+                            startedAt = it.startedAt,
+                            waitingForServer = it.uploadStarted,
+                        )
+                    }
                 }
-            }
 
         suspend fun refresh(search: String = ""): PageResult {
-            val response = api().feed(search = search.trim().ifBlank { null })
+            val account = account()
+            val response = api(account.settings).feed(search = search.trim().ifBlank { null })
             if (search.isBlank()) {
-                activityDao.replaceActivities(response.activities.map(::toEntity))
+                activityDao.replaceActivities(account.key, response.activities.map { toEntity(it, account.key) })
             } else {
-                activityDao.upsertActivities(response.activities.map(::toEntity))
+                activityDao.upsertActivities(response.activities.map { toEntity(it, account.key) })
             }
             return PageResult(response.nextCursor, response.total)
         }
@@ -104,16 +115,19 @@ class ActivityRepository
             cursor: String,
             search: String = "",
         ): PageResult {
-            val response = api().feed(cursor = cursor, search = search.trim().ifBlank { null })
-            activityDao.upsertActivities(response.activities.map(::toEntity))
+            val account = account()
+            val response = api(account.settings).feed(cursor = cursor, search = search.trim().ifBlank { null })
+            activityDao.upsertActivities(response.activities.map { toEntity(it, account.key) })
             return PageResult(response.nextCursor, response.total)
         }
 
         suspend fun refreshDetail(id: String) {
-            val detail = api().activity(id)
-            activityDao.upsertActivities(listOf(toEntity(detail.summary())))
+            val account = account()
+            val detail = api(account.settings).activity(id)
+            activityDao.upsertActivities(listOf(toEntity(detail.summary(), account.key)))
             activityDao.upsertDetail(
                 ActivityDetailEntity(
+                    accountKey = account.key,
                     id = detail.id,
                     payload = json.encodeToString(ActivityDetail.serializer(), detail),
                     cachedAt = System.currentTimeMillis(),
@@ -130,9 +144,10 @@ class ActivityRepository
         }
 
         suspend fun deleteActivity(id: String) {
-            api().deleteActivity(id)
-            activityDao.deleteActivity(id)
-            activityDao.deleteDetail(id)
+            val account = account()
+            api(account.settings).deleteActivity(id)
+            activityDao.deleteActivity(account.key, id)
+            activityDao.deleteDetail(account.key, id)
         }
 
         suspend fun matchedRoutes(id: String): MatchedRouteHistory = api().matchedRoutes(id)
@@ -183,6 +198,7 @@ class ActivityRepository
             sport: String,
             title: String,
         ): String {
+            val account = account()
             val localId = "local-${UUID.randomUUID()}"
             val startedAt = recording.startedAt ?: Instant.now()
             val savedAt = Instant.now()
@@ -223,15 +239,17 @@ class ActivityRepository
                     matchedRouteCount = null,
                 )
             activityDao.saveQueuedWorkout(
-                activity = toEntity(activity, isLocal = true),
+                activity = toEntity(activity, account.key, isLocal = true),
                 detail =
                     ActivityDetailEntity(
+                        accountKey = account.key,
                         id = localId,
                         payload = json.encodeToString(ActivityDetail.serializer(), detail),
                         cachedAt = System.currentTimeMillis(),
                     ),
                 workout =
                     QueuedWorkoutEntity(
+                        accountKey = account.key,
                         localActivityId = localId,
                         gpxPath = file.absolutePath,
                         title = title,
@@ -255,25 +273,29 @@ class ActivityRepository
 
         /** Returns true while a workout remains queued, allowing WorkManager to retry later. */
         suspend fun syncQueuedWorkouts(): Boolean {
-            for (workout in activityDao.queuedWorkouts()) {
+            val account = accountOrNull() ?: return false
+            for (workout in activityDao.queuedWorkouts(account.key)) {
                 if (!workout.uploadStarted) {
                     val file = File(workout.gpxPath)
                     if (!file.exists()) continue
                     try {
-                        uploadGpx(file)
-                        activityDao.markUploadStarted(workout.localActivityId)
+                        uploadGpx(file, account.settings)
+                        activityDao.markUploadStarted(account.key, workout.localActivityId)
                     } catch (_: Exception) {
                         return true
                     }
                 }
                 try {
-                    val remoteId = findRecentlyUploadedActivity(workout.startedAt, workout.title) ?: continue
-                    val detail = api().activity(remoteId)
+                    val remoteId =
+                        findRecentlyUploadedActivity(workout.startedAt, workout.title, account.settings) ?: continue
+                    val detail = api(account.settings).activity(remoteId)
                     activityDao.replaceQueuedWorkout(
+                        accountKey = account.key,
                         localActivityId = workout.localActivityId,
-                        activity = toEntity(detail.summary()),
+                        activity = toEntity(detail.summary(), account.key),
                         detail =
                             ActivityDetailEntity(
+                                accountKey = account.key,
                                 id = detail.id,
                                 payload = json.encodeToString(ActivityDetail.serializer(), detail),
                                 cachedAt = System.currentTimeMillis(),
@@ -284,16 +306,22 @@ class ActivityRepository
                     return true
                 }
             }
-            return activityDao.queuedWorkouts().isNotEmpty()
+            return activityDao.queuedWorkouts(account.key).isNotEmpty()
         }
 
         suspend fun findRecentlyUploadedActivity(
             startedAt: String,
             title: String,
+        ): String? = findRecentlyUploadedActivity(startedAt, title, account().settings)
+
+        private suspend fun findRecentlyUploadedActivity(
+            startedAt: String,
+            title: String,
+            settings: AppSettings,
         ): String? {
             val expected = runCatching { Instant.parse(startedAt) }.getOrNull() ?: return null
             repeat(20) { attempt ->
-                val activities = api().activities(limit = 50).activities
+                val activities = api(settings).activities(limit = 50).activities
                 val match =
                     activities
                         .filter { activity ->
@@ -314,13 +342,33 @@ class ActivityRepository
             api().activities(limit = 1)
         }
 
-        private suspend fun api() =
-            settingsRepository.settings.first().let { apiFactory.create(it.serverUrl, it.accessToken) }
+        private suspend fun account(): AccountScope = accountOrNull() ?: error("Sign in before accessing account data")
+
+        private suspend fun accountOrNull(): AccountScope? {
+            val settings = settingsRepository.settings.first()
+            val key = settings.accountKey ?: return null
+            if (settings.accessToken == null) return null
+            return AccountScope(key, settings)
+        }
+
+        private suspend fun api() = api(account().settings)
+
+        private fun api(settings: AppSettings) = apiFactory.create(settings.serverUrl, settings.accessToken)
+
+        private suspend fun uploadGpx(
+            file: File,
+            settings: AppSettings,
+        ) {
+            val request = file.asRequestBody("application/gpx+xml".toMediaType())
+            api(settings).uploadActivity(MultipartBody.Part.createFormData("file", file.name, request))
+        }
 
         private fun toEntity(
             activity: Activity,
+            accountKey: String,
             isLocal: Boolean = false,
         ) = ActivityEntity(
+            accountKey = accountKey,
             id = activity.id,
             startedAt = activity.startedAt,
             searchableText =
@@ -366,5 +414,10 @@ class ActivityRepository
                 json.decodeFromString(ActivityDetail.serializer(), payload)
             }.getOrNull()
     }
+
+private data class AccountScope(
+    val key: String,
+    val settings: AppSettings,
+)
 
 private const val WORKOUT_SYNC_WORK_NAME = "queued-workout-sync"

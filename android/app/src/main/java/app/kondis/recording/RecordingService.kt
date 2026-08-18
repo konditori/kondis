@@ -53,12 +53,13 @@ class RecordingService :
         startId: Int,
     ): Int {
         when (intent?.action) {
+            ACTION_START -> start(intent.getStringExtra(EXTRA_SPORT) ?: "run")
             ACTION_PAUSE -> pause()
             ACTION_RESUME -> resume()
             ACTION_STOP -> stop()
-            else -> start(intent?.getStringExtra(EXTRA_SPORT) ?: "run")
+            else -> restoreAfterProcessDeath()
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -84,13 +85,34 @@ class RecordingService :
     }
 
     private fun start(sport: String) {
-        recordingManager.start()
+        val created = recordingManager.start()
         startForeground(NOTIFICATION_ID, notification())
         startLocationUpdates()
         startTicker()
-        recordingManager.state.value.startedAt?.let { startedAt ->
-            scope.launch(Dispatchers.IO) {
-                runCatching { liveTracking.start(sport, startedAt) }
+        if (created) {
+            recordingManager.state.value.startedAt?.let { startedAt ->
+                scope.launch(Dispatchers.IO) {
+                    runCatching { liveTracking.start(sport, startedAt) }
+                }
+            }
+        }
+    }
+
+    private fun restoreAfterProcessDeath() {
+        when (recordingManager.state.value.mode) {
+            RecordingMode.Recording -> {
+                startForeground(NOTIFICATION_ID, notification())
+                startLocationUpdates()
+                startTicker()
+            }
+
+            RecordingMode.Paused -> {
+                startForeground(NOTIFICATION_ID, notification())
+                startTicker()
+            }
+
+            else -> {
+                stopSelf()
             }
         }
     }

@@ -61,7 +61,7 @@ export const LiveWorkoutStateSchema = z
 export const LiveWorkoutShareSchema = z
   .object({
     token: z.string().min(20),
-    expiresAt: z.string().datetime().nullable(),
+    expiresAt: z.string().datetime(),
   })
   .meta({ id: 'LiveWorkoutShareDto' });
 

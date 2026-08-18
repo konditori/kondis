@@ -49,7 +49,7 @@ class AppViewModel
                     if (error is HttpException && error.code() in setOf(401, 403, 404)) {
                         settingsRepository.setAccessToken(null)
                     }
-                }
+                }.onSuccess { user -> settingsRepository.setAccountId(user.id) }
             }
         }
 
@@ -64,7 +64,7 @@ class AppViewModel
                 val settings = settingsRepository.settings.first()
                 apiFactory.create(settings.serverUrl).login(LoginRequest(email.trim(), password))
             }.onSuccess { response ->
-                settingsRepository.setAccessToken(response.accessToken)
+                settingsRepository.setSession(response.accessToken, response.user.id)
             }.onFailure { error ->
                 _loginError.value = error.message ?: "Unable to sign in"
             }

@@ -11,6 +11,9 @@ injectWorkspacePackages: true
 shamefullyHoist: false
 verifyDepsBeforeRun: install
 
+overrides:
+  'js-yaml@>=5.0.0 <=5.2.1': 5.2.2
+
 allowBuilds:
   '@nestjs/core': false
   '@scarf/scarf': false

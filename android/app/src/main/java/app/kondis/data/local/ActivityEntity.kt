@@ -1,27 +1,29 @@
 package app.kondis.data.local
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "activities")
+@Entity(tableName = "activities", primaryKeys = ["accountKey", "id"])
 data class ActivityEntity(
-    @PrimaryKey val id: String,
+    val accountKey: String,
+    val id: String,
     val startedAt: String,
     val searchableText: String,
     val payload: String,
     val isLocal: Boolean = false,
 )
 
-@Entity(tableName = "activity_details")
+@Entity(tableName = "activity_details", primaryKeys = ["accountKey", "id"])
 data class ActivityDetailEntity(
-    @PrimaryKey val id: String,
+    val accountKey: String,
+    val id: String,
     val payload: String,
     val cachedAt: Long,
 )
 
-@Entity(tableName = "queued_workouts")
+@Entity(tableName = "queued_workouts", primaryKeys = ["accountKey", "localActivityId"])
 data class QueuedWorkoutEntity(
-    @PrimaryKey val localActivityId: String,
+    val accountKey: String,
+    val localActivityId: String,
     val gpxPath: String,
     val title: String,
     val startedAt: String,

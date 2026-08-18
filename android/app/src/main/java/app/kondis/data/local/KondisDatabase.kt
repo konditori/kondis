@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [ActivityEntity::class, ActivityDetailEntity::class, QueuedWorkoutEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class KondisDatabase : RoomDatabase() {

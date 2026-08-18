@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 import { ConfigService } from 'src/config/config.service';
@@ -12,9 +12,9 @@ export class StorageRepository {
     private readonly crypto: CryptoRepository,
   ) {}
 
-  buildPath(checksum: string, extension: string): string {
+  buildPath(userId: string, checksum: string, extension: string): string {
     const suffix = extension.startsWith('.') ? extension : `.${extension}`;
-    return join('activities', checksum.slice(0, 2), checksum.slice(2, 4), `${checksum}${suffix}`);
+    return join('activities', userId, checksum.slice(0, 2), checksum.slice(2, 4), `${checksum}${suffix}`);
   }
 
   buildTemporaryPath(extension: string): string {
@@ -48,6 +48,20 @@ export class StorageRepository {
     } catch (error) {
       await rm(temporary, { force: true });
       throw error;
+    }
+  }
+
+  async importFile(sourcePath: string, relativePath: string): Promise<void> {
+    const target = this.absolutePath(relativePath);
+    await mkdir(dirname(target), { recursive: true });
+    try {
+      await rename(sourcePath, target);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EXDEV') {
+        throw error;
+      }
+      await copyFile(sourcePath, target);
+      await rm(sourcePath, { force: true });
     }
   }
 

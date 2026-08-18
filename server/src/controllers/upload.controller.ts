@@ -1,13 +1,21 @@
 import { Controller, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
 import { ZodResponse } from 'nestjs-zod';
+import { randomUUID } from 'node:crypto';
+import { tmpdir } from 'node:os';
 
 import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto, TakeoutImportStatusDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
-import { UploadedFileData } from 'src/types/uploads';
+import { DiskUploadedFileData } from 'src/types/uploads';
+
+const uploadStorage = diskStorage({
+  destination: tmpdir(),
+  filename: (_request, _file, callback) => callback(null, `kondis-upload-${randomUUID()}`),
+});
 
 @ApiTags('uploads')
 @Controller()
@@ -37,11 +45,12 @@ export class UploadController {
   @Post('upload/activity')
   @UseInterceptors(
     FileInterceptor('file', {
+      storage: uploadStorage,
       limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0 },
     }),
   )
   async uploadActivity(
-    @UploadedFile() file: UploadedFileData | undefined,
+    @UploadedFile() file: DiskUploadedFileData | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<FitUploadResponseDto> {
     return this.service.uploadActivity(file, user.id);
@@ -70,11 +79,12 @@ export class UploadController {
   @Post('upload/strava')
   @UseInterceptors(
     FileInterceptor('file', {
+      storage: uploadStorage,
       limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0 },
     }),
   )
   async uploadStravaTakeout(
-    @UploadedFile() uploadedFile: UploadedFileData | undefined,
+    @UploadedFile() uploadedFile: DiskUploadedFileData | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<LagomTakeoutUploadResponseDto> {
     return this.service.uploadLagomTakeout(uploadedFile, user.id);

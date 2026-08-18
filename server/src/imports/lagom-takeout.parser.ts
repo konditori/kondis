@@ -6,7 +6,7 @@ import { Open, type File as ZipEntry } from 'unzipper';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import type { ActivityTag, ActivityType } from 'src/types';
-import type { UploadedFileData } from 'src/types/uploads';
+import type { BufferedUploadedFileData } from 'src/types/uploads';
 import { toActivityType } from 'src/utils/activity';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
@@ -26,7 +26,7 @@ export type LagomTakeoutActivity = {
   description: string | null;
   sport: ActivityType | null;
   tags: ActivityTag[];
-  file: UploadedFileData;
+  file: BufferedUploadedFileData;
   images: LagomTakeoutMedia[];
   manual?: {
     sourceId: string;
@@ -45,7 +45,7 @@ export type LagomTakeoutActivity = {
 };
 
 export type LagomTakeoutMedia = {
-  file: UploadedFileData;
+  file: BufferedUploadedFileData;
   caption: string | null;
   sortOrder: number;
 };
@@ -53,7 +53,7 @@ export type LagomTakeoutMedia = {
 export type LagomTakeoutProfile = {
   firstName: string | null;
   lastName: string | null;
-  avatar: UploadedFileData | null;
+  avatar: BufferedUploadedFileData | null;
 };
 
 export type LagomTakeoutError = {

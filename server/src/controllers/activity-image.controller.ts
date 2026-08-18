@@ -22,7 +22,7 @@ import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ActivityImageDto, ActivityImageListDto, ActivityImageUpdateDto } from 'src/dtos/activity-image.dto';
 import { ActivityImageService } from 'src/services/activity-image.service';
-import { UploadedFileData } from 'src/types/uploads';
+import { BufferedUploadedFileData } from 'src/types/uploads';
 
 @ApiTags('activity-images')
 @Controller()
@@ -43,7 +43,7 @@ export class ActivityImageController {
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: UPLOAD_LIMITS.imageFileBytes, files: 1, fields: 1 } }))
   upload(
     @Param('id') activityId: string,
-    @UploadedFile() file: UploadedFileData | undefined,
+    @UploadedFile() file: BufferedUploadedFileData | undefined,
     @Body('caption') caption: string | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ) {

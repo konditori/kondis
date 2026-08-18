@@ -13,7 +13,7 @@ export interface IActivityUploadJob {
   userId?: string;
   originalName: string;
   storagePath: string;
-  checksum: string;
+  checksum?: string;
   activityName?: string;
   activityDescription?: string;
   activitySport?: ActivityType;

@@ -12,7 +12,7 @@ distributed and are therefore not listed.
 
 This file is generated. Run `mise run third-party-licenses` to update it; do not edit it by hand.
 
-Packages: 165. Licenses in use: (MIT OR CC0-1.0), 0BSD, Apache-2.0, BSD-3-Clause, ISC, MIT, Python-2.0.
+Packages: 167. Licenses in use: (MIT OR CC0-1.0), 0BSD, Apache-2.0, BSD-3-Clause, ISC, MIT, Python-2.0.
 
 ---
 
@@ -660,6 +660,38 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 > This package does not distribute a license file. It declares `MIT` in its
 > `package.json`; refer to the homepage above for the copyright holder.
+
+---
+
+## @types/node
+
+- Version: 22.20.1
+- License: MIT
+- Homepage: https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node
+
+```
+MIT License
+
+    Copyright (c) Microsoft Corporation.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE
+```
 
 ---
 
@@ -3089,7 +3121,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ## js-yaml
 
-- Version: 5.2.1
+- Version: 5.2.2
 - License: MIT
 - Author: Vladimir Zapparov
 - Homepage: https://github.com/nodeca/js-yaml#readme
@@ -5021,12 +5053,12 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ## sharp
 
-- Version: 0.34.5
+- Version: 0.35.3
 - License: Apache-2.0
 - Author: Lovell Fuller
 - Homepage: https://sharp.pixelplumbing.com
 - Also covers these per-platform prebuilt binaries, published under the same license
-  (only the one matching the host is installed): @img/sharp-darwin-arm64, @img/sharp-darwin-x64, @img/sharp-libvips-darwin-arm64, @img/sharp-libvips-darwin-x64, @img/sharp-libvips-linux-arm, @img/sharp-libvips-linux-arm64, @img/sharp-libvips-linux-ppc64, @img/sharp-libvips-linux-riscv64, @img/sharp-libvips-linux-s390x, @img/sharp-libvips-linux-x64, @img/sharp-libvips-linuxmusl-arm64, @img/sharp-libvips-linuxmusl-x64, @img/sharp-linux-arm, @img/sharp-linux-arm64, @img/sharp-linux-ppc64, @img/sharp-linux-riscv64, @img/sharp-linux-s390x, @img/sharp-linux-x64, @img/sharp-linuxmusl-arm64, @img/sharp-linuxmusl-x64, @img/sharp-wasm32, @img/sharp-win32-arm64, @img/sharp-win32-ia32, @img/sharp-win32-x64
+  (only the one matching the host is installed): @img/sharp-darwin-arm64, @img/sharp-darwin-x64, @img/sharp-freebsd-wasm32, @img/sharp-libvips-darwin-arm64, @img/sharp-libvips-darwin-x64, @img/sharp-libvips-linux-arm, @img/sharp-libvips-linux-arm64, @img/sharp-libvips-linux-ppc64, @img/sharp-libvips-linux-riscv64, @img/sharp-libvips-linux-s390x, @img/sharp-libvips-linux-x64, @img/sharp-libvips-linuxmusl-arm64, @img/sharp-libvips-linuxmusl-x64, @img/sharp-linux-arm, @img/sharp-linux-arm64, @img/sharp-linux-ppc64, @img/sharp-linux-riscv64, @img/sharp-linux-s390x, @img/sharp-linux-x64, @img/sharp-linuxmusl-arm64, @img/sharp-linuxmusl-x64, @img/sharp-webcontainers-wasm32, @img/sharp-win32-arm64, @img/sharp-win32-ia32, @img/sharp-win32-x64
 
 ```
 Apache License
@@ -6170,6 +6202,38 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+---
+
+## undici-types
+
+- Version: 6.21.0
+- License: MIT
+- Homepage: https://undici.nodejs.org
+
+```
+MIT License
+
+Copyright (c) Matteo Collina and Undici contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ---

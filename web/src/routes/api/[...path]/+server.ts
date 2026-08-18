@@ -14,13 +14,15 @@ const proxy: RequestHandler = async ({ request, params, url, locals }) => {
   const body =
     request.method === "GET" || request.method === "HEAD"
       ? undefined
-      : await request.arrayBuffer();
-  return locals.kondisFetch(target, {
+      : request.body;
+  const init: RequestInit & { duplex?: "half" } = {
     method: request.method,
     headers,
     body,
     redirect: "manual",
-  });
+  };
+  if (body) init.duplex = "half";
+  return locals.kondisFetch(target, init);
 };
 
 export const GET = proxy;

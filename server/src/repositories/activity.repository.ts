@@ -290,10 +290,21 @@ export class ActivityRepository {
     await executor.deleteFrom('activity_route_match').where('activity_id', '=', activityId).execute();
     await executor.deleteFrom('activity_route_match').where('matched_activity_id', '=', activityId).execute();
 
-    const ids = await this.computeMatchingRouteIds(activityId, executor);
-    if (ids.length === 0) {
+    const candidateIds = await this.computeMatchingRouteIds(activityId, executor);
+    if (candidateIds.length === 0) {
       return;
     }
+
+    // Lock every referenced activity in a stable order. Deletes then wait for
+    // this transaction, and candidates deleted just before the lock are omitted.
+    const locked = await executor
+      .selectFrom('activity')
+      .select('id')
+      .where('id', 'in', [...candidateIds].sort())
+      .orderBy('id')
+      .forUpdate()
+      .execute();
+    const ids = locked.map(({ id }) => id);
 
     await executor
       .insertInto('activity_route_match')
@@ -309,7 +320,12 @@ export class ActivityRepository {
 
   async recomputeRouteMatches(activityId: string): Promise<boolean> {
     return this.db.transaction().execute(async (trx) => {
-      const activity = await trx.selectFrom('activity').select('id').where('id', '=', activityId).executeTakeFirst();
+      const activity = await trx
+        .selectFrom('activity')
+        .select('id')
+        .where('id', '=', activityId)
+        .forUpdate()
+        .executeTakeFirst();
       if (!activity) {
         return false;
       }

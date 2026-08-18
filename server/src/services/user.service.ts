@@ -8,7 +8,7 @@ import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { JobOf } from 'src/types/jobs';
-import type { UploadedFileData } from 'src/types/uploads';
+import type { BufferedUploadedFileData } from 'src/types/uploads';
 
 const AVATAR_SIZE = 512;
 const AVATAR_MIME_TYPE = 'image/webp';
@@ -21,7 +21,7 @@ export class UserService {
     private readonly storage: StorageRepository,
   ) {}
 
-  async uploadAvatar(userId: string, file: UploadedFileData | undefined) {
+  async uploadAvatar(userId: string, file: BufferedUploadedFileData | undefined) {
     if (!file) {
       throw new BadRequestException('Missing profile picture');
     }

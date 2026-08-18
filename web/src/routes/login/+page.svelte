@@ -26,8 +26,10 @@
         >Sign in</button
       >
     </form>
-    <p class="auth-switch">
-      Don't have an account? <a href="/register">Create one</a>
-    </p>
+    {#if data.registrationEnabled}
+      <p class="auth-switch">
+        Don't have an account? <a href="/register">Create one</a>
+      </p>
+    {/if}
   </section>
 </main>

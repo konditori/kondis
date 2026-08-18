@@ -147,10 +147,10 @@ export class ActivityService {
           this.toCreateInput(
             id,
             parsed,
+            upload.user_id,
             activityName,
             activityDescription,
             activitySport,
-            upload.user_id,
             activityTags,
           ),
           trx,
@@ -199,13 +199,17 @@ export class ActivityService {
 
   @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
   async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
+    if (!job.userId) {
+      throw new Error('Manual activity job has no owner');
+    }
+    const userId = job.userId;
     const manualChecksum = job.sourceId ? `strava:${job.sourceId}` : `manual:${job.id}`;
-    const existing = await this.uploadRepository.getByChecksum(manualChecksum, job.userId);
+    const existing = await this.uploadRepository.getByChecksum(manualChecksum, userId);
     const legacyExisting =
-      !existing && job.userId && job.sourceId
+      !existing && job.sourceId
         ? await this.uploadRepository.hasManualActivity(
             { startedAt: new Date(job.startedAt), sport: job.activitySport, elapsedTime: job.elapsedTime },
-            job.userId,
+            userId,
           )
         : false;
     if (existing || legacyExisting) {
@@ -234,7 +238,7 @@ export class ActivityService {
           original_name: 'Strava manual activity',
           byte_size: 0,
           storage_path: '',
-          user_id: job.userId,
+          user_id: userId,
           status: 'parsed',
         },
         trx,
@@ -243,6 +247,7 @@ export class ActivityService {
         {
           activity: {
             upload_id: job.id,
+            user_id: userId,
             sport: job.activitySport,
             name: job.activityName ?? null,
             description: job.activityDescription ?? null,
@@ -1006,16 +1011,16 @@ export class ActivityService {
   private toCreateInput(
     uploadId: string,
     parsed: ParsedActivityStructure,
+    userId: string,
     activityName?: string,
     activityDescription?: string,
     activitySport?: ActivityType,
-    userId?: string | null,
     activityTags: ActivityTag[] = [],
   ): CreateActivityInput {
     return {
       activity: {
         upload_id: uploadId,
-        user_id: userId ?? null,
+        user_id: userId,
         sport: activitySport ?? parsed.sport,
         name: activityName ?? parsed.name,
         description: activityDescription ?? null,
