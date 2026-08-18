@@ -1,0 +1,39 @@
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_77790d1abf2040::t_4540955b51192b 32-33
+android/app/src/test/java/app/kondis/model/ApiModelTest.kt
+  s_77790d1abf2040::t_92c8eb591078fb 20-25,67-80
+open-api/kondis-openapi-specs.json
+  s_77790d1abf2040::t_701662f69d8f1d 753-798,3293-3297,3666
+server/src/controllers/activity.controller.ts
+  s_77790d1abf2040::t_1e71b35b1f23c7 12,14-15,93-113
+server/src/dtos/activity.dto.ts
+  s_77790d1abf2040::t_b0244bcdf5253b 185-188
+server/src/open-api/fetch-client.ts
+  s_77790d1abf2040::t_5318b8410badad 267-268
+server/src/services/activity.service.spec.ts
+  s_77790d1abf2040::t_5ee8885c483824 34,65,152,167-188
+server/src/services/activity.service.ts
+  s_77790d1abf2040::t_7216489f4a82f1 663,667,674,697-715
+web/src/app.css
+  s_77790d1abf2040::t_703206c5fb12e6 2025-2028
+web/src/lib/types.ts
+  s_77790d1abf2040::t_c62afb905ea09f 86
+web/src/routes/activities/[id]/+page.svelte
+  s_77790d1abf2040::t_1c7dd8a5785771 8,566-574
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f9f1994b528c4910ecaabc06789df2109068894d",
+  "prompts": {},
+  "sessions": {
+    "s_77790d1abf2040": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01652-90e8-7c42-aa73-a8f1dd328127",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
