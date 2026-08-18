@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type KondisDatabase } from 'src/db/database';
 import type { ActivityDto } from 'src/dtos/activity.dto';
 import { EventRepository } from 'src/repositories/event.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 
 import { createMediumTestDatabase, getTestDatabaseConfig, resetMediumTestDatabase } from 'test/medium/test-db';
 
@@ -17,7 +18,9 @@ describe(EventRepository.name, () => {
     await db?.destroy();
   });
 
-  const setup = () => ({ sut: new EventRepository(db, { database: getTestDatabaseConfig() } as never) });
+  const setup = () => ({
+    sut: new EventRepository(db, { database: getTestDatabaseConfig() } as never, new SocialRepository(db)),
+  });
 
   it('publishes activity events through PostgreSQL notifications', async () => {
     const { sut } = setup();
@@ -36,6 +39,7 @@ describe(EventRepository.name, () => {
     } as ActivityDto;
 
     await expect(sut.emit('ActivityCreate', activity)).resolves.toBeUndefined();
+    await expect(sut.emit('ActivityCommentCreated', { id: activity.id })).resolves.toBeUndefined();
   });
 
   it('publishes targeted notification and read events', async () => {

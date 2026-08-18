@@ -51,6 +51,7 @@
   let plusMenuOpen = $state(false);
   let notificationsOpen = $state(false);
   let notificationsLoading = $state(false);
+  let notificationsReloadPending = $state(false);
   let notificationCount = $state(0);
   let notifications = $state<
     | {
@@ -110,14 +111,28 @@
     notificationsOpen = false;
   }
 
-  async function markNotificationsRead() {
+  async function markNotificationRead() {
     if (notificationCount === 0) return;
     notificationCount = 0;
+    const readAt = new Date().toISOString();
+    notifications =
+      notifications?.map((notification) => ({ ...notification, readAt })) ??
+      null;
     await socialControllerMarkNotificationsRead(getSdkRequestOptions());
   }
 
-  async function loadNotifications(markRead = false) {
-    if (notificationsLoading) return;
+  async function viewAllNotifications(event: MouseEvent) {
+    event.preventDefault();
+    await markNotificationRead();
+    closeNotifications();
+    await goto("/notifications");
+  }
+
+  async function loadNotifications() {
+    if (notificationsLoading) {
+      notificationsReloadPending = true;
+      return;
+    }
     notificationsLoading = true;
     try {
       const result = await socialControllerNotifications(
@@ -131,24 +146,28 @@
         result.unreadCount > 0
           ? result.unreadCount
           : 0;
-      if (markRead) await markNotificationsRead();
     } finally {
       notificationsLoading = false;
+      if (notificationsReloadPending) {
+        notificationsReloadPending = false;
+        void loadNotifications();
+      }
     }
   }
 
   function handleNotificationsToggle() {
-    if (notificationsOpen) void loadNotifications(true);
+    if (notificationsOpen) void loadNotifications();
   }
 
   onMount(() => {
     void loadNotifications();
-    return subscribeToActivityEvents(
+    const unsubscribe = subscribeToActivityEvents(
       eventsUrl,
       () => {},
-      () => {},
       () => void loadNotifications(),
+      { onNotification: () => void loadNotifications() },
     );
+    return () => unsubscribe();
   });
 
   function handleWindowClick(event: MouseEvent) {
@@ -270,7 +289,7 @@
     <div class="notification-popover">
       <div class="notification-popover-heading">
         <strong>Notifications</strong>
-        <a href="/notifications" onclick={closeNotifications}>View all</a>
+        <a href="/notifications" onclick={viewAllNotifications}>View all</a>
       </div>
       {#if notificationsLoading}
         <p class="notification-empty">Loading\u2026</p>
@@ -278,12 +297,16 @@
         <div class="notification-list">
           {#each notifications as notification}
             <a
+              class:notification-unread={!notification.readAt}
               href={notification.activityId
                 ? `/activities/${notification.activityId}`
                 : notification.type === "follow_request"
                   ? "/people"
                   : "/notifications"}
-              onclick={closeNotifications}
+              onclick={() => {
+                void markNotificationRead();
+                closeNotifications();
+              }}
             >
               <UserAvatar
                 name={userDisplayName(notification.actor)}

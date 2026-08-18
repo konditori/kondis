@@ -47,7 +47,7 @@
       data.eventsUrl,
       () => {},
       () => {},
-      () => void loadNotifications(),
+      { onNotification: () => void loadNotifications() },
     );
   });
 </script>

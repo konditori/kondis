@@ -1,12 +1,5 @@
 <script lang="ts">
-  import {
-    MessageCircle,
-    MoreVertical,
-    Pencil,
-    Send,
-    Trash2,
-    X,
-  } from "@lucide/svelte";
+  import { MoreVertical, Pencil, Send, Trash2, X } from "@lucide/svelte";
   import {
     getSdkRequestOptions,
     socialControllerComment,
@@ -18,9 +11,22 @@
   import type { ActivityDetail } from "$lib/types";
   import { relativeTime } from "$lib/format";
   import { userDisplayName } from "$lib/user-name";
+  import { subscribeToActivityEvents } from "$lib/realtime";
+  import { onMount } from "svelte";
 
-  let { activity, viewerId }: { activity: ActivityDetail; viewerId?: string } =
-    $props();
+  let {
+    activity,
+    viewerId,
+    eventsUrl,
+    viewerName = "You",
+    viewerAvatarUrl,
+  }: {
+    activity: ActivityDetail;
+    viewerId?: string;
+    eventsUrl: string;
+    viewerName?: string;
+    viewerAvatarUrl?: string | null;
+  } = $props();
   type Comment = {
     id: string;
     body: string;
@@ -137,30 +143,28 @@
   $effect(() => {
     void load();
   });
+
+  onMount(() =>
+    subscribeToActivityEvents(
+      eventsUrl,
+      (event) => {
+        if (
+          event.type === "activity.comment.created" &&
+          event.activity.id === activity.id
+        )
+          void load();
+      },
+      () => {},
+      { activityId: activity.id },
+    ),
+  );
 </script>
 
 <section id="comments" class="activity-comments" aria-label="Comments">
-  <div class="section-heading">
-    <MessageCircle size={19} />
-    <h2>Comments</h2>
-  </div>
-  <form class="comment-form" onsubmit={submit}>
-    <input
-      bind:value={body}
-      maxlength="2000"
-      placeholder="Add a comment"
-      aria-label="Comment"
-    />
-    <button type="submit" disabled={sending || !body.trim()}>
-      <Send size={16} /> Comment
-    </button>
-  </form>
   {#if error}<p class="form-error" role="alert">{error}</p>{/if}
   {#if loading}
     <p class="muted-copy">Loading comments…</p>
-  {:else if comments.length === 0}
-    <p class="muted-copy">Be the first to comment.</p>
-  {:else}
+  {:else if comments.length}
     <div class="comment-list">
       {#each comments as comment (comment.id)}
         <article class="comment-row">
@@ -236,4 +240,23 @@
       {/each}
     </div>
   {/if}
+  <div class="comment-composer">
+    <UserAvatar name={viewerName} src={viewerAvatarUrl} size={44} />
+    <form class="comment-form" onsubmit={submit}>
+      <input
+        bind:value={body}
+        maxlength="2000"
+        placeholder="Add a comment"
+        aria-label="Comment"
+      />
+      <button
+        type="submit"
+        disabled={sending || !body.trim()}
+        aria-label="Send comment"
+        title="Send comment"
+      >
+        <Send size={16} />
+      </button>
+    </form>
+  </div>
 </section>

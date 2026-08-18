@@ -88,7 +88,9 @@
     | null
   >(null);
   let likersOpen = $state(false);
+  let likersHovered = $state(false);
   let likersLoading = $state(false);
+  const likersVisible = $derived(likersOpen || likersHovered);
   const canEditCurrentActivity = $derived(
     canEditActivity(activity.userId, data.user?.id),
   );
@@ -351,9 +353,8 @@
     editing = true;
   }
 
-  async function toggleLikers() {
-    likersOpen = !likersOpen;
-    if (!likersOpen || likers !== null || likersLoading) return;
+  async function loadLikers() {
+    if (likers !== null || likersLoading) return;
     likersLoading = true;
     try {
       likers = await socialControllerLikers(
@@ -363,6 +364,11 @@
     } finally {
       likersLoading = false;
     }
+  }
+
+  async function toggleLikers() {
+    likersOpen = !likersOpen;
+    if (likersOpen) await loadLikers();
   }
 
   function rankOrdinal(rank: number): string {
@@ -556,17 +562,26 @@
           aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
         >
       {/if}
-      <div class="detail-likes">
+      <div
+        class="detail-likes"
+        role="group"
+        aria-label="Activity likes"
+        onmouseenter={() => {
+          likersHovered = true;
+          void loadLikers();
+        }}
+        onmouseleave={() => (likersHovered = false)}
+      >
         <button
           type="button"
           onclick={toggleLikers}
-          aria-expanded={likersOpen}
+          aria-expanded={likersVisible}
           aria-label="Show people who liked this activity"
           ><Heart size={16} fill="currentColor" />
           {activity.likeCount ?? 0}</button
         >
-        {#if likersOpen}
-          <div class="detail-likers-popover">
+        {#if likersVisible}
+          <div class="detail-likers-popover" role="tooltip">
             <strong>Likes</strong>
             {#if likersLoading}
               <span>Loading…</span>
@@ -1094,4 +1109,10 @@
     onClose={() => (selectedImageIndex = null)}
   />
 {/if}
-<ActivityComments {activity} viewerId={data.user?.id} />
+<ActivityComments
+  {activity}
+  eventsUrl={data.eventsUrl}
+  viewerId={data.user?.id}
+  viewerName={data.user ? userDisplayName(data.user) : "You"}
+  viewerAvatarUrl={data.user?.avatarUrl}
+/>

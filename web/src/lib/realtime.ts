@@ -6,6 +6,10 @@ export type ActivityEvent =
       activity: Activity;
     }
   | {
+      type: "activity.comment.created";
+      activity: Pick<Activity, "id">;
+    }
+  | {
       type: "activity.best-efforts.available";
       activity: Pick<ActivityDetail, "id" | "bestEfforts">;
     };
@@ -24,12 +28,37 @@ export type NotificationEvent =
 
 export type ActivityEventType = ActivityEvent["type"];
 
+type ActivityEventSubscriptionOptions = {
+  onNotification?: (event: NotificationEvent) => void;
+  activityId?: string;
+};
+
+export function parseNotificationEvent(data: string): NotificationEvent | null {
+  try {
+    const event = JSON.parse(data) as {
+      type?: string;
+      notification?: { id?: string };
+      readAt?: string;
+    };
+    if (event.type === "notification.created" && event.notification?.id) {
+      return event as NotificationEvent;
+    }
+    if (event.type === "notifications.read" && event.readAt) {
+      return event as NotificationEvent;
+    }
+  } catch {
+    // Ignore malformed and forward-incompatible messages.
+  }
+  return null;
+}
+
 export function subscribeToActivityEvents(
   url: string,
   onActivity: (event: ActivityEvent) => void,
   onConnected: () => void,
-  onNotification?: (event: NotificationEvent) => void,
+  options: ActivityEventSubscriptionOptions = {},
 ): () => void {
+  const { activityId, onNotification } = options;
   let socket: WebSocket | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
@@ -66,26 +95,27 @@ export function subscribeToActivityEvents(
     }
     socket.onopen = () => {
       retryMs = 500;
+      if (activityId)
+        socket?.send(
+          JSON.stringify({ type: "activity.subscribe", activityId }),
+        );
       onConnected();
     };
     socket.onmessage = ({ data }) => {
+      const notificationEvent = parseNotificationEvent(String(data));
+      if (notificationEvent) {
+        onNotification?.(notificationEvent);
+        return;
+      }
       try {
         const event = JSON.parse(String(data)) as {
           type?: string;
-          notification?: { id?: string };
-          readAt?: string;
           activity?: { id?: string };
         };
         if (
-          (event.type === "notification.created" && event.notification?.id) ||
-          (event.type === "notifications.read" && event.readAt)
-        ) {
-          onNotification?.(event as NotificationEvent);
-          return;
-        }
-        if (
           (event.type === "activity.created" ||
             event.type === "activity.updated" ||
+            event.type === "activity.comment.created" ||
             event.type === "activity.best-efforts.available") &&
           event.activity?.id
         ) {

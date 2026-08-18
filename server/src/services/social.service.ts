@@ -209,6 +209,7 @@ export class SocialService {
       .returningAll()
       .executeTakeFirstOrThrow();
     await this.notify(activity.user_id, viewerId, 'activity_comment', activityId);
+    await this.eventRepository.emit('ActivityCommentCreated', { id: activityId });
     return {
       id: row.id,
       body: row.body,
@@ -350,10 +351,14 @@ export class SocialService {
       return;
     }
     const row = await this.db
-      .insertInto('notification')
-      .values({ user_id: recipientId, actor_id: actorId, type, activity_id: activityId })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+      .transaction()
+      .execute((trx) =>
+        trx
+          .insertInto('notification')
+          .values({ user_id: recipientId, actor_id: actorId, type, activity_id: activityId })
+          .returningAll()
+          .executeTakeFirstOrThrow(),
+      );
     await this.eventRepository.emit('NotificationCreated', {
       recipientId,
       id: row.id,

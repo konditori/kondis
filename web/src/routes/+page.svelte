@@ -132,7 +132,11 @@
     subscribeToActivityEvents(
       data.eventsUrl,
       (event) => {
-        if (event.type === "activity.best-efforts.available") return;
+        if (
+          event.type === "activity.best-efforts.available" ||
+          event.type === "activity.comment.created"
+        )
+          return;
         const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(
