@@ -517,7 +517,7 @@ button {
   background: #fce8ee;
 }
 .activity-comments {
-  width: min(1060px, calc(100% - 72px));
+  width: min(1120px, calc(100% - 72px));
   margin: 24px auto 80px;
   padding: 22px;
   background: var(--surface);
@@ -567,15 +567,104 @@ button {
 .comment-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 11px;
+  position: relative;
   padding: 12px;
   background: #f7f7f4;
   border-radius: 9px;
 }
-.comment-row .person-copy span {
+.comment-row .person-copy {
+  min-width: 0;
+  flex: 1;
+}
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.comment-meta time {
+  color: var(--muted);
+  font-size: 12px;
+}
+.comment-row .person-copy p {
+  margin: 4px 0 0;
   color: #30352f;
   font-size: 14px;
   line-height: 1.45;
+}
+.comment-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+.comment-menu-trigger {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.comment-menu-trigger:hover,
+.comment-menu-trigger:focus-visible {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+.comment-menu-popover {
+  position: absolute;
+  z-index: 3;
+  top: 34px;
+  right: 0;
+  display: grid;
+  min-width: 120px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px #17201924;
+}
+.comment-menu-popover button,
+.comment-edit-form button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  color: #1c211d;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+.comment-menu-popover button:hover {
+  background: var(--green-soft);
+}
+.comment-menu-popover .comment-delete {
+  color: #a13c3c;
+}
+.comment-edit-form {
+  display: flex;
+  gap: 7px;
+  margin-top: 7px;
+}
+.comment-edit-form input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.comment-edit-form button[type="submit"] {
+  color: white;
+  background: var(--green);
+}
+.comment-edit-form .comment-cancel {
+  color: var(--muted);
 }
 .icon-button {
   padding: 5px;

@@ -6,6 +6,7 @@ import {
   elevation,
   ordinal,
   pace,
+  relativeTime,
   speed,
 } from "$lib/format";
 
@@ -21,6 +22,16 @@ describe("unit-aware activity formatting", () => {
       "13th",
       "21st",
     ]);
+  });
+
+  it("formats relative timestamps", () => {
+    const now = new Date("2026-08-18T10:00:00.000Z");
+    expect(relativeTime("2026-08-18T09:59:40.000Z", now)).toBe("Just now");
+    expect(relativeTime("2026-08-18T09:55:00.000Z", now)).toBe("5 minutes ago");
+    expect(relativeTime("2026-08-18T08:30:00.000Z", now)).toBe("1 hour ago");
+    expect(relativeTime("2026-08-16T10:00:00.000Z", now)).toBe("2 days ago");
+    expect(relativeTime("2026-07-18T10:00:00.000Z", now)).toBe("1 month ago");
+    expect(relativeTime("2025-08-18T10:00:00.000Z", now)).toBe("1 year ago");
   });
 
   it("formats metric measurements", () => {

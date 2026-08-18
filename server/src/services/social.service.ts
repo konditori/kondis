@@ -142,11 +142,27 @@ export class SocialService {
         sql<boolean>`NOT EXISTS (SELECT 1 FROM user_block b WHERE (b.blocker_id = ${viewerId}::uuid AND b.blocked_id = activity_comment.user_id) OR (b.blocker_id = activity_comment.user_id AND b.blocked_id = ${viewerId}::uuid))`,
       );
     if (cursor) {
-      query = query.where('activity_comment.id', '<', cursor);
+      const cursorComment = await this.db
+        .selectFrom('activity_comment')
+        .select('created_at')
+        .where('id', '=', cursor)
+        .where('activity_id', '=', activityId)
+        .executeTakeFirst();
+      if (cursorComment) {
+        query = query.where(({ and, eb, or }) =>
+          or([
+            eb('activity_comment.created_at', '>', cursorComment.created_at),
+            and([
+              eb('activity_comment.created_at', '=', cursorComment.created_at),
+              eb('activity_comment.id', '>', cursor),
+            ]),
+          ]),
+        );
+      }
     }
     const rows = await query
-      .orderBy('activity_comment.created_at', 'desc')
-      .orderBy('activity_comment.id', 'desc')
+      .orderBy('activity_comment.created_at', 'asc')
+      .orderBy('activity_comment.id', 'asc')
       .limit(limit + 1)
       .execute();
     const hasMore = rows.length > limit;
@@ -222,16 +238,15 @@ export class SocialService {
 
   async deleteComment(activityId: string, commentId: string, viewerId: string) {
     const row = await this.db
-      .selectFrom('activity_comment')
-      .innerJoin('activity', 'activity.id', 'activity_comment.activity_id')
-      .select(['activity_comment.user_id', 'activity.user_id as owner_id'])
-      .where('activity_comment.id', '=', commentId)
-      .where('activity_comment.activity_id', '=', activityId)
+      .deleteFrom('activity_comment')
+      .where('id', '=', commentId)
+      .where('activity_id', '=', activityId)
+      .where('user_id', '=', viewerId)
+      .returning('id')
       .executeTakeFirst();
-    if (!row || (row.user_id !== viewerId && row.owner_id !== viewerId)) {
+    if (!row) {
       throw new NotFoundException('Comment does not exist');
     }
-    await this.db.deleteFrom('activity_comment').where('id', '=', commentId).execute();
   }
 
   private avatarUrl(userId: string, path: string | null): string | null {

@@ -1039,4 +1039,4 @@
     onClose={() => (selectedImageIndex = null)}
   />
 {/if}
-<ActivityComments {activity} />
+<ActivityComments {activity} viewerId={data.user?.id} />
