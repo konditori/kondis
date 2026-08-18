@@ -1,0 +1,49 @@
+open-api/kondis-openapi-specs.json
+  s_9337a742ca108e::t_da05e55b7d7e30 1079-1146
+server/src/controllers/user.controller.ts
+  s_9337a742ca108e::t_e377a5acbe3db3 1-21,24-25,34,39,41-44,48-50,60-93
+server/src/enum.ts
+  s_9337a742ca108e::t_c8abb4576acd05 28
+server/src/imports/lagom-takeout.parser.spec.ts
+  s_9337a742ca108e::t_b9bb7d2339c8cf 44-57
+server/src/imports/lagom-takeout.parser.ts
+  s_9337a742ca108e::t_41d338a9b078a2 53-57,69,314,462-498
+server/src/open-api/fetch-client.ts
+  s_9337a742ca108e::t_04d003180dd99f 1145-1187
+server/src/repositories/job.repository.ts
+  s_9337a742ca108e::t_bdbfaca9e362f0 395-398
+server/src/repositories/user.repository.ts
+  s_9337a742ca108e::t_3974d00c15a7f0 36-38
+server/src/services/index.ts
+  s_9337a742ca108e::t_64afdebcbcd19e 10,22
+server/src/services/upload.service.ts
+  s_9337a742ca108e::t_43daab8d1489ab 6,21,39,238-248
+server/src/services/user.service.spec.ts
+  s_9337a742ca108e::t_5a0b5e90d708ae 1-91
+server/src/services/user.service.ts
+  s_9337a742ca108e::t_bc3203c357d2f6 5-6,10,17,24,53-67,76,87
+server/src/types/jobs.ts
+  s_9337a742ca108e::t_47b24d640d708c 84-88,104
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_9337a742ca108e::t_1dab04c00fe918 117-120
+server/test/medium/specs/service/upload.service.spec.ts
+  s_9337a742ca108e::t_634a7ae8909de2 17,20,41,43,59,61,379-416
+server/test/medium/specs/service/user.service.spec.ts
+  s_9337a742ca108e::t_b4fd9a4a05ccbb 1-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ca7309f06c8ec62283c9161593f1b162f4ac646c",
+  "prompts": {},
+  "sessions": {
+    "s_9337a742ca108e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01385-bc93-7e11-b6bf-6abdf278b061",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
