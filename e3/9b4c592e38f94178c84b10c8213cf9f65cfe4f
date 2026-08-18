@@ -1,0 +1,93 @@
+server/src/controllers/activity-image.controller.ts
+  s_5b604e7a1d8dce::t_c85eb7e0de6221 25
+server/src/controllers/upload.controller.ts
+  s_5b604e7a1d8dce::t_3ca1276b0ea27c 10
+server/src/controllers/user-avatar.controller.ts
+  s_5b604e7a1d8dce::t_c9ca4708dbd4f3 21
+server/src/db/schema.ts
+  s_5b604e7a1d8dce::t_dd94ab2507fc2a 80-81
+server/src/imports/lagom-takeout.parser.ts
+  s_5b604e7a1d8dce::t_0bf4df2df26d7a 8-9,319-322
+server/src/repositories/activity.repository.ts
+  s_5b604e7a1d8dce::t_c48f710e3bfc33 71
+server/src/repositories/index.ts
+  s_5b604e7a1d8dce::t_5cc7130910418a 10
+server/src/repositories/job.repository.ts
+  s_5b604e7a1d8dce::t_fce04d9bb142cc 12,24
+server/src/repositories/live-workout.repository.ts
+  s_5b604e7a1d8dce::t_e30503688e8724 7
+server/src/repositories/social.repository.ts
+  s_5b604e7a1d8dce::t_1fd712d3a10a4b 6
+server/src/repositories/upload.repository.ts
+  s_5b604e7a1d8dce::t_659f18ae77eb50 7,13
+server/src/schema/tables/upload.table.ts
+  s_5b604e7a1d8dce::t_99db2edee82669 10
+server/src/services/activity-image.service.ts
+  s_5b604e7a1d8dce::t_1dcf54e1e901a6 23-24
+server/src/services/activity.service.ts
+  s_5b604e7a1d8dce::t_629d0b52c7718a 41
+server/src/services/auth.service.spec.ts
+  s_5b604e7a1d8dce::t_468bc9d710c3aa 7
+server/src/services/job.service.spec.ts
+  s_5b604e7a1d8dce::t_f99c9db9bdd3bb 8,40-42
+server/src/services/job.service.ts
+  s_5b604e7a1d8dce::t_a766e901838e25 6
+server/src/services/storage.service.spec.ts
+  s_5b604e7a1d8dce::t_96d95fde704479 14
+server/src/services/storage.service.ts
+  s_5b604e7a1d8dce::t_b6eed48859b503 7
+server/src/services/upload.service.spec.ts
+  s_5b604e7a1d8dce::t_d9509516ec8164 12,30
+server/src/services/upload.service.ts
+  s_5b604e7a1d8dce::t_85400c569496fa 21-22
+server/src/services/user-avatar.service.ts
+  s_5b604e7a1d8dce::t_a6db71adc6d1db 8
+server/src/types/jobs.ts
+  s_5b604e7a1d8dce::t_53ee3da7df49e8 1-123
+server/src/types/uploads.ts
+  s_5b604e7a1d8dce::t_0c100da55ff2a3 1-7
+server/test/medium.factory.ts
+  s_5b604e7a1d8dce::t_2ba0138bd0af93 6-7
+server/test/medium/specs/repositories/activity.repository.spec.ts
+  s_5b604e7a1d8dce::t_fb8c4aee02a63a 11
+server/test/medium/specs/repositories/database.repository.spec.ts
+  s_5b604e7a1d8dce::t_a7aa04dd43d9b1 11,25-33,44-52
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_5b604e7a1d8dce::t_2a3b5b546f2bff 12
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_5b604e7a1d8dce::t_3110e368c04d5a 18,93-103
+server/test/medium/specs/repositories/storage.repository.spec.ts
+  s_5b604e7a1d8dce::t_8ac08068c9b468 4,49-51
+server/test/medium/specs/repositories/upload.repository.spec.ts
+  s_5b604e7a1d8dce::t_27b8c82a584010 11,40-51
+server/test/medium/specs/repositories/user.repository.spec.ts
+  s_5b604e7a1d8dce::t_28ecc0010fd50b 11
+server/test/medium/specs/service/activity.service.spec.ts
+  s_5b604e7a1d8dce::t_5904dd5cc49af1 191-192,536-539,553,555
+server/test/medium/specs/service/auth.service.spec.ts
+  s_5b604e7a1d8dce::t_2fa316103d34f9 6,15
+server/test/medium/specs/service/job.service.spec.ts
+  s_5b604e7a1d8dce::t_5a8651027b125a 4,10-22,26,36
+server/test/medium/specs/service/server.service.spec.ts
+  s_5b604e7a1d8dce::t_5fce3836180fe6 6
+server/test/medium/specs/service/storage.service.spec.ts
+  s_5b604e7a1d8dce::t_63cd9a18117573 33
+server/test/medium/specs/service/upload.service.spec.ts
+  s_5b604e7a1d8dce::t_ee6fdf501b1de0 50,173,278,285-287,335
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e39b4c592e38f94178c84b10c8213cf9f65cfe4f",
+  "prompts": {},
+  "sessions": {
+    "s_5b604e7a1d8dce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0136d-6b1c-7a81-be55-45c5013a9b35",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
