@@ -1,0 +1,43 @@
+web/src/app.css
+  s_500e6d05b5955c::t_856275df5234be 2767-2769,2771-2774
+web/src/lib/components/ActivityCard.svelte
+  s_500e6d05b5955c::t_7ad1f42769ea23 35,120-121,134-138,140,143-144
+web/src/lib/components/ActivityComments.svelte
+  s_500e6d05b5955c::t_5f81ced598d2ee 102-104
+web/src/lib/format.spec.ts
+  s_500e6d05b5955c::t_cc92ce7a710cfc 3-10,13-25
+web/src/lib/format.ts
+  s_500e6d05b5955c::t_5b952e9bee218a 46-60
+web/src/routes/+layout.server.ts
+  s_500e6d05b5955c::t_8ec8cf857b51ab 31,51
+web/src/routes/best-efforts/+page.server.ts
+  s_500e6d05b5955c::t_70d02c622e8eec 58
+web/src/routes/login/+page.svelte
+  s_500e6d05b5955c::t_a6d79e3c16ef11 27-31
+web/src/routes/people/[id]/+page.svelte
+  s_500e6d05b5955c::t_71311acd4a21dc 105-107
+web/src/routes/register/+page.server.ts
+  s_500e6d05b5955c::t_f151d950e1060e 25-26
+web/src/routes/register/+page.svelte
+  s_500e6d05b5955c::t_e58621bab25285 52-54
+web/src/routes/settings/+page.svelte
+  s_500e6d05b5955c::t_33964bf0a64635 38-41,44-47,120-124,128-132
+web/src/routes/setup/+page.server.ts
+  s_500e6d05b5955c::t_7f3b08224a2d90 29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "49beeef4719baa285d90d3643e48b73321186a75",
+  "prompts": {},
+  "sessions": {
+    "s_500e6d05b5955c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01399-8552-7e53-b309-6957c039b29a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
