@@ -1,0 +1,21 @@
+e2e/src/specs/server/api/activities.e2e-spec.ts
+  s_3105f94b93851f::t_5b281d0d6f0df0 9
+e2e/vitest.config.ts
+  s_3105f94b93851f::t_2e1e87fa16f7bd 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "39914e2ae05fec996a1e1da5f00979f537676d28",
+  "prompts": {},
+  "sessions": {
+    "s_3105f94b93851f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "842deb59-8d4e-49f7-8b61-72e76a7b8d63",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
