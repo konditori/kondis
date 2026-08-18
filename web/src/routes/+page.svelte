@@ -361,6 +361,7 @@
           {activity}
           activityTypes={data.activityTypes}
           unitSystem={data.unitSystem}
+          viewerId={data.user?.id}
         />
       {/each}
     </div>

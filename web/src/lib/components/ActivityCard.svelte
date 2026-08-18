@@ -16,6 +16,7 @@
   } from "$lib/activity-achievements";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
+  import { userDisplayName, userPossessiveName } from "$lib/user-name";
   import type { ActivityTypeSettingsOutput } from "$lib/api";
   import type { Activity } from "$lib/types";
   import {
@@ -39,10 +40,12 @@
     activity,
     activityTypes,
     unitSystem,
+    viewerId,
   }: {
     activity: Activity;
     activityTypes: ActivityTypeSettingsOutput[];
     unitSystem: UnitSystem;
+    viewerId?: string;
   } = $props();
   let liked = $state(false);
   let likeCount = $state(0);
@@ -112,6 +115,13 @@
       );
     })(),
   );
+  const activityOwner = $derived(
+    viewerId && (activity.userId === viewerId || activity.athlete?.id === viewerId)
+      ? "Your"
+      : activity.athlete
+        ? userPossessiveName(activity.athlete)
+        : "This athlete's",
+  );
 
   function achievementText(
     effort: NonNullable<Activity["topBestEfforts"]>[number],
@@ -120,14 +130,14 @@
     const label = bestEffortLabel(type);
     const rank = personalRecord?.overallRank ?? 1;
     const ordinal = rank === 1 ? "" : rank === 2 ? "2nd " : "3rd ";
-    if (type === "longest_ride") return `Your ${ordinal}longest ride!`;
-    if (type === "biggest_climb") return `Your ${ordinal}biggest climb!`;
+    if (type === "longest_ride") return `${activityOwner} ${ordinal}longest ride!`;
+    if (type === "biggest_climb") return `${activityOwner} ${ordinal}biggest climb!`;
     if (type.startsWith("power_")) {
-      return `Your ${ordinal}highest power output for ${powerDurationLabel(type)} ever!`;
+      return `${activityOwner} ${ordinal}highest power output for ${powerDurationLabel(type)} ever!`;
     }
     return type.includes("power") || type === "elevation_gain"
-      ? `Your ${ordinal}best ${label}!`
-      : `Your ${ordinal}fastest ${label}!`;
+      ? `${activityOwner} ${ordinal}best ${label}!`
+      : `${activityOwner} ${ordinal}fastest ${label}!`;
   }
 
   function powerDuration(type: string): number {
@@ -197,7 +207,7 @@
   >
     <div class="activity-card-identity">
       <UserAvatar
-        name={activity.athlete?.name ?? "You"}
+        name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
         src={activity.athlete?.avatarUrl}
         size={54}
       />

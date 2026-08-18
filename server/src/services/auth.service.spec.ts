@@ -24,29 +24,32 @@ describe(AuthService.name, () => {
     create.mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
-      name: 'User',
+      first_name: 'User',
+      last_name: 'Test',
       role: 'user',
       password_hash: 'hash',
     });
   });
 
-  it('creates a normalized user with a trimmed name', async () => {
+  it('creates normalized user name parts', async () => {
     const { sut } = setup();
 
-    const user = await sut.create('USER@example.com', '  User  ', 'long enough password', 'user');
+    const user = await sut.create('USER@example.com', '  User  ', ' Test ', 'long enough password', 'user');
 
-    expect(user).toMatchObject({ email: 'user@example.com', name: 'User' });
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ email: 'user@example.com', name: 'User' }));
+    expect(user).toMatchObject({ email: 'user@example.com', first_name: 'User', last_name: 'Test' });
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'user@example.com', first_name: 'User', last_name: 'Test' }),
+    );
   });
 
   it('rejects invalid account data and duplicate emails', async () => {
     const { sut } = setup();
 
-    await expect(sut.create('invalid', 'User', 'long enough password', 'user')).rejects.toBeInstanceOf(
+    await expect(sut.create('invalid', 'User', 'Test', 'long enough password', 'user')).rejects.toBeInstanceOf(
       BadRequestException,
     );
     findByEmail.mockResolvedValue({ id: 'existing' });
-    await expect(sut.create('user@example.com', 'User', 'long enough password', 'user')).rejects.toBeInstanceOf(
+    await expect(sut.create('user@example.com', 'User', 'Test', 'long enough password', 'user')).rejects.toBeInstanceOf(
       ConflictException,
     );
   });
@@ -57,7 +60,8 @@ describe(AuthService.name, () => {
     findByEmail.mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
-      name: 'User',
+      first_name: 'User',
+      last_name: 'Test',
       role: 'user',
       password_hash: passwordHash,
     });

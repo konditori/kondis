@@ -51,7 +51,8 @@ export type LagomTakeoutMedia = {
 };
 
 export type LagomTakeoutProfile = {
-  name: string | null;
+  firstName: string | null;
+  lastName: string | null;
   avatar: UploadedFileData | null;
 };
 
@@ -469,7 +470,8 @@ export class LagomTakeoutParser {
       return null;
     }
 
-    let name: string | null = null;
+    let firstName: string | null = null;
+    let lastName: string | null = null;
     if (profileManifest) {
       const profileContents = await this.readEntry(profileManifest, UPLOAD_LIMITS.manifestBytes);
       const rows = parse(profileContents.toString('utf8'), {
@@ -478,14 +480,14 @@ export class LagomTakeoutParser {
         max_record_size: UPLOAD_LIMITS.manifestRecordBytes,
       }) as string[][];
       const headers = rows.shift() ?? [];
-      const firstName = rows[0]?.[headers.indexOf('First Name')]?.trim() ?? '';
-      const lastName = rows[0]?.[headers.indexOf('Last Name')]?.trim() ?? '';
-      name = [firstName, lastName].filter(Boolean).join(' ') || null;
+      firstName = rows[0]?.[headers.indexOf('First Name')]?.trim() || null;
+      lastName = rows[0]?.[headers.indexOf('Last Name')]?.trim() || null;
     }
 
     const avatarBuffer = profileImage ? await this.readEntry(profileImage, UPLOAD_LIMITS.avatarFileBytes) : null;
     return {
-      name,
+      firstName,
+      lastName,
       avatar: avatarBuffer
         ? {
             originalname: 'profile.jpg',

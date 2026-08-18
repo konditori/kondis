@@ -26,7 +26,8 @@ describe(DatabaseRepository.name, () => {
         .insertInto('user')
         .values({
           email: 'transaction@example.com',
-          name: 'Transaction User',
+          first_name: 'Transaction',
+          last_name: 'User',
           password_hash: 'hash',
           role: 'user',
         })
@@ -45,7 +46,8 @@ describe(DatabaseRepository.name, () => {
           .insertInto('user')
           .values({
             email: 'rollback@example.com',
-            name: 'Rollback User',
+            first_name: 'Rollback',
+            last_name: 'User',
             password_hash: 'hash',
             role: 'user',
           })

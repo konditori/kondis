@@ -10,6 +10,7 @@
   import { untrack } from "svelte";
   import type { UnitSystem } from "$lib/units";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
+  import { userDisplayName } from "$lib/user-name";
 
   let { data, form } = $props();
   let selected = $state<UnitSystem>(untrack(() => data.unitSystem));
@@ -22,7 +23,8 @@
   );
   let avatarBusy = $state(false);
   let avatarError = $state("");
-  let name = $state(untrack(() => data.user?.name ?? ""));
+  let firstName = $state(untrack(() => data.user?.firstName ?? ""));
+  let lastName = $state(untrack(() => data.user?.lastName ?? ""));
   let nameBusy = $state(false);
   let nameError = $state("");
 
@@ -33,10 +35,12 @@
       const response = await fetch("/api/v1/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim() }),
       });
       if (!response.ok) throw new Error();
-      name = ((await response.json()) as { name: string }).name;
+      const saved = (await response.json()) as { firstName: string; lastName: string };
+      firstName = saved.firstName;
+      lastName = saved.lastName;
       window.location.reload();
     } catch {
       nameError = "Could not save your name.";
@@ -104,15 +108,21 @@
         <p>This is the name shown on your activities and profile.</p>
       </div>
     </div>
-    <label class="settings-field">
-      <span>Name</span>
-      <input bind:value={name} maxlength="80" autocomplete="name" />
-    </label>
+    <div class="settings-name-fields">
+      <label class="settings-field">
+        <span>First name</span>
+        <input bind:value={firstName} maxlength="80" autocomplete="given-name" />
+      </label>
+      <label class="settings-field">
+        <span>Last name</span>
+        <input bind:value={lastName} maxlength="80" autocomplete="family-name" />
+      </label>
+    </div>
     <div class="settings-actions">
       <button
         type="button"
         onclick={saveName}
-        disabled={nameBusy || !name.trim()}
+        disabled={nameBusy || !firstName.trim() || !lastName.trim()}
       >
         <Check size={17} />
         {nameBusy ? "Saving…" : "Save name"}
@@ -124,7 +134,11 @@
 
   <section class="settings-panel profile-picture-panel">
     <div class="settings-heading">
-      <UserAvatar name={data.user?.name ?? "You"} src={avatarUrl} size={72} />
+      <UserAvatar
+        name={data.user ? userDisplayName(data.user) : "You"}
+        src={avatarUrl}
+        size={72}
+      />
       <div>
         <h2>Profile picture</h2>
         <p>Shown next to your name on activities and profiles.</p>

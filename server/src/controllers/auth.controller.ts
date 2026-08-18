@@ -5,7 +5,18 @@ import { ActivityEventsTicketDto } from 'src/dtos/auth.dto';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { z } from 'zod';
-const credentials = z.object({ email: z.string(), name: z.string().optional(), password: z.string() });
+const credentials = z.object({
+  email: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  password: z.string(),
+});
+const registrationCredentials = z.object({
+  email: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  password: z.string(),
+});
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -20,7 +31,7 @@ export class AuthController {
   @Public() @Post('setup') setup(@Body() body: unknown) {
     try {
       const value = credentials.parse(body);
-      return this.service.setup(value.email, value.name ?? '', value.password);
+      return this.service.setup(value.email, value.firstName ?? '', value.lastName ?? '', value.password);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Initial setup request rejected: ${message}`, error instanceof Error ? error.stack : undefined);
@@ -31,6 +42,24 @@ export class AuthController {
     const value = credentials.parse(body);
     return this.service.login(value.email, value.password);
   }
+  @Public() @Post('register') register(@Body() body: unknown) {
+    const payload = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+    const email = typeof payload.email === 'string' ? payload.email : '<missing>';
+    const firstNameLength = typeof payload.firstName === 'string' ? payload.firstName.trim().length : 0;
+    const lastNameLength = typeof payload.lastName === 'string' ? payload.lastName.trim().length : 0;
+    const passwordLength = typeof payload.password === 'string' ? payload.password.length : 0;
+    this.logger.log(
+      `Public registration request received for ${email}; firstNameLength=${firstNameLength}, lastNameLength=${lastNameLength}, passwordLength=${passwordLength}`,
+    );
+    try {
+      const value = registrationCredentials.parse(body);
+      return this.service.register(value.email, value.firstName, value.lastName, value.password);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Public registration rejected for ${email}: ${message}`);
+      throw error;
+    }
+  }
   @Get('me')
   async me(@CurrentUser() user: AuthenticatedUser) {
     const storedUser = await this.users.findById(user.id);
@@ -40,7 +69,8 @@ export class AuthController {
     return {
       id: storedUser.id,
       email: storedUser.email,
-      name: storedUser.name,
+      firstName: storedUser.first_name,
+      lastName: storedUser.last_name,
       role: storedUser.role,
       avatarUrl: storedUser.avatar_path ? `/api/v1/users/${storedUser.id}/avatar` : null,
     };

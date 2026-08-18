@@ -9,6 +9,7 @@
     socialControllerSend,
     socialControllerUnfollow,
   } from "$lib/api";
+  import { userDisplayName } from "$lib/user-name";
 
   type Person = Awaited<ReturnType<typeof socialControllerPeople>>[number];
   type RequestItem = Awaited<
@@ -91,12 +92,12 @@
       {#each requests as request (request.id)}
         <div class="person-row">
           <UserAvatar
-            name={request.user.name}
+            name={userDisplayName(request.user)}
             src={request.user.avatarUrl}
             size={42}
           />
           <div class="person-copy">
-            <strong>{request.user.name}</strong>
+            <strong>{userDisplayName(request.user)}</strong>
           </div>
           <button
             class="metadata-save"
@@ -131,13 +132,13 @@
     {#each people as person (person.user.id)}
       <article class="person-row">
         <UserAvatar
-          name={person.user.name}
+          name={userDisplayName(person.user)}
           src={person.user.avatarUrl}
           size={42}
         />
         <div class="person-copy">
           <a href={`/people/${person.user.id}`}
-            ><strong>{person.user.name}</strong></a
+            ><strong>{userDisplayName(person.user)}</strong></a
           >
         </div>
         <button

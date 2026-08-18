@@ -174,7 +174,8 @@ export type ActivityListResponseDtoOutput = {
     userId?: string | null;
     athlete?: {
       id: string;
-      name: string;
+      firstName: string;
+      lastName: string;
       avatarUrl: string | null;
     };
     likeCount?: number;
@@ -267,7 +268,8 @@ export type ActivityDetailDtoOutput = {
   userId?: string | null;
   athlete?: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     avatarUrl: string | null;
   };
   likeCount?: number;
@@ -378,7 +380,8 @@ export type ActivityDtoOutput = {
   userId?: string | null;
   athlete?: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     avatarUrl: string | null;
   };
   likeCount?: number;
@@ -420,7 +423,8 @@ export type ActivityEventsTicketDtoOutput = {
 export type PeopleListDtoOutput = {
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     avatarUrl: string | null;
   };
   relation: {
@@ -434,7 +438,8 @@ export type PeopleListDtoOutput = {
 export type PersonDtoOutput = {
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     avatarUrl: string | null;
   };
   relation: {
@@ -450,7 +455,8 @@ export type RequestListDtoOutput = {
   createdAt: string;
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     avatarUrl: string | null;
   };
 }[];
@@ -466,7 +472,8 @@ export type CommentListDtoOutput = {
     updatedAt: string;
     user: {
       id: string;
-      name: string;
+      firstName: string;
+      lastName: string;
       avatarUrl: string | null;
     };
   }[];
@@ -482,7 +489,8 @@ export type CommentDtoOutput = {
   updatedAt: string;
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     avatarUrl: string | null;
   };
 };
@@ -1104,6 +1112,14 @@ export function authControllerSetup(opts?: Oazapfts.RequestOpts) {
 export function authControllerLogin(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchText('/auth/login', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function authControllerRegister(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/register', {
       ...opts,
       method: 'POST',
     }),

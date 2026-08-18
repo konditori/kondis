@@ -16,7 +16,12 @@ export type Activity = {
   id: string;
   uploadId: string;
   userId?: string | null;
-  athlete?: { id: string; name: string; avatarUrl: string | null };
+  athlete?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
   likeCount?: number;
   commentCount?: number;
   viewerLiked?: boolean;

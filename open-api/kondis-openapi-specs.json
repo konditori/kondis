@@ -1015,6 +1015,20 @@
         ]
       }
     },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/me": {
       "get": {
         "operationId": "AuthController_me",
@@ -2708,7 +2722,10 @@
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     },
-                    "name": {
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
                       "type": "string"
                     },
                     "avatarUrl": {
@@ -2718,7 +2735,8 @@
                   },
                   "required": [
                     "id",
-                    "name",
+                    "firstName",
+                    "lastName",
                     "avatarUrl"
                   ],
                   "additionalProperties": false
@@ -3160,7 +3178,10 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
-              "name": {
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
                 "type": "string"
               },
               "avatarUrl": {
@@ -3170,7 +3191,8 @@
             },
             "required": [
               "id",
-              "name",
+              "firstName",
+              "lastName",
               "avatarUrl"
             ],
             "additionalProperties": false
@@ -3557,7 +3579,10 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
-              "name": {
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
                 "type": "string"
               },
               "avatarUrl": {
@@ -3567,7 +3592,8 @@
             },
             "required": [
               "id",
-              "name",
+              "firstName",
+              "lastName",
               "avatarUrl"
             ],
             "additionalProperties": false
@@ -3850,7 +3876,10 @@
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
-                "name": {
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
                   "type": "string"
                 },
                 "avatarUrl": {
@@ -3860,7 +3889,8 @@
               },
               "required": [
                 "id",
-                "name",
+                "firstName",
+                "lastName",
                 "avatarUrl"
               ],
               "additionalProperties": false
@@ -3912,7 +3942,10 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
-              "name": {
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
                 "type": "string"
               },
               "avatarUrl": {
@@ -3922,7 +3955,8 @@
             },
             "required": [
               "id",
-              "name",
+              "firstName",
+              "lastName",
               "avatarUrl"
             ],
             "additionalProperties": false
@@ -3985,7 +4019,10 @@
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
-                "name": {
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
                   "type": "string"
                 },
                 "avatarUrl": {
@@ -3995,7 +4032,8 @@
               },
               "required": [
                 "id",
-                "name",
+                "firstName",
+                "lastName",
                 "avatarUrl"
               ],
               "additionalProperties": false
@@ -4061,7 +4099,10 @@
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     },
-                    "name": {
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
                       "type": "string"
                     },
                     "avatarUrl": {
@@ -4071,7 +4112,8 @@
                   },
                   "required": [
                     "id",
-                    "name",
+                    "firstName",
+                    "lastName",
                     "avatarUrl"
                   ],
                   "additionalProperties": false
@@ -4140,7 +4182,10 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
-              "name": {
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
                 "type": "string"
               },
               "avatarUrl": {
@@ -4150,7 +4195,8 @@
             },
             "required": [
               "id",
-              "name",
+              "firstName",
+              "lastName",
               "avatarUrl"
             ],
             "additionalProperties": false

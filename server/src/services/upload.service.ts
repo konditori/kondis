@@ -236,8 +236,8 @@ export class UploadService {
     );
 
     if (userId && takeout.profile) {
-      if (takeout.profile.name && this.userRepository) {
-        await this.userRepository.setName(userId, takeout.profile.name);
+      if (takeout.profile.firstName && takeout.profile.lastName && this.userRepository) {
+        await this.userRepository.setNameParts(userId, takeout.profile.firstName, takeout.profile.lastName);
       }
       if (takeout.profile.avatar) {
         const avatarPath = this.storageRepository.buildTemporaryPath('.jpg');

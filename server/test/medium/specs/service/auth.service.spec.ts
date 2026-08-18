@@ -29,13 +29,19 @@ describe(AuthService.name, () => {
     const { sut } = setup();
     const email = `auth-${crypto.randomUUID()}@example.com`;
 
-    const user = await sut.create(email.toUpperCase(), '  Medium User  ', 'a sufficiently long password', 'user');
+    const user = await sut.create(
+      email.toUpperCase(),
+      '  Medium',
+      'User  ',
+      'a sufficiently long password',
+      'user',
+    );
     const token = await sut.login(email, 'a sufficiently long password');
 
-    expect(user).toMatchObject({ email, name: 'Medium User', role: 'user' });
+    expect(user).toMatchObject({ email, first_name: 'Medium', last_name: 'User', role: 'user' });
     expect(token).toMatchObject({
       setup: false,
-      user: { id: user.id, email, name: 'Medium User', role: 'user' },
+      user: { id: user.id, email, firstName: 'Medium', lastName: 'User', role: 'user' },
     });
     expect(token.accessToken).toEqual(expect.any(String));
   });
@@ -43,10 +49,10 @@ describe(AuthService.name, () => {
   it('rejects duplicate accounts and invalid credentials', async () => {
     const { sut } = setup();
     const email = `auth-${crypto.randomUUID()}@example.com`;
-    await sut.create(email, 'Medium User', 'a sufficiently long password', 'user');
+    await sut.create(email, 'Medium', 'User', 'a sufficiently long password', 'user');
 
     await expect(
-      sut.create(email.toUpperCase(), 'Another User', 'a sufficiently long password', 'user'),
+      sut.create(email.toUpperCase(), 'Another', 'User', 'a sufficiently long password', 'user'),
     ).rejects.toBeInstanceOf(ConflictException);
     await expect(sut.login(email, 'wrong password')).rejects.toThrow('Invalid email or password');
     await expect(sut.login(`missing-${email}`, 'a sufficiently long password')).rejects.toThrow(
@@ -59,7 +65,13 @@ describe(AuthService.name, () => {
     const countResult = await users.count();
     const countBefore = Number(countResult.count);
     const before = await sut.setupStatus();
-    await sut.create(`setup-${crypto.randomUUID()}@example.com`, 'Medium User', 'a sufficiently long password', 'user');
+    await sut.create(
+      `setup-${crypto.randomUUID()}@example.com`,
+      'Medium',
+      'User',
+      'a sufficiently long password',
+      'user',
+    );
     const after = await sut.setupStatus();
 
     expect(before.setupRequired).toBe(countBefore === 0);

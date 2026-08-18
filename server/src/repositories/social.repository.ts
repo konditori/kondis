@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 
-export type SocialUser = { id: string; name: string; avatarUrl: string | null };
+export type SocialUser = { id: string; firstName: string; lastName: string; avatarUrl: string | null };
 type ActivityEngagement = {
   activity_id: string;
   like_count: number;
@@ -33,7 +33,7 @@ export class SocialRepository {
   getUser(id: string): Promise<SocialUser | undefined> {
     return this.db
       .selectFrom('user')
-      .select(['user.id', 'user.name', 'user.avatar_path'])
+      .select(['user.id', 'user.first_name', 'user.last_name', 'user.avatar_path'])
       .where('user.id', '=', id)
       .executeTakeFirst()
       .then((user) => (user ? this.toSocialUser(user) : undefined));
@@ -42,17 +42,18 @@ export class SocialRepository {
   searchUsers(viewerId: string, query?: string, limit = 50): Promise<SocialUser[]> {
     let request = this.db
       .selectFrom('user')
-      .select(['user.id', 'user.name', 'user.avatar_path'])
+      .select(['user.id', 'user.first_name', 'user.last_name', 'user.avatar_path'])
       .where('user.id', '!=', viewerId)
       .where(
         sql<boolean>`NOT EXISTS (SELECT 1 FROM user_block b WHERE (b.blocker_id = ${viewerId}::uuid AND b.blocked_id = "user".id) OR (b.blocker_id = "user".id AND b.blocked_id = ${viewerId}::uuid))`,
       );
     if (query?.trim()) {
       const pattern = `%${query.trim()}%`;
-      request = request.where('user.name', 'ilike', pattern);
+      request = request.where(sql<string>`concat_ws(' ', user.first_name, user.last_name)`, 'ilike', pattern);
     }
     return request
-      .orderBy('user.name')
+      .orderBy('user.first_name')
+      .orderBy('user.last_name')
       .orderBy('user.id')
       .limit(limit)
       .execute()
@@ -277,7 +278,8 @@ export class SocialRepository {
           'follow_request.id',
           'follow_request.created_at',
           'user.id as user_id',
-          'user.name',
+          'user.first_name',
+          'user.last_name',
           'user.avatar_path',
         ])
         .where('follow_request.target_id', '=', viewerId)
@@ -287,7 +289,14 @@ export class SocialRepository {
     return this.db
       .selectFrom('follow_request')
       .innerJoin('user', 'user.id', 'follow_request.target_id')
-      .select(['follow_request.id', 'follow_request.created_at', 'user.id as user_id', 'user.name', 'user.avatar_path'])
+        .select([
+          'follow_request.id',
+          'follow_request.created_at',
+          'user.id as user_id',
+          'user.first_name',
+          'user.last_name',
+          'user.avatar_path',
+        ])
       .where('follow_request.requester_id', '=', viewerId)
       .orderBy('follow_request.created_at', 'desc')
       .execute();
@@ -328,10 +337,16 @@ export class SocialRepository {
     }));
   }
 
-  private toSocialUser(user: { id: string; name: string; avatar_path: string | null }): SocialUser {
+  private toSocialUser(user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_path: string | null;
+  }): SocialUser {
     return {
       id: user.id,
-      name: user.name,
+      firstName: user.first_name,
+      lastName: user.last_name,
       avatarUrl: user.avatar_path ? `/api/v1/users/${user.id}/avatar` : null,
     };
   }

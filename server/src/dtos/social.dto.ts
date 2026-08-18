@@ -3,7 +3,8 @@ import z from 'zod';
 
 export const SocialUserSchema = z.object({
   id: z.string().uuid(),
-  name: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
   avatarUrl: z.string().nullable(),
 });
 export const RelationSchema = z.object({

@@ -71,7 +71,12 @@ export class SocialService {
     return rows.map((row) => ({
       id: row.id,
       createdAt: new Date(row.created_at).toISOString(),
-      user: { id: row.user_id, name: row.name, avatarUrl: this.avatarUrl(row.user_id, row.avatar_path) },
+      user: {
+        id: row.user_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        avatarUrl: this.avatarUrl(row.user_id, row.avatar_path),
+      },
     }));
   }
 
@@ -129,7 +134,8 @@ export class SocialService {
         'activity_comment.updated_at',
         'user.id as user_id',
         'user.avatar_path',
-        'user.name',
+        'user.first_name',
+        'user.last_name',
       ])
       .where('activity_comment.activity_id', '=', activityId)
       .where(
@@ -151,7 +157,12 @@ export class SocialService {
         body: row.body,
         createdAt: new Date(row.created_at).toISOString(),
         updatedAt: new Date(row.updated_at).toISOString(),
-        user: { id: row.user_id, name: row.name, avatarUrl: this.avatarUrl(row.user_id, row.avatar_path) },
+        user: {
+          id: row.user_id,
+          firstName: row.first_name,
+          lastName: row.last_name,
+          avatarUrl: this.avatarUrl(row.user_id, row.avatar_path),
+        },
       })),
       nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
     };

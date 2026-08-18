@@ -377,7 +377,7 @@ describe(UploadService.name, () => {
     });
 
     it('imports the takeout profile name for the logged-in user', async () => {
-      const user = await createMediumFactory(db).newUser({ name: 'Original Name' });
+      const user = await createMediumFactory(db).newUser({ first_name: 'Original', last_name: 'Name' });
       const archive = createTestZip({
         'activities.csv': Buffer.from('Activity ID,Activity Name,Activity Type,Filename\n'),
         'profile.csv': Buffer.from('Athlete ID,First Name,Last Name\n123,Imported,Profile\n'),
@@ -386,7 +386,10 @@ describe(UploadService.name, () => {
       await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-name.zip', archive), user.id);
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      await expect(userRepository.findById(user.id)).resolves.toMatchObject({ name: 'Imported Profile' });
+      await expect(userRepository.findById(user.id)).resolves.toMatchObject({
+        first_name: 'Imported',
+        last_name: 'Profile',
+      });
     });
 
     it('imports and stores the takeout profile picture for the logged-in user', async () => {

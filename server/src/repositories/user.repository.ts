@@ -33,8 +33,8 @@ export class UserRepository {
       .returning(['avatar_path', 'avatar_mime_type', 'avatar_size'])
       .executeTakeFirstOrThrow();
   }
-  setName(id: string, name: string) {
-    return this.db.updateTable('user').set({ name }).where('id', '=', id).executeTakeFirst();
+  setNameParts(id: string, first_name: string, last_name: string) {
+    return this.db.updateTable('user').set({ first_name, last_name }).where('id', '=', id).executeTakeFirst();
   }
   clearAvatar(id: string) {
     return this.db
@@ -44,7 +44,13 @@ export class UserRepository {
       .returning(['avatar_path', 'avatar_mime_type', 'avatar_size'])
       .executeTakeFirstOrThrow();
   }
-  create(input: { email: string; name: string; password_hash: string; role: 'admin' | 'user' }) {
+  create(input: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    password_hash: string;
+    role: 'admin' | 'user';
+  }) {
     return this.db.insertInto('user').values(input).returningAll().executeTakeFirstOrThrow();
   }
   async adoptOrphanedData(userId: string) {

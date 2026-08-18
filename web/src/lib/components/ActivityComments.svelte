@@ -7,6 +7,7 @@
     socialControllerDeleteComment,
   } from "$lib/api";
   import type { ActivityDetail } from "$lib/types";
+  import { userDisplayName } from "$lib/user-name";
 
   let { activity }: { activity: ActivityDetail } = $props();
   type Comment = {
@@ -14,7 +15,12 @@
     body: string;
     createdAt: string;
     updatedAt: string;
-    user: { id: string; name: string; avatarUrl: string | null };
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      avatarUrl: string | null;
+    };
   };
   let comments = $state<Comment[]>([]);
   let body = $state("");
@@ -93,7 +99,7 @@
     <div class="comment-list">
       {#each comments as comment (comment.id)}<article class="comment-row">
           <div class="person-copy">
-            <strong>{comment.user.name}</strong><span>{comment.body}</span>
+            <strong>{userDisplayName(comment.user)}</strong><span>{comment.body}</span>
           </div>
           <button
             class="icon-button"

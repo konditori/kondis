@@ -2,12 +2,11 @@
   let { form } = $props();
 </script>
 
-<svelte:head><title>Welcome to Kondis</title></svelte:head>
+<svelte:head><title>Create account · Kondis</title></svelte:head>
 <main class="auth-page">
   <section>
-    <h1>Welcome to Kondis 😰</h1>
-    <p>Please create your account</p>
-    <form method="POST" action="?/setup">
+    <h1>Create your account</h1>
+    <form method="POST" action="?/register">
       <label
         >First name<input
           required
@@ -47,8 +46,9 @@
           autocomplete="new-password"
         /></label
       >{#if form?.error}<p class="error">{form.error}</p>{/if}<button
-        >Set up</button
+        >Create account</button
       >
     </form>
+    <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
   </section>
 </main>

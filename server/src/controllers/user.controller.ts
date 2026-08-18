@@ -27,12 +27,14 @@ import { UploadedFileData } from 'src/types/uploads';
 
 const createUser = z.object({
   email: z.string(),
-  name: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
   password: z.string(),
   role: z.enum(['user', 'admin']).default('user'),
 });
 const updateName = z.object({
-  name: z.string().trim().min(1).max(80),
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().min(1).max(80),
 });
 @Controller('users')
 @ApiTags('User')
@@ -55,7 +57,8 @@ export class UserController {
     const value = createUser.parse(body);
     const { password_hash: _passwordHash, ...user } = await this.auth.create(
       value.email,
-      value.name,
+      value.firstName,
+      value.lastName,
       value.password,
       value.role,
     );
@@ -65,13 +68,14 @@ export class UserController {
   @Patch('me')
   async updateMe(@Body() body: unknown, @CurrentUser() user: AuthenticatedUser) {
     const value = updateName.parse(body);
-    await this.users.setName(user.id, value.name);
+    await this.users.setNameParts(user.id, value.firstName, value.lastName);
     const updated = await this.users.findById(user.id);
     if (!updated) throw new NotFoundException('User does not exist');
     return {
       id: updated.id,
       email: updated.email,
-      name: updated.name,
+      firstName: updated.first_name,
+      lastName: updated.last_name,
       role: updated.role,
       avatarUrl: updated.avatar_path ? `/api/v1/users/${updated.id}/avatar` : null,
     };

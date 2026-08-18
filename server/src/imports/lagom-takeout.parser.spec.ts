@@ -51,7 +51,7 @@ describe('extractLagomTakeout', () => {
 
     const result = await extractLagomTakeout(archive);
 
-    expect(result.profile?.name).toBe('Jane Doe');
+    expect(result.profile).toMatchObject({ firstName: 'Jane', lastName: 'Doe' });
     expect(result.profile?.avatar).toMatchObject({ originalname: 'profile.jpg', buffer: image, size: image.length });
   });
 

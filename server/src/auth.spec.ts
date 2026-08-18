@@ -21,7 +21,13 @@ describe('activity event tickets', () => {
     vi.setSystemTime(new Date('2026-08-17T12:00:00Z'));
     const ticket = createActivityEventsTicket('8300a315-5101-4bbf-8813-6244965ed9b5', SECRET);
     const accessToken = createAccessToken(
-      { id: '8300a315-5101-4bbf-8813-6244965ed9b5', role: 'user', email: 'a@example.com', name: 'A' },
+      {
+        id: '8300a315-5101-4bbf-8813-6244965ed9b5',
+        role: 'user',
+        email: 'a@example.com',
+        firstName: 'A',
+        lastName: 'User',
+      },
       SECRET,
     );
 

@@ -10,7 +10,13 @@ import {
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ConfigService } from 'src/config/config.service';
 
-export type AuthenticatedUser = { id: string; role: 'admin' | 'user'; email: string; name: string };
+export type AuthenticatedUser = {
+  id: string;
+  role: 'admin' | 'user';
+  email: string;
+  firstName: string;
+  lastName: string;
+};
 type EventTicket = { id: string; scope: 'activity-events'; exp: number };
 export const PUBLIC = 'kondis:public';
 export const Public = () => SetMetadata(PUBLIC, true);
@@ -89,7 +95,13 @@ export class AuthGuard implements CanActivate {
       if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) {
         throw new Error('Invalid access token');
       }
-      request.user = { id: parsed.id, email: parsed.email, role: parsed.role, name: parsed.name };
+      request.user = {
+        id: parsed.id,
+        email: parsed.email,
+        role: parsed.role,
+        firstName: parsed.firstName,
+        lastName: parsed.lastName,
+      };
       // reflect-metadata augments the standard Reflect object at runtime.
       /* eslint-disable unicorn/no-nonstandard-builtin-properties */
       if (

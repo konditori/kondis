@@ -11,12 +11,18 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
+  import { userDisplayName } from "$lib/user-name";
 
   let {
     user,
     onUpload,
   }: {
-    user?: { name: string; email: string; avatarUrl?: string | null };
+    user?: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      avatarUrl?: string | null;
+    };
     onUpload: () => void;
   } = $props();
   let search = $state("");
@@ -28,7 +34,7 @@
   let menuOpen = $state(false);
   let plusMenuOpen = $state(false);
   const accountName = $derived.by(() => {
-    const name = user?.name?.trim();
+    const name = user ? userDisplayName(user) : "";
     const email = user?.email?.trim();
     if (name && (!email || name.toLowerCase() !== email.toLowerCase()))
       return name;

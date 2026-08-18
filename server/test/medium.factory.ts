@@ -16,7 +16,8 @@ export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFile
 
 type UserOverrides = Partial<{
   email: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   password_hash: string;
   role: 'admin' | 'user';
 }>;
@@ -47,7 +48,8 @@ export const createMediumFactory = (db: KondisDatabase) => {
   const newUser = async (overrides: UserOverrides = {}): Promise<AuthenticatedUser> => {
     const user = await users.create({
       email: `medium-test-${crypto.randomUUID()}@example.com`,
-      name: 'Medium Test User',
+      first_name: 'Medium Test',
+      last_name: 'User',
       password_hash: 'not-a-real-password-hash',
       role: 'user',
       ...overrides,
@@ -57,7 +59,8 @@ export const createMediumFactory = (db: KondisDatabase) => {
       id: user.id,
       role: user.role,
       email: user.email,
-      name: user.name,
+      firstName: user.first_name,
+      lastName: user.last_name,
     };
   };
 

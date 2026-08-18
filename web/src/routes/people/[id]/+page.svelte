@@ -14,6 +14,7 @@
     socialControllerUnfollow,
   } from "$lib/api";
   import type { Activity, ActivityPage } from "$lib/types";
+  import { userDisplayName } from "$lib/user-name";
 
   let { data } = $props();
   type Person = Awaited<ReturnType<typeof socialControllerPerson>>;
@@ -101,7 +102,7 @@
 
 <svelte:head
   ><title
-    >{profile ? `${profile.user.name} · Kondis` : "Profile · Kondis"}</title
+    >{profile ? `${userDisplayName(profile.user)} · Kondis` : "Profile · Kondis"}</title
   ></svelte:head
 >
 
@@ -117,12 +118,12 @@
     <header class="page-header">
       <div>
         <UserAvatar
-          name={profile.user.name}
+          name={userDisplayName(profile.user)}
           src={profile.user.avatarUrl}
           size={72}
         />
         <span class="eyebrow">{isOwnProfile ? "Your profile" : "Athlete"}</span>
-        <h1>{profile.user.name}</h1>
+        <h1>{userDisplayName(profile.user)}</h1>
       </div>
       {#if !isOwnProfile}<div class="profile-actions">
           <button
@@ -160,6 +161,7 @@
               {activity}
               activityTypes={data.activityTypes}
               unitSystem={data.unitSystem}
+              viewerId={data.user?.id}
             />
           {/each}
         </section>
@@ -185,13 +187,14 @@
     {:else}
       <section
         class="activity-list"
-        aria-label={`${profile.user.name}'s activities`}
+        aria-label={`${userDisplayName(profile.user)}'s activities`}
       >
         {#each activities as activity (activity.id)}
           <ActivityCard
             {activity}
             activityTypes={data.activityTypes}
             unitSystem={data.unitSystem}
+            viewerId={data.user?.id}
           />
         {/each}
       </section>

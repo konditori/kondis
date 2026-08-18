@@ -40,6 +40,7 @@
   import ImageLightbox from "$lib/components/ImageLightbox.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
+  import { userDisplayName } from "$lib/user-name";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import {
     activityName,
@@ -499,13 +500,13 @@
     <div class="detail-heading">
       <div class="detail-identity">
         <UserAvatar
-          name={activity.athlete?.name ?? "You"}
+          name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
           src={activity.athlete?.avatarUrl}
           size={80}
         />
       </div>
       <div class="detail-title">
-        <h1>{activity.athlete?.name ?? "You"}</h1>
+        <h1>{activity.athlete ? userDisplayName(activity.athlete) : "You"}</h1>
         <p class="detail-timestamp">
           {localDate(activity.startedAt)} · {localTime(activity.startedAt)}
           <span
