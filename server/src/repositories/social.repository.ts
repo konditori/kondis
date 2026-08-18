@@ -3,10 +3,32 @@ import { sql } from 'kysely';
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 
 export type SocialUser = { id: string; name: string; avatarUrl: string | null };
+export type ActivityEngagement = {
+  activity_id: string;
+  like_count: number;
+  comment_count: number;
+  viewer_liked: boolean | null;
+};
 
 @Injectable()
 export class SocialRepository {
   constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+
+  activityEngagement(ids: string[], viewerId: string): Promise<ActivityEngagement[]> {
+    return this.db
+      .selectFrom('activity')
+      .leftJoin('activity_like', 'activity_like.activity_id', 'activity.id')
+      .leftJoin('activity_comment', 'activity_comment.activity_id', 'activity.id')
+      .select([
+        'activity.id as activity_id',
+        sql<number>`count(distinct activity_like.user_id)`.as('like_count'),
+        sql<number>`count(distinct activity_comment.id)`.as('comment_count'),
+        sql<boolean>`bool_or(activity_like.user_id = ${viewerId})`.as('viewer_liked'),
+      ])
+      .where('activity.id', 'in', ids)
+      .groupBy('activity.id')
+      .execute();
+  }
 
   getUser(id: string): Promise<SocialUser | undefined> {
     return this.db

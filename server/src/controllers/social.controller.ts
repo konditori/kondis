@@ -13,11 +13,15 @@ import {
   RequestDirectionDto,
   RequestListDto,
 } from 'src/dtos/social.dto';
+import { ActivityService } from 'src/services/activity.service';
 import { SocialService } from 'src/services/social.service';
 
 @Controller()
 export class SocialController {
-  constructor(private readonly service: SocialService) {}
+  constructor(
+    private readonly service: SocialService,
+    private readonly activityService: ActivityService,
+  ) {}
 
   @Get('people')
   @ZodResponse({ status: 200, type: PeopleListDto, description: 'People available to follow' })
@@ -34,7 +38,7 @@ export class SocialController {
   @Get('people/:id/activities')
   @ZodResponse({ status: 200, type: ActivityListResponseDto, description: 'Visible activities for a person' })
   activities(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Query() query: ActivityListQueryDto) {
-    return this.service.profileActivities(user.id, id, query);
+    return this.activityService.profileActivities(user.id, id, query);
   }
 
   @Post('people/:id/follow-request')
@@ -81,7 +85,7 @@ export class SocialController {
   @Get('feed')
   @ZodResponse({ status: 200, type: ActivityListResponseDto, description: 'Home feed' })
   feed(@CurrentUser() user: AuthenticatedUser, @Query() query: ActivityListQueryDto) {
-    return this.service.feed(user.id, query);
+    return this.activityService.feed(user.id, query);
   }
 
   @Put('activities/:id/like')

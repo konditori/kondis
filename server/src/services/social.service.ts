@@ -1,14 +1,12 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'kysely';
 import { KYSELY, KondisDatabase } from 'src/db/database';
-import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
-import { ActivityService } from 'src/services/activity.service';
+import { SocialRepository } from 'src/repositories/social.repository';
 
 @Injectable()
 export class SocialService {
   constructor(
     private readonly social: SocialRepository,
-    private readonly activities: ActivityService,
     @Inject(KYSELY) private readonly db: KondisDatabase,
   ) {}
 
@@ -90,64 +88,6 @@ export class SocialService {
 
   async unblock(viewerId: string, targetId: string) {
     await this.social.unblock(viewerId, targetId);
-  }
-
-  async feed(
-    viewerId: string,
-    query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
-  ) {
-    const page = await this.activities.listRecent(query, viewerId, viewerId);
-    const ids = page.activities.map((activity) => activity.id);
-    if (ids.length === 0) {
-      return page;
-    }
-    const [engagement, users] = await Promise.all([
-      this.engagement(ids, viewerId),
-      Promise.all(
-        [...new Set(page.activities.map((a) => a.userId).filter((id): id is string => !!id))].map((id) =>
-          this.social.getUser(id),
-        ),
-      ),
-    ]);
-    const userMap = new Map(users.filter((user): user is SocialUser => !!user).map((user) => [user.id, user]));
-    const engagementMap = new Map(engagement.map((row) => [row.activity_id, row]));
-    return {
-      ...page,
-      activities: page.activities.map((activity) => ({
-        ...activity,
-        athlete: activity.userId ? userMap.get(activity.userId) : undefined,
-        likeCount: Number(engagementMap.get(activity.id)?.like_count ?? 0),
-        commentCount: Number(engagementMap.get(activity.id)?.comment_count ?? 0),
-        viewerLiked: !!engagementMap.get(activity.id)?.viewer_liked,
-      })),
-    };
-  }
-
-  async profileActivities(
-    viewerId: string,
-    targetId: string,
-    query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
-  ) {
-    if (!(await this.social.canViewUser(viewerId, targetId))) {
-      throw new NotFoundException('Person does not exist');
-    }
-    const page = await this.activities.listRecent(query, targetId);
-    const ids = page.activities.map((activity) => activity.id);
-    if (ids.length === 0) {
-      return page;
-    }
-    const [engagement, athlete] = await Promise.all([this.engagement(ids, viewerId), this.social.getUser(targetId)]);
-    const engagementMap = new Map(engagement.map((row) => [row.activity_id, row]));
-    return {
-      ...page,
-      activities: page.activities.map((activity) => ({
-        ...activity,
-        athlete: athlete ?? undefined,
-        likeCount: Number(engagementMap.get(activity.id)?.like_count ?? 0),
-        commentCount: Number(engagementMap.get(activity.id)?.comment_count ?? 0),
-        viewerLiked: !!engagementMap.get(activity.id)?.viewer_liked,
-      })),
-    };
   }
 
   async like(activityId: string, viewerId: string, liked: boolean) {
@@ -281,22 +221,6 @@ export class SocialService {
       throw new NotFoundException('Comment does not exist');
     }
     await this.db.deleteFrom('activity_comment').where('id', '=', commentId).execute();
-  }
-
-  private engagement(ids: string[], viewerId: string) {
-    return this.db
-      .selectFrom('activity')
-      .leftJoin('activity_like', 'activity_like.activity_id', 'activity.id')
-      .leftJoin('activity_comment', 'activity_comment.activity_id', 'activity.id')
-      .select([
-        'activity.id as activity_id',
-        sql<number>`count(distinct activity_like.user_id)`.as('like_count'),
-        sql<number>`count(distinct activity_comment.id)`.as('comment_count'),
-        sql<boolean>`bool_or(activity_like.user_id = ${viewerId})`.as('viewer_liked'),
-      ])
-      .where('activity.id', 'in', ids)
-      .groupBy('activity.id')
-      .execute();
   }
 
   private avatarUrl(userId: string, path: string | null): string | null {

@@ -1,4 +1,4 @@
-import { BadRequestException, ConsoleLogger, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -20,7 +20,7 @@ import { EventRepository } from 'src/repositories/event.repository';
 import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
-import { SocialRepository } from 'src/repositories/social.repository';
+import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -554,6 +554,57 @@ export class ActivityService {
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
       total: await this.activityRepository.count(normalizedSearch, ownerFilter, tags, tagMatch, feedUserId),
+    };
+  }
+
+  async feed(
+    viewerId: string,
+    query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
+  ) {
+    return this.decorateSocialActivities(await this.listRecent(query, viewerId, viewerId), viewerId);
+  }
+
+  async profileActivities(
+    viewerId: string,
+    targetId: string,
+    query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
+  ) {
+    if (!this.socialRepository || !(await this.socialRepository.canViewUser(viewerId, targetId))) {
+      throw new NotFoundException('Person does not exist');
+    }
+    return this.decorateSocialActivities(await this.listRecent(query, targetId), viewerId, targetId);
+  }
+
+  private async decorateSocialActivities(
+    page: Awaited<ReturnType<ActivityService['listRecent']>>,
+    viewerId: string,
+    targetId?: string,
+  ) {
+    if (!this.socialRepository || page.activities.length === 0) {
+      return page;
+    }
+    const ids = page.activities.map((activity) => activity.id);
+    const [engagement, users] = await Promise.all([
+      this.socialRepository.activityEngagement(ids, viewerId),
+      targetId
+        ? Promise.resolve([await this.socialRepository.getUser(targetId)])
+        : Promise.all(
+            [...new Set(page.activities.map((activity) => activity.userId).filter((id): id is string => !!id))].map(
+              (id) => this.socialRepository!.getUser(id),
+            ),
+          ),
+    ]);
+    const userMap = new Map(users.filter((user): user is SocialUser => !!user).map((user) => [user.id, user]));
+    const engagementMap = new Map(engagement.map((row) => [row.activity_id, row]));
+    return {
+      ...page,
+      activities: page.activities.map((activity) => ({
+        ...activity,
+        athlete: userMap.get(targetId ?? activity.userId ?? ''),
+        likeCount: Number(engagementMap.get(activity.id)?.like_count ?? 0),
+        commentCount: Number(engagementMap.get(activity.id)?.comment_count ?? 0),
+        viewerLiked: !!engagementMap.get(activity.id)?.viewer_liked,
+      })),
     };
   }
 
