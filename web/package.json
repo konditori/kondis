@@ -9,7 +9,7 @@
     "build": "vite build",
     "format": "prettier --check .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "test": "vitest run"
+    "test": "svelte-kit sync && vitest run"
   },
   "dependencies": {
     "@lucide/svelte": "^1.28.0",
