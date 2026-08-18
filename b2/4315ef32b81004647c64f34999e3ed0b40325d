@@ -1,0 +1,23 @@
+server/src/controllers/user.controller.ts
+  s_500e6d05b5955c::t_42222933153c27 10,34-36,65-79
+web/src/routes/api/[...path]/+server.ts
+  s_500e6d05b5955c::t_e43b848c03a774 29
+web/src/routes/settings/+page.svelte
+  s_500e6d05b5955c::t_8c731b6fc1b4b2 2,18-39,92-142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b24315ef32b81004647c64f34999e3ed0b40325d",
+  "prompts": {},
+  "sessions": {
+    "s_500e6d05b5955c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01399-8552-7e53-b309-6957c039b29a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
