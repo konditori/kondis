@@ -77,6 +77,7 @@ services:
     restart: unless-stopped
     environment:
       KONDIS_API_URL: http://kondis-server:2293
+      KONDIS_VITE_ALLOWED_HOSTS: ${KONDIS_VITE_ALLOWED_HOSTS:-true}
       KONDIS_VITE_USE_POLLING: 'true'
     ports:
       - 3000:3000
