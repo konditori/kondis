@@ -125,7 +125,7 @@ class OfflineWorkoutSyncTest {
                 .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
                 .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
                 .build()
-            runBlocking { check(verificationDatabase.activityDao().queuedWorkouts(accountKey).isEmpty()) }
+        runBlocking { check(verificationDatabase.activityDao().queuedWorkouts(accountKey).isEmpty()) }
         verificationDatabase.close()
     }
 
