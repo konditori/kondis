@@ -1,0 +1,19 @@
+web/src/routes/activities/[id]/+page.svelte
+  s_41de02eaf65639::t_e0a19adf48df34 91,93,356-357,369-373,565-574,578,583-584,1112-1118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5d4606eddf12609fb44bc2fa3d25d097569841ec",
+  "prompts": {},
+  "sessions": {
+    "s_41de02eaf65639": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01462-15e7-7cd2-a0ea-07a3c1d89438",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
