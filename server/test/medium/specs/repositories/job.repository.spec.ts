@@ -114,6 +114,10 @@ describe('JobRepository', () => {
           storagePath: 'temporary/empty.zip',
         },
       },
+      [JobName.UserAvatarUpload]: {
+        name: JobName.UserAvatarUpload,
+        data: { userId: MISSING_UUID, storagePath: 'temporary/missing.jpg' },
+      },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
       [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },
       [JobName.ActivityManualCreate]: {

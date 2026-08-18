@@ -14,9 +14,10 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 import { UploadService } from 'src/services/upload.service';
 
-import { makeUploadedFile } from 'test/medium.factory';
+import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 import { activityFixtures } from 'test/medium/utils';
@@ -37,7 +38,9 @@ describe(UploadService.name, () => {
   let queuedSut: UploadService;
   let jobsRepository: JobRepository;
   let queuedUploadRepository: UploadRepository;
+  let queuedStorageRepository: StorageRepository;
   let activityRepository: ActivityRepository;
+  let userRepository: UserRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -53,7 +56,9 @@ describe(UploadService.name, () => {
     queuedSut = testApp.get(UploadService);
     jobsRepository = testApp.get(JobRepository);
     queuedUploadRepository = testApp.get(UploadRepository);
+    queuedStorageRepository = testApp.get(StorageRepository);
     activityRepository = testApp.get(ActivityRepository);
+    userRepository = testApp.get(UserRepository);
   });
 
   beforeEach(async () => {
@@ -369,6 +374,44 @@ describe(UploadService.name, () => {
         description: 'A walk in the woods',
         sport: 'roller_ski',
       });
+    });
+
+    it('imports the takeout profile name for the logged-in user', async () => {
+      const user = await createMediumFactory(db).newUser({ name: 'Original Name' });
+      const archive = createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Activity Name,Activity Type,Filename\n'),
+        'profile.csv': Buffer.from('Athlete ID,First Name,Last Name\n123,Imported,Profile\n'),
+      });
+
+      await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-name.zip', archive), user.id);
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      await expect(userRepository.findById(user.id)).resolves.toMatchObject({ name: 'Imported Profile' });
+    });
+
+    it('imports and stores the takeout profile picture for the logged-in user', async () => {
+      const user = await createMediumFactory(db).newUser();
+      const image = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        'base64',
+      );
+      const archive = createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Activity Name,Activity Type,Filename\n'),
+        'profile.jpg': image,
+      });
+
+      await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-picture.zip', archive), user.id);
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const storedUser = await userRepository.findById(user.id);
+      expect(storedUser).toMatchObject({
+        avatar_mime_type: 'image/webp',
+        avatar_size: expect.any(Number),
+        avatar_path: expect.stringMatching(/^avatars\/.*\.webp$/),
+      });
+      const storedAvatar = await queuedStorageRepository.read(storedUser!.avatar_path!);
+      expect(storedAvatar.length).toBe(storedUser!.avatar_size);
+      expect(storedAvatar.equals(image)).toBe(false);
     });
 
     it('deduplicates manual activities using the takeout Activity ID', async () => {

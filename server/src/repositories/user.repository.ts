@@ -33,6 +33,9 @@ export class UserRepository {
       .returning(['avatar_path', 'avatar_mime_type', 'avatar_size'])
       .executeTakeFirstOrThrow();
   }
+  setName(id: string, name: string) {
+    return this.db.updateTable('user').set({ name }).where('id', '=', id).executeTakeFirst();
+  }
   clearAvatar(id: string) {
     return this.db
       .updateTable('user')

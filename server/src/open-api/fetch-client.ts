@@ -1142,6 +1142,49 @@ export function userControllerCreate(opts?: Oazapfts.RequestOpts) {
     }),
   );
 }
+export function userControllerUploadAvatar(
+  {
+    body,
+  }: {
+    body: {
+      file: Blob;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(
+      '/users/me/avatar',
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+export function userControllerDeleteAvatar(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/users/me/avatar', {
+      ...opts,
+      method: 'DELETE',
+    }),
+  );
+}
+export function userControllerAvatarFile(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/users/${encodeURIComponent(id)}/avatar`, {
+      ...opts,
+    }),
+  );
+}
 export function socialControllerPeople(
   {
     query,
@@ -1515,49 +1558,6 @@ export function socialControllerDeleteComment(
     oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`, {
       ...opts,
       method: 'DELETE',
-    }),
-  );
-}
-export function userAvatarControllerUpload(
-  {
-    body,
-  }: {
-    body: {
-      file: Blob;
-    };
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(
-      '/users/me/avatar',
-      oazapfts.multipart({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
-  );
-}
-export function userAvatarControllerDelete(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchText('/users/me/avatar', {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
-}
-export function userAvatarControllerFile(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/users/${encodeURIComponent(id)}/avatar`, {
-      ...opts,
     }),
   );
 }

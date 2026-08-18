@@ -50,6 +50,11 @@ export type LagomTakeoutMedia = {
   sortOrder: number;
 };
 
+export type LagomTakeoutProfile = {
+  name: string | null;
+  avatar: UploadedFileData | null;
+};
+
 export type LagomTakeoutError = {
   row: number;
   filename: string;
@@ -61,6 +66,7 @@ export type LagomTakeoutContents = {
   skipped: number;
   activities: LagomTakeoutActivity[];
   errors: LagomTakeoutError[];
+  profile: LagomTakeoutProfile | null;
 };
 
 class TakeoutLimitError extends Error {}
@@ -305,6 +311,7 @@ export class LagomTakeoutParser {
       skipped: 0,
       activities: [],
       errors: [],
+      profile: await this.readProfile(archiveRoot, entries),
     };
     const referencedEntries = new Set<string>();
     let expandedBytes = 0;
@@ -450,6 +457,43 @@ export class LagomTakeoutParser {
     }
 
     return result;
+  };
+
+  private readonly readProfile = async (
+    archiveRoot: string,
+    entries: Map<string, ZipEntry>,
+  ): Promise<LagomTakeoutProfile | null> => {
+    const profileManifest = entries.get(`${archiveRoot}profile.csv`);
+    const profileImage = entries.get(`${archiveRoot}profile.jpg`);
+    if (!profileManifest && !profileImage) {
+      return null;
+    }
+
+    let name: string | null = null;
+    if (profileManifest) {
+      const profileContents = await this.readEntry(profileManifest, UPLOAD_LIMITS.manifestBytes);
+      const rows = parse(profileContents.toString('utf8'), {
+        bom: true,
+        relax_column_count: true,
+        max_record_size: UPLOAD_LIMITS.manifestRecordBytes,
+      }) as string[][];
+      const headers = rows.shift() ?? [];
+      const firstName = rows[0]?.[headers.indexOf('First Name')]?.trim() ?? '';
+      const lastName = rows[0]?.[headers.indexOf('Last Name')]?.trim() ?? '';
+      name = [firstName, lastName].filter(Boolean).join(' ') || null;
+    }
+
+    const avatarBuffer = profileImage ? await this.readEntry(profileImage, UPLOAD_LIMITS.avatarFileBytes) : null;
+    return {
+      name,
+      avatar: avatarBuffer
+        ? {
+            originalname: 'profile.jpg',
+            buffer: avatarBuffer,
+            size: avatarBuffer.length,
+          }
+        : null,
+    };
   };
 
   private readonly readMedia = async (

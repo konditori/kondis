@@ -41,6 +41,20 @@ describe('extractLagomTakeout', () => {
     ]);
   });
 
+  it('imports the current profile name and picture', async () => {
+    const image = Buffer.from('profile image');
+    const archive = createTestZip({
+      'activities.csv': Buffer.from('Activity ID,Activity Name,Activity Type,Filename\n'),
+      'profile.csv': Buffer.from('Athlete ID,First Name,Last Name\n123,Jane,Doe\n'),
+      'profile.jpg': image,
+    });
+
+    const result = await extractLagomTakeout(archive);
+
+    expect(result.profile?.name).toBe('Jane Doe');
+    expect(result.profile?.avatar).toMatchObject({ originalname: 'profile.jpg', buffer: image, size: image.length });
+  });
+
   it('reads the manifest and decompresses supported activity files', async () => {
     const archive = createTestZip({
       'export/activities.csv': {

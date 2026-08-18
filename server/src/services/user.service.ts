@@ -2,23 +2,26 @@ import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeExce
 import sharp from 'sharp';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { OnJob } from 'src/decorators';
+import { JobName, JobStatus, QueueName } from 'src/enum';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
+import type { JobOf } from 'src/types/jobs';
 import type { UploadedFileData } from 'src/types/uploads';
 
 const AVATAR_SIZE = 512;
 const AVATAR_MIME_TYPE = 'image/webp';
 
 @Injectable()
-export class UserAvatarService {
+export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
     private readonly storage: StorageRepository,
   ) {}
 
-  async upload(userId: string, file: UploadedFileData | undefined) {
+  async uploadAvatar(userId: string, file: UploadedFileData | undefined) {
     if (!file) {
       throw new BadRequestException('Missing profile picture');
     }
@@ -47,7 +50,21 @@ export class UserAvatarService {
     return { avatarUrl: `/api/v1/users/${userId}/avatar` };
   }
 
-  async clear(userId: string): Promise<void> {
+  @OnJob({ name: JobName.UserAvatarUpload, queue: QueueName.ImageProcessing })
+  async handleAvatarUpload({ userId, storagePath }: JobOf<JobName.UserAvatarUpload>): Promise<JobStatus> {
+    if (!(await this.users.findById(userId))) {
+      return JobStatus.Skipped;
+    }
+    try {
+      const buffer = await this.storage.read(storagePath);
+      await this.uploadAvatar(userId, { originalname: 'profile.jpg', buffer, size: buffer.length });
+      return JobStatus.Success;
+    } finally {
+      await this.storage.delete(storagePath);
+    }
+  }
+
+  async clearAvatar(userId: string): Promise<void> {
     const previous = await this.users.getAvatar(userId);
     if (!previous?.avatar_path) {
       return;
@@ -56,7 +73,7 @@ export class UserAvatarService {
     await this.storage.delete(previous.avatar_path);
   }
 
-  async file(userId: string, viewerId: string) {
+  async avatarFile(userId: string, viewerId: string) {
     if (!(await this.social.canSeeProfile(viewerId, userId))) {
       throw new NotFoundException('Profile picture does not exist');
     }
@@ -67,7 +84,7 @@ export class UserAvatarService {
     return avatar;
   }
 
-  absolutePath(path: string): string {
+  avatarAbsolutePath(path: string): string {
     return this.storage.absolutePath(path);
   }
 }

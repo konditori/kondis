@@ -7,7 +7,7 @@ import { ServerService } from 'src/services/server.service';
 import { SocialService } from 'src/services/social.service';
 import { StorageService } from 'src/services/storage.service';
 import { UploadService } from 'src/services/upload.service';
-import { UserAvatarService } from 'src/services/user-avatar.service';
+import { UserService } from 'src/services/user.service';
 
 export const services = [
   ActivityService,
@@ -19,5 +19,5 @@ export const services = [
   UploadService,
   AuthService,
   SocialService,
-  UserAvatarService,
+  UserService,
 ];

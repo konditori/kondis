@@ -392,6 +392,10 @@ export class JobRepository implements OnApplicationShutdown {
         return {};
       }
 
+      case JobName.UserAvatarUpload: {
+        return {};
+      }
+
       case JobName.ActivityParseQueueAll: {
         // A constant key: one full scan at a time, however many times it is requested.
         return { singletonKey: item.name };

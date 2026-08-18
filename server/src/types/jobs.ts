@@ -81,6 +81,11 @@ export interface IActivityImageAttachJob {
   images: IActivityImageStage[];
 }
 
+export interface IUserAvatarUploadJob {
+  userId: string;
+  storagePath: string;
+}
+
 export type JobItem =
   | { name: JobName.ActivityUpload; data: IActivityUploadJob }
   | { name: JobName.ActivityMetricCompute; data: IEntityJob }
@@ -96,6 +101,7 @@ export type JobItem =
   | { name: JobName.ActivityImageGenerateThumbnails; data: IEntityJob }
   | { name: JobName.ActivityImageGenerateQueueAll; data: IBaseJob }
   | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }
+  | { name: JobName.UserAvatarUpload; data: IUserAvatarUploadJob }
   | { name: JobName.FileDelete; data: { paths: string[] } }
   | { name: JobName.TemporaryFileCleanup; data: Record<string, never> };
 
