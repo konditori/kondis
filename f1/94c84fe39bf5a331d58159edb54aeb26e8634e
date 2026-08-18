@@ -1,0 +1,21 @@
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_3105f94b93851f::t_13e771c0fc200a 69,73,117,132,138,147,160
+server/test/medium/specs/service/upload.service.spec.ts
+  s_3105f94b93851f::t_c7952956388f72 99,114,150,168,222,249,262,360,384,453,459
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f194c84fe39bf5a331d58159edb54aeb26e8634e",
+  "prompts": {},
+  "sessions": {
+    "s_3105f94b93851f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "842deb59-8d4e-49f7-8b61-72e76a7b8d63",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
