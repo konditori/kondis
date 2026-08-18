@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Camera, Check, Gauge, Ruler, Trash2 } from "@lucide/svelte";
+  import { Camera, Check, Gauge, Ruler, Trash2, UserRound } from "@lucide/svelte";
   import { untrack } from "svelte";
   import type { UnitSystem } from "$lib/units";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
@@ -15,6 +15,28 @@
   );
   let avatarBusy = $state(false);
   let avatarError = $state("");
+  let name = $state(untrack(() => data.user?.name ?? ""));
+  let nameBusy = $state(false);
+  let nameError = $state("");
+
+  async function saveName() {
+    nameBusy = true;
+    nameError = "";
+    try {
+      const response = await fetch("/api/v1/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      if (!response.ok) throw new Error();
+      name = ((await response.json()) as { name: string }).name;
+      window.location.reload();
+    } catch {
+      nameError = "Could not save your name.";
+    } finally {
+      nameBusy = false;
+    }
+  }
 
   async function uploadAvatar(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
@@ -62,11 +84,61 @@
 <div class="page-shell settings-page">
   <header class="page-header">
     <div>
-      <span class="eyebrow">Local athlete</span>
       <h1>Settings</h1>
       <p>Choose how Kondis displays your activity data.</p>
     </div>
   </header>
+
+  <section class="settings-panel name-panel">
+    <div class="settings-heading">
+      <span class="settings-icon"><UserRound size={21} /></span>
+      <div>
+        <h2>Your name</h2>
+        <p>This is the name shown on your activities and profile.</p>
+      </div>
+    </div>
+    <label class="settings-field">
+      <span>Name</span>
+      <input bind:value={name} maxlength="80" autocomplete="name" />
+    </label>
+    <div class="settings-actions">
+      <button type="button" onclick={saveName} disabled={nameBusy || !name.trim()}>
+        <Check size={17} /> {nameBusy ? "Saving…" : "Save name"}
+      </button>
+      {#if nameError}<span class="settings-error" role="alert">{nameError}</span>{/if}
+    </div>
+  </section>
+
+  <section class="settings-panel profile-picture-panel">
+    <div class="settings-heading">
+      <UserAvatar name={data.user?.name ?? "You"} src={avatarUrl} size={72} />
+      <div>
+        <h2>Profile picture</h2>
+        <p>Shown next to your name on activities and profiles.</p>
+      </div>
+    </div>
+    <div class="settings-actions">
+      <label class="metadata-save profile-picture-upload">
+        <Camera size={17} />
+        {avatarBusy ? "Saving…" : "Choose picture"}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
+          onchange={uploadAvatar}
+          disabled={avatarBusy}
+        />
+      </label>
+      {#if avatarUrl}<button
+          class="metadata-cancel"
+          type="button"
+          onclick={removeAvatar}
+          disabled={avatarBusy}><Trash2 size={17} /> Remove</button
+        >{/if}
+    </div>
+    {#if avatarError}<p class="settings-error" role="alert">
+        {avatarError}
+      </p>{/if}
+  </section>
 
   <form method="POST" class="settings-panel">
     <div class="settings-heading">
@@ -121,34 +193,4 @@
         >{/if}
     </div>
   </form>
-  <section class="settings-panel profile-picture-panel">
-    <div class="settings-heading">
-      <UserAvatar name={data.user?.name ?? "You"} src={avatarUrl} size={72} />
-      <div>
-        <h2>Profile picture</h2>
-        <p>Shown next to your name on activities and profiles.</p>
-      </div>
-    </div>
-    <div class="settings-actions">
-      <label class="metadata-save profile-picture-upload">
-        <Camera size={17} />
-        {avatarBusy ? "Saving…" : "Choose picture"}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
-          onchange={uploadAvatar}
-          disabled={avatarBusy}
-        />
-      </label>
-      {#if avatarUrl}<button
-          class="metadata-cancel"
-          type="button"
-          onclick={removeAvatar}
-          disabled={avatarBusy}><Trash2 size={17} /> Remove</button
-        >{/if}
-    </div>
-    {#if avatarError}<p class="settings-error" role="alert">
-        {avatarError}
-      </p>{/if}
-  </section>
 </div>

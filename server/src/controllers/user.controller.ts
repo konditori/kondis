@@ -7,6 +7,7 @@ import {
   HttpStatus,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Res,
   UploadedFile,
@@ -29,6 +30,9 @@ const createUser = z.object({
   name: z.string(),
   password: z.string(),
   role: z.enum(['user', 'admin']).default('user'),
+});
+const updateName = z.object({
+  name: z.string().trim().min(1).max(80),
 });
 @Controller('users')
 @ApiTags('User')
@@ -56,6 +60,21 @@ export class UserController {
       value.role,
     );
     return user;
+  }
+
+  @Patch('me')
+  async updateMe(@Body() body: unknown, @CurrentUser() user: AuthenticatedUser) {
+    const value = updateName.parse(body);
+    await this.users.setName(user.id, value.name);
+    const updated = await this.users.findById(user.id);
+    if (!updated) throw new NotFoundException('User does not exist');
+    return {
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      avatarUrl: updated.avatar_path ? `/api/v1/users/${updated.id}/avatar` : null,
+    };
   }
 
   @Post('me/avatar')

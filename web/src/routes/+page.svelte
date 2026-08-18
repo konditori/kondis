@@ -265,13 +265,15 @@
 
 <svelte:head><title>Activities · Kondis</title></svelte:head>
 
-<div class="page-shell">
-  <header class="page-header">
-    <div>
-      <h1>{heading}</h1>
-      {#if hasSearch}<p>{resultSummary}</p>{/if}
-    </div>
-  </header>
+<div class="page-shell home-page">
+  {#if hasSearch}
+    <header class="page-header">
+      <div>
+        <h1>{heading}</h1>
+        <p>{resultSummary}</p>
+      </div>
+    </header>
+  {/if}
 
   {#if data.unavailable}
     <div class="notice">

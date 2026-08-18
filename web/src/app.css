@@ -333,6 +333,9 @@ button {
   margin: 0 auto;
   padding: 53px 0 80px;
 }
+.home-page {
+  padding-top: 32px;
+}
 .page-header {
   display: flex;
   align-items: flex-end;
@@ -424,6 +427,29 @@ button {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
+}
+.settings-page {
+  display: grid;
+  align-content: start;
+  gap: 0;
+}
+.settings-field {
+  display: grid;
+  gap: 7px;
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.settings-field input {
+  width: 100%;
+  padding: 11px 12px;
+  color: #1c211d;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
 }
 .people-list {
   display: grid;
@@ -899,11 +925,11 @@ button {
 }
 .activity-card-summary {
   display: grid;
-  grid-template-columns: 68px minmax(220px, 1fr) max-content;
+  grid-template-columns: 54px minmax(220px, 1fr) max-content;
   grid-template-rows: auto;
   align-content: start;
   align-items: start;
-  column-gap: 18px;
+  column-gap: 14px;
   row-gap: 0;
   min-height: 132px;
   padding: 20px 22px 18px 20px;
