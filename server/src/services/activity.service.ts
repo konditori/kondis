@@ -1,4 +1,4 @@
-import { BadRequestException, ConsoleLogger, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -20,6 +20,7 @@ import { EventRepository } from 'src/repositories/event.repository';
 import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
+import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -33,12 +34,11 @@ import {
   BestEffortGroup,
   BestEffortType,
   CYCLING_BEST_EFFORTS,
-  JobItem,
-  JobOf,
   ParsedActivity,
   ParsedActivityStructure,
   RUNNING_BEST_EFFORTS,
 } from 'src/types';
+import { JobItem, JobOf } from 'src/types/jobs';
 import { buildActivityAnalysis } from 'src/utils/activity-details';
 import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 
@@ -85,6 +85,7 @@ export class ActivityService {
     private readonly logger: ConsoleLogger,
     @Optional() private readonly importProgressStore?: ImportProgressStore,
     @Optional() private readonly activityImageRepository?: ActivityImageRepository,
+    @Optional() private readonly socialRepository?: SocialRepository,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -506,6 +507,7 @@ export class ActivityService {
       tagMatch = 'any',
     }: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
     userId?: string,
+    feedUserId?: string,
   ) {
     const normalizedSearch = search?.trim() || undefined;
     const tags = tagQuery
@@ -515,11 +517,13 @@ export class ActivityService {
     if (tags?.some((tag) => !ACTIVITY_TAG_IDS.includes(tag))) {
       throw new BadRequestException('Unknown activity tag');
     }
+    const ownerFilter = feedUserId ? undefined : userId;
     const rows = await this.activityRepository.listRecentPage({
       limit: limit + 1,
       cursor: cursor ? this.decodeActivityCursor(cursor) : undefined,
       search: normalizedSearch,
-      userId,
+      userId: ownerFilter,
+      feedUserId,
       tags,
       tagMatch,
     });
@@ -535,7 +539,9 @@ export class ActivityService {
     const achievementCountByActivity = new Map(
       achievementCounts.map(({ activity_id, achievement_count }) => [activity_id, achievement_count]),
     );
-    const imagesByActivity = await Promise.all(page.map((row) => this.listImageDtos(row.upload_id, userId)));
+    const imagesByActivity = await Promise.all(
+      page.map((row) => this.listImageDtos(row.upload_id, feedUserId ? undefined : userId)),
+    );
 
     return {
       activities: page.map((row, index) => ({
@@ -546,7 +552,58 @@ export class ActivityService {
         images: imagesByActivity[index],
       })),
       nextCursor: hasMore && last ? this.encodeActivityCursor(last.started_at, last.id) : null,
-      total: await this.activityRepository.count(normalizedSearch, userId, tags, tagMatch),
+      total: await this.activityRepository.count(normalizedSearch, ownerFilter, tags, tagMatch, feedUserId),
+    };
+  }
+
+  async feed(
+    viewerId: string,
+    query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
+  ) {
+    return this.decorateSocialActivities(await this.listRecent(query, viewerId, viewerId), viewerId);
+  }
+
+  async profileActivities(
+    viewerId: string,
+    targetId: string,
+    query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
+  ) {
+    if (!this.socialRepository || !(await this.socialRepository.canViewUser(viewerId, targetId))) {
+      throw new NotFoundException('Person does not exist');
+    }
+    return this.decorateSocialActivities(await this.listRecent(query, targetId), viewerId, targetId);
+  }
+
+  private async decorateSocialActivities(
+    page: Awaited<ReturnType<ActivityService['listRecent']>>,
+    viewerId: string,
+    targetId?: string,
+  ) {
+    if (!this.socialRepository || page.activities.length === 0) {
+      return page;
+    }
+    const ids = page.activities.map((activity) => activity.id);
+    const [engagement, users] = await Promise.all([
+      this.socialRepository.activityEngagement(ids, viewerId),
+      targetId
+        ? Promise.resolve([await this.socialRepository.getUser(targetId)])
+        : Promise.all(
+            [...new Set(page.activities.map((activity) => activity.userId).filter((id): id is string => !!id))].map(
+              (id) => this.socialRepository!.getUser(id),
+            ),
+          ),
+    ]);
+    const userMap = new Map(users.filter((user): user is SocialUser => !!user).map((user) => [user.id, user]));
+    const engagementMap = new Map(engagement.map((row) => [row.activity_id, row]));
+    return {
+      ...page,
+      activities: page.activities.map((activity) => ({
+        ...activity,
+        athlete: userMap.get(targetId ?? activity.userId ?? ''),
+        likeCount: Number(engagementMap.get(activity.id)?.like_count ?? 0),
+        commentCount: Number(engagementMap.get(activity.id)?.comment_count ?? 0),
+        viewerLiked: !!engagementMap.get(activity.id)?.viewer_liked,
+      })),
     };
   }
 
@@ -593,7 +650,10 @@ export class ActivityService {
   }
 
   async getById(id: string, userId?: string) {
-    const row = await this.activityRepository.getDetailById(id, userId);
+    if (userId && this.socialRepository && !(await this.socialRepository.canViewActivity(id, userId))) {
+      return;
+    }
+    const row = await this.activityRepository.getDetailById(id, this.socialRepository ? undefined : userId);
     if (!row) {
       return;
     }
@@ -603,12 +663,14 @@ export class ActivityService {
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
-      this.activityImageRepository?.listForUpload(row.upload_id, userId) ?? Promise.resolve([]),
+      this.activityImageRepository?.listForUpload(row.upload_id) ?? Promise.resolve([]),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
+    const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
 
-    return {
+    const detail = {
       ...this.toActivityDto(row),
+      ...(athlete && { athlete }),
       track,
       analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
       matchedRouteCount: row.route_matches_computed_at === null ? null : Number(row.matched_route_count),
@@ -616,6 +678,17 @@ export class ActivityService {
       images: await Promise.all(
         images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)),
       ),
+    };
+    if (!this.socialRepository || !userId) {
+      return detail;
+    }
+    const engagements = await this.socialRepository.activityEngagement([id], userId);
+    const engagement = engagements[0];
+    return {
+      ...detail,
+      likeCount: Number(engagement?.like_count ?? 0),
+      commentCount: Number(engagement?.comment_count ?? 0),
+      viewerLiked: !!engagement?.viewer_liked,
     };
   }
 
@@ -704,7 +777,9 @@ export class ActivityService {
 
     if (input.tags !== undefined) {
       const current = await this.activityRepository.getById(id, userId);
-      if (!current) return;
+      if (!current) {
+        return;
+      }
       const tags = [...new Set(input.tags)];
       if (tags.some((tag) => !ACTIVITY_TAG_IDS.includes(tag))) {
         throw new BadRequestException('Unknown activity tag');
@@ -793,11 +868,17 @@ export class ActivityService {
     sport: ActivityType,
   ): NonNullable<ActivityDetailDto['bestEfforts']> {
     const allowedTypes = new Set(
-      (BEST_EFFORT_SPORTS.run.includes(sport) ? RUNNING_BEST_EFFORTS : CYCLING_ANALYSIS_SPORTS.has(sport) ? CYCLING_BEST_EFFORTS : [])
-        .map((definition) => definition.type),
+      (BEST_EFFORT_SPORTS.run.includes(sport)
+        ? RUNNING_BEST_EFFORTS
+        : CYCLING_ANALYSIS_SPORTS.has(sport)
+          ? CYCLING_BEST_EFFORTS
+          : []
+      ).map((definition) => definition.type),
     );
     return DETAIL_BEST_EFFORT_DEFINITIONS.flatMap((definition) => {
-      if (!allowedTypes.has(definition.type)) return [];
+      if (!allowedTypes.has(definition.type)) {
+        return [];
+      }
       const effort = storedEfforts.find((candidate) => candidate.type === definition.type);
       return effort
         ? [

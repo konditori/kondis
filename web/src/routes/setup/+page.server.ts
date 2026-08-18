@@ -10,22 +10,24 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
   setup: async ({ request, cookies, fetch }) => {
     const form = await request.formData();
-    const name = String(form.get("name") ?? "");
+    const firstName = String(form.get("firstName") ?? "");
+    const lastName = String(form.get("lastName") ?? "");
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
     const confirmPassword = String(form.get("confirmPassword") ?? "");
-    const values = { name, email };
+    const values = { firstName, lastName, email };
     if (password !== confirmPassword)
       return fail(400, { ...values, error: "Passwords do not match." });
     const response = await fetch("/api/v1/auth/setup", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ firstName, lastName, email, password }),
     });
     if (!response.ok)
       return fail(400, {
         ...values,
-        error: "Use a name, valid email, sufficiently long password",
+        error:
+          "Use first and last names, a valid email, and a sufficiently long password",
       });
     const result = await response.json();
     cookies.set("kondis_session", result.accessToken, {

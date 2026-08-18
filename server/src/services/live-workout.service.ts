@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import { ActivityType } from 'src/types';
 
@@ -16,7 +17,10 @@ type PointInput = {
 
 @Injectable()
 export class LiveWorkoutService {
-  constructor(private readonly repository: LiveWorkoutRepository) {}
+  constructor(
+    private readonly repository: LiveWorkoutRepository,
+    private readonly social: SocialRepository,
+  ) {}
 
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {
     const existing = await this.repository.getByClientSessionId(userId, input.clientSessionId);
@@ -28,20 +32,24 @@ export class LiveWorkoutService {
         sport: input.sport,
         startedAt: new Date(input.startedAt),
       }));
-    return this.toDto(workout);
+    return this.toDto(workout, userId);
   }
 
   async list(userId: string) {
-    const workouts = await this.repository.listActive(userId);
-    return Promise.all(workouts.map((workout) => this.toDto(workout)));
+    const workouts = await this.repository.listActiveVisible(userId);
+    return Promise.all(workouts.map((workout) => this.toDto(workout, userId)));
   }
 
   async get(id: string, userId: string) {
-    const workout = await this.repository.getById(id, userId);
+    const owned = await this.repository.getById(id, userId);
+    const workout = owned ?? (await this.repository.getById(id));
+    if (workout && !owned && !(await this.social.canViewUser(userId, workout.user_id))) {
+      throw new NotFoundException('Live workout not found');
+    }
     if (!workout) {
       throw new NotFoundException('Live workout not found');
     }
-    return this.toDto(workout);
+    return this.toDto(workout, userId);
   }
 
   async getShared(token: string) {
@@ -92,10 +100,10 @@ export class LiveWorkoutService {
       throw new NotFoundException('Live workout not found');
     }
     if (workout.status === 'discarded') {
-      return this.toDto(workout);
+      return this.toDto(workout, userId);
     }
     const updated = await this.repository.updateProgress(id, input.status, input.elapsedSeconds, input.distanceMeters);
-    return this.toDto(updated ?? workout);
+    return this.toDto(updated ?? workout, userId);
   }
 
   async createShare(id: string, userId: string) {
@@ -125,7 +133,7 @@ export class LiveWorkoutService {
     await this.repository.updateProgress(id, 'discarded', workout.elapsed_seconds, workout.distance_meters);
   }
 
-  private async toDto(workout: Awaited<ReturnType<LiveWorkoutRepository['getById']>> & {}) {
+  private async toDto(workout: Awaited<ReturnType<LiveWorkoutRepository['getById']>> & {}, viewerId?: string) {
     if (!workout) {
       throw new NotFoundException('Live workout not found');
     }
@@ -135,6 +143,7 @@ export class LiveWorkoutService {
       sport: workout.sport,
       startedAt: new Date(workout.started_at).toISOString(),
       status: workout.status,
+      canShare: viewerId === workout.user_id,
       elapsedSeconds: workout.elapsed_seconds,
       distanceMeters: workout.distance_meters,
       lastSequence: workout.last_sequence,

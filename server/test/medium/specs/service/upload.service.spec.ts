@@ -14,11 +14,12 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 import { UploadService } from 'src/services/upload.service';
 
-import { makeUploadedFile } from 'test/medium.factory';
+import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
-import { createMediumTestDatabase, truncateAllTables } from 'test/medium/test-db';
+import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 import { activityFixtures } from 'test/medium/utils';
 import { createTestZip } from 'test/utils/zip';
 
@@ -37,7 +38,9 @@ describe(UploadService.name, () => {
   let queuedSut: UploadService;
   let jobsRepository: JobRepository;
   let queuedUploadRepository: UploadRepository;
+  let queuedStorageRepository: StorageRepository;
   let activityRepository: ActivityRepository;
+  let userRepository: UserRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -47,26 +50,20 @@ describe(UploadService.name, () => {
     const config = { storageDir } as unknown as ConfigService;
 
     storageRepository = new StorageRepository(config, crypto);
-    sut = new UploadService(
-      uploadRepository,
-      storageRepository,
-      crypto,
-      new DatabaseRepository(db),
-      jobs,
-      logger,
-    );
+    sut = new UploadService(uploadRepository, storageRepository, crypto, new DatabaseRepository(db), jobs, logger);
 
     testApp = await createTestApp();
     queuedSut = testApp.get(UploadService);
     jobsRepository = testApp.get(JobRepository);
     queuedUploadRepository = testApp.get(UploadRepository);
+    queuedStorageRepository = testApp.get(StorageRepository);
     activityRepository = testApp.get(ActivityRepository);
+    userRepository = testApp.get(UserRepository);
   });
 
   beforeEach(async () => {
     queue.mockClear();
-    await truncateAllTables(db);
-    await Promise.all(Object.values(QueueName).map((queueName) => jobsRepository.empty(queueName)));
+    await resetMediumTestDatabase(db, jobsRepository);
   });
 
   afterAll(async () => {
@@ -178,9 +175,7 @@ describe(UploadService.name, () => {
     const contents = Buffer.from('activity');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow(
-      'queue unavailable',
-    );
+    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow('queue unavailable');
 
     const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(contents);
@@ -285,18 +280,16 @@ describe(UploadService.name, () => {
     const archive = Buffer.from('archive');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow(
-      'queue unavailable',
-    );
+    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow('queue unavailable');
 
     const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
   });
 
   it('rejects a non-ZIP Strava takeout upload', async () => {
-    await expect(
-      sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
-    ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
+    await expect(sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope')))).rejects.toThrow(
+      'Only a Strava takeout .zip file is accepted',
+    );
   });
 
   describe('real queue processing', () => {
@@ -344,9 +337,7 @@ describe(UploadService.name, () => {
         ),
         'activities/run.fit.gz': gzipSync(fit),
       });
-      const updatedResult = await queuedSut.uploadLagomTakeout(
-        makeUploadedFile('updated-export.zip', updatedArchive),
-      );
+      const updatedResult = await queuedSut.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
       expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
@@ -383,6 +374,47 @@ describe(UploadService.name, () => {
         description: 'A walk in the woods',
         sport: 'roller_ski',
       });
+    });
+
+    it('imports the takeout profile name for the logged-in user', async () => {
+      const user = await createMediumFactory(db).newUser({ first_name: 'Original', last_name: 'Name' });
+      const archive = createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Activity Name,Activity Type,Filename\n'),
+        'profile.csv': Buffer.from('Athlete ID,First Name,Last Name\n123,Imported,Profile\n'),
+      });
+
+      await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-name.zip', archive), user.id);
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      await expect(userRepository.findById(user.id)).resolves.toMatchObject({
+        first_name: 'Imported',
+        last_name: 'Profile',
+      });
+    });
+
+    it('imports and stores the takeout profile picture for the logged-in user', async () => {
+      const user = await createMediumFactory(db).newUser();
+      const image = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        'base64',
+      );
+      const archive = createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Activity Name,Activity Type,Filename\n'),
+        'profile.jpg': image,
+      });
+
+      await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-picture.zip', archive), user.id);
+      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+
+      const storedUser = await userRepository.findById(user.id);
+      expect(storedUser).toMatchObject({
+        avatar_mime_type: 'image/webp',
+        avatar_size: expect.any(Number),
+        avatar_path: expect.stringMatching(/^avatars\/.*\.webp$/),
+      });
+      const storedAvatar = await queuedStorageRepository.read(storedUser!.avatar_path!);
+      expect(storedAvatar.length).toBe(storedUser!.avatar_size);
+      expect(storedAvatar.equals(image)).toBe(false);
     });
 
     it('deduplicates manual activities using the takeout Activity ID', async () => {

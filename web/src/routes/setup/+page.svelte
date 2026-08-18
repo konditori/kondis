@@ -9,11 +9,18 @@
     <p>Please create your account</p>
     <form method="POST" action="?/setup">
       <label
-        >Name<input
+        >First name<input
           required
-          name="name"
-          autocomplete="name"
-          value={form?.name ?? ""}
+          name="firstName"
+          autocomplete="given-name"
+          value={form?.firstName ?? ""}
+        /></label
+      ><label
+        >Last name<input
+          required
+          name="lastName"
+          autocomplete="family-name"
+          value={form?.lastName ?? ""}
         /></label
       ><label
         >Email<input

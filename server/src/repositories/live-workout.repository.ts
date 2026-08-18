@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { sql } from 'kysely';
 import { KondisDatabase, KYSELY } from 'src/db/database';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import { ActivityType } from 'src/types';
 
-export type LivePointInput = {
+type LivePointInput = {
   sequence: number;
   recordedAt: Date;
   latitude: number;
@@ -40,6 +41,29 @@ export class LiveWorkoutRepository {
       .selectAll()
       .where('user_id', '=', userId)
       .where('status', 'in', ['recording', 'paused'])
+      .orderBy('started_at', 'desc')
+      .execute();
+  }
+
+  listActiveVisible(userId: string) {
+    return this.db
+      .selectFrom('live_workout')
+      .selectAll()
+      .where('status', 'in', ['recording', 'paused'])
+      .where(({ or, eb, exists, selectFrom }) =>
+        or([
+          eb('user_id', '=', userId),
+          exists(
+            selectFrom('user_follow')
+              .select('follower_id')
+              .where('follower_id', '=', userId)
+              .whereRef('followee_id', '=', 'live_workout.user_id'),
+          ),
+        ]),
+      )
+      .where(
+        sql<boolean>`NOT EXISTS (SELECT 1 FROM user_block b WHERE (b.blocker_id = ${userId}::uuid AND b.blocked_id = live_workout.user_id) OR (b.blocker_id = live_workout.user_id AND b.blocked_id = ${userId}::uuid))`,
+      )
       .orderBy('started_at', 'desc')
       .execute();
   }

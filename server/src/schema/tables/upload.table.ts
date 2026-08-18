@@ -7,7 +7,7 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from 'src/schema/decorators';
-import { UploadStatus } from 'src/types';
+import { UploadStatus } from 'src/types/uploads';
 
 @Table('upload')
 export class UploadTable {

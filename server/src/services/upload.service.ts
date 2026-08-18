@@ -3,6 +3,7 @@ import {
   ConsoleLogger,
   Injectable,
   NotFoundException,
+  Optional,
   PayloadTooLargeException,
 } from '@nestjs/common';
 import { extname } from 'node:path';
@@ -17,8 +18,10 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 import { ImportProgressStore } from 'src/state/import-progress.store';
-import { JobOf, UploadedFileData } from 'src/types';
+import { JobOf } from 'src/types/jobs';
+import { UploadedFileData } from 'src/types/uploads';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -33,6 +36,7 @@ export class UploadService {
     private readonly logger: ConsoleLogger,
     private readonly lagomTakeoutParser: LagomTakeoutParser = new LagomTakeoutParser(),
     private readonly importProgressStore: ImportProgressStore = new ImportProgressStore(),
+    @Optional() private readonly userRepository?: UserRepository,
   ) {
     this.logger.setContext(UploadService.name);
   }
@@ -230,6 +234,17 @@ export class UploadService {
         queued += 1;
       },
     );
+
+    if (userId && takeout.profile) {
+      if (takeout.profile.firstName && takeout.profile.lastName && this.userRepository) {
+        await this.userRepository.setNameParts(userId, takeout.profile.firstName, takeout.profile.lastName);
+      }
+      if (takeout.profile.avatar) {
+        const avatarPath = this.storageRepository.buildTemporaryPath('.jpg');
+        await this.storageRepository.write(avatarPath, takeout.profile.avatar.buffer);
+        await this.jobRepository.queue({ name: JobName.UserAvatarUpload, data: { userId, storagePath: avatarPath } });
+      }
+    }
 
     if (takeoutImportId) {
       this.importProgressStore.setProcessing(takeoutImportId, queued);

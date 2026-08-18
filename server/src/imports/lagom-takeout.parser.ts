@@ -5,7 +5,8 @@ import { parse } from 'csv-parse/sync';
 import { Open, type File as ZipEntry } from 'unzipper';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { ActivityTag, ActivityType, UploadedFileData } from 'src/types';
+import type { ActivityTag, ActivityType } from 'src/types';
+import type { UploadedFileData } from 'src/types/uploads';
 import { toActivityType } from 'src/utils/activity';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
@@ -49,6 +50,12 @@ export type LagomTakeoutMedia = {
   sortOrder: number;
 };
 
+export type LagomTakeoutProfile = {
+  firstName: string | null;
+  lastName: string | null;
+  avatar: UploadedFileData | null;
+};
+
 export type LagomTakeoutError = {
   row: number;
   filename: string;
@@ -60,6 +67,7 @@ export type LagomTakeoutContents = {
   skipped: number;
   activities: LagomTakeoutActivity[];
   errors: LagomTakeoutError[];
+  profile: LagomTakeoutProfile | null;
 };
 
 class TakeoutLimitError extends Error {}
@@ -304,6 +312,7 @@ export class LagomTakeoutParser {
       skipped: 0,
       activities: [],
       errors: [],
+      profile: await this.readProfile(archiveRoot, entries),
     };
     const referencedEntries = new Set<string>();
     let expandedBytes = 0;
@@ -315,7 +324,10 @@ export class LagomTakeoutParser {
       const description = descriptionIndex === -1 ? null : row[descriptionIndex]?.trim() || null;
       const manifestSport = sportIndex === -1 ? '' : (row[sportIndex]?.trim() ?? '');
       const sport = manifestSport ? toActivityType(manifestSport) : null;
-      const tags: ActivityTag[] = commuteIndex !== -1 && ['true', '1', 'yes'].includes((row[commuteIndex] ?? '').trim().toLowerCase()) ? ['commute'] : [];
+      const tags: ActivityTag[] =
+        commuteIndex !== -1 && ['true', '1', 'yes'].includes((row[commuteIndex] ?? '').trim().toLowerCase())
+          ? ['commute']
+          : [];
       if (!filename) {
         const startedAt = row[this.column(headers, 'Activity Date')]?.trim();
         const elapsedTime = this.number(headers, row, 'Elapsed Time');
@@ -446,6 +458,44 @@ export class LagomTakeoutParser {
     }
 
     return result;
+  };
+
+  private readonly readProfile = async (
+    archiveRoot: string,
+    entries: Map<string, ZipEntry>,
+  ): Promise<LagomTakeoutProfile | null> => {
+    const profileManifest = entries.get(`${archiveRoot}profile.csv`);
+    const profileImage = entries.get(`${archiveRoot}profile.jpg`);
+    if (!profileManifest && !profileImage) {
+      return null;
+    }
+
+    let firstName: string | null = null;
+    let lastName: string | null = null;
+    if (profileManifest) {
+      const profileContents = await this.readEntry(profileManifest, UPLOAD_LIMITS.manifestBytes);
+      const rows = parse(profileContents.toString('utf8'), {
+        bom: true,
+        relax_column_count: true,
+        max_record_size: UPLOAD_LIMITS.manifestRecordBytes,
+      }) as string[][];
+      const headers = rows.shift() ?? [];
+      firstName = rows[0]?.[headers.indexOf('First Name')]?.trim() || null;
+      lastName = rows[0]?.[headers.indexOf('Last Name')]?.trim() || null;
+    }
+
+    const avatarBuffer = profileImage ? await this.readEntry(profileImage, UPLOAD_LIMITS.avatarFileBytes) : null;
+    return {
+      firstName,
+      lastName,
+      avatar: avatarBuffer
+        ? {
+            originalname: 'profile.jpg',
+            buffer: avatarBuffer,
+            size: avatarBuffer.length,
+          }
+        : null,
+    };
   };
 
   private readonly readMedia = async (

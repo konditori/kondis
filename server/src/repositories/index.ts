@@ -7,6 +7,7 @@ import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -26,4 +27,5 @@ export const repositories = [
   TcxRepository,
   UploadRepository,
   UserRepository,
+  SocialRepository,
 ];

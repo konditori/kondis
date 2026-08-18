@@ -1,6 +1,8 @@
 import { sql } from 'kysely';
 import { type DatabaseConfig } from 'src/config/config.service';
 import { createDatabase, type KondisDatabase } from 'src/db/database';
+import { QueueName } from 'src/enum';
+import type { JobRepository } from 'src/repositories/job.repository';
 
 export const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
 
@@ -51,7 +53,19 @@ export const truncateJobs = async (db: KondisDatabase): Promise<void> => {
   }
 };
 
-export const resetMediumTestDatabase = async (db: KondisDatabase): Promise<void> => {
-  await truncateJobs(db);
-  await truncateAllTables(db);
+export const resetMediumTestDatabase = async (db: KondisDatabase, jobs?: JobRepository): Promise<void> => {
+  if (!jobs) {
+    await truncateJobs(db);
+    await truncateAllTables(db);
+    return;
+  }
+
+  const queues = Object.values(QueueName);
+  await Promise.all(queues.map((queue) => jobs.pause(queue)));
+  try {
+    await truncateJobs(db);
+    await truncateAllTables(db);
+  } finally {
+    await Promise.all(queues.map((queue) => jobs.resume(queue)));
+  }
 };

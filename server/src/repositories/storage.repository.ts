@@ -28,6 +28,11 @@ export class StorageRepository {
     return join('images', shard.slice(0, 2), shard.slice(2, 4), imageId, `${variant}${suffix}`);
   }
 
+  buildUserAvatarPath(userId: string): string {
+    const shard = userId.replaceAll('-', '');
+    return join('avatars', shard.slice(0, 2), shard.slice(2, 4), `${userId}.webp`);
+  }
+
   absolutePath(relativePath: string): string {
     return resolve(this.config.storageDir, relativePath);
   }

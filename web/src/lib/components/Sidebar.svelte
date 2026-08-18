@@ -1,16 +1,17 @@
 <script lang="ts">
-  import { Activity, Trophy } from "@lucide/svelte";
+  import { Activity, Trophy, Users } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
 
   const items = [
-    { href: "/", label: "Activities", icon: Activity, section: null },
+    { href: "/", label: "Home", icon: Activity, section: null },
     {
-      href: "/best-efforts/run/5k",
+      href: "/best-efforts",
       label: "Best efforts",
       icon: Trophy,
       section: "/best-efforts",
     },
+    { href: "/people", label: "People", icon: Users, section: "/people" },
   ];
 
   function goHome(event: MouseEvent) {
@@ -45,10 +46,13 @@
 
 <nav class="mobile-nav" aria-label="Mobile navigation">
   <a class:active={page.url.pathname === "/"} href="/" onclick={goHome}
-    ><Activity size={21} /><span>Activities</span></a
+    ><Activity size={21} /><span>Home</span></a
   >
   <a
     class:active={page.url.pathname.startsWith("/best-efforts")}
-    href="/best-efforts/run/5k"><Trophy size={21} /><span>Best efforts</span></a
+    href="/best-efforts"><Trophy size={21} /><span>Best efforts</span></a
+  >
+  <a class:active={page.url.pathname.startsWith("/people")} href="/people"
+    ><Users size={21} /><span>People</span></a
   >
 </nav>

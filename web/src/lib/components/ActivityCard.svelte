@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowUpRight, Medal } from "@lucide/svelte";
+  import { ArrowUpRight, Heart, Medal, MessageCircle } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import {
     AverageMetric,
@@ -12,10 +12,18 @@
     achievementMedalLabel,
     achievementRank,
     distinctAchievementEfforts,
+    shouldShowAchievementCount,
   } from "$lib/activity-achievements";
   import RouteMap from "$lib/components/RouteMap.svelte";
+  import UserAvatar from "$lib/components/UserAvatar.svelte";
+  import { userDisplayName, userPossessiveName } from "$lib/user-name";
   import type { ActivityTypeSettingsOutput } from "$lib/api";
   import type { Activity } from "$lib/types";
+  import {
+    getSdkRequestOptions,
+    socialControllerLike,
+    socialControllerUnlike,
+  } from "$lib/api";
   import type { UnitSystem } from "$lib/units";
   import {
     activityName,
@@ -24,6 +32,7 @@
     elevation,
     localDate,
     localTime,
+    ordinal,
     pace,
     speed,
   } from "$lib/format";
@@ -32,12 +41,25 @@
     activity,
     activityTypes,
     unitSystem,
+    viewerId,
   }: {
     activity: Activity;
     activityTypes: ActivityTypeSettingsOutput[];
     unitSystem: UnitSystem;
+    viewerId?: string;
   } = $props();
+  let liked = $state(false);
+  let likeCount = $state(0);
+  let likeBusy = $state(false);
+  let descriptionExpanded = $state(false);
+  $effect(() => {
+    liked = activity.viewerLiked ?? false;
+    likeCount = activity.likeCount ?? 0;
+  });
   const Icon = $derived(sportIcon(activity.sport));
+  const descriptionExpandable = $derived(
+    (activity.description?.length ?? 0) > 320,
+  );
   const settings = $derived(
     activityTypeSettings(activityTypes, activity.sport),
   );
@@ -75,6 +97,9 @@
       value: elevation(activity.metrics?.elevationGain ?? null, unitSystem),
     },
   ]);
+  const achievementCount = $derived(
+    activity.achievementCount ?? activity.topBestEfforts?.length ?? 0,
+  );
   const personalRecord = $derived(
     (() => {
       const records =
@@ -95,6 +120,14 @@
       );
     })(),
   );
+  const activityOwner = $derived(
+    viewerId &&
+      (activity.userId === viewerId || activity.athlete?.id === viewerId)
+      ? "Your"
+      : activity.athlete
+        ? userPossessiveName(activity.athlete)
+        : "This athlete's",
+  );
 
   function achievementText(
     effort: NonNullable<Activity["topBestEfforts"]>[number],
@@ -102,15 +135,17 @@
     const { type } = effort;
     const label = bestEffortLabel(type);
     const rank = personalRecord?.overallRank ?? 1;
-    const ordinal = rank === 1 ? "" : rank === 2 ? "2nd " : "3rd ";
-    if (type === "longest_ride") return `Your ${ordinal}longest ride!`;
-    if (type === "biggest_climb") return `Your ${ordinal}biggest climb!`;
+    const rankLabel = rank === 1 ? "" : `${ordinal(rank)} `;
+    if (type === "longest_ride")
+      return `${activityOwner} ${rankLabel}longest ride!`;
+    if (type === "biggest_climb")
+      return `${activityOwner} ${rankLabel}biggest climb!`;
     if (type.startsWith("power_")) {
-      return `Your ${ordinal}highest power output for ${powerDurationLabel(type)} ever!`;
+      return `${activityOwner} ${rankLabel}highest power output for ${powerDurationLabel(type)} ever!`;
     }
     return type.includes("power") || type === "elevation_gain"
-      ? `Your ${ordinal}best ${label}!`
-      : `Your ${ordinal}fastest ${label}!`;
+      ? `${activityOwner} ${rankLabel}best ${label}!`
+      : `${activityOwner} ${rankLabel}fastest ${label}!`;
   }
 
   function powerDuration(type: string): number {
@@ -137,9 +172,39 @@
       !event.altKey
     ) {
       event.preventDefault();
-      void goto(`/activities/${activity.id}`, {
+      const href =
+        (event.currentTarget as HTMLAnchorElement).getAttribute("href") ??
+        `/activities/${activity.id}`;
+      void goto(href, {
         state: { fromActivityList: true },
       });
+    }
+  }
+
+  async function toggleLike(event: MouseEvent) {
+    event.stopPropagation();
+    if (likeBusy) return;
+    likeBusy = true;
+    const next = !liked;
+    liked = next;
+    likeCount += next ? 1 : -1;
+    try {
+      const result = next
+        ? await socialControllerLike(
+            { id: activity.id },
+            getSdkRequestOptions(),
+          )
+        : await socialControllerUnlike(
+            { id: activity.id },
+            getSdkRequestOptions(),
+          );
+      liked = result.liked;
+      likeCount = result.likeCount;
+    } catch {
+      liked = !next;
+      likeCount += next ? -1 : 1;
+    } finally {
+      likeBusy = false;
     }
   }
 </script>
@@ -147,21 +212,34 @@
 <article class="activity-card">
   <a
     class="activity-card-summary"
+    class:has-description={Boolean(activity.description)}
     href={`/activities/${activity.id}`}
     onclick={openActivity}
   >
-    <div class="sport-badge"><Icon size={24} strokeWidth={1.8} /></div>
+    <div class="activity-card-identity">
+      <UserAvatar
+        name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
+        src={activity.athlete?.avatarUrl}
+        size={54}
+      />
+    </div>
     <div class="activity-primary">
-      <div class="activity-title">
+      <div class="activity-title activity-name-title">
         <h3>{activityName(activity)}</h3>
         <ArrowUpRight size={17} />
       </div>
       <p>
         <span
-          >{localDate(activity.startedAt)} · {localTime(activity.startedAt)} · {activityTypeLabel(
-            activityTypes,
-            activity.sport,
+          >{localDate(activity.startedAt)} · {localTime(
+            activity.startedAt,
           )}</span
+        ><span
+          class="activity-sport-inline"
+          class:running-sport={["run", "trail_run", "virtual_run"].includes(
+            activity.sport,
+          )}
+          aria-label={activityTypeLabel(activityTypes, activity.sport)}
+          ><Icon size={16} strokeWidth={1.8} /></span
         >
       </p>
       {#if activity.tags?.length}<div
@@ -172,23 +250,31 @@
               >{tag.replaceAll("_", " ")}</span
             >{/each}
         </div>{/if}
-      {#if activity.topBestEfforts?.length}
-        <div class="activity-achievements">
-          {#each distinctAchievementEfforts(activity.topBestEfforts) as effort}
+    </div>
+    {#if activity.description}
+      <p class="activity-card-description" class:expanded={descriptionExpanded}>
+        {activity.description}
+      </p>
+    {/if}
+    <div class="activity-feed-stats">
+      <div
+        class="activity-stat activity-medal-stat"
+        aria-label={`${achievementCount} medals`}
+      >
+        <div class="activity-medal-value">
+          {#if shouldShowAchievementCount(achievementCount, activity.topBestEfforts ?? [])}<strong
+              >{achievementCount}</strong
+            >{/if}
+          {#each distinctAchievementEfforts(activity.topBestEfforts ?? []) as effort}
             <span
               class={`activity-achievement rank-${achievementRank(effort)}`}
               title={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
               aria-label={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
-              ><Medal size={18} /></span
+              ><Medal size={20} /></span
             >
           {/each}
-          <span class="activity-achievement-count">
-            {activity.achievementCount ?? activity.topBestEfforts.length}
-          </span>
         </div>
-      {/if}
-    </div>
-    <div class="activity-feed-stats">
+      </div>
       {#each stats as stat}
         <div class="activity-stat">
           <strong>{stat.value}</strong><small>{stat.label}</small>
@@ -196,6 +282,15 @@
       {/each}
     </div>
   </a>
+  {#if activity.description && descriptionExpandable}
+    <button
+      class="activity-card-description-toggle"
+      type="button"
+      aria-expanded={descriptionExpanded}
+      onclick={() => (descriptionExpanded = !descriptionExpanded)}
+      >{descriptionExpanded ? "Show less" : "Show more"}</button
+    >
+  {/if}
   {#if personalRecord}
     <div
       class="activity-pr-banner"
@@ -260,5 +355,25 @@
         {/if}
       </div>
     </a>
+  {/if}
+  {#if likeCount > 0 || activity.commentCount !== undefined}
+    <div class="activity-social-row">
+      <button
+        class:liked
+        type="button"
+        class="activity-social-button"
+        onclick={toggleLike}
+        disabled={likeBusy}
+        aria-label={liked ? "Unlike activity" : "Like activity"}
+        ><Heart size={17} fill={liked ? "currentColor" : "none"} />
+        {likeCount}</button
+      >
+      <a
+        class="activity-social-button"
+        href={`/activities/${activity.id}#comments`}
+        onclick={openActivity}
+        ><MessageCircle size={17} /> {activity.commentCount ?? 0}</a
+      >
+    </div>
   {/if}
 </article>

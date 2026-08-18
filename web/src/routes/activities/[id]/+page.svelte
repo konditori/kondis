@@ -1,13 +1,13 @@
 <script lang="ts">
   import {
     ArrowLeft,
-    CalendarDays,
     Check,
     ChevronLeft,
     ChevronRight,
     Clock3,
     Flame,
     Gauge,
+    Heart,
     HeartPulse,
     MapPinned,
     Medal,
@@ -25,6 +25,7 @@
     activityControllerUpdateById,
     ActivityUpdateSport,
     getSdkRequestOptions,
+    socialControllerLikers,
     Sport,
   } from "$lib/api";
   import {
@@ -37,8 +38,12 @@
   } from "$lib/activity-types";
   import { bestEffortLabel, bestEffortRecordName } from "$lib/best-efforts";
   import ActivityProfile from "$lib/components/ActivityProfile.svelte";
+  import ActivityComments from "$lib/components/ActivityComments.svelte";
   import ImageLightbox from "$lib/components/ImageLightbox.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
+  import UserAvatar from "$lib/components/UserAvatar.svelte";
+  import { userDisplayName } from "$lib/user-name";
+  import { canEditActivity } from "$lib/activity-access";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import {
     activityName,
@@ -73,6 +78,22 @@
   let draftDescription = $state("");
   let draftExcludeFromRankings = $state(false);
   let draftTags = $state<Activity["tags"]>([]);
+  let likers = $state<
+    | {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+      }[]
+    | null
+  >(null);
+  let likersOpen = $state(false);
+  let likersHovered = $state(false);
+  let likersLoading = $state(false);
+  const likersVisible = $derived(likersOpen || likersHovered);
+  const canEditCurrentActivity = $derived(
+    canEditActivity(activity.userId, data.user?.id),
+  );
   const tagLabels: Record<Activity["tags"][number], string> = {
     race: "Race",
     long_run: "Long Run",
@@ -332,6 +353,24 @@
     editing = true;
   }
 
+  async function loadLikers() {
+    if (likers !== null || likersLoading) return;
+    likersLoading = true;
+    try {
+      likers = await socialControllerLikers(
+        { id: activity.id },
+        getSdkRequestOptions(),
+      );
+    } finally {
+      likersLoading = false;
+    }
+  }
+
+  async function toggleLikers() {
+    likersOpen = !likersOpen;
+    if (likersOpen) await loadLikers();
+  }
+
   function rankOrdinal(rank: number): string {
     return rank === 2 ? "2nd" : "3rd";
   }
@@ -496,19 +535,73 @@
       ><ArrowLeft size={18} /> All activities</a
     >
     <div class="detail-heading">
-      <span class="detail-sport"><Icon size={27} /></span>
+      <UserAvatar
+        name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
+        src={activity.athlete?.avatarUrl}
+        size={54}
+      />
       <div class="detail-title">
-        <span class="eyebrow"
-          >{activityTypeLabel(data.activityTypes, activity.sport)}</span
-        >
         <h1>{activityName(activity)}</h1>
+        <p class="detail-timestamp">
+          {localDate(activity.startedAt)} · {localTime(activity.startedAt)}
+          <span
+            class="activity-sport-inline"
+            class:running-sport={["run", "trail_run", "virtual_run"].includes(
+              activity.sport,
+            )}
+            aria-label={activityTypeLabel(data.activityTypes, activity.sport)}
+            ><Icon size={17} /></span
+          >
+        </p>
       </div>
-      <button
-        class="edit-metadata-button"
-        type="button"
-        onclick={startEditing}
-        aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
+      {#if canEditCurrentActivity}
+        <button
+          class="edit-metadata-button"
+          type="button"
+          onclick={startEditing}
+          aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
+        >
+      {/if}
+      <div
+        class="detail-likes"
+        role="group"
+        aria-label="Activity likes"
+        onmouseenter={() => {
+          likersHovered = true;
+          void loadLikers();
+        }}
+        onmouseleave={() => (likersHovered = false)}
       >
+        <button
+          type="button"
+          onclick={toggleLikers}
+          aria-expanded={likersVisible}
+          aria-label="Show people who liked this activity"
+          ><Heart size={16} fill="currentColor" />
+          {activity.likeCount ?? 0}</button
+        >
+        {#if likersVisible}
+          <div class="detail-likers-popover" role="tooltip">
+            <strong>Likes</strong>
+            {#if likersLoading}
+              <span>Loading…</span>
+            {:else if likers?.length}
+              {#each likers as liker}
+                <a href={`/people/${liker.id}`}>
+                  <UserAvatar
+                    name={userDisplayName(liker)}
+                    src={liker.avatarUrl}
+                    size={28}
+                  />
+                  {userDisplayName(liker)}
+                </a>
+              {/each}
+            {:else}
+              <span>No likes yet.</span>
+            {/if}
+          </div>
+        {/if}
+      </div>
     </div>
     {#if editing}
       <form class="metadata-editor" onsubmit={saveMetadata}>
@@ -591,10 +684,6 @@
           </p>{/if}
       </form>
     {/if}
-    <div class="detail-date">
-      <span><CalendarDays size={17} />{localDate(activity.startedAt)}</span
-      ><span><Clock3 size={17} />{localTime(activity.startedAt)}</span>
-    </div>
     {#if activity.tags?.length}<div
         class="activity-tags"
         aria-label="Activity tags"
@@ -848,12 +937,6 @@
   {/if}
 
   <section class="metrics-section">
-    <div class="section-heading">
-      <div>
-        <span class="eyebrow">Workout summary</span>
-        <h2>At a glance</h2>
-      </div>
-    </div>
     <div class="metric-grid">
       {#each stats as stat}
         <article class="metric">
@@ -1026,3 +1109,10 @@
     onClose={() => (selectedImageIndex = null)}
   />
 {/if}
+<ActivityComments
+  {activity}
+  eventsUrl={data.eventsUrl}
+  viewerId={data.user?.id}
+  viewerName={data.user ? userDisplayName(data.user) : "You"}
+  viewerAvatarUrl={data.user?.avatarUrl}
+/>

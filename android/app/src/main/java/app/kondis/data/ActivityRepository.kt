@@ -91,7 +91,7 @@ class ActivityRepository
             }
 
         suspend fun refresh(search: String = ""): PageResult {
-            val response = api().activities(search = search.trim().ifBlank { null })
+            val response = api().feed(search = search.trim().ifBlank { null })
             if (search.isBlank()) {
                 activityDao.replaceActivities(response.activities.map(::toEntity))
             } else {
@@ -104,7 +104,7 @@ class ActivityRepository
             cursor: String,
             search: String = "",
         ): PageResult {
-            val response = api().activities(cursor = cursor, search = search.trim().ifBlank { null })
+            val response = api().feed(cursor = cursor, search = search.trim().ifBlank { null })
             activityDao.upsertActivities(response.activities.map(::toEntity))
             return PageResult(response.nextCursor, response.total)
         }

@@ -26,5 +26,8 @@
         >Sign in</button
       >
     </form>
+    <p class="auth-switch">
+      Don't have an account? <a href="/register">Create one</a>
+    </p>
   </section>
 </main>

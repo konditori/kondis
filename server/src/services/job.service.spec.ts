@@ -5,7 +5,7 @@ import { type ConfigService } from 'src/config/config.service';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
-import { JobItem } from 'src/types';
+import { JobItem } from 'src/types/jobs';
 import { newTestService } from 'test/utils';
 
 const makeConfig = (workers: WorkerType[]): ConfigService =>
@@ -37,11 +37,9 @@ describe('JobService', () => {
   } as unknown as JobRepository;
 
   const setup = (workers = [WorkerType.API, WorkerType.JOBS]) =>
-    newTestService(
-      JobService,
-      [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })],
-      { jobRepository },
-    );
+    newTestService(JobService, [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })], {
+      jobRepository,
+    });
 
   const makeService = (workers = [WorkerType.API, WorkerType.JOBS]) => setup(workers).sut;
 

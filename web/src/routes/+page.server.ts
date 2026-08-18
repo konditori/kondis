@@ -1,6 +1,9 @@
-import { activityControllerListRecent } from "$lib/api";
-import { activityEventsUrl, getServerSdkRequestOptions } from "$lib/server/api";
-import { apiUrl } from "$lib/server/api";
+import { socialControllerFeed } from "$lib/api";
+import {
+  activityEventsUrl,
+  apiUrl,
+  getServerSdkRequestOptions,
+} from "$lib/server/api";
 import type { ActivityPage, LiveWorkout } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
@@ -11,7 +14,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     ? ((await liveResponse.json()) as LiveWorkout[])
     : [];
   try {
-    const body = (await activityControllerListRecent(
+    const body = (await socialControllerFeed(
       {},
       getServerSdkRequestOptions(locals.kondisFetch),
     )) as ActivityPage;

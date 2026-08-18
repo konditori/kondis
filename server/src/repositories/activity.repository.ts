@@ -68,7 +68,7 @@ export type UpdateActivityInput = Pick<
   'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings' | 'tags'
 >;
 
-export type ActivityCursor = {
+type ActivityCursor = {
   startedAt: Date;
   id: string;
 };
@@ -405,6 +405,7 @@ export class ActivityRepository {
     cursor,
     search,
     userId,
+    feedUserId,
     tags,
     tagMatch = 'any',
   }: {
@@ -412,6 +413,7 @@ export class ActivityRepository {
     cursor?: ActivityCursor;
     search?: string;
     userId?: string;
+    feedUserId?: string;
     tags?: ActivityTag[];
     tagMatch?: 'any' | 'all';
   }) {
@@ -429,6 +431,23 @@ export class ActivityRepository {
       .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
     if (userId) {
       query = query.where('activity.user_id', '=', userId);
+    }
+    if (feedUserId) {
+      query = query
+        .where(({ or, eb, exists, selectFrom }) =>
+          or([
+            eb('activity.user_id', '=', feedUserId),
+            exists(
+              selectFrom('user_follow')
+                .select('follower_id')
+                .where('follower_id', '=', feedUserId)
+                .whereRef('followee_id', '=', 'activity.user_id'),
+            ),
+          ]),
+        )
+        .where(
+          sql<boolean>`NOT EXISTS (SELECT 1 FROM user_block b WHERE (b.blocker_id = ${feedUserId}::uuid AND b.blocked_id = activity.user_id) OR (b.blocker_id = activity.user_id AND b.blocked_id = ${feedUserId}::uuid))`,
+        );
     }
 
     if (search) {
@@ -468,10 +487,28 @@ export class ActivityRepository {
     userId?: string,
     tags?: ActivityTag[],
     tagMatch: 'any' | 'all' = 'any',
+    feedUserId?: string,
   ): Promise<number> {
     let query = this.db.selectFrom('activity').select(({ fn }) => fn.countAll<number>().as('count'));
     if (userId) {
       query = query.where('activity.user_id', '=', userId);
+    }
+    if (feedUserId) {
+      query = query
+        .where(({ or, eb, exists, selectFrom }) =>
+          or([
+            eb('activity.user_id', '=', feedUserId),
+            exists(
+              selectFrom('user_follow')
+                .select('follower_id')
+                .where('follower_id', '=', feedUserId)
+                .whereRef('followee_id', '=', 'activity.user_id'),
+            ),
+          ]),
+        )
+        .where(
+          sql<boolean>`NOT EXISTS (SELECT 1 FROM user_block b WHERE (b.blocker_id = ${feedUserId}::uuid AND b.blocked_id = activity.user_id) OR (b.blocker_id = activity.user_id AND b.blocked_id = ${feedUserId}::uuid))`,
+        );
     }
     if (search) {
       const pattern = `%${search}%`;
@@ -687,21 +724,22 @@ export class ActivityRepository {
       const overallGroups = new Map<string, typeof efforts>();
       const yearGroups = new Map<string, typeof efforts>();
       for (const effort of efforts) {
-        if (!effort.eligible) continue;
+        if (!effort.eligible) {
+          continue;
+        }
         addToGroup(overallGroups, `${effort.sportGroup}:${effort.type}`, effort);
         addToGroup(yearGroups, `${effort.sportGroup}:${effort.type}:${effort.year}`, effort);
       }
 
       const rank = (groups: Map<string, typeof efforts>, property: 'overallRank' | 'yearRank'): void => {
         for (const group of groups.values()) {
-          group
-            .sort((left, right) => {
-              const valueOrder = left.value_kind === 'duration' ? left.value - right.value : right.value - left.value;
-              return valueOrder || left.activity_id.localeCompare(right.activity_id);
-            })
-            .forEach((effort, index) => {
-              effort[property] = index + 1;
-            });
+          group.sort((left, right) => {
+            const valueOrder = left.value_kind === 'duration' ? left.value - right.value : right.value - left.value;
+            return valueOrder || left.activity_id.localeCompare(right.activity_id);
+          });
+          for (const [index, effort] of group.entries()) {
+            effort[property] = index + 1;
+          }
         }
       };
       rank(overallGroups, 'overallRank');

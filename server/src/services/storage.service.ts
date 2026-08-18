@@ -4,7 +4,7 @@ import { OnJob } from 'src/decorators';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
-import { JobOf } from 'src/types';
+import { JobOf } from 'src/types/jobs';
 
 const TEMPORARY_FILE_RETENTION_MS = 24 * 60 * 60 * 1000;
 

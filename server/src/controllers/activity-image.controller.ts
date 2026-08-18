@@ -22,7 +22,7 @@ import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ActivityImageDto, ActivityImageListDto, ActivityImageUpdateDto } from 'src/dtos/activity-image.dto';
 import { ActivityImageService } from 'src/services/activity-image.service';
-import { UploadedFileData } from 'src/types';
+import { UploadedFileData } from 'src/types/uploads';
 
 @ApiTags('activity-images')
 @Controller()

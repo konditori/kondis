@@ -36,7 +36,7 @@ describe(ActivityService.name, () => {
   });
 
   beforeEach(async () => {
-    await resetMediumTestDatabase(db);
+    await resetMediumTestDatabase(db, jobs);
     testUser = await factory.newUser();
   });
 
@@ -188,7 +188,8 @@ describe(ActivityService.name, () => {
         'ride',
       );
 
-      const activity = (await serviceApi.listRecent({ limit: 50 })).activities.find(({ id }) => id === activityId);
+      const recent = await serviceApi.listRecent({ limit: 50 });
+      const activity = recent.activities.find(({ id }) => id === activityId);
 
       expect(activity?.topBestEfforts?.some(({ type }) => type.startsWith('power_'))).toBe(true);
       expect(activity?.achievementCount).toBeGreaterThan(activity?.topBestEfforts?.length ?? 0);
@@ -532,17 +533,10 @@ describe(ActivityService.name, () => {
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
       const afterAdd = await serviceApi.listRecent({ limit: 50 });
       expect(afterAdd.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
-      expect((await serviceApi.getById({ id: goldId })).bestEfforts).toEqual(
-        expect.arrayContaining([expect.objectContaining({ type: '5k' })]),
-      );
-      expect(
-        (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
-          ({ activityName, overallRank }) => ({
-            activityName,
-            overallRank,
-          }),
-        ),
-      ).toEqual([
+      const goldActivity = await serviceApi.getById({ id: goldId });
+      expect(goldActivity.bestEfforts).toEqual(expect.arrayContaining([expect.objectContaining({ type: '5k' })]));
+      const effortsAfterAdd = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
+      expect(effortsAfterAdd.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
         { activityName: 'silver', overallRank: 1 },
         { activityName: 'bronze', overallRank: 2 },
       ]);
@@ -556,13 +550,9 @@ describe(ActivityService.name, () => {
       expect(afterRemove.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual(
         expect.arrayContaining([expect.objectContaining({ overallRank: 1 })]),
       );
+      const effortsAfterRemove = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
       expect(
-        (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
-          ({ activityName, overallRank }) => ({
-            activityName,
-            overallRank,
-          }),
-        ),
+        effortsAfterRemove.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank })),
       ).toEqual([
         { activityName: 'gold', overallRank: 1 },
         { activityName: 'silver', overallRank: 2 },
@@ -591,6 +581,16 @@ describe(ActivityService.name, () => {
 
     it('returns no activity for a missing activity id', async () => {
       await expect(sut.updateById(MISSING_UUID, testUser.id, { name: 'x' })).resolves.toBeUndefined();
+    });
+
+    it('does not allow another user to update an activity', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'owner activity');
+      const otherUser = await factory.newUser();
+
+      await expect(
+        sut.updateById(activityId, otherUser.id, { name: 'changed by another user' }),
+      ).resolves.toBeUndefined();
+      await expect(activities.getById(activityId)).resolves.toMatchObject({ name: 'owner activity' });
     });
   });
 
@@ -638,6 +638,14 @@ describe(ActivityService.name, () => {
 
     it('returns false for a missing activity id', async () => {
       await expect(serviceApi.deleteById({ id: MISSING_UUID })).resolves.toBe(false);
+    });
+
+    it('does not allow another user to delete an activity', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'owner activity');
+      const otherUser = await factory.newUser();
+
+      await expect(sut.deleteById(activityId, otherUser.id)).resolves.toBe(false);
+      await expect(activities.getById(activityId)).resolves.toBeDefined();
     });
   });
 });

@@ -43,6 +43,21 @@ export function duration(seconds: number | null): string {
   return `${minutes}:${remainder.toString().padStart(2, "0")}`;
 }
 
+export function ordinal(value: number): string {
+  const lastTwoDigits = value % 100;
+  const suffix =
+    lastTwoDigits >= 11 && lastTwoDigits <= 13
+      ? "th"
+      : value % 10 === 1
+        ? "st"
+        : value % 10 === 2
+          ? "nd"
+          : value % 10 === 3
+            ? "rd"
+            : "th";
+  return `${value}${suffix}`;
+}
+
 export function speed(value: number | null, unitSystem: UnitSystem): string {
   if (value == null) return "—";
   return unitSystem === "metric"
@@ -133,4 +148,34 @@ export function localTime(value: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+export function relativeTime(value: string | Date, now = new Date()): string {
+  const seconds = Math.max(
+    0,
+    Math.floor((now.getTime() - new Date(value).getTime()) / 1000),
+  );
+  if (seconds < 45) return "Just now";
+  if (seconds < 90) return "1 minute ago";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 45) return `${minutes} minutes ago`;
+  if (minutes < 90) return "1 hour ago";
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 22) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 36) return "1 day ago";
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  if (days < 14) return "1 week ago";
+
+  const weeks = Math.floor(days / 7);
+  if (days < 28) return `${weeks} weeks ago`;
+  if (days < 60) return "1 month ago";
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} months ago`;
+  if (days < 730) return "1 year ago";
+  return `${Math.floor(days / 365)} years ago`;
 }

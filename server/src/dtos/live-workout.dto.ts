@@ -19,6 +19,7 @@ export const LiveWorkoutSchema = z
     sport: ActivityTypeSchema,
     startedAt: z.string().datetime(),
     status: LiveWorkoutStatusSchema,
+    canShare: z.boolean(),
     elapsedSeconds: z.number().int().nonnegative(),
     distanceMeters: z.number().nonnegative(),
     lastSequence: z.number().int().nonnegative(),

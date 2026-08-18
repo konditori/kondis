@@ -41,6 +41,7 @@ describe('ActivityService', () => {
   const recomputeRouteMatches = vi.fn<(id: string) => Promise<boolean>>();
   const refreshBestEffortRankings = vi.fn(async () => {});
   const getBestEfforts = vi.fn();
+  const updateActivity = vi.fn();
 
   const withTransaction = vi.fn(async (fn: (trx: unknown) => Promise<unknown>) => fn('trx'));
   const emitEvent = vi.fn(async () => {});
@@ -72,6 +73,7 @@ describe('ActivityService', () => {
     recomputeRouteMatches,
     refreshBestEffortRankings,
     getBestEfforts,
+    update: updateActivity,
   } as unknown as ActivityRepository;
 
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
@@ -144,10 +146,20 @@ describe('ActivityService', () => {
     recomputeBestEfforts.mockResolvedValue(true);
     recomputeRouteMatches.mockResolvedValue(true);
     getBestEfforts.mockResolvedValue([]);
+    updateActivity.mockResolvedValue(undefined);
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
     decodeTcx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
+  });
+
+  describe('activity ownership', () => {
+    it('passes the authenticated user to the update repository query', async () => {
+      await expect(makeService().updateById(ACTIVITY_ID, 'another-user', { name: 'changed' })).resolves.toBeUndefined();
+
+      expect(updateActivity).toHaveBeenCalledWith(ACTIVITY_ID, { name: 'changed' }, 'another-user');
+      expect(emitEvent).not.toHaveBeenCalled();
+    });
   });
 
   describe('handleActivityParse', () => {

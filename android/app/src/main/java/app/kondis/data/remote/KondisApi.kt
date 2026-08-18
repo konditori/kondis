@@ -121,6 +121,13 @@ interface KondisApi {
         @Query("search") search: String? = null,
     ): ActivityPage
 
+    @GET("feed")
+    suspend fun feed(
+        @Query("cursor") cursor: String? = null,
+        @Query("limit") limit: Int = 50,
+        @Query("search") search: String? = null,
+    ): ActivityPage
+
     @GET("activities/{id}")
     suspend fun activity(
         @Path("id") id: String,

@@ -15,7 +15,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { JobService } from 'src/services/job.service';
 import { UploadService } from 'src/services/upload.service';
-import { type JobItem } from 'src/types';
+import { type JobItem } from 'src/types/jobs';
 
 import { makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -54,7 +54,7 @@ describe('JobRepository', () => {
   }, 60_000);
 
   beforeEach(async () => {
-    await resetMediumTestDatabase(db);
+    await resetMediumTestDatabase(db, jobs);
   });
 
   afterAll(async () => {
@@ -90,9 +90,18 @@ describe('JobRepository', () => {
       [JobName.ActivityDelete]: { name: JobName.ActivityDelete, data: { id: MISSING_UUID } },
       [JobName.ActivityImageIngest]: {
         name: JobName.ActivityImageIngest,
-        data: { imageId: MISSING_UUID, uploadId: MISSING_UUID, storagePath: 'temporary/missing.jpg', originalName: 'missing.jpg', checksum: 'missing' },
+        data: {
+          imageId: MISSING_UUID,
+          uploadId: MISSING_UUID,
+          storagePath: 'temporary/missing.jpg',
+          originalName: 'missing.jpg',
+          checksum: 'missing',
+        },
       },
-      [JobName.ActivityImageAttach]: { name: JobName.ActivityImageAttach, data: { uploadId: MISSING_UUID, images: [] } },
+      [JobName.ActivityImageAttach]: {
+        name: JobName.ActivityImageAttach,
+        data: { uploadId: MISSING_UUID, images: [] },
+      },
       [JobName.ActivityImageGenerateThumbnails]: {
         name: JobName.ActivityImageGenerateThumbnails,
         data: { id: MISSING_UUID },
@@ -104,6 +113,10 @@ describe('JobRepository', () => {
           originalName: 'empty.zip',
           storagePath: 'temporary/empty.zip',
         },
+      },
+      [JobName.UserAvatarUpload]: {
+        name: JobName.UserAvatarUpload,
+        data: { userId: MISSING_UUID, storagePath: 'temporary/missing.jpg' },
       },
       [JobName.FileDelete]: { name: JobName.FileDelete, data: { paths: [] } },
       [JobName.TemporaryFileCleanup]: { name: JobName.TemporaryFileCleanup, data: {} },

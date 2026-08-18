@@ -7,7 +7,7 @@ import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto, TakeoutImportStatusDto } from 'src/dtos/upload.dto';
 import { UploadService } from 'src/services/upload.service';
-import { UploadedFileData } from 'src/types';
+import { UploadedFileData } from 'src/types/uploads';
 
 @ApiTags('uploads')
 @Controller()

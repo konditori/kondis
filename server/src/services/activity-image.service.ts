@@ -18,8 +18,10 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
-import { JobOf, UploadedFileData } from 'src/types';
+import { JobOf } from 'src/types/jobs';
+import { UploadedFileData } from 'src/types/uploads';
 
 const SUPPORTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'heif', 'avif']);
 const MIME_TYPES: Record<string, string> = {
@@ -43,6 +45,7 @@ export class ActivityImageService {
     private readonly database: DatabaseRepository,
     private readonly jobs: JobRepository,
     private readonly logger: ConsoleLogger,
+    private readonly socialRepository: SocialRepository,
   ) {
     this.logger.setContext(ActivityImageService.name);
   }
@@ -131,11 +134,11 @@ export class ActivityImageService {
   }
 
   async list(activityId: string, userId: string) {
-    const activity = await this.activities.getById(activityId, userId);
-    if (!activity) {
+    const activity = await this.activities.getById(activityId);
+    if (!activity || !(await this.socialRepository.canViewActivity(activityId, userId))) {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
-    const rows = await this.images.listForUpload(activity.upload_id, userId);
+    const rows = await this.images.listForUpload(activity.upload_id);
     return Promise.all(
       rows
         .filter((row) => row.status === 'ready')
@@ -191,8 +194,12 @@ export class ActivityImageService {
     variant: 'original' | 'thumbnail' | 'preview',
     userId: string,
   ): Promise<ActivityImageFile> {
-    const image = await this.images.getById(imageId, userId);
+    const image = await this.images.getById(imageId);
     if (!image) {
+      throw new NotFoundException(`Image ${imageId} does not exist`);
+    }
+    const activity = await this.activities.getByUploadId(image.upload_id);
+    if (!activity || !(await this.socialRepository.canViewActivity(activity.id, userId))) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }
     const files = await this.images.getFiles(imageId);

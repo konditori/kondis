@@ -15,6 +15,16 @@ export type ActivityTag =
 export type Activity = {
   id: string;
   uploadId: string;
+  userId?: string | null;
+  athlete?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
+  likeCount?: number;
+  commentCount?: number;
+  viewerLiked?: boolean;
   sport: ActivityType;
   name: string | null;
   description: string | null;
@@ -144,6 +154,7 @@ export type LiveWorkout = {
   sport: ActivityType;
   startedAt: string;
   status: "recording" | "paused" | "ended" | "discarded";
+  canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
   lastSequence: number;

@@ -10,7 +10,7 @@
   import type { Snapshot } from "@sveltejs/kit";
   import ActivityCard from "$lib/components/ActivityCard.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
-  import { activityControllerListRecent, getSdkRequestOptions } from "$lib/api";
+  import { socialControllerFeed, getSdkRequestOptions } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import type { Activity, ActivityPage } from "$lib/types";
   import { activityTypeLabel, sportIcon } from "$lib/activity-types";
@@ -61,7 +61,7 @@
   const displayedNextCursor = $derived(hasSearch ? searchCursor : nextCursor);
   const displayedTotal = $derived(hasSearch ? (searchTotal ?? 0) : total);
   const heading = $derived(
-    hasSearch ? `Search results for “${query.trim()}”` : "Activities",
+    hasSearch ? `Search results for “${query.trim()}”` : "Home",
   );
   const resultSummary = $derived(
     `${displayedTotal} ${displayedTotal === 1 ? "activity" : "activities"} found`,
@@ -101,7 +101,7 @@
         void goto(url, { replaceState: true, keepFocus: true, noScroll: true });
       }
 
-      void activityControllerListRecent({ search }, getSdkRequestOptions())
+      void socialControllerFeed({ search }, getSdkRequestOptions())
         .then((page) => {
           if (generation !== searchGeneration) return;
           const nextPage = page as ActivityPage;
@@ -132,7 +132,11 @@
     subscribeToActivityEvents(
       data.eventsUrl,
       (event) => {
-        if (event.type === "activity.best-efforts.available") return;
+        if (
+          event.type === "activity.best-efforts.available" ||
+          event.type === "activity.comment.created"
+        )
+          return;
         const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(
@@ -161,7 +165,7 @@
 
   async function refreshRecent() {
     try {
-      const page = (await activityControllerListRecent(
+      const page = (await socialControllerFeed(
         {},
         getSdkRequestOptions(),
       )) as ActivityPage;
@@ -186,7 +190,7 @@
     loading = true;
     loadError = false;
     try {
-      const page = (await activityControllerListRecent(
+      const page = (await socialControllerFeed(
         hasSearch
           ? { cursor: searchCursor!, search: query.trim() }
           : { cursor: nextCursor! },
@@ -265,13 +269,15 @@
 
 <svelte:head><title>Activities · Kondis</title></svelte:head>
 
-<div class="page-shell">
-  <header class="page-header">
-    <div>
-      <h1>{heading}</h1>
-      {#if hasSearch}<p>{resultSummary}</p>{/if}
-    </div>
-  </header>
+<div class="page-shell home-page">
+  {#if hasSearch}
+    <header class="page-header">
+      <div>
+        <h1>{heading}</h1>
+        <p>{resultSummary}</p>
+      </div>
+    </header>
+  {/if}
 
   {#if data.unavailable}
     <div class="notice">
@@ -359,6 +365,7 @@
           {activity}
           activityTypes={data.activityTypes}
           unitSystem={data.unitSystem}
+          viewerId={data.user?.id}
         />
       {/each}
     </div>

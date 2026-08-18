@@ -2,6 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
 import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
+import { SocialUserSchema } from 'src/dtos/social.dto';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, AverageMetric, BEST_EFFORT_TYPES, BestEffortGroup } from 'src/types';
 
 export const ActivityTypeSchema = z
@@ -71,6 +72,11 @@ export const ActivitySchema = z
   .object({
     id: z.string().uuid().describe('Activity id'),
     uploadId: z.string().uuid().describe('Source upload id'),
+    userId: z.string().uuid().nullable().optional().describe('Activity owner id'),
+    athlete: SocialUserSchema.optional(),
+    likeCount: z.number().int().nonnegative().optional(),
+    commentCount: z.number().int().nonnegative().optional(),
+    viewerLiked: z.boolean().optional(),
     sport: ActivityTypeSchema,
     name: z.string().nullable().describe('Activity name'),
     description: z.string().nullable().describe('Activity description'),
@@ -232,11 +238,15 @@ export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
 export class MatchedRouteListResponseDto extends createZodDto(MatchedRouteListResponseSchema) {}
 export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
 export class ActivityTypeListResponseDto extends createZodDto(ActivityTypeListResponseSchema) {}
-export class ActivityTagListResponseDto extends createZodDto(z.array(z.object({
-  tag: ActivityTagSchema,
-  label: z.string(),
-  sports: z.union([z.literal('all'), z.array(ActivityTypeSchema)]),
-}))) {}
+export class ActivityTagListResponseDto extends createZodDto(
+  z.array(
+    z.object({
+      tag: ActivityTagSchema,
+      label: z.string(),
+      sports: z.union([z.literal('all'), z.array(ActivityTypeSchema)]),
+    }),
+  ),
+) {}
 export class BestEffortListParamDto extends createZodDto(BestEffortListParamSchema) {}
 export class BestEffortListResponseDto extends createZodDto(BestEffortListResponseSchema) {}
 export class ActivityUpdateDto extends createZodDto(ActivityUpdateSchema) {}
