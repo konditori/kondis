@@ -41,6 +41,7 @@ class OfflineWorkoutSyncTest {
     private val remoteId = "remote-sync-test-activity"
     private val deleteId = "zzzz-remote-delete-test-activity"
     private val startedAt = Instant.now().toString()
+    private lateinit var accountKey: String
 
     @Before
     fun setUp() {
@@ -48,6 +49,7 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
+        accountKey = "${server.url("/api/v1/")}|offline-sync-test-user"
         runBlocking {
             SettingsRepository(context).apply {
                 setServerUrl(server.url("/api/v1/").toString())
@@ -69,11 +71,12 @@ class OfflineWorkoutSyncTest {
             database.activityDao().saveQueuedWorkout(
                 activity = localActivityEntity(),
                 detail = localDetailEntity(),
-                workout = QueuedWorkoutEntity("local-sync-test", file.absolutePath, "Offline test run", startedAt),
+                workout =
+                    QueuedWorkoutEntity(accountKey, "local-sync-test", file.absolutePath, "Offline test run", startedAt),
             )
             database.activityDao().upsertActivities(listOf(remoteActivityEntity()))
             database.activityDao().upsertDetail(
-                ActivityDetailEntity(deleteId, deleteDetailJson(), System.currentTimeMillis()),
+                ActivityDetailEntity(accountKey, deleteId, deleteDetailJson(), System.currentTimeMillis()),
             )
         }
         database.close()
@@ -221,6 +224,7 @@ class OfflineWorkoutSyncTest {
 
     private fun localActivityEntity() =
         ActivityEntity(
+            accountKey = accountKey,
             id = "local-sync-test",
             startedAt = startedAt,
             searchableText = "offline test run run",
@@ -229,7 +233,7 @@ class OfflineWorkoutSyncTest {
         )
 
     private fun localDetailEntity() =
-        ActivityDetailEntity("local-sync-test", localDetailJson(), System.currentTimeMillis())
+        ActivityDetailEntity(accountKey, "local-sync-test", localDetailJson(), System.currentTimeMillis())
 
     private fun localActivityJson() =
         activityJson(
@@ -256,6 +260,7 @@ class OfflineWorkoutSyncTest {
 
     private fun remoteActivityEntity() =
         ActivityEntity(
+            accountKey = accountKey,
             id = deleteId,
             startedAt = startedAt,
             searchableText = "delete test run run",
