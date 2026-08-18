@@ -1,0 +1,19 @@
+server/test/medium/specs/service/upload.service.spec.ts
+  s_c2cda2d38dd900::t_af344c1ccf97d1 425-429
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ecd5469fdddc8ae3ace68c4348603989c4c63498",
+  "prompts": {},
+  "sessions": {
+    "s_c2cda2d38dd900": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3a2d8c55-4236-418f-b369-23184ff17afe",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
