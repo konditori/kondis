@@ -72,7 +72,13 @@ class OfflineWorkoutSyncTest {
                 activity = localActivityEntity(),
                 detail = localDetailEntity(),
                 workout =
-                    QueuedWorkoutEntity(accountKey, "local-sync-test", file.absolutePath, "Offline test run", startedAt),
+                    QueuedWorkoutEntity(
+                        accountKey,
+                        "local-sync-test",
+                        file.absolutePath,
+                        "Offline test run",
+                        startedAt,
+                    ),
             )
             database.activityDao().upsertActivities(listOf(remoteActivityEntity()))
             database.activityDao().upsertDetail(
@@ -117,7 +123,7 @@ class OfflineWorkoutSyncTest {
                 .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
                 .addMigrations(TEST_MIGRATION_1_2)
                 .build()
-        runBlocking { check(verificationDatabase.activityDao().queuedWorkouts().isEmpty()) }
+            runBlocking { check(verificationDatabase.activityDao().queuedWorkouts(accountKey).isEmpty()) }
         verificationDatabase.close()
     }
 
