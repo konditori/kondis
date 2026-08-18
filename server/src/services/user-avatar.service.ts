@@ -5,7 +5,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
-import type { UploadedFileData } from 'src/types';
+import type { UploadedFileData } from 'src/types/uploads';
 
 const AVATAR_SIZE = 512;
 const AVATAR_MIME_TYPE = 'image/webp';

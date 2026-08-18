@@ -4,7 +4,7 @@ import { KondisDatabase, KYSELY } from 'src/db/database';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import { ActivityType } from 'src/types';
 
-export type LivePointInput = {
+type LivePointInput = {
   sequence: number;
   recordedAt: Date;
   latitude: number;

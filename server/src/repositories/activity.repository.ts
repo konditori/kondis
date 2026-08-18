@@ -68,7 +68,7 @@ export type UpdateActivityInput = Pick<
   'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings' | 'tags'
 >;
 
-export type ActivityCursor = {
+type ActivityCursor = {
   startedAt: Date;
   id: string;
 };

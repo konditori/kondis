@@ -3,7 +3,7 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 import { ConfigService } from 'src/config/config.service';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
 import { JobRepository } from 'src/repositories/job.repository';
-import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types';
+import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
 
 const asJobItem = (name: ManualJobName): JobItem => {

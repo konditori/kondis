@@ -9,7 +9,7 @@ import { createMediumTestDatabase, getTestDatabaseConfig, resetMediumTestDatabas
 describe(EventRepository.name, () => {
   let db: KondisDatabase;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     db = createMediumTestDatabase();
   });
   beforeEach(() => resetMediumTestDatabase(db));

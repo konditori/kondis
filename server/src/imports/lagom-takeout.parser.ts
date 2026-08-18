@@ -5,7 +5,8 @@ import { parse } from 'csv-parse/sync';
 import { Open, type File as ZipEntry } from 'unzipper';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { ActivityTag, ActivityType, UploadedFileData } from 'src/types';
+import type { ActivityTag, ActivityType } from 'src/types';
+import type { UploadedFileData } from 'src/types/uploads';
 import { toActivityType } from 'src/utils/activity';
 
 const ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
@@ -315,7 +316,10 @@ export class LagomTakeoutParser {
       const description = descriptionIndex === -1 ? null : row[descriptionIndex]?.trim() || null;
       const manifestSport = sportIndex === -1 ? '' : (row[sportIndex]?.trim() ?? '');
       const sport = manifestSport ? toActivityType(manifestSport) : null;
-      const tags: ActivityTag[] = commuteIndex !== -1 && ['true', '1', 'yes'].includes((row[commuteIndex] ?? '').trim().toLowerCase()) ? ['commute'] : [];
+      const tags: ActivityTag[] =
+        commuteIndex !== -1 && ['true', '1', 'yes'].includes((row[commuteIndex] ?? '').trim().toLowerCase())
+          ? ['commute']
+          : [];
       if (!filename) {
         const startedAt = row[this.column(headers, 'Activity Date')]?.trim();
         const elapsedTime = this.number(headers, row, 'Elapsed Time');

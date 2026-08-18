@@ -47,14 +47,7 @@ describe(UploadService.name, () => {
     const config = { storageDir } as unknown as ConfigService;
 
     storageRepository = new StorageRepository(config, crypto);
-    sut = new UploadService(
-      uploadRepository,
-      storageRepository,
-      crypto,
-      new DatabaseRepository(db),
-      jobs,
-      logger,
-    );
+    sut = new UploadService(uploadRepository, storageRepository, crypto, new DatabaseRepository(db), jobs, logger);
 
     testApp = await createTestApp();
     queuedSut = testApp.get(UploadService);
@@ -177,9 +170,7 @@ describe(UploadService.name, () => {
     const contents = Buffer.from('activity');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow(
-      'queue unavailable',
-    );
+    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow('queue unavailable');
 
     const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(contents);
@@ -284,18 +275,16 @@ describe(UploadService.name, () => {
     const archive = Buffer.from('archive');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow(
-      'queue unavailable',
-    );
+    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow('queue unavailable');
 
     const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
   });
 
   it('rejects a non-ZIP Strava takeout upload', async () => {
-    await expect(
-      sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope'))),
-    ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
+    await expect(sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope')))).rejects.toThrow(
+      'Only a Strava takeout .zip file is accepted',
+    );
   });
 
   describe('real queue processing', () => {
@@ -343,9 +332,7 @@ describe(UploadService.name, () => {
         ),
         'activities/run.fit.gz': gzipSync(fit),
       });
-      const updatedResult = await queuedSut.uploadLagomTakeout(
-        makeUploadedFile('updated-export.zip', updatedArchive),
-      );
+      const updatedResult = await queuedSut.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
       expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({

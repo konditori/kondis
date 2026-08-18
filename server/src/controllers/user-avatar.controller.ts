@@ -18,7 +18,7 @@ import type { Response } from 'express';
 import { AuthenticatedUser, CurrentUser } from 'src/auth';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { UserAvatarService } from 'src/services/user-avatar.service';
-import { UploadedFileData } from 'src/types';
+import { UploadedFileData } from 'src/types/uploads';
 
 @ApiTags('user avatars')
 @Controller('users')

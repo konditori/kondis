@@ -3,7 +3,7 @@ import { sql } from 'kysely';
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 
 export type SocialUser = { id: string; name: string; avatarUrl: string | null };
-export type ActivityEngagement = {
+type ActivityEngagement = {
   activity_id: string;
   like_count: number;
   comment_count: number;

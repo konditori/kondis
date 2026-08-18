@@ -188,7 +188,8 @@ describe(ActivityService.name, () => {
         'ride',
       );
 
-      const activity = (await serviceApi.listRecent({ limit: 50 })).activities.find(({ id }) => id === activityId);
+      const recent = await serviceApi.listRecent({ limit: 50 });
+      const activity = recent.activities.find(({ id }) => id === activityId);
 
       expect(activity?.topBestEfforts?.some(({ type }) => type.startsWith('power_'))).toBe(true);
       expect(activity?.achievementCount).toBeGreaterThan(activity?.topBestEfforts?.length ?? 0);
@@ -532,17 +533,10 @@ describe(ActivityService.name, () => {
       await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
       const afterAdd = await serviceApi.listRecent({ limit: 50 });
       expect(afterAdd.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
-      expect((await serviceApi.getById({ id: goldId })).bestEfforts).toEqual(
-        expect.arrayContaining([expect.objectContaining({ type: '5k' })]),
-      );
-      expect(
-        (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
-          ({ activityName, overallRank }) => ({
-            activityName,
-            overallRank,
-          }),
-        ),
-      ).toEqual([
+      const goldActivity = await serviceApi.getById({ id: goldId });
+      expect(goldActivity.bestEfforts).toEqual(expect.arrayContaining([expect.objectContaining({ type: '5k' })]));
+      const effortsAfterAdd = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
+      expect(effortsAfterAdd.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
         { activityName: 'silver', overallRank: 1 },
         { activityName: 'bronze', overallRank: 2 },
       ]);
@@ -556,13 +550,9 @@ describe(ActivityService.name, () => {
       expect(afterRemove.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual(
         expect.arrayContaining([expect.objectContaining({ overallRank: 1 })]),
       );
+      const effortsAfterRemove = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
       expect(
-        (await serviceApi.listBestEfforts({ sport: 'run', type: '5k' })).efforts.map(
-          ({ activityName, overallRank }) => ({
-            activityName,
-            overallRank,
-          }),
-        ),
+        effortsAfterRemove.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank })),
       ).toEqual([
         { activityName: 'gold', overallRank: 1 },
         { activityName: 'silver', overallRank: 2 },

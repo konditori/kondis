@@ -18,7 +18,8 @@ import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ImportProgressStore } from 'src/state/import-progress.store';
-import { JobOf, UploadedFileData } from 'src/types';
+import { JobOf } from 'src/types/jobs';
+import { UploadedFileData } from 'src/types/uploads';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 

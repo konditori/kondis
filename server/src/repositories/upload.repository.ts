@@ -4,13 +4,13 @@ import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { NewUpload, Upload, UploadStatus } from 'src/db/schema';
 import { ActivityType } from 'src/types';
 
-export type UploadPageOptions = {
+type UploadPageOptions = {
   force: boolean;
   after?: string;
   limit: number;
 };
 
-export type ManualActivitySignature = {
+type ManualActivitySignature = {
   startedAt: Date;
   sport: ActivityType;
   elapsedTime: number;

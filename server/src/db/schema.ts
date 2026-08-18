@@ -77,4 +77,5 @@ export type UserBlock = Selectable<UserBlockTable>;
 export type ActivityLike = Selectable<ActivityLikeTable>;
 export type ActivityComment = Selectable<ActivityCommentTable>;
 
-export { type StreamType, type UploadStatus } from 'src/types';
+export { type StreamType } from 'src/types';
+export { type UploadStatus } from 'src/types/uploads';

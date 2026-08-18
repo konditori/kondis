@@ -1,16 +1,29 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ConsoleLogger } from '@nestjs/common';
+import { QueueCommand, QueueName } from 'src/enum';
 import type { JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
-import { QueueCommand, QueueName } from 'src/enum';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+
+const makeJobService = () => {
+  const paused = new Set<QueueName>();
+  const jobs = {
+    getJobCounts: () => ({ queued: 0, active: 0, completed: 0, failed: 0, total: 0 }),
+    isPaused: (queue: QueueName) => paused.has(queue),
+    pause: (queue: QueueName) => void paused.add(queue),
+    resume: (queue: QueueName) => void paused.delete(queue),
+  } as unknown as JobRepository;
+  return {
+    sut: new JobService({ hasWorker: () => false } as never, jobs, new ConsoleLogger()),
+  };
+};
 
 describe(JobService.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     db = createMediumTestDatabase();
   });
 
@@ -19,25 +32,8 @@ describe(JobService.name, () => {
     await db?.destroy();
   });
 
-  const setup = () => {
-    const paused = new Set<QueueName>();
-    const jobs = {
-      getJobCounts: async () => ({ queued: 0, active: 0, completed: 0, failed: 0, total: 0 }),
-      isPaused: (queue: QueueName) => paused.has(queue),
-      pause: async (queue: QueueName) => void paused.add(queue),
-      resume: async (queue: QueueName) => void paused.delete(queue),
-    } as unknown as JobRepository;
-    return {
-      sut: new JobService(
-        { hasWorker: () => false } as never,
-        jobs,
-        new ConsoleLogger(),
-      ),
-    };
-  };
-
   it('reports every configured queue and handles queue commands', async () => {
-    const { sut } = setup();
+    const { sut } = makeJobService();
 
     const status = await sut.getAllJobStatus();
     expect(Object.keys(status).sort()).toEqual(Object.values(QueueName).sort());

@@ -34,12 +34,11 @@ import {
   BestEffortGroup,
   BestEffortType,
   CYCLING_BEST_EFFORTS,
-  JobItem,
-  JobOf,
   ParsedActivity,
   ParsedActivityStructure,
   RUNNING_BEST_EFFORTS,
 } from 'src/types';
+import { JobItem, JobOf } from 'src/types/jobs';
 import { buildActivityAnalysis } from 'src/utils/activity-details';
 import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 

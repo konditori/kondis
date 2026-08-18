@@ -8,7 +8,7 @@ import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/t
 describe(UploadRepository.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     db = createMediumTestDatabase();
   });
   beforeEach(() => resetMediumTestDatabase(db));
@@ -37,8 +37,18 @@ describe(UploadRepository.name, () => {
 
   it('paginates uploads that still need parsing', async () => {
     const { sut } = setup();
-    const first = await sut.create({ checksum: '1'.repeat(32), original_name: '1.fit', byte_size: 1, storage_path: '1/1.fit' });
-    const second = await sut.create({ checksum: '2'.repeat(32), original_name: '2.fit', byte_size: 1, storage_path: '2/2.fit' });
+    const first = await sut.create({
+      checksum: '1'.repeat(32),
+      original_name: '1.fit',
+      byte_size: 1,
+      storage_path: '1/1.fit',
+    });
+    const second = await sut.create({
+      checksum: '2'.repeat(32),
+      original_name: '2.fit',
+      byte_size: 1,
+      storage_path: '2/2.fit',
+    });
 
     const ids = await sut.getIdsToParse({ force: false, limit: 10 });
     expect(ids).toEqual(expect.arrayContaining([first.id, second.id]));

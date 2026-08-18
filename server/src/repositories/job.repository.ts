@@ -9,7 +9,7 @@ import { ConfigService } from 'src/config/config.service';
 import { KondisTransaction } from 'src/db/database';
 import type { JobConfig } from 'src/decorators';
 import { JobName, JobStatus, MetadataKey, QueueName, WorkerType } from 'src/enum';
-import { JobCounts, JobItem, JobOf } from 'src/types';
+import { JobCounts, JobItem, JobOf } from 'src/types/jobs';
 import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
 
 type StoredJob = { name: JobName; data?: object };
@@ -21,7 +21,7 @@ type JobMapItem = {
   label: string;
 };
 
-export type QueueJobOptions = {
+type QueueJobOptions = {
   transaction?: KondisTransaction;
 };
 
