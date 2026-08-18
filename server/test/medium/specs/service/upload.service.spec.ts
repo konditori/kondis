@@ -96,6 +96,7 @@ describe(UploadService.name, () => {
         originalName: 'ride.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
         checksum: crypto.xxHash(buffer),
+        userId: ownerId,
       },
     });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(buffer);
@@ -110,6 +111,7 @@ describe(UploadService.name, () => {
       originalName: 'ride.fit',
       storagePath,
       checksum: crypto.xxHash(buffer),
+      userId: ownerId,
     };
 
     await expect(sut.handleActivityUpload(data)).resolves.toBe('success');
@@ -145,6 +147,7 @@ describe(UploadService.name, () => {
         originalName: file.originalname,
         storagePath,
         checksum: crypto.xxHash(file.buffer),
+        userId: ownerId,
       }),
     ).resolves.toBe('success');
 
@@ -162,6 +165,7 @@ describe(UploadService.name, () => {
         originalName: 'ride.fit',
         storagePath,
         checksum: crypto.xxHash(Buffer.from('original')),
+        userId: ownerId,
       }),
     ).rejects.toThrow('Activity upload checksum mismatch');
     expect(queue).not.toHaveBeenCalled();
@@ -215,6 +219,7 @@ describe(UploadService.name, () => {
         originalName: 'export.zip',
         storagePath: expect.stringMatching(/^temporary\/.+\.zip$/),
         takeoutImportId: first.importId,
+        userId: ownerId,
       },
     });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
@@ -241,6 +246,7 @@ describe(UploadService.name, () => {
     expect(fitJob).toEqual({
       name: JobName.ActivityUpload,
       data: {
+        userId: ownerId,
         originalName: 'run.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
         checksum: crypto.xxHash(fit),
@@ -253,6 +259,7 @@ describe(UploadService.name, () => {
     expect(gpxJob).toEqual({
       name: JobName.ActivityUpload,
       data: {
+        userId: ownerId,
         originalName: 'ride.gpx',
         storagePath: expect.stringMatching(/^temporary\/.+\.gpx$/),
         checksum: crypto.xxHash(gpx),
@@ -350,7 +357,7 @@ describe(UploadService.name, () => {
       );
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,
@@ -374,7 +381,7 @@ describe(UploadService.name, () => {
       );
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,
@@ -443,13 +450,13 @@ describe(UploadService.name, () => {
       const second = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive), ownerId);
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(first.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(first.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 0,
         status: 'completed',
       });
-      expect(queuedSut.getLagomTakeoutStatus(second.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(second.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,

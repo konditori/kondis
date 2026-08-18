@@ -66,10 +66,11 @@ describe('JobRepository', () => {
   });
 
   describe('handler discovery', () => {
-    const samples: Record<JobName, JobItem> = {
+    const buildSamples = (): Record<JobName, JobItem> => ({
       [JobName.ActivityUpload]: {
         name: JobName.ActivityUpload,
         data: {
+          userId: ownerId,
           originalName: 'sample.gpx',
           storagePath: 'temporary/sample.gpx',
           checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
@@ -113,6 +114,7 @@ describe('JobRepository', () => {
       [JobName.LagomTakeoutImport]: {
         name: JobName.LagomTakeoutImport,
         data: {
+          userId: ownerId,
           originalName: 'empty.zip',
           storagePath: 'temporary/empty.zip',
         },
@@ -127,12 +129,13 @@ describe('JobRepository', () => {
         name: JobName.ActivityManualCreate,
         data: {
           id: MISSING_UUID,
+          userId: ownerId,
           activitySport: 'run',
           startedAt: '2024-01-01T00:00:00.000Z',
           elapsedTime: 60,
         },
       },
-    };
+    });
 
     it('binds a handler to every job name', async () => {
       await storageRepository.write('temporary/sample.gpx', SAMPLE_GPX);
@@ -141,7 +144,7 @@ describe('JobRepository', () => {
         createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),
       );
 
-      for (const item of Object.values(samples)) {
+      for (const item of Object.values(buildSamples())) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
         );
@@ -154,7 +157,7 @@ describe('JobRepository', () => {
 
       try {
         await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
-        await jobs.queueAll(Object.values(samples));
+        await jobs.queueAll(Object.values(buildSamples()));
 
         const counts = await Promise.all(Object.values(QueueName).map((queue) => jobs.getJobCounts(queue)));
         const queued = counts.reduce((sum, { queued: value }) => sum + value, 0);
