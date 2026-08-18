@@ -464,6 +464,32 @@ export type LikeStateDtoOutput = {
   liked: boolean;
   likeCount: number;
 };
+export type LikerListDtoOutput = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+}[];
+export type NotificationListDtoOutput = {
+  notifications: {
+    id: string;
+    type: Type2;
+    createdAt: string;
+    actor: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      avatarUrl: string | null;
+    };
+    activityId: string | null;
+    activityName: string | null;
+    readAt: string | null;
+  }[];
+  unreadCount: number;
+};
+export type NotificationsReadDtoOutput = {
+  markedRead: boolean;
+};
 export type CommentListDtoOutput = {
   comments: {
     id: string;
@@ -1489,6 +1515,58 @@ export function socialControllerUnlike(
     }),
   );
 }
+export function socialControllerLikers(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: LikerListDtoOutput;
+    }>(`/activities/${encodeURIComponent(id)}/likes`, {
+      ...opts,
+    }),
+  );
+}
+export function socialControllerNotifications(
+  {
+    limit,
+  }: {
+    limit: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: NotificationListDtoOutput;
+    }>(
+      `/notifications${QS.query(
+        QS.explode({
+          limit,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
+    ),
+  );
+}
+export function socialControllerMarkNotificationsRead(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: NotificationsReadDtoOutput;
+    }>('/notifications/read', {
+      ...opts,
+      method: 'PATCH',
+    }),
+  );
+}
 export function socialControllerComments(
   {
     id,
@@ -1933,4 +2011,9 @@ export enum ActivityUpdateDtoActivityType {
   Workout = 'workout',
   Yoga = 'yoga',
   Other = 'other',
+}
+export enum Type2 {
+  ActivityLike = 'activity_like',
+  ActivityComment = 'activity_comment',
+  FollowRequest = 'follow_request',
 }

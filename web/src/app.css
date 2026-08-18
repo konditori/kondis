@@ -190,8 +190,139 @@ button {
 }
 .plus-menu {
   position: relative;
+  margin-left: 0;
+  margin-right: 10px;
+}
+.notification-menu {
+  position: relative;
   margin-left: auto;
   margin-right: 10px;
+}
+.notification-menu summary {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: #4d554e;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  list-style: none;
+}
+.notification-badge {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  color: white;
+  background: #c6284f;
+  border: 2px solid #f7f7f4;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+.notification-menu summary::-webkit-details-marker {
+  display: none;
+}
+.notification-menu summary:hover,
+.notification-menu[open] summary {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+.notification-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(370px, calc(100vw - 32px));
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 14px 35px #17201924;
+}
+.notification-popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 10px;
+  font-size: 14px;
+}
+.notification-popover-heading a {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+.notification-list {
+  display: grid;
+}
+.notification-list a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 9px 4px;
+  border-radius: 8px;
+}
+.notification-list a:hover {
+  background: var(--green-soft);
+}
+.notification-list strong,
+.notification-list small {
+  display: block;
+}
+.notification-list strong {
+  color: #343a35;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.notification-list small,
+.notification-empty {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.notification-empty {
+  margin: 4px;
+}
+.notifications-panel {
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.notification-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.notification-row:last-child {
+  border-bottom: 0;
+}
+.notification-row:hover {
+  background: var(--green-soft);
+}
+.notification-row strong,
+.notification-row time {
+  display: block;
+}
+.notification-row strong {
+  color: #343a35;
+  font-size: 14px;
+}
+.notification-row time {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
 }
 .plus-menu summary {
   display: grid;
@@ -1095,11 +1226,31 @@ button {
 .activity-card-description {
   grid-column: 2 / -1;
   grid-row: 2;
+  max-height: calc(1.45em * 5);
   margin: 6px 0 0;
   padding-right: 14px;
+  overflow: hidden;
   color: var(--text);
   line-height: 1.45;
   white-space: pre-wrap;
+}
+.activity-card-description.expanded {
+  max-height: none;
+}
+.activity-card-description-toggle {
+  display: block;
+  margin: 0 22px 14px 88px;
+  padding: 0;
+  color: var(--green);
+  background: transparent;
+  border: 0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.activity-card-description-toggle:hover {
+  color: var(--green-dark);
+  text-decoration: underline;
 }
 .profile-picture-upload {
   cursor: pointer;
@@ -1748,25 +1899,23 @@ button {
   gap: 16px;
   margin-top: 36px;
 }
-.detail-identity {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
 .detail-timestamp {
   margin-top: 5px;
   color: var(--muted);
-  font-size: 15px;
-}
-.detail-title h2 {
-  margin-top: 18px;
-  font-size: clamp(26px, 3vw, 38px);
-  line-height: 1.1;
-  letter-spacing: -1px;
+  font-size: 12px;
+  text-transform: capitalize;
 }
 .detail-title {
+  flex: 1;
   min-width: 0;
+}
+.detail-title h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
 }
 .edit-metadata-button {
   display: inline-flex;
@@ -1781,6 +1930,61 @@ button {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+}
+.detail-likes {
+  position: relative;
+  margin-left: auto;
+}
+.detail-likes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  color: var(--green);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.detail-likes button:hover {
+  border-color: #9dae9e;
+  background: var(--green-soft);
+}
+.detail-likers-popover {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 14px 35px #17201924;
+}
+.detail-likers-popover > strong,
+.detail-likers-popover > span {
+  display: block;
+  padding: 4px;
+  font-size: 13px;
+}
+.detail-likers-popover > span {
+  color: var(--muted);
+}
+.detail-likers-popover a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  color: #343a35;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.detail-likers-popover a:hover {
+  background: var(--green-soft);
 }
 .edit-metadata-button:hover {
   border-color: #9dae9e;
@@ -1935,7 +2139,7 @@ button {
   gap: 7px;
 }
 .activity-description {
-  max-width: 760px;
+  max-width: 900px;
   margin: 16px 0 0 71px;
   color: var(--muted);
   line-height: 1.6;
@@ -3387,6 +3591,9 @@ button {
     align-items: start;
     padding: 13px;
     gap: 11px;
+  }
+  .activity-card-description-toggle {
+    margin-left: 84px;
   }
   .sport-badge {
     width: 42px;

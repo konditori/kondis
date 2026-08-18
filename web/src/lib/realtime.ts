@@ -10,12 +10,25 @@ export type ActivityEvent =
       activity: Pick<ActivityDetail, "id" | "bestEfforts">;
     };
 
+export type NotificationEvent =
+  | {
+      type: "notification.created";
+      notification: {
+        id: string;
+        type: "activity_like" | "activity_comment" | "follow_request";
+        createdAt: string;
+        activityId: string | null;
+      };
+    }
+  | { type: "notifications.read"; readAt: string };
+
 export type ActivityEventType = ActivityEvent["type"];
 
 export function subscribeToActivityEvents(
   url: string,
   onActivity: (event: ActivityEvent) => void,
   onConnected: () => void,
+  onNotification?: (event: NotificationEvent) => void,
 ): () => void {
   let socket: WebSocket | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -57,7 +70,19 @@ export function subscribeToActivityEvents(
     };
     socket.onmessage = ({ data }) => {
       try {
-        const event = JSON.parse(String(data)) as Partial<ActivityEvent>;
+        const event = JSON.parse(String(data)) as {
+          type?: string;
+          notification?: { id?: string };
+          readAt?: string;
+          activity?: { id?: string };
+        };
+        if (
+          (event.type === "notification.created" && event.notification?.id) ||
+          (event.type === "notifications.read" && event.readAt)
+        ) {
+          onNotification?.(event as NotificationEvent);
+          return;
+        }
         if (
           (event.type === "activity.created" ||
             event.type === "activity.updated" ||

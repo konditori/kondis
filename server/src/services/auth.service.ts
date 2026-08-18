@@ -57,15 +57,8 @@ export class AuthService {
     return createActivityEventsTicket(userId, this.config.authSecret);
   }
   async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
-    if (
-      !/^\S+@\S+\.\S+$/.test(email) ||
-      password.length < 10 ||
-      !firstName.trim() ||
-      !lastName.trim()
-    ) {
-      throw new BadRequestException(
-        'Use a first name, last name, valid email, and password of at least 10 characters',
-      );
+    if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 10 || !firstName.trim() || !lastName.trim()) {
+      throw new BadRequestException('Use a first name, last name, valid email, and password of at least 10 characters');
     }
     if (await this.users.findByEmail(email.toLowerCase())) {
       throw new ConflictException('Email is already in use');

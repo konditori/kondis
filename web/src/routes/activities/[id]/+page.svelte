@@ -7,6 +7,7 @@
     Clock3,
     Flame,
     Gauge,
+    Heart,
     HeartPulse,
     MapPinned,
     Medal,
@@ -24,6 +25,7 @@
     activityControllerUpdateById,
     ActivityUpdateSport,
     getSdkRequestOptions,
+    socialControllerLikers,
     Sport,
   } from "$lib/api";
   import {
@@ -41,6 +43,7 @@
   import RouteMap from "$lib/components/RouteMap.svelte";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
   import { userDisplayName } from "$lib/user-name";
+  import { canEditActivity } from "$lib/activity-access";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import {
     activityName,
@@ -75,6 +78,20 @@
   let draftDescription = $state("");
   let draftExcludeFromRankings = $state(false);
   let draftTags = $state<Activity["tags"]>([]);
+  let likers = $state<
+    | {
+        id: string;
+        firstName: string;
+        lastName: string;
+        avatarUrl: string | null;
+      }[]
+    | null
+  >(null);
+  let likersOpen = $state(false);
+  let likersLoading = $state(false);
+  const canEditCurrentActivity = $derived(
+    canEditActivity(activity.userId, data.user?.id),
+  );
   const tagLabels: Record<Activity["tags"][number], string> = {
     race: "Race",
     long_run: "Long Run",
@@ -334,6 +351,20 @@
     editing = true;
   }
 
+  async function toggleLikers() {
+    likersOpen = !likersOpen;
+    if (!likersOpen || likers !== null || likersLoading) return;
+    likersLoading = true;
+    try {
+      likers = await socialControllerLikers(
+        { id: activity.id },
+        getSdkRequestOptions(),
+      );
+    } finally {
+      likersLoading = false;
+    }
+  }
+
   function rankOrdinal(rank: number): string {
     return rank === 2 ? "2nd" : "3rd";
   }
@@ -498,15 +529,13 @@
       ><ArrowLeft size={18} /> All activities</a
     >
     <div class="detail-heading">
-      <div class="detail-identity">
-        <UserAvatar
-          name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
-          src={activity.athlete?.avatarUrl}
-          size={80}
-        />
-      </div>
+      <UserAvatar
+        name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
+        src={activity.athlete?.avatarUrl}
+        size={54}
+      />
       <div class="detail-title">
-        <h1>{activity.athlete ? userDisplayName(activity.athlete) : "You"}</h1>
+        <h1>{activityName(activity)}</h1>
         <p class="detail-timestamp">
           {localDate(activity.startedAt)} · {localTime(activity.startedAt)}
           <span
@@ -518,14 +547,46 @@
             ><Icon size={17} /></span
           >
         </p>
-        <h2>{activityName(activity)}</h2>
       </div>
-      <button
-        class="edit-metadata-button"
-        type="button"
-        onclick={startEditing}
-        aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
-      >
+      {#if canEditCurrentActivity}
+        <button
+          class="edit-metadata-button"
+          type="button"
+          onclick={startEditing}
+          aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
+        >
+      {/if}
+      <div class="detail-likes">
+        <button
+          type="button"
+          onclick={toggleLikers}
+          aria-expanded={likersOpen}
+          aria-label="Show people who liked this activity"
+          ><Heart size={16} fill="currentColor" />
+          {activity.likeCount ?? 0}</button
+        >
+        {#if likersOpen}
+          <div class="detail-likers-popover">
+            <strong>Likes</strong>
+            {#if likersLoading}
+              <span>Loading…</span>
+            {:else if likers?.length}
+              {#each likers as liker}
+                <a href={`/people/${liker.id}`}>
+                  <UserAvatar
+                    name={userDisplayName(liker)}
+                    src={liker.avatarUrl}
+                    size={28}
+                  />
+                  {userDisplayName(liker)}
+                </a>
+              {/each}
+            {:else}
+              <span>No likes yet.</span>
+            {/if}
+          </div>
+        {/if}
+      </div>
     </div>
     {#if editing}
       <form class="metadata-editor" onsubmit={saveMetadata}>
@@ -861,12 +922,6 @@
   {/if}
 
   <section class="metrics-section">
-    <div class="section-heading">
-      <div>
-        <span class="eyebrow">Workout summary</span>
-        <h2>At a glance</h2>
-      </div>
-    </div>
     <div class="metric-grid">
       {#each stats as stat}
         <article class="metric">

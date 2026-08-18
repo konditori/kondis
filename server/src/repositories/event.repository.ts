@@ -15,6 +15,21 @@ type EventMap = {
   ActivityCreate: [activity: ActivityDto];
   ActivityUpdate: [activity: ActivityDto];
   ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
+  NotificationCreated: [notification: NotificationCreatedEvent];
+  NotificationsRead: [notification: NotificationsReadEvent];
+};
+
+type NotificationCreatedEvent = {
+  recipientId: string;
+  id: string;
+  type: 'activity_like' | 'activity_comment' | 'follow_request';
+  createdAt: string;
+  activityId: string | null;
+};
+
+type NotificationsReadEvent = {
+  userId: string;
+  readAt: string;
 };
 
 export type EmitEvent = keyof EventMap;
@@ -22,7 +37,9 @@ export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent =
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
-  | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> };
+  | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> }
+  | { type: 'notification.created'; notification: NotificationCreatedEvent }
+  | { type: 'notifications.read'; userId: string; readAt: string };
 
 type EventSerializers = {
   [T in EmitEvent]: (...args: ArgsOf<T>) => WebsocketEvent;
@@ -32,6 +49,8 @@ const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
   ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
+  NotificationCreated: (notification) => ({ type: 'notification.created', notification }),
+  NotificationsRead: (notification) => ({ type: 'notifications.read', ...notification }),
 };
 
 @Injectable()
@@ -128,7 +147,18 @@ export class EventRepository implements OnApplicationShutdown {
 
   private async recipientsFor(payload: string): Promise<Set<string>> {
     try {
-      const event = JSON.parse(payload) as { activity?: { id?: string } };
+      const event = JSON.parse(payload) as {
+        type?: string;
+        notification?: { recipientId?: string };
+        userId?: string;
+        activity?: { id?: string };
+      };
+      if (event.type === 'notification.created' && event.notification?.recipientId) {
+        return new Set([event.notification.recipientId]);
+      }
+      if (event.type === 'notifications.read' && event.userId) {
+        return new Set([event.userId]);
+      }
       const activityId = event.activity?.id;
       if (!activityId) {
         return new Set();

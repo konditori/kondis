@@ -29,13 +29,7 @@ describe(AuthService.name, () => {
     const { sut } = setup();
     const email = `auth-${crypto.randomUUID()}@example.com`;
 
-    const user = await sut.create(
-      email.toUpperCase(),
-      '  Medium',
-      'User  ',
-      'a sufficiently long password',
-      'user',
-    );
+    const user = await sut.create(email.toUpperCase(), '  Medium', 'User  ', 'a sufficiently long password', 'user');
     const token = await sut.login(email, 'a sufficiently long password');
 
     expect(user).toMatchObject({ email, first_name: 'Medium', last_name: 'User', role: 'user' });

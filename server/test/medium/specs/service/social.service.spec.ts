@@ -72,4 +72,82 @@ describe(SocialService.name, () => {
     await expect(sut.like(activityId, follower.id, true)).resolves.toEqual({ liked: true, likeCount: 1 });
     await expect(sut.like(activityId, follower.id, false)).resolves.toEqual({ liked: false, likeCount: 0 });
   });
+
+  it('lists likers and notifies an activity owner only once per new like', async () => {
+    const owner = await factory.newUser();
+    const follower = await factory.newUser();
+    const activityId = await factory.newActivity(owner.id, new Date('2024-01-01T08:00:00.000Z'), 'liked activity');
+    await db.insertInto('user_follow').values({ follower_id: follower.id, followee_id: owner.id }).execute();
+
+    await sut.like(activityId, follower.id, true);
+    await sut.like(activityId, follower.id, true);
+
+    await expect(sut.likers(activityId, owner.id)).resolves.toMatchObject([
+      { id: follower.id, firstName: follower.firstName, lastName: follower.lastName },
+    ]);
+    await expect(sut.notifications(owner.id)).resolves.toMatchObject({
+      notifications: [
+        {
+          type: 'activity_like',
+          activityId,
+          activityName: 'liked activity',
+          actor: { id: follower.id },
+        },
+      ],
+    });
+  });
+
+  it('notifies an activity owner when a follower comments', async () => {
+    const owner = await factory.newUser();
+    const follower = await factory.newUser();
+    const activityId = await factory.newActivity(owner.id, new Date('2024-01-01T08:00:00.000Z'), 'commented activity');
+    await db.insertInto('user_follow').values({ follower_id: follower.id, followee_id: owner.id }).execute();
+
+    await sut.addComment(activityId, follower.id, 'Nice work');
+
+    await expect(sut.notifications(owner.id)).resolves.toMatchObject({
+      notifications: [
+        {
+          type: 'activity_comment',
+          activityId,
+          activityName: 'commented activity',
+          actor: { id: follower.id },
+        },
+      ],
+    });
+  });
+
+  it('tracks unread notifications and marks them read', async () => {
+    const owner = await factory.newUser();
+    const follower = await factory.newUser();
+    const activityId = await factory.newActivity(owner.id, new Date('2024-01-01T08:00:00.000Z'), 'read state activity');
+    await db.insertInto('user_follow').values({ follower_id: follower.id, followee_id: owner.id }).execute();
+
+    await sut.like(activityId, follower.id, true);
+    await expect(sut.notifications(owner.id)).resolves.toMatchObject({ unreadCount: 1 });
+
+    await expect(sut.markNotificationsRead(owner.id)).resolves.toEqual({ markedRead: true });
+    await expect(sut.notifications(owner.id)).resolves.toMatchObject({
+      unreadCount: 0,
+      notifications: [{ readAt: expect.any(String) }],
+    });
+  });
+
+  it('notifies a user about a new follow request without duplicating retries', async () => {
+    const requester = await factory.newUser();
+    const target = await factory.newUser();
+
+    await expect(sut.sendRequest(requester.id, target.id)).resolves.toMatchObject({ outgoingRequest: true });
+    await expect(sut.sendRequest(requester.id, target.id)).resolves.toMatchObject({ outgoingRequest: true });
+
+    await expect(sut.notifications(target.id)).resolves.toMatchObject({
+      notifications: [
+        {
+          type: 'follow_request',
+          activityId: null,
+          actor: { id: requester.id },
+        },
+      ],
+    });
+  });
 });

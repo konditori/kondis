@@ -266,7 +266,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       UNIQUE (storage_path)
     )
   `.execute(db);
-  await sql`CREATE INDEX activity_image_upload_order_idx ON activity_image (upload_id, sort_order, created_at)`.execute(db);
+  await sql`CREATE INDEX activity_image_upload_order_idx ON activity_image (upload_id, sort_order, created_at)`.execute(
+    db,
+  );
   await sql`CREATE INDEX activity_image_status_idx ON activity_image (status)`.execute(db);
   await sql`CREATE TRIGGER activity_image_set_updated_at BEFORE UPDATE ON activity_image
     FOR EACH ROW EXECUTE FUNCTION kondis_set_updated_at()`.execute(db);
@@ -346,12 +348,29 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
   )`.execute(db);
-  await sql`CREATE INDEX activity_comment_activity_idx ON activity_comment (activity_id, created_at DESC, id DESC)`.execute(db);
+  await sql`CREATE INDEX activity_comment_activity_idx ON activity_comment (activity_id, created_at DESC, id DESC)`.execute(
+    db,
+  );
   await sql`CREATE TRIGGER activity_comment_set_updated_at BEFORE UPDATE ON activity_comment
     FOR EACH ROW EXECUTE FUNCTION kondis_set_updated_at()`.execute(db);
+  await sql`CREATE TABLE notification (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+    actor_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
+    type text NOT NULL CHECK (type IN ('activity_like', 'activity_comment', 'follow_request')),
+    activity_id uuid REFERENCES activity (id) ON DELETE CASCADE,
+    read_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    CHECK (user_id <> actor_id)
+  )`.execute(db);
+  await sql`CREATE INDEX notification_user_created_idx ON notification (user_id, created_at DESC)`.execute(db);
+  await sql`CREATE INDEX notification_user_unread_idx ON notification (user_id, created_at DESC) WHERE read_at IS NULL`.execute(
+    db,
+  );
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
+  await sql`DROP TABLE IF EXISTS notification`.execute(db);
   await sql`DROP TABLE IF EXISTS activity_comment`.execute(db);
   await sql`DROP TABLE IF EXISTS activity_like`.execute(db);
   await sql`DROP TABLE IF EXISTS user_block`.execute(db);

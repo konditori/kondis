@@ -51,11 +51,15 @@
   let liked = $state(false);
   let likeCount = $state(0);
   let likeBusy = $state(false);
+  let descriptionExpanded = $state(false);
   $effect(() => {
     liked = activity.viewerLiked ?? false;
     likeCount = activity.likeCount ?? 0;
   });
   const Icon = $derived(sportIcon(activity.sport));
+  const descriptionExpandable = $derived(
+    (activity.description?.length ?? 0) > 320,
+  );
   const settings = $derived(
     activityTypeSettings(activityTypes, activity.sport),
   );
@@ -168,7 +172,10 @@
       !event.altKey
     ) {
       event.preventDefault();
-      void goto(`/activities/${activity.id}`, {
+      const href =
+        (event.currentTarget as HTMLAnchorElement).getAttribute("href") ??
+        `/activities/${activity.id}`;
+      void goto(href, {
         state: { fromActivityList: true },
       });
     }
@@ -245,7 +252,9 @@
         </div>{/if}
     </div>
     {#if activity.description}
-      <p class="activity-card-description">{activity.description}</p>
+      <p class="activity-card-description" class:expanded={descriptionExpanded}>
+        {activity.description}
+      </p>
     {/if}
     <div class="activity-feed-stats">
       <div
@@ -273,6 +282,15 @@
       {/each}
     </div>
   </a>
+  {#if activity.description && descriptionExpandable}
+    <button
+      class="activity-card-description-toggle"
+      type="button"
+      aria-expanded={descriptionExpanded}
+      onclick={() => (descriptionExpanded = !descriptionExpanded)}
+      >{descriptionExpanded ? "Show less" : "Show more"}</button
+    >
+  {/if}
   {#if personalRecord}
     <div
       class="activity-pr-banner"

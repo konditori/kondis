@@ -289,14 +289,14 @@ export class SocialRepository {
     return this.db
       .selectFrom('follow_request')
       .innerJoin('user', 'user.id', 'follow_request.target_id')
-        .select([
-          'follow_request.id',
-          'follow_request.created_at',
-          'user.id as user_id',
-          'user.first_name',
-          'user.last_name',
-          'user.avatar_path',
-        ])
+      .select([
+        'follow_request.id',
+        'follow_request.created_at',
+        'user.id as user_id',
+        'user.first_name',
+        'user.last_name',
+        'user.avatar_path',
+      ])
       .where('follow_request.requester_id', '=', viewerId)
       .orderBy('follow_request.created_at', 'desc')
       .execute();

@@ -37,4 +37,24 @@ describe(EventRepository.name, () => {
 
     await expect(sut.emit('ActivityCreate', activity)).resolves.toBeUndefined();
   });
+
+  it('publishes targeted notification and read events', async () => {
+    const { sut } = setup();
+
+    await expect(
+      sut.emit('NotificationCreated', {
+        recipientId: crypto.randomUUID(),
+        id: crypto.randomUUID(),
+        type: 'activity_like',
+        createdAt: new Date().toISOString(),
+        activityId: crypto.randomUUID(),
+      }),
+    ).resolves.toBeUndefined();
+    await expect(
+      sut.emit('NotificationsRead', {
+        userId: crypto.randomUUID(),
+        readAt: new Date().toISOString(),
+      }),
+    ).resolves.toBeUndefined();
+  });
 });

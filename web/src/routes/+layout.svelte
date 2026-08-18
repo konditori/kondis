@@ -18,6 +18,10 @@
   {@render children()}
 {:else}
   <Sidebar />
-  <Topbar user={data.user} onUpload={() => void goto("/upload")} />
+  <Topbar
+    user={data.user}
+    eventsUrl={data.eventsUrl}
+    onUpload={() => void goto("/upload")}
+  />
   <main class="app-main">{@render children()}</main>
 {/if}

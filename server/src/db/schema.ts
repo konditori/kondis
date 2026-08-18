@@ -11,6 +11,7 @@ import { FollowRequestTable } from 'src/schema/tables/follow-request.table';
 import { LapTable } from 'src/schema/tables/lap.table';
 import { LiveWorkoutPointTable } from 'src/schema/tables/live-workout-point.table';
 import { LiveWorkoutTable } from 'src/schema/tables/live-workout.table';
+import { NotificationTable } from 'src/schema/tables/notification.table';
 import { UploadTable } from 'src/schema/tables/upload.table';
 import { UserBlockTable } from 'src/schema/tables/user-block.table';
 import { UserFollowTable } from 'src/schema/tables/user-follow.table';
@@ -34,6 +35,7 @@ export interface DB {
   user_block: UserBlockTable;
   activity_like: ActivityLikeTable;
   activity_comment: ActivityCommentTable;
+  notification: NotificationTable;
 }
 
 export interface ActivityRouteMatchTable {
@@ -76,6 +78,7 @@ export type UserFollow = Selectable<UserFollowTable>;
 export type UserBlock = Selectable<UserBlockTable>;
 export type ActivityLike = Selectable<ActivityLikeTable>;
 export type ActivityComment = Selectable<ActivityCommentTable>;
+export type Notification = Selectable<NotificationTable>;
 
 export { type StreamType } from 'src/types';
 export { type UploadStatus } from 'src/types/uploads';

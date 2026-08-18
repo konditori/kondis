@@ -33,6 +33,9 @@ import {
   socialControllerComment,
   socialControllerUpdateComment,
   socialControllerDeleteComment,
+  socialControllerLikers,
+  socialControllerNotifications,
+  socialControllerMarkNotificationsRead,
 } from "../../../server/src/open-api/fetch-client";
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
@@ -104,4 +107,7 @@ export {
   socialControllerComment,
   socialControllerUpdateComment,
   socialControllerDeleteComment,
+  socialControllerLikers,
+  socialControllerNotifications,
+  socialControllerMarkNotificationsRead,
 };

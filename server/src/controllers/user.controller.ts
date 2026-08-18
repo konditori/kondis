@@ -70,7 +70,9 @@ export class UserController {
     const value = updateName.parse(body);
     await this.users.setNameParts(user.id, value.firstName, value.lastName);
     const updated = await this.users.findById(user.id);
-    if (!updated) throw new NotFoundException('User does not exist');
+    if (!updated) {
+      throw new NotFoundException('User does not exist');
+    }
     return {
       id: updated.id,
       email: updated.email,

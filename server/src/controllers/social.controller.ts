@@ -8,6 +8,9 @@ import {
   CommentListDto,
   CommentUpdateDto,
   LikeStateDto,
+  LikerListDto,
+  NotificationListDto,
+  NotificationsReadDto,
   PeopleListDto,
   PersonDto,
   RequestDirectionDto,
@@ -98,6 +101,24 @@ export class SocialController {
   @ZodResponse({ status: 200, type: LikeStateDto, description: 'Unlike an activity' })
   unlike(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.service.like(id, user.id, false);
+  }
+
+  @Get('activities/:id/likes')
+  @ZodResponse({ status: 200, type: LikerListDto, description: 'People who liked an activity' })
+  likers(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.service.likers(id, user.id);
+  }
+
+  @Get('notifications')
+  @ZodResponse({ status: 200, type: NotificationListDto, description: 'Latest notifications' })
+  notifications(@CurrentUser() user: AuthenticatedUser, @Query('limit') limit?: string) {
+    return this.service.notifications(user.id, limit ? Number(limit) : undefined);
+  }
+
+  @Patch('notifications/read')
+  @ZodResponse({ status: 200, type: NotificationsReadDto, description: 'Mark notifications as read' })
+  markNotificationsRead(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.markNotificationsRead(user.id);
   }
 
   @Get('activities/:id/comments')

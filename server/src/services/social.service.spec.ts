@@ -2,17 +2,18 @@ import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { KondisDatabase } from 'src/db/database';
+import type { EventRepository } from 'src/repositories/event.repository';
 import { SocialService } from 'src/services/social.service';
 
-describe(SocialService.name, () => {
-  const makeService = () => {
-    const social = {
-      canViewActivity: vi.fn(),
-    };
-    const service = new SocialService(social as never, {} as KondisDatabase);
-    return { service, social };
+const makeService = () => {
+  const social = {
+    canViewActivity: vi.fn(),
   };
+  const service = new SocialService(social as never, {} as KondisDatabase, {} as EventRepository);
+  return { service, social };
+};
 
+describe(SocialService.name, () => {
   it('rejects likes for activities the viewer cannot access', async () => {
     const { service, social } = makeService();
     social.canViewActivity.mockResolvedValue(undefined);

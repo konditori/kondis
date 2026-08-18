@@ -582,6 +582,16 @@ describe(ActivityService.name, () => {
     it('returns no activity for a missing activity id', async () => {
       await expect(sut.updateById(MISSING_UUID, testUser.id, { name: 'x' })).resolves.toBeUndefined();
     });
+
+    it('does not allow another user to update an activity', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'owner activity');
+      const otherUser = await factory.newUser();
+
+      await expect(
+        sut.updateById(activityId, otherUser.id, { name: 'changed by another user' }),
+      ).resolves.toBeUndefined();
+      await expect(activities.getById(activityId)).resolves.toMatchObject({ name: 'owner activity' });
+    });
   });
 
   describe('DELETE /activities/:id', () => {
@@ -628,6 +638,14 @@ describe(ActivityService.name, () => {
 
     it('returns false for a missing activity id', async () => {
       await expect(serviceApi.deleteById({ id: MISSING_UUID })).resolves.toBe(false);
+    });
+
+    it('does not allow another user to delete an activity', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'owner activity');
+      const otherUser = await factory.newUser();
+
+      await expect(sut.deleteById(activityId, otherUser.id)).resolves.toBe(false);
+      await expect(activities.getById(activityId)).resolves.toBeDefined();
     });
   });
 });

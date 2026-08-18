@@ -32,6 +32,21 @@ export const CommentListSchema = z.object({ comments: z.array(CommentSchema), ne
 export const CommentCreateSchema = z.object({ body: z.string().trim().min(1).max(2000) });
 export const CommentUpdateSchema = CommentCreateSchema;
 export const LikeStateSchema = z.object({ liked: z.boolean(), likeCount: z.number().int().nonnegative() });
+export const LikerListSchema = z.array(SocialUserSchema);
+export const NotificationSchema = z.object({
+  id: z.string().uuid(),
+  type: z.enum(['activity_like', 'activity_comment', 'follow_request']),
+  createdAt: z.string().datetime(),
+  actor: SocialUserSchema,
+  activityId: z.string().uuid().nullable(),
+  activityName: z.string().nullable(),
+  readAt: z.string().datetime().nullable(),
+});
+export const NotificationListSchema = z.object({
+  notifications: z.array(NotificationSchema),
+  unreadCount: z.number().int().nonnegative(),
+});
+export const NotificationsReadSchema = z.object({ markedRead: z.boolean() });
 
 export class PersonDto extends createZodDto(PersonSchema) {}
 export class PeopleListDto extends createZodDto(z.array(PersonSchema)) {}
@@ -43,3 +58,6 @@ export class CommentListDto extends createZodDto(CommentListSchema) {}
 export class CommentCreateDto extends createZodDto(CommentCreateSchema) {}
 export class CommentUpdateDto extends createZodDto(CommentUpdateSchema) {}
 export class LikeStateDto extends createZodDto(LikeStateSchema) {}
+export class LikerListDto extends createZodDto(LikerListSchema) {}
+export class NotificationListDto extends createZodDto(NotificationListSchema) {}
+export class NotificationsReadDto extends createZodDto(NotificationsReadSchema) {}

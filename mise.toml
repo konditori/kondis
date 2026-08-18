@@ -2,6 +2,7 @@ monorepo_root = true
 
 [monorepo]
 config_roots = [
+  "android",
   "server",
   "web",
   "e2e",
@@ -32,6 +33,42 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 
 [tasks.e2e]
 run = { task = "//e2e:test" }
+
+[tasks.format]
+description = "Check formatting across the project"
+run = [
+  { task = "//web:format" },
+  { task = "//server:format" },
+  { task = "//e2e:format" },
+  { task = "//android:format" },
+]
+
+[tasks."format-fix"]
+description = "Fix formatting across the project"
+run = [
+  { task = "//web:format-fix" },
+  { task = "//server:format-fix" },
+  { task = "//e2e:format-fix" },
+  { task = "//android:format-fix" },
+]
+
+[tasks.lint]
+description = "Run lint checks across the project"
+run = [
+  { task = "//web:check" },
+  { task = "//server:lint" },
+  { task = "//e2e:lint" },
+  { task = "//android:lint" },
+]
+
+[tasks."lint-fix"]
+description = "Fix lint issues across the project"
+run = [
+  { task = "//web:check" },
+  { task = "//server:lint-fix" },
+  { task = "//e2e:lint-fix" },
+  { task = "//android:lint-fix" },
+]
 
 [tasks."ci:server-medium"]
 description = "Install server dependencies and run the CI medium-test suite (requires Docker)"

@@ -668,7 +668,7 @@ export class ActivityService {
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
     const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
 
-    return {
+    const detail = {
       ...this.toActivityDto(row),
       ...(athlete && { athlete }),
       track,
@@ -678,6 +678,17 @@ export class ActivityService {
       images: await Promise.all(
         images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)),
       ),
+    };
+    if (!this.socialRepository || !userId) {
+      return detail;
+    }
+    const engagements = await this.socialRepository.activityEngagement([id], userId);
+    const engagement = engagements[0];
+    return {
+      ...detail,
+      likeCount: Number(engagement?.like_count ?? 0),
+      commentCount: Number(engagement?.comment_count ?? 0),
+      viewerLiked: !!engagement?.viewer_liked,
     };
   }
 

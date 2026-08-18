@@ -1,0 +1,19 @@
+[tasks.format]
+description = "Check Kotlin formatting"
+dir = "{{ config_root }}"
+run = "./gradlew ktlintCheck"
+
+[tasks."format-fix"]
+description = "Fix Kotlin formatting"
+dir = "{{ config_root }}"
+run = "./gradlew ktlintFormat"
+
+[tasks.lint]
+description = "Run Android lint"
+dir = "{{ config_root }}"
+run = "./gradlew :app:lintDebug"
+
+[tasks."lint-fix"]
+description = "Fix Android lint issues"
+dir = "{{ config_root }}"
+run = "./gradlew :app:lintFixDebug"
