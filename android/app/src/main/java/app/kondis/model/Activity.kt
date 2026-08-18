@@ -29,7 +29,8 @@ data class Activity(
 @Serializable
 data class SocialUser(
     val id: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val avatarUrl: String? = null,
 )
 

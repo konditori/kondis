@@ -9,8 +9,10 @@ import {
   Param,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ZodResponse } from 'nestjs-zod';
 
 import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
@@ -86,6 +88,27 @@ export class ActivityController {
     }
 
     return activity;
+  }
+
+  @ApiOperation({ summary: 'Download the original activity file' })
+  @ApiProduces('application/octet-stream', 'application/gpx+xml', 'application/vnd.garmin.tcx+xml')
+  @Get(':id/original')
+  async downloadOriginal(
+    @Param() { id }: ActivityIdParamDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() response: Response,
+  ): Promise<void> {
+    const file = await this.service.getOriginalFile(id, user.id);
+    if (!file) {
+      throw new NotFoundException('Original activity file does not exist');
+    }
+    response.type(file.originalName);
+    response.setHeader('Content-Length', String(file.byteSize));
+    response.setHeader('Content-Disposition', 'attachment');
+    response.setHeader('Cache-Control', 'private, no-cache');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    response.attachment(file.originalName);
+    response.sendFile(file.absolutePath);
   }
 
   @ApiOperation({ summary: 'List activities matched to the same GPS route' })

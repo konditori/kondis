@@ -17,6 +17,12 @@ class ApiModelTest {
                   "activities": [{
                     "id": "activity-1",
                     "uploadId": "upload-1",
+                    "athlete": {
+                      "id": "user-1",
+                      "firstName": "Anna",
+                      "lastName": "Runner",
+                      "avatarUrl": null
+                    },
                     "sport": "run",
                     "name": "Morning run",
                     "description": null,
@@ -58,6 +64,20 @@ class ApiModelTest {
 
         assertEquals(1, page.total)
         assertEquals("Morning run", page.activities.single().name)
+        assertEquals(
+            "Anna",
+            page.activities
+                .single()
+                .athlete
+                ?.firstName,
+        )
+        assertEquals(
+            "Runner",
+            page.activities
+                .single()
+                .athlete
+                ?.lastName,
+        )
         assertEquals(
             5_000.0,
             page.activities

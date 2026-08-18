@@ -750,6 +750,52 @@
         ]
       }
     },
+    "/activities/{id}/original": {
+      "get": {
+        "operationId": "ActivityController_downloadOriginal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Activity id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Original activity file",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/gpx+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.garmin.tcx+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Download the original activity file",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/activities/{id}/matched-routes": {
       "get": {
         "operationId": "ActivityController_listMatchedRoutes",
@@ -3244,6 +3290,11 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "description": "Source upload id"
           },
+          "originalFileName": {
+            "type": "string",
+            "description": "Original uploaded activity file name, or null when no source file is available",
+            "nullable": true
+          },
           "userId": {
             "type": "string",
             "format": "uuid",
@@ -3612,6 +3663,7 @@
         "required": [
           "id",
           "uploadId",
+          "originalFileName",
           "sport",
           "name",
           "description",

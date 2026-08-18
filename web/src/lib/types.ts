@@ -83,6 +83,7 @@ export type ActivityPage = {
 };
 
 export type ActivityDetail = Activity & {
+  originalFileName: string | null;
   images: ActivityImage[];
   matchedRouteCount: number | null;
   analysis: {

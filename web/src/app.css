@@ -2022,6 +2022,10 @@ button {
   border-color: #9dae9e;
   background: var(--green-soft);
 }
+.download-original-button {
+  margin-left: 0;
+  text-decoration: none;
+}
 .metadata-editor {
   display: grid;
   grid-template-columns: 1.4fr 1fr auto;

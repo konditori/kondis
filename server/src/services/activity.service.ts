@@ -660,16 +660,18 @@ export class ActivityService {
 
     const supportsActivityAnalysis =
       BEST_EFFORT_SPORTS.run.includes(row.sport) || CYCLING_ANALYSIS_SPORTS.has(row.sport);
-    const [storedEfforts, streams, images] = await Promise.all([
+    const [storedEfforts, streams, images, upload] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
       this.activityImageRepository?.listForUpload(row.upload_id) ?? Promise.resolve([]),
+      this.uploadRepository.getById(row.upload_id),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
     const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
 
     const detail = {
       ...this.toActivityDto(row),
+      originalFileName: upload?.storage_path ? upload.original_name : null,
       ...(athlete && { athlete }),
       track,
       analysis: supportsActivityAnalysis ? buildActivityAnalysis(streams) : null,
@@ -689,6 +691,25 @@ export class ActivityService {
       likeCount: Number(engagement?.like_count ?? 0),
       commentCount: Number(engagement?.comment_count ?? 0),
       viewerLiked: !!engagement?.viewer_liked,
+    };
+  }
+
+  async getOriginalFile(id: string, userId?: string) {
+    if (userId && this.socialRepository && !(await this.socialRepository.canViewActivity(id, userId))) {
+      return;
+    }
+    const activity = await this.activityRepository.getById(id, this.socialRepository ? undefined : userId);
+    if (!activity) {
+      return;
+    }
+    const upload = await this.uploadRepository.getById(activity.upload_id);
+    if (!upload?.storage_path) {
+      return;
+    }
+    return {
+      absolutePath: this.storageRepository.absolutePath(upload.storage_path),
+      byteSize: upload.byte_size,
+      originalName: upload.original_name,
     };
   }
 

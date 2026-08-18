@@ -264,6 +264,8 @@ export type ActivityDetailDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
+  /** Original uploaded activity file name, or null when no source file is available */
+  originalFileName: string | null;
   /** Activity owner id */
   userId?: string | null;
   athlete?: {

@@ -182,6 +182,10 @@ export const BestEffortListResponseSchema = z
   .meta({ id: 'BestEffortListResponseDto' });
 
 export const ActivityDetailSchema = ActivitySchema.extend({
+  originalFileName: z
+    .string()
+    .nullable()
+    .describe('Original uploaded activity file name, or null when no source file is available'),
   images: z.array(ActivityImageSchema),
   track: ActivityTrackSchema.nullable().describe('GPS route as GeoJSON'),
   analysis: ActivityAnalysisSchema.nullable().describe('Split, profile, and route data for activity analysis'),

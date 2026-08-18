@@ -5,6 +5,7 @@
     ChevronLeft,
     ChevronRight,
     Clock3,
+    Download,
     Flame,
     Gauge,
     Heart,
@@ -560,6 +561,15 @@
           type="button"
           onclick={startEditing}
           aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
+        >
+      {/if}
+      {#if activity.originalFileName}
+        <a
+          class="edit-metadata-button download-original-button"
+          href={`/api/v1/activities/${activity.id}/original`}
+          download={activity.originalFileName}
+          aria-label="Download original activity file"
+          ><Download size={16} /> Download original</a
         >
       {/if}
       <div

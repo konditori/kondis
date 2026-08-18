@@ -31,6 +31,7 @@ describe('ActivityService', () => {
   const getIdsToParse = vi.fn<(options: { force: boolean; after?: string; limit: number }) => Promise<string[]>>();
 
   const read = vi.fn<(relativePath: string) => Promise<Buffer>>();
+  const absolutePath = vi.fn<(relativePath: string) => string>();
 
   const getActivityById = vi.fn();
   const getByUploadId = vi.fn();
@@ -61,7 +62,7 @@ describe('ActivityService', () => {
     getIdsToParse,
   } as unknown as UploadRepository;
 
-  const storageRepository = { read } as unknown as StorageRepository;
+  const storageRepository = { read, absolutePath } as unknown as StorageRepository;
 
   const activityRepository = {
     getById: getActivityById,
@@ -148,6 +149,7 @@ describe('ActivityService', () => {
     getBestEfforts.mockResolvedValue([]);
     updateActivity.mockResolvedValue(undefined);
     read.mockResolvedValue(Buffer.from('not actually a fit file'));
+    absolutePath.mockImplementation((relativePath) => `/storage/${relativePath}`);
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
     decodeTcx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
@@ -159,6 +161,28 @@ describe('ActivityService', () => {
 
       expect(updateActivity).toHaveBeenCalledWith(ACTIVITY_ID, { name: 'changed' }, 'another-user');
       expect(emitEvent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getOriginalFile', () => {
+    it('returns the stored source file for a visible activity', async () => {
+      getActivityById.mockResolvedValue({ id: ACTIVITY_ID, upload_id: UPLOAD_ID });
+      getUploadById.mockResolvedValue(
+        anUpload({ original_name: 'evening-run.fit', byte_size: 1234 }),
+      );
+
+      await expect(makeService().getOriginalFile(ACTIVITY_ID, 'owner-id')).resolves.toEqual({
+        absolutePath: '/storage/ab/cd/abcd.fit',
+        byteSize: 1234,
+        originalName: 'evening-run.fit',
+      });
+    });
+
+    it('returns no file for activities without a stored source', async () => {
+      getActivityById.mockResolvedValue({ id: ACTIVITY_ID, upload_id: UPLOAD_ID });
+      getUploadById.mockResolvedValue(anUpload({ storage_path: '' }));
+
+      await expect(makeService().getOriginalFile(ACTIVITY_ID, 'owner-id')).resolves.toBeUndefined();
     });
   });
 
