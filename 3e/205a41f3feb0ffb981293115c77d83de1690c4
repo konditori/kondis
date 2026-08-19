@@ -1,0 +1,19 @@
+web/vite.config.ts
+  s_8f73afdd617f30::t_1ca48396e13992 6-11,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3e205a41f3feb0ffb981293115c77d83de1690c4",
+  "prompts": {},
+  "sessions": {
+    "s_8f73afdd617f30": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01a21-2c42-7a23-b609-5b841475b989",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
