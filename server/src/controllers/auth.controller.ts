@@ -26,6 +26,16 @@ export class AuthController {
     private readonly service: AuthService,
     private readonly users: UserRepository,
   ) {}
+  /**
+   * Lets native clients probe how to authenticate before sending credentials. A perimeter
+   * gateway (for example Cloudflare Access) intercepts this request before it reaches Kondis
+   * whenever one is configured, replying with its own `401`/`302` instead of this `200`. Clients
+   * that see this response directly know the deployment has no such gateway and can sign in with
+   * a Kondis email and password immediately.
+   */
+  @Public() @Get('capabilities') capabilities() {
+    return { direct: true };
+  }
   @Public() @Get('setup') setupStatus() {
     return this.service.setupStatus().then((status) => ({
       ...status,

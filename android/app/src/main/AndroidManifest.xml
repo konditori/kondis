@@ -40,6 +40,29 @@
             </intent-filter>
         </activity>
 
+        <!--
+             Receives the OAuth/OIDC authorization redirect after a perimeter gateway (for example
+             Cloudflare Access Managed OAuth) finishes signing the user in through the browser. This
+             activity is provided by the AppAuth library; declaring its intent filter here claims the
+             HTTPS App Link so Android hands the redirect back to Kondis instead of loading it as a
+             web page. It then forwards the result to whichever activity started the authorization
+             request (see ExternalAuthManager), which is why it does not need its own Hilt entry point.
+        -->
+        <activity
+            android:name="net.openid.appauth.RedirectUriReceiverActivity"
+            android:exported="true"
+            tools:node="replace">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="${oauthRedirectHost}"
+                    android:pathPrefix="${oauthRedirectPathPrefix}" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".recording.RecordingService"
             android:exported="false"

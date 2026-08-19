@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -34,6 +36,19 @@ android {
         vectorDrawables.useSupportLibrary = true
         val apiUrl = providers.gradleProperty("kondis.apiUrl").orElse("http://10.0.2.2:2293/api/v1/")
         buildConfigField("String", "DEFAULT_API_URL", "\"${apiUrl.get().trimEnd('/')}\"")
+
+        // The OAuth/OIDC authorization-code redirect target for signing in through a perimeter
+        // gateway (for example Cloudflare Access Managed OAuth). This is a single, Kondis-owned
+        // HTTPS App Link shared by every self-hosted deployment: identity providers are configured
+        // with a fixed, pre-registered redirect URI, so it cannot vary per server. Forks that ship
+        // under a different applicationId must own this domain (serving `assetlinks.json` for their
+        // signing certificate) and override this property; see android/README.md.
+        val oauthRedirectUri =
+            providers.gradleProperty("kondis.oauthRedirectUri").orElse("https://auth.kondis.app/android/oauth2redirect")
+        buildConfigField("String", "OAUTH_REDIRECT_URI", "\"${oauthRedirectUri.get()}\"")
+        val oauthRedirectParsed = URI(oauthRedirectUri.get())
+        manifestPlaceholders["oauthRedirectHost"] = oauthRedirectParsed.host
+        manifestPlaceholders["oauthRedirectPathPrefix"] = oauthRedirectParsed.path
     }
 
     signingConfigs {
@@ -122,6 +137,8 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.splashscreen)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.appauth)
     implementation(libs.hilt.android)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.serialization)
@@ -145,6 +162,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.test.core)
+    testImplementation(libs.okhttp.mockwebserver)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

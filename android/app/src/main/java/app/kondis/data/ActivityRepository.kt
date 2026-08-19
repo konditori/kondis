@@ -181,7 +181,7 @@ class ActivityRepository
             val url = URI(settings.serverUrl).resolve(path).toString()
             return runCatching {
                 withContext(Dispatchers.IO) {
-                    apiFactory.create(settings.serverUrl, settings.accessToken).activityImage(url).use { body ->
+                    apiFactory.create(settings).activityImage(url).use { body ->
                         val bytes = body.bytes()
                         BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                     }
@@ -353,7 +353,7 @@ class ActivityRepository
 
         private suspend fun api() = api(account().settings)
 
-        private fun api(settings: AppSettings) = apiFactory.create(settings.serverUrl, settings.accessToken)
+        private suspend fun api(settings: AppSettings) = apiFactory.create(settings)
 
         private suspend fun uploadGpx(
             file: File,

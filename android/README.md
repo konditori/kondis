@@ -95,6 +95,36 @@ Compose screens → Hilt ViewModels → repositories → Retrofit / Room / DataS
 
 Keep Android-specific behavior inside `data`, `recording`, and `ui` packages. Introduce additional Gradle modules when independent feature ownership or build performance makes the boundary useful; a single module keeps this first vertical slice easy to change.
 
+## Signing in behind a perimeter gateway
+
+Some self-hosted deployments sit behind a perimeter gateway such as [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/) rather than being reachable directly. On every sign-in attempt, the app first calls `GET /api/v1/auth/capabilities` without any credentials and inspects the response:
+
+- A clean `200` means there is no gateway; the app shows the normal Kondis email/password form.
+- A `401` advertising OAuth/OIDC discovery metadata (RFC 8414/RFC 9728 — this is what Cloudflare Access sends once [Managed OAuth](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/) is enabled) opens the identity provider's login page in the browser (never a WebView — see `ExternalAuthManager`'s KDoc for why), then shows the Kondis email/password form once that completes.
+- Anything else (a `302` to a login page, a gateway with no Managed OAuth) is reported to the user as unsupported; this app never scrapes a browser cookie to work around it.
+
+This is provider-neutral: any authorization server that supports RFC 7591 dynamic client registration works, not just Cloudflare Access. Manually configured (non-DCR) providers are not yet supported.
+
+The OAuth redirect lands on a single, Kondis-owned HTTPS App Link — `https://auth.kondis.app/android/oauth2redirect` by default — shared by every deployment, because identity providers are configured with one fixed, pre-registered redirect URI. Override it with `-Pkondis.oauthRedirectUri=https://your-domain/path` if you fork this app under a different `applicationId` or want to host your own callback. Whichever domain is configured must serve a Digital Asset Links file for Android to verify the App Link:
+
+```jsonc
+// https://<host>/.well-known/assetlinks.json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.kondis",
+      "sha256_cert_fingerprints": ["<SHA-256 fingerprint of the release signing certificate>"]
+    }
+  }
+]
+```
+
+Get the fingerprint with `keytool -list -v -keystore <release-keystore>` (or `-alias <debug-alias> -keystore ~/.android/debug.keystore -storepass android` for local testing). Add one entry per signing certificate the app is distributed with (Play Store app signing key, debug key, F-Droid/fork keys, and so on) — App Link verification silently fails for any certificate not listed here.
+
+On the Cloudflare Access side, enable Managed OAuth on the application and add the callback URL above (with dynamic client registration enabled) to its allowed redirect URIs.
+
 ## Recording notes
 
 Starting a workout must happen while the app is visible. Android then allows the location foreground service to continue through screen-off and background use. Finishing writes a GPX file to private app storage and queues the workout in Room. WorkManager uploads queued files when connectivity is available; a failed upload leaves both the GPX and the local workout visible until a later retry succeeds.

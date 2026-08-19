@@ -82,6 +82,12 @@ export class AuthGuard implements CanActivate {
     const request = context
       .switchToHttp()
       .getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
+    // Native clients behind a perimeter gateway (e.g. Cloudflare Access Managed OAuth) occupy the
+    // standard `Authorization` header with a perimeter access token. They send the Kondis session
+    // token separately in this dedicated header so the two credentials never collide. Existing
+    // `Authorization: Bearer` clients (older Android builds, scripts) keep working unchanged.
+    const kondisHeader = request.headers['x-kondis-authorization'];
+    const kondisHeaderToken = kondisHeader?.startsWith('Bearer ') ? kondisHeader.slice(7) : undefined;
     const value = request.headers.authorization;
     const bearerToken = value?.startsWith('Bearer ') ? value.slice(7) : undefined;
     const cookieToken = request.headers.cookie
@@ -89,7 +95,7 @@ export class AuthGuard implements CanActivate {
       .map((part) => part.trim())
       .find((part) => part.startsWith('kondis_session='))
       ?.slice('kondis_session='.length);
-    const token = bearerToken ?? cookieToken;
+    const token = kondisHeaderToken ?? bearerToken ?? cookieToken;
     if (!token) {
       throw new UnauthorizedException('Sign in is required');
     }

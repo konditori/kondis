@@ -12,6 +12,7 @@ import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import app.kondis.MainActivity
+import app.kondis.data.auth.SecureSessionStore
 import app.kondis.data.local.ActivityDetailEntity
 import app.kondis.data.local.ActivityEntity
 import app.kondis.data.local.KondisDatabase
@@ -52,7 +53,7 @@ class OfflineWorkoutSyncTest {
         val serverUrl = server.url("/api/v1/").toString()
         accountKey = "$serverUrl|offline-sync-test-user"
         runBlocking {
-            SettingsRepository(context).apply {
+            SettingsRepository(context, SecureSessionStore(context)).apply {
                 setServerUrl(serverUrl)
                 setAccessToken("offline-sync-test-token")
                 setAccountId("offline-sync-test-user")

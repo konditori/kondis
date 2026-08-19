@@ -1,6 +1,8 @@
 package app.kondis.data.remote
 
 import app.kondis.BuildConfig
+import app.kondis.data.auth.ExternalAuthManager
+import app.kondis.data.settings.AppSettings
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -15,10 +17,28 @@ class KondisApiFactory
     constructor(
         private val client: OkHttpClient,
         private val json: Json,
+        private val externalAuthManager: ExternalAuthManager,
     ) {
+        /**
+         * Builds an API client for [settings]'s server, attaching a fresh perimeter OAuth access
+         * token (see [ExternalAuthManager]) whenever the deployment is signed in through one. This is
+         * the standard way to reach the API; use [create] directly only for requests that must
+         * bypass the current session (for example the capability probe).
+         */
+        suspend fun create(settings: AppSettings): KondisApi =
+            create(settings.serverUrl, settings.accessToken, externalAuthManager.freshAccessTokenOrNull())
+
+        /**
+         * @param accessToken the Kondis-issued session token, sent in a dedicated header so it never
+         *   collides with a perimeter gateway's own `Authorization` bearer token.
+         * @param externalAccessToken the perimeter OAuth/OIDC access token, when the deployment is
+         *   behind one (for example Cloudflare Access Managed OAuth); sent as `Authorization: Bearer`,
+         *   matching what any such gateway expects to see.
+         */
         fun create(
             baseUrl: String,
             accessToken: String? = null,
+            externalAccessToken: String? = null,
         ): KondisApi =
             Retrofit
                 .Builder()
@@ -27,24 +47,32 @@ class KondisApiFactory
                     client
                         .newBuilder()
                         .addInterceptor { chain ->
-                            chain.proceed(
-                                chain
-                                    .request()
-                                    .newBuilder()
-                                    .apply {
-                                        if (accessToken !=
-                                            null
-                                        ) {
-                                            header("Authorization", "Bearer $accessToken")
-                                        }
-                                    }.build(),
-                            )
+                            val requestBuilder = chain.request().newBuilder()
+                            authHeaders(accessToken, externalAccessToken).forEach { (name, value) ->
+                                requestBuilder.header(name, value)
+                            }
+                            chain.proceed(requestBuilder.build())
                         }.build(),
                 ).addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
                 .build()
                 .create(KondisApi::class.java)
 
         companion object {
+            /**
+             * The exact headers [create] attaches for a given pair of credentials: the external
+             * perimeter token (if any) as a standard `Authorization: Bearer`, and the Kondis token
+             * (if any) in its own dedicated header so the two never collide. Exposed for testing
+             * without needing a full [KondisApiFactory] instance.
+             */
+            internal fun authHeaders(
+                accessToken: String?,
+                externalAccessToken: String?,
+            ): Map<String, String> =
+                buildMap {
+                    if (externalAccessToken != null) put("Authorization", "Bearer $externalAccessToken")
+                    if (accessToken != null) put("X-Kondis-Authorization", "Bearer $accessToken")
+                }
+
             fun normalizeBaseUrl(
                 value: String,
                 allowCleartext: Boolean = BuildConfig.DEBUG,

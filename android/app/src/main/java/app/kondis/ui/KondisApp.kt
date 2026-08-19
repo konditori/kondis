@@ -1,15 +1,24 @@
 package app.kondis.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -26,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,6 +43,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import app.kondis.data.settings.AppSettings
 import app.kondis.recording.isActive
 import app.kondis.ui.detail.ActivityDetailRoute
 import app.kondis.ui.detail.BestEffortsRoute
@@ -86,14 +97,40 @@ private val destinations =
 @Composable
 fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val loginStage by viewModel.loginStage.collectAsStateWithLifecycle()
     val loginError by viewModel.loginError.collectAsStateWithLifecycle()
+    val reauthorizationRequired by viewModel.reauthorizationRequired.collectAsStateWithLifecycle()
     val recording by viewModel.recording.collectAsStateWithLifecycle()
     val recordingActive = recording.mode.isActive
-    if (settings.accessToken == null) {
+
+    // The OAuth/OIDC authorization step always completes in the external browser (RFC 8252); this
+    // launcher receives its result once the browser hands control back through the App Link
+    // callback registered in AndroidManifest.xml.
+    val oauthLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            viewModel.handleExternalAuthResult(result.data)
+        }
+    LaunchedEffect(viewModel) {
+        viewModel.browserIntent.collect { intent -> oauthLauncher.launch(intent) }
+    }
+
+    if (settings.accessToken == null || reauthorizationRequired) {
         LoginScreen(
-            serverUrl = settings.serverUrl,
+            settings = settings,
+            loginStage = loginStage,
             errorMessage = loginError,
-            onLogin = viewModel::login,
+            isReauth = reauthorizationRequired && settings.accessToken != null,
+            onCheckServer = viewModel::checkServer,
+            onStartBrowserSignIn = viewModel::startExternalAuth,
+            onLogin = { email, password ->
+                val serverUrl =
+                    when (val stage = loginStage) {
+                        is LoginStage.DirectReady -> stage.serverUrl
+                        is LoginStage.OAuthSignedIn -> stage.serverUrl
+                        else -> settings.serverUrl
+                    }
+                viewModel.login(serverUrl, email, password)
+            },
         )
         return
     }
@@ -211,33 +248,122 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * Guides the user through connecting to a self-hosted Kondis server: enter its address, let
+ * [LoginStage] report whether it can be reached directly or requires signing in through an
+ * OAuth/OIDC gateway first (see [AppViewModel.checkServer]), then complete whichever sign-in that
+ * server needs. [isReauth] renders a shorter prompt for the case where only the perimeter gateway
+ * session expired and the Kondis credentials on this device are still valid.
+ */
 @Composable
 private fun LoginScreen(
-    serverUrl: String,
+    settings: AppSettings,
+    loginStage: LoginStage,
     errorMessage: String?,
-    onLogin: (String, String, String) -> Unit,
+    isReauth: Boolean,
+    onCheckServer: (String) -> Unit,
+    onStartBrowserSignIn: () -> Unit,
+    onLogin: (String, String) -> Unit,
 ) {
-    var serverUrlDraft by remember(serverUrl) { mutableStateOf(serverUrl) }
+    var serverUrlDraft by remember(settings.serverUrl) { mutableStateOf(settings.serverUrl) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val checking = loginStage == LoginStage.CheckingServer
+    val showServerField =
+        !isReauth && loginStage !is LoginStage.DirectReady &&
+            loginStage !is LoginStage.OAuthReady && loginStage !is LoginStage.OAuthSignedIn
+
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Sign in to Kondis")
-        OutlinedTextField(
-            value = serverUrlDraft,
-            onValueChange = { serverUrlDraft = it },
-            label = { Text("API base URL") },
-            supportingText = { Text("For a phone, use the server's LAN address and include /api/v1") },
-            singleLine = true,
+        Text(
+            if (isReauth) "Sign-in expired" else "Sign in to Kondis",
+            style = MaterialTheme.typography.headlineSmall,
         )
-        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
-        errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Button(onClick = {
-            onLogin(serverUrlDraft, email, password)
-        }, enabled = serverUrlDraft.isNotBlank() && email.isNotBlank() && password.isNotBlank()) { Text("Sign in") }
+        Spacer(Modifier.height(16.dp))
+
+        if (showServerField) {
+            OutlinedTextField(
+                value = serverUrlDraft,
+                onValueChange = { serverUrlDraft = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("API base URL") },
+                supportingText = { Text("For a phone, use the server's LAN address and include /api/v1") },
+                singleLine = true,
+                enabled = !checking,
+            )
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = { onCheckServer(serverUrlDraft) },
+                enabled = serverUrlDraft.isNotBlank() && !checking,
+            ) {
+                if (checking) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Continue")
+                }
+            }
+        }
+
+        when (val stage = loginStage) {
+            is LoginStage.UnsupportedGateway -> {
+                Spacer(Modifier.height(12.dp))
+                Text(stage.reason, color = MaterialTheme.colorScheme.error)
+            }
+
+            is LoginStage.OAuthReady -> {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    if (isReauth) {
+                        "Your sign-in with this server's identity provider expired."
+                    } else {
+                        "This server requires signing in with your identity provider first."
+                    },
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = onStartBrowserSignIn) { Text("Continue in browser") }
+            }
+
+            is LoginStage.DirectReady, is LoginStage.OAuthSignedIn -> {
+                Spacer(Modifier.height(12.dp))
+                if (stage is LoginStage.OAuthSignedIn) {
+                    Text("Signed in with your identity provider. Now sign in with your Kondis account.")
+                    Spacer(Modifier.height(8.dp))
+                }
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Email") },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { onLogin(email, password) },
+                    enabled = email.isNotBlank() && password.isNotBlank(),
+                ) { Text("Sign in") }
+            }
+
+            LoginStage.EnteringServer, LoginStage.CheckingServer -> {}
+        }
+
+        errorMessage?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
+        }
     }
 }
