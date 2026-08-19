@@ -38,6 +38,16 @@ describe('ConfigService', () => {
     });
   });
 
+  describe('setup token', () => {
+    it('generates a UUID instead of requiring an operator-provided token', () => {
+      const first = new ConfigService().setupToken;
+      const second = new ConfigService().setupToken;
+
+      expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      expect(second).not.toBe(first);
+    });
+  });
+
   describe('job concurrency', () => {
     it('derives the environment variable name from the queue name', () => {
       expect(concurrencyEnvVar(QueueName.ActivityParsing)).toBe('KONDIS_JOB_CONCURRENCY_ACTIVITY_PARSING');

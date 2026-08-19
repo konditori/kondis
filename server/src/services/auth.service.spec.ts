@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -92,6 +92,7 @@ describe(AuthService.name, () => {
     await expect(
       sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'wrong-token'),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(createInitialAdmin).not.toHaveBeenCalled();
     await expect(
       sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'unit-test-setup-token'),
     ).resolves.toMatchObject({ setup: true, user: { role: 'admin' } });
@@ -101,6 +102,18 @@ describe(AuthService.name, () => {
     await expect(
       sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'unit-test-setup-token'),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('logs the setup token only while the installation has no administrator', async () => {
+    const { sut } = setup();
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+    await sut.logSetupTokenIfRequired();
+    expect(warn).toHaveBeenCalledWith('No administrator account exists. Use setup token: unit-test-setup-token');
+
+    count.mockResolvedValue({ count: 1 });
+    await sut.logSetupTokenIfRequired();
+    expect(warn).toHaveBeenCalledOnce();
   });
 
   it('disables public registration by default', async () => {
