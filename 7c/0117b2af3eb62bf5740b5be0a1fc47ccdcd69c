@@ -1,0 +1,19 @@
+android/app/src/main/java/app/kondis/data/auth/ExternalAuthManager.kt
+  s_e7a919f3bfc03f::t_0d0ffc6d25fe51 5,45-56,61-64,76-80,97-98,100,124-128,131-135,142-167,170-173,176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7c0117b2af3eb62bf5740b5be0a1fc47ccdcd69c",
+  "prompts": {},
+  "sessions": {
+    "s_e7a919f3bfc03f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fe4b3e42cffeKq96pc375uTGvn",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
