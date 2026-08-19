@@ -1,0 +1,29 @@
+docker/env.example
+  s_404eb64e01bd16::t_aba3ad1eea20ac 10
+server/src/config/config.service.spec.ts
+  s_404eb64e01bd16::t_b807640859da76 41-50
+server/src/config/config.service.ts
+  s_404eb64e01bd16::t_f7ddb3aff58b8d 2,128,141-144
+server/src/main.ts
+  s_404eb64e01bd16::t_128cd1db74fba3 11,29
+server/src/services/auth.service.spec.ts
+  s_404eb64e01bd16::t_45f02f6b19e319 1,95,107-118
+server/src/services/auth.service.ts
+  s_404eb64e01bd16::t_97785cb3a8e12c 30-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "801087d05857392f0c92ca9f7ea9e4dc0139d132",
+  "prompts": {},
+  "sessions": {
+    "s_404eb64e01bd16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01a3c-d113-72e2-963e-787607ff677a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
