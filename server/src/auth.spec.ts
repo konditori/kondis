@@ -90,4 +90,24 @@ describe(AuthGuard.name, () => {
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(ForbiddenException);
   });
+
+  it('accepts the HttpOnly session cookie for same-origin browser requests', async () => {
+    const users = {
+      findById: vi.fn().mockResolvedValue({
+        id: TOKEN_USER.id,
+        email: TOKEN_USER.email,
+        role: 'admin',
+        first_name: 'Current',
+        last_name: 'Name',
+      }),
+    } as unknown as UserRepository;
+    const guard = new AuthGuard(config, users);
+    const token = createAccessToken(TOKEN_USER, config.authSecret);
+    const { context } = contextFor(token);
+    const request = context.switchToHttp().getRequest<{ headers: Record<string, string> }>();
+    delete request.headers.authorization;
+    request.headers.cookie = `other=value; kondis_session=${token}`;
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+  });
 });

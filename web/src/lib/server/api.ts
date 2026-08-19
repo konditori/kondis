@@ -24,8 +24,9 @@ export function activityEventsUrl(requestUrl: URL): string {
     return publicEnv.PUBLIC_KONDIS_EVENTS_URL;
 
   const url = new URL(requestUrl);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  url.port = "2293";
+  const secure = url.protocol === "https:";
+  url.protocol = secure ? "wss:" : "ws:";
+  if (!secure) url.port = "2293";
   url.pathname = "/events";
   url.search = "";
   url.hash = "";

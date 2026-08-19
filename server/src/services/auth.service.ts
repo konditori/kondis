@@ -28,7 +28,8 @@ export class AuthService {
     return { setupRequired: Number(row.count) === 0 };
   }
   async logSetupTokenIfRequired() {
-    if ((await this.setupStatus()).setupRequired) {
+    const status = await this.setupStatus();
+    if (status.setupRequired) {
       this.logger.warn(`No administrator account exists. Use setup token: ${this.config.setupToken}`);
     }
   }

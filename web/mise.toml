@@ -1,4 +1,5 @@
 [tasks.install]
+depends = ["//server:install"]
 run = "pnpm install --filter @kondis/web --frozen-lockfile"
 
 [tasks.dev]

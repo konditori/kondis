@@ -66,7 +66,9 @@ describe('JobRepository', () => {
   });
 
   describe('handler discovery', () => {
-    const buildSamples = (): Record<JobName, JobItem> => ({
+    // This fixture builder is scoped with the related tests for readability.
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    const buildSamples = (ownerId: string): Record<JobName, JobItem> => ({
       [JobName.ActivityUpload]: {
         name: JobName.ActivityUpload,
         data: {
@@ -144,7 +146,7 @@ describe('JobRepository', () => {
         createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),
       );
 
-      for (const item of Object.values(buildSamples())) {
+      for (const item of Object.values(buildSamples(ownerId))) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
         );
@@ -157,7 +159,7 @@ describe('JobRepository', () => {
 
       try {
         await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
-        await jobs.queueAll(Object.values(buildSamples()));
+        await jobs.queueAll(Object.values(buildSamples(ownerId)));
 
         const counts = await Promise.all(Object.values(QueueName).map((queue) => jobs.getJobCounts(queue)));
         const queued = counts.reduce((sum, { queued: value }) => sum + value, 0);
