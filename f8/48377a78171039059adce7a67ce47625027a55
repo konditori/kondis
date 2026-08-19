@@ -1,0 +1,25 @@
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_e7a919f3bfc03f::t_a146b5c1578f9f 15,56
+android/app/src/main/java/app/kondis/ui/AppViewModel.kt
+  s_e7a919f3bfc03f::t_80bd42431c90fb 3,6-9,17,19,22,29-61,68-69,75-85,100,107-111,114-166,176,179
+android/app/src/test/java/app/kondis/data/auth/ServerCapabilityProberTest.kt
+  s_e7a919f3bfc03f::t_de513ffe3d3f31 1-191
+android/app/src/test/java/app/kondis/data/remote/KondisApiFactoryTest.kt
+  s_e7a919f3bfc03f::t_a7f6223877aa97 18-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f848377a78171039059adce7a67ce47625027a55",
+  "prompts": {},
+  "sessions": {
+    "s_e7a919f3bfc03f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fe4b3e42cffeKq96pc375uTGvn",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
