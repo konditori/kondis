@@ -1,8 +1,8 @@
 package app.kondis.data.auth
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
+import androidx.browser.auth.AuthTabIntent
 import androidx.core.net.toUri
 import app.kondis.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -43,13 +43,25 @@ sealed interface AuthorizationOutcome {
 }
 
 /**
+ * What to launch to run the browser sign-in step: the modern [AuthTabIntent] surface
+ * (`androidx.browser.auth`, stable since `androidx.browser` 1.9.0) — a browser tab purpose-built
+ * for authorization, run in an ephemeral (non-history, non-cookie-sharing) session, with an
+ * explicit result when the browser could not verify the HTTPS App Link redirect.
+ */
+data class AuthTabLaunch(
+    val authorizationUri: Uri,
+    val redirectHost: String,
+    val redirectPath: String,
+)
+
+/**
  * Drives the OAuth 2.0 Authorization Code + PKCE flow (RFC 8252) against whichever
  * standards-compliant authorization server [ServerCapabilityProber] discovered — Cloudflare Access
  * with Managed OAuth enabled, or any other provider exposing RFC 8414/OIDC discovery metadata and
- * dynamic client registration (RFC 7591). The flow always runs in the device's external browser
- * (Custom Tabs where available, via AppAuth); this app never uses a WebView for it, per RFC 8252
- * §8.12: an embedded browser can read every keystroke and cookie, defeating the purpose of relying
- * on a third-party identity provider at all.
+ * dynamic client registration (RFC 7591). The flow always runs in the device's external browser via
+ * an [AuthTabIntent]; this app never uses a WebView for it, per RFC 8252 §8.12: an embedded browser
+ * can read every keystroke and cookie, defeating the purpose of relying on a third-party identity
+ * provider at all.
  *
  * Only one authorization attempt and one signed-in external session exist at a time, matching
  * [app.kondis.data.settings.SettingsRepository]'s single-active-server model.
@@ -61,9 +73,11 @@ class ExternalAuthManager
         @ApplicationContext context: Context,
         private val store: SecureSessionStore,
     ) {
-        // Deferred so building this object never binds to a Custom Tabs service before it's
-        // actually needed (most app launches never touch OAuth at all), and so it can be
-        // constructed in a JVM unit test that never exercises any OAuth-driving method.
+        // Deferred so building this object never touches the browser before it's actually needed
+        // (most app launches never touch OAuth at all), and so it can be constructed in a JVM unit
+        // test that never exercises any OAuth-driving method. AuthorizationService here is only
+        // ever used for its plain HTTP operations (token exchange, registration, refresh) — never
+        // for launching a browser, which AuthTabIntent owns directly.
         private val authService by lazy { AuthorizationService(context) }
 
         private val mutableReauthorizationRequired = MutableStateFlow(false)
@@ -80,10 +94,10 @@ class ExternalAuthManager
 
         /**
          * Registers a client (via RFC 7591 dynamic registration, when the provider advertises a
-         * `registration_endpoint`) and builds the browser [Intent] to launch for [capability].
-         * Launch it with an activity-result API and pass the resulting data to [completeAuthorization].
+         * `registration_endpoint`) and builds the [AuthTabLaunch] to launch for [capability]. Pass
+         * the resulting `AuthTabIntent.AuthResult` fields to [completeAuthorization].
          */
-        suspend fun prepareAuthorizationRequest(capability: ServerCapability.ExternalOAuth): Intent =
+        suspend fun prepareAuthorizationRequest(capability: ServerCapability.ExternalOAuth): AuthTabLaunch =
             withContext(Dispatchers.IO) {
                 val redirectUri = BuildConfig.OAUTH_REDIRECT_URI.toUri()
                 val configuration =
@@ -107,29 +121,59 @@ class ExternalAuthManager
                 requestBuilder.setAdditionalParameters(mapOf("resource" to capability.resource))
                 val request = requestBuilder.build()
                 store.setPendingAuthorizationRequest(request.jsonSerializeString())
-                authService.getAuthorizationRequestIntent(request)
+                AuthTabLaunch(
+                    authorizationUri = request.toUri(),
+                    redirectHost = redirectUri.host ?: "",
+                    redirectPath = redirectUri.path ?: "/",
+                )
             }
 
-        /** Call with the [Intent] data returned from launching [prepareAuthorizationRequest]'s intent. */
-        suspend fun completeAuthorization(data: Intent?): AuthorizationOutcome {
+        /** Call with the `AuthTabIntent.AuthResult` fields from launching [prepareAuthorizationRequest]'s result. */
+        suspend fun completeAuthorization(
+            resultCode: Int,
+            resultUri: Uri?,
+        ): AuthorizationOutcome {
             val pendingRequest =
                 store.pendingAuthorizationRequest()?.let { json ->
                     runCatching { AuthorizationRequest.jsonDeserialize(json) }.getOrNull()
                 }
             store.setPendingAuthorizationRequest(null)
 
-            val exception = data?.let { AuthorizationException.fromIntent(it) }
-            if (exception != null) {
-                return AuthorizationOutcome.Failure(
-                    exception.errorDescription ?: exception.error ?: "Sign-in did not complete.",
-                )
+            val failureMessage =
+                when (resultCode) {
+                    AuthTabIntent.RESULT_OK -> {
+                        null
+                    }
+
+                    AuthTabIntent.RESULT_CANCELED -> {
+                        "Sign-in was cancelled."
+                    }
+
+                    AuthTabIntent.RESULT_VERIFICATION_FAILED -> {
+                        "Could not verify the app's sign-in callback address with this browser. Check that " +
+                            "${BuildConfig.OAUTH_REDIRECT_URI} is reachable and correctly configured."
+                    }
+
+                    AuthTabIntent.RESULT_VERIFICATION_TIMED_OUT -> {
+                        "Verifying the sign-in callback address took too long. Check your connection and try again."
+                    }
+
+                    else -> {
+                        "Sign-in did not complete (code $resultCode)."
+                    }
+                }
+            if (failureMessage != null) return AuthorizationOutcome.Failure(failureMessage)
+            if (pendingRequest == null || resultUri == null) {
+                return AuthorizationOutcome.Failure("Sign-in did not complete.")
             }
             val response =
-                data?.let { AuthorizationResponse.fromIntent(it) }
-                    ?: return AuthorizationOutcome.Failure("Sign-in did not complete.")
+                runCatching {
+                    AuthorizationResponse.Builder(pendingRequest).fromUri(resultUri).build()
+                }.getOrNull() ?: return AuthorizationOutcome.Failure("Sign-in did not complete.")
+
             // RFC 8252 §8.10 mix-up mitigation: reject a response that doesn't match the request we
             // stored before launching the browser (wrong pending flow, or a forged callback).
-            if (pendingRequest != null && response.state != pendingRequest.state) {
+            if (response.state != pendingRequest.state) {
                 return AuthorizationOutcome.Failure(
                     "The sign-in response did not match the pending request. Please try again.",
                 )

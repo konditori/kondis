@@ -139,6 +139,9 @@ dependencies {
     implementation(libs.androidx.splashscreen)
     implementation(libs.androidx.security.crypto)
     implementation(libs.appauth)
+    // Explicit, newer than AppAuth's own transitive 1.3.0: brings androidx.browser.auth.AuthTabIntent,
+    // the purpose-built (ephemeral, non-Custom-Tab) browser surface for OAuth sign-in.
+    implementation(libs.androidx.browser)
     implementation(libs.hilt.android)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.serialization)

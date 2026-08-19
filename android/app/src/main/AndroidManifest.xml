@@ -41,12 +41,16 @@
         </activity>
 
         <!--
-             Receives the OAuth/OIDC authorization redirect after a perimeter gateway (for example
-             Cloudflare Access Managed OAuth) finishes signing the user in through the browser. This
-             activity is provided by the AppAuth library; declaring its intent filter here claims the
-             HTTPS App Link so Android hands the redirect back to Kondis instead of loading it as a
-             web page. It then forwards the result to whichever activity started the authorization
-             request (see ExternalAuthManager), which is why it does not need its own Hilt entry point.
+             Claims the OAuth/OIDC authorization redirect (used after a perimeter gateway such as
+             Cloudflare Access Managed OAuth signs the user in) as a verified Android App Link.
+             AuthTabIntent (see MainActivity/ExternalAuthManager) intercepts and completes this
+             redirect entirely within the browser process without ever launching this activity, but
+             `autoVerify="true"` here is still what makes Android check `assetlinks.json` and
+             register Kondis as the verified owner of the redirect domain — the same verification
+             AuthTabIntent's `RESULT_VERIFICATION_FAILED`/`RESULT_VERIFICATION_TIMED_OUT` results
+             reflect. This activity, provided by the AppAuth library, only ever runs as a safe no-op
+             absorber if a browser somehow dispatches the redirect as an ordinary Android intent
+             instead.
         -->
         <activity
             android:name="net.openid.appauth.RedirectUriReceiverActivity"

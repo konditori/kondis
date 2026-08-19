@@ -1,8 +1,9 @@
 package app.kondis.ui
 
-import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.kondis.data.auth.AuthTabLaunch
 import app.kondis.data.auth.AuthorizationOutcome
 import app.kondis.data.auth.ExternalAuthManager
 import app.kondis.data.auth.ServerCapability
@@ -75,10 +76,14 @@ class AppViewModel
         private val _loginStage = MutableStateFlow<LoginStage>(LoginStage.EnteringServer)
         val loginStage: StateFlow<LoginStage> = _loginStage
 
-        private val _browserIntent = MutableSharedFlow<Intent>(extraBufferCapacity = 1)
+        private val _browserLaunch = MutableSharedFlow<AuthTabLaunch>(extraBufferCapacity = 1)
 
-        /** Emits an intent to launch for the external browser sign-in step; collect with an activity-result launcher. */
-        val browserIntent: SharedFlow<Intent> = _browserIntent.asSharedFlow()
+        /**
+         * Emits what to launch for the external browser sign-in step. Collected by `MainActivity`,
+         * which owns the Auth Tab activity-result launcher (it must be registered on an
+         * `ActivityResultCaller`, which a `@Composable` function is not).
+         */
+        val browserLaunch: SharedFlow<AuthTabLaunch> = _browserLaunch.asSharedFlow()
 
         /** True once the perimeter OAuth/OIDC session expired or was revoked and must be redone. */
         val reauthorizationRequired: StateFlow<Boolean> = externalAuthManager.reauthorizationRequired
@@ -150,19 +155,25 @@ class AppViewModel
                 val stage = _loginStage.value as? LoginStage.OAuthReady ?: return@launch
                 _loginError.value = null
                 runCatching { externalAuthManager.prepareAuthorizationRequest(stage.capability) }
-                    .onSuccess { intent -> _browserIntent.emit(intent) }
+                    .onSuccess { launch -> _browserLaunch.emit(launch) }
                     .onFailure { error -> _loginError.value = error.message ?: "Unable to start browser sign-in" }
             }
 
-        /** Call with the result data from launching the intent emitted on [browserIntent]. */
-        fun handleExternalAuthResult(data: Intent?) =
-            viewModelScope.launch {
-                val stage = _loginStage.value as? LoginStage.OAuthReady ?: return@launch
-                when (val outcome = externalAuthManager.completeAuthorization(data)) {
-                    is AuthorizationOutcome.Success -> _loginStage.value = LoginStage.OAuthSignedIn(stage.serverUrl)
-                    is AuthorizationOutcome.Failure -> _loginError.value = outcome.message
-                }
+        /** Call with the result from launching the [AuthTabLaunch] emitted on [browserLaunch]. */
+        fun handleAuthTabResult(
+            resultCode: Int,
+            resultUri: Uri?,
+        ) = viewModelScope.launch {
+            applyOutcome(externalAuthManager.completeAuthorization(resultCode, resultUri))
+        }
+
+        private fun applyOutcome(outcome: AuthorizationOutcome) {
+            val stage = _loginStage.value as? LoginStage.OAuthReady ?: return
+            when (outcome) {
+                is AuthorizationOutcome.Success -> _loginStage.value = LoginStage.OAuthSignedIn(stage.serverUrl)
+                is AuthorizationOutcome.Failure -> _loginError.value = outcome.message
             }
+        }
 
         fun login(
             serverUrl: String,

@@ -1,7 +1,5 @@
 package app.kondis.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -103,17 +101,10 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val recording by viewModel.recording.collectAsStateWithLifecycle()
     val recordingActive = recording.mode.isActive
 
-    // The OAuth/OIDC authorization step always completes in the external browser (RFC 8252); this
-    // launcher receives its result once the browser hands control back through the App Link
-    // callback registered in AndroidManifest.xml.
-    val oauthLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            viewModel.handleExternalAuthResult(result.data)
-        }
-    LaunchedEffect(viewModel) {
-        viewModel.browserIntent.collect { intent -> oauthLauncher.launch(intent) }
-    }
-
+    // The OAuth/OIDC authorization step always completes in the external browser (RFC 8252).
+    // Launching it and receiving the result is owned by MainActivity rather than here: the modern
+    // Auth Tab launcher must be registered on an ActivityResultCaller (an Activity/Fragment), which
+    // a @Composable function is not — see MainActivity.kt.
     if (settings.accessToken == null || reauthorizationRequired) {
         LoginScreen(
             settings = settings,
