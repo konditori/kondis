@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { QueueName, WorkerType } from 'src/enum';
@@ -124,7 +125,7 @@ export class ConfigService {
   readonly jobs: JobsConfig;
   /** Secret used to sign access tokens. Set KONDIS_AUTH_SECRET in production. */
   readonly authSecret: string;
-  /** Secret required to claim a fresh installation. */
+  /** Ephemeral token required to claim a fresh installation. */
   readonly setupToken: string;
   /** Public account creation is opt-in for self-hosted installations. */
   readonly registrationEnabled: boolean;
@@ -137,7 +138,10 @@ export class ConfigService {
     // DB_PASSWORD keeps existing single-container installs usable, but a distinct
     // long random secret is recommended so database credentials can be rotated.
     this.authSecret = readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret';
-    this.setupToken = readSecret('KONDIS_SETUP_TOKEN') ?? this.authSecret;
+    // Generate this by default rather than sharing the signing secret or
+    // requiring an operator to invent a separate secret. The override keeps
+    // automated and multi-process deployments able to supply one shared value.
+    this.setupToken = readSecret('KONDIS_SETUP_TOKEN') ?? randomUUID();
     this.registrationEnabled = readBoolean('KONDIS_REGISTRATION_ENABLED', false);
 
     this.database = {

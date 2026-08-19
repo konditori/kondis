@@ -27,6 +27,11 @@ export class AuthService {
     const row = await this.users.count();
     return { setupRequired: Number(row.count) === 0 };
   }
+  async logSetupTokenIfRequired() {
+    if ((await this.setupStatus()).setupRequired) {
+      this.logger.warn(`No administrator account exists. Use setup token: ${this.config.setupToken}`);
+    }
+  }
   async setup(email: string, firstName: string, lastName: string, password: string, setupToken: string) {
     this.logger.log(`Initial account setup attempt for ${email || '<missing email>'}`);
     try {

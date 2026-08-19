@@ -8,6 +8,7 @@ import { ConfigService } from 'src/config/config.service';
 import { WorkerType } from 'src/enum';
 import { migrateDatabase } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
+import { AuthService } from 'src/services/auth.service';
 
 const API_PREFIX = 'api/v1';
 
@@ -25,6 +26,7 @@ async function bootstrap(): Promise<void> {
     app.setGlobalPrefix(API_PREFIX);
     app.enableShutdownHooks();
     await app.init();
+    await app.get(AuthService).logSetupTokenIfRequired();
     await app.get(EventRepository).attach(app.getHttpServer());
     await app.listen(config.port, '0.0.0.0'); // TODO: make host configurable
     logger.log(`Kondis server listening on 0.0.0.0 on port ${config.port}`);
