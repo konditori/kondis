@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@lucide/svelte": "^1.28.0",
+    "@oazapfts/runtime": "^1.2.0",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {
