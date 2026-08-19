@@ -1,0 +1,21 @@
+docker/docker-compose.dev.yml
+  s_8f73afdd617f30::t_d7e22cd6d85988 77-78
+web/src/vite-allowed-hosts.spec.ts
+  s_8f73afdd617f30::t_3773677271dbc7 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7c42f1897e843a79e5ed77aa694bebcebee1823e",
+  "prompts": {},
+  "sessions": {
+    "s_8f73afdd617f30": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01a21-2c42-7a23-b609-5b841475b989",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
