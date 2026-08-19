@@ -83,7 +83,13 @@ export class AuthGuard implements CanActivate {
       .switchToHttp()
       .getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
     const value = request.headers.authorization;
-    const token = value?.startsWith('Bearer ') ? value.slice(7) : undefined;
+    const bearerToken = value?.startsWith('Bearer ') ? value.slice(7) : undefined;
+    const cookieToken = request.headers.cookie
+      ?.split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith('kondis_session='))
+      ?.slice('kondis_session='.length);
+    const token = bearerToken ?? cookieToken;
     if (!token) {
       throw new UnauthorizedException('Sign in is required');
     }

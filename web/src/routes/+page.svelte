@@ -102,7 +102,7 @@
       }
 
       void socialControllerFeed({ search }, getSdkRequestOptions())
-        .then((page) => {
+        .then((page: unknown) => {
           if (generation !== searchGeneration) return;
           const nextPage = page as ActivityPage;
           const sameActivities =
