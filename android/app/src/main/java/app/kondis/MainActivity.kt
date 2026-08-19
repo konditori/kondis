@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
                     AuthTabIntent
                         .Builder()
                         .build()
-                        .launch(authTabLauncher, launch.authorizationUri, launch.redirectHost, launch.redirectPath)
+                        .launch(authTabLauncher, launch.authorizationUri, launch.redirectScheme)
                 }
             }
         }

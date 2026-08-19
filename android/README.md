@@ -37,7 +37,7 @@ Open this directory in Android Studio and run the `app` configuration, or use:
 ./gradlew :app:installDebug
 ```
 
-The default API URL is `http://10.0.2.2:2293/api/v1/`, which reaches the host machine from the Android Emulator. For a physical device, enter the server URL on the sign-in screen or in Settings, such as `http://192.168.1.20:2293/api/v1/`. A build-time default can also be supplied with `./gradlew -Pkondis.apiUrl=https://kondis.example/api/v1/ :app:assembleRelease`.
+Enter the self-hosted server URL on the sign-in screen. The app does not assume a default deployment.
 
 Plain HTTP is supported for local self-hosting. Use HTTPS whenever traffic leaves a trusted local network.
 
@@ -105,25 +105,9 @@ Some self-hosted deployments sit behind a perimeter gateway such as [Cloudflare 
 
 This is provider-neutral: any authorization server that supports RFC 7591 dynamic client registration works, not just Cloudflare Access. Manually configured (non-DCR) providers are not yet supported.
 
-The OAuth redirect lands on a single, Kondis-owned HTTPS App Link — `https://auth.kondis.app/android/oauth2redirect` by default — shared by every deployment, because identity providers are configured with one fixed, pre-registered redirect URI. Override it with `-Pkondis.oauthRedirectUri=https://your-domain/path` if you fork this app under a different `applicationId` or want to host your own callback. Whichever domain is configured must serve a Digital Asset Links file for Android to verify the App Link:
+The OAuth redirect uses the app-owned custom URI `app.kondis:///oauth-callback`. It does not depend on a Kondis-hosted service or on any self-hosted server exposing a callback route.
 
-```jsonc
-// https://<host>/.well-known/assetlinks.json
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "app.kondis",
-      "sha256_cert_fingerprints": ["<SHA-256 fingerprint of the release signing certificate>"]
-    }
-  }
-]
-```
-
-Get the fingerprint with `keytool -list -v -keystore <release-keystore>` (or `-alias <debug-alias> -keystore ~/.android/debug.keystore -storepass android` for local testing). Add one entry per signing certificate the app is distributed with (Play Store app signing key, debug key, F-Droid/fork keys, and so on) — App Link verification silently fails for any certificate not listed here.
-
-On the Cloudflare Access side, enable Managed OAuth on the application and add the callback URL above (with dynamic client registration enabled) to its allowed redirect URIs.
+On the Cloudflare Access side, enable Managed OAuth on the application and add `app.kondis:///oauth-callback` to **Allowed redirect URIs**. Cloudflare requires custom-scheme redirect URIs to match exactly.
 
 ## Recording notes
 

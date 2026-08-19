@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import app.kondis.BuildConfig
 import app.kondis.data.auth.SecureSessionStore
 import app.kondis.data.remote.KondisApiFactory
 import app.kondis.model.UnitSystem
@@ -20,7 +19,7 @@ import javax.inject.Singleton
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 
 data class AppSettings(
-    val serverUrl: String = BuildConfig.DEFAULT_API_URL,
+    val serverUrl: String = "",
     val unitSystem: UnitSystem = UnitSystem.Metric,
     val accessToken: String? = null,
     val accountId: String? = null,
@@ -55,7 +54,7 @@ class SettingsRepository
                     }
                 }.map { preferences ->
                     AppSettings(
-                        serverUrl = preferences[SERVER_URL] ?: BuildConfig.DEFAULT_API_URL,
+                        serverUrl = preferences[SERVER_URL].orEmpty(),
                         unitSystem =
                             preferences[UNIT_SYSTEM]
                                 ?.let { value -> UnitSystem.entries.firstOrNull { it.name == value } }

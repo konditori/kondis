@@ -41,7 +41,7 @@ class ServerCapabilityProberTest {
         }
 
     @Test
-    fun `a 401 with a resource_metadata challenge discovers the authorization server through RFC 9728`() =
+    fun `path-specific resource metadata still requests a token for the configured server`() =
         runTest {
             val resourceMetadataUrl = server.url("/.well-known/oauth-protected-resource").toString()
             val issuer = server.url("/").toString()
@@ -63,7 +63,7 @@ class ServerCapabilityProberTest {
                         response(
                             200,
                             """{"resource":"${server.url(
-                                "/api/v1/",
+                                "/api/v1/auth/capabilities",
                             )}","authorization_servers":["$issuer"],"scopes_supported":["profile"]}""",
                         ),
                     "/.well-known/oauth-authorization-server" to
@@ -75,7 +75,7 @@ class ServerCapabilityProberTest {
 
             val capability = prober.probe(server.url("/api/v1/").toString()) as ServerCapability.ExternalOAuth
 
-            assertEquals(server.url("/api/v1/").toString(), capability.resource)
+            assertEquals(server.url("/api/v1").toString(), capability.resource)
             assertEquals(listOf("profile"), capability.scopes)
         }
 

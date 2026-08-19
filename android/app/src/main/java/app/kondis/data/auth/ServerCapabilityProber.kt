@@ -40,6 +40,7 @@ class ServerCapabilityProber
 
         suspend fun probe(baseUrl: String): ServerCapability =
             withContext(Dispatchers.IO) {
+                val resource = baseUrl.trimEnd('/')
                 val capabilitiesUrl =
                     baseUrl.toHttpUrlOrNull()?.resolve("auth/capabilities")
                         ?: return@withContext ServerCapability.UnsupportedGateway(
@@ -58,7 +59,7 @@ class ServerCapabilityProber
                         }
 
                         it.code == 401 -> {
-                            capabilityFromChallenge(capabilitiesUrl, it)
+                            capabilityFromChallenge(capabilitiesUrl, resource, it)
                         }
 
                         it.code in 300..399 -> {
@@ -76,6 +77,7 @@ class ServerCapabilityProber
 
         private fun capabilityFromChallenge(
             capabilitiesUrl: HttpUrl,
+            resource: String,
             response: Response,
         ): ServerCapability {
             val challenge = response.header("WWW-Authenticate")
@@ -90,7 +92,7 @@ class ServerCapabilityProber
 
             resourceMetadataUrl?.let { url ->
                 fetchProtectedResourceMetadata(url)?.let { metadata ->
-                    return capabilityFromResourceMetadata(metadata, capabilitiesUrl.toString())
+                    return capabilityFromResourceMetadata(metadata, resource)
                 }
             }
             // Some deployments (Cloudflare Access Managed OAuth as documented today) serve
@@ -98,11 +100,11 @@ class ServerCapabilityProber
             // `resource_metadata` pointer. Try both well-known shapes there before giving up.
             val directAuthServerUrl = origin.resolve(".well-known/oauth-authorization-server").toString()
             fetchAuthorizationServerMetadata(directAuthServerUrl)?.let { metadata ->
-                return capabilityFromAuthServerMetadata(metadata, origin.toString())
+                return capabilityFromAuthServerMetadata(metadata, resource)
             }
             val directResourceUrl = origin.resolve(".well-known/oauth-protected-resource").toString()
             fetchProtectedResourceMetadata(directResourceUrl)?.let { metadata ->
-                return capabilityFromResourceMetadata(metadata, capabilitiesUrl.toString())
+                return capabilityFromResourceMetadata(metadata, resource)
             }
             return ServerCapability.UnsupportedGateway(
                 "This server requires sign-in but does not advertise a supported OAuth/OIDC configuration. " +
@@ -112,7 +114,7 @@ class ServerCapabilityProber
 
         private fun capabilityFromResourceMetadata(
             metadata: ProtectedResourceMetadata,
-            fallbackResource: String,
+            resource: String,
         ): ServerCapability {
             val issuer =
                 metadata.authorizationServers.firstOrNull()
@@ -128,7 +130,7 @@ class ServerCapabilityProber
                     )
             return capabilityFromAuthServerMetadata(
                 authMetadata,
-                metadata.resource ?: fallbackResource,
+                resource,
                 metadata.scopesSupported,
             )
         }

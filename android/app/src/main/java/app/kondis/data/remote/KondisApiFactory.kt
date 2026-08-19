@@ -4,6 +4,7 @@ import app.kondis.BuildConfig
 import app.kondis.data.auth.ExternalAuthManager
 import app.kondis.data.settings.AppSettings
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -46,6 +47,10 @@ class KondisApiFactory
                 .client(
                     client
                         .newBuilder()
+                        // An authentication gateway may redirect a rejected API request to an HTML
+                        // login page. Retrofit must see the redirect status, not parse that page as JSON.
+                        .followRedirects(false)
+                        .followSslRedirects(false)
                         .addInterceptor { chain ->
                             val requestBuilder = chain.request().newBuilder()
                             authHeaders(accessToken, externalAccessToken).forEach { (name, value) ->
@@ -85,7 +90,14 @@ class KondisApiFactory
                         "Release builds require an HTTPS server URL"
                     }
                 }
-                return trimmed.trimEnd('/') + "/"
+                val url = trimmed.toHttpUrlOrNull() ?: throw IllegalArgumentException("Server URL is invalid")
+                val apiUrl =
+                    if (url.encodedPath == "/") {
+                        url.newBuilder().addPathSegments("api/v1").build()
+                    } else {
+                        url
+                    }
+                return apiUrl.toString().trimEnd('/') + "/"
             }
         }
     }

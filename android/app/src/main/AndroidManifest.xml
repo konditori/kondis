@@ -40,30 +40,17 @@
             </intent-filter>
         </activity>
 
-        <!--
-             Claims the OAuth/OIDC authorization redirect (used after a perimeter gateway such as
-             Cloudflare Access Managed OAuth signs the user in) as a verified Android App Link.
-             AuthTabIntent (see MainActivity/ExternalAuthManager) intercepts and completes this
-             redirect entirely within the browser process without ever launching this activity, but
-             `autoVerify="true"` here is still what makes Android check `assetlinks.json` and
-             register Kondis as the verified owner of the redirect domain — the same verification
-             AuthTabIntent's `RESULT_VERIFICATION_FAILED`/`RESULT_VERIFICATION_TIMED_OUT` results
-             reflect. This activity, provided by the AppAuth library, only ever runs as a safe no-op
-             absorber if a browser somehow dispatches the redirect as an ordinary Android intent
-             instead.
-        -->
+        <!-- Auth Tab normally returns this callback directly. AppAuth's receiver is a fallback if
+             a browser dispatches the private-use URI as an ordinary Android intent instead. -->
         <activity
             android:name="net.openid.appauth.RedirectUriReceiverActivity"
             android:exported="true"
             tools:node="replace">
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="${oauthRedirectHost}"
-                    android:pathPrefix="${oauthRedirectPathPrefix}" />
+                <data android:scheme="app.kondis" />
             </intent-filter>
         </activity>
 

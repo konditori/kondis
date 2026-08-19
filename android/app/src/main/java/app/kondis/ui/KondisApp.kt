@@ -310,15 +310,15 @@ private fun LoginScreen(
 
             is LoginStage.OAuthReady -> {
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    if (isReauth) {
-                        "Your sign-in with this server's identity provider expired."
-                    } else {
-                        "This server requires signing in with your identity provider first."
-                    },
-                )
+                if (errorMessage == null) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Opening identity provider...")
+                }
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = onStartBrowserSignIn) { Text("Continue in browser") }
+                if (errorMessage != null) {
+                    Button(onClick = onStartBrowserSignIn) { Text("Retry in browser") }
+                }
             }
 
             is LoginStage.DirectReady, is LoginStage.OAuthSignedIn -> {

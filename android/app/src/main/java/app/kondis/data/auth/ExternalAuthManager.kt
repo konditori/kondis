@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.browser.auth.AuthTabIntent
 import androidx.core.net.toUri
-import app.kondis.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,13 +17,11 @@ import net.openid.appauth.AuthorizationRequest
 import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
-import net.openid.appauth.RegistrationRequest
-import net.openid.appauth.RegistrationResponse
 import net.openid.appauth.ResponseTypeValues
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 /** Thrown when this app cannot drive a discovered authorization server (for example, it requires
  * manual OAuth client configuration this app does not yet support). */
@@ -46,12 +43,11 @@ sealed interface AuthorizationOutcome {
  * What to launch to run the browser sign-in step: the modern [AuthTabIntent] surface
  * (`androidx.browser.auth`, stable since `androidx.browser` 1.9.0) — a browser tab purpose-built
  * for authorization, run in an ephemeral (non-history, non-cookie-sharing) session, with an
- * explicit result when the browser could not verify the HTTPS App Link redirect.
+ * explicit callback to the launching app.
  */
 data class AuthTabLaunch(
     val authorizationUri: Uri,
-    val redirectHost: String,
-    val redirectPath: String,
+    val redirectScheme: String,
 )
 
 /**
@@ -72,6 +68,7 @@ class ExternalAuthManager
     constructor(
         @ApplicationContext context: Context,
         private val store: SecureSessionStore,
+        private val clientRegistrar: DynamicClientRegistrar,
     ) {
         // Deferred so building this object never touches the browser before it's actually needed
         // (most app launches never touch OAuth at all), and so it can be constructed in a JVM unit
@@ -99,7 +96,6 @@ class ExternalAuthManager
          */
         suspend fun prepareAuthorizationRequest(capability: ServerCapability.ExternalOAuth): AuthTabLaunch =
             withContext(Dispatchers.IO) {
-                val redirectUri = BuildConfig.OAUTH_REDIRECT_URI.toUri()
                 val configuration =
                     AuthorizationServiceConfiguration(
                         capability.authorizationEndpoint.toUri(),
@@ -107,14 +103,20 @@ class ExternalAuthManager
                         capability.registrationEndpoint?.toUri(),
                     )
                 val clientId =
-                    capability.registrationEndpoint?.let { registerClient(configuration, redirectUri) }
+                    capability.registrationEndpoint?.let { endpoint ->
+                        clientRegistrar.register(
+                            endpoint = endpoint,
+                            redirectUri = REDIRECT_URI.toString(),
+                            clientUri = originOf(capability.resource),
+                        )
+                    }
                         ?: throw ExternalAuthException(
                             "This identity provider does not support automatic app registration " +
                                 "(no registration_endpoint was advertised). Manual OAuth client " +
                                 "configuration is not yet supported by this app.",
                         )
                 val requestBuilder =
-                    AuthorizationRequest.Builder(configuration, clientId, ResponseTypeValues.CODE, redirectUri)
+                    AuthorizationRequest.Builder(configuration, clientId, ResponseTypeValues.CODE, REDIRECT_URI)
                 if (capability.scopes.isNotEmpty()) requestBuilder.setScopes(capability.scopes)
                 // RFC 8707 resource indicator: tells the authorization server which API this access
                 // token must be scoped to. Cloudflare Access Managed OAuth requires this parameter.
@@ -123,8 +125,7 @@ class ExternalAuthManager
                 store.setPendingAuthorizationRequest(request.jsonSerializeString())
                 AuthTabLaunch(
                     authorizationUri = request.toUri(),
-                    redirectHost = redirectUri.host ?: "",
-                    redirectPath = redirectUri.path ?: "/",
+                    redirectScheme = REDIRECT_URI.scheme.orEmpty(),
                 )
             }
 
@@ -150,8 +151,7 @@ class ExternalAuthManager
                     }
 
                     AuthTabIntent.RESULT_VERIFICATION_FAILED -> {
-                        "Could not verify the app's sign-in callback address with this browser. Check that " +
-                            "${BuildConfig.OAUTH_REDIRECT_URI} is reachable and correctly configured."
+                        "The browser could not verify the app's sign-in callback."
                     }
 
                     AuthTabIntent.RESULT_VERIFICATION_TIMED_OUT -> {
@@ -239,29 +239,21 @@ class ExternalAuthManager
             mutableReauthorizationRequired.value = false
         }
 
-        private suspend fun registerClient(
-            configuration: AuthorizationServiceConfiguration,
-            redirectUri: Uri,
-        ): String {
-            val request = RegistrationRequest.Builder(configuration, listOf(redirectUri)).build()
-            val response: RegistrationResponse =
-                suspendCancellableCoroutine { continuation ->
-                    authService.performRegistrationRequest(request) { registrationResponse, exception ->
-                        if (registrationResponse != null) {
-                            continuation.resume(registrationResponse)
-                        } else {
-                            continuation.resumeWithException(
-                                ExternalAuthException(
-                                    exception?.errorDescription ?: exception?.error
-                                        ?: "Dynamic client registration failed.",
-                                ),
-                            )
-                        }
-                    }
-                }
-            return response.clientId
-        }
-
         private fun isPermanentOAuthFailure(exception: AuthorizationException): Boolean =
             exception.type == AuthorizationException.TYPE_OAUTH_TOKEN_ERROR
+
+        private fun originOf(resource: String): String =
+            resource
+                .toHttpUrlOrNull()
+                ?.newBuilder()
+                ?.encodedPath("/")
+                ?.query(null)
+                ?.fragment(null)
+                ?.build()
+                ?.toString()
+                ?: resource
+
+        private companion object {
+            val REDIRECT_URI = "app.kondis:///oauth-callback".toUri()
+        }
     }

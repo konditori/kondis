@@ -126,23 +126,25 @@ class AppViewModel
                     val serverUrl = settingsRepository.settings.first().serverUrl
                     serverUrl to capabilityProber.probe(serverUrl)
                 }.onSuccess { (serverUrl, capability) ->
-                    _loginStage.value =
-                        when (capability) {
-                            is ServerCapability.Direct -> {
-                                LoginStage.DirectReady(serverUrl)
-                            }
+                    when (capability) {
+                        is ServerCapability.Direct -> {
+                            _loginStage.value = LoginStage.DirectReady(serverUrl)
+                        }
 
-                            is ServerCapability.ExternalOAuth -> {
-                                LoginStage.OAuthReady(serverUrl, capability)
-                            }
+                        is ServerCapability.ExternalOAuth -> {
+                            val stage = LoginStage.OAuthReady(serverUrl, capability)
+                            _loginStage.value = stage
+                            launchExternalAuth(stage)
+                        }
 
-                            is ServerCapability.UnsupportedGateway -> {
+                        is ServerCapability.UnsupportedGateway -> {
+                            _loginStage.value =
                                 LoginStage.UnsupportedGateway(
                                     serverUrl,
                                     capability.reason,
                                 )
-                            }
                         }
+                    }
                 }.onFailure { error ->
                     _loginError.value = error.message ?: "Unable to reach the server"
                     _loginStage.value = LoginStage.EnteringServer
@@ -153,11 +155,15 @@ class AppViewModel
         fun startExternalAuth() =
             viewModelScope.launch {
                 val stage = _loginStage.value as? LoginStage.OAuthReady ?: return@launch
-                _loginError.value = null
-                runCatching { externalAuthManager.prepareAuthorizationRequest(stage.capability) }
-                    .onSuccess { launch -> _browserLaunch.emit(launch) }
-                    .onFailure { error -> _loginError.value = error.message ?: "Unable to start browser sign-in" }
+                launchExternalAuth(stage)
             }
+
+        private suspend fun launchExternalAuth(stage: LoginStage.OAuthReady) {
+            _loginError.value = null
+            runCatching { externalAuthManager.prepareAuthorizationRequest(stage.capability) }
+                .onSuccess { launch -> _browserLaunch.emit(launch) }
+                .onFailure { error -> _loginError.value = error.message ?: "Unable to start browser sign-in" }
+        }
 
         /** Call with the result from launching the [AuthTabLaunch] emitted on [browserLaunch]. */
         fun handleAuthTabResult(
@@ -189,7 +195,12 @@ class AppViewModel
                 settingsRepository.setSession(response.accessToken, response.user.id)
                 _loginStage.value = LoginStage.EnteringServer
             }.onFailure { error ->
-                _loginError.value = error.message ?: "Unable to sign in"
+                if (error is HttpException && error.code() in 300..399) {
+                    _loginError.value =
+                        "The server redirected the API login request. Check that the configured URL points to the Kondis API."
+                } else {
+                    _loginError.value = error.message ?: "Unable to sign in"
+                }
             }
         }
     }

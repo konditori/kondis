@@ -17,6 +17,14 @@ class KondisApiFactoryTest {
     }
 
     @Test
+    fun `deployment root URL resolves to the Kondis API prefix`() {
+        assertEquals(
+            "https://kondis.example/api/v1/",
+            KondisApiFactory.normalizeBaseUrl("https://kondis.example", allowCleartext = false),
+        )
+    }
+
+    @Test
     fun `Kondis token uses its own header so it never collides with a perimeter bearer token`() {
         val headers = KondisApiFactory.authHeaders(accessToken = "kondis-token", externalAccessToken = null)
 
