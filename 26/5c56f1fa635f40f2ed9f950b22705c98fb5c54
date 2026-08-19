@@ -1,0 +1,23 @@
+server/src/auth.spec.ts
+  s_404eb64e01bd16::t_147826fefb5cde 93-112
+web/mise.toml
+  s_404eb64e01bd16::t_5fd756d80345b9 2
+web/src/routes/+page.svelte
+  s_404eb64e01bd16::t_e96aa290b7d0e5 105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "265c56f1fa635f40f2ed9f950b22705c98fb5c54",
+  "prompts": {},
+  "sessions": {
+    "s_404eb64e01bd16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01a3c-d113-72e2-963e-787607ff677a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
