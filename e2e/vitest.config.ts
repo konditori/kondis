@@ -17,6 +17,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@kondis/sdk': sdkPath,
+      'src/': new URL('./src/', import.meta.url).pathname,
     },
   },
   test: {

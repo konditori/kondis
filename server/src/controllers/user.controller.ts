@@ -23,7 +23,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { UserService } from 'src/services/user.service';
-import { UploadedFileData } from 'src/types/uploads';
+import { BufferedUploadedFileData } from 'src/types/uploads';
 
 const createUser = z.object({
   email: z.string(),
@@ -89,7 +89,7 @@ export class UserController {
     schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } },
   })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: UPLOAD_LIMITS.avatarFileBytes, files: 1 } }))
-  uploadAvatar(@UploadedFile() file: UploadedFileData | undefined, @CurrentUser() user: AuthenticatedUser) {
+  uploadAvatar(@UploadedFile() file: BufferedUploadedFileData | undefined, @CurrentUser() user: AuthenticatedUser) {
     return this.userService.uploadAvatar(user.id, file);
   }
 

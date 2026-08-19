@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ConfigService } from 'src/config/config.service';
+import { UserRepository } from 'src/repositories/user.repository';
 
 export type AuthenticatedUser = {
   id: string;
@@ -66,8 +67,11 @@ export const verifyActivityEventsTicket = (token: string | null, secret: string)
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly config: ConfigService) {}
-  canActivate(context: ExecutionContext): boolean {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly users: UserRepository,
+  ) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const handler = context.getHandler() as object;
     const controller = context.getClass() as object;
     // reflect-metadata augments the standard Reflect object at runtime.
@@ -90,30 +94,35 @@ export class AuthGuard implements CanActivate {
     if (!hasValidSignature(payload, signature, this.config.authSecret)) {
       throw new UnauthorizedException('Invalid access token');
     }
+    let parsed: AuthenticatedUser & { exp: number };
     try {
-      const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
+      parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
       if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) {
         throw new Error('Invalid access token');
       }
-      request.user = {
-        id: parsed.id,
-        email: parsed.email,
-        role: parsed.role,
-        firstName: parsed.firstName,
-        lastName: parsed.lastName,
-      };
-      // reflect-metadata augments the standard Reflect object at runtime.
-      /* eslint-disable unicorn/no-nonstandard-builtin-properties */
-      if (
-        (Reflect.getMetadata(ADMIN, handler) || Reflect.getMetadata(ADMIN, controller)) &&
-        request.user.role !== 'admin'
-      ) {
-        throw new ForbiddenException('Administrator access is required');
-      }
-      /* eslint-enable unicorn/no-nonstandard-builtin-properties */
-      return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired access token');
     }
+    const stored = await this.users.findById(parsed.id);
+    if (!stored) {
+      throw new UnauthorizedException('Account no longer exists');
+    }
+    request.user = {
+      id: stored.id,
+      email: stored.email,
+      role: stored.role,
+      firstName: stored.first_name,
+      lastName: stored.last_name,
+    };
+    // reflect-metadata augments the standard Reflect object at runtime.
+    /* eslint-disable unicorn/no-nonstandard-builtin-properties */
+    if (
+      (Reflect.getMetadata(ADMIN, handler) || Reflect.getMetadata(ADMIN, controller)) &&
+      request.user.role !== 'admin'
+    ) {
+      throw new ForbiddenException('Administrator access is required');
+    }
+    /* eslint-enable unicorn/no-nonstandard-builtin-properties */
+    return true;
   }
 }

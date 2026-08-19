@@ -1,7 +1,17 @@
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createAccessToken, createActivityEventsTicket, verifyActivityEventsTicket } from 'src/auth';
+import { ADMIN, AuthGuard, createAccessToken, createActivityEventsTicket, verifyActivityEventsTicket } from 'src/auth';
+import { type ConfigService } from 'src/config/config.service';
+import { type UserRepository } from 'src/repositories/user.repository';
 
+const TOKEN_USER = {
+  id: '00000000-0000-4000-8000-000000000001',
+  email: 'admin@example.com',
+  role: 'admin' as const,
+  firstName: 'Old',
+  lastName: 'Name',
+};
 const SECRET = 'test-secret';
 
 describe('activity event tickets', () => {
@@ -35,5 +45,49 @@ describe('activity event tickets', () => {
     expect(verifyActivityEventsTicket(accessToken, SECRET)).toBeUndefined();
     vi.advanceTimersByTime(60_001);
     expect(verifyActivityEventsTicket(ticket.token, SECRET)).toBeUndefined();
+  });
+});
+
+const contextFor = (token: string, adminOnly = false) => {
+  const handler = {};
+  if (adminOnly) {
+    // reflect-metadata augments the standard Reflect object at runtime.
+    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
+    Reflect.defineMetadata(ADMIN, true, handler);
+  }
+  const request = { headers: { authorization: `Bearer ${token}` } };
+  const context = {
+    getHandler: () => handler,
+    getClass: () => ({}),
+    switchToHttp: () => ({ getRequest: () => request }),
+  } as unknown as ExecutionContext;
+  return { context, request };
+};
+
+describe(AuthGuard.name, () => {
+  const config = { authSecret: 'unit-test-secret' } as ConfigService;
+
+  it('rejects an otherwise valid token after its account is deleted', async () => {
+    const users = { findById: vi.fn().mockResolvedValue(undefined) } as unknown as UserRepository;
+    const guard = new AuthGuard(config, users);
+    const { context } = contextFor(createAccessToken(TOKEN_USER, config.authSecret));
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('uses the stored role so demotion immediately removes administrator access', async () => {
+    const users = {
+      findById: vi.fn().mockResolvedValue({
+        id: TOKEN_USER.id,
+        email: TOKEN_USER.email,
+        role: 'user',
+        first_name: 'Current',
+        last_name: 'Name',
+      }),
+    } as unknown as UserRepository;
+    const guard = new AuthGuard(config, users);
+    const { context } = contextFor(createAccessToken(TOKEN_USER, config.authSecret), true);
+
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

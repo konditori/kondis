@@ -21,7 +21,7 @@ import { JobRepository } from 'src/repositories/job.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { JobOf } from 'src/types/jobs';
-import { UploadedFileData } from 'src/types/uploads';
+import { BufferedUploadedFileData } from 'src/types/uploads';
 
 const SUPPORTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'heif', 'avif']);
 const MIME_TYPES: Record<string, string> = {
@@ -50,7 +50,12 @@ export class ActivityImageService {
     this.logger.setContext(ActivityImageService.name);
   }
 
-  async upload(activityId: string, file: UploadedFileData | undefined, caption: string | undefined, userId: string) {
+  async upload(
+    activityId: string,
+    file: BufferedUploadedFileData | undefined,
+    caption: string | undefined,
+    userId: string,
+  ) {
     if (!file) {
       throw new BadRequestException('Missing image upload');
     }

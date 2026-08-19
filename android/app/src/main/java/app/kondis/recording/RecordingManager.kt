@@ -13,19 +13,26 @@ import javax.inject.Singleton
 @Singleton
 class RecordingManager
     @Inject
-    constructor() {
-        private val mutableState = MutableStateFlow(RecordingState())
+    constructor(
+        private val store: RecordingPersistence,
+    ) {
+        private val restored = store.load()
+        private val mutableState = MutableStateFlow(restored?.state ?: RecordingState())
         val state: StateFlow<RecordingState> = mutableState.asStateFlow()
 
-        private var activeSince: Instant? = null
-        private var elapsedBeforeActive = 0L
+        private var activeSince: Instant? = restored?.activeSince
+        private var elapsedBeforeActive = restored?.elapsedBeforeActive ?: 0L
 
-        fun start() {
-            if (mutableState.value.mode != RecordingMode.Idle && mutableState.value.mode != RecordingMode.Saved) return
+        fun start(): Boolean {
+            if (mutableState.value.mode != RecordingMode.Idle && mutableState.value.mode != RecordingMode.Saved) {
+                return false
+            }
             val now = Instant.now()
             activeSince = now
             elapsedBeforeActive = 0
             mutableState.value = RecordingState(mode = RecordingMode.Recording, startedAt = now)
+            persist()
+            return true
         }
 
         fun pause() {
@@ -34,12 +41,14 @@ class RecordingManager
             elapsedBeforeActive = mutableState.value.elapsedSeconds
             activeSince = null
             mutableState.update { it.copy(mode = RecordingMode.Paused) }
+            persist()
         }
 
         fun resume() {
             if (mutableState.value.mode != RecordingMode.Paused) return
             activeSince = Instant.now()
             mutableState.update { it.copy(mode = RecordingMode.Recording) }
+            persist()
         }
 
         fun tick() {
@@ -48,7 +57,11 @@ class RecordingManager
 
         fun addLocation(location: Location) {
             if (mutableState.value.mode != RecordingMode.Recording || location.accuracy > 50f) return
-            val point = location.toTrackPoint()
+            addPoint(location.toTrackPoint())
+        }
+
+        internal fun addPoint(point: TrackPoint) {
+            if (mutableState.value.mode != RecordingMode.Recording || point.accuracyMeters > 50f) return
             mutableState.update { current ->
                 val previous = current.points.lastOrNull()
                 val segment = previous?.let { distanceMeters(it, point) } ?: 0.0
@@ -59,6 +72,7 @@ class RecordingManager
                     points = current.points + point,
                 )
             }
+            persist()
         }
 
         fun beginSaving(): RecordingState? {
@@ -68,21 +82,25 @@ class RecordingManager
             val snapshot = mutableState.value.copy(mode = RecordingMode.Saving)
             mutableState.value = snapshot
             activeSince = null
+            persist()
             return snapshot
         }
 
         fun saved() {
             mutableState.update { it.copy(mode = RecordingMode.Saved) }
+            store.clear()
         }
 
         fun fail(message: String) {
             mutableState.update { it.copy(mode = RecordingMode.Error, errorMessage = message) }
+            persist()
         }
 
         fun reset() {
             activeSince = null
             elapsedBeforeActive = 0
             mutableState.value = RecordingState()
+            store.clear()
         }
 
         private fun updateElapsed() {
@@ -90,4 +108,6 @@ class RecordingManager
             val activeElapsed = Duration.between(since, Instant.now()).seconds.coerceAtLeast(0)
             mutableState.update { it.copy(elapsedSeconds = elapsedBeforeActive + activeElapsed) }
         }
+
+        private fun persist() = store.save(mutableState.value, activeSince, elapsedBeforeActive)
     }

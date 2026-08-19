@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
-import { SocialRepository } from 'src/repositories/social.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import { ActivityType } from 'src/types';
 
@@ -14,13 +13,11 @@ type PointInput = {
   altitude?: number | null;
   accuracyMeters: number;
 };
+const SHARE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class LiveWorkoutService {
-  constructor(
-    private readonly repository: LiveWorkoutRepository,
-    private readonly social: SocialRepository,
-  ) {}
+  constructor(private readonly repository: LiveWorkoutRepository) {}
 
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {
     const existing = await this.repository.getByClientSessionId(userId, input.clientSessionId);
@@ -41,11 +38,7 @@ export class LiveWorkoutService {
   }
 
   async get(id: string, userId: string) {
-    const owned = await this.repository.getById(id, userId);
-    const workout = owned ?? (await this.repository.getById(id));
-    if (workout && !owned && !(await this.social.canViewUser(userId, workout.user_id))) {
-      throw new NotFoundException('Live workout not found');
-    }
+    const workout = await this.repository.getById(id, userId);
     if (!workout) {
       throw new NotFoundException('Live workout not found');
     }
@@ -112,8 +105,9 @@ export class LiveWorkoutService {
       throw new NotFoundException('Live workout not found');
     }
     const token = randomBytes(24).toString('base64url');
-    await this.repository.setShareToken(id, this.hashToken(token), null);
-    return { token, expiresAt: null };
+    const expiresAt = new Date(Date.now() + SHARE_LIFETIME_MS);
+    await this.repository.setShareToken(id, this.hashToken(token), expiresAt);
+    return { token, expiresAt: expiresAt.toISOString() };
   }
 
   async revokeShare(id: string, userId: string): Promise<void> {

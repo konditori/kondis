@@ -119,7 +119,7 @@ export type LiveWorkoutAckDtoOutput = {
 };
 export type LiveWorkoutShareDtoOutput = {
   token: string;
-  expiresAt: string | null;
+  expiresAt: string;
 };
 export type ActivityMetricDtoOutput = {
   /** Elapsed duration in seconds */

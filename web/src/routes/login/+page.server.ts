@@ -4,9 +4,15 @@ import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals }) => {
   const response = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
-  const setupRequired = response.ok && (await response.json()).setupRequired;
+  const status = response.ok
+    ? await response.json()
+    : { setupRequired: false, registrationEnabled: false };
+  const setupRequired = status.setupRequired;
   if (setupRequired) throw redirect(303, "/setup");
-  return { setupRequired: false };
+  return {
+    setupRequired: false,
+    registrationEnabled: status.registrationEnabled,
+  };
 };
 export const actions: Actions = {
   login: async ({ request, cookies, fetch }) => {

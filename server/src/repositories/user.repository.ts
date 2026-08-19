@@ -1,5 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { sql } from 'kysely';
 import { KYSELY, KondisDatabase } from 'src/db/database';
+
+type NewUserInput = {
+  email: string;
+  first_name: string;
+  last_name: string;
+  password_hash: string;
+  role: 'admin' | 'user';
+};
+
 @Injectable()
 export class UserRepository {
   constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
@@ -44,17 +54,19 @@ export class UserRepository {
       .returning(['avatar_path', 'avatar_mime_type', 'avatar_size'])
       .executeTakeFirstOrThrow();
   }
-  create(input: {
-    email: string;
-    first_name: string;
-    last_name: string;
-    password_hash: string;
-    role: 'admin' | 'user';
-  }) {
+  create(input: NewUserInput) {
     return this.db.insertInto('user').values(input).returningAll().executeTakeFirstOrThrow();
   }
-  async adoptOrphanedData(userId: string) {
-    await this.db.updateTable('upload').set({ user_id: userId }).where('user_id', 'is', null).execute();
-    await this.db.updateTable('activity').set({ user_id: userId }).where('user_id', 'is', null).execute();
+
+  /** Serializes installation claims so exactly one caller can create the first administrator. */
+  createInitialAdmin(input: NewUserInput) {
+    return this.db.transaction().execute(async (transaction) => {
+      await sql`SELECT pg_advisory_xact_lock(hashtext('kondis-initial-setup'))`.execute(transaction);
+      const existing = await transaction.selectFrom('user').select('id').limit(1).executeTakeFirst();
+      if (existing) {
+        return;
+      }
+      return transaction.insertInto('user').values(input).returningAll().executeTakeFirstOrThrow();
+    });
   }
 }

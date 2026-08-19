@@ -1,5 +1,13 @@
 import { fail, redirect } from "@sveltejs/kit";
-import type { Actions } from "./$types";
+import { apiUrl } from "$lib/server/api";
+import type { Actions, PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async ({ locals }) => {
+  const response = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
+  if (!response.ok || !(await response.json()).registrationEnabled)
+    throw redirect(303, "/login");
+  return {};
+};
 
 export const actions: Actions = {
   register: async ({ request, cookies, fetch, url }) => {

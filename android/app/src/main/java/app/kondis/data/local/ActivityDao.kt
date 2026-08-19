@@ -12,18 +12,23 @@ interface ActivityDao {
     @Query(
         """
         SELECT * FROM activities
-        WHERE :query = '' OR searchableText LIKE '%' || :query || '%'
+        WHERE accountKey = :accountKey
+          AND (:query = '' OR searchableText LIKE '%' || :query || '%')
         ORDER BY startedAt DESC, id DESC
         LIMIT :limit
         """,
     )
     fun observeActivities(
+        accountKey: String,
         query: String,
         limit: Int = 250,
     ): Flow<List<ActivityEntity>>
 
-    @Query("SELECT * FROM activity_details WHERE id = :id")
-    fun observeDetail(id: String): Flow<ActivityDetailEntity?>
+    @Query("SELECT * FROM activity_details WHERE accountKey = :accountKey AND id = :id")
+    fun observeDetail(
+        accountKey: String,
+        id: String,
+    ): Flow<ActivityDetailEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertActivities(activities: List<ActivityEntity>)
@@ -34,30 +39,45 @@ interface ActivityDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertQueuedWorkout(workout: QueuedWorkoutEntity)
 
-    @Query("SELECT * FROM queued_workouts ORDER BY startedAt DESC")
-    fun observeQueuedWorkouts(): Flow<List<QueuedWorkoutEntity>>
+    @Query("SELECT * FROM queued_workouts WHERE accountKey = :accountKey ORDER BY startedAt DESC")
+    fun observeQueuedWorkouts(accountKey: String): Flow<List<QueuedWorkoutEntity>>
 
-    @Query("SELECT * FROM queued_workouts ORDER BY startedAt ASC")
-    suspend fun queuedWorkouts(): List<QueuedWorkoutEntity>
+    @Query("SELECT * FROM queued_workouts WHERE accountKey = :accountKey ORDER BY startedAt ASC")
+    suspend fun queuedWorkouts(accountKey: String): List<QueuedWorkoutEntity>
 
-    @Query("UPDATE queued_workouts SET uploadStarted = 1 WHERE localActivityId = :id")
-    suspend fun markUploadStarted(id: String)
+    @Query("UPDATE queued_workouts SET uploadStarted = 1 WHERE accountKey = :accountKey AND localActivityId = :id")
+    suspend fun markUploadStarted(
+        accountKey: String,
+        id: String,
+    )
 
-    @Query("DELETE FROM queued_workouts WHERE localActivityId = :id")
-    suspend fun deleteQueuedWorkout(id: String)
+    @Query("DELETE FROM queued_workouts WHERE accountKey = :accountKey AND localActivityId = :id")
+    suspend fun deleteQueuedWorkout(
+        accountKey: String,
+        id: String,
+    )
 
-    @Query("DELETE FROM activities WHERE id = :id")
-    suspend fun deleteActivity(id: String)
+    @Query("DELETE FROM activities WHERE accountKey = :accountKey AND id = :id")
+    suspend fun deleteActivity(
+        accountKey: String,
+        id: String,
+    )
 
-    @Query("DELETE FROM activity_details WHERE id = :id")
-    suspend fun deleteDetail(id: String)
+    @Query("DELETE FROM activity_details WHERE accountKey = :accountKey AND id = :id")
+    suspend fun deleteDetail(
+        accountKey: String,
+        id: String,
+    )
 
-    @Query("DELETE FROM activities WHERE isLocal = 0")
-    suspend fun clearRemoteActivities()
+    @Query("DELETE FROM activities WHERE accountKey = :accountKey AND isLocal = 0")
+    suspend fun clearRemoteActivities(accountKey: String)
 
     @Transaction
-    suspend fun replaceActivities(activities: List<ActivityEntity>) {
-        clearRemoteActivities()
+    suspend fun replaceActivities(
+        accountKey: String,
+        activities: List<ActivityEntity>,
+    ) {
+        clearRemoteActivities(accountKey)
         upsertActivities(activities)
     }
 
@@ -74,13 +94,14 @@ interface ActivityDao {
 
     @Transaction
     suspend fun replaceQueuedWorkout(
+        accountKey: String,
         localActivityId: String,
         activity: ActivityEntity,
         detail: ActivityDetailEntity,
     ) {
-        deleteActivity(localActivityId)
-        deleteDetail(localActivityId)
-        deleteQueuedWorkout(localActivityId)
+        deleteActivity(accountKey, localActivityId)
+        deleteDetail(accountKey, localActivityId)
+        deleteQueuedWorkout(accountKey, localActivityId)
         upsertActivities(listOf(activity))
         upsertDetail(detail)
     }

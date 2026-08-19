@@ -32,12 +32,18 @@ import retrofit2.http.Url
 
 @Serializable data class LoginResponse(
     val accessToken: String,
+    val user: LoginUserResponse,
+)
+
+@Serializable data class LoginUserResponse(
+    val id: String,
 )
 
 @Serializable data class CurrentUserResponse(
     val id: String,
     val email: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val role: String,
 )
 

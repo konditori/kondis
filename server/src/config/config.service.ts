@@ -124,6 +124,10 @@ export class ConfigService {
   readonly jobs: JobsConfig;
   /** Secret used to sign access tokens. Set KONDIS_AUTH_SECRET in production. */
   readonly authSecret: string;
+  /** Secret required to claim a fresh installation. */
+  readonly setupToken: string;
+  /** Public account creation is opt-in for self-hosted installations. */
+  readonly registrationEnabled: boolean;
 
   constructor() {
     this.port = Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293);
@@ -133,6 +137,8 @@ export class ConfigService {
     // DB_PASSWORD keeps existing single-container installs usable, but a distinct
     // long random secret is recommended so database credentials can be rotated.
     this.authSecret = readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret';
+    this.setupToken = readSecret('KONDIS_SETUP_TOKEN') ?? this.authSecret;
+    this.registrationEnabled = readBoolean('KONDIS_REGISTRATION_ENABLED', false);
 
     this.database = {
       host: readSecret('DB_HOSTNAME') ?? 'localhost',

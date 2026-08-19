@@ -14,6 +14,7 @@ export const actions: Actions = {
     const lastName = String(form.get("lastName") ?? "");
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
+    const setupToken = String(form.get("setupToken") ?? "");
     const confirmPassword = String(form.get("confirmPassword") ?? "");
     const values = { firstName, lastName, email };
     if (password !== confirmPassword)
@@ -21,13 +22,18 @@ export const actions: Actions = {
     const response = await fetch("/api/v1/auth/setup", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ firstName, lastName, email, password }),
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        password,
+        setupToken,
+      }),
     });
     if (!response.ok)
       return fail(400, {
         ...values,
-        error:
-          "Use first and last names, a valid email, and a sufficiently long password",
+        error: "Check the setup token and account details, then try again.",
       });
     const result = await response.json();
     cookies.set("kondis_session", result.accessToken, {

@@ -9,6 +9,13 @@
     <p>Please create your account</p>
     <form method="POST" action="?/setup">
       <label
+        >Setup token<input
+          required
+          type="password"
+          name="setupToken"
+          autocomplete="off"
+        /></label
+      ><label
         >First name<input
           required
           name="firstName"

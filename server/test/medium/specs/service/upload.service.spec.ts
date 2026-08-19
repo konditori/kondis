@@ -41,6 +41,7 @@ describe(UploadService.name, () => {
   let queuedStorageRepository: StorageRepository;
   let activityRepository: ActivityRepository;
   let userRepository: UserRepository;
+  let ownerId: string;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -64,6 +65,8 @@ describe(UploadService.name, () => {
   beforeEach(async () => {
     queue.mockClear();
     await resetMediumTestDatabase(db, jobsRepository);
+    const owner = await createMediumFactory(db).newUser();
+    ownerId = owner.id;
   });
 
   afterAll(async () => {
@@ -80,7 +83,7 @@ describe(UploadService.name, () => {
     const buffer = Buffer.from('not really a fit file, but parsing happens in a later job');
     const file = makeUploadedFile('ride.fit', buffer);
 
-    const result = await sut.uploadActivity(file);
+    const result = await sut.uploadActivity(file, ownerId);
 
     expect(result).toEqual({ byteSize: buffer.length, queued: true });
     expect(queue).toHaveBeenCalledTimes(1);
@@ -93,6 +96,7 @@ describe(UploadService.name, () => {
         originalName: 'ride.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
         checksum: crypto.xxHash(buffer),
+        userId: ownerId,
       },
     });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(buffer);
@@ -107,6 +111,7 @@ describe(UploadService.name, () => {
       originalName: 'ride.fit',
       storagePath,
       checksum: crypto.xxHash(buffer),
+      userId: ownerId,
     };
 
     await expect(sut.handleActivityUpload(data)).resolves.toBe('success');
@@ -142,6 +147,7 @@ describe(UploadService.name, () => {
         originalName: file.originalname,
         storagePath,
         checksum: crypto.xxHash(file.buffer),
+        userId: ownerId,
       }),
     ).resolves.toBe('success');
 
@@ -159,6 +165,7 @@ describe(UploadService.name, () => {
         originalName: 'ride.fit',
         storagePath,
         checksum: crypto.xxHash(Buffer.from('original')),
+        userId: ownerId,
       }),
     ).rejects.toThrow('Activity upload checksum mismatch');
     expect(queue).not.toHaveBeenCalled();
@@ -168,14 +175,16 @@ describe(UploadService.name, () => {
     const buffer = Buffer.from('nope');
     const file = makeUploadedFile('ride.lol', buffer);
 
-    await expect(sut.uploadActivity(file)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
+    await expect(sut.uploadActivity(file, ownerId)).rejects.toThrow('Only .fit, .tcx and .gpx files are accepted');
   });
 
   it('leaves a staged activity for cleanup when queueing its upload fails', async () => {
     const contents = Buffer.from('activity');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents))).rejects.toThrow('queue unavailable');
+    await expect(sut.uploadActivity(makeUploadedFile('ride.fit', contents), ownerId)).rejects.toThrow(
+      'queue unavailable',
+    );
 
     const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(contents);
@@ -197,7 +206,7 @@ describe(UploadService.name, () => {
       'activities/ride.gpx': gpx,
     });
 
-    const first = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+    const first = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive), ownerId);
 
     expect(first).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
@@ -210,6 +219,7 @@ describe(UploadService.name, () => {
         originalName: 'export.zip',
         storagePath: expect.stringMatching(/^temporary\/.+\.zip$/),
         takeoutImportId: first.importId,
+        userId: ownerId,
       },
     });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
@@ -236,6 +246,7 @@ describe(UploadService.name, () => {
     expect(fitJob).toEqual({
       name: JobName.ActivityUpload,
       data: {
+        userId: ownerId,
         originalName: 'run.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
         checksum: crypto.xxHash(fit),
@@ -248,6 +259,7 @@ describe(UploadService.name, () => {
     expect(gpxJob).toEqual({
       name: JobName.ActivityUpload,
       data: {
+        userId: ownerId,
         originalName: 'ride.gpx',
         storagePath: expect.stringMatching(/^temporary\/.+\.gpx$/),
         checksum: crypto.xxHash(gpx),
@@ -259,7 +271,7 @@ describe(UploadService.name, () => {
     await expect(storageRepository.read(fitJob.data.storagePath)).resolves.toEqual(fit);
     await expect(storageRepository.read(gpxJob.data.storagePath)).resolves.toEqual(gpx);
     queue.mockClear();
-    const second = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+    const second = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive), ownerId);
 
     expect(second).toEqual({ byteSize: archive.length, queued: true, importId: expect.any(String) });
     expect(queue).toHaveBeenCalledTimes(1);
@@ -267,7 +279,7 @@ describe(UploadService.name, () => {
 
   it('defers validation of ZIP contents to the takeout import job', async () => {
     const archive = Buffer.from('nope');
-    const result = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+    const result = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive), ownerId);
 
     expect(result.queued).toBe(true);
     const [item] = queue.mock.calls[0] as unknown as [{ data: { originalName: string; storagePath: string } }];
@@ -280,22 +292,24 @@ describe(UploadService.name, () => {
     const archive = Buffer.from('archive');
     queue.mockRejectedValueOnce(new Error('queue unavailable'));
 
-    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive))).rejects.toThrow('queue unavailable');
+    await expect(sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive), ownerId)).rejects.toThrow(
+      'queue unavailable',
+    );
 
     const [item] = queue.mock.calls[0] as unknown as [{ data: { storagePath: string } }];
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
   });
 
   it('rejects a non-ZIP Strava takeout upload', async () => {
-    await expect(sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope')))).rejects.toThrow(
-      'Only a Strava takeout .zip file is accepted',
-    );
+    await expect(
+      sut.uploadLagomTakeout(makeUploadedFile('activities.csv', Buffer.from('nope')), ownerId),
+    ).rejects.toThrow('Only a Strava takeout .zip file is accepted');
   });
 
   describe('real queue processing', () => {
     it.each(Object.values(activityFixtures))('parses $filename through the real queue', async (fixture) => {
       const contents = await readFile(fixture.path);
-      const result = await queuedSut.uploadActivity(makeUploadedFile(fixture.filename, contents));
+      const result = await queuedSut.uploadActivity(makeUploadedFile(fixture.filename, contents), ownerId);
       expect(result.queued).toBe(true);
 
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
@@ -317,7 +331,7 @@ describe(UploadService.name, () => {
         'activities/run.fit.gz': gzipSync(fit),
       });
 
-      const result = await queuedSut.uploadLagomTakeout(makeUploadedFile('export.zip', archive));
+      const result = await queuedSut.uploadLagomTakeout(makeUploadedFile('export.zip', archive), ownerId);
       expect(result.queued).toBe(true);
       expect(await queuedUploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
 
@@ -337,10 +351,13 @@ describe(UploadService.name, () => {
         ),
         'activities/run.fit.gz': gzipSync(fit),
       });
-      const updatedResult = await queuedSut.uploadLagomTakeout(makeUploadedFile('updated-export.zip', updatedArchive));
+      const updatedResult = await queuedSut.uploadLagomTakeout(
+        makeUploadedFile('updated-export.zip', updatedArchive),
+        ownerId,
+      );
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,
@@ -360,10 +377,11 @@ describe(UploadService.name, () => {
       });
       const iceSkateResult = await queuedSut.uploadLagomTakeout(
         makeUploadedFile('ice-skate-export.zip', iceSkateArchive),
+        ownerId,
       );
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,
@@ -404,7 +422,11 @@ describe(UploadService.name, () => {
       });
 
       await queuedSut.uploadLagomTakeout(makeUploadedFile('profile-picture.zip', archive), user.id);
-      await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
+      await jobsRepository.waitForQueueCompletion(
+        QueueName.BackgroundTask,
+        QueueName.ActivityParsing,
+        QueueName.ImageProcessing,
+      );
 
       const storedUser = await userRepository.findById(user.id);
       expect(storedUser).toMatchObject({
@@ -427,18 +449,18 @@ describe(UploadService.name, () => {
         ),
       });
 
-      const first = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual.zip', archive));
+      const first = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual.zip', archive), ownerId);
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
-      const second = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive));
+      const second = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive), ownerId);
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(first.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(first.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 0,
         status: 'completed',
       });
-      expect(queuedSut.getLagomTakeoutStatus(second.importId, '')).toMatchObject({
+      expect(queuedSut.getLagomTakeoutStatus(second.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,

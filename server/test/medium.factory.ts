@@ -4,11 +4,11 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { ActivityType } from 'src/types';
-import type { UploadedFileData } from 'src/types/uploads';
+import type { BufferedUploadedFileData } from 'src/types/uploads';
 
 import type { KondisDatabase } from 'src/db/database';
 
-export const makeUploadedFile = (filename: string, buffer: Buffer): UploadedFileData => ({
+export const makeUploadedFile = (filename: string, buffer: Buffer): BufferedUploadedFileData => ({
   originalname: filename,
   buffer,
   size: buffer.length,

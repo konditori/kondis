@@ -96,4 +96,14 @@ describe(LiveWorkoutService.name, () => {
     await expect(sut.createShare(WORKOUT_ID, USER_ID)).rejects.toBeInstanceOf(NotFoundException);
     expect(setShareToken).not.toHaveBeenCalled();
   });
+
+  it('mints only expiring public links', async () => {
+    const { sut } = setup();
+
+    const result = await sut.createShare(WORKOUT_ID, USER_ID);
+
+    expect(result.token).toHaveLength(32);
+    expect(new Date(result.expiresAt).getTime()).toBeGreaterThan(Date.now());
+    expect(setShareToken).toHaveBeenCalledWith(WORKOUT_ID, expect.any(String), expect.any(Date));
+  });
 });

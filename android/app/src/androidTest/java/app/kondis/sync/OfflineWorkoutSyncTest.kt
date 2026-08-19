@@ -41,6 +41,7 @@ class OfflineWorkoutSyncTest {
     private val remoteId = "remote-sync-test-activity"
     private val deleteId = "zzzz-remote-delete-test-activity"
     private val startedAt = Instant.now().toString()
+    private lateinit var accountKey: String
 
     @Before
     fun setUp() {
@@ -48,17 +49,20 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
+        val serverUrl = server.url("/api/v1/").toString()
+        accountKey = "$serverUrl|offline-sync-test-user"
         runBlocking {
             SettingsRepository(context).apply {
-                setServerUrl(server.url("/api/v1/").toString())
+                setServerUrl(serverUrl)
                 setAccessToken("offline-sync-test-token")
+                setAccountId("offline-sync-test-user")
             }
         }
 
         database =
             Room
                 .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-                .addMigrations(TEST_MIGRATION_1_2)
+                .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
                 .build()
         val file =
             File(context.filesDir, "recordings/sync-test.gpx").apply {
@@ -69,11 +73,18 @@ class OfflineWorkoutSyncTest {
             database.activityDao().saveQueuedWorkout(
                 activity = localActivityEntity(),
                 detail = localDetailEntity(),
-                workout = QueuedWorkoutEntity("local-sync-test", file.absolutePath, "Offline test run", startedAt),
+                workout =
+                    QueuedWorkoutEntity(
+                        accountKey,
+                        "local-sync-test",
+                        file.absolutePath,
+                        "Offline test run",
+                        startedAt,
+                    ),
             )
             database.activityDao().upsertActivities(listOf(remoteActivityEntity()))
             database.activityDao().upsertDetail(
-                ActivityDetailEntity(deleteId, deleteDetailJson(), System.currentTimeMillis()),
+                ActivityDetailEntity(accountKey, deleteId, deleteDetailJson(), System.currentTimeMillis()),
             )
         }
         database.close()
@@ -112,9 +123,9 @@ class OfflineWorkoutSyncTest {
         val verificationDatabase =
             Room
                 .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-                .addMigrations(TEST_MIGRATION_1_2)
+                .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
                 .build()
-        runBlocking { check(verificationDatabase.activityDao().queuedWorkouts().isEmpty()) }
+        runBlocking { check(verificationDatabase.activityDao().queuedWorkouts(accountKey).isEmpty()) }
         verificationDatabase.close()
     }
 
@@ -217,10 +228,57 @@ class OfflineWorkoutSyncTest {
                     )
                 }
             }
+
+        val TEST_MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("DROP TABLE queued_workouts")
+                    db.execSQL("DROP TABLE activity_details")
+                    db.execSQL("DROP TABLE activities")
+                    db.execSQL(
+                        """
+                        CREATE TABLE activities (
+                            accountKey TEXT NOT NULL,
+                            id TEXT NOT NULL,
+                            startedAt TEXT NOT NULL,
+                            searchableText TEXT NOT NULL,
+                            payload TEXT NOT NULL,
+                            isLocal INTEGER NOT NULL,
+                            PRIMARY KEY(accountKey, id)
+                        )
+                        """.trimIndent(),
+                    )
+                    db.execSQL(
+                        """
+                        CREATE TABLE activity_details (
+                            accountKey TEXT NOT NULL,
+                            id TEXT NOT NULL,
+                            payload TEXT NOT NULL,
+                            cachedAt INTEGER NOT NULL,
+                            PRIMARY KEY(accountKey, id)
+                        )
+                        """.trimIndent(),
+                    )
+                    db.execSQL(
+                        """
+                        CREATE TABLE queued_workouts (
+                            accountKey TEXT NOT NULL,
+                            localActivityId TEXT NOT NULL,
+                            gpxPath TEXT NOT NULL,
+                            title TEXT NOT NULL,
+                            startedAt TEXT NOT NULL,
+                            uploadStarted INTEGER NOT NULL,
+                            PRIMARY KEY(accountKey, localActivityId)
+                        )
+                        """.trimIndent(),
+                    )
+                }
+            }
     }
 
     private fun localActivityEntity() =
         ActivityEntity(
+            accountKey = accountKey,
             id = "local-sync-test",
             startedAt = startedAt,
             searchableText = "offline test run run",
@@ -229,7 +287,7 @@ class OfflineWorkoutSyncTest {
         )
 
     private fun localDetailEntity() =
-        ActivityDetailEntity("local-sync-test", localDetailJson(), System.currentTimeMillis())
+        ActivityDetailEntity(accountKey, "local-sync-test", localDetailJson(), System.currentTimeMillis())
 
     private fun localActivityJson() =
         activityJson(
@@ -256,6 +314,7 @@ class OfflineWorkoutSyncTest {
 
     private fun remoteActivityEntity() =
         ActivityEntity(
+            accountKey = accountKey,
             id = deleteId,
             startedAt = startedAt,
             searchableText = "delete test run run",

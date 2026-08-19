@@ -21,7 +21,10 @@ data class AppSettings(
     val serverUrl: String = BuildConfig.DEFAULT_API_URL,
     val unitSystem: UnitSystem = UnitSystem.Metric,
     val accessToken: String? = null,
-)
+    val accountId: String? = null,
+) {
+    val accountKey: String? get() = accountId?.let { "$serverUrl|$it" }
+}
 
 @Singleton
 class SettingsRepository
@@ -47,12 +50,18 @@ class SettingsRepository
                             preferences[UNIT_SYSTEM]
                                 ?.let { value -> UnitSystem.entries.firstOrNull { it.name == value } }
                                 ?: UnitSystem.Metric,
-                    ).copy(accessToken = preferences[ACCESS_TOKEN])
+                    ).copy(accessToken = preferences[ACCESS_TOKEN], accountId = preferences[ACCOUNT_ID])
                 }
 
         suspend fun setServerUrl(url: String) {
             val normalized = KondisApiFactory.normalizeBaseUrl(url)
-            context.settingsDataStore.edit { it[SERVER_URL] = normalized }
+            context.settingsDataStore.edit { preferences ->
+                if (preferences[SERVER_URL] != null && preferences[SERVER_URL] != normalized) {
+                    preferences.remove(ACCESS_TOKEN)
+                    preferences.remove(ACCOUNT_ID)
+                }
+                preferences[SERVER_URL] = normalized
+            }
         }
 
         suspend fun setUnitSystem(unitSystem: UnitSystem) {
@@ -65,15 +74,31 @@ class SettingsRepository
                     null
                 ) {
                     preferences.remove(ACCESS_TOKEN)
+                    preferences.remove(ACCOUNT_ID)
                 } else {
                     preferences[ACCESS_TOKEN] = token
                 }
             }
         }
 
+        suspend fun setSession(
+            token: String,
+            accountId: String,
+        ) {
+            context.settingsDataStore.edit { preferences ->
+                preferences[ACCESS_TOKEN] = token
+                preferences[ACCOUNT_ID] = accountId
+            }
+        }
+
+        suspend fun setAccountId(accountId: String) {
+            context.settingsDataStore.edit { it[ACCOUNT_ID] = accountId }
+        }
+
         private companion object {
             val SERVER_URL = stringPreferencesKey("server_url")
             val UNIT_SYSTEM = stringPreferencesKey("unit_system")
             val ACCESS_TOKEN = stringPreferencesKey("access_token")
+            val ACCOUNT_ID = stringPreferencesKey("account_id")
         }
     }

@@ -79,6 +79,9 @@ jobs:
         run: mise run //server:test
         continue-on-error: true
 
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
   e2e-check:
     name: Check E2E
     needs: pre-job
@@ -138,6 +141,9 @@ jobs:
       - name: Run checks
         run: mise run //web:check
         if: ${{ !cancelled() }}
+
+      - name: Build production web server
+        run: pnpm build
 
   web-unit-tests:
     name: Test Web

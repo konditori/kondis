@@ -26,8 +26,8 @@ export class UploadTable {
   @Column({ type: 'text' })
   storage_path!: string;
 
-  @Column({ type: 'text', nullable: true })
-  user_id!: string | null;
+  @Column({ type: 'text' })
+  user_id!: string;
 
   @Column({ type: 'text' })
   status!: Generated<UploadStatus>;

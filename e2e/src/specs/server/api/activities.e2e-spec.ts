@@ -6,7 +6,7 @@ import {
 } from '@kondis/sdk';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { utils as e2e } from '../../../utils';
+import { utils as e2e } from 'src/utils';
 
 const fitFixturePath = 'activities/running/2015-hindas/2015-06-22-run.fit';
 const orsaTcxFixturePath = 'activities/alpine-ski/2013-01-13-orsa.tcx';

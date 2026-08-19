@@ -17,7 +17,7 @@ import { JobService } from 'src/services/job.service';
 import { UploadService } from 'src/services/upload.service';
 import { type JobItem } from 'src/types/jobs';
 
-import { makeUploadedFile } from 'test/medium.factory';
+import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 import { activityFixtures } from 'test/medium/utils';
@@ -38,6 +38,7 @@ describe('JobRepository', () => {
   let activityRepository: ActivityRepository;
   let databaseRepository: DatabaseRepository;
   let storageRepository: StorageRepository;
+  let ownerId: string;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
@@ -55,6 +56,8 @@ describe('JobRepository', () => {
 
   beforeEach(async () => {
     await resetMediumTestDatabase(db, jobs);
+    const owner = await createMediumFactory(db).newUser();
+    ownerId = owner.id;
   });
 
   afterAll(async () => {
@@ -63,10 +66,11 @@ describe('JobRepository', () => {
   });
 
   describe('handler discovery', () => {
-    const samples: Record<JobName, JobItem> = {
+    const buildSamples = (): Record<JobName, JobItem> => ({
       [JobName.ActivityUpload]: {
         name: JobName.ActivityUpload,
         data: {
+          userId: ownerId,
           originalName: 'sample.gpx',
           storagePath: 'temporary/sample.gpx',
           checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
@@ -110,6 +114,7 @@ describe('JobRepository', () => {
       [JobName.LagomTakeoutImport]: {
         name: JobName.LagomTakeoutImport,
         data: {
+          userId: ownerId,
           originalName: 'empty.zip',
           storagePath: 'temporary/empty.zip',
         },
@@ -124,12 +129,13 @@ describe('JobRepository', () => {
         name: JobName.ActivityManualCreate,
         data: {
           id: MISSING_UUID,
+          userId: ownerId,
           activitySport: 'run',
           startedAt: '2024-01-01T00:00:00.000Z',
           elapsedTime: 60,
         },
       },
-    };
+    });
 
     it('binds a handler to every job name', async () => {
       await storageRepository.write('temporary/sample.gpx', SAMPLE_GPX);
@@ -138,7 +144,7 @@ describe('JobRepository', () => {
         createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),
       );
 
-      for (const item of Object.values(samples)) {
+      for (const item of Object.values(buildSamples())) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
         );
@@ -151,7 +157,7 @@ describe('JobRepository', () => {
 
       try {
         await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
-        await jobs.queueAll(Object.values(samples));
+        await jobs.queueAll(Object.values(buildSamples()));
 
         const counts = await Promise.all(Object.values(QueueName).map((queue) => jobs.getJobCounts(queue)));
         const queued = counts.reduce((sum, { queued: value }) => sum + value, 0);
@@ -215,7 +221,7 @@ describe('JobRepository', () => {
     it('deletes the activity, the upload and the file', async () => {
       const fixture = activityFixtures.hindasRun;
       const contents = await readFile(fixture.path);
-      await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents));
+      await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents), ownerId);
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
       const uploaded = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
@@ -311,6 +317,7 @@ describe('JobRepository', () => {
           original_name: 'x.fit',
           byte_size: 1,
           storage_path: 'de/ad/deadbeef.fit',
+          user_id: ownerId,
         });
 
         const item = { name: JobName.ActivityParse, data: { id: upload.id } } as const;
@@ -364,6 +371,7 @@ describe('JobRepository', () => {
             original_name: `${index}.fit`,
             byte_size: 1,
             storage_path: `${index}/${index}.fit`,
+            user_id: ownerId,
           });
         }
 
@@ -398,6 +406,7 @@ describe('JobRepository', () => {
         original_name: 'a.fit',
         byte_size: 1,
         storage_path: 'a/a.fit',
+        user_id: ownerId,
       });
       await jobs.queue({ name: JobName.ActivityParse, data: { id: upload.id } });
 

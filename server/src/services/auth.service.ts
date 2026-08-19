@@ -1,5 +1,13 @@
-import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
+import { timingSafeEqual } from 'node:crypto';
 import { createAccessToken, createActivityEventsTicket } from 'src/auth';
 import { ConfigService } from 'src/config/config.service';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -12,18 +20,28 @@ export class AuthService {
     private readonly users: UserRepository,
     private readonly config: ConfigService,
   ) {}
+  get registrationEnabled() {
+    return this.config.registrationEnabled;
+  }
   async setupStatus() {
     const row = await this.users.count();
     return { setupRequired: Number(row.count) === 0 };
   }
-  async setup(email: string, firstName: string, lastName: string, password: string) {
+  async setup(email: string, firstName: string, lastName: string, password: string, setupToken: string) {
     this.logger.log(`Initial account setup attempt for ${email || '<missing email>'}`);
     try {
-      const status = await this.setupStatus();
-      if (!status.setupRequired) {
+      if (!this.matchesSetupToken(setupToken)) {
+        throw new UnauthorizedException('Invalid setup token');
+      }
+      const account = this.normalizeAccount(email, firstName, lastName, password);
+      const user = await this.users.createInitialAdmin({
+        ...account,
+        password_hash: await hash(password, BCRYPT_WORK_FACTOR),
+        role: 'admin',
+      });
+      if (!user) {
         throw new ConflictException('Initial admin already exists');
       }
-      const user = await this.create(email, firstName, lastName, password, 'admin');
       this.logger.log(`Initial administrator account created for ${user.email}`);
       return this.issue(user, true);
     } catch (error) {
@@ -42,6 +60,9 @@ export class AuthService {
     return this.issue(user, false);
   }
   async register(email: string, firstName: string, lastName: string, password: string) {
+    if (!this.config.registrationEnabled) {
+      throw new ForbiddenException('Public registration is disabled');
+    }
     this.logger.log(`Creating public user account for ${email}`);
     try {
       const user = await this.create(email, firstName, lastName, password, 'user');
@@ -57,23 +78,29 @@ export class AuthService {
     return createActivityEventsTicket(userId, this.config.authSecret);
   }
   async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
-    if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 10 || !firstName.trim() || !lastName.trim()) {
-      throw new BadRequestException('Use a first name, last name, valid email, and password of at least 10 characters');
-    }
-    if (await this.users.findByEmail(email.toLowerCase())) {
+    const account = this.normalizeAccount(email, firstName, lastName, password);
+    if (await this.users.findByEmail(account.email)) {
       throw new ConflictException('Email is already in use');
     }
     const user = await this.users.create({
-      email: email.toLowerCase(),
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
+      ...account,
       password_hash: await hash(password, BCRYPT_WORK_FACTOR),
       role,
     });
-    if (role === 'admin') {
-      await this.users.adoptOrphanedData(user.id);
-    }
     return user;
+  }
+
+  private normalizeAccount(email: string, firstName: string, lastName: string, password: string) {
+    if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 10 || !firstName.trim() || !lastName.trim()) {
+      throw new BadRequestException('Use a first name, last name, valid email, and password of at least 10 characters');
+    }
+    return { email: email.toLowerCase(), first_name: firstName.trim(), last_name: lastName.trim() };
+  }
+
+  private matchesSetupToken(candidate: string): boolean {
+    const actual = Buffer.from(this.config.setupToken);
+    const supplied = Buffer.from(candidate);
+    return actual.length === supplied.length && timingSafeEqual(actual, supplied);
   }
   private issue(
     user: { id: string; role: 'admin' | 'user'; email: string; first_name: string; last_name: string },

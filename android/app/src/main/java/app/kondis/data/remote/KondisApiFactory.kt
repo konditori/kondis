@@ -1,5 +1,6 @@
 package app.kondis.data.remote
 
+import app.kondis.BuildConfig
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -44,10 +45,17 @@ class KondisApiFactory
                 .create(KondisApi::class.java)
 
         companion object {
-            fun normalizeBaseUrl(value: String): String {
+            fun normalizeBaseUrl(
+                value: String,
+                allowCleartext: Boolean = BuildConfig.DEBUG,
+            ): String {
                 val trimmed = value.trim()
-                require(trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-                    "Server URL must start with http:// or https://"
+                require(trimmed.startsWith("https://") || (allowCleartext && trimmed.startsWith("http://"))) {
+                    if (allowCleartext) {
+                        "Server URL must start with http:// or https://"
+                    } else {
+                        "Release builds require an HTTPS server URL"
+                    }
                 }
                 return trimmed.trimEnd('/') + "/"
             }

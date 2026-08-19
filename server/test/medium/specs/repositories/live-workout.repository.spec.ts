@@ -48,7 +48,7 @@ describe(LiveWorkoutRepository.name, () => {
       },
     ]);
     await sut.updateProgress(workout.id, 'recording', 10, 12.5);
-    await sut.setShareToken(workout.id, 'token-hash', null);
+    await sut.setShareToken(workout.id, 'token-hash', new Date(Date.now() + 60_000));
 
     await expect(sut.listPoints(workout.id)).resolves.toHaveLength(1);
     await expect(sut.getById(workout.id, user.id)).resolves.toMatchObject({

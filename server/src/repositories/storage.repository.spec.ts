@@ -21,7 +21,9 @@ describe('StorageRepository', () => {
   });
 
   it('shards workout and image paths', () => {
-    expect(repository.buildPath('abcdef0123456789', '.fit')).toBe('activities/ab/cd/abcdef0123456789.fit');
+    expect(repository.buildPath('user-id', 'abcdef0123456789', '.fit')).toBe(
+      'activities/user-id/ab/cd/abcdef0123456789.fit',
+    );
     expect(repository.buildImagePath('6ffe851c-920e-4615-844f-fcdfc40a8de7', 'original', '.jpg')).toBe(
       'images/6f/fe/6ffe851c-920e-4615-844f-fcdfc40a8de7/original.jpg',
     );

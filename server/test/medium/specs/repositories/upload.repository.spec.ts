@@ -36,18 +36,21 @@ describe(UploadRepository.name, () => {
   });
 
   it('paginates uploads that still need parsing', async () => {
-    const { sut } = setup();
+    const { sut, factory } = setup();
+    const user = await factory.newUser();
     const first = await sut.create({
       checksum: '1'.repeat(32),
       original_name: '1.fit',
       byte_size: 1,
       storage_path: '1/1.fit',
+      user_id: user.id,
     });
     const second = await sut.create({
       checksum: '2'.repeat(32),
       original_name: '2.fit',
       byte_size: 1,
       storage_path: '2/2.fit',
+      user_id: user.id,
     });
 
     const ids = await sut.getIdsToParse({ force: false, limit: 10 });

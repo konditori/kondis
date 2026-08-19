@@ -75,7 +75,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       error text,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
-      user_id uuid REFERENCES "user" (id) ON DELETE CASCADE
+      user_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE
     )
   `.execute(db);
 
@@ -88,7 +88,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     CREATE TABLE activity (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       upload_id uuid NOT NULL UNIQUE REFERENCES upload (id) ON DELETE CASCADE,
-      user_id uuid REFERENCES "user" (id) ON DELETE CASCADE,
+      user_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
       sport text NOT NULL CHECK (
         sport IN (
           'alpine_ski', 'backcountry_ski', 'badminton', 'basketball', 'canoeing', 'cricket',
@@ -290,7 +290,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       share_expires_at timestamptz,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
-      UNIQUE (user_id, client_session_id)
+      UNIQUE (user_id, client_session_id),
+      CHECK ((share_token_hash IS NULL) = (share_expires_at IS NULL))
     )
   `.execute(db);
   await sql`CREATE TRIGGER live_workout_set_updated_at BEFORE UPDATE ON live_workout

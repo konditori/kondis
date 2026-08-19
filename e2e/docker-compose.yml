@@ -14,6 +14,7 @@ services:
       DB_DATABASE_NAME: kondis
       KONDIS_PORT: '2295'
       KONDIS_STORAGE_DIR: /tmp/kondis-uploads
+      KONDIS_SETUP_TOKEN: e2e-setup-token
     volumes:
       - ./test-assets:/test-assets
     depends_on:
