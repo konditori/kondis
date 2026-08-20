@@ -249,25 +249,30 @@
             rx="3"
           />
           <text x="10" y="19"
-            ><tspan class="profile-tooltip-label">{t("dist_label")} </tspan><tspan
-              class="profile-tooltip-value"
+            ><tspan class="profile-tooltip-label"
+              >{t("dist_label")}
+            </tspan><tspan class="profile-tooltip-value"
               >{(displayedPoint.distance / 1000).toFixed(2)} km</tspan
             ></text
           >
           <text x="10" y="37"
-            ><tspan class="profile-tooltip-label">{t("elev_label")} </tspan><tspan
-              class="profile-tooltip-value"
+            ><tspan class="profile-tooltip-label"
+              >{t("elev_label")}
+            </tspan><tspan class="profile-tooltip-value"
               >{Math.round(displayedPoint.altitude)} m</tspan
             ></text
           >
           <text x="10" y="55"
-            ><tspan class="profile-tooltip-label">{t("pace_label")} </tspan><tspan
-              class="profile-tooltip-value">{paceText(pointPace)}</tspan
+            ><tspan class="profile-tooltip-label"
+              >{t("pace_label")}
+            </tspan><tspan class="profile-tooltip-value"
+              >{paceText(pointPace)}</tspan
             ></text
           >
           {#if displayedPoint.heartRate != null}<text x="10" y="73"
-              ><tspan class="profile-tooltip-label">{t("heart_rate_short_label")} </tspan><tspan
-                class="profile-tooltip-value"
+              ><tspan class="profile-tooltip-label"
+                >{t("heart_rate_short_label")}
+              </tspan><tspan class="profile-tooltip-value"
                 >{displayedPoint.heartRate} bpm</tspan
               ></text
             >{/if}

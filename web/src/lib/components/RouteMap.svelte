@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { MapPinOff } from "@lucide/svelte";
   import { ActivityMapStyle } from "$lib/activity-types";
+  import { t } from "$lib/i18n";
 
   let {
     coordinates,

@@ -200,7 +200,8 @@
                 <button
                   type="button"
                   class="comment-cancel"
-                  onclick={cancelEdit}><X size={15} /> {t("common_cancel")}</button
+                  onclick={cancelEdit}
+                  ><X size={15} /> {t("common_cancel")}</button
                 >
               </form>
             {:else}

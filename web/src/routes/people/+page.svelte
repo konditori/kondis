@@ -108,7 +108,8 @@
           ><button
             class="metadata-cancel"
             type="button"
-            onclick={() => ignore(request.id)}><X size={16} /> {t("ignore")}</button
+            onclick={() => ignore(request.id)}
+            ><X size={16} /> {t("ignore")}</button
           >
         </div>
       {/each}
