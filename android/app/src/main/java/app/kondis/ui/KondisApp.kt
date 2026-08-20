@@ -49,10 +49,10 @@ import app.kondis.ui.detail.ActivityDetailRoute
 import app.kondis.ui.detail.BestEffortsRoute
 import app.kondis.ui.detail.MatchedRoutesRoute
 import app.kondis.ui.feed.FeedRoute
+import app.kondis.ui.i18n.tr
 import app.kondis.ui.people.PeopleRoute
 import app.kondis.ui.record.RecordRoute
 import app.kondis.ui.settings.SettingsRoute
-import app.kondis.ui.i18n.tr
 import kotlinx.serialization.Serializable
 
 @Serializable

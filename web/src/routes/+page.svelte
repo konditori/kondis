@@ -390,9 +390,7 @@
         {query ? t("no_matching_activities") : t("first_activity_starts_here")}
       </h2>
       <p>
-        {query
-          ? t("try_different_activity_search")
-          : t("import_file_to_archive")}
+        {query ? t("try_different_activity_search") : t("no_activities")}
       </p>
     </div>
   {/if}

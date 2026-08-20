@@ -68,7 +68,7 @@
     <string name="i18n_no_matching_activities">Inga matchande aktiviteter</string>
     <string name="i18n_first_activity_starts_here">Din första aktivitet börjar här</string>
     <string name="i18n_try_different_activity_search">Prova en annan sport eller ett annat aktivitetsnamn.</string>
-    <string name="i18n_import_file_to_archive">Importera en fil för att bygga ditt privata träningsarkiv.</string>
+    <string name="i18n_no_activities">Importera en fil för att bygga ditt privata träningsarkiv.</string>
     <string name="i18n_could_not_load_best_efforts">Kunde inte läsa in dina bästa resultat.</string>
     <string name="i18n_no_result_yet">Inget resultat ännu</string>
     <string name="i18n_social">Socialt</string>

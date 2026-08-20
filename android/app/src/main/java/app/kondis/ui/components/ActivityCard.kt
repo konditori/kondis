@@ -71,13 +71,25 @@ fun ActivityCard(
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     activity.athlete?.let { athlete ->
-                        Text(athlete.name, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Text(
+                            athlete.name,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
                     }
                     Text(activity.displayName(), style = MaterialTheme.typography.titleMedium)
-                    Text(formatDateTime(activity.startedAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        formatDateTime(activity.startedAt),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     if (activity.tags.isNotEmpty()) {
                         Text(
-                            activity.tags.joinToString(" · ") { it.replace('_', ' ').replaceFirstChar { character -> character.titlecase() } },
+                            activity.tags.joinToString(" · ") {
+                                it.replace('_', ' ').replaceFirstChar { character ->
+                                    character.titlecase()
+                                }
+                            },
                             modifier = Modifier.padding(top = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
@@ -110,18 +122,30 @@ fun ActivityCard(
                         ActivityStat(tr("distance"), formatDistance(metrics?.distance, units))
                         ActivityStat(tr("time"), formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
                         val isPace = activity.sport.contains("run") || activity.sport == "walk"
-                        ActivityStat(if (isPace) tr("pace") else tr("speed"), if (isPace) formatPace(metrics?.avgSpeed, units) else formatSpeed(metrics?.avgSpeed, units))
+                        ActivityStat(
+                            if (isPace) tr("pace") else tr("speed"),
+                            if (isPace) formatPace(metrics?.avgSpeed, units) else formatSpeed(metrics?.avgSpeed, units),
+                        )
                     }
                 }
             }
             activity.personalRecord()?.let { effort ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant).padding(18.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                            ).padding(18.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     AchievementMedal(effort.overallRank, showRank = true)
-                    Text(achievementText(effort), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        achievementText(effort),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
             ActivityCardVisualPager(activity, onLoadImage)
@@ -137,16 +161,31 @@ fun ActivityCard(
                     )
                 }
                 Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Icon(Icons.Rounded.ChatBubbleOutline, contentDescription = tr("comments", activity.commentCount), modifier = Modifier.padding(start = 20.dp))
-                Text(activity.commentCount.toString(), modifier = Modifier.padding(start = 6.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    Icons.Rounded.ChatBubbleOutline,
+                    contentDescription = tr("comments", activity.commentCount),
+                    modifier = Modifier.padding(start = 20.dp),
+                )
+                Text(
+                    activity.commentCount.toString(),
+                    modifier = Modifier.padding(start = 6.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ActivityCardVisualPager(activity: Activity, onLoadImage: suspend (String) -> Bitmap?) {
-    val hasMap = activity.track?.coordinates?.size?.let { it > 1 } == true
+private fun ActivityCardVisualPager(
+    activity: Activity,
+    onLoadImage: suspend (String) -> Bitmap?,
+) {
+    val hasMap =
+        activity.track
+            ?.coordinates
+            ?.size
+            ?.let { it > 1 } == true
     val pageCount = (if (hasMap) 1 else 0) + activity.images.size
     if (pageCount == 0) return
 
@@ -158,7 +197,9 @@ private fun ActivityCardVisualPager(activity: Activity, onLoadImage: suspend (St
         pageSpacing = 8.dp,
     ) { page ->
         if (hasMap && page == 0) {
-            activity.track.let { track -> StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(190.dp)) }
+            activity.track.let { track ->
+                StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(190.dp))
+            }
         } else {
             ActivityImageSlide(
                 image = activity.images[page - if (hasMap) 1 else 0],
@@ -171,9 +212,26 @@ private fun ActivityCardVisualPager(activity: Activity, onLoadImage: suspend (St
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.Center) {
             repeat(pageCount) { page ->
                 Surface(
-                    modifier = Modifier.padding(horizontal = 3.dp).size(if (page == pagerState.currentPage) 18.dp else 6.dp, 6.dp),
+                    modifier =
+                        Modifier.padding(horizontal = 3.dp).size(
+                            if (page ==
+                                pagerState.currentPage
+                            ) {
+                                18.dp
+                            } else {
+                                6.dp
+                            },
+                            6.dp,
+                        ),
                     shape = RoundedCornerShape(3.dp),
-                    color = if (page == pagerState.currentPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    color =
+                        if (page ==
+                            pagerState.currentPage
+                        ) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
                 ) {}
             }
         }

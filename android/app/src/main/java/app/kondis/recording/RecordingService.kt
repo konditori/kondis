@@ -200,9 +200,9 @@ class RecordingService :
                 if (recordingManager.state.value.mode ==
                     RecordingMode.Paused
                 ) {
-                    tr("workout_paused")
+                    tr("activity_paused")
                 } else {
-                    tr("tap_to_view_workout")
+                    tr("tap_to_view_activity")
                 },
             ).setContentIntent(contentIntent)
             .setOngoing(true)

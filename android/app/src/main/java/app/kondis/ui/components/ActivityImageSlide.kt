@@ -48,11 +48,12 @@ fun ActivityImageSlide(
         image.caption?.takeIf(String::isNotBlank)?.let { caption ->
             Text(
                 text = caption,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.65f))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.65f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.onPrimary,
             )
         }

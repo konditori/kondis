@@ -134,7 +134,11 @@ fun FeedScreen(
             } else {
                 item {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(tr("home"), modifier = Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
+                        Text(
+                            tr("home"),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
                         IconButton(onClick = onPeopleClick) {
                             Icon(Icons.Rounded.PersonAdd, contentDescription = tr("find_people"))
                         }
@@ -236,7 +240,16 @@ private fun SyncStatusCard(
                     Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Text(
-                            tr(if (queuedWorkouts.size == 1) "workout_waiting_to_sync" else "workouts_waiting_to_sync", queuedWorkouts.size),
+                            tr(
+                                if (queuedWorkouts.size ==
+                                    1
+                                ) {
+                                    "workout_waiting_to_sync"
+                                } else {
+                                    "workouts_waiting_to_sync"
+                                },
+                                queuedWorkouts.size,
+                            ),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(

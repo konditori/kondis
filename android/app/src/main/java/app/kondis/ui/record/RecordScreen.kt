@@ -401,7 +401,10 @@ private fun PostRecordingScreen(
                         color = MaterialTheme.colorScheme.primary,
                     )
                 } else {
-                    Button(onClick = onSave, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(tr("save_activity")) }
+                    Button(
+                        onClick = onSave,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                    ) { Text(tr("save_activity")) }
                     TextButton(onClick = { showDiscardDialog = true }, modifier = Modifier.fillMaxWidth()) {
                         Text(tr("discard_activity"))
                     }
@@ -412,8 +415,8 @@ private fun PostRecordingScreen(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text(tr("discard_workout")) },
-            text = { Text(tr("discard_workout_confirmation")) },
+            title = { Text(tr("discard_activity")) },
+            text = { Text(tr("discard_activity_confirmation")) },
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false

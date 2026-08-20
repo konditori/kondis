@@ -68,7 +68,7 @@
     <string name="i18n_no_matching_activities">No matching activities</string>
     <string name="i18n_first_activity_starts_here">Your first activity starts here</string>
     <string name="i18n_try_different_activity_search">Try a different sport or activity name.</string>
-    <string name="i18n_import_file_to_archive">Import a file to build your private training archive.</string>
+    <string name="i18n_no_activities">Import a file to build your private training archive.</string>
     <string name="i18n_could_not_load_best_efforts">Could not load your best efforts.</string>
     <string name="i18n_no_result_yet">No result yet</string>
     <string name="i18n_social">Social</string>

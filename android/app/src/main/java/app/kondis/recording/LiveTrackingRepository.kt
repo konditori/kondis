@@ -104,7 +104,11 @@ class LiveTrackingRepository
                     .putExtra(Intent.EXTRA_TEXT, "$appUrl/live/${response.token}")
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(
-                Intent.createChooser(shareIntent, context.tr("share_live_tracking")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                Intent
+                    .createChooser(
+                        shareIntent,
+                        context.tr("share_live_tracking"),
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
             return true
         }

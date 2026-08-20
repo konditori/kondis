@@ -46,7 +46,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
     );
   } catch {
     // Activity pages already surface API availability; keep settings usable.
-  } 
+  }
   const result = {
     user,
     authenticated: !url || (!publicAuthPage && !publicLiveView),

@@ -92,8 +92,8 @@ import app.kondis.ui.components.ActivityImageSlide
 import app.kondis.ui.components.ActivityStat
 import app.kondis.ui.components.MedalIcon
 import app.kondis.ui.components.StaticRoutePreview
-import app.kondis.ui.record.ActivityTypePicker
 import app.kondis.ui.i18n.tr
+import app.kondis.ui.record.ActivityTypePicker
 import app.kondis.ui.theme.KondisOrange
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -304,7 +304,15 @@ fun ActivityDetailScreen(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     SectionTitle(
-                        eyebrow = if (isCycling(activity.sport)) tr("cycling_performance") else tr("running_performance"),
+                        eyebrow =
+                            if (isCycling(
+                                    activity.sport,
+                                )
+                            ) {
+                                tr("cycling_performance")
+                            } else {
+                                tr("running_performance")
+                            },
                         title = tr("best_efforts"),
                     )
                     Spacer(Modifier.weight(1f))
@@ -362,10 +370,18 @@ fun ActivityDetailScreen(
                 TextButton(
                     onClick = onDelete,
                     enabled = !state.deleting,
-                ) { Text(if (state.deleting) tr("deleting") else tr("common_delete"), color = MaterialTheme.colorScheme.error) }
+                ) {
+                    Text(
+                        if (state.deleting) tr("deleting") else tr("common_delete"),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }, enabled = !state.deleting) { Text(tr("common_cancel")) }
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    enabled = !state.deleting,
+                ) { Text(tr("common_cancel")) }
             },
         )
     }
@@ -1254,7 +1270,10 @@ private fun ActivityEditor(
                 Text(tr("common_delete"), color = MaterialTheme.colorScheme.error)
             }
             TextButton(onClick = onCancel, enabled = !saving && !deleting) { Text(tr("common_cancel")) }
-            Button(onClick = onSave, enabled = !saving && !deleting) { Text(if (saving) tr("saving") else tr("common_save")) }
+            Button(
+                onClick = onSave,
+                enabled = !saving && !deleting,
+            ) { Text(if (saving) tr("saving") else tr("common_save")) }
         }
     }
 }

@@ -86,8 +86,16 @@ private fun BestEffortsScreen(
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back"))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(tr("you").uppercase(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-                    Text(tr("best_efforts"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        tr("you").uppercase(),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Text(
+                        tr("best_efforts"),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
                 IconButton(onClick = onSettings) {
                     Icon(Icons.Rounded.Settings, contentDescription = tr("settings"))

@@ -49,8 +49,8 @@ import app.kondis.model.formatDateTime
 import app.kondis.model.formatDuration
 import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
-import app.kondis.ui.theme.KondisOrange
 import app.kondis.ui.i18n.tr
+import app.kondis.ui.theme.KondisOrange
 import kotlin.math.abs
 
 @Composable
@@ -107,7 +107,9 @@ fun MatchedRoutesScreen(
                 Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, end = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back")) }
+                IconButton(
+                    onClick = onBack,
+                ) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back")) }
                 Text(
                     tr("back_to_activity"),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -180,8 +182,8 @@ fun MatchedRoutesScreen(
                         }
                         Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Text(tr("activities_count", activities.size), fontWeight = FontWeight.Bold)
-                            Text(tr("trending_average"), color = MaterialTheme.colorScheme.primary)
-                            Text(tr("each_effort"), color = MaterialTheme.colorScheme.secondary)
+                            Text("- ${tr("trending_average")}", color = MaterialTheme.colorScheme.primary)
+                            Text("- ${tr("each_effort")}", color = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 }
