@@ -1,7 +1,9 @@
 package app.kondis.ui.i18n
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 
 private val legacyKeys =
@@ -14,16 +16,18 @@ private fun androidResourceName(key: String) = if (key in legacyKeys) key else "
  * the keys in the repository-level i18n catalog.
  */
 @Composable
+@SuppressLint("DiscouragedApi")
 fun tr(
     key: String,
     vararg formatArgs: Any,
 ): String {
     val context = LocalContext.current
-    val resourceId = context.resources.getIdentifier(androidResourceName(key), "string", context.packageName)
+    val resourceId = LocalResources.current.getIdentifier(androidResourceName(key), "string", context.packageName)
     check(resourceId != 0) { "Unknown translation key: $key" }
     return stringResource(resourceId, *formatArgs)
 }
 
+@SuppressLint("DiscouragedApi")
 fun android.content.Context.tr(
     key: String,
     vararg formatArgs: Any,

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generated from i18n/*.json. Run: mise run //:i18n:android -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources,TypographyEllipsis">
     <string name="app_name">Kondis</string>
     <string name="recording_channel_name">Träningsregistrering</string>
     <string name="recording_channel_description">Håller platsregistreringen aktiv under ett träningspass</string>
@@ -11,6 +11,47 @@
     <string name="i18n_common_delete">Ta bort</string>
     <string name="i18n_common_save">Spara</string>
     <string name="i18n_common_retry">Försök igen</string>
+    <string name="i18n_comments">%1$s kommentarer</string>
+    <string name="i18n_loading_comments">Laddar kommentarer&amp;#8230;</string>
+    <string name="i18n_edit_comment">Redigera kommentar</string>
+    <string name="i18n_comment_actions">Kommentarshandlingar</string>
+    <string name="i18n_edit">Redigera</string>
+    <string name="i18n_add_a_comment">Lägg till en kommentar</string>
+    <string name="i18n_comment">Kommentar</string>
+    <string name="i18n_send_comment">Skicka kommentar</string>
+    <string name="i18n_activity_image">Aktivitetsbild</string>
+    <string name="i18n_activity_photo">Aktivitetsbild</string>
+    <string name="i18n_previous_image">Föregående bild</string>
+    <string name="i18n_next_image">Nästa bild</string>
+    <string name="i18n_close_image_viewer">Stäng bildvisaren</string>
+    <string name="i18n_elevation_profile">Höjdprofil</string>
+    <string name="i18n_elevation_by_distance">Höjd efter distans</string>
+    <string name="i18n_dist_label">Dist:</string>
+    <string name="i18n_elev_label">Höjd:</string>
+    <string name="i18n_pace_label">Tempo:</string>
+    <string name="i18n_heart_rate_short_label">Puls:</string>
+    <string name="i18n_activity_tags">Aktivitetstaggar</string>
+    <string name="i18n_live_workout_route">Rutt för pågående träningspass</string>
+    <string name="i18n_lifetime">Alla tider</string>
+    <string name="i18n_medal_title">%1$s-medalj</string>
+    <string name="i18n_activity_density_map">Aktivitetsdensitetskarta</string>
+    <string name="i18n_activity_route_map">Karta över aktivitetens rutt</string>
+    <string name="i18n_no_gps_route">Ingen GPS-rutt</string>
+    <string name="i18n_no_location_data">Den här aktiviteten innehåller inga platsdata.</string>
+    <string name="i18n_done">Klar</string>
+    <string name="i18n_error_label">Fel</string>
+    <string name="i18n_error_generic_title">Något gick fel</string>
+    <string name="i18n_return_to_activities">Tillbaka till aktiviteter</string>
+    <string name="i18n_app_description">Ditt egenhostade aktivitetsarkiv</string>
+    <string name="i18n_live_tracking">Livespårning</string>
+    <string name="i18n_live_workout">Pågående träningspass</string>
+    <string name="i18n_requests">Förfrågningar</string>
+    <string name="i18n_follow_requests">Följförfrågningar</string>
+    <string name="i18n_no_pending_requests">Inga väntande förfrågningar.</string>
+    <string name="i18n_accept">Acceptera</string>
+    <string name="i18n_ignore">Ignorera</string>
+    <string name="i18n_medals_count">%1$s medaljer</string>
+    <string name="i18n_map_attribution">&amp;copy; &lt;a href=\"https://www.openstreetmap.org/copyright\"&gt;OpenStreetMap&lt;/a&gt;</string>
     <string name="i18n_auth_sign_in">Logga in</string>
     <string name="i18n_auth_sign_out">Logga ut</string>
     <string name="i18n_auth_create_account">Skapa konto</string>
@@ -43,7 +84,7 @@
     <string name="i18n_clear_search">Töm sökning</string>
     <string name="i18n_open_notifications">Öppna notiser</string>
     <string name="i18n_view_all">Visa alla</string>
-    <string name="i18n_loading">Laddar...</string>
+    <string name="i18n_loading">Laddar&amp;#8230;</string>
     <string name="i18n_no_notifications_yet">Inga notiser ännu.</string>
     <string name="i18n_add_activity">Lägg till aktivitet</string>
     <string name="i18n_add_manual_entry">Lägg till manuellt</string>
@@ -60,11 +101,11 @@
     <string name="i18n_strava_failed_activities">%1$s misslyckades</string>
     <string name="i18n_strava_import_failed">Importen misslyckades.</string>
     <string name="i18n_strava_choose_zip">Välj en Strava-exportfil i .zip-format.</string>
-    <string name="i18n_strava_takeout_uploaded">Exportfilen har laddats upp. Aktiviteterna bearbetas...</string>
+    <string name="i18n_strava_takeout_uploaded">Exportfilen har laddats upp. Aktiviteterna bearbetas&amp;#8230;</string>
     <string name="i18n_strava_drop_takeout">Släpp Strava-exportfilen här</string>
     <string name="i18n_strava_browse_device">eller klicka för att bläddra på din enhet</string>
     <string name="i18n_strava_activities_processed">%1$s av %2$s aktiviteter bearbetade</string>
-    <string name="i18n_strava_importing">Importerar...</string>
+    <string name="i18n_strava_importing">Importerar&amp;#8230;</string>
     <string name="i18n_strava_import_takeout">Importera exportfil</string>
     <string name="i18n_server_unavailable">Servern är inte tillgänglig</string>
     <string name="i18n_start_api_to_load_activities">Starta Kondis-servern för att läsa in aktiviteter.</string>
@@ -80,12 +121,12 @@
     <string name="i18n_waiting_for_gps">Väntar på GPS</string>
     <string name="i18n_updated_seconds_ago">Uppdaterad för %1$s sekunder sedan</string>
     <string name="i18n_could_not_create_share_link">Kunde inte skapa en delningslänk</string>
-    <string name="i18n_creating_share_link">Skapar...</string>
+    <string name="i18n_creating_share_link">Skapar&amp;#8230;</string>
     <string name="i18n_new_share_link">Ny delningslänk</string>
     <string name="i18n_share_live">Dela livepass</string>
     <string name="i18n_beacon_link_copied">Beacon-länken har kopierats</string>
     <string name="i18n_gps_points">GPS-punkter</string>
-    <string name="i18n_waiting_for_first_gps_position">Väntar på den första GPS-positionen...</string>
+    <string name="i18n_waiting_for_first_gps_position">Väntar på den första GPS-positionen&amp;#8230;</string>
     <string name="i18n_distance">Distans</string>
     <string name="i18n_elapsed">Förfluten tid</string>
     <string name="i18n_pace">Tempo</string>
@@ -116,7 +157,7 @@
     <string name="i18n_name_description">Det här namnet visas på dina aktiviteter och din profil.</string>
     <string name="i18n_first_name">Förnamn</string>
     <string name="i18n_last_name">Efternamn</string>
-    <string name="i18n_saving">Sparar...</string>
+    <string name="i18n_saving">Sparar&amp;#8230;</string>
     <string name="i18n_save_name">Spara namn</string>
     <string name="i18n_you">Du</string>
     <string name="i18n_profile_picture">Profilbild</string>
@@ -147,7 +188,7 @@
     <string name="i18n_search_results_for">Sökresultat för ”%1$s”</string>
     <string name="i18n_activities_found">%1$s aktiviteter hittades</string>
     <string name="i18n_activity_found">%1$s aktivitet hittades</string>
-    <string name="i18n_loading_more_activities">Laddar fler aktiviteter...</string>
+    <string name="i18n_loading_more_activities">Laddar fler aktiviteter&amp;#8230;</string>
     <string name="i18n_effort_progress_description">Välj en prestation för att se hur dina resultat har utvecklats över tid.</string>
     <string name="i18n_run">Löpning</string>
     <string name="i18n_ride">Cykling</string>
@@ -160,7 +201,7 @@
     <string name="i18n_server_url_settings_example">Till exempel http://192.168.0.10 eller https://kondis.example.com</string>
     <string name="i18n_continue">Fortsätt</string>
     <string name="i18n_retry">Försök igen</string>
-    <string name="i18n_opening_identity_provider">Öppnar identitetsleverantör...</string>
+    <string name="i18n_opening_identity_provider">Öppnar identitetsleverantör&amp;#8230;</string>
     <string name="i18n_retry_in_browser">Försök igen i webbläsaren</string>
     <string name="i18n_server_requires_setup">Kondis-servern kräver en första installation. Slutför installationen i webbläsaren och återvänd sedan hit för att logga in.</string>
     <string name="i18n_share_live_tracking">Dela liveföljning</string>
@@ -172,7 +213,6 @@
     <string name="i18n_sync_now">Synka nu</string>
     <string name="i18n_everything_uploaded">Allt är uppladdat</string>
     <string name="i18n_untitled_activity">Namnlöst träningspass</string>
-    <string name="i18n_activity_route_map">Karta över aktivitetens rutt</string>
     <string name="i18n_try_again">Försök igen</string>
     <string name="i18n_saved_waiting_to_sync">Sparad på den här enheten och väntar på synkning.</string>
     <string name="i18n_add_photos">Lägg till bilder</string>
@@ -182,7 +222,7 @@
     <string name="i18n_running_performance">Löpprestation</string>
     <string name="i18n_delete_activity">Ta bort aktivitet</string>
     <string name="i18n_delete_activity_confirmation">Detta tar permanent bort träningspasset och dess analys.</string>
-    <string name="i18n_deleting">Tar bort...</string>
+    <string name="i18n_deleting">Tar bort&amp;#8230;</string>
     <string name="i18n_repeated_route">Återkommande rutt</string>
     <string name="i18n_activities_on_route">%1$s aktiviteter på den här rutten</string>
     <string name="i18n_activity_on_route">%1$s aktivitet på den här rutten</string>
@@ -198,14 +238,11 @@
     <string name="i18n_calories">Kalorier</string>
     <string name="i18n_like_activity">Gilla aktivitet</string>
     <string name="i18n_unlike_activity">Ta bort gilla-markering</string>
-    <string name="i18n_comments">%1$s kommentarer</string>
-    <string name="i18n_activity_photo">Aktivitetsbild</string>
     <string name="i18n_open_activity_photos">Öppna aktivitetsbilder</string>
     <string name="i18n_close_photos">Stäng bilder</string>
     <string name="i18n_photo_of">Bild %1$s av %2$s</string>
     <string name="i18n_return_to_activity">Återgå till aktivitet</string>
     <string name="i18n_more_options">Fler alternativ</string>
-    <string name="i18n_edit">Redigera</string>
     <string name="i18n_edit_activity">Redigera aktivitet</string>
     <string name="i18n_name">Namn</string>
     <string name="i18n_activity_name">Aktivitetsnamn</string>
@@ -240,13 +277,12 @@
     <string name="i18n_pause">Pausa</string>
     <string name="i18n_resume">Återuppta</string>
     <string name="i18n_finish">Avsluta</string>
-    <string name="i18n_saving_and_syncing_activity">Sparar och synkar träningspass...</string>
+    <string name="i18n_saving_and_syncing_activity">Sparar och synkar träningspass&amp;#8230;</string>
     <string name="i18n_activity_saved">Träningspasset är sparat</string>
-    <string name="i18n_done">Klar</string>
     <string name="i18n_dismiss">Stäng</string>
     <string name="i18n_no_gps_trace">Ingen GPS-rutt registrerades för den här aktiviteten.</string>
     <string name="i18n_activity_title">Aktivitetens titel</string>
-    <string name="i18n_uploading_activity">Laddar upp aktivitet...</string>
+    <string name="i18n_uploading_activity">Laddar upp aktivitet&amp;#8230;</string>
     <string name="i18n_save_activity">Spara aktivitet</string>
     <string name="i18n_discard_activity">Ta bort aktivitet</string>
     <string name="i18n_discard_activity_confirmation">Den här aktiviteten tas bort permanent och kan inte återställas.</string>
@@ -265,11 +301,11 @@
     <string name="i18n_activities_saved_on_device">De är sparade på den här enheten och finns tillgängliga nedan.</string>
     <string name="i18n_request_pending">Förfrågan väntar</string>
     <string name="i18n_unfollow">Sluta följa</string>
-    <string name="i18n_checking">Kontrollerar...</string>
+    <string name="i18n_checking">Kontrollerar&amp;#8230;</string>
     <string name="i18n_save_and_test_connection">Spara och testa anslutningen</string>
     <string name="i18n_sign_out_confirmation_title">Logga ut?</string>
     <string name="i18n_sign_out_confirmation">Du kommer att loggas ut från din Kondis-server</string>
-    <string name="i18n_looking_for_gps">Söker GPS...</string>
+    <string name="i18n_looking_for_gps">Söker GPS&amp;#8230;</string>
     <string name="i18n_gps_signal_weak">GPS-signalen är svag</string>
     <string name="i18n_recording_failed">Registreringen misslyckades</string>
     <string name="i18n_saved_will_upload_when_reachable">Sparad på den här enheten. Den laddas upp när din Kondis-server går att nå.</string>

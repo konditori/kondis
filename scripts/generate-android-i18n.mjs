@@ -25,15 +25,17 @@ const escapeXml = (value) =>
 const androidFormat = (value) => {
   const placeholders = new Map();
   const escaped = value.replaceAll("%", "%%");
-  return escaped.replaceAll(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g, (_, name) => {
-    if (!placeholders.has(name)) placeholders.set(name, placeholders.size + 1);
-    return `%${placeholders.get(name)}$s`;
-  });
+  return escaped
+    .replaceAll(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g, (_, name) => {
+      if (!placeholders.has(name)) placeholders.set(name, placeholders.size + 1);
+      return `%${placeholders.get(name)}$s`;
+    })
+    .replaceAll("...", "&#8230;");
 };
 
 const resourceXml = (catalog) => `<?xml version="1.0" encoding="utf-8"?>
 <!-- Generated from i18n/*.json. Run: mise run //:i18n:android -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources,TypographyEllipsis">
 ${sourceKeys.map((key) => `    <string name="${resourceName(key)}">${escapeXml(androidFormat(catalog[key]))}</string>`).join("\n")}
 </resources>
 `;

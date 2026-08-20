@@ -49,8 +49,8 @@ fun ActivityCard(
     activity: Activity,
     units: UnitSystem,
     onClick: () -> Unit,
-    onLike: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onLike: () -> Unit = {},
     onLoadImage: suspend (String) -> Bitmap? = { null },
 ) {
     Card(

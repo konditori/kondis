@@ -244,9 +244,9 @@ private fun SyncStatusCard(
                                 if (queuedWorkouts.size ==
                                     1
                                 ) {
-                                    "workout_waiting_to_sync"
+                                    "activity_waiting_to_sync"
                                 } else {
-                                    "workouts_waiting_to_sync"
+                                    "activities_waiting_to_sync"
                                 },
                                 queuedWorkouts.size,
                             ),
