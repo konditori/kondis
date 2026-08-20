@@ -2,16 +2,17 @@
   import { Activity, Trophy, Users } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { t } from "$lib/i18n";
 
   const items = [
-    { href: "/", label: "Home", icon: Activity, section: null },
+    { href: "/", label: t("home"), icon: Activity, section: null },
     {
       href: "/best-efforts",
-      label: "Best efforts",
+      label: t("best_efforts"),
       icon: Trophy,
       section: "/best-efforts",
     },
-    { href: "/people", label: "People", icon: Users, section: "/people" },
+    { href: "/people", label: t("people"), icon: Users, section: "/people" },
   ];
 
   function goHome(event: MouseEvent) {
@@ -23,12 +24,12 @@
 </script>
 
 <aside class="sidebar">
-  <a class="brand" href="/" onclick={goHome} aria-label="Kondis home">
+  <a class="brand" href="/" onclick={goHome} aria-label={t("kondis_home")}>
     <span class="brand-mark" aria-hidden="true">😰</span>
     <span>kondis</span>
   </a>
 
-  <nav aria-label="Primary navigation">
+  <nav aria-label={t("primary_navigation")}>
     {#each items as item}
       <a
         class:active={item.section
@@ -44,15 +45,15 @@
   </nav>
 </aside>
 
-<nav class="mobile-nav" aria-label="Mobile navigation">
+<nav class="mobile-nav" aria-label={t("mobile_navigation")}>
   <a class:active={page.url.pathname === "/"} href="/" onclick={goHome}
-    ><Activity size={21} /><span>Home</span></a
+    ><Activity size={21} /><span>{t("home")}</span></a
   >
   <a
     class:active={page.url.pathname.startsWith("/best-efforts")}
-    href="/best-efforts"><Trophy size={21} /><span>Best efforts</span></a
+    href="/best-efforts"><Trophy size={21} /><span>{t("best_efforts")}</span></a
   >
   <a class:active={page.url.pathname.startsWith("/people")} href="/people"
-    ><Users size={21} /><span>People</span></a
+    ><Users size={21} /><span>{t("people")}</span></a
   >
 </nav>

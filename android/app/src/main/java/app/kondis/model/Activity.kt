@@ -38,6 +38,42 @@ data class SocialUser(
 }
 
 @Serializable
+data class SocialRelation(
+    val following: Boolean,
+    val incomingRequest: Boolean,
+    val outgoingRequest: Boolean,
+    val blockedByViewer: Boolean,
+    val blockedViewer: Boolean,
+)
+
+@Serializable
+data class PersonSearchResult(
+    val user: SocialUser,
+    val relation: SocialRelation,
+)
+
+@Serializable
+data class LikeState(
+    val liked: Boolean,
+    val likeCount: Int,
+)
+
+@Serializable
+data class Comment(
+    val id: String,
+    val body: String,
+    val createdAt: String,
+    val updatedAt: String,
+    val user: SocialUser,
+)
+
+@Serializable
+data class CommentPage(
+    val comments: List<Comment>,
+    val nextCursor: String? = null,
+)
+
+@Serializable
 data class ActivityImage(
     val id: String,
     val caption: String? = null,
@@ -169,15 +205,6 @@ data class ActivityDetail(
             metrics = metrics,
             createdAt = createdAt,
             updatedAt = updatedAt,
-            topBestEfforts =
-                bestEfforts?.map { effort ->
-                    BestEffortSummary(
-                        type = effort.type,
-                        value = effort.value,
-                        overallRank = effort.overallRank,
-                        yearRank = effort.yearRank,
-                    )
-                },
             track = track,
             images = images,
             userId = userId,

@@ -1,0 +1,265 @@
+{
+  "app_name": "Kondis",
+  "recording_channel_name": "Workout recording",
+  "recording_channel_description": "Keeps location recording active during a workout",
+  "recording_notification_title": "Kondis is recording",
+  "common_cancel": "Cancel",
+  "common_close": "Close",
+  "common_confirm": "Confirm",
+  "common_delete": "Delete",
+  "common_save": "Save",
+  "common_retry": "Retry",
+  "auth_sign_in": "Sign in",
+  "auth_sign_out": "Sign out",
+  "auth_create_account": "Create account",
+  "email": "Email",
+  "password": "Password",
+  "account": "Account",
+  "activities": "Activities",
+  "activity": "Activity",
+  "activity_upload": "Upload activity",
+  "activity_upload_description": "Upload a workout file.",
+  "activity_import_strava": "Import Strava takeout",
+  "activity_import_strava_description": "Import your activities from a Strava .zip export.",
+  "notifications": "Notifications",
+  "notifications_empty": "Likes and comments on your activities will appear here.",
+  "recording_start": "Start recording",
+  "recording_pause": "Pause recording",
+  "recording_resume": "Resume recording",
+  "recording_stop": "Stop recording",
+  "settings": "Settings",
+  "error_generic": "Something went wrong. Please try again.",
+  "error_network": "Could not connect to the server.",
+  "error_not_found": "The requested item could not be found.",
+  "home": "Home",
+  "best_efforts": "Best efforts",
+  "people": "People",
+  "primary_navigation": "Primary navigation",
+  "mobile_navigation": "Mobile navigation",
+  "kondis_home": "Kondis home",
+  "search_activities": "Search activities",
+  "clear_search": "Clear search",
+  "open_notifications": "Open notifications",
+  "view_all": "View all",
+  "loading": "Loading...",
+  "no_notifications_yet": "No notifications yet.",
+  "add_activity": "Add activity",
+  "add_manual_entry": "Add manual entry",
+  "open_account_menu": "Open account menu",
+  "log_out": "Log out",
+  "new_import": "New import",
+  "individual_workout_file": "Individual workout file",
+  "upload_one_file": "Upload one .fit, .tcx, or .gpx file.",
+  "strava_takeout": "Strava takeout",
+  "upload_activity": "Upload activity",
+  "server_unavailable": "Server unavailable",
+  "start_api_to_load_activities": "Start the Kondis API to load your activities.",
+  "live_workouts": "Live workouts",
+  "live_recording": "Live recording",
+  "paused": "Paused",
+  "live": "Live",
+  "distance": "Distance",
+  "pace": "Pace",
+  "moving_time": "Moving time",
+  "elevation": "Elevation",
+  "could_not_load_more": "Could not load more. Try again",
+  "no_matching_activities": "No matching activities",
+  "first_activity_starts_here": "Your first activity starts here",
+  "try_different_activity_search": "Try a different sport or activity name.",
+  "import_file_to_archive": "Import a file to build your private training archive.",
+  "could_not_load_best_efforts": "Could not load your best efforts.",
+  "no_result_yet": "No result yet",
+  "social": "Social",
+  "follow_athletes_description": "Follow athletes and see their activities in your home feed.",
+  "incoming_requests": "Incoming requests",
+  "search_by_name": "Search by name",
+  "search_people": "Search people",
+  "search": "Search",
+  "following": "Following",
+  "requested": "Requested",
+  "follow": "Follow",
+  "no_people_found": "No people found",
+  "try_different_name": "Try a different name.",
+  "could_not_load_people": "Could not load people.",
+  "could_not_update_follow_request": "Could not update the follow request.",
+  "choose_activity_display": "Choose how Kondis displays your activity data.",
+  "your_name": "Your name",
+  "name_description": "This is the name shown on your activities and profile.",
+  "first_name": "First name",
+  "last_name": "Last name",
+  "saving": "Saving...",
+  "save_name": "Save name",
+  "you": "You",
+  "profile_picture": "Profile picture",
+  "profile_picture_description": "Shown next to your name on activities and profiles.",
+  "choose_picture": "Choose picture",
+  "units_of_measurement": "Units of measurement",
+  "display_units": "Display units",
+  "metric": "Metric",
+  "imperial": "Imperial",
+  "welcome_to_kondis": "Welcome to Kondis",
+  "setup_token_description": "Enter the setup token shown in the backend log to get started.",
+  "setup_token": "Setup token",
+  "see_latest_reactions": "See the latest reactions and comments on your activities.",
+  "no_notifications_description": "Likes and comments on your activities will appear here.",
+  "upload_workout_file": "Upload a workout file",
+  "upload_workout_description": "Add one workout directly to your activity archive.",
+  "drop_workout_file": "Drop your workout file here",
+  "click_to_browse": "or click to browse your device",
+  "choose_workout_file": "Choose a .fit, .tcx, or .gpx workout file.",
+  "workout_uploaded": "Workout uploaded.",
+  "upload_failed": "Upload failed.",
+  "processing_taking_long": "Activity processing is taking longer than expected",
+  "dont_have_account": "Don't have an account?",
+  "create_one": "Create one",
+  "create_your_account": "Create your account",
+  "confirm_password": "Confirm password",
+  "already_have_account": "Already have an account?",
+  "search_results_for": "Search results for “{query}”",
+  "activities_found": "{count} activities found",
+  "activity_found": "{count} activity found",
+  "loading_more_activities": "Loading more activities…",
+  "effort_progress_description": "Choose an effort to see how your performances have progressed over time.",
+  "run": "Run",
+  "ride": "Ride",
+  "remove": "Remove",
+  "save_preference": "Save preference",
+  "saved": "Saved"
+  ,"record": "Record"
+  ,"server_url": "Server URL"
+  ,"server_url_example": "For example http://192.168.1.10:2293 or https://kondis.example.com"
+  ,"server_url_settings_example": "For example http://192.168.0.10 or https://kondis.example.com"
+  ,"continue": "Continue"
+  ,"retry": "Retry"
+  ,"opening_identity_provider": "Opening identity provider…"
+  ,"retry_in_browser": "Retry in browser"
+  ,"server_requires_setup": "The Kondis server requires initial setup. Finish setup in your web browser and then return here to sign in."
+  ,"share_live_tracking": "Share live tracking"
+  ,"workout_paused": "Workout paused"
+  ,"tap_to_view_workout": "Tap to view your workout"
+  ,"back": "Back"
+  ,"find_people": "Find people"
+  ,"record_a_workout": "Record a workout"
+  ,"sync_now": "Sync now"
+  ,"everything_uploaded": "Everything is uploaded"
+  ,"untitled_workout": "Untitled workout"
+  ,"activity_route_map": "Activity route map"
+  ,"try_again": "Try again"
+  ,"saved_waiting_to_sync": "Saved on this device and waiting to sync."
+  ,"add_photos": "Add photos"
+  ,"activity_analysis": "ACTIVITY ANALYSIS"
+  ,"splits": "Splits"
+  ,"cycling_performance": "CYCLING PERFORMANCE"
+  ,"running_performance": "RUNNING PERFORMANCE"
+  ,"delete_activity": "Delete activity"
+  ,"delete_activity_confirmation": "This will permanently delete this workout and its analysis."
+  ,"deleting": "Deleting…"
+  ,"repeated_route": "REPEATED ROUTE"
+  ,"activities_on_route": "{count} activities on this route"
+  ,"activity_on_route": "{count} activity on this route"
+  ,"compare_matched_efforts": "Compare your performance across every matched effort."
+  ,"view_matched_rides": "View matched rides"
+  ,"view_matched_runs": "View matched runs"
+  ,"speed": "Speed"
+  ,"time": "Time"
+  ,"power": "Power"
+  ,"elevation_short": "Elev"
+  ,"average_speed": "Avg speed"
+  ,"average_heart_rate": "Avg heart rate"
+  ,"calories": "Calories"
+  ,"like_activity": "Like activity"
+  ,"unlike_activity": "Unlike activity"
+  ,"comments": "{count} comments"
+  ,"activity_photo": "Activity photo"
+  ,"open_activity_photos": "Open activity photos"
+  ,"close_photos": "Close photos"
+  ,"photo_of": "Photo {current} of {total}"
+  ,"return_to_activity": "Return to activity"
+  ,"more_options": "More options"
+  ,"edit": "Edit"
+  ,"edit_activity": "Edit activity"
+  ,"name": "Name"
+  ,"activity_name": "Activity name"
+  ,"description": "Description"
+  ,"add_description": "Add a description"
+  ,"exclude_from_rankings": "Exclude from rankings"
+  ,"tags": "Tags"
+  ,"race": "Race"
+  ,"commute": "Commute"
+  ,"workout": "Workout"
+  ,"recovery": "Recovery"
+  ,"with_kid": "With Kid"
+  ,"with_pet": "With Pet"
+  ,"for_a_cause": "For a Cause"
+  ,"new_best_all_time": "New best of all time"
+  ,"new_second_best_all_time": "New 2nd best of all time"
+  ,"new_third_best_all_time": "New 3rd best of all time"
+  ,"new_best_year": "New best of {year}"
+  ,"new_second_best_year": "New 2nd best of {year}"
+  ,"new_third_best_year": "New 3rd best of {year}"
+  ,"no_matched_route_data": "No matched route data"
+  ,"back_to_activity": "Back to activity"
+  ,"progress_over_time": "PROGRESS OVER TIME"
+  ,"fastest": "Fastest"
+  ,"all_time_average": "All-time avg"
+  ,"slowest": "Slowest"
+  ,"trending_average": "━ Trending average"
+  ,"each_effort": "━ Each effort"
+  ,"every_effort": "EVERY EFFORT"
+  ,"popular": "Popular"
+  ,"more_activities": "More activities"
+  ,"start_workout": "Start workout"
+  ,"pause": "Pause"
+  ,"resume": "Resume"
+  ,"finish": "Finish"
+  ,"saving_and_syncing_workout": "Saving and syncing workout..."
+  ,"workout_saved": "Workout saved"
+  ,"done": "Done"
+  ,"dismiss": "Dismiss"
+  ,"no_gps_trace": "No GPS trace was captured for this activity."
+  ,"activity_title": "Activity title"
+  ,"uploading_activity": "Uploading activity..."
+  ,"save_activity": "Save activity"
+  ,"discard_activity": "Discard activity"
+  ,"discard_workout": "Discard workout?"
+  ,"discard_workout_confirmation": "This recording will be permanently deleted and cannot be recovered."
+  ,"discard": "Discard"
+  ,"keep_workout": "Keep workout"
+  ,"choose_activity_type": "Choose activity type"
+  ,"choose_sport": "Choose a sport"
+  ,"select_sport_to_record": "Select what you're about to record"
+  ,"close": "Close"
+  ,"search_sports": "Search sports"
+  ,"selected": "Selected"
+  ,"nothing_to_see": "Nothing to see here!"
+  ,"try_different_name_or_sport": "Try a different name or sport."
+  ,"workout_waiting_to_sync": "{count} workout waiting to sync"
+  ,"workouts_waiting_to_sync": "{count} workouts waiting to sync"
+  ,"workouts_saved_on_device": "They are saved on this device and remain available below."
+  ,"request_pending": "Request pending"
+  ,"unfollow": "Unfollow"
+  ,"checking": "Checking..."
+  ,"save_and_test_connection": "Save and test connection"
+  ,"sign_out_confirmation_title": "Sign out?"
+  ,"sign_out_confirmation": "You will sign out from your Kondis server"
+  ,"looking_for_gps": "Looking for GPS..."
+  ,"gps_signal_weak": "GPS signal is weak"
+  ,"recording_failed": "Recording failed"
+  ,"saved_will_upload_when_reachable": "Saved on this device. It will upload when your Kondis server is reachable."
+  ,"no_sports_found": "No sports found"
+  ,"likes": "{count} likes"
+  ,"add_comment": "Add a comment"
+  ,"post": "Post"
+  ,"competition": "Competition"
+  ,"matched_rides": "Matched rides"
+  ,"matched_runs": "Matched runs"
+  ,"compare_route_activities": "Compare your performance across {count} activities on the same route"
+  ,"activities_count": "{count} activities"
+  ,"all_time_ranking": "All-time ranking"
+  ,"your_efforts": "Your {effort} efforts"
+  ,"every_result": "Every result"
+  ,"effort_history": "Effort history"
+  ,"effort": "Effort"
+  ,"kilometre_abbreviation": "KM"
+  ,"achievement_badge_description": "{effort}: {rank}"
+}

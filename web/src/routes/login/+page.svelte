@@ -1,14 +1,15 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   let { data, form } = $props();
 </script>
 
-<svelte:head><title>Sign in · Kondis</title></svelte:head>
+<svelte:head><title>{t("auth_sign_in")} · Kondis</title></svelte:head>
 <main class="auth-page">
   <section>
-    <h1>Kondis login 😰</h1>
+    <h1>Kondis {t("auth_sign_in")} 😰</h1>
     <form method="POST" action="?/login">
       <label
-        >Email<input
+        >{t("email")}<input
           required
           type="email"
           name="email"
@@ -16,19 +17,19 @@
         /></label
       >
       <label
-        >Password<input
+        >{t("password")}<input
           required
           type="password"
           name="password"
           autocomplete="current-password"
         /></label
       >{#if form?.error}<p class="error">{form.error}</p>{/if}<button
-        >Sign in</button
+        >{t("auth_sign_in")}</button
       >
     </form>
     {#if data.registrationEnabled}
       <p class="auth-switch">
-        Don't have an account? <a href="/register">Create one</a>
+        {t("dont_have_account")} <a href="/register">{t("create_one")}</a>
       </p>
     {/if}
   </section>

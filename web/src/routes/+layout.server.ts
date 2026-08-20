@@ -55,9 +55,6 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
     activityTypes,
   };
   if (!url) {
-    // Some unit tests call the load function with only the fields they exercise.
-    // SvelteKit always supplies `url` at runtime, so keep the page-data contract
-    // string-valued without forcing those minimal fixtures to construct one.
     return result as typeof result & { eventsUrl: string };
   }
   return { ...result, eventsUrl: activityEventsUrl(url) };

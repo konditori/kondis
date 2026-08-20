@@ -7,6 +7,7 @@
   } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import type { Activity } from "$lib/types";
+  import { t } from "$lib/i18n";
 
   let { eventsUrl }: { eventsUrl: string } = $props();
   let input = $state<HTMLInputElement>();
@@ -23,7 +24,7 @@
     if (!accepted) {
       file = undefined;
       uploadState = "error";
-      message = "Choose a .fit, .tcx, or .gpx workout file.";
+      message = t("choose_workout_file");
       return;
     }
     file = selected;
@@ -36,7 +37,7 @@
       let unsubscribe: (() => void) | undefined;
       const timeout = setTimeout(() => {
         unsubscribe?.();
-        reject(new Error("Activity processing is taking longer than expected"));
+        reject(new Error(t("processing_taking_long")));
       }, 60_000);
       unsubscribe = subscribeToActivityEvents(
         eventsUrl,
@@ -63,7 +64,7 @@
       );
       await invalidateAll();
       uploadState = "done";
-      message = "Workout uploaded.";
+      message = t("workout_uploaded");
       try {
         const activity = await activityCreated;
         await goto(`/activities/${activity.id}`);
@@ -73,20 +74,20 @@
     } catch (error) {
       void activityCreated.catch(() => {});
       uploadState = "error";
-      message = error instanceof Error ? error.message : "Upload failed.";
+      message = error instanceof Error ? error.message : t("upload_failed");
     }
   }
 </script>
 
 <div class="upload-panel">
   <button class="upload-back" type="button" onclick={() => void goto("/upload")}
-    ><ArrowLeft size={17} /> Upload activity</button
+    ><ArrowLeft size={17} /> {t("upload_activity")}</button
   >
   <div class="upload-panel-heading">
     <span class="upload-choice-icon"><FileUp size={24} /></span>
     <div>
-      <h2>Upload a workout file</h2>
-      <p>Add one workout directly to your activity archive.</p>
+      <h2>{t("upload_workout_file")}</h2>
+      <p>{t("upload_workout_description")}</p>
     </div>
   </div>
 
@@ -107,8 +108,8 @@
     }}
   >
     <span class="upload-icon"><FileUp size={28} /></span>
-    <strong>Drop your workout file here</strong>
-    <span>or click to browse your device</span>
+    <strong>{t("drop_workout_file")}</strong>
+    <span>{t("click_to_browse")}</span>
     <small>.fit, .tcx, or .gpx</small>
   </button>
   <input

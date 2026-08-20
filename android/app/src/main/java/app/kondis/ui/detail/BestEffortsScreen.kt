@@ -43,6 +43,7 @@ import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
 import app.kondis.model.sportLabel
 import app.kondis.ui.components.MedalIcon
+import app.kondis.ui.i18n.tr
 
 @Composable
 fun BestEffortsRoute(
@@ -82,14 +83,14 @@ private fun BestEffortsScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back"))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text("YOU", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-                    Text("Best efforts", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text(tr("you").uppercase(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                    Text(tr("best_efforts"), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 }
                 IconButton(onClick = onSettings) {
-                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+                    Icon(Icons.Rounded.Settings, contentDescription = tr("settings"))
                 }
             }
         }
@@ -99,7 +100,7 @@ private fun BestEffortsScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 SportTab("Run", sport == "run", Modifier.weight(1f)) { onNavigate("run", "5k") }
-                SportTab("Ride", sport == "ride", Modifier.weight(1f)) { onNavigate("ride", "10k") }
+                SportTab(tr("ride"), sport == "ride", Modifier.weight(1f)) { onNavigate("ride", "10k") }
             }
         }
         state.errorMessage?.let { message ->
@@ -122,12 +123,12 @@ private fun BestEffortsScreen(
             item { EffortSelector(history, type, onNavigate) }
             val podium = history.efforts.filter { it.overallRank <= 3 }.sortedBy { it.overallRank }
             if (podium.isNotEmpty()) {
-                item { BestEffortSectionTitle("ALL-TIME RANKING", "Your ${effortLabel(type)} efforts") }
+                item { BestEffortSectionTitle(tr("all_time_ranking"), tr("your_efforts", effortLabel(type))) }
                 items(podium, key = { "podium-${it.activityId}" }) { effort ->
                     EffortCard(effort, history, units, onActivityClick)
                 }
             }
-            item { BestEffortSectionTitle("EVERY RESULT", "Effort history") }
+            item { BestEffortSectionTitle(tr("every_result"), tr("effort_history")) }
             items(history.efforts.asReversed(), key = { "history-${it.activityId}-${it.startedAt}" }) { effort ->
                 EffortCard(effort, history, units, onActivityClick)
             }
@@ -169,7 +170,7 @@ private fun EffortSelector(
     onNavigate: (String, String) -> Unit,
 ) {
     Column(Modifier.padding(horizontal = 20.dp)) {
-        Text("Effort", style = MaterialTheme.typography.labelLarge)
+        Text(tr("effort"), style = MaterialTheme.typography.labelLarge)
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             history.options.take(5).forEach { option ->
                 Card(

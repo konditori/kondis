@@ -6,7 +6,11 @@ import app.kondis.model.ActivityImage
 import app.kondis.model.ActivityPage
 import app.kondis.model.ActivityUpdate
 import app.kondis.model.BestEffortHistory
+import app.kondis.model.Comment
+import app.kondis.model.CommentPage
+import app.kondis.model.LikeState
 import app.kondis.model.MatchedRouteHistory
+import app.kondis.model.PersonSearchResult
 import app.kondis.model.UploadResponse
 import kotlinx.serialization.Serializable
 import okhttp3.MultipartBody
@@ -84,6 +88,10 @@ import retrofit2.http.Url
     val expiresAt: String? = null,
 )
 
+@Serializable data class CommentCreateRequest(
+    val body: String,
+)
+
 interface KondisApi {
     @POST("auth/login")
     suspend fun login(
@@ -138,6 +146,49 @@ interface KondisApi {
     suspend fun activity(
         @Path("id") id: String,
     ): ActivityDetail
+
+    @PUT("activities/{id}/like")
+    suspend fun like(
+        @Path("id") id: String,
+    ): LikeState
+
+    @DELETE("activities/{id}/like")
+    suspend fun unlike(
+        @Path("id") id: String,
+    ): LikeState
+
+    @GET("activities/{id}/comments")
+    suspend fun comments(
+        @Path("id") id: String,
+        @Query("cursor") cursor: String? = null,
+        @Query("limit") limit: Int = 50,
+    ): CommentPage
+
+    @POST("activities/{id}/comments")
+    suspend fun comment(
+        @Path("id") id: String,
+        @Body request: CommentCreateRequest,
+    ): Comment
+
+    @GET("people")
+    suspend fun people(
+        @Query("query") query: String,
+    ): List<PersonSearchResult>
+
+    @POST("people/{id}/follow-request")
+    suspend fun follow(
+        @Path("id") id: String,
+    )
+
+    @DELETE("people/{id}/follow-request")
+    suspend fun cancelFollowRequest(
+        @Path("id") id: String,
+    )
+
+    @DELETE("people/{id}/follow")
+    suspend fun unfollow(
+        @Path("id") id: String,
+    )
 
     @PUT("activities/{id}")
     suspend fun updateActivity(

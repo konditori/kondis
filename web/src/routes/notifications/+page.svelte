@@ -11,6 +11,7 @@
   import { userDisplayName } from "$lib/user-name";
   import { onMount } from "svelte";
   import { subscribeToActivityEvents } from "$lib/realtime";
+  import { t } from "$lib/i18n";
 
   let { data } = $props<{ data: { eventsUrl: string } }>();
 
@@ -35,7 +36,7 @@
         await socialControllerMarkNotificationsRead(getSdkRequestOptions());
       }
     } catch {
-      error = "Could not load notifications.";
+      error = t("error_generic");
     } finally {
       loading = false;
     }
@@ -57,20 +58,20 @@
 <div class="page-shell notifications-page">
   <header class="page-header">
     <div>
-      <h1>Notifications</h1>
-      <p>See the latest reactions and comments on your activities.</p>
+      <h1>{t("notifications")}</h1>
+      <p>{t("see_latest_reactions")}</p>
     </div>
   </header>
 
   {#if loading}
-    <p class="muted-copy">Loading notifications…</p>
+    <p class="muted-copy">{t("loading")}</p>
   {:else if error}
     <p class="form-error">{error}</p>
   {:else if notifications.length === 0}
     <div class="empty-state">
       <Bell size={24} />
-      <h2>No notifications yet</h2>
-      <p>Likes and comments on your activities will appear here.</p>
+      <h2>{t("no_notifications_yet")}</h2>
+      <p>{t("no_notifications_description")}</p>
     </div>
   {:else}
     <section class="notifications-panel" aria-label="Notifications">

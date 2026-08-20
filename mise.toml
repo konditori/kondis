@@ -117,3 +117,12 @@ run = [
 # Committed rather than built on demand, so the notices are readable from the repository.
 [tasks."third-party-licenses"]
 run = { task = "//server:third-party-licenses" }
+
+[tasks."i18n:check"]
+description = "Validate the shared translation catalogs"
+run = "node ./scripts/check-i18n.mjs"
+
+[tasks."i18n:android"]
+description = "Generate Android string resources from the shared translation catalogs"
+depends = ["i18n:check"]
+run = "node ./scripts/generate-android-i18n.mjs"

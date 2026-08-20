@@ -24,6 +24,12 @@ interface ActivityDao {
         limit: Int = 250,
     ): Flow<List<ActivityEntity>>
 
+    @Query("SELECT * FROM activities WHERE accountKey = :accountKey AND id = :id")
+    suspend fun activity(
+        accountKey: String,
+        id: String,
+    ): ActivityEntity?
+
     @Query("SELECT * FROM activity_details WHERE accountKey = :accountKey AND id = :id")
     fun observeDetail(
         accountKey: String,

@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import app.kondis.MainActivity
 import app.kondis.R
+import app.kondis.ui.i18n.tr
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -199,9 +200,9 @@ class RecordingService :
                 if (recordingManager.state.value.mode ==
                     RecordingMode.Paused
                 ) {
-                    "Workout paused"
+                    tr("workout_paused")
                 } else {
-                    "Tap to view your workout"
+                    tr("tap_to_view_workout")
                 },
             ).setContentIntent(contentIntent)
             .setOngoing(true)

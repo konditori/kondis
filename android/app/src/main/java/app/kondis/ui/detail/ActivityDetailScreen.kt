@@ -30,6 +30,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -76,6 +78,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityImage
 import app.kondis.model.ActivityUpdate
+import app.kondis.model.Comment
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
 import app.kondis.model.formatDateTime
@@ -90,6 +93,7 @@ import app.kondis.ui.components.ActivityStat
 import app.kondis.ui.components.MedalIcon
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.record.ActivityTypePicker
+import app.kondis.ui.i18n.tr
 import app.kondis.ui.theme.KondisOrange
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -124,6 +128,8 @@ fun ActivityDetailRoute(
         viewModel::update,
         viewModel::delete,
         viewModel::refresh,
+        viewModel::setLiked,
+        viewModel::addComment,
         onAddImages = { imagePicker.launch("image/*") },
         onLoadImage = viewModel::loadImage,
     )
@@ -140,6 +146,8 @@ fun ActivityDetailScreen(
     onUpdate: (ActivityUpdate) -> Unit,
     onDelete: () -> Unit,
     onRefresh: () -> Unit,
+    onLike: (Boolean) -> Unit,
+    onComment: (String) -> Unit,
     onAddImages: () -> Unit,
     onLoadImage: suspend (String) -> Bitmap?,
 ) {
@@ -157,7 +165,7 @@ fun ActivityDetailScreen(
             state.errorMessage?.let {
                 Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                 Text(it, modifier = Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error)
-                TextButton(onClick = onRefresh) { Text("Try again") }
+                TextButton(onClick = onRefresh) { Text(tr("try_again")) }
             }
         }
         return
@@ -205,7 +213,7 @@ fun ActivityDetailScreen(
                 ) {
                     Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Text(
-                        "Saved on this device and waiting to sync.",
+                        tr("saved_waiting_to_sync"),
                         modifier = Modifier.padding(start = 10.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -251,7 +259,7 @@ fun ActivityDetailScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    OutlinedButton(onClick = onAddImages) { Text("Add photos") }
+                    OutlinedButton(onClick = onAddImages) { Text(tr("add_photos")) }
                 }
             }
         }
@@ -266,7 +274,7 @@ fun ActivityDetailScreen(
         }
         if (!isCycling(activity.sport)) {
             activity.analysis?.splits?.takeIf(List<*>::isNotEmpty)?.let { splits ->
-                item { SectionTitle(eyebrow = "ACTIVITY ANALYSIS", title = "Splits") }
+                item { SectionTitle(eyebrow = tr("activity_analysis"), title = tr("splits")) }
                 item {
                     SplitsTable(
                         splits = splits,
@@ -296,15 +304,15 @@ fun ActivityDetailScreen(
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     SectionTitle(
-                        eyebrow = "${if (isCycling(activity.sport)) "CYCLING" else "RUNNING"} PERFORMANCE",
-                        title = "Best efforts",
+                        eyebrow = if (isCycling(activity.sport)) tr("cycling_performance") else tr("running_performance"),
+                        title = tr("best_efforts"),
                     )
                     Spacer(Modifier.weight(1f))
                     TextButton(
                         onClick = {
                             onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", efforts.first().type)
                         },
-                    ) { Text("You") }
+                    ) { Text(tr("you")) }
                 }
             }
             if (distanceEfforts.isNotEmpty()) {
@@ -332,20 +340,32 @@ fun ActivityDetailScreen(
                 }
             }
         }
+        if (!queuedForSync) {
+            item {
+                ActivitySocialSection(
+                    activity = activity,
+                    comments = state.comments,
+                    loading = state.commentsLoading,
+                    commenting = state.commenting,
+                    onLike = { onLike(!activity.viewerLiked) },
+                    onComment = onComment,
+                )
+            }
+        }
     }
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { if (!state.deleting) showDeleteDialog = false },
-            title = { Text("Delete activity?") },
-            text = { Text("This will permanently delete this workout and its analysis.") },
+            title = { Text(tr("delete_activity")) },
+            text = { Text(tr("delete_activity_confirmation")) },
             confirmButton = {
                 TextButton(
                     onClick = onDelete,
                     enabled = !state.deleting,
-                ) { Text(if (state.deleting) "Deleting…" else "Delete", color = MaterialTheme.colorScheme.error) }
+                ) { Text(if (state.deleting) tr("deleting") else tr("common_delete"), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }, enabled = !state.deleting) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false }, enabled = !state.deleting) { Text(tr("common_cancel")) }
             },
         )
     }
@@ -372,22 +392,22 @@ private fun RepeatedRouteCard(
             )
             Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                 Text(
-                    "REPEATED ROUTE",
+                    tr("repeated_route"),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    "$count ${if (count == 1) "activity" else "activities"} on this route",
+                    tr(if (count == 1) "activity_on_route" else "activities_on_route", count),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    "Compare your performance across every matched effort.",
+                    tr("compare_matched_efforts"),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
-                "View matched ${if (cycling) "rides" else "runs"}",
+                tr(if (cycling) "view_matched_rides" else "view_matched_runs"),
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
             )
@@ -417,10 +437,10 @@ private fun SplitsTable(
     val hasHeartRate = splits.any { it.avgHr != null }
     DetailTable(modifier) {
         TableHeader {
-            TableCell("KM", .85f, bold = true)
-            TableCell(if (cycling) "Speed" else "Pace", 1.35f, bold = true)
+            TableCell(tr("kilometre_abbreviation"), .85f, bold = true)
+            TableCell(if (cycling) tr("speed") else tr("pace"), 1.35f, bold = true)
             if (hasHeartRate) TableCell("HR", .8f, bold = true)
-            TableCell("Elev", .85f, bold = true)
+            TableCell(tr("elevation_short"), .85f, bold = true)
         }
         splits.forEachIndexed { index, split ->
             TableRow {
@@ -453,11 +473,11 @@ private fun BestEffortsTable(
     val hasHeartRate = efforts.any { it.avgHr != null }
     DetailTable(modifier) {
         TableHeader {
-            TableCell("Distance", 1.45f, bold = true)
-            TableCell("Time", 1f, bold = true)
-            TableCell(if (cycling) "Speed" else "Pace", 1.3f, bold = true)
+            TableCell(tr("distance"), 1.45f, bold = true)
+            TableCell(tr("time"), 1f, bold = true)
+            TableCell(if (cycling) tr("speed") else tr("pace"), 1.3f, bold = true)
             if (hasHeartRate) TableCell("HR", .8f, bold = true)
-            TableCell("Elev", .85f, bold = true)
+            TableCell(tr("elevation_short"), .85f, bold = true)
         }
         efforts.forEach { effort ->
             val achievement = if (excludedFromRankings) null else achievement(effort)
@@ -508,9 +528,9 @@ private fun PowerBestEffortsTable(
     DetailTable(modifier) {
         TableHeader {
             TableCell("", .35f, bold = true)
-            TableCell("Time", 1f, bold = true)
-            TableCell("Power", 1.2f, bold = true)
-            TableCell("Elev", .9f, bold = true)
+            TableCell(tr("time"), 1f, bold = true)
+            TableCell(tr("power"), 1.2f, bold = true)
+            TableCell(tr("elevation_short"), .9f, bold = true)
         }
         efforts.forEach { effort ->
             val rank = if (excludedFromRankings) null else achievement(effort)
@@ -702,7 +722,7 @@ private fun DetailHeader(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = tr("back"),
                             tint = Color.White,
                         )
                     }
@@ -718,14 +738,14 @@ private fun DetailHeader(
                         ) {
                             Icon(
                                 Icons.Rounded.MoreVert,
-                                contentDescription = "More options",
+                                contentDescription = tr("more_options"),
                                 tint = Color.White,
                             )
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                             onEdit?.let { edit ->
                                 DropdownMenuItem(
-                                    text = { Text("Edit") },
+                                    text = { Text(tr("edit")) },
                                     onClick = {
                                         showMenu = false
                                         edit()
@@ -734,7 +754,7 @@ private fun DetailHeader(
                             }
                             onDelete?.let { delete ->
                                 DropdownMenuItem(
-                                    text = { Text("Delete") },
+                                    text = { Text(tr("common_delete")) },
                                     onClick = {
                                         showMenu = false
                                         delete()
@@ -745,6 +765,7 @@ private fun DetailHeader(
                     }
                 }
                 if (firstImage != null) {
+                    val openActivityPhotos = tr("open_activity_photos")
                     Box(
                         modifier =
                             Modifier
@@ -753,12 +774,12 @@ private fun DetailHeader(
                                 .size(76.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .clickable { showImages = true }
-                                .semantics { contentDescription = "Open activity photos" },
+                                .semantics { contentDescription = openActivityPhotos },
                     ) {
                         firstImageBitmap?.let {
                             Image(
                                 bitmap = it.asImageBitmap(),
-                                contentDescription = "Open activity photos",
+                                contentDescription = tr("open_activity_photos"),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                             )
@@ -784,17 +805,17 @@ private fun DetailHeader(
                 if (!hasMap) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back"))
                         }
                         Spacer(Modifier.weight(1f))
                         Box {
                             IconButton(onClick = { showMenu = true }) {
-                                Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                                Icon(Icons.Rounded.MoreVert, contentDescription = tr("more_options"))
                             }
                             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                                 onEdit?.let { edit ->
                                     DropdownMenuItem(
-                                        text = { Text("Edit") },
+                                        text = { Text(tr("edit")) },
                                         onClick = {
                                             showMenu = false
                                             edit()
@@ -803,7 +824,7 @@ private fun DetailHeader(
                                 }
                                 onDelete?.let { delete ->
                                     DropdownMenuItem(
-                                        text = { Text("Delete") },
+                                        text = { Text(tr("common_delete")) },
                                         onClick = {
                                             showMenu = false
                                             delete()
@@ -843,10 +864,10 @@ private fun DetailHeader(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         val metrics = activity.metrics
-                        ActivityStat("Distance", formatDistance(metrics?.distance, units))
-                        ActivityStat("Moving time", formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
+                        ActivityStat(tr("distance"), formatDistance(metrics?.distance, units))
+                        ActivityStat(tr("moving_time"), formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
                         ActivityStat(
-                            if (activity.sport.contains("run")) "Pace" else "Avg speed",
+                            if (activity.sport.contains("run")) tr("pace") else tr("average_speed"),
                             if (activity.sport.contains(
                                     "run",
                                 )
@@ -862,19 +883,19 @@ private fun DetailHeader(
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         ActivityStat(
-                            "Elevation",
+                            tr("elevation"),
                             formatElevation(activity.metrics?.elevationGain, units),
                             Modifier.weight(1f),
                         )
                         ActivityStat(
-                            "Avg heart rate",
+                            tr("average_heart_rate"),
                             activity.metrics?.avgHr?.let {
                                 "$it bpm"
                             } ?: "—",
                             Modifier.weight(1f),
                         )
                         ActivityStat(
-                            "Calories",
+                            tr("calories"),
                             activity.metrics?.calories?.let {
                                 "${it.toInt()} kcal"
                             } ?: "—",
@@ -901,11 +922,77 @@ private fun DetailHeader(
 }
 
 @Composable
+private fun ActivitySocialSection(
+    activity: ActivityDetail,
+    comments: List<Comment>,
+    loading: Boolean,
+    commenting: Boolean,
+    onLike: () -> Unit,
+    onComment: (String) -> Unit,
+) {
+    var draft by remember(activity.id) { mutableStateOf("") }
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onLike) {
+                Icon(
+                    if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                    contentDescription = if (activity.viewerLiked) tr("unlike_activity") else tr("like_activity"),
+                    tint =
+                        if (activity.viewerLiked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                )
+            }
+            Text(tr("likes", activity.likeCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                tr("comments", activity.commentCount),
+                modifier = Modifier.padding(start = 18.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        OutlinedTextField(
+            value = draft,
+            onValueChange = { draft = it.take(2000) },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            label = { Text(tr("add_comment")) },
+            trailingIcon = {
+                TextButton(
+                    enabled = draft.isNotBlank() && !commenting,
+                    onClick = {
+                        onComment(draft)
+                        draft = ""
+                    },
+                ) { Text(tr("post")) }
+            },
+            singleLine = false,
+        )
+        if (loading) {
+            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp).size(20.dp), strokeWidth = 2.dp)
+        } else {
+            comments.forEach { comment ->
+                Column(Modifier.padding(top = 16.dp)) {
+                    Text(comment.user.name, style = MaterialTheme.typography.labelLarge)
+                    Text(comment.body, modifier = Modifier.padding(top = 2.dp))
+                    Text(
+                        formatDateTime(comment.createdAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ActivityPhotoViewer(
     activity: ActivityDetail,
     onLoadImage: suspend (String) -> Bitmap?,
     onDismiss: () -> Unit,
 ) {
+    val returnToActivity = tr("return_to_activity")
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
@@ -921,15 +1008,14 @@ private fun ActivityPhotoViewer(
                 modifier = Modifier.fillMaxSize().padding(top = 60.dp, bottom = 76.dp),
                 pageSpacing = 16.dp,
             ) { page ->
+                val photoDescription = tr("photo_of", page + 1, activity.images.size)
                 ActivityImageSlide(
                     image = activity.images[page],
                     onLoadImage = onLoadImage,
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .semantics {
-                                contentDescription = "Photo ${page + 1} of ${activity.images.size}"
-                            },
+                            .semantics { contentDescription = photoDescription },
                     contentScale = ContentScale.Fit,
                     roundedCorners = false,
                 )
@@ -939,7 +1025,7 @@ private fun ActivityPhotoViewer(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ViewerIconButton(onClick = onDismiss, contentDescription = "Close photos") {
+                ViewerIconButton(onClick = onDismiss, contentDescription = tr("close_photos")) {
                     Icon(Icons.Rounded.Close, contentDescription = null)
                 }
                 Spacer(Modifier.weight(1f))
@@ -960,7 +1046,7 @@ private fun ActivityPhotoViewer(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color.Black)
                                 .clickable(onClick = onDismiss)
-                                .semantics { contentDescription = "Return to activity" },
+                                .semantics { contentDescription = returnToActivity },
                     ) {
                         StaticRoutePreview(
                             track = track,
@@ -1056,7 +1142,7 @@ private fun ActivityMapViewer(
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Back to activity",
+                    contentDescription = tr("back_to_activity"),
                     tint = Color.White,
                 )
             }
@@ -1103,14 +1189,15 @@ private fun ActivityEditor(
     onSave: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val deleteActivityDescription = tr("delete_activity")
     Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-        Text("Edit activity", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(tr("edit_activity"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
             modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-            label = { Text("Name") },
-            placeholder = { Text("Activity name") },
+            label = { Text(tr("name")) },
+            placeholder = { Text(tr("activity_name")) },
             singleLine = true,
             enabled = !saving && !deleting,
         )
@@ -1123,26 +1210,26 @@ private fun ActivityEditor(
             value = description,
             onValueChange = onDescriptionChange,
             modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-            label = { Text("Description") },
-            placeholder = { Text("Add a description") },
+            label = { Text(tr("description")) },
+            placeholder = { Text(tr("add_description")) },
             minLines = 3,
             enabled = !saving && !deleting,
         )
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
             Checkbox(checked = excludeFromRankings, onCheckedChange = onExcludeChange, enabled = !saving && !deleting)
-            Text("Exclude from rankings")
+            Text(tr("exclude_from_rankings"))
         }
-        Text("Tags", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+        Text(tr("tags"), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             listOf(
-                "race" to "Race",
-                "commute" to "Commute",
-                "workout" to "Workout",
-                "recovery" to "Recovery",
-                "with_kid" to "With Kid",
-                "with_pet" to "With Pet",
-                "competition" to "Competition",
-                "for_a_cause" to "For a Cause",
+                "race" to tr("race"),
+                "commute" to tr("commute"),
+                "workout" to tr("workout"),
+                "recovery" to tr("recovery"),
+                "with_kid" to tr("with_kid"),
+                "with_pet" to tr("with_pet"),
+                "competition" to tr("competition"),
+                "for_a_cause" to tr("for_a_cause"),
             ).forEach { (tag, label) ->
                 FilterChip(selected = tag in tags, onClick = {
                     onTagsChange(
@@ -1162,12 +1249,12 @@ private fun ActivityEditor(
             TextButton(
                 onClick = onDelete,
                 enabled = !saving && !deleting,
-                modifier = Modifier.semantics { contentDescription = "Delete activity" },
+                modifier = Modifier.semantics { contentDescription = deleteActivityDescription },
             ) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
+                Text(tr("common_delete"), color = MaterialTheme.colorScheme.error)
             }
-            TextButton(onClick = onCancel, enabled = !saving && !deleting) { Text("Cancel") }
-            Button(onClick = onSave, enabled = !saving && !deleting) { Text(if (saving) "Saving…" else "Save") }
+            TextButton(onClick = onCancel, enabled = !saving && !deleting) { Text(tr("common_cancel")) }
+            Button(onClick = onSave, enabled = !saving && !deleting) { Text(if (saving) tr("saving") else tr("common_save")) }
         }
     }
 }

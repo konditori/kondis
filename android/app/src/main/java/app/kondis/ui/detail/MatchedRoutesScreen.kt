@@ -50,6 +50,7 @@ import app.kondis.model.formatDuration
 import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
 import app.kondis.ui.theme.KondisOrange
+import app.kondis.ui.i18n.tr
 import kotlin.math.abs
 
 @Composable
@@ -79,7 +80,7 @@ fun MatchedRoutesScreen(
     }
     if (state.errorMessage != null || state.history == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(state.errorMessage ?: "No matched route data", color = MaterialTheme.colorScheme.error)
+            Text(state.errorMessage ?: tr("no_matched_route_data"), color = MaterialTheme.colorScheme.error)
         }
         return
     }
@@ -106,9 +107,9 @@ fun MatchedRoutesScreen(
                 Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp, end = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back") }
+                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back")) }
                 Text(
-                    "Back to activity",
+                    tr("back_to_activity"),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -135,17 +136,17 @@ fun MatchedRoutesScreen(
                 }
                 Column(Modifier.padding(start = 16.dp)) {
                     Text(
-                        "REPEATED ROUTE",
+                        tr("repeated_route"),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
                     Text(
-                        "Matched ${if (cycling) "rides" else "runs"}",
+                        tr(if (cycling) "matched_rides" else "matched_runs"),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        "Compare your performance across ${activities.size} activities on the same route",
+                        tr("compare_route_activities", activities.size),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -153,7 +154,7 @@ fun MatchedRoutesScreen(
         }
         if (values.isNotEmpty()) {
             item {
-                SectionTitle(eyebrow = "PROGRESS OVER TIME", title = if (cycling) "Speed" else "Pace")
+                SectionTitle(eyebrow = tr("progress_over_time"), title = if (cycling) tr("speed") else tr("pace"))
                 Card(
                     Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -165,28 +166,28 @@ fun MatchedRoutesScreen(
                             Modifier.fillMaxWidth().padding(top = 14.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            ChartStat("Fastest", performance(fastest, cycling, units), KondisOrange)
+                            ChartStat(tr("fastest"), performance(fastest, cycling, units), KondisOrange)
                             ChartStat(
-                                "All-time avg",
+                                tr("all_time_average"),
                                 performance(average, cycling, units),
                                 MaterialTheme.colorScheme.primary,
                             )
                             ChartStat(
-                                "Slowest",
+                                tr("slowest"),
                                 performance(slowest, cycling, units),
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Text("${activities.size} activities", fontWeight = FontWeight.Bold)
-                            Text("━ Trending average", color = MaterialTheme.colorScheme.primary)
-                            Text("━ Each effort", color = MaterialTheme.colorScheme.secondary)
+                            Text(tr("activities_count", activities.size), fontWeight = FontWeight.Bold)
+                            Text(tr("trending_average"), color = MaterialTheme.colorScheme.primary)
+                            Text(tr("each_effort"), color = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 }
             }
         }
-        item { SectionTitle(eyebrow = "EVERY EFFORT", title = "${activities.size} activities") }
+        item { SectionTitle(eyebrow = tr("every_effort"), title = tr("activities_count", activities.size)) }
         items(activities.sortedByDescending { it.startedAt }, key = { it.id }) { activity ->
             MatchedActivityRow(activity, source?.id == activity.id, cycling, units, average, onActivityClick)
         }

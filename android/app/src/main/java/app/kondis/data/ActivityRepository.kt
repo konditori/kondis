@@ -15,6 +15,7 @@ import app.kondis.data.local.ActivityDao
 import app.kondis.data.local.ActivityDetailEntity
 import app.kondis.data.local.ActivityEntity
 import app.kondis.data.local.QueuedWorkoutEntity
+import app.kondis.data.remote.CommentCreateRequest
 import app.kondis.data.remote.KondisApiFactory
 import app.kondis.data.settings.AppSettings
 import app.kondis.data.settings.SettingsRepository
@@ -138,7 +139,23 @@ class ActivityRepository
         suspend fun refreshDetail(id: String) {
             val account = account()
             val detail = api(account.settings).activity(id)
-            activityDao.upsertActivities(listOf(toEntity(detail.summary(), account.key)))
+            // The detail response contains every computed effort, while the feed response contains
+            // the curated medal summary and its total. Retain the latter so opening a detail cannot
+            // turn ordinary best efforts into medals in the feed.
+            val existing = activityDao.activity(account.key, id)?.let { decodeActivity(it.payload) }
+            activityDao.upsertActivities(
+                listOf(
+                    toEntity(
+                        detail
+                            .summary()
+                            .copy(
+                                topBestEfforts = existing?.topBestEfforts,
+                                achievementCount = existing?.achievementCount,
+                            ),
+                        account.key,
+                    ),
+                ),
+            )
             activityDao.upsertDetail(
                 ActivityDetailEntity(
                     accountKey = account.key,
@@ -147,6 +164,24 @@ class ActivityRepository
                     cachedAt = System.currentTimeMillis(),
                 ),
             )
+        }
+
+        suspend fun setLiked(
+            id: String,
+            liked: Boolean,
+        ) {
+            if (liked) api().like(id) else api().unlike(id)
+            refreshDetail(id)
+        }
+
+        suspend fun comments(id: String) = api().comments(id)
+
+        suspend fun addComment(
+            id: String,
+            body: String,
+        ) {
+            api().comment(id, CommentCreateRequest(body))
+            refreshDetail(id)
         }
 
         suspend fun updateActivity(

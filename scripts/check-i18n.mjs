@@ -1,0 +1,69 @@
+import { readdir, readFile } from "node:fs/promises";
+import { extname, join } from "node:path";
+
+const directory = new URL("../i18n/", import.meta.url);
+const source = JSON.parse(
+  await readFile(new URL("en.json", directory), "utf8"),
+);
+const sourceKeys = new Set(Object.keys(source));
+
+const placeholders = (value) =>
+  [...value.matchAll(/\{([a-zA-Z][a-zA-Z0-9_]*)[^}]*\}/g)]
+    .map((match) => match[1])
+    .sort();
+
+const files = (await readdir(directory)).filter(
+  (file) => extname(file) === ".json",
+);
+for (const file of files) {
+  if (file === "en.json") continue;
+
+  const locale = JSON.parse(
+    await readFile(join(directory.pathname, file), "utf8"),
+  );
+  const localeKeys = Object.keys(locale);
+  const unknownKeys = localeKeys.filter((key) => !sourceKeys.has(key));
+  const missingKeys = [...sourceKeys].filter((key) => !(key in locale));
+  const invalidPlaceholders = [...sourceKeys].filter(
+    (key) =>
+      key in locale &&
+      JSON.stringify(placeholders(source[key])) !==
+        JSON.stringify(placeholders(locale[key])),
+  );
+
+  if (unknownKeys.length || missingKeys.length || invalidPlaceholders.length) {
+    console.error(`${file}: translation catalog is out of sync`);
+    if (unknownKeys.length)
+      console.error(`  unknown keys: ${unknownKeys.join(", ")}`);
+    if (missingKeys.length)
+      console.error(`  missing keys: ${missingKeys.join(", ")}`);
+    if (invalidPlaceholders.length)
+      console.error(
+        `  placeholder mismatch: ${invalidPlaceholders.join(", ")}`,
+      );
+    process.exitCode = 1;
+  }
+}
+
+const androidUiDirectory = new URL("../android/app/src/main/java/app/kondis/ui/", import.meta.url);
+const kotlinFiles = [];
+const collectKotlinFiles = async (directory) => {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      await collectKotlinFiles(path);
+    } else if (entry.name.endsWith(".kt")) {
+      kotlinFiles.push(path);
+    }
+  }
+};
+
+await collectKotlinFiles(androidUiDirectory.pathname);
+const hardcodedUiString = /(?:Text|contentDescription)\s*\(?(?:\s*=\s*)?"/;
+for (const file of kotlinFiles) {
+  const sourceText = await readFile(file, "utf8");
+  if (hardcodedUiString.test(sourceText)) {
+    console.error(`${file}: hardcoded user-visible Compose string`);
+    process.exitCode = 1;
+  }
+}

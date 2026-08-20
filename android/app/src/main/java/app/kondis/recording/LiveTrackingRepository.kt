@@ -8,6 +8,7 @@ import app.kondis.data.remote.LiveWorkoutCreateRequest
 import app.kondis.data.remote.LiveWorkoutPointsRequest
 import app.kondis.data.remote.LiveWorkoutStateRequest
 import app.kondis.data.settings.SettingsRepository
+import app.kondis.ui.i18n.tr
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import java.util.UUID
@@ -103,7 +104,7 @@ class LiveTrackingRepository
                     .putExtra(Intent.EXTRA_TEXT, "$appUrl/live/${response.token}")
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(
-                Intent.createChooser(shareIntent, "Share live tracking").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                Intent.createChooser(shareIntent, context.tr("share_live_tracking")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
             return true
         }

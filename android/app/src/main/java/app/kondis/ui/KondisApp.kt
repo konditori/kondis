@@ -49,8 +49,10 @@ import app.kondis.ui.detail.ActivityDetailRoute
 import app.kondis.ui.detail.BestEffortsRoute
 import app.kondis.ui.detail.MatchedRoutesRoute
 import app.kondis.ui.feed.FeedRoute
+import app.kondis.ui.people.PeopleRoute
 import app.kondis.ui.record.RecordRoute
 import app.kondis.ui.settings.SettingsRoute
+import app.kondis.ui.i18n.tr
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -64,6 +66,9 @@ private data object SettingsKey : NavKey
 
 @Serializable
 private data object YouKey : NavKey
+
+@Serializable
+private data object PeopleKey : NavKey
 
 @Serializable
 private data class ActivityDetailKey(
@@ -83,15 +88,15 @@ private data class BestEffortsKey(
 
 private data class Destination(
     val key: NavKey,
-    val label: String,
+    val labelKey: String,
     val icon: ImageVector,
 )
 
 private val destinations =
     listOf(
-        Destination(FeedKey, "Activities", Icons.AutoMirrored.Rounded.DirectionsRun),
-        Destination(RecordKey, "Record", Icons.Rounded.AddCircle),
-        Destination(YouKey, "You", Icons.Rounded.Person),
+        Destination(FeedKey, "home", Icons.AutoMirrored.Rounded.DirectionsRun),
+        Destination(RecordKey, "record", Icons.Rounded.AddCircle),
+        Destination(YouKey, "you", Icons.Rounded.Person),
     )
 
 @Composable
@@ -169,8 +174,8 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                                     backStack.add(destination.key)
                                 }
                             },
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
-                            label = { Text(destination.label) },
+                            icon = { Icon(destination.icon, contentDescription = tr(destination.labelKey)) },
+                            label = { Text(tr(destination.labelKey)) },
                         )
                     }
                 }
@@ -187,6 +192,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                         FeedRoute(
                             units = loadedSettings.unitSystem,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
+                            onPeopleClick = { backStack.add(PeopleKey) },
                         )
                     }
                     entry<RecordKey> {
@@ -197,6 +203,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                         )
                     }
+                    entry<PeopleKey> { PeopleRoute(onBack = ::navigateBack) }
                     entry<SettingsKey> { SettingsRoute() }
                     entry<YouKey> {
                         BestEffortsRoute(
@@ -289,8 +296,8 @@ private fun LoginScreen(
                 value = serverUrlDraft,
                 onValueChange = { serverUrlDraft = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Server URL") },
-                supportingText = { Text("For example http://192.168.1.10:2293 or https://kondis.example.com") },
+                label = { Text(tr("server_url")) },
+                supportingText = { Text(tr("server_url_example")) },
                 singleLine = true,
                 enabled = !checking,
             )
@@ -302,7 +309,7 @@ private fun LoginScreen(
                 if (checking) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Continue")
+                    Text(tr("continue"))
                 }
             }
         }
@@ -311,11 +318,11 @@ private fun LoginScreen(
             is LoginStage.InitialSetupRequired -> {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "The Kondis server requires initial setup. Finish setup in your web browser and then return here to sign in.",
+                    tr("server_requires_setup"),
                 )
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = { onCheckServer(stage.serverUrl) }) {
-                    Text("Retry")
+                    Text(tr("retry"))
                 }
             }
 
@@ -329,11 +336,11 @@ private fun LoginScreen(
                 if (errorMessage == null) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.height(8.dp))
-                    Text("Opening identity provider...")
+                    Text(tr("opening_identity_provider"))
                 }
                 Spacer(Modifier.height(8.dp))
                 if (errorMessage != null) {
-                    Button(onClick = onStartBrowserSignIn) { Text("Retry in browser") }
+                    Button(onClick = onStartBrowserSignIn) { Text(tr("retry_in_browser")) }
                 }
             }
 
@@ -343,14 +350,14 @@ private fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Email") },
+                    label = { Text(tr("email")) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Password") },
+                    label = { Text(tr("password")) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                 )
@@ -358,7 +365,7 @@ private fun LoginScreen(
                 Button(
                     onClick = { onLogin(email, password) },
                     enabled = email.isNotBlank() && password.isNotBlank(),
-                ) { Text("Sign in") }
+                ) { Text(tr("auth_sign_in")) }
             }
 
             LoginStage.EnteringServer, LoginStage.CheckingServer -> {}

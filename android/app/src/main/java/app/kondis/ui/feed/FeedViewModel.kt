@@ -112,6 +112,16 @@ class FeedViewModel
             }
         }
 
+        fun setLiked(
+            id: String,
+            liked: Boolean,
+        ) {
+            viewModelScope.launch {
+                runCatching { repository.setLiked(id, liked) }
+                    .onFailure { error -> meta.update { it.copy(errorMessage = error.userMessage()) } }
+            }
+        }
+
         fun syncQueuedWorkouts() {
             meta.update { it.copy(syncRequested = true) }
             viewModelScope.launch {
