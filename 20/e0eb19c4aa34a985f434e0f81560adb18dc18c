@@ -1,0 +1,41 @@
+.github/workflows/test.yml
+  s_77b290439e60de::t_d0736883428005 320-328,330-331,333-334,336-337,339-357
+.github/workflows/android.yml
+  s_77b290439e60de::t_624e1414095b31 232
+mise.toml
+  s_77b290439e60de::t_d06bd9f8601cc3 125
+web/src/lib/components/LiveWorkoutView.svelte
+  s_77b290439e60de::t_323c9fa52d5fe2 196
+web/src/routes/activities/[id]/+page.svelte
+  s_77b290439e60de::t_03c793698d3b2f 60,231,238,255,274,287,296,306,384,389,393,398,478,485,498,536,563,569,580,586,588,601,610,613,617,629,632,638,641,668,674,680,690,706,711,721,726,737,741,748,770,777,779,782,784,831,845-846,869,876,878,881,883,926,929,931,934,956,958,960,968,975-976,978,981,983,997,1062,1066-1068,1078
+web/src/routes/activities/[id]/matched-routes/+page.svelte
+  s_77b290439e60de::t_314b495470a03c 12,164,168,174-175,177,185,189-190,201,312,314,317,320,330-332,340-341,347,350-354,373
+web/src/routes/best-efforts/[sport]/[distance]/+page.svelte
+  s_77b290439e60de::t_11d26e71982225 16,73,78-81,83,87,93,116,123-124,128-129,144,183-184,224,239,241
+web/src/routes/people/+page.svelte
+  s_77b290439e60de::t_b125f25f949564 133
+web/src/routes/people/[id]/+page.svelte
+  s_77b290439e60de::t_ce98f671b9401c 18,46,68,93,108,114,117-118,128,138-140,149,157-158,161,174-175,179,181,186-187
+web/src/routes/setup/account/+page.svelte
+  s_77b290439e60de::t_d786f709fde9db 2-3,7,10-11,14,22,30,39,48,57
+web/src/routes/upload/activity/+page.svelte
+  s_77b290439e60de::t_b547d9783bba44 3,8
+web/src/routes/upload/strava/+page.svelte
+  s_77b290439e60de::t_fd8631d69ced26 3,8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "20e0eb19c4aa34a985f434e0f81560adb18dc18c",
+  "prompts": {},
+  "sessions": {
+    "s_77b290439e60de": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3cd90163-23e3-4325-96e5-22d47f81f470",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
