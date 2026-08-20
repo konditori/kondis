@@ -1,0 +1,23 @@
+i18n/sv.json
+  s_ab8e63af9240aa::t_b958a6924ad572 57,237
+web/src/lib/components/UploadForm.svelte
+  s_ab8e63af9240aa::t_f4e1cfd4f0a709 27,67,89-90,111
+web/src/routes/+page.svelte
+  s_ab8e63af9240aa::t_2c2842d45afbe7 295
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d2f6f119ad1eee83e08ea624073fca25301ce834",
+  "prompts": {},
+  "sessions": {
+    "s_ab8e63af9240aa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f484d321-4709-4111-85ff-c85b3096e3f3",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
