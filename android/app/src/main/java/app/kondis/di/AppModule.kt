@@ -79,8 +79,6 @@ object AppModule {
     private val MIGRATION_2_3 =
         object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Version 2 rows have no trustworthy destination account. They
-                // are caches; discard them instead of risking a cross-account upload.
                 db.execSQL("DROP TABLE queued_workouts")
                 db.execSQL("DROP TABLE activity_details")
                 db.execSQL("DROP TABLE activities")

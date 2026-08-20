@@ -186,10 +186,6 @@
       <span class="settings-icon"><Ruler size={21} /></span>
       <div>
         <h2>Units of measurement</h2>
-        <p>
-          This preference is stored in this browser until user accounts are
-          available.
-        </p>
       </div>
     </div>
 
@@ -202,11 +198,7 @@
           value="metric"
           bind:group={selected}
         />
-        <span
-          ><strong>Metric</strong><small
-            >Kilometers, meters, km/h, and min/km</small
-          ></span
-        >
+        <span><strong>Metric</strong></span>
         {#if selected === "metric"}<Check size={19} />{/if}
       </label>
       <label class:selected={selected === "imperial"}>
@@ -216,10 +208,7 @@
           value="imperial"
           bind:group={selected}
         />
-        <span
-          ><strong>Imperial</strong><small>Miles, feet, mph, and min/mile</small
-          ></span
-        >
+        <span><strong>Imperial</strong></span>
         {#if selected === "imperial"}<Check size={19} />{/if}
       </label>
     </fieldset>

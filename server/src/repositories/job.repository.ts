@@ -206,9 +206,6 @@ export class JobRepository implements OnApplicationShutdown {
 
     const boss = await this.getBoss();
     await boss.offWork(queue);
-    // offWork stops fetching new jobs but lets an in-flight handler finish. Wait for
-    // those handlers before reporting the queue paused so callers can safely perform
-    // maintenance such as truncating tables used by the job.
     await this.waitForQueueIdle(queue);
     this.logger.log(`Paused queue: ${queue}`);
   }

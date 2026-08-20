@@ -7,32 +7,32 @@ import {
 
 describe("notificationSummary", () => {
   it("summarizes likes and comments with the actor's full name", () => {
-    const actor = { firstName: "Anna", lastName: "Jogenfors" };
+    const actor = { firstName: "John", lastName: "Doe" };
     expect(
       notificationSummary({
         type: "activity_like",
         activityName: "Morning Run",
         actor,
       }),
-    ).toBe("Anna Jogenfors liked your activity \u201cMorning Run\u201d.");
+    ).toBe("John Doe liked your activity \u201cMorning Run\u201d.");
     expect(
       notificationSummary({
         type: "activity_comment",
         activityName: null,
         actor,
       }),
-    ).toBe("Anna Jogenfors commented on your activity.");
+    ).toBe("John Doe commented on your activity.");
   });
 
   it("summarizes follow requests", () => {
-    const actor = { firstName: "Anna", lastName: "Jogenfors" };
+    const actor = { firstName: "John", lastName: "Doe" };
     expect(
       notificationSummary({
         type: "follow_request",
         activityName: null,
         actor,
       }),
-    ).toBe("Anna Jogenfors sent you a follow request.");
+    ).toBe("John Doe sent you a follow request.");
   });
 });
 

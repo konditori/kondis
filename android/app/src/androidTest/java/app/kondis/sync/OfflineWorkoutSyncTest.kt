@@ -12,6 +12,7 @@ import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import app.kondis.MainActivity
+import app.kondis.data.auth.SecureSessionStore
 import app.kondis.data.local.ActivityDetailEntity
 import app.kondis.data.local.ActivityEntity
 import app.kondis.data.local.KondisDatabase
@@ -49,10 +50,11 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
-        val serverUrl = server.url("/api/v1/").toString()
+        // SettingsRepository expects the server origin; the API client adds /api/v1 itself.
+        val serverUrl = server.url("/").toString().trimEnd('/')
         accountKey = "$serverUrl|offline-sync-test-user"
         runBlocking {
-            SettingsRepository(context).apply {
+            SettingsRepository(context, SecureSessionStore(context)).apply {
                 setServerUrl(serverUrl)
                 setAccessToken("offline-sync-test-token")
                 setAccountId("offline-sync-test-user")
@@ -143,7 +145,11 @@ class OfflineWorkoutSyncTest {
         }
         check(deleteActivityVisible)
         check(uiDevice.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
-        device.findObject(By.textContains("Delete test run")).click()
+        val deleteActivity = device.findObject(By.textContains("Delete test run"))
+        val deleteActivityBounds = deleteActivity.visibleBounds
+        device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())
+        check(device.wait(Until.hasObject(By.desc("More options")), 5_000))
+        device.findObject(By.desc("More options")).click()
         check(device.wait(Until.hasObject(By.text("Edit")), 5_000))
         device.findObject(By.text("Edit")).click()
         check(UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Edit activity"))
@@ -183,8 +189,16 @@ class OfflineWorkoutSyncTest {
                         response(201, "{\"byteSize\":128,\"queued\":true}")
                     }
 
+                    request.method == "PUT" && request.url.encodedPath == "/api/v1/activities/$remoteId" -> {
+                        response(200, activityJson(remoteId, "Offline test run", startedAt, startedAt))
+                    }
+
                     request.method == "DELETE" && request.url.encodedPath == "/api/v1/activities/$deleteId" -> {
                         response(204, "")
+                    }
+
+                    request.method == "GET" && request.url.query == "limit=20" -> {
+                        response(200, activityPageJson())
                     }
 
                     request.method == "GET" && request.url.query == "limit=50" -> {

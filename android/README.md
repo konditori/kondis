@@ -37,7 +37,7 @@ Open this directory in Android Studio and run the `app` configuration, or use:
 ./gradlew :app:installDebug
 ```
 
-The default API URL is `http://10.0.2.2:2293/api/v1/`, which reaches the host machine from the Android Emulator. For a physical device, enter the server URL on the sign-in screen or in Settings, such as `http://192.168.1.20:2293/api/v1/`. A build-time default can also be supplied with `./gradlew -Pkondis.apiUrl=https://kondis.example/api/v1/ :app:assembleRelease`.
+Enter the self-hosted server URL on the sign-in screen. The app does not assume a default deployment.
 
 Plain HTTP is supported for local self-hosting. Use HTTPS whenever traffic leaves a trusted local network.
 
@@ -94,6 +94,20 @@ Compose screens → Hilt ViewModels → repositories → Retrofit / Room / DataS
 - Server URL and unit system are user-owned settings; the default URL is supplied through `BuildConfig`.
 
 Keep Android-specific behavior inside `data`, `recording`, and `ui` packages. Introduce additional Gradle modules when independent feature ownership or build performance makes the boundary useful; a single module keeps this first vertical slice easy to change.
+
+## Signing in behind a perimeter gateway
+
+Some self-hosted deployments sit behind a perimeter gateway such as [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/) rather than being reachable directly. On every sign-in attempt, the app first calls `GET /api/v1/auth/capabilities` without any credentials and inspects the response:
+
+- A clean `200` means there is no gateway; the app shows the normal Kondis email/password form.
+- A `401` advertising OAuth/OIDC discovery metadata (RFC 8414/RFC 9728 — this is what Cloudflare Access sends once [Managed OAuth](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/) is enabled) opens the identity provider's login page in an [Auth Tab](https://developer.android.com/develop/ui/views/layout/webapps/auth-tab) (`androidx.browser.auth.AuthTabIntent`) — never a WebView, see `ExternalAuthManager`'s KDoc for why — then shows the Kondis email/password form once that completes.
+- Anything else (a `302` to a login page, a gateway with no Managed OAuth) is reported to the user as unsupported; this app never scrapes a browser cookie to work around it.
+
+This is provider-neutral: any authorization server that supports RFC 7591 dynamic client registration works, not just Cloudflare Access. Manually configured (non-DCR) providers are not yet supported.
+
+The OAuth redirect uses the app-owned custom URI `app.kondis:///oauth-callback`. It does not depend on a Kondis-hosted service or on any self-hosted server exposing a callback route.
+
+On the Cloudflare Access side, enable Managed OAuth on the application and add `app.kondis:///oauth-callback` to **Allowed redirect URIs**. Cloudflare requires custom-scheme redirect URIs to match exactly.
 
 ## Recording notes
 

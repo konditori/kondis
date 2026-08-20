@@ -21,6 +21,12 @@ class ApiModelTest {
                     "name": "Morning run",
                     "description": null,
                     "excludeFromRankings": false,
+                    "athlete": {
+                      "id": "user-1",
+                      "firstName": "Ada",
+                      "lastName": "Lovelace",
+                      "avatarUrl": null
+                    },
                     "startedAt": "2026-08-13T05:30:00Z",
                     "timezoneOffsetMinutes": 120,
                     "metrics": {
@@ -42,6 +48,7 @@ class ApiModelTest {
                     },
                     "createdAt": "2026-08-13T06:01:00Z",
                     "updatedAt": "2026-08-13T06:01:00Z",
+                    "achievementCount": 4,
                     "topBestEfforts": [{
                       "type": "power_30m",
                       "value": 287.4,
@@ -58,6 +65,14 @@ class ApiModelTest {
 
         assertEquals(1, page.total)
         assertEquals("Morning run", page.activities.single().name)
+        assertEquals(4, page.activities.single().achievementCount)
+        assertEquals(
+            "Ada Lovelace",
+            page.activities
+                .single()
+                .athlete
+                ?.name,
+        )
         assertEquals(
             5_000.0,
             page.activities

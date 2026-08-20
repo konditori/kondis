@@ -40,6 +40,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Auth Tab normally returns this callback directly. AppAuth's receiver is a fallback if
+             a browser dispatches the private-use URI as an ordinary Android intent instead. -->
+        <activity
+            android:name="net.openid.appauth.RedirectUriReceiverActivity"
+            android:exported="true"
+            tools:node="replace">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="app.kondis" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".recording.RecordingService"
             android:exported="false"

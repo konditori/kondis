@@ -26,8 +26,6 @@ const buildPoints = (distance: number[], time: number[]): DistanceTimePoint[] =>
       continue;
     }
 
-    // Some formats reset cumulative distance at each lap. Unroll those resets while
-    // clamping small device/GPS regressions so the resulting series stays monotonic.
     const isLapReset =
       previousRawDistance !== undefined && previousRawDistance > 100 && rawDistance < previousRawDistance * 0.25;
     if (isLapReset) {

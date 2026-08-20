@@ -79,6 +79,7 @@ class FeedViewModel
                         hadQueuedWorkouts = true
                     } else if (hadQueuedWorkouts) {
                         meta.update { it.copy(syncRequested = true) }
+                        refresh()
                     }
                 }
             }

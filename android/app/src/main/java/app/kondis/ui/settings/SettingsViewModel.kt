@@ -3,6 +3,7 @@ package app.kondis.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
+import app.kondis.data.auth.ExternalAuthManager
 import app.kondis.data.settings.AppSettings
 import app.kondis.data.settings.SettingsRepository
 import app.kondis.model.UnitSystem
@@ -21,7 +22,9 @@ data class SettingsUiState(
     val serverUrlDraft: String = AppSettings().serverUrl,
     val checking: Boolean = false,
     val message: String? = null,
-)
+) {
+    val serverActive: Boolean get() = settings.accessToken != null || settings.accountId != null
+}
 
 @HiltViewModel
 class SettingsViewModel
@@ -29,6 +32,7 @@ class SettingsViewModel
     constructor(
         private val settingsRepository: SettingsRepository,
         private val activityRepository: ActivityRepository,
+        private val externalAuthManager: ExternalAuthManager,
     ) : ViewModel() {
         private val draft = MutableStateFlow<String?>(null)
         private val checking = MutableStateFlow(false)
@@ -54,7 +58,10 @@ class SettingsViewModel
         }
 
         fun signOut() {
-            viewModelScope.launch { settingsRepository.setAccessToken(null) }
+            viewModelScope.launch {
+                settingsRepository.setAccessToken(null)
+                externalAuthManager.signOut()
+            }
         }
 
         fun saveAndTest() {

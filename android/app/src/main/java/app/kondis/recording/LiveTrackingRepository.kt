@@ -33,7 +33,7 @@ class LiveTrackingRepository
             val settings = settingsRepository.settings.first()
             val response =
                 apiFactory
-                    .create(settings.serverUrl, settings.accessToken)
+                    .create(settings)
                     .createLiveWorkout(
                         LiveWorkoutCreateRequest(
                             clientSessionId = UUID.randomUUID().toString(),
@@ -55,7 +55,7 @@ class LiveTrackingRepository
             val settings = settingsRepository.settings.first()
             val response =
                 apiFactory
-                    .create(settings.serverUrl, settings.accessToken)
+                    .create(settings)
                     .uploadLivePoints(
                         current.id,
                         LiveWorkoutPointsRequest(
@@ -85,7 +85,7 @@ class LiveTrackingRepository
             val current = session ?: return
             val settings = settingsRepository.settings.first()
             apiFactory
-                .create(settings.serverUrl, settings.accessToken)
+                .create(settings)
                 .updateLiveWorkout(
                     current.id,
                     LiveWorkoutStateRequest(status, recording.elapsedSeconds, recording.distanceMeters),
@@ -95,12 +95,7 @@ class LiveTrackingRepository
         suspend fun share(): Boolean {
             val current = session ?: return false
             val settings = settingsRepository.settings.first()
-            val response =
-                apiFactory
-                    .create(
-                        settings.serverUrl,
-                        settings.accessToken,
-                    ).createLiveWorkoutShare(current.id)
+            val response = apiFactory.create(settings).createLiveWorkoutShare(current.id)
             val appUrl = settings.serverUrl.substringBefore("/api/v1").trimEnd('/')
             val shareIntent =
                 Intent(Intent.ACTION_SEND)
@@ -116,7 +111,7 @@ class LiveTrackingRepository
         suspend fun discard() {
             val current = session ?: return
             val settings = settingsRepository.settings.first()
-            apiFactory.create(settings.serverUrl, settings.accessToken).discardLiveWorkout(current.id)
+            apiFactory.create(settings).discardLiveWorkout(current.id)
             session = null
             pendingStart = null
         }

@@ -1,9 +1,6 @@
 import { Kysely, sql } from 'kysely';
 
 export async function up(db: Kysely<unknown>): Promise<void> {
-  // Orphan rows predate authentication and have no trustworthy owner. Do not
-  // silently transfer them to whichever administrator happens to be created next.
-  // Manual imports did record their owner on the upload, so preserve those rows.
   await sql`UPDATE activity
     SET user_id = upload.user_id
     FROM upload

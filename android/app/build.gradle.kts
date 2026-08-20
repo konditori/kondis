@@ -32,8 +32,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-        val apiUrl = providers.gradleProperty("kondis.apiUrl").orElse("http://10.0.2.2:2293/api/v1/")
-        buildConfigField("String", "DEFAULT_API_URL", "\"${apiUrl.get().trimEnd('/')}\"")
     }
 
     signingConfigs {
@@ -122,6 +120,12 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.splashscreen)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.appauth)
+    // Explicit, newer than AppAuth's own transitive 1.3.0: brings androidx.browser.auth.AuthTabIntent,
+    // the purpose-built (ephemeral, non-Custom-Tab) browser surface for OAuth sign-in.
+    implementation(libs.androidx.browser)
+    implementation(libs.osmdroid)
     implementation(libs.hilt.android)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.serialization)
@@ -145,6 +149,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.test.core)
+    testImplementation(libs.okhttp.mockwebserver)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

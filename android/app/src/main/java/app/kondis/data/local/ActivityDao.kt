@@ -99,10 +99,10 @@ interface ActivityDao {
         activity: ActivityEntity,
         detail: ActivityDetailEntity,
     ) {
-        deleteActivity(accountKey, localActivityId)
-        deleteDetail(accountKey, localActivityId)
-        deleteQueuedWorkout(accountKey, localActivityId)
         upsertActivities(listOf(activity))
         upsertDetail(detail)
+        upsertDetail(detail.copy(id = localActivityId))
+        deleteActivity(accountKey, localActivityId)
+        deleteQueuedWorkout(accountKey, localActivityId)
     }
 }

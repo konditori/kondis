@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { type KondisDatabase } from 'src/db/database';
@@ -15,7 +15,7 @@ describe(AuthService.name, () => {
   beforeAll(() => {
     db = createMediumTestDatabase();
     users = new UserRepository(db);
-    sut = new AuthService(users, { authSecret: 'medium-test-secret' } as never);
+    sut = new AuthService(users, { authSecret: 'medium-test-secret', setupToken: 'medium-setup-token' } as never);
   });
 
   beforeEach(() => resetMediumTestDatabase(db));
@@ -70,5 +70,24 @@ describe(AuthService.name, () => {
 
     expect(before.setupRequired).toBe(countBefore === 0);
     expect(after.setupRequired).toBe(false);
+  });
+
+  it('rejects an invalid setup token and creates the first administrator with a valid one', async () => {
+    const { sut } = setup();
+    await db.deleteFrom('user').execute();
+
+    await expect(sut.verifySetupToken('invalid-medium-token')).rejects.toBeInstanceOf(UnauthorizedException);
+
+    const ticket = await sut.verifySetupToken('medium-setup-token');
+    const result = await sut.setup(
+      `admin-${crypto.randomUUID()}@example.com`,
+      'Medium',
+      'Admin',
+      'a sufficiently long password',
+      ticket.token,
+    );
+
+    expect(result).toMatchObject({ setup: true, user: { role: 'admin', firstName: 'Medium', lastName: 'Admin' } });
+    await expect(sut.setupStatus()).resolves.toEqual({ setupRequired: false });
   });
 });

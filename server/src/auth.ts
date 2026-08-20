@@ -19,6 +19,7 @@ export type AuthenticatedUser = {
   lastName: string;
 };
 type EventTicket = { id: string; scope: 'activity-events'; exp: number };
+type SetupTicket = { scope: 'initial-setup'; exp: number };
 export const PUBLIC = 'kondis:public';
 export const Public = () => SetMetadata(PUBLIC, true);
 export const ADMIN = 'kondis:admin';
@@ -65,6 +66,29 @@ export const verifyActivityEventsTicket = (token: string | null, secret: string)
   }
 };
 
+/** A short-lived credential issued only after the installation token is verified. */
+export const createSetupTicket = (secret: string) => {
+  const expiresAt = new Date(Date.now() + 10 * 60_000);
+  const payload = encode({ scope: 'initial-setup', exp: Math.floor(expiresAt.getTime() / 1000) });
+  return { token: `${payload}.${sign(payload, secret)}`, expiresAt: expiresAt.toISOString() };
+};
+
+export const verifySetupTicket = (token: string | null, secret: string): boolean => {
+  if (!token) {
+    return false;
+  }
+  const [payload, signature] = token.split('.', 2);
+  if (!payload || !signature || !hasValidSignature(payload, signature, secret)) {
+    return false;
+  }
+  try {
+    const ticket = JSON.parse(Buffer.from(payload, 'base64url').toString()) as SetupTicket;
+    return ticket.scope === 'initial-setup' && ticket.exp * 1000 >= Date.now();
+  } catch {
+    return false;
+  }
+};
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -82,6 +106,8 @@ export class AuthGuard implements CanActivate {
     const request = context
       .switchToHttp()
       .getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
+    const kondisHeader = request.headers['x-kondis-authorization'];
+    const kondisHeaderToken = kondisHeader?.startsWith('Bearer ') ? kondisHeader.slice(7) : undefined;
     const value = request.headers.authorization;
     const bearerToken = value?.startsWith('Bearer ') ? value.slice(7) : undefined;
     const cookieToken = request.headers.cookie
@@ -89,7 +115,7 @@ export class AuthGuard implements CanActivate {
       .map((part) => part.trim())
       .find((part) => part.startsWith('kondis_session='))
       ?.slice('kondis_session='.length);
-    const token = bearerToken ?? cookieToken;
+    const token = kondisHeaderToken ?? bearerToken ?? cookieToken;
     if (!token) {
       throw new UnauthorizedException('Sign in is required');
     }

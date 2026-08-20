@@ -117,25 +117,25 @@ fun ActivityCard(
                     }
                     val achievements = activity.topBestEfforts.orEmpty()
                     if (achievements.isNotEmpty()) {
+                        val achievementCount = activity.achievementCount ?: achievements.size
                         Row(
                             modifier = Modifier.padding(top = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            achievements
-                                .distinctBy { achievementRank(it) }
-                                .take(3)
-                                .forEach { effort ->
-                                    AchievementBadge(effort)
-                                }
-                            Text(
-                                achievements.size.toString(),
-                                modifier = Modifier.padding(start = 2.dp),
-                                fontSize = 13.sp,
-                                lineHeight = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold,
-                            )
+                            distinctAchievementEfforts(achievements).forEach { effort ->
+                                AchievementBadge(effort)
+                            }
+                            if (shouldShowAchievementCount(achievementCount, achievements)) {
+                                Text(
+                                    achievementCount.toString(),
+                                    modifier = Modifier.padding(end = 2.dp),
+                                    fontSize = 13.sp,
+                                    lineHeight = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
                         }
                     }
                     Spacer(Modifier.height(16.dp))
@@ -298,6 +298,20 @@ private fun AchievementBadge(effort: BestEffortSummary) {
 private fun achievementRank(effort: BestEffortSummary): Int =
     if (effort.overallRank in 1..3) effort.overallRank else effort.yearRank
 
+private fun distinctAchievementEfforts(efforts: List<BestEffortSummary>): List<BestEffortSummary> =
+    efforts.sortedBy(::achievementRank).distinctBy(::achievementRank).take(3)
+
+private fun shouldShowAchievementCount(
+    count: Int,
+    efforts: List<BestEffortSummary>,
+): Boolean {
+    if (count <= 1) return false
+    val ranks = distinctAchievementEfforts(efforts).mapTo(mutableSetOf(), ::achievementRank)
+    if (count == 2 && ranks.containsAll(listOf(2, 3))) return false
+    if (count == 3 && ranks.containsAll(listOf(1, 2, 3))) return false
+    return true
+}
+
 @Composable
 fun MedalIcon(
     tint: Color,
@@ -319,7 +333,7 @@ fun MedalIcon(
 
         withTransform({
             translate(offsetX, offsetY)
-            scale(scale, scale)
+            scale(scale, scale, pivot = Offset.Zero)
         }) {
             val ribbon =
                 Path().apply {

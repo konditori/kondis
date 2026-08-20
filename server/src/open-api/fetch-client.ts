@@ -1120,6 +1120,13 @@ export function activityImageControllerFile(
     }),
   );
 }
+export function authControllerCapabilities(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/capabilities', {
+      ...opts,
+    }),
+  );
+}
 export function authControllerSetupStatus(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchText('/auth/setup', {
@@ -1130,6 +1137,22 @@ export function authControllerSetupStatus(opts?: Oazapfts.RequestOpts) {
 export function authControllerSetup(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchText('/auth/setup', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function authControllerVerifySetupToken(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/setup/verify', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function authControllerValidateSetupTicket(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/setup/validate', {
       ...opts,
       method: 'POST',
     }),

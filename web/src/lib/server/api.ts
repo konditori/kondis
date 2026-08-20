@@ -20,11 +20,18 @@ export function apiEndpointUrl(path: string): URL {
 }
 
 export function activityEventsUrl(requestUrl: URL): string {
-  if (publicEnv.PUBLIC_KONDIS_EVENTS_URL)
-    return publicEnv.PUBLIC_KONDIS_EVENTS_URL;
-
   const url = new URL(requestUrl);
   const secure = url.protocol === "https:";
+  const configured = publicEnv.PUBLIC_KONDIS_EVENTS_URL;
+  if (configured) {
+    const eventsUrl = new URL(configured, requestUrl);
+    if (eventsUrl.hostname === requestUrl.hostname) {
+      eventsUrl.protocol = secure ? "wss:" : "ws:";
+      eventsUrl.port = secure ? "" : "2293";
+    }
+    return eventsUrl.toString();
+  }
+
   url.protocol = secure ? "wss:" : "ws:";
   if (!secure) url.port = "2293";
   url.pathname = "/events";

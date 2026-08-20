@@ -54,15 +54,16 @@ import kotlin.math.tan
 fun StaticRoutePreview(
     track: Track,
     modifier: Modifier = Modifier,
+    currentLocation: List<Double>? = null,
 ) {
     val context = LocalContext.current.applicationContext
     val density = LocalDensity.current.density
     var size by remember { mutableStateOf(IntSize.Zero) }
-    var bitmap by remember(track) { mutableStateOf<Bitmap?>(null) }
+    var bitmap by remember(track, currentLocation) { mutableStateOf<Bitmap?>(null) }
 
-    LaunchedEffect(track, size, density) {
+    LaunchedEffect(track, currentLocation, size, density) {
         if (size.width <= 0 || size.height <= 0) return@LaunchedEffect
-        bitmap = StaticOsmRenderer.render(context, track, size, density)
+        bitmap = StaticOsmRenderer.render(context, track, size, density, currentLocation)
     }
 
     Box(
@@ -107,6 +108,7 @@ private object StaticOsmRenderer {
         track: Track,
         size: IntSize,
         density: Float,
+        currentLocation: List<Double>?,
     ): Bitmap =
         RENDER_SLOTS.withPermit {
             withContext(Dispatchers.IO) {
@@ -117,9 +119,11 @@ private object StaticOsmRenderer {
                         .map { Coordinate(it[0].coerceIn(-180.0, 180.0), it[1].coerceIn(-MAX_LATITUDE, MAX_LATITUDE)) }
                         .toList()
                         .downsampleCoordinates(600)
-                if (coordinates.size < 2) return@withContext emptyMap(size)
+                val current = currentLocation?.toCoordinateOrNull()
+                val viewportCoordinates = coordinates + listOfNotNull(current)
+                if (viewportCoordinates.isEmpty()) return@withContext emptyMap(size)
 
-                val viewport = viewportFor(coordinates, size, (24f * density).toDouble())
+                val viewport = viewportFor(viewportCoordinates, size, (24f * density).toDouble())
                 val output = emptyMap(size)
                 val canvas = Canvas(output)
                 val firstTileX = floor(viewport.left / TILE_SIZE).toInt()
@@ -144,7 +148,8 @@ private object StaticOsmRenderer {
                     }
                 }
 
-                drawRoute(canvas, coordinates, viewport, density)
+                if (coordinates.size > 1) drawRoute(canvas, coordinates, viewport, density)
+                current?.let { drawCurrentLocation(canvas, it, viewport, density) }
                 output
             }
         }
@@ -206,6 +211,19 @@ private object StaticOsmRenderer {
         canvas.drawPath(path, route)
     }
 
+    private fun drawCurrentLocation(
+        canvas: Canvas,
+        coordinate: Coordinate,
+        viewport: Viewport,
+        density: Float,
+    ) {
+        val point = project(coordinate, viewport.zoom)
+        val x = (point.x - viewport.left).toFloat()
+        val y = (point.y - viewport.top).toFloat()
+        canvas.drawCircle(x, y, 10f * density, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
+        canvas.drawCircle(x, y, 7f * density, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(25, 118, 210) })
+    }
+
     private fun project(
         coordinate: Coordinate,
         zoom: Int,
@@ -260,6 +278,10 @@ private data class Coordinate(
     val longitude: Double,
     val latitude: Double,
 )
+
+private fun List<Double>.toCoordinateOrNull(): Coordinate? =
+    takeIf { size >= 2 && this[0].isFinite() && this[1].isFinite() }
+        ?.let { Coordinate(it[0].coerceIn(-180.0, 180.0), it[1].coerceIn(-85.05112878, 85.05112878)) }
 
 private data class PixelPoint(
     val x: Double,

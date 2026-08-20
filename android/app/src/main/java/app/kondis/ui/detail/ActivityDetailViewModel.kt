@@ -41,10 +41,40 @@ class ActivityDetailViewModel
             if (id == activityId) return
             activityId = id
             observeJob?.cancel()
+            mutableState.value =
+                mutableState.value.copy(
+                    activity = null,
+                    loading = true,
+                    errorMessage = null,
+                    deleted = false,
+                    mutationError = null,
+                )
             observeJob =
                 viewModelScope.launch {
                     repository.detail(id).collect { activity ->
-                        mutableState.value = mutableState.value.copy(activity = activity)
+                        mutableState.value =
+                            mutableState.value.copy(
+                                activity = activity,
+                                loading = false,
+                            )
+                        if (activity != null && activity.id != id) switchToRemoteActivity(activity.id)
+                    }
+                }
+            refresh()
+        }
+
+        private fun switchToRemoteActivity(remoteId: String) {
+            if (remoteId == activityId) return
+            activityId = remoteId
+            observeJob?.cancel()
+            observeJob =
+                viewModelScope.launch {
+                    repository.detail(remoteId).collect { activity ->
+                        mutableState.value =
+                            mutableState.value.copy(
+                                activity = activity ?: mutableState.value.activity,
+                                loading = false,
+                            )
                     }
                 }
             refresh()

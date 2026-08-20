@@ -72,6 +72,10 @@ class ActivityRepository
         private val settingsRepository: SettingsRepository,
         private val json: Json,
     ) {
+        private companion object {
+            const val FEED_PAGE_SIZE = 20
+        }
+
         fun activities(search: String): Flow<List<Activity>> =
             settingsRepository.settings
                 .flatMapLatest { settings ->
@@ -102,7 +106,7 @@ class ActivityRepository
 
         suspend fun refresh(search: String = ""): PageResult {
             val account = account()
-            val response = api(account.settings).feed(search = search.trim().ifBlank { null })
+            val response = api(account.settings).feed(limit = FEED_PAGE_SIZE, search = search.trim().ifBlank { null })
             if (search.isBlank()) {
                 activityDao.replaceActivities(account.key, response.activities.map { toEntity(it, account.key) })
             } else {
@@ -116,7 +120,17 @@ class ActivityRepository
             search: String = "",
         ): PageResult {
             val account = account()
-            val response = api(account.settings).feed(cursor = cursor, search = search.trim().ifBlank { null })
+            val response =
+                api(
+                    account.settings,
+                ).feed(
+                    cursor = cursor,
+                    limit = FEED_PAGE_SIZE,
+                    search =
+                        search.trim().ifBlank {
+                            null
+                        },
+                )
             activityDao.upsertActivities(response.activities.map { toEntity(it, account.key) })
             return PageResult(response.nextCursor, response.total)
         }
@@ -181,7 +195,7 @@ class ActivityRepository
             val url = URI(settings.serverUrl).resolve(path).toString()
             return runCatching {
                 withContext(Dispatchers.IO) {
-                    apiFactory.create(settings.serverUrl, settings.accessToken).activityImage(url).use { body ->
+                    apiFactory.create(settings).activityImage(url).use { body ->
                         val bytes = body.bytes()
                         BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                     }
@@ -288,7 +302,11 @@ class ActivityRepository
                 try {
                     val remoteId =
                         findRecentlyUploadedActivity(workout.startedAt, workout.title, account.settings) ?: continue
-                    val detail = api(account.settings).activity(remoteId)
+                    val remoteApi = api(account.settings)
+                    if (workout.title.isNotBlank()) {
+                        remoteApi.updateActivity(remoteId, ActivityUpdate(name = workout.title))
+                    }
+                    val detail = remoteApi.activity(remoteId)
                     activityDao.replaceQueuedWorkout(
                         accountKey = account.key,
                         localActivityId = workout.localActivityId,
@@ -353,7 +371,7 @@ class ActivityRepository
 
         private suspend fun api() = api(account().settings)
 
-        private fun api(settings: AppSettings) = apiFactory.create(settings.serverUrl, settings.accessToken)
+        private suspend fun api(settings: AppSettings) = apiFactory.create(settings)
 
         private suspend fun uploadGpx(
             file: File,

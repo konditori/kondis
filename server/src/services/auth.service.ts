@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
 import { timingSafeEqual } from 'node:crypto';
-import { createAccessToken, createActivityEventsTicket } from 'src/auth';
+import { createAccessToken, createActivityEventsTicket, createSetupTicket, verifySetupTicket } from 'src/auth';
 import { ConfigService } from 'src/config/config.service';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
@@ -30,14 +30,45 @@ export class AuthService {
   async logSetupTokenIfRequired() {
     const status = await this.setupStatus();
     if (status.setupRequired) {
-      this.logger.warn(`No administrator account exists. Use setup token: ${this.config.setupToken}`);
+      this.logger.log(`
+================================================================================
+Welcome to Kondis!
+
+For initial setup, go to the app in a web browser (not mobile app)
+
+You will need the following setup token:
+
+   ${this.config.setupToken}
+
+Do not share this secret token with anyone.
+
+================================================================================
+`);
     }
   }
-  async setup(email: string, firstName: string, lastName: string, password: string, setupToken: string) {
+  async verifySetupToken(setupToken: string) {
+    const status = await this.setupStatus();
+    if (!status.setupRequired) {
+      throw new ConflictException('Initial setup is already complete');
+    }
+    if (!this.matchesSetupToken(setupToken)) {
+      this.logger.warn('Invalid setup token supplied during initial setup verification');
+      throw new UnauthorizedException('Invalid setup token');
+    }
+    return createSetupTicket(this.config.authSecret);
+  }
+  async validateSetupTicket(setupTicket: string) {
+    const status = await this.setupStatus();
+    if (!status.setupRequired || !verifySetupTicket(setupTicket, this.config.authSecret)) {
+      throw new UnauthorizedException('Setup verification is no longer valid');
+    }
+    return { valid: true };
+  }
+  async setup(email: string, firstName: string, lastName: string, password: string, setupTicket: string) {
     this.logger.log(`Initial account setup attempt for ${email || '<missing email>'}`);
     try {
-      if (!this.matchesSetupToken(setupToken)) {
-        throw new UnauthorizedException('Invalid setup token');
+      if (!verifySetupTicket(setupTicket, this.config.authSecret)) {
+        throw new UnauthorizedException('Verify the setup token before creating the administrator account');
       }
       const account = this.normalizeAccount(email, firstName, lastName, password);
       const user = await this.users.createInitialAdmin({

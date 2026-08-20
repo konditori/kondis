@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
@@ -38,6 +38,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,10 +63,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -87,6 +91,12 @@ import app.kondis.ui.components.MedalIcon
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.record.ActivityTypePicker
 import app.kondis.ui.theme.KondisOrange
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
 
 @Composable
 fun ActivityDetailRoute(
@@ -133,6 +143,9 @@ fun ActivityDetailScreen(
     onAddImages: () -> Unit,
     onLoadImage: suspend (String) -> Bitmap?,
 ) {
+    LaunchedEffect(state.deleted) {
+        if (state.deleted) onDeleted()
+    }
     val activity = state.activity
     if (activity == null) {
         Column(
@@ -158,10 +171,6 @@ fun ActivityDetailScreen(
     var draftSport by remember(activity.id) { mutableStateOf(activity.sport) }
     var draftExcludeFromRankings by remember(activity.id) { mutableStateOf(activity.excludeFromRankings) }
     var draftTags by remember(activity.id) { mutableStateOf(activity.tags) }
-    LaunchedEffect(state.deleted) {
-        if (state.deleted) onDeleted()
-    }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 32.dp),
@@ -185,6 +194,7 @@ fun ActivityDetailScreen(
                     } else {
                         null
                     },
+                onDelete = if (!queuedForSync) ({ showDeleteDialog = true }) else null,
             )
         }
         if (queuedForSync) {
@@ -653,6 +663,7 @@ private fun DetailHeader(
     onBack: () -> Unit,
     onLoadImage: suspend (String) -> Bitmap?,
     onEdit: (() -> Unit)?,
+    onDelete: (() -> Unit)?,
 ) {
     val hasMap =
         activity.track
@@ -665,12 +676,17 @@ private fun DetailHeader(
         value = firstImagePath?.let { runCatching { onLoadImage(it) }.getOrNull() }
     }
     var showImages by remember(activity.id) { mutableStateOf(false) }
+    var showMenu by remember(activity.id) { mutableStateOf(false) }
+    var showMap by remember(activity.id) { mutableStateOf(false) }
 
     Column {
         if (hasMap) {
             Box(Modifier.fillMaxWidth().height(360.dp)) {
                 activity.track.let { track ->
-                    StaticRoutePreview(track = track, modifier = Modifier.fillMaxSize())
+                    StaticRoutePreview(
+                        track = track,
+                        modifier = Modifier.fillMaxSize().clickable { showMap = true },
+                    )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
@@ -684,29 +700,48 @@ private fun DetailHeader(
                                 CircleShape,
                             ),
                     ) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                        )
                     }
                     Spacer(Modifier.weight(1f))
-                    onEdit?.let { TextButton(onClick = it) { Text("Edit") } }
-                    IconButton(
-                        onClick = {},
-                        modifier =
-                            Modifier.background(
-                                MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
-                                CircleShape,
-                            ),
-                    ) {
-                        Icon(Icons.Rounded.BookmarkBorder, contentDescription = "Bookmark activity")
-                    }
-                    IconButton(
-                        onClick = {},
-                        modifier =
-                            Modifier.background(
-                                MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
-                                CircleShape,
-                            ),
-                    ) {
-                        Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true },
+                            modifier =
+                                Modifier.background(
+                                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
+                                    CircleShape,
+                                ),
+                        ) {
+                            Icon(
+                                Icons.Rounded.MoreVert,
+                                contentDescription = "More options",
+                                tint = Color.White,
+                            )
+                        }
+                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            onEdit?.let { edit ->
+                                DropdownMenuItem(
+                                    text = { Text("Edit") },
+                                    onClick = {
+                                        showMenu = false
+                                        edit()
+                                    },
+                                )
+                            }
+                            onDelete?.let { delete ->
+                                DropdownMenuItem(
+                                    text = { Text("Delete") },
+                                    onClick = {
+                                        showMenu = false
+                                        delete()
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
                 if (firstImage != null) {
@@ -752,7 +787,31 @@ private fun DetailHeader(
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                         }
                         Spacer(Modifier.weight(1f))
-                        onEdit?.let { TextButton(onClick = it) { Text("Edit") } }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Rounded.MoreVert, contentDescription = "More options")
+                            }
+                            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                                onEdit?.let { edit ->
+                                    DropdownMenuItem(
+                                        text = { Text("Edit") },
+                                        onClick = {
+                                            showMenu = false
+                                            edit()
+                                        },
+                                    )
+                                }
+                                onDelete?.let { delete ->
+                                    DropdownMenuItem(
+                                        text = { Text("Delete") },
+                                        onClick = {
+                                            showMenu = false
+                                            delete()
+                                        },
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 Column(Modifier.padding(start = 12.dp)) {
@@ -825,6 +884,12 @@ private fun DetailHeader(
                 }
             }
         }
+        if (showMap) {
+            ActivityMapViewer(
+                track = activity.track!!,
+                onDismiss = { showMap = false },
+            )
+        }
         if (showImages) {
             ActivityPhotoViewer(
                 activity = activity,
@@ -878,12 +943,6 @@ private fun ActivityPhotoViewer(
                     Icon(Icons.Rounded.Close, contentDescription = null)
                 }
                 Spacer(Modifier.weight(1f))
-                ViewerIconButton(onClick = {}, contentDescription = "Bookmark activity") {
-                    Icon(Icons.Rounded.BookmarkBorder, contentDescription = null)
-                }
-                ViewerIconButton(onClick = {}, contentDescription = "More options") {
-                    Icon(Icons.Rounded.MoreVert, contentDescription = null)
-                }
             }
 
             if (track != null) {
@@ -937,6 +996,69 @@ private fun ActivityPhotoViewer(
                         ) {}
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityMapViewer(
+    track: app.kondis.model.Track,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    val route =
+        remember(track) {
+            track.coordinates.mapNotNull { coordinate ->
+                coordinate.takeIf { it.size >= 2 }?.let { GeoPoint(it[1], it[0]) }
+            }
+        }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            AndroidView(
+                factory = {
+                    Configuration.getInstance().userAgentValue = context.packageName
+                    MapView(context).apply {
+                        setTileSource(TileSourceFactory.MAPNIK)
+                        setMaxZoomLevel(TileSourceFactory.MAPNIK.maximumZoomLevel.toDouble())
+                        setTilesScaledToDpi(false)
+                        setMultiTouchControls(true)
+                        if (route.isNotEmpty()) {
+                            overlays +=
+                                Polyline().apply {
+                                    setPoints(route)
+                                    outlinePaint.color = android.graphics.Color.rgb(22, 101, 52)
+                                    outlinePaint.strokeWidth = 9f
+                                }
+                            post {
+                                if (route.size == 1) {
+                                    controller.setZoom(17.0)
+                                    controller.setCenter(route.first())
+                                } else {
+                                    zoomToBoundingBox(BoundingBox.fromGeoPointsSafe(route), false, 96)
+                                }
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+            IconButton(
+                onClick = onDismiss,
+                modifier =
+                    Modifier
+                        .statusBarsPadding()
+                        .padding(12.dp)
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f), CircleShape),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "Back to activity",
+                    tint = Color.White,
+                )
             }
         }
     }

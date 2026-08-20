@@ -975,6 +975,20 @@
         ]
       }
     },
+    "/auth/capabilities": {
+      "get": {
+        "operationId": "AuthController_capabilities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/setup": {
       "get": {
         "operationId": "AuthController_setupStatus",
@@ -990,6 +1004,34 @@
       },
       "post": {
         "operationId": "AuthController_setup",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/setup/verify": {
+      "post": {
+        "operationId": "AuthController_verifySetupToken",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/setup/validate": {
+      "post": {
+        "operationId": "AuthController_validateSetupTicket",
         "parameters": [],
         "responses": {
           "201": {
