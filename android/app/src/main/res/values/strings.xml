@@ -252,6 +252,7 @@
     <string name="i18n_tags">Tags</string>
     <string name="i18n_race">Race</string>
     <string name="i18n_commute">Commute</string>
+    <string name="i18n_workout">Workout</string>
     <string name="i18n_recovery">Recovery</string>
     <string name="i18n_with_kid">With Kid</string>
     <string name="i18n_with_pet">With Pet</string>

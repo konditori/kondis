@@ -252,6 +252,7 @@
     <string name="i18n_tags">Taggar</string>
     <string name="i18n_race">Tävling</string>
     <string name="i18n_commute">Pendling</string>
+    <string name="i18n_workout">Träningspass</string>
     <string name="i18n_recovery">Återhämtning</string>
     <string name="i18n_with_kid">Med barn</string>
     <string name="i18n_with_pet">Med husdjur</string>
