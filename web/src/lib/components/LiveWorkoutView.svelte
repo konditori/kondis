@@ -193,7 +193,7 @@
   <div class="live-stats">
     <div>
       <strong>{distance(workout.distanceMeters, unitSystem)}</strong><span
-        >Distance</span
+        >{t("distance")}</span
       >
     </div>
     <div>

@@ -57,6 +57,7 @@
     speed,
   } from "$lib/format";
   import type { Activity, ActivityDetail } from "$lib/types";
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
   let updatedActivity = $state<Activity | null>(null);
@@ -227,14 +228,14 @@
       : averageMetric === AverageMetric.Speed
         ? [
             {
-              label: "Average speed",
+              label: t("average_speed"),
               value: speed(activity.metrics?.avgSpeed ?? null, data.unitSystem),
               icon: Gauge,
             },
           ]
         : [
             {
-              label: "Pace",
+              label: t("pace"),
               value: pace(
                 activity.metrics?.avgSpeed ??
                   (activity.metrics?.distance != null
@@ -251,7 +252,7 @@
   );
   const stats = $derived([
     {
-      label: "Distance",
+      label: t("distance"),
       value: distance(activity.metrics?.distance ?? null, data.unitSystem),
       icon: Gauge,
     },
@@ -270,7 +271,7 @@
     ...(hasElevation
       ? [
           {
-            label: "Elevation gain",
+            label: t("elevation_gain"),
             value: elevation(
               activity.metrics?.elevationGain ?? null,
               data.unitSystem,
@@ -283,7 +284,7 @@
     ...(hasHeartRate
       ? [
           {
-            label: "Average heart rate",
+            label: t("average_heart_rate"),
             value: `${activity.metrics?.avgHr} bpm`,
             icon: HeartPulse,
           },
@@ -292,7 +293,7 @@
     ...(activitySettings.showAveragePower
       ? [
           {
-            label: "Average power",
+            label: t("average_power"),
             value:
               activity.metrics?.avgPower == null
                 ? "—"
@@ -302,7 +303,7 @@
         ]
       : []),
     {
-      label: "Energy",
+      label: t("energy"),
       value:
         activity.metrics?.calories == null
           ? "—"
@@ -380,21 +381,21 @@
   ): { rank: number; text: string } | null {
     const name = bestEffortRecordName(effort.type);
     if (effort.overallRank === 1) {
-      return { rank: 1, text: `New best of all time` };
+      return { rank: 1, text: t("new_best_all_time") };
     }
     if (effort.overallRank <= 3) {
       return {
         rank: effort.overallRank,
-        text: `New ${rankOrdinal(effort.overallRank)} best of all time`,
+        text: t("new_ranked_best_all_time", { rank: rankOrdinal(effort.overallRank) }),
       };
     }
     if (effort.yearRank === 1) {
-      return { rank: 1, text: `New best of ${effort.year}` };
+      return { rank: 1, text: t("new_best_year", { year: effort.year }) };
     }
     if (effort.yearRank <= 3) {
       return {
         rank: effort.yearRank,
-        text: `New ${rankOrdinal(effort.yearRank)} best of ${effort.year}`,
+        text: t("new_ranked_best_year", { rank: rankOrdinal(effort.yearRank), year: effort.year }),
       };
     }
     return null;
@@ -474,14 +475,14 @@
       updatedActivity = updated;
       editing = false;
     } catch {
-      editError = "Could not save the activity. Please try again.";
+      editError = t("could_not_save_activity");
     } finally {
       saving = false;
     }
   }
 
   async function deleteActivity() {
-    if (!window.confirm("Delete this activity? This cannot be undone.")) {
+    if (!window.confirm(t("delete_activity_confirmation_prompt"))) {
       return;
     }
 
@@ -494,7 +495,7 @@
       );
       await goto("/");
     } catch {
-      editError = "Could not delete the activity. Please try again.";
+      editError = t("could_not_delete_activity");
       deleting = false;
     }
   }
@@ -532,7 +533,7 @@
 <div class="detail-page">
   <header class="detail-header">
     <a class="back-link" href="/" onclick={backToActivities}
-      ><ArrowLeft size={18} /> All activities</a
+      ><ArrowLeft size={18} /> {t("all_activities")}</a
     >
     <div class="detail-heading">
       <UserAvatar
@@ -559,13 +560,13 @@
           class="edit-metadata-button"
           type="button"
           onclick={startEditing}
-          aria-label="Edit activity metadata"><Pencil size={16} /> Edit</button
+          aria-label={t("edit_activity_metadata")}><Pencil size={16} /> {t("edit")}</button
         >
       {/if}
       <div
         class="detail-likes"
         role="group"
-        aria-label="Activity likes"
+        aria-label={t("activity_likes")}
         onmouseenter={() => {
           likersHovered = true;
           void loadLikers();
@@ -576,15 +577,15 @@
           type="button"
           onclick={toggleLikers}
           aria-expanded={likersVisible}
-          aria-label="Show people who liked this activity"
+          aria-label={t("show_people_who_liked")}
           ><Heart size={16} fill="currentColor" />
           {activity.likeCount ?? 0}</button
         >
         {#if likersVisible}
           <div class="detail-likers-popover" role="tooltip">
-            <strong>Likes</strong>
+            <strong>{t("likes_label")}</strong>
             {#if likersLoading}
-              <span>Loading…</span>
+              <span>{t("loading")}</span>
             {:else if likers?.length}
               {#each likers as liker}
                 <a href={`/people/${liker.id}`}>
@@ -597,7 +598,7 @@
                 </a>
               {/each}
             {:else}
-              <span>No likes yet.</span>
+              <span>{t("no_likes_yet")}</span>
             {/if}
           </div>
         {/if}
@@ -606,14 +607,14 @@
     {#if editing}
       <form class="metadata-editor" onsubmit={saveMetadata}>
         <label
-          ><span>Name</span><input
+          ><span>{t("name")}</span><input
             bind:value={draftName}
             maxlength="200"
-            placeholder="Activity name"
+            placeholder={t("activity_name")}
           /></label
         >
         <label
-          ><span>Activity type</span><select
+          ><span>{t("activity_type")}</span><select
             bind:value={draftSport}
             onchange={() => {
               if (!["run", "trail_run", "virtual_run"].includes(draftSport))
@@ -625,19 +626,19 @@
           ></label
         >
         <label class="metadata-description"
-          ><span>Description</span><textarea
+          ><span>{t("description")}</span><textarea
             bind:value={draftDescription}
             maxlength="10000"
-            placeholder="Activity description"></textarea></label
+            placeholder={t("activity_description_placeholder")}></textarea></label
         >
         <label class="metadata-checkbox"
           ><input
             type="checkbox"
             bind:checked={draftExcludeFromRankings}
-          /><span>Exclude from rankings</span></label
+          /><span>{t("exclude_from_rankings")}</span></label
         >
         <fieldset class="metadata-tags">
-          <legend>Tags</legend>
+          <legend>{t("tags")}</legend>
           <div class="tag-options">
             {#each availableTags as tag}
               <label
@@ -664,19 +665,19 @@
             class="metadata-delete"
             onclick={deleteActivity}
             disabled={saving || deleting}
-            ><Trash2 size={16} /> {deleting ? "Deleting…" : "Delete"}</button
+            ><Trash2 size={16} /> {deleting ? t("deleting") : t("common_delete")}</button
           >
           <button
             type="button"
             class="metadata-cancel"
             onclick={cancelEditing}
-            disabled={saving || deleting}><X size={16} /> Cancel</button
+            disabled={saving || deleting}><X size={16} /> {t("common_cancel")}</button
           >
           <button
             type="submit"
             class="metadata-save"
             disabled={saving || deleting}
-            ><Check size={16} /> {saving ? "Saving…" : "Save"}</button
+            ><Check size={16} /> {saving ? t("saving") : t("common_save")}</button
           >
         </div>
         {#if editError}<p class="metadata-error" role="alert">
@@ -686,7 +687,7 @@
     {/if}
     {#if activity.tags?.length}<div
         class="activity-tags"
-        aria-label="Activity tags"
+        aria-label={t("activity_tags")}
       >
         {#each activity.tags as tag}<span class="activity-tag"
             >{tagLabels[tag]}</span
@@ -702,12 +703,12 @@
       class="activity-image-carousel"
       class:activity-image-carousel-locked={selectedImageIndex !== null}
       inert={selectedImageIndex !== null}
-      aria-label="Activity photos"
+      aria-label={t("activity_photos")}
     >
       <div
         class="activity-visual-carousel-track"
         role="region"
-        aria-label="Swipeable activity photos"
+        aria-label={t("swipeable_activity_photos")}
         bind:this={imageCarousel}
         onscroll={updateImagePage}
       >
@@ -717,12 +718,12 @@
               <button
                 type="button"
                 class="activity-photo-open"
-                aria-label={image.caption ?? "Open activity photo"}
+                aria-label={image.caption ?? t("open_activity_photos")}
                 onclick={() => (selectedImageIndex = imageIndex)}
               >
                 <img
                   src={image.preview ?? image.thumbnail ?? image.original}
-                  alt={image.caption ?? "Activity photo"}
+                  alt={image.caption ?? t("activity_photo")}
                 />
               </button>
               {#if image.caption}<figcaption>{image.caption}</figcaption>{/if}
@@ -733,18 +734,18 @@
       {#if imagePageCount > 1}
         <div
           class="activity-visual-controls"
-          aria-label="Photo carousel controls"
+          aria-label={t("photo_carousel_controls")}
         >
           <button
             type="button"
-            aria-label="Previous photo"
+            aria-label={t("previous_image")}
             onclick={() => scrollImages(-1)}
             disabled={imagePage === 0}><ChevronLeft size={17} /></button
           >
           <span aria-live="polite">{imagePage + 1} / {imagePageCount}</span>
           <button
             type="button"
-            aria-label="Next photo"
+            aria-label={t("next_image")}
             onclick={() => scrollImages(1)}
             disabled={imagePage === imagePageCount - 1}
             ><ChevronRight size={17} /></button
@@ -766,21 +767,21 @@
             <div
               class="split-table"
               role="table"
-              aria-label="Activity kilometre splits"
+              aria-label={t("activity_kilometre_splits")}
             >
               <div
                 class="split-header"
                 class:no-heart-rate={!hasSplitHeartRate}
                 role="row"
               >
-                <div role="columnheader"><strong>KM</strong></div>
+                <div role="columnheader"><strong>{t("kilometre_abbreviation")}</strong></div>
                 <div role="columnheader">
-                  <strong>{isCyclingEffort ? "Speed" : "Pace"}</strong>
+                  <strong>{isCyclingEffort ? t("speed") : t("pace")}</strong>
                 </div>
                 {#if hasSplitHeartRate}<div role="columnheader">
-                    <strong>HR</strong>
+                    <strong>{t("heart_rate_short_label")}</strong>
                   </div>{/if}
-                <div role="columnheader"><strong>Elev</strong></div>
+                <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
               </div>
               {#each activity.analysis.splits as split, index}
                 {@const splitLabel =
@@ -827,7 +828,7 @@
           </div>
         </section>
       {/if}
-      <section class="activity-map-section" aria-label="Activity route">
+      <section class="activity-map-section" aria-label={t("activity_route_map")}>
         <section class="map-panel">
           {#key mapStyle}
             <RouteMap
@@ -841,8 +842,8 @@
           {/key}
           {#if activity.track && mapStyle === ActivityMapStyle.Route}
             <div class="map-key">
-              <span><i class="start-dot"></i> Start</span><span
-                ><i class="finish-dot"></i> Finish</span
+              <span><i class="start-dot"></i> {t("start")}</span><span
+                ><i class="finish-dot"></i> {t("finish")}</span
               >
             </div>
           {/if}
@@ -865,21 +866,21 @@
         <div
           class="split-table"
           role="table"
-          aria-label="Activity kilometre splits"
+          aria-label={t("activity_kilometre_splits")}
         >
           <div
             class="split-header"
             class:no-heart-rate={!hasSplitHeartRate}
             role="row"
           >
-            <div role="columnheader"><strong>KM</strong></div>
+            <div role="columnheader"><strong>{t("kilometre_abbreviation")}</strong></div>
             <div role="columnheader">
-              <strong>{isCyclingEffort ? "Speed" : "Pace"}</strong>
+              <strong>{isCyclingEffort ? t("speed") : t("pace")}</strong>
             </div>
             {#if hasSplitHeartRate}<div role="columnheader">
-                <strong>Heart rate</strong>
+                <strong>{t("heart_rate")}</strong>
               </div>{/if}
-            <div role="columnheader"><strong>Elev</strong></div>
+            <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
           </div>
           {#each activity.analysis.splits as split, index}
             {@const splitLabel =
@@ -922,15 +923,15 @@
     <section class="route-match-summary">
       <div class="route-match-summary-icon"><MapPinned size={23} /></div>
       <div>
-        <span class="eyebrow">Repeated route</span>
+        <span class="eyebrow">{t("repeated_route")}</span>
         <h2>
           {activity.matchedRouteCount}
-          {activity.matchedRouteCount === 1 ? "activity" : "activities"} on this route
+          {activity.matchedRouteCount === 1 ? t("activity") : t("activities")} on this route
         </h2>
-        <p>Compare your performance across every matched effort.</p>
+        <p>{t("compare_matched_efforts")}</p>
       </div>
       <a href={`/activities/${activity.id}/matched-routes`}
-        >View matched {isCyclingEffort ? "rides" : "runs"}
+        >{t("view_matched", { activities: isCyclingEffort ? t("matched_rides") : t("matched_runs") })}
         <ChevronRight size={17} /></a
       >
     </section>
@@ -952,11 +953,11 @@
       <div class="section-heading">
         <div>
           <span class="eyebrow"
-            >{isCyclingEffort ? "Cycling" : "Running"} performance</span
+            >{isCyclingEffort ? t("cycling") : t("running")} {t("performance")}</span
           >
-          <h2>Best efforts</h2>
+          <h2>{t("best_efforts")}</h2>
           {#if excludedFromRankings}<p class="best-efforts-excluded-note">
-              Shown for this activity only; excluded from rankings.
+              {t("excluded_from_rankings_note")}
             </p>{/if}
         </div>
       </div>
@@ -964,22 +965,22 @@
           <div
             class="best-effort-table"
             role="table"
-            aria-label="Distance best efforts"
+            aria-label={t("distance_best_efforts")}
           >
             <div
               class="best-effort-header"
               class:no-heart-rate={!hasBestEffortHeartRate}
               role="row"
             >
-              <div role="columnheader"><strong>Distance</strong></div>
-              <div role="columnheader"><strong>Time</strong></div>
+              <div role="columnheader"><strong>{t("distance")}</strong></div>
+              <div role="columnheader"><strong>{t("time")}</strong></div>
               <div role="columnheader">
-                <strong>{isCyclingEffort ? "Speed" : "Pace"}</strong>
+                <strong>{isCyclingEffort ? t("speed") : t("pace")}</strong>
               </div>
               {#if hasBestEffortHeartRate}<div role="columnheader">
-                  <strong>Heart Rate</strong>
+                  <strong>{t("heart_rate")}</strong>
                 </div>{/if}
-              <div role="columnheader"><strong>Elev</strong></div>
+              <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
             </div>
             {#each distanceBestEfforts as effort}
               {@const achievement = excludedFromRankings
@@ -993,7 +994,7 @@
                   highlightedRange?.endTime === effort.endTime}
                 role="row"
                 href={`/best-efforts/${isCyclingEffort ? "ride" : "run"}/${effort.type}`}
-                aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ""}. View best effort history`}
+                aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ""}. ${t("view_best_effort_history")}`}
                 onpointerenter={() =>
                   highlight(
                     effort.startTime,
@@ -1058,13 +1059,13 @@
           <div
             class="best-effort-table power-best-effort-table"
             role="table"
-            aria-label="Power best efforts"
+            aria-label={t("power_best_efforts")}
           >
             <div class="best-effort-header" role="row">
               <div role="columnheader"></div>
-              <div role="columnheader"><strong>Time</strong></div>
-              <div role="columnheader"><strong>Power</strong></div>
-              <div role="columnheader"><strong>Elev</strong></div>
+              <div role="columnheader"><strong>{t("time")}</strong></div>
+              <div role="columnheader"><strong>{t("power")}</strong></div>
+              <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
             </div>
             {#each powerBestEfforts as effort}
               {@const achievement = excludedFromRankings
@@ -1074,7 +1075,7 @@
                 class="best-effort-row"
                 role="row"
                 href={`/best-efforts/ride/${effort.type}`}
-                aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ""}. View best effort history`}
+                aria-label={`${bestEffortLabel(effort.type)}${achievement ? `. ${achievement.text}` : ""}. ${t("view_best_effort_history")}`}
               >
                 <div class="effort-distance" role="cell">
                   {#if achievement}<span

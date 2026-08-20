@@ -229,7 +229,7 @@ jobs:
   release:
     name: Sign & Publish
     if: startsWith(github.ref, 'refs/tags/android-v')
-    needs: [test, instrumented]
+    needs: [test, instrumented, build, lint]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

@@ -97,7 +97,7 @@
   }
 </script>
 
-<svelte:head><title>Settings · Kondis</title></svelte:head>
+<svelte:head><title>{t("settings")} · Kondis</title></svelte:head>
 
 <div class="page-shell settings-page">
   <header class="page-header">

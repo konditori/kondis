@@ -13,6 +13,7 @@
   import BestEffortChart from "$lib/components/BestEffortChart.svelte";
   import { activityName, bestEffortValue, duration, pace } from "$lib/format";
   import { subscribeToActivityEvents } from "$lib/realtime";
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
   $effect(() => {
@@ -69,27 +70,27 @@
   }
 </script>
 
-<svelte:head><title>Best efforts · Kondis</title></svelte:head>
+<svelte:head><title>{t("best_efforts")} · Kondis</title></svelte:head>
 
 <div class="page-shell best-efforts-page">
   <header class="page-header best-efforts-header">
     <div>
-      <span class="eyebrow">{sportName} performance</span>
-      <h1>Best efforts</h1>
-      <p>See how your best {activityNoun} have progressed over time.</p>
-      <nav class="effort-sport-tabs" aria-label="Best effort sport">
+      <span class="eyebrow">{sportName} {t("performance")}</span>
+      <h1>{t("best_efforts")}</h1>
+      <p>{t("best_efforts_progress", { activities: activityNoun })}</p>
+      <nav class="effort-sport-tabs" aria-label={t("best_effort_sport")}>
         <a class:active={history?.sport === "run"} href="/best-efforts/run/5k"
-          >Run</a
+          >{t("run")}</a
         >
         <a
           class:active={history?.sport === "ride"}
-          href="/best-efforts/ride/10k">Ride</a
+          href="/best-efforts/ride/10k">{t("ride")}</a
         >
       </nav>
     </div>
     {#if history}
       <div class="distance-picker">
-        <label for="effort-distance">Effort</label>
+        <label for="effort-distance">{t("effort")}</label>
         <select
           id="effort-distance"
           value={history.type}
@@ -112,20 +113,20 @@
   {#if data.unavailable}
     <div class="notice">
       <CloudOff size={20} /><span
-        ><strong>Server unavailable</strong> Could not load your best efforts.</span
+        ><strong>{t("server_unavailable")}</strong> {t("could_not_load_best_efforts")}</span
       >
     </div>
   {:else if history && history.efforts.length > 0}
     <section class="effort-overview">
       <div class="section-heading effort-section-heading">
         <div>
-          <span class="eyebrow">Progress over time</span>
-          <h2>{label} performance</h2>
+          <span class="eyebrow">{t("progress_over_time")}</span>
+          <h2>{label} {t("performance")}</h2>
         </div>
         <span class="chart-hint"
           >{history.higherIsBetter
-            ? "Higher is better"
-            : "Higher is faster"}</span
+            ? t("higher_is_better")
+            : t("higher_is_faster")}</span
         >
       </div>
       <BestEffortChart
@@ -140,7 +141,7 @@
     <section class="podium-section">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">All-time ranking</span>
+          <span class="eyebrow">{t("all_time_ranking")}</span>
           <h2>Your fastest {label} efforts</h2>
         </div>
       </div>
@@ -179,8 +180,8 @@
     <section class="effort-history-section">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">Every result</span>
-          <h2>Effort history</h2>
+          <span class="eyebrow">{t("every_result")}</span>
+          <h2>{t("effort_history")}</h2>
         </div>
       </div>
       <div class="effort-history-list">
@@ -220,7 +221,7 @@
             <span class="history-badges">
               {#if effort.overallRank <= 3}<span
                   class={`badge rank-${effort.overallRank}`}
-                  ><Medal size={31} /> All time</span
+                  ><Medal size={31} /> {t("all_time")}</span
                 >{/if}
               {#if effort.yearRank <= 3}<span
                   class={`badge rank-${effort.yearRank}`}
@@ -235,9 +236,9 @@
   {:else if history}
     <div class="empty-state best-efforts-empty">
       <span class="empty-icon"><Award size={28} /></span>
-      <h2>No {label} efforts yet</h2>
+      <h2>{t("no_efforts_yet", { effort: label })}</h2>
       <p>
-        Import more {activityNoun} with the required data to start tracking this effort.
+        {t("import_more_activities", { activities: activityNoun })}
       </p>
     </div>
   {/if}

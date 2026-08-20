@@ -9,6 +9,7 @@
     pace,
     speed,
   } from "$lib/format";
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
   let activeActivityId = $state<string | null>(null);
@@ -160,21 +161,20 @@
   }
 </script>
 
-<svelte:head><title>Matched routes · Kondis</title></svelte:head>
+<svelte:head><title>{t("matched_routes")} · Kondis</title></svelte:head>
 
 <div class="page-shell matched-routes-page">
   <a class="back-link" href={`/activities/${history.sourceActivityId}`}>
-    <ArrowLeft size={18} /> Back to activity
+    <ArrowLeft size={18} /> {t("back_to_activity")}
   </a>
 
   <header class="matched-routes-header">
     <span class="matched-routes-icon"><MapPinned size={27} /></span>
     <div>
-      <span class="eyebrow">Repeated route</span>
-      <h1>Matched {isSpeed ? "rides" : "runs"}</h1>
+      <span class="eyebrow">{t("repeated_route")}</span>
+      <h1>{t("matched", { activities: isSpeed ? t("matched_rides") : t("matched_runs") })}</h1>
       <p>
-        Compare your performance across {activities.length} activities on the same
-        route.
+        {t("compare_route_activities", { count: activities.length })}
       </p>
     </div>
   </header>
@@ -182,12 +182,12 @@
   {#if validValues.length > 0}
     <section
       class="matched-route-chart"
-      aria-label="Route performance over time"
+      aria-label={t("route_performance_over_time")}
     >
       <div class="matched-route-chart-heading">
         <div>
-          <span class="eyebrow">Progress over time</span>
-          <h2>{isSpeed ? "Speed" : "Pace"}</h2>
+          <span class="eyebrow">{t("progress_over_time")}</span>
+          <h2>{isSpeed ? t("speed") : t("pace")}</h2>
         </div>
       </div>
       <div class="matched-chart-wrap">
@@ -198,7 +198,7 @@
         >
           <line class="chart-y-axis" x1="48" x2="48" y1="28" y2="270" />
           <text class="chart-axis-title" x="48" y="20"
-            >{isSpeed ? "Speed" : "Pace"}</text
+            >{isSpeed ? t("speed") : t("pace")}</text
           >
           {#each axisTicks as tick}
             <line
@@ -309,15 +309,15 @@
             </g>
           {/if}
         </svg>
-        <aside class="chart-stat-labels" aria-label="Performance summary">
+        <aside class="chart-stat-labels" aria-label={t("performance_summary")}>
           <span class="fastest"
-            >Fastest<strong>{displayChartValue(fastest)}</strong></span
+            >{t("fastest")}<strong>{displayChartValue(fastest)}</strong></span
           >
           <span class="average"
-            >All-time avg<strong>{displayChartValue(average)}</strong></span
+            >{t("all_time_average")}<strong>{displayChartValue(average)}</strong></span
           >
           <span class="slowest"
-            >Slowest<strong>{displayChartValue(slowest)}</strong></span
+            >{t("slowest")}<strong>{displayChartValue(slowest)}</strong></span
           >
         </aside>
       </div>
@@ -327,9 +327,9 @@
         >
       </div>
       <div class="matched-chart-legend">
-        <strong>{activities.length} activities</strong><span
-          ><i class="trend-swatch"></i>Trending average</span
-        ><span><i class="effort-swatch"></i>Each effort</span>
+        ><strong>{t("activities_count", { count: activities.length })}</strong><span
+          ><i class="trend-swatch"></i>{t("trending_average")}</span
+        ><span><i class="effort-swatch"></i>{t("each_effort")}</span>
       </div>
     </section>
   {/if}
@@ -337,21 +337,21 @@
   <section class="matched-route-list">
     <div class="section-heading">
       <div>
-        <span class="eyebrow">Every effort</span>
-        <h2>{activities.length} activities</h2>
+        <span class="eyebrow">{t("every_effort")}</span>
+        <h2>{t("activities_count", { count: activities.length })}</h2>
       </div>
     </div>
     <div
       class="matched-route-table"
       role="table"
-      aria-label="Matched route activities"
+      aria-label={t("matched_route_activities")}
     >
       <div class="matched-route-row matched-route-table-header" role="row">
-        <span role="columnheader">Date</span><span role="columnheader"
-          >Activity</span
-        ><span role="columnheader">{isSpeed ? "Speed" : "Pace"}</span><span
-          role="columnheader">vs average</span
-        ><span role="columnheader">Moving time</span><span></span>
+        <span role="columnheader">{t("date")}</span><span role="columnheader"
+          >{t("activity")}</span
+        ><span role="columnheader">{isSpeed ? t("speed") : t("pace")}</span><span
+          role="columnheader">{t("versus_average")}</span
+        ><span role="columnheader">{t("moving_time")}</span><span></span>
       </div>
       {#each [...efforts].reverse() as effort}
         <a
@@ -370,7 +370,7 @@
           <span role="cell"
             ><strong>{activityName(effort)}</strong
             >{#if effort.id === history.sourceActivityId}<small
-                >This {isSpeed ? "ride" : "run"}</small
+                >{t("this_activity", { activity: isSpeed ? t("ride") : t("run") })}</small
               >{/if}</span
           >
           <span role="cell"

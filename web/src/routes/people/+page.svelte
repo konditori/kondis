@@ -130,7 +130,7 @@
     /><button type="submit">{t("search")}</button>
   </form>
   {#if error}<p class="form-error">{error}</p>{/if}
-  <section class="people-list" aria-label="People">
+  <section class="people-list" aria-label={t("people")}>
     {#each people as person (person.user.id)}
       <article class="person-row">
         <UserAvatar

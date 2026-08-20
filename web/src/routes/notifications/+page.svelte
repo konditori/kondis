@@ -53,7 +53,7 @@
   });
 </script>
 
-<svelte:head><title>Notifications · Kondis</title></svelte:head>
+<svelte:head><title>{t("notifications")} · Kondis</title></svelte:head>
 
 <div class="page-shell notifications-page">
   <header class="page-header">

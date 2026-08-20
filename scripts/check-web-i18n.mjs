@@ -15,7 +15,7 @@ const collectFiles = async (path) => {
 await collectFiles(directory.pathname);
 
 const userVisibleString =
-  />\s*[A-Za-z][^<{]*<|\b(?:aria-label|placeholder|title)\s*=\s*["'][^"']+["']/;
+  />\s*[A-Za-z][^<{]*<\/?[A-Za-z]|\b(?:aria-label|placeholder|title)\s*=\s*["'][^"']+["']/;
 
 for (const file of files) {
   const sourceText = await readFile(file, "utf8");

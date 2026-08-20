@@ -15,6 +15,7 @@
   } from "$lib/api";
   import type { Activity, ActivityPage } from "$lib/types";
   import { userDisplayName } from "$lib/user-name";
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
   type Person = Awaited<ReturnType<typeof socialControllerPerson>>;
@@ -42,7 +43,7 @@
     } catch {
       profile = null;
       activities = [];
-      error = "This profile is unavailable.";
+      error = t("profile_unavailable");
     } finally {
       loading = false;
     }
@@ -64,7 +65,7 @@
         profile.relation = { ...profile.relation, outgoingRequest: true };
       }
     } catch {
-      error = "Could not update this follow request.";
+      error = t("could_not_update_follow_request");
     } finally {
       updating = false;
     }
@@ -89,7 +90,7 @@
         activities = [];
       }
     } catch {
-      error = "Could not update the block.";
+      error = t("could_not_update_block");
     } finally {
       updating = false;
     }
@@ -104,17 +105,17 @@
   ><title
     >{profile
       ? `${userDisplayName(profile.user)} · Kondis`
-      : "Profile · Kondis"}</title
+      : `${t("profile")} · Kondis`}</title
   ></svelte:head
 >
 
 <div class="page-shell">
   {#if loading}
-    <p class="muted-copy">Loading profile…</p>
+    <p class="muted-copy">{t("loading_profile")}</p>
   {:else if !profile}
     <div class="empty-state">
-      <h1>Profile unavailable</h1>
-      <p>{error || "This person could not be found."}</p>
+      <h1>{t("profile_unavailable")}</h1>
+      <p>{error || t("person_not_found")}</p>
     </div>
   {:else}
     <header class="page-header">
@@ -124,7 +125,7 @@
           src={profile.user.avatarUrl}
           size={72}
         />
-        <span class="eyebrow">{isOwnProfile ? "Your profile" : "Athlete"}</span>
+        <span class="eyebrow">{isOwnProfile ? t("your_profile") : t("athlete")}</span>
         <h1>{userDisplayName(profile.user)}</h1>
       </div>
       {#if !isOwnProfile}<div class="profile-actions">
@@ -134,9 +135,9 @@
             disabled={updating || profile.relation.blockedViewer}
             onclick={follow}
           >
-            {#if profile.relation.following}<UserMinus size={16} /> Unfollow
-            {:else if profile.relation.outgoingRequest}Cancel request
-            {:else}<UserPlus size={16} /> Follow{/if}
+            {#if profile.relation.following}<UserMinus size={16} /> {t("unfollow")}
+            {:else if profile.relation.outgoingRequest}{t("cancel_request")}
+            {:else}<UserPlus size={16} /> {t("follow")}{/if}
           </button>
           <button
             class="metadata-cancel"
@@ -145,7 +146,7 @@
             onclick={toggleBlock}
           >
             <Flag size={16} />
-            {profile.relation.blockedByViewer ? "Unblock" : "Block"}
+            {profile.relation.blockedByViewer ? t("unblock") : t("block")}
           </button>
         </div>{/if}
     </header>
@@ -153,11 +154,11 @@
     {#if isOwnProfile}
       {#if activities.length === 0}
         <div class="empty-state">
-          <h2>No activities yet</h2>
-          <p>Your recorded and uploaded activities will appear here.</p>
+          <h2>{t("no_activities")}</h2>
+          <p>{t("your_activities_description")}</p>
         </div>
       {:else}
-        <section class="activity-list" aria-label="Your activities">
+        <section class="activity-list" aria-label={t("your_activities")}>
           {#each activities as activity (activity.id)}
             <ActivityCard
               {activity}
@@ -170,21 +171,20 @@
       {/if}
     {:else if profile.relation.blockedByViewer}
       <div class="empty-state">
-        <h2>You blocked this person</h2>
-        <p>Unblock them to see their activity history.</p>
+        <h2>{t("you_blocked_this_person")}</h2>
+        <p>{t("unblock_to_see_activities")}</p>
       </div>
     {:else if !profile.relation.following}
       <div class="empty-state">
-        <h2>Follow to see activities</h2>
+        <h2>{t("follow_to_see_activities")}</h2>
         <p>
-          When they accept your request, their activities and live sessions will
-          appear here and in Home.
+          {t("follow_to_see_activities_description")}
         </p>
       </div>
     {:else if activities.length === 0}
       <div class="empty-state">
-        <h2>No activities yet</h2>
-        <p>This athlete has not shared an activity yet.</p>
+        <h2>{t("no_activities")}</h2>
+        <p>{t("athlete_no_activity")}</p>
       </div>
     {:else}
       <section
