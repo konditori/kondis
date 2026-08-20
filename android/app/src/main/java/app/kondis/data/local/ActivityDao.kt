@@ -99,10 +99,12 @@ interface ActivityDao {
         activity: ActivityEntity,
         detail: ActivityDetailEntity,
     ) {
-        deleteActivity(accountKey, localActivityId)
-        deleteDetail(accountKey, localActivityId)
-        deleteQueuedWorkout(accountKey, localActivityId)
         upsertActivities(listOf(activity))
         upsertDetail(detail)
+        // Keep a short-lived alias so a detail screen observing the local ID can hand off to the
+        // server ID instead of receiving null while this transaction completes.
+        upsertDetail(detail.copy(id = localActivityId))
+        deleteActivity(accountKey, localActivityId)
+        deleteQueuedWorkout(accountKey, localActivityId)
     }
 }

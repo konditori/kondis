@@ -13,6 +13,7 @@ import app.kondis.data.remote.LoginRequest
 import app.kondis.data.settings.AppSettings
 import app.kondis.data.settings.SettingsRepository
 import app.kondis.recording.RecordingManager
+import app.kondis.recording.RecordingMode
 import app.kondis.recording.RecordingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -73,7 +74,7 @@ class AppViewModel
         private val apiFactory: KondisApiFactory,
         private val capabilityProber: ServerCapabilityProber,
         private val externalAuthManager: ExternalAuthManager,
-        recordingManager: RecordingManager,
+        private val recordingManager: RecordingManager,
     ) : ViewModel() {
         private val _loginError = MutableStateFlow<String?>(null)
         val loginError: StateFlow<String?> = _loginError
@@ -102,6 +103,12 @@ class AppViewModel
             )
 
         val recording: StateFlow<RecordingState> = recordingManager.state
+
+        fun prepareRecordScreen() {
+            if (recordingManager.state.value.mode == RecordingMode.Saved) {
+                recordingManager.reset()
+            }
+        }
 
         init {
             viewModelScope.launch {

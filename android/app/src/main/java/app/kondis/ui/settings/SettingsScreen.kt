@@ -170,7 +170,12 @@ private fun UnitOption(
         modifier = modifier,
         colors =
             CardDefaults.cardColors(
-                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                containerColor =
+                    if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
             ),
         border =
             androidx.compose.foundation.BorderStroke(

@@ -160,6 +160,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             selected = current == destination.key,
                             onClick = {
                                 if (current != destination.key) {
+                                    if (destination.key == RecordKey) viewModel.prepareRecordScreen()
                                     backStack.clear()
                                     backStack.add(destination.key)
                                 }
@@ -271,7 +272,7 @@ private fun LoginScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             "Kondis 😰",

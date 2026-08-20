@@ -156,7 +156,7 @@ fun FeedScreen(
                 if (state.activities.isEmpty() && !state.refreshing) {
                     item {
                         Box(
-                        modifier = Modifier.fillParentMaxSize().padding(horizontal = 16.dp, vertical = 72.dp),
+                            modifier = Modifier.fillParentMaxSize().padding(horizontal = 16.dp, vertical = 72.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -165,7 +165,12 @@ fun FeedScreen(
                                     style = MaterialTheme.typography.titleLarge,
                                 )
                                 Text(
-                                    if (state.search.isBlank()) "Record a workout" else "Try a different name or sport.",
+                                    text =
+                                        if (state.search.isBlank()) {
+                                            "Record a workout"
+                                        } else {
+                                            "Try a different name or sport."
+                                        },
                                     modifier = Modifier.padding(top = 8.dp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -209,22 +214,7 @@ private fun SyncStatusCard(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             ),
     ) {
-        if (showSyncComplete) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(Icons.Rounded.CloudDone, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Column {
-                    Text("Everything is uploaded", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Your workouts are safely synced to Kondis.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        } else {
+        if (!showSyncComplete) {
             Column(Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
