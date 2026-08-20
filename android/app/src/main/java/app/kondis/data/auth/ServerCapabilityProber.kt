@@ -12,19 +12,6 @@ import okhttp3.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Detects, without sending any credentials, how a configured Kondis server expects to be signed
- * in to: directly with a Kondis email and password, through a standards-based OAuth/OIDC
- * authorization server (for example Cloudflare Access with Managed OAuth enabled, or any other
- * provider publishing RFC 8414/RFC 9728 discovery metadata), or through a gateway this app cannot
- * drive automatically (for example Cloudflare Access without Managed OAuth, which only offers a
- * browser cookie flow — see RFC 8252 §8.12 for why this app will not extract that cookie from a
- * WebView).
- *
- * This deliberately bypasses [app.kondis.data.remote.KondisApiFactory]: the probe request must
- * carry no `Authorization`/cookie of any kind and must not silently follow redirects, since a `302`
- * to a login page is itself meaningful signal.
- */
 @Singleton
 class ServerCapabilityProber
     @Inject
@@ -102,9 +89,7 @@ class ServerCapabilityProber
                     return capabilityFromResourceMetadata(metadata, resource)
                 }
             }
-            // Some deployments (Cloudflare Access Managed OAuth as documented today) serve
-            // authorization-server metadata directly from the protected origin without a
-            // `resource_metadata` pointer. Try both well-known shapes there before giving up.
+
             val directAuthServerUrl = origin.resolve(".well-known/oauth-authorization-server").toString()
             fetchAuthorizationServerMetadata(directAuthServerUrl)?.let { metadata ->
                 return capabilityFromAuthServerMetadata(metadata, resource)
@@ -206,13 +191,6 @@ class ServerCapabilityProber
         private companion object {
             val RESOURCE_METADATA_PARAM = Regex("resource_metadata=\"([^\"]+)\"")
 
-            /**
-             * Candidate well-known metadata URLs for an issuer, in priority order: RFC 8414
-             * authorization-server metadata, then OpenID Connect Discovery, each per RFC 8414 §3.1 /
-             * OIDC Discovery §4.2 rules for issuers that include a path component (for example
-             * Keycloak realms), falling back to the simple no-path form used by most providers
-             * (including Cloudflare Access).
-             */
             fun wellKnownCandidates(issuer: String): List<String> {
                 val issuerUrl = issuer.toHttpUrlOrNull() ?: return emptyList()
                 val path = issuerUrl.encodedPath.trim('/')

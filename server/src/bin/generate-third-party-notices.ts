@@ -182,8 +182,6 @@ async function run(): Promise<void> {
 
   console.log(`Wrote ${notices.length} notices to ${OUTPUT_PATH}`);
   if (missingText.length > 0) {
-    // Not fatal: a package omitting its own license file is an upstream packaging bug, and the
-    // declared SPDX identifier still records the terms we received it under.
     console.warn(`\n${missingText.length} package(s) ship no license file:`);
     for (const name of missingText) {
       console.warn(`  - ${name}`);

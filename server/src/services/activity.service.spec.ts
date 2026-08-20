@@ -440,8 +440,6 @@ describe('ActivityService', () => {
       expect(withTransaction).not.toHaveBeenCalled();
     });
 
-    // The row delete and the file-delete job must commit together, otherwise a crash between
-    // them either orphans the file or removes a file whose row survived.
     it('deletes the upload and enqueues the file delete in one transaction', async () => {
       getActivityById.mockResolvedValue({ id: 'activity-1', upload_id: UPLOAD_ID });
       getUploadById.mockResolvedValue(anUpload({ storage_path: 'ab/cd/abcd.fit' }));

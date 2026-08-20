@@ -1023,8 +1023,6 @@ private fun ActivityMapViewer(
                     Configuration.getInstance().userAgentValue = context.packageName
                     MapView(context).apply {
                         setTileSource(TileSourceFactory.MAPNIK)
-                        // MAPNIK only supplies native raster tiles through its maximum zoom.
-                        // Prevent osmdroid from enlarging the last available tile level.
                         setMaxZoomLevel(TileSourceFactory.MAPNIK.maximumZoomLevel.toDouble())
                         setTilesScaledToDpi(false)
                         setMultiTouchControls(true)

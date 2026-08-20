@@ -18,14 +18,8 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    // hiltViewModel() inside KondisApp() resolves to this same Activity-scoped instance, so the
-    // browser-launch events emitted from user interaction inside Compose are the ones collected
-    // here.
     private val viewModel: AppViewModel by viewModels()
 
-    // AuthTabIntent's launcher must be registered on an ActivityResultCaller (an Activity or
-    // Fragment) unconditionally before the Activity reaches STARTED, so it lives here rather than
-    // in a @Composable.
     private val authTabLauncher =
         AuthTabIntent.registerActivityResultLauncher(this) { result ->
             viewModel.handleAuthTabResult(result.resultCode, result.resultUri)

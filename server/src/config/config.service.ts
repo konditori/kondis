@@ -135,12 +135,7 @@ export class ConfigService {
     this.workers = parseWorkers(process.env.KONDIS_WORKERS);
     this.storageDir = process.env.KONDIS_STORAGE_DIR ?? '/data';
     this.autoMigrate = readBoolean('KONDIS_DB_AUTO_MIGRATE', true);
-    // DB_PASSWORD keeps existing single-container installs usable, but a distinct
-    // long random secret is recommended so database credentials can be rotated.
     this.authSecret = readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret';
-    // Generate this by default rather than sharing the signing secret or
-    // requiring an operator to invent a separate secret. The override keeps
-    // automated and multi-process deployments able to supply one shared value.
     this.setupToken = readSecret('KONDIS_SETUP_TOKEN') ?? randomUUID();
     this.registrationEnabled = readBoolean('KONDIS_REGISTRATION_ENABLED', false);
 

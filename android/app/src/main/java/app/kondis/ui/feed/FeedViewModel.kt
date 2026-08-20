@@ -79,9 +79,6 @@ class FeedViewModel
                         hadQueuedWorkouts = true
                     } else if (hadQueuedWorkouts) {
                         meta.update { it.copy(syncRequested = true) }
-                        // The server can finish best-effort ranking just after the uploaded
-                        // activity is returned. Refresh the feed so the locally cached activity
-                        // does not keep showing the pre-ranking medals until a pull-to-refresh.
                         refresh()
                     }
                 }

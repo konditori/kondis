@@ -295,8 +295,6 @@ export class ActivityRepository {
       return;
     }
 
-    // Lock every referenced activity in a stable order. Deletes then wait for
-    // this transaction, and candidates deleted just before the lock are omitted.
     const locked = await executor
       .selectFrom('activity')
       .select('id')
@@ -645,9 +643,6 @@ export class ActivityRepository {
         return row;
       }
 
-      // Best-effort computation is deliberately queued by ActivityService. Keep
-      // existing efforts visible while queued work runs, but invalidate route
-      // matches immediately when sport or ranking exclusion changes.
       if (input.sport !== undefined || input.exclude_from_rankings !== undefined) {
         await trx.deleteFrom('activity_route_match').where('activity_id', '=', id).execute();
         await trx.deleteFrom('activity_route_match').where('matched_activity_id', '=', id).execute();
@@ -699,8 +694,6 @@ export class ActivityRepository {
 
   async refreshBestEffortRankings(): Promise<void> {
     await this.db.transaction().execute(async (trx) => {
-      // Jobs are exclusive, but the lock also protects this invariant when this repository
-      // is used outside the worker (for example, in maintenance tooling).
       await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:best-effort-rankings'))`.execute(trx);
 
       const rows = await trx

@@ -39,29 +39,11 @@ sealed interface AuthorizationOutcome {
     ) : AuthorizationOutcome
 }
 
-/**
- * What to launch to run the browser sign-in step: the modern [AuthTabIntent] surface
- * (`androidx.browser.auth`, stable since `androidx.browser` 1.9.0) — a browser tab purpose-built
- * for authorization, run in an ephemeral (non-history, non-cookie-sharing) session, with an
- * explicit callback to the launching app.
- */
 data class AuthTabLaunch(
     val authorizationUri: Uri,
     val redirectScheme: String,
 )
 
-/**
- * Drives the OAuth 2.0 Authorization Code + PKCE flow (RFC 8252) against whichever
- * standards-compliant authorization server [ServerCapabilityProber] discovered — Cloudflare Access
- * with Managed OAuth enabled, or any other provider exposing RFC 8414/OIDC discovery metadata and
- * dynamic client registration (RFC 7591). The flow always runs in the device's external browser via
- * an [AuthTabIntent]; this app never uses a WebView for it, per RFC 8252 §8.12: an embedded browser
- * can read every keystroke and cookie, defeating the purpose of relying on a third-party identity
- * provider at all.
- *
- * Only one authorization attempt and one signed-in external session exist at a time, matching
- * [app.kondis.data.settings.SettingsRepository]'s single-active-server model.
- */
 @Singleton
 class ExternalAuthManager
     @Inject
@@ -70,30 +52,14 @@ class ExternalAuthManager
         private val store: SecureSessionStore,
         private val clientRegistrar: DynamicClientRegistrar,
     ) {
-        // Deferred so building this object never touches the browser before it's actually needed
-        // (most app launches never touch OAuth at all), and so it can be constructed in a JVM unit
-        // test that never exercises any OAuth-driving method. AuthorizationService here is only
-        // ever used for its plain HTTP operations (token exchange, registration, refresh) — never
-        // for launching a browser, which AuthTabIntent owns directly.
         private val authService by lazy { AuthorizationService(context) }
 
         private val mutableReauthorizationRequired = MutableStateFlow(false)
 
-        /**
-         * True once a token refresh fails because the authorization server rejected the refresh
-         * token outright (revoked, expired grant), meaning the browser sign-in must be repeated
-         * before any request can succeed again. Distinguishing this from a Kondis-credential
-         * failure lets the UI explain which sign-in actually needs to be redone.
-         */
         val reauthorizationRequired: StateFlow<Boolean> = mutableReauthorizationRequired.asStateFlow()
 
         suspend fun hasExternalSession(): Boolean = store.externalAuthState() != null
 
-        /**
-         * Registers a client (via RFC 7591 dynamic registration, when the provider advertises a
-         * `registration_endpoint`) and builds the [AuthTabLaunch] to launch for [capability]. Pass
-         * the resulting `AuthTabIntent.AuthResult` fields to [completeAuthorization].
-         */
         suspend fun prepareAuthorizationRequest(capability: ServerCapability.ExternalOAuth): AuthTabLaunch =
             withContext(Dispatchers.IO) {
                 val configuration =
@@ -118,8 +84,7 @@ class ExternalAuthManager
                 val requestBuilder =
                     AuthorizationRequest.Builder(configuration, clientId, ResponseTypeValues.CODE, REDIRECT_URI)
                 if (capability.scopes.isNotEmpty()) requestBuilder.setScopes(capability.scopes)
-                // RFC 8707 resource indicator: tells the authorization server which API this access
-                // token must be scoped to. Cloudflare Access Managed OAuth requires this parameter.
+
                 requestBuilder.setAdditionalParameters(mapOf("resource" to capability.resource))
                 val request = requestBuilder.build()
                 store.setPendingAuthorizationRequest(request.jsonSerializeString())
@@ -129,7 +94,6 @@ class ExternalAuthManager
                 )
             }
 
-        /** Call with the `AuthTabIntent.AuthResult` fields from launching [prepareAuthorizationRequest]'s result. */
         suspend fun completeAuthorization(
             resultCode: Int,
             resultUri: Uri?,
@@ -171,8 +135,6 @@ class ExternalAuthManager
                     AuthorizationResponse.Builder(pendingRequest).fromUri(resultUri).build()
                 }.getOrNull() ?: return AuthorizationOutcome.Failure("Sign-in did not complete.")
 
-            // RFC 8252 §8.10 mix-up mitigation: reject a response that doesn't match the request we
-            // stored before launching the browser (wrong pending flow, or a forged callback).
             if (response.state != pendingRequest.state) {
                 return AuthorizationOutcome.Failure(
                     "The sign-in response did not match the pending request. Please try again.",
@@ -207,11 +169,6 @@ class ExternalAuthManager
             return outcome
         }
 
-        /**
-         * Returns a valid access token for the current external session, refreshing it first if
-         * needed, or `null` if there is no external session (direct-auth deployments always hit
-         * this path harmlessly) or the refresh could not complete.
-         */
         suspend fun freshAccessTokenOrNull(): String? =
             withContext(Dispatchers.IO) {
                 val stateJson = store.externalAuthState() ?: return@withContext null
@@ -226,14 +183,10 @@ class ExternalAuthManager
                             continuation.resume(token)
                         }
                     }
-                // AuthState mutates itself in place during a refresh attempt regardless of outcome
-                // (for example recording that a refresh token was rejected); persist that either way.
                 store.setExternalAuthState(authState.jsonSerializeString())
                 accessToken
             }
 
-        /** Ends the local external session. Does not revoke the token or sign out of the upstream
-         * identity provider's own session — only clears what this app can act on unilaterally. */
         suspend fun signOut() {
             store.clearExternalAuth()
             mutableReauthorizationRequired.value = false

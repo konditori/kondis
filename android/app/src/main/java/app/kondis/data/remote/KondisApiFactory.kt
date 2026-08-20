@@ -45,8 +45,6 @@ class KondisApiFactory
                 .client(
                     client
                         .newBuilder()
-                        // An authentication gateway may redirect a rejected API request to an HTML
-                        // login page. Retrofit must see the redirect status, not parse that page as JSON.
                         .followRedirects(false)
                         .followSslRedirects(false)
                         .addInterceptor { chain ->
@@ -63,12 +61,6 @@ class KondisApiFactory
         companion object {
             private const val API_BASE_PATH = "/api/v1/"
 
-            /**
-             * The exact headers [create] attaches for a given pair of credentials: the external
-             * perimeter token (if any) as a standard `Authorization: Bearer`, and the Kondis token
-             * (if any) in its own dedicated header so the two never collide. Exposed for testing
-             * without needing a full [KondisApiFactory] instance.
-             */
             internal fun authHeaders(
                 accessToken: String?,
                 externalAccessToken: String?,

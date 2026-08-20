@@ -124,8 +124,6 @@ describe(AuthGuard.name, () => {
     const guard = new AuthGuard(config, users);
     const kondisToken = createAccessToken(TOKEN_USER, config.authSecret);
     const { context, request } = contextFor(kondisToken);
-    // Simulate a Cloudflare Access Managed OAuth perimeter token occupying `Authorization`,
-    // while the real Kondis session travels in the dedicated header.
     request.headers.authorization = 'Bearer opaque-perimeter-access-token';
     (request.headers as Record<string, string>)['x-kondis-authorization'] = `Bearer ${kondisToken}`;
 
