@@ -18,14 +18,14 @@
   ];
 </script>
 
-<svelte:head><title>Upload activity · Kondis</title></svelte:head>
+<svelte:head><title>{t("upload_activity")} · Kondis</title></svelte:head>
 
 <div class="page-shell upload-page">
   <header class="page-header">
     <div>
       <span class="eyebrow">{t("new_import")}</span>
-      <h1>Upload activity</h1>
-      <p>Choose how you want to add workouts to your archive.</p>
+      <h1>{t("upload_activity")}</h1>
+      <p>{t("upload_activity_page_description")}</p>
     </div>
   </header>
 

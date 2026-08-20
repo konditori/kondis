@@ -52,6 +52,18 @@
   "upload_one_file": "Upload one .fit, .tcx, or .gpx file.",
   "strava_takeout": "Strava takeout",
   "upload_activity": "Upload activity",
+  "upload_activity_page_description": "Choose how you want to add workouts to your archive.",
+  "strava_imported_activities": "Imported {count} activities",
+  "strava_duplicate_activities": "{count} activities were duplicates",
+  "strava_failed_activities": "{count} failed",
+  "strava_import_failed": "Import failed.",
+  "strava_choose_zip": "Choose a Strava takeout .zip file.",
+  "strava_takeout_uploaded": "Takeout uploaded. Processing activities...",
+  "strava_drop_takeout": "Drop your Strava takeout here",
+  "strava_browse_device": "or click to browse your device",
+  "strava_activities_processed": "{processed} of {total} activities processed",
+  "strava_importing": "Importing...",
+  "strava_import_takeout": "Import takeout",
   "server_unavailable": "Server unavailable",
   "start_api_to_load_activities": "Start the Kondis API to load your activities.",
   "live_activities": "Live activities",
@@ -186,7 +198,6 @@
   ,"tags": "Tags"
   ,"race": "Race"
   ,"commute": "Commute"
-  ,"activity": "Activity"
   ,"recovery": "Recovery"
   ,"with_kid": "With Kid"
   ,"with_pet": "With Pet"

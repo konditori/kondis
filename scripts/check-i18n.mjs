@@ -62,8 +62,12 @@ await collectKotlinFiles(androidUiDirectory.pathname);
 const hardcodedUiString = /(?:Text|contentDescription)\s*\(?(?:\s*=\s*)?"/;
 for (const file of kotlinFiles) {
   const sourceText = await readFile(file, "utf8");
-  if (hardcodedUiString.test(sourceText)) {
-    console.error(`${file}: hardcoded user-visible Compose string`);
-    process.exitCode = 1;
+  for (const [index, line] of sourceText.split("\n").entries()) {
+    if (hardcodedUiString.test(line)) {
+      console.error(
+        `${file}:${index + 1}: hardcoded user-visible Compose string`,
+      );
+      process.exitCode = 1;
+    }
   }
 }
