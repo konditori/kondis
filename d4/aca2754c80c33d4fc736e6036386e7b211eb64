@@ -1,0 +1,19 @@
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_11b6dcdb3bd13f::t_36b55222fdfd37 151-156,159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d4aca2754c80c33d4fc736e6036386e7b211eb64",
+  "prompts": {},
+  "sessions": {
+    "s_11b6dcdb3bd13f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "e0319bb3-a055-404c-84b0-a3e881c94169",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
