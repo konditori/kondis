@@ -1,0 +1,43 @@
+android/app/src/main/res/values-b+sv/strings.xml
+  s_960af8644f9322::t_dd7c94513c1033 21,23-24,28-31,43,46,53,57-68,70-72,74-88,90,98,102,119,128,134-136,138-139,150,163,167-168,171,174,179,181-182,185-186,221-224,230,234-236,239,243-244,249,251-254,263-265,268,272,285
+android/app/src/main/res/values/strings.xml
+  s_960af8644f9322::t_546da95d36e35e 5-6,23,53,57-68,71,75-88,90,98,134-136,138-139,167-168,171,174,179,181-182,184,186,234-236,239,243-244,252,254,263-265
+android/app/src/main/java/app/kondis/ui/detail/MatchedRoutesScreen.kt
+  s_960af8644f9322::t_1da6097a82bfa1 185-186
+android/app/src/main/java/app/kondis/ui/i18n/Translations.kt
+  s_108ae286a9c5e0::t_30a9e46001d10a 5
+android/app/src/main/java/app/kondis/ui/record/RecordingViewModel.kt
+  s_108ae286a9c5e0::t_a67b3756669d62 17
+mise.toml
+  s_108ae286a9c5e0::t_f44baa513317d1 122-127
+scripts/check-frontend-i18n.mjs
+  s_108ae286a9c5e0::t_bf43b904206195 1-28
+server/src/setup-token-rate-limiter.spec.ts
+  s_108ae286a9c5e0::t_d6b8c6412d52e3 12-14
+web/src/lib/components/LiveWorkoutView.svelte
+  s_108ae286a9c5e0::t_a266550fb09e42 18,58-65,128,136,154,157-163,167-168,178-182,188,200-205,211-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "927e124151abc22d539b3ce8659c13c643d99c27",
+  "prompts": {},
+  "sessions": {
+    "s_108ae286a9c5e0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a020c7-e1fc-7c63-978e-71448edb0adf",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_960af8644f9322": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "be36130e-038e-4a39-9edf-a0c6aa4e093d",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
