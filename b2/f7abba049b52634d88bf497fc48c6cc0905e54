@@ -1,0 +1,19 @@
+android/app/src/main/java/app/kondis/ui/components/StaticRoutePreview.kt
+  s_674f2740bb7f29::t_cee6e3f93a61c3 57,62,64,66,111,122-124,126,151-152,214-226,282-285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b2f7abba049b52634d88bf497fc48c6cc0905e54",
+  "prompts": {},
+  "sessions": {
+    "s_674f2740bb7f29": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01e43-eaf9-7a02-8509-c718b08cc013",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
