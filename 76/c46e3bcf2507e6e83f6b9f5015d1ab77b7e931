@@ -1,0 +1,35 @@
+android/app/src/test/java/app/kondis/data/remote/KondisApiFactoryTest.kt
+  s_4d7e4074abe168::t_764d314c15e8a8 9,11-14,22
+android/app/src/main/java/app/kondis/data/remote/KondisApiFactory.kt
+  s_9eb7564bfafdf0::t_41a6280b3bb787 64-65,85,87,91-92,99
+android/app/src/main/java/app/kondis/ui/settings/SettingsViewModel.kt
+  s_9eb7564bfafdf0::t_07276631e0c4e5 25-27
+android/app/src/test/java/app/kondis/ui/settings/SettingsUiStateTest.kt
+  s_9eb7564bfafdf0::t_09fb343c9c9b2a 1-23
+web/src/lib/notifications.spec.ts
+  s_9eb7564bfafdf0::t_2c18aecd663744 10,17,24,28,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "76c46e3bcf2507e6e83f6b9f5015d1ab77b7e931",
+  "prompts": {},
+  "sessions": {
+    "s_4d7e4074abe168": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "96df768e-3d9f-46f4-ad36-4c2aa457d94a",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_9eb7564bfafdf0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01dc6-d76d-7d70-8183-a24ab0ac4afc",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
