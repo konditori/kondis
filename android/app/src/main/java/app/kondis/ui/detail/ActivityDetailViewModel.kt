@@ -46,6 +46,8 @@ class ActivityDetailViewModel
                     activity = null,
                     loading = true,
                     errorMessage = null,
+                    deleted = false,
+                    mutationError = null,
                 )
             observeJob =
                 viewModelScope.launch {

@@ -141,13 +141,17 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
         }
     }
 
+    fun navigateToFeed() {
+        backStack.clear()
+        backStack.add(FeedKey)
+    }
+
     fun navigateBack() {
         if (recordingActive) return
         if (backStack.size > 1) {
             backStack.removeAt(backStack.lastIndex)
         } else {
-            backStack.clear()
-            backStack.add(FeedKey)
+            navigateToFeed()
         }
     }
 
@@ -215,7 +219,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
-                            onDeleted = ::navigateBack,
+                            onDeleted = ::navigateToFeed,
                         )
                     }
                     entry<MatchedRoutesKey> { key ->

@@ -193,6 +193,5 @@ class RecordingViewModel
 
         override fun onCleared() {
             stopGpsWarmup()
-            super.onCleared()
         }
     }

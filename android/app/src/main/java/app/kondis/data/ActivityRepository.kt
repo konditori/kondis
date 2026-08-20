@@ -302,7 +302,11 @@ class ActivityRepository
                 try {
                     val remoteId =
                         findRecentlyUploadedActivity(workout.startedAt, workout.title, account.settings) ?: continue
-                    val detail = api(account.settings).activity(remoteId)
+                    val remoteApi = api(account.settings)
+                    if (workout.title.isNotBlank()) {
+                        remoteApi.updateActivity(remoteId, ActivityUpdate(name = workout.title))
+                    }
+                    val detail = remoteApi.activity(remoteId)
                     activityDao.replaceQueuedWorkout(
                         accountKey = account.key,
                         localActivityId = workout.localActivityId,

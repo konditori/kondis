@@ -975,6 +975,20 @@
         ]
       }
     },
+    "/auth/capabilities": {
+      "get": {
+        "operationId": "AuthController_capabilities",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/setup": {
       "get": {
         "operationId": "AuthController_setupStatus",
