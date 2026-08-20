@@ -1,0 +1,25 @@
+android/app/src/main/java/app/kondis/data/auth/ServerCapabilityProber.kt
+  s_9eb7564bfafdf0::t_a5d02b6bd5206d 43-45,47
+android/app/src/main/java/app/kondis/data/remote/KondisApiFactory.kt
+  s_9eb7564bfafdf0::t_53f90bce8ad097 46,94-103
+android/app/src/main/java/app/kondis/ui/settings/SettingsScreen.kt
+  s_9eb7564bfafdf0::t_ae8bc78d225f11 56,65
+android/app/src/test/java/app/kondis/data/remote/KondisApiFactoryTest.kt
+  s_9eb7564bfafdf0::t_fe0c443bfc379f 14,22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ce0152dde45a89acdd90e3753557aabb8995b872",
+  "prompts": {},
+  "sessions": {
+    "s_9eb7564bfafdf0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01dc6-d76d-7d70-8183-a24ab0ac4afc",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
