@@ -168,7 +168,7 @@ fun ActivityCard(
                 Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Icon(
                     Icons.Rounded.ChatBubbleOutline,
-                    contentDescription = tr("comments", activity.commentCount),
+                    contentDescription = tr("comments_count", activity.commentCount),
                     modifier = Modifier.padding(start = 20.dp),
                 )
                 Text(

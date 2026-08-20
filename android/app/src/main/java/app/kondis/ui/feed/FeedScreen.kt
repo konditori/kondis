@@ -105,7 +105,7 @@ fun FeedScreen(
         isRefreshing = state.refreshing,
         onRefresh = onRefresh,
         state = pullToRefreshState,
-        modifier = Modifier.fillMaxSize().imePadding(),
+        modifier = Modifier.fillMaxSize().imePadding().testTag("activities-feed"),
     ) {
         LazyColumn(
             state = listState,
@@ -205,6 +205,7 @@ fun FeedScreen(
                     onClick = { onActivityClick(activity.id) },
                     onLike = { onLike(activity.id, !activity.viewerLiked) },
                     onLoadImage = onLoadImage,
+                    modifier = Modifier.testTag("activity-card-${activity.id}"),
                 )
             }
             if (state.loadingMore) {
@@ -270,7 +271,7 @@ private fun SyncStatusCard(
         } else {
             Text(
                 tr("everything_uploaded"),
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(16.dp).testTag("sync-complete"),
                 style = MaterialTheme.typography.titleMedium,
             )
         }

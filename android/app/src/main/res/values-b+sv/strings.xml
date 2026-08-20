@@ -11,7 +11,7 @@
     <string name="i18n_common_delete">Ta bort</string>
     <string name="i18n_common_save">Spara</string>
     <string name="i18n_common_retry">Försök igen</string>
-    <string name="i18n_comments">%1$s kommentarer</string>
+    <string name="i18n_comments">Kommentarer</string>
     <string name="i18n_loading_comments">Laddar kommentarer&amp;#8230;</string>
     <string name="i18n_edit_comment">Redigera kommentar</string>
     <string name="i18n_comment_actions">Kommentarshandlingar</string>
@@ -20,7 +20,7 @@
     <string name="i18n_comment">Kommentar</string>
     <string name="i18n_send_comment">Skicka kommentar</string>
     <string name="i18n_activity_image">Aktivitetsbild</string>
-    <string name="i18n_activity_photo">Aktivitetsbild</string>
+    <string name="i18n_activity_photo">Aktivitetsfoto</string>
     <string name="i18n_previous_image">Föregående bild</string>
     <string name="i18n_next_image">Nästa bild</string>
     <string name="i18n_close_image_viewer">Stäng bildvisaren</string>
@@ -238,6 +238,7 @@
     <string name="i18n_calories">Kalorier</string>
     <string name="i18n_like_activity">Gilla aktivitet</string>
     <string name="i18n_unlike_activity">Ta bort gilla-markering</string>
+    <string name="i18n_comments_count">%1$s kommentarer</string>
     <string name="i18n_open_activity_photos">Öppna aktivitetsbilder</string>
     <string name="i18n_close_photos">Stäng bilder</string>
     <string name="i18n_photo_of">Bild %1$s av %2$s</string>
@@ -252,7 +253,7 @@
     <string name="i18n_tags">Taggar</string>
     <string name="i18n_race">Tävling</string>
     <string name="i18n_commute">Pendling</string>
-    <string name="i18n_workout">Träningspass</string>
+    <string name="i18n_workout">Träning</string>
     <string name="i18n_recovery">Återhämtning</string>
     <string name="i18n_with_kid">Med barn</string>
     <string name="i18n_with_pet">Med husdjur</string>
@@ -277,7 +278,7 @@
     <string name="i18n_start_activity">Starta träningspass</string>
     <string name="i18n_pause">Pausa</string>
     <string name="i18n_resume">Återuppta</string>
-    <string name="i18n_finish">Mål</string>
+    <string name="i18n_finish">Avsluta</string>
     <string name="i18n_saving_and_syncing_activity">Sparar och synkar träningspass&amp;#8230;</string>
     <string name="i18n_activity_saved">Träningspasset är sparat</string>
     <string name="i18n_dismiss">Stäng</string>

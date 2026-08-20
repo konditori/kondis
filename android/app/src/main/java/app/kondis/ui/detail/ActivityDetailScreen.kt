@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -363,6 +364,7 @@ fun ActivityDetailScreen(
     }
     if (showDeleteDialog) {
         AlertDialog(
+            modifier = Modifier.testTag("delete-activity-dialog"),
             onDismissRequest = { if (!state.deleting) showDeleteDialog = false },
             title = { Text(tr("delete_activity")) },
             text = { Text(tr("delete_activity_confirmation")) },
@@ -370,6 +372,7 @@ fun ActivityDetailScreen(
                 TextButton(
                     onClick = onDelete,
                     enabled = !state.deleting,
+                    modifier = Modifier.testTag("delete-activity-confirm"),
                 ) {
                     Text(
                         if (state.deleting) tr("deleting") else tr("common_delete"),
@@ -750,7 +753,7 @@ private fun DetailHeader(
                                 Modifier.background(
                                     MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
                                     CircleShape,
-                                ),
+                                ).testTag("activity-more-options"),
                         ) {
                             Icon(
                                 Icons.Rounded.MoreVert,
@@ -762,6 +765,7 @@ private fun DetailHeader(
                             onEdit?.let { edit ->
                                 DropdownMenuItem(
                                     text = { Text(tr("edit")) },
+                                    modifier = Modifier.testTag("activity-edit"),
                                     onClick = {
                                         showMenu = false
                                         edit()
@@ -825,13 +829,14 @@ private fun DetailHeader(
                         }
                         Spacer(Modifier.weight(1f))
                         Box {
-                            IconButton(onClick = { showMenu = true }) {
+                            IconButton(onClick = { showMenu = true }, modifier = Modifier.testTag("activity-more-options")) {
                                 Icon(Icons.Rounded.MoreVert, contentDescription = tr("more_options"))
                             }
                             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                                 onEdit?.let { edit ->
                                     DropdownMenuItem(
                                         text = { Text(tr("edit")) },
+                                        modifier = Modifier.testTag("activity-edit"),
                                         onClick = {
                                             showMenu = false
                                             edit()
@@ -963,7 +968,7 @@ private fun ActivitySocialSection(
             }
             Text(tr("likes", activity.likeCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                tr("comments", activity.commentCount),
+                tr("comments_count", activity.commentCount),
                 modifier = Modifier.padding(start = 18.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1206,7 +1211,7 @@ private fun ActivityEditor(
     onDelete: () -> Unit,
 ) {
     val deleteActivityDescription = tr("delete_activity")
-    Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp).testTag("activity-editor")) {
         Text(tr("edit_activity"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         OutlinedTextField(
             value = name,
@@ -1265,7 +1270,10 @@ private fun ActivityEditor(
             TextButton(
                 onClick = onDelete,
                 enabled = !saving && !deleting,
-                modifier = Modifier.semantics { contentDescription = deleteActivityDescription },
+                modifier =
+                    Modifier
+                        .semantics { contentDescription = deleteActivityDescription }
+                        .testTag("activity-delete"),
             ) {
                 Text(tr("common_delete"), color = MaterialTheme.colorScheme.error)
             }

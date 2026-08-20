@@ -50,7 +50,6 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
-        // SettingsRepository expects the server origin; the API client adds /api/v1 itself.
         val serverUrl = server.url("/").toString().trimEnd('/')
         accountKey = "$serverUrl|offline-sync-test-user"
         runBlocking {
@@ -101,14 +100,13 @@ class OfflineWorkoutSyncTest {
 
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
-        check(device.wait(Until.hasObject(By.text("Sync now")), 30_000))
+        check(device.wait(Until.hasObject(By.res("sync-now")), 30_000))
         val feed = UiScrollable(UiSelector().scrollable(true))
-        feed.scrollTextIntoView("Offline test run")
-        check(device.hasObject(By.textContains("Offline test run")))
+        check(feed.scrollIntoView(UiSelector().resourceId("activity-card-local-sync-test")))
         feed.scrollToBeginning(10)
 
-        device.findObject(By.text("Sync now")).click()
-        check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 45_000)) {
+        device.findObject(By.res("sync-now")).click()
+        check(device.wait(Until.hasObject(By.res("sync-complete")), 45_000)) {
             "Sync did not complete; server requests=${server.requestCount}"
         }
 
@@ -119,7 +117,7 @@ class OfflineWorkoutSyncTest {
             if (request.method == "POST" && request.url.encodedPath == "/api/v1/upload/activity") upload = request
         }
         check(upload != null) { "No upload request received" }
-        check(device.hasObject(By.text("Everything is uploaded")))
+        check(device.hasObject(By.res("sync-complete")))
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val verificationDatabase =
@@ -134,34 +132,34 @@ class OfflineWorkoutSyncTest {
     @Test
     fun deletingActivityReturnsToFeed() {
         val uiDevice = device
-        check(uiDevice.wait(Until.hasObject(By.text("Sync now")), 30_000))
-        var deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
+        check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000))
+        var deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
         repeat(5) {
             if (!deleteActivityVisible) {
                 val centerX = uiDevice.displayWidth / 2
                 uiDevice.swipe(centerX, uiDevice.displayHeight * 3 / 4, centerX, uiDevice.displayHeight / 4, 10)
-                deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
+                deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
             }
         }
         check(deleteActivityVisible)
-        check(uiDevice.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
-        val deleteActivity = device.findObject(By.textContains("Delete test run"))
+        check(uiDevice.wait(Until.hasObject(By.res("activity-card-$deleteId")), 10_000))
+        val deleteActivity = device.findObject(By.res("activity-card-$deleteId"))
         val deleteActivityBounds = deleteActivity.visibleBounds
         device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())
-        check(device.wait(Until.hasObject(By.desc("More options")), 5_000))
-        device.findObject(By.desc("More options")).click()
-        check(device.wait(Until.hasObject(By.text("Edit")), 5_000))
-        device.findObject(By.text("Edit")).click()
-        check(UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Edit activity"))
-        check(device.wait(Until.hasObject(By.text("Edit activity")), 5_000))
+        check(device.wait(Until.hasObject(By.res("activity-more-options")), 5_000))
+        device.findObject(By.res("activity-more-options")).click()
+        check(device.wait(Until.hasObject(By.res("activity-edit")), 5_000))
+        device.findObject(By.res("activity-edit")).click()
+        check(UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().resourceId("activity-editor")))
+        check(device.wait(Until.hasObject(By.res("activity-editor")), 5_000))
         UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)
-        check(device.wait(Until.hasObject(By.desc("Delete activity")), 5_000))
-        device.findObject(By.desc("Delete activity")).click()
-        check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
+        check(device.wait(Until.hasObject(By.res("activity-delete")), 5_000))
+        device.findObject(By.res("activity-delete")).click()
+        check(device.wait(Until.hasObject(By.res("delete-activity-dialog")), 5_000))
 
-        device.findObject(By.text("Delete")).click()
-        check(device.wait(Until.gone(By.text("Delete activity?")), 10_000))
-        check(device.wait(Until.hasObject(By.text("Activities")), 10_000))
+        device.findObject(By.res("delete-activity-confirm")).click()
+        check(device.wait(Until.gone(By.res("delete-activity-dialog")), 10_000))
+        check(device.wait(Until.hasObject(By.res("activities-feed")), 10_000))
 
         var deleteRequest: RecordedRequest? = null
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)

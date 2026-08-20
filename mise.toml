@@ -117,6 +117,7 @@ run = { task = "//server:third-party-licenses" }
 [tasks."i18n:check"]
 description = "Validate translation catalogs and user-visible strings"
 run = [
+  "node ./scripts/check-json-duplicates.mjs",
   "node ./scripts/check-i18n.mjs",
   "node ./scripts/check-web-i18n.mjs",
 ]
