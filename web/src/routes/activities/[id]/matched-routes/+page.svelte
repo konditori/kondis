@@ -165,14 +165,19 @@
 
 <div class="page-shell matched-routes-page">
   <a class="back-link" href={`/activities/${history.sourceActivityId}`}>
-    <ArrowLeft size={18} /> {t("back_to_activity")}
+    <ArrowLeft size={18} />
+    {t("back_to_activity")}
   </a>
 
   <header class="matched-routes-header">
     <span class="matched-routes-icon"><MapPinned size={27} /></span>
     <div>
       <span class="eyebrow">{t("repeated_route")}</span>
-      <h1>{t("matched", { activities: isSpeed ? t("matched_rides") : t("matched_runs") })}</h1>
+      <h1>
+        {t("matched", {
+          activities: isSpeed ? t("matched_rides") : t("matched_runs"),
+        })}
+      </h1>
       <p>
         {t("compare_route_activities", { count: activities.length })}
       </p>
@@ -314,7 +319,8 @@
             >{t("fastest")}<strong>{displayChartValue(fastest)}</strong></span
           >
           <span class="average"
-            >{t("all_time_average")}<strong>{displayChartValue(average)}</strong></span
+            >{t("all_time_average")}<strong>{displayChartValue(average)}</strong
+            ></span
           >
           <span class="slowest"
             >{t("slowest")}<strong>{displayChartValue(slowest)}</strong></span
@@ -327,9 +333,10 @@
         >
       </div>
       <div class="matched-chart-legend">
-        ><strong>{t("activities_count", { count: activities.length })}</strong><span
-          ><i class="trend-swatch"></i>{t("trending_average")}</span
-        ><span><i class="effort-swatch"></i>{t("each_effort")}</span>
+        ><strong>{t("activities_count", { count: activities.length })}</strong
+        ><span><i class="trend-swatch"></i>{t("trending_average")}</span><span
+          ><i class="effort-swatch"></i>{t("each_effort")}</span
+        >
       </div>
     </section>
   {/if}
@@ -349,9 +356,10 @@
       <div class="matched-route-row matched-route-table-header" role="row">
         <span role="columnheader">{t("date")}</span><span role="columnheader"
           >{t("activity")}</span
-        ><span role="columnheader">{isSpeed ? t("speed") : t("pace")}</span><span
-          role="columnheader">{t("versus_average")}</span
-        ><span role="columnheader">{t("moving_time")}</span><span></span>
+        ><span role="columnheader">{isSpeed ? t("speed") : t("pace")}</span
+        ><span role="columnheader">{t("versus_average")}</span><span
+          role="columnheader">{t("moving_time")}</span
+        ><span></span>
       </div>
       {#each [...efforts].reverse() as effort}
         <a
@@ -370,7 +378,9 @@
           <span role="cell"
             ><strong>{activityName(effort)}</strong
             >{#if effort.id === history.sourceActivityId}<small
-                >{t("this_activity", { activity: isSpeed ? t("ride") : t("run") })}</small
+                >{t("this_activity", {
+                  activity: isSpeed ? t("ride") : t("run"),
+                })}</small
               >{/if}</span
           >
           <span role="cell"

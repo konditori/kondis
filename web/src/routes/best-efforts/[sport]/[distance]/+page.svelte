@@ -113,7 +113,8 @@
   {#if data.unavailable}
     <div class="notice">
       <CloudOff size={20} /><span
-        ><strong>{t("server_unavailable")}</strong> {t("could_not_load_best_efforts")}</span
+        ><strong>{t("server_unavailable")}</strong>
+        {t("could_not_load_best_efforts")}</span
       >
     </div>
   {:else if history && history.efforts.length > 0}

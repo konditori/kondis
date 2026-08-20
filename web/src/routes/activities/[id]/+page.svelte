@@ -386,7 +386,9 @@
     if (effort.overallRank <= 3) {
       return {
         rank: effort.overallRank,
-        text: t("new_ranked_best_all_time", { rank: rankOrdinal(effort.overallRank) }),
+        text: t("new_ranked_best_all_time", {
+          rank: rankOrdinal(effort.overallRank),
+        }),
       };
     }
     if (effort.yearRank === 1) {
@@ -395,7 +397,10 @@
     if (effort.yearRank <= 3) {
       return {
         rank: effort.yearRank,
-        text: t("new_ranked_best_year", { rank: rankOrdinal(effort.yearRank), year: effort.year }),
+        text: t("new_ranked_best_year", {
+          rank: rankOrdinal(effort.yearRank),
+          year: effort.year,
+        }),
       };
     }
     return null;
@@ -560,7 +565,8 @@
           class="edit-metadata-button"
           type="button"
           onclick={startEditing}
-          aria-label={t("edit_activity_metadata")}><Pencil size={16} /> {t("edit")}</button
+          aria-label={t("edit_activity_metadata")}
+          ><Pencil size={16} /> {t("edit")}</button
         >
       {/if}
       <div
@@ -629,7 +635,8 @@
           ><span>{t("description")}</span><textarea
             bind:value={draftDescription}
             maxlength="10000"
-            placeholder={t("activity_description_placeholder")}></textarea></label
+            placeholder={t("activity_description_placeholder")}
+          ></textarea></label
         >
         <label class="metadata-checkbox"
           ><input
@@ -665,19 +672,22 @@
             class="metadata-delete"
             onclick={deleteActivity}
             disabled={saving || deleting}
-            ><Trash2 size={16} /> {deleting ? t("deleting") : t("common_delete")}</button
+            ><Trash2 size={16} />
+            {deleting ? t("deleting") : t("common_delete")}</button
           >
           <button
             type="button"
             class="metadata-cancel"
             onclick={cancelEditing}
-            disabled={saving || deleting}><X size={16} /> {t("common_cancel")}</button
+            disabled={saving || deleting}
+            ><X size={16} /> {t("common_cancel")}</button
           >
           <button
             type="submit"
             class="metadata-save"
             disabled={saving || deleting}
-            ><Check size={16} /> {saving ? t("saving") : t("common_save")}</button
+            ><Check size={16} />
+            {saving ? t("saving") : t("common_save")}</button
           >
         </div>
         {#if editError}<p class="metadata-error" role="alert">
@@ -774,14 +784,18 @@
                 class:no-heart-rate={!hasSplitHeartRate}
                 role="row"
               >
-                <div role="columnheader"><strong>{t("kilometre_abbreviation")}</strong></div>
+                <div role="columnheader">
+                  <strong>{t("kilometre_abbreviation")}</strong>
+                </div>
                 <div role="columnheader">
                   <strong>{isCyclingEffort ? t("speed") : t("pace")}</strong>
                 </div>
                 {#if hasSplitHeartRate}<div role="columnheader">
                     <strong>{t("heart_rate_short_label")}</strong>
                   </div>{/if}
-                <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
+                <div role="columnheader">
+                  <strong>{t("elevation_short")}</strong>
+                </div>
               </div>
               {#each activity.analysis.splits as split, index}
                 {@const splitLabel =
@@ -828,7 +842,10 @@
           </div>
         </section>
       {/if}
-      <section class="activity-map-section" aria-label={t("activity_route_map")}>
+      <section
+        class="activity-map-section"
+        aria-label={t("activity_route_map")}
+      >
         <section class="map-panel">
           {#key mapStyle}
             <RouteMap
@@ -873,14 +890,18 @@
             class:no-heart-rate={!hasSplitHeartRate}
             role="row"
           >
-            <div role="columnheader"><strong>{t("kilometre_abbreviation")}</strong></div>
+            <div role="columnheader">
+              <strong>{t("kilometre_abbreviation")}</strong>
+            </div>
             <div role="columnheader">
               <strong>{isCyclingEffort ? t("speed") : t("pace")}</strong>
             </div>
             {#if hasSplitHeartRate}<div role="columnheader">
                 <strong>{t("heart_rate")}</strong>
               </div>{/if}
-            <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
+            <div role="columnheader">
+              <strong>{t("elevation_short")}</strong>
+            </div>
           </div>
           {#each activity.analysis.splits as split, index}
             {@const splitLabel =
@@ -926,12 +947,15 @@
         <span class="eyebrow">{t("repeated_route")}</span>
         <h2>
           {activity.matchedRouteCount}
-          {activity.matchedRouteCount === 1 ? t("activity") : t("activities")} on this route
+          {activity.matchedRouteCount === 1 ? t("activity") : t("activities")} on
+          this route
         </h2>
         <p>{t("compare_matched_efforts")}</p>
       </div>
       <a href={`/activities/${activity.id}/matched-routes`}
-        >{t("view_matched", { activities: isCyclingEffort ? t("matched_rides") : t("matched_runs") })}
+        >{t("view_matched", {
+          activities: isCyclingEffort ? t("matched_rides") : t("matched_runs"),
+        })}
         <ChevronRight size={17} /></a
       >
     </section>
@@ -953,7 +977,8 @@
       <div class="section-heading">
         <div>
           <span class="eyebrow"
-            >{isCyclingEffort ? t("cycling") : t("running")} {t("performance")}</span
+            >{isCyclingEffort ? t("cycling") : t("running")}
+            {t("performance")}</span
           >
           <h2>{t("best_efforts")}</h2>
           {#if excludedFromRankings}<p class="best-efforts-excluded-note">
@@ -980,7 +1005,9 @@
               {#if hasBestEffortHeartRate}<div role="columnheader">
                   <strong>{t("heart_rate")}</strong>
                 </div>{/if}
-              <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
+              <div role="columnheader">
+                <strong>{t("elevation_short")}</strong>
+              </div>
             </div>
             {#each distanceBestEfforts as effort}
               {@const achievement = excludedFromRankings
@@ -1065,7 +1092,9 @@
               <div role="columnheader"></div>
               <div role="columnheader"><strong>{t("time")}</strong></div>
               <div role="columnheader"><strong>{t("power")}</strong></div>
-              <div role="columnheader"><strong>{t("elevation_short")}</strong></div>
+              <div role="columnheader">
+                <strong>{t("elevation_short")}</strong>
+              </div>
             </div>
             {#each powerBestEfforts as effort}
               {@const achievement = excludedFromRankings

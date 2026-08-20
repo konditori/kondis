@@ -125,7 +125,9 @@
           src={profile.user.avatarUrl}
           size={72}
         />
-        <span class="eyebrow">{isOwnProfile ? t("your_profile") : t("athlete")}</span>
+        <span class="eyebrow"
+          >{isOwnProfile ? t("your_profile") : t("athlete")}</span
+        >
         <h1>{userDisplayName(profile.user)}</h1>
       </div>
       {#if !isOwnProfile}<div class="profile-actions">
@@ -135,7 +137,8 @@
             disabled={updating || profile.relation.blockedViewer}
             onclick={follow}
           >
-            {#if profile.relation.following}<UserMinus size={16} /> {t("unfollow")}
+            {#if profile.relation.following}<UserMinus size={16} />
+              {t("unfollow")}
             {:else if profile.relation.outgoingRequest}{t("cancel_request")}
             {:else}<UserPlus size={16} /> {t("follow")}{/if}
           </button>

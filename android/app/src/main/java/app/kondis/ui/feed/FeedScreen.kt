@@ -253,7 +253,7 @@ private fun SyncStatusCard(
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            tr("workouts_saved_on_device"),
+                            tr("activities_saved_on_device"),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
