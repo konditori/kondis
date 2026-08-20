@@ -1,0 +1,25 @@
+e2e/src/utils.ts
+  s_62ca9c80312677::t_fcff21582946e2 32-36,40-43
+web/src/routes/+layout.server.ts
+  s_62ca9c80312677::t_039b59ca78a0e0 30
+web/src/routes/setup/+page.svelte
+  s_62ca9c80312677::t_c2f933984c9383 9-10,19
+web/src/routes/setup/account/+page.svelte
+  s_62ca9c80312677::t_fb9250f1384293 1-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d9a9132156aba5f89675b9146d22761bd50eb396",
+  "prompts": {},
+  "sessions": {
+    "s_62ca9c80312677": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01e0d-1881-7a63-870c-5adcc5f52078",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
