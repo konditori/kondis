@@ -148,10 +148,15 @@ class OfflineWorkoutSyncTest {
         device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())
         check(device.wait(Until.hasObject(By.res("activity-more-options")), 5_000))
         device.findObject(By.res("activity-more-options")).click()
-        check(device.wait(Until.hasObject(By.res("activity-edit")), 5_000)) {
+        val editMenuItem = By.res("activity-edit")
+        val editMenuText = By.text("Edit")
+        check(
+            device.wait(Until.hasObject(editMenuItem), 5_000) ||
+                device.wait(Until.hasObject(editMenuText), 5_000),
+        ) {
             "Activity options menu did not show edit action"
         }
-        device.findObject(By.res("activity-edit")).click()
+        device.findObject(if (device.hasObject(editMenuItem)) editMenuItem else editMenuText).click()
         check(UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().resourceId("activity-editor")))
         check(device.wait(Until.hasObject(By.res("activity-editor")), 5_000))
         UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)

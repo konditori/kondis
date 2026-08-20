@@ -95,6 +95,42 @@ fun ActivityCard(
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
+                    ActivityCardVisualPager(activity, onLoadImage)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 18.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(onClick = onLike) {
+                            Icon(
+                                if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                                contentDescription =
+                                    if (activity.viewerLiked) {
+                                        tr(
+                                            "unlike_activity",
+                                        )
+                                    } else {
+                                        tr("like_activity")
+                                    },
+                                tint =
+                                    if (activity.viewerLiked) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                            )
+                        }
+                        Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(
+                            Icons.Rounded.ChatBubbleOutline,
+                            contentDescription = tr("comments_count", activity.commentCount),
+                            modifier = Modifier.padding(start = 20.dp),
+                        )
+                        Text(
+                            activity.commentCount.toString(),
+                            modifier = Modifier.padding(start = 6.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     val achievements = activity.topBestEfforts.orEmpty()
                     val achievementCount = activity.achievementCount
                     if (achievementCount != null && achievements.isNotEmpty()) {
@@ -147,35 +183,6 @@ fun ActivityCard(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-            }
-            ActivityCardVisualPager(activity, onLoadImage)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 18.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onLike) {
-                    Icon(
-                        if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                        contentDescription = if (activity.viewerLiked) tr("unlike_activity") else tr("like_activity"),
-                        tint =
-                            if (activity.viewerLiked) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                    )
-                }
-                Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Icon(
-                    Icons.Rounded.ChatBubbleOutline,
-                    contentDescription = tr("comments_count", activity.commentCount),
-                    modifier = Modifier.padding(start = 20.dp),
-                )
-                Text(
-                    activity.commentCount.toString(),
-                    modifier = Modifier.padding(start = 6.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }
