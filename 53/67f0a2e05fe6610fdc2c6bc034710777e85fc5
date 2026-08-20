@@ -1,0 +1,61 @@
+android/app/build.gradle.kts
+  s_674f2740bb7f29::t_586e7d302e6681 128
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_674f2740bb7f29::t_8ff5bcaaef9bc2 305-309
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_674f2740bb7f29::t_df35cb032925a7 144-148,154,222
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_254261c5238faf::t_034d7e07f34154 21,41-42,66,71,94-99,146-148,197,666,679-680,686-689,703-707,710-744,790-814,887-892,1001-1065
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_674f2740bb7f29::t_d311146a033211 49-50
+android/app/src/main/java/app/kondis/ui/feed/FeedViewModel.kt
+  s_c9d6570587750d::t_17e1bf326767cf 82-85
+android/gradle/libs.versions.toml
+  s_674f2740bb7f29::t_a9814332ce1b5a 34,83
+android/gradle/wrapper/gradle-wrapper.properties
+  s_b75d534aec49ac::t_b3ebf73a706ae2 3
+open-api/kondis-openapi-specs.json
+  s_674f2740bb7f29::t_70dbe9f3edb6bd 978-991
+server/src/open-api/fetch-client.ts
+  s_674f2740bb7f29::t_39da6a102bf1e1 1123-1129,1142-1157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5367f0a2e05fe6610fdc2c6bc034710777e85fc5",
+  "prompts": {},
+  "sessions": {
+    "s_254261c5238faf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f3d-bf08-7ae2-a715-ae9377b66f3c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_674f2740bb7f29": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01e43-eaf9-7a02-8509-c718b08cc013",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b75d534aec49ac": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "85ca45ef-ab04-4422-932a-777bf2e4c647",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_c9d6570587750d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01f41-55a9-7962-88f5-38b5095ee6a2",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
