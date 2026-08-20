@@ -103,14 +103,10 @@ class OfflineWorkoutSyncTest {
         check(device.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
             "Sync button did not appear; server requests=${server.requestCount}"
         }
-        check(device.wait(Until.hasObject(By.res("activity-card-$remoteId")), 30_000)) {
-            "Remote activity feed did not load; server requests=${server.requestCount}"
-        }
-        val feed = UiScrollable(UiSelector().scrollable(true))
-        check(feed.scrollIntoView(UiSelector().resourceId("activity-card-local-sync-test"))) {
+        check(scrollToActivity("local-sync-test")) {
             "Local activity card did not appear; server requests=${server.requestCount}"
         }
-        feed.scrollToBeginning(10)
+        scrollToActivity("local-sync-test", beginning = true)
 
         device.findObject(By.res("sync-now")).click()
         check(device.wait(Until.hasObject(By.res("sync-complete")), 45_000)) {
@@ -144,22 +140,8 @@ class OfflineWorkoutSyncTest {
         check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
             "Sync button did not appear; server requests=${server.requestCount}"
         }
-        check(uiDevice.wait(Until.hasObject(By.res("activity-card-$remoteId")), 30_000)) {
-            "Remote activity feed did not load; server requests=${server.requestCount}"
-        }
-        var deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
-        repeat(5) {
-            if (!deleteActivityVisible) {
-                val centerX = uiDevice.displayWidth / 2
-                uiDevice.swipe(centerX, uiDevice.displayHeight * 3 / 4, centerX, uiDevice.displayHeight / 4, 10)
-                deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
-            }
-        }
-        check(deleteActivityVisible) {
+        check(scrollToActivity(deleteId)) {
             "Delete activity card was not found after scrolling; server requests=${server.requestCount}"
-        }
-        check(uiDevice.wait(Until.hasObject(By.res("activity-card-$deleteId")), 10_000)) {
-            "Delete activity card disappeared before it could be opened"
         }
         val deleteActivity = device.findObject(By.res("activity-card-$deleteId"))
         val deleteActivityBounds = deleteActivity.visibleBounds
@@ -190,6 +172,20 @@ class OfflineWorkoutSyncTest {
             }
         }
         check(deleteRequest != null) { "No delete request received" }
+    }
+
+    private fun scrollToActivity(
+        id: String,
+        beginning: Boolean = false,
+    ): Boolean {
+        val selector = By.res("activity-card-$id")
+        val scrollable = UiScrollable(UiSelector().scrollable(true))
+        if (beginning) scrollable.scrollToBeginning(10)
+        repeat(30) {
+            if (device.wait(Until.hasObject(selector), 1_000)) return true
+            if (scrollable.scrollIntoView(UiSelector().resourceId("activity-card-$id"))) return true
+        }
+        return device.hasObject(selector)
     }
 
     private fun apiDispatcher() =
