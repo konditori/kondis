@@ -1,0 +1,121 @@
+android/app/src/main/java/app/kondis/ui/components/AchievementComponents.kt
+  s_f2350d8a977606::t_a72f5805662c98 1-140
+android/app/src/main/java/app/kondis/ui/components/ActivityCard.kt
+  s_f2350d8a977606::t_75524a498d478a 21-23,27,45,52,70,73-75,77,80,87-88,94,108,110-113,119,124,128-142,148-149,161,171,174,176
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_f2350d8a977606::t_97d3d91fa9754e 33-34,81,96,131-132,149-150,168,216,262,277,307-308,315,343-354,359-360,365,368,395,400,405,410,440-441,443,476-478,480,531-533,725,741,748,757,768,777,782,808,813,818,827,867-868,870,886,891,898,924-988,995,1011,1018,1028,1049,1145,1192,1194,1199-1200,1213-1214,1220,1222,1225-1232,1252,1254,1256-1257
+android/app/src/main/res/values/strings.xml
+  s_f2350d8a977606::t_265e76bee9df11 1-2,8-266
+i18n/en.json
+  s_f2350d8a977606::t_47ab9c67ae8aff 1-265
+scripts/check-i18n.mjs
+  s_f2350d8a977606::t_7aeb27d2a82414 1-69
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_204e93d85fa6d9::t_8a4bf38d69cfa0 18,142-158,169-186
+android/app/src/main/java/app/kondis/data/SocialRepository.kt
+  s_204e93d85fa6d9::t_27f2dd6ce7955a 1-26
+android/app/src/main/java/app/kondis/data/local/ActivityDao.kt
+  s_204e93d85fa6d9::t_3a02dcc0bb7412 27-32
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_204e93d85fa6d9::t_4a188bdf1b0877 9-11,13,91-94,150-192
+android/app/src/main/java/app/kondis/model/Activity.kt
+  s_204e93d85fa6d9::t_3fb69d02ead83e 40-75
+android/app/src/main/java/app/kondis/recording/LiveTrackingRepository.kt
+  s_ef1a3479354578::t_6b684f2f416c3d 11,107
+android/app/src/main/java/app/kondis/recording/RecordingService.kt
+  s_ef1a3479354578::t_1ffcd25653590d 21,203,205
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_ef1a3479354578::t_93e8c293b687fd 52,55,70-72,91,97-99,177-178,195,206,299-300,312,321,325,339,343,353,360,368
+android/app/src/main/java/app/kondis/ui/components/ActivityImageSlide.kt
+  s_f2350d8a977606::t_464dd00e306bbf 1-60
+android/app/src/main/java/app/kondis/ui/components/ActivityStat.kt
+  s_f2350d8a977606::t_8db2b31ea65754 1-23
+android/app/src/main/java/app/kondis/ui/components/SportIcon.kt
+  s_f2350d8a977606::t_86dffc85a44b7e 1-25
+android/app/src/main/java/app/kondis/ui/components/StaticRoutePreview.kt
+  s_ef1a3479354578::t_2508f876509faa 36,79
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_204e93d85fa6d9::t_d79cae2cb5a049 10,28-30,68,115-156
+android/app/src/main/java/app/kondis/ui/detail/BestEffortsScreen.kt
+  s_ef1a3479354578::t_06ac065c7d76bb 46,86,89-90,93,103,126,131,173
+android/app/src/main/java/app/kondis/ui/detail/MatchedRoutesScreen.kt
+  s_ef1a3479354578::t_c0939fa1caa74b 53,83,110,112,139,144,149,157,169,171,176,182-184,190
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_ef1a3479354578::t_a9b6a584eefeb4 20,46,54,64,67,79,82,135-142,150,167,179,185,187,202,239,243,247,251,259
+android/app/src/main/java/app/kondis/ui/feed/FeedViewModel.kt
+  s_204e93d85fa6d9::t_2aca1617307d42 115-124
+android/app/src/main/java/app/kondis/ui/i18n/Translations.kt
+  s_ef1a3479354578::t_47bd62b7b457d1 1-26
+android/app/src/main/java/app/kondis/ui/people/PeopleScreen.kt
+  s_ef1a3479354578::t_ba2fcab4721761 1-144
+android/app/src/main/java/app/kondis/ui/record/RecordScreen.kt
+  s_ef1a3479354578::t_e7d2c7abaa0211 74,146-147,190,192,194,196,218,229,234,248,256,264,276,280,287,294,344,349,361,369,382-383,396,400,404,406,415-416,421,423,527,564-565,567,575,587,601,617,653
+android/app/src/main/java/app/kondis/ui/settings/SettingsScreen.kt
+  s_ef1a3479354578::t_1fe1f1714b617c 33,61,73,77,83,90,94,103,113,122,143-144,151,155
+i18n/README.md
+  s_ef1a3479354578::t_82a140ac45aa83 1-40
+mise.toml
+  s_ef1a3479354578::t_99fb198f5f8268 120-128
+scripts/generate-android-i18n.mjs
+  s_204e93d85fa6d9::t_9f0dc7360363a2 1-70
+web/src/lib/components/Sidebar.svelte
+  s_ef1a3479354578::t_fef9e609d3d94a 5,8,11,15,27,32,48,50,54,57
+web/src/lib/components/Topbar.svelte
+  s_ef1a3479354578::t_85f99f4821b7f5 28,84,249-250,257-258,269,282,292-295,298,327,333,342-343,346-347,353,361-362,365
+web/src/lib/components/UploadForm.svelte
+  s_ef1a3479354578::t_69692aa5119ca3 10,27,40,67,77,84,89-90,111-112
+web/src/lib/i18n.ts
+  s_ef1a3479354578::t_3c1d6f73b001da 1-14
+web/src/routes/+page.svelte
+  s_ef1a3479354578::t_0d1b01c4440933 25,65,68-70,288-289,295,309,318,325,329,334,339,378-379,381,390,394-395
+web/src/routes/best-efforts/+page.svelte
+  s_ef1a3479354578::t_0985c965607f9a 5,9-10,23-24,31-32,65-67
+web/src/routes/login/+page.svelte
+  s_ef1a3479354578::t_0d12e12d1abcbc 2,6,9,12,20,27,32
+web/src/routes/notifications/+page.svelte
+  s_ef1a3479354578::t_76bac91e54a357 14,39,61-62,67,73-74
+web/src/routes/people/+page.svelte
+  s_ef1a3479354578::t_810df9d80f008e 13,32,48,79-81,89,127-129,152,154-155,160-161
+web/src/routes/register/+page.svelte
+  s_ef1a3479354578::t_497bae03b82da2 2,6,9,12,19,26,34,42,50,54
+web/src/routes/settings/+page.svelte
+  s_ef1a3479354578::t_1dbfb25d50021d 14,105-106,114-115,120,128,143,153,158-159,165,177,189,194,202,212,218,220
+web/src/routes/setup/+page.svelte
+  s_ef1a3479354578::t_701f090fc0070c 2,6,9-10,13,20
+web/src/routes/upload/+page.svelte
+  s_ef1a3479354578::t_afb09778ad1811 3,8-9,14-15,26
+web/svelte.config.js
+  s_ef1a3479354578::t_ab64e1bec3d9fd 6-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b4f9e53de5cb01ab8695becaaa0e6c7f7ae939f3",
+  "prompts": {},
+  "sessions": {
+    "s_204e93d85fa6d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02038-b436-7cd3-902b-5bef0e1ad383",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_ef1a3479354578": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0203a-7645-73b2-9ab4-9effaa0fc5d7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_f2350d8a977606": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "78608af3-999a-4cdd-ad80-0e0074cb5132",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
