@@ -1,0 +1,19 @@
+android/app/src/main/java/app/kondis/ui/feed/FeedScreen.kt
+  s_62ca9c80312677::t_1af87ed8bba2fd 11,101,159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7b7e55aad8c93c24925442bb073064d2852ea107",
+  "prompts": {},
+  "sessions": {
+    "s_62ca9c80312677": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01e0d-1881-7a63-870c-5adcc5f52078",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
