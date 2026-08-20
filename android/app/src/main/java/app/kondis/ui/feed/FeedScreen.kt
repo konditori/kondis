@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -97,7 +98,7 @@ fun FeedScreen(
         isRefreshing = state.refreshing,
         onRefresh = onRefresh,
         state = pullToRefreshState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().imePadding(),
     ) {
         LazyColumn(
             state = listState,
@@ -155,7 +156,7 @@ fun FeedScreen(
                 if (state.activities.isEmpty() && !state.refreshing) {
                     item {
                         Box(
-                            modifier = Modifier.fillParentMaxSize().padding(vertical = 72.dp),
+                        modifier = Modifier.fillParentMaxSize().padding(horizontal = 16.dp, vertical = 72.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
