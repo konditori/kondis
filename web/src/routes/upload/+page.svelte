@@ -5,7 +5,7 @@
   const choices = [
     {
       href: "/upload/activity",
-      title: t("individual_workout_file"),
+      title: t("individual_activity_file"),
       description: t("upload_one_file"),
       icon: FileUp,
     },

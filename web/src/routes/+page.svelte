@@ -292,7 +292,7 @@
   {/if}
 
   {#if data.liveWorkouts.length}
-    <section class="live-workout-list" aria-label={t("live_workouts")}>
+    <section class="live-workout-list" aria-label={t("live_activities")}>
       {#each data.liveWorkouts as workout (workout.id)}
         {@const Icon = sportIcon(workout.sport)}
         {@const averageSpeed =

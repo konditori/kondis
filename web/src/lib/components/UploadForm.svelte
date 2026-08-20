@@ -24,7 +24,7 @@
     if (!accepted) {
       file = undefined;
       uploadState = "error";
-      message = t("choose_workout_file");
+      message = t("choose_activity_file");
       return;
     }
     file = selected;
@@ -64,7 +64,7 @@
       );
       await invalidateAll();
       uploadState = "done";
-      message = t("workout_uploaded");
+      message = t("activity_uploaded");
       try {
         const activity = await activityCreated;
         await goto(`/activities/${activity.id}`);
@@ -86,8 +86,8 @@
   <div class="upload-panel-heading">
     <span class="upload-choice-icon"><FileUp size={24} /></span>
     <div>
-      <h2>{t("upload_workout_file")}</h2>
-      <p>{t("upload_workout_description")}</p>
+      <h2>{t("upload_activity_file")}</h2>
+      <p>{t("upload_activity_description")}</p>
     </div>
   </div>
 
@@ -108,7 +108,7 @@
     }}
   >
     <span class="upload-icon"><FileUp size={28} /></span>
-    <strong>{t("drop_workout_file")}</strong>
+    <strong>{t("drop_activity_file")}</strong>
     <span>{t("click_to_browse")}</span>
     <small>.fit, .tcx, or .gpx</small>
   </button>
