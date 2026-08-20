@@ -45,7 +45,6 @@ for (const file of files) {
   }
 }
 
-const androidUiDirectory = new URL("../android/app/src/main/java/app/kondis/ui/", import.meta.url);
 const kotlinFiles = [];
 const collectKotlinFiles = async (directory) => {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -58,7 +57,51 @@ const collectKotlinFiles = async (directory) => {
   }
 };
 
-await collectKotlinFiles(androidUiDirectory.pathname);
+const androidSourceDirectory = new URL("../android/app/src/main/java/", import.meta.url);
+const runtimeKeyPattern = /(?:\btr|\.tr)\(\s*"([a-zA-Z0-9_]+)"/g;
+const legacyKeys = new Set([
+  "app_name",
+  "recording_channel_name",
+  "recording_channel_description",
+  "recording_notification_title",
+]);
+await collectKotlinFiles(androidSourceDirectory.pathname);
+for (const file of kotlinFiles) {
+  const sourceText = await readFile(file, "utf8");
+  for (const match of sourceText.matchAll(runtimeKeyPattern)) {
+    const key = match[1];
+    if (!sourceKeys.has(key) && !legacyKeys.has(key)) {
+      const line = sourceText.slice(0, match.index).split("\n").length;
+      console.error(`${file}:${line}: unknown translation key: ${key}`);
+      process.exitCode = 1;
+    }
+  }
+}
+
+const webSourceDirectory = new URL("../web/src/", import.meta.url);
+const webFiles = [];
+const collectWebFiles = async (directory) => {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) await collectWebFiles(path);
+    else if (entry.name.endsWith(".svelte")) webFiles.push(path);
+  }
+};
+await collectWebFiles(webSourceDirectory.pathname);
+
+const webKeyPattern = /\bt\(\s*["']([a-zA-Z0-9_]+)["']/g;
+for (const file of webFiles) {
+  const sourceText = await readFile(file, "utf8");
+  for (const match of sourceText.matchAll(webKeyPattern)) {
+    const key = match[1];
+    if (!sourceKeys.has(key)) {
+      const line = sourceText.slice(0, match.index).split("\n").length;
+      console.error(`${file}:${line}: unknown translation key: ${key}`);
+      process.exitCode = 1;
+    }
+  }
+}
+
 const hardcodedUiString = /(?:Text|contentDescription)\s*\(?(?:\s*=\s*)?"/;
 for (const file of kotlinFiles) {
   const sourceText = await readFile(file, "utf8");

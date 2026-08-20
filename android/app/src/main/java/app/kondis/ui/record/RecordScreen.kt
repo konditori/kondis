@@ -215,7 +215,7 @@ fun RecordScreen(
                                 modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 12.dp),
                             ) {
                                 Icon(Icons.Rounded.PlayArrow, contentDescription = null)
-                                Text(tr("start_workout"), modifier = Modifier.padding(start = 8.dp))
+                                Text(tr("recording_start"), modifier = Modifier.padding(start = 8.dp))
                             }
                         }
 
@@ -261,7 +261,7 @@ fun RecordScreen(
                         RecordingMode.Saving -> {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 CircularProgressIndicator()
-                                Text(tr("saving_and_syncing_workout"), modifier = Modifier.padding(top = 12.dp))
+                                Text(tr("saving_and_syncing_activity"), modifier = Modifier.padding(top = 12.dp))
                             }
                         }
 
@@ -273,7 +273,7 @@ fun RecordScreen(
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(36.dp),
                                 )
-                                Text(tr("workout_saved"), style = MaterialTheme.typography.titleLarge)
+                                Text(tr("activity_saved"), style = MaterialTheme.typography.titleLarge)
                                 Button(
                                     onClick = onReset,
                                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
@@ -341,7 +341,7 @@ private fun PostRecordingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    if (recording.mode == RecordingMode.Saved) tr("workout_saved") else tr("save_activity"),
+                    if (recording.mode == RecordingMode.Saved) tr("activity_saved") else tr("save_activity"),
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.headlineSmall,
                 )
@@ -423,7 +423,7 @@ private fun PostRecordingScreen(
                     onDiscard()
                 }) { Text(tr("discard")) }
             },
-            dismissButton = { TextButton(onClick = { showDiscardDialog = false }) { Text(tr("keep_workout")) } },
+            dismissButton = { TextButton(onClick = { showDiscardDialog = false }) { Text(tr("keep_activity")) } },
         )
     }
 }

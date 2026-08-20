@@ -373,8 +373,6 @@ jobs:
       - name: Install dependencies
         run: mise run //server:install
 
-      # Adding or bumping a dependency changes what we redistribute, so the attribution file has
-      # to change with it. Regenerating here proves the committed copy still matches the tree.
       - name: Regenerate third-party licenses
         run: mise run third-party-licenses
 

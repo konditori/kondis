@@ -103,6 +103,9 @@ class OfflineWorkoutSyncTest {
         check(device.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
             "Sync button did not appear; server requests=${server.requestCount}"
         }
+        check(device.wait(Until.hasObject(By.res("activity-card-$remoteId")), 30_000)) {
+            "Remote activity feed did not load; server requests=${server.requestCount}"
+        }
         val feed = UiScrollable(UiSelector().scrollable(true))
         check(feed.scrollIntoView(UiSelector().resourceId("activity-card-local-sync-test"))) {
             "Local activity card did not appear; server requests=${server.requestCount}"
@@ -141,6 +144,9 @@ class OfflineWorkoutSyncTest {
         check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
             "Sync button did not appear; server requests=${server.requestCount}"
         }
+        check(uiDevice.wait(Until.hasObject(By.res("activity-card-$remoteId")), 30_000)) {
+            "Remote activity feed did not load; server requests=${server.requestCount}"
+        }
         var deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
         repeat(5) {
             if (!deleteActivityVisible) {
@@ -160,7 +166,9 @@ class OfflineWorkoutSyncTest {
         device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())
         check(device.wait(Until.hasObject(By.res("activity-more-options")), 5_000))
         device.findObject(By.res("activity-more-options")).click()
-        check(device.wait(Until.hasObject(By.res("activity-edit")), 5_000))
+        check(device.wait(Until.hasObject(By.res("activity-edit")), 5_000)) {
+            "Activity options menu did not show edit action"
+        }
         device.findObject(By.res("activity-edit")).click()
         check(UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().resourceId("activity-editor")))
         check(device.wait(Until.hasObject(By.res("activity-editor")), 5_000))

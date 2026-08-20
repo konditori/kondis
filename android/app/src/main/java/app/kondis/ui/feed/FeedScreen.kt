@@ -186,7 +186,7 @@ fun FeedScreen(
                                 Text(
                                     text =
                                         if (state.search.isBlank()) {
-                                            tr("record_a_workout")
+                                            tr("record_a_activity")
                                         } else {
                                             tr("try_different_name_or_sport")
                                         },
@@ -262,7 +262,7 @@ private fun SyncStatusCard(
                 }
                 queuedWorkouts.forEach { workout ->
                     Text(
-                        "${workout.title.ifBlank { tr("untitled_workout") }} · ${formatDateTime(workout.startedAt)}",
+                        "${workout.title.ifBlank { tr("activity") }} · ${formatDateTime(workout.startedAt)}",
                         modifier = Modifier.padding(start = 36.dp, top = 10.dp),
                         style = MaterialTheme.typography.bodyMedium,
                     )

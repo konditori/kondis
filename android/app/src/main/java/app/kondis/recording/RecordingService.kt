@@ -86,8 +86,25 @@ class RecordingService :
     }
 
     private fun start(sport: String) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            recordingManager.fail("Precise location is required to record a GPS workout")
+            stopSelf()
+            return
+        }
         val created = recordingManager.start()
-        startForeground(NOTIFICATION_ID, notification())
+        try {
+            startForeground(NOTIFICATION_ID, notification())
+        } catch (_: SecurityException) {
+            recordingManager.fail("Location permission is required to record a GPS workout")
+            stopSelf()
+            return
+        } catch (_: IllegalStateException) {
+            recordingManager.fail("Recording could not be started while the app is not visible")
+            stopSelf()
+            return
+        }
         startLocationUpdates()
         startTicker()
         if (created) {
