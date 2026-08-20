@@ -750,10 +750,11 @@ private fun DetailHeader(
                         IconButton(
                             onClick = { showMenu = true },
                             modifier =
-                                Modifier.background(
-                                    MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
-                                    CircleShape,
-                                ).testTag("activity-more-options"),
+                                Modifier
+                                    .background(
+                                        MaterialTheme.colorScheme.scrim.copy(alpha = 0.75f),
+                                        CircleShape,
+                                    ).testTag("activity-more-options"),
                         ) {
                             Icon(
                                 Icons.Rounded.MoreVert,
@@ -829,7 +830,10 @@ private fun DetailHeader(
                         }
                         Spacer(Modifier.weight(1f))
                         Box {
-                            IconButton(onClick = { showMenu = true }, modifier = Modifier.testTag("activity-more-options")) {
+                            IconButton(
+                                onClick = { showMenu = true },
+                                modifier = Modifier.testTag("activity-more-options"),
+                            ) {
                                 Icon(Icons.Rounded.MoreVert, contentDescription = tr("more_options"))
                             }
                             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
