@@ -316,6 +316,43 @@ jobs:
             git --no-pager diff -- server/src/open-api/fetch-client.ts open-api/kondis-openapi-specs.json
             exit 1
 
+  generated-translations-up-to-date:
+      name: Android Translations
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            persist-credentials: false
+
+        - name: Setup Mise
+          uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.2.0
+
+        - name: Regenerate Android translations
+          run: mise run //:i18n:android
+
+        - name: Find file changes
+          uses: tj-actions/verify-changed-files@a1c6acee9df209257a246f2cc6ae8cb6581c1edf # v20.0.4
+          id: verify-changed-files
+          with:
+            files: |
+              android/app/src/main/res/values*/strings.xml
+
+        - name: Verify files have not changed
+          if: steps.verify-changed-files.outputs.files_changed == 'true'
+          env:
+            CHANGED_FILES: ${{ steps.verify-changed-files.outputs.changed_files }}
+          run: |
+            echo "ERROR: Generated Android translation resources are not up to date!"
+            echo "Changed files: ${CHANGED_FILES}"
+            echo ""
+            echo "Run 'mise run //:i18n:android' and commit the result."
+            echo "Diff:"
+            git --no-pager diff -- android/app/src/main/res
+            exit 1
+
   third-party-licenses-up-to-date:
     name: Third-Party Licenses
     runs-on: ubuntu-latest
