@@ -1,0 +1,23 @@
+android/app/src/main/java/app/kondis/recording/GpxWriter.kt
+  s_9aeccdb752182e::t_3d6d28b1d16573 6-7,17
+android/app/src/main/java/app/kondis/ui/i18n/Translations.kt
+  s_9aeccdb752182e::t_bfb08e6868076c 4,7-8,17-20,24,27-30
+android/app/src/main/java/app/kondis/ui/record/RecordingViewModel.kt
+  s_9aeccdb752182e::t_b564db288e8397 17,26,152-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "651ec294d39c5f0184ab5fc66b65b5b09937ab82",
+  "prompts": {},
+  "sessions": {
+    "s_9aeccdb752182e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9411d93d-6a38-4837-a29e-8f56514c7f6c",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
