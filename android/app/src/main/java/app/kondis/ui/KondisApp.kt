@@ -1,6 +1,7 @@
 package app.kondis.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -101,16 +102,19 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val recording by viewModel.recording.collectAsStateWithLifecycle()
     val recordingActive = recording.mode.isActive
 
-    // The OAuth/OIDC authorization step always completes in the external browser (RFC 8252).
-    // Launching it and receiving the result is owned by MainActivity rather than here: the modern
-    // Auth Tab launcher must be registered on an ActivityResultCaller (an Activity/Fragment), which
-    // a @Composable function is not — see MainActivity.kt.
-    if (settings.accessToken == null || reauthorizationRequired) {
+    // Avoid showing the login form for the transient empty settings value at process start.
+    if (settings == null) {
+        Box(Modifier.fillMaxSize())
+        return
+    }
+    val loadedSettings = settings ?: return
+
+    if (loadedSettings.accessToken == null || reauthorizationRequired) {
         LoginScreen(
-            settings = settings,
+            settings = loadedSettings,
             loginStage = loginStage,
             errorMessage = loginError,
-            isReauth = reauthorizationRequired && settings.accessToken != null,
+            isReauth = reauthorizationRequired && loadedSettings.accessToken != null,
             onCheckServer = viewModel::checkServer,
             onStartBrowserSignIn = viewModel::startExternalAuth,
             onLogin = { email, password ->
@@ -118,7 +122,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                     when (val stage = loginStage) {
                         is LoginStage.DirectReady -> stage.serverUrl
                         is LoginStage.OAuthSignedIn -> stage.serverUrl
-                        else -> settings.serverUrl
+                        else -> loadedSettings.serverUrl
                     }
                 viewModel.login(serverUrl, email, password)
             },
@@ -175,7 +179,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                 entryProvider {
                     entry<FeedKey> {
                         FeedRoute(
-                            units = settings.unitSystem,
+                            units = loadedSettings.unitSystem,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                         )
                     }
@@ -192,7 +196,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                         BestEffortsRoute(
                             sport = "run",
                             type = "5k",
-                            units = settings.unitSystem,
+                            units = loadedSettings.unitSystem,
                             onBack = ::navigateBack,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                             onNavigate = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
@@ -205,7 +209,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                     entry<ActivityDetailKey> { key ->
                         ActivityDetailRoute(
                             id = key.id,
-                            units = settings.unitSystem,
+                            units = loadedSettings.unitSystem,
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
@@ -215,7 +219,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                     entry<MatchedRoutesKey> { key ->
                         MatchedRoutesRoute(
                             id = key.id,
-                            units = settings.unitSystem,
+                            units = loadedSettings.unitSystem,
                             onBack = ::navigateBack,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                         )
@@ -224,7 +228,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                         BestEffortsRoute(
                             sport = key.sport,
                             type = key.type,
-                            units = settings.unitSystem,
+                            units = loadedSettings.unitSystem,
                             onBack = ::navigateBack,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
                             onNavigate = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
@@ -239,13 +243,6 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     }
 }
 
-/**
- * Guides the user through connecting to a self-hosted Kondis server: enter its address, let
- * [LoginStage] report whether it can be reached directly or requires signing in through an
- * OAuth/OIDC gateway first (see [AppViewModel.checkServer]), then complete whichever sign-in that
- * server needs. [isReauth] renders a shorter prompt for the case where only the perimeter gateway
- * session expired and the Kondis credentials on this device are still valid.
- */
 @Composable
 private fun LoginScreen(
     settings: AppSettings,
@@ -274,7 +271,7 @@ private fun LoginScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            if (isReauth) "Sign-in expired" else "Sign in to Kondis",
+            "Kondis 😰",
             style = MaterialTheme.typography.headlineSmall,
         )
         Spacer(Modifier.height(16.dp))
@@ -284,8 +281,8 @@ private fun LoginScreen(
                 value = serverUrlDraft,
                 onValueChange = { serverUrlDraft = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("API base URL") },
-                supportingText = { Text("For a phone, use the server's LAN address and include /api/v1") },
+                label = { Text("Server URL") },
+                supportingText = { Text("For example http://192.168.0.10 or https://kondis.example.com") },
                 singleLine = true,
                 enabled = !checking,
             )
@@ -323,10 +320,6 @@ private fun LoginScreen(
 
             is LoginStage.DirectReady, is LoginStage.OAuthSignedIn -> {
                 Spacer(Modifier.height(12.dp))
-                if (stage is LoginStage.OAuthSignedIn) {
-                    Text("Signed in with your identity provider. Now sign in with your Kondis account.")
-                    Spacer(Modifier.height(8.dp))
-                }
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },

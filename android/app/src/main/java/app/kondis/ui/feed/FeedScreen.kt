@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudDone
@@ -28,6 +29,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +38,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
 import app.kondis.model.UnitSystem
 import app.kondis.model.formatDateTime
 import app.kondis.ui.components.ActivityCard
@@ -70,6 +75,21 @@ fun FeedScreen(
     onLoadImage: suspend (String) -> Bitmap? = { null },
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
+    val listState = rememberLazyListState()
+    val initialLoading =
+        state.activities.isEmpty() &&
+            state.total == null &&
+            state.errorMessage == null
+
+    LaunchedEffect(listState, state.activities.size, state.nextCursor, state.loadingMore) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
+            .distinctUntilChanged()
+            .collectLatest { lastVisibleIndex ->
+                if (state.nextCursor != null && !state.loadingMore && lastVisibleIndex >= state.activities.size - 3) {
+                    onLoadMore()
+                }
+            }
+    }
     PullToRefreshBox(
         isRefreshing = state.refreshing,
         onRefresh = onRefresh,
@@ -77,29 +97,11 @@ fun FeedScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, top = 22.dp, end = 16.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Activities", style = MaterialTheme.typography.displaySmall)
-                        Text(
-                            state.total?.let { "$it ${if (it == 1) "activity" else "activities"}" }
-                                ?: "Your private training log",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    IconButton(onClick = onRefresh, enabled = !state.refreshing) {
-                        if (state.refreshing) {
-                            CircularProgressIndicator(modifier = Modifier.padding(10.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Rounded.Refresh, contentDescription = "Refresh activities")
-                        }
-                    }
-                }
-            }
             if (state.queuedWorkouts.isNotEmpty() || state.showSyncComplete) {
                 item {
                     SyncStatusCard(
@@ -109,54 +111,57 @@ fun FeedScreen(
                     )
                 }
             }
-            item {
-                OutlinedTextField(
-                    value = state.search,
-                    onValueChange = onSearchChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                    placeholder = { Text("Search activities") },
-                    shape = MaterialTheme.shapes.large,
-                )
-            }
-            state.errorMessage?.let { message ->
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                        Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = onRefresh) { Text("Retry") }
-                    }
-                }
-            }
-            if (state.activities.isEmpty() && !state.refreshing) {
+            if (initialLoading) {
                 item {
                     Box(
-                        modifier = Modifier.fillParentMaxSize().padding(vertical = 72.dp),
+                        modifier = Modifier.fillParentMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                if (state.search.isBlank()) {
-                                    "Your first activity starts here"
-                                } else {
-                                    "No matching activities"
-                                },
-                                style = MaterialTheme.typography.titleLarge,
-                            )
-                            Text(
-                                if (state.search.isBlank()) {
-                                    "Record a workout or connect to your Kondis server."
-                                } else {
-                                    "Try a different name or sport."
-                                },
-                                modifier = Modifier.padding(top = 8.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        CircularProgressIndicator()
+                    }
+                }
+            } else {
+                item {
+                    OutlinedTextField(
+                        value = state.search,
+                        onValueChange = onSearchChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        placeholder = { Text("Search activities") },
+                        shape = MaterialTheme.shapes.large,
+                    )
+                }
+                state.errorMessage?.let { message ->
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                            TextButton(onClick = onRefresh) { Text("Retry") }
+                        }
+                    }
+                }
+                if (state.activities.isEmpty() && !state.refreshing) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillParentMaxSize().padding(vertical = 72.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    if (state.search.isBlank()) "Your first activity starts here" else "No matching activities",
+                                    style = MaterialTheme.typography.titleLarge,
+                                )
+                                Text(
+                                    if (state.search.isBlank()) "Record a workout or connect to your Kondis server." else "Try a different name or sport.",
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 }
@@ -169,17 +174,13 @@ fun FeedScreen(
                     onLoadImage = onLoadImage,
                 )
             }
-            if (state.nextCursor != null) {
+            if (state.loadingMore) {
                 item {
-                    Button(
-                        onClick = onLoadMore,
-                        enabled = !state.loadingMore,
-                        modifier = Modifier.fillMaxWidth(),
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        if (state.loadingMore) {
-                            CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp), strokeWidth = 2.dp)
-                        }
-                        Text(if (state.loadingMore) "Loading…" else "Load more")
+                        CircularProgressIndicator(strokeWidth = 2.dp)
                     }
                 }
             }

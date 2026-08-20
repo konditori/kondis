@@ -6,21 +6,20 @@ import org.junit.Test
 
 class KondisApiFactoryTest {
     @Test
-    fun `release URL validation rejects cleartext HTTP`() {
+    fun `URL validation rejects API paths`() {
         assertThrows(IllegalArgumentException::class.java) {
-            KondisApiFactory.normalizeBaseUrl("http://kondis.example/api/v1", allowCleartext = false)
+            KondisApiFactory.normalizeBaseUrl("http://kondis.example/api/v1")
         }
-        assertEquals(
-            "https://kondis.example",
-            KondisApiFactory.normalizeBaseUrl("https://kondis.example/api/v1", allowCleartext = false),
-        )
+        assertThrows(IllegalArgumentException::class.java) {
+            KondisApiFactory.normalizeBaseUrl("https://kondis.example/api/v1")
+        }
     }
 
     @Test
     fun `deployment root URL resolves to the Kondis API prefix`() {
         assertEquals(
             "https://kondis.example",
-            KondisApiFactory.normalizeBaseUrl("https://kondis.example", allowCleartext = false),
+            KondisApiFactory.normalizeBaseUrl("https://kondis.example"),
         )
     }
 

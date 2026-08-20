@@ -1,6 +1,4 @@
 package app.kondis.data.remote
-
-import app.kondis.BuildConfig
 import app.kondis.data.auth.ExternalAuthManager
 import app.kondis.data.settings.AppSettings
 import kotlinx.serialization.json.Json
@@ -63,6 +61,8 @@ class KondisApiFactory
                 .create(KondisApi::class.java)
 
         companion object {
+            private const val API_BASE_PATH = "/api/v1/"
+
             /**
              * The exact headers [create] attaches for a given pair of credentials: the external
              * perimeter token (if any) as a standard `Authorization: Bearer`, and the Kondis token
@@ -80,27 +80,23 @@ class KondisApiFactory
 
             fun normalizeBaseUrl(
                 value: String,
-                allowCleartext: Boolean = BuildConfig.DEBUG,
             ): String {
                 val trimmed = value.trim()
-                require(trimmed.startsWith("https://") || (allowCleartext && trimmed.startsWith("http://"))) {
-                    if (allowCleartext) {
+                require(trimmed.startsWith("https://") || (trimmed.startsWith("http://"))) {
                         "Server URL must start with http:// or https://"
-                    } else {
-                        "Release builds require an HTTPS server URL"
-                    }
+                   
                 }
                 val url = trimmed.toHttpUrlOrNull() ?: throw IllegalArgumentException("Server URL is invalid")
                 val path = url.encodedPath.trimEnd('/')
-                require(path.isEmpty() || path == "/api/v1") {
-                    "Server URL must be the server address, without an API path"
+                require(path.isEmpty()) {
+                    "Enter the server URL (without ${API_BASE_PATH.trimEnd('/')})"
                 }
                 return url.newBuilder().encodedPath("/").build().toString().trimEnd('/')
             }
 
             private fun normalizeApiBaseUrl(value: String): String {
                 val baseUrl = normalizeBaseUrl(value)
-                return baseUrl.trimEnd('/') + "/api/v1/"
+                return baseUrl.trimEnd('/') + API_BASE_PATH
             }
         }
     }

@@ -88,11 +88,12 @@ class AppViewModel
         /** True once the perimeter OAuth/OIDC session expired or was revoked and must be redone. */
         val reauthorizationRequired: StateFlow<Boolean> = externalAuthManager.reauthorizationRequired
 
-        val settings: StateFlow<AppSettings> =
+        // A fabricated empty value makes the UI briefly look signed out while DataStore loads.
+        val settings: StateFlow<AppSettings?> =
             settingsRepository.settings.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
-                AppSettings(),
+                null,
             )
 
         val recording: StateFlow<RecordingState> = recordingManager.state

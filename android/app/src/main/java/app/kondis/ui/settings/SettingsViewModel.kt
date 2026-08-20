@@ -22,7 +22,9 @@ data class SettingsUiState(
     val serverUrlDraft: String = AppSettings().serverUrl,
     val checking: Boolean = false,
     val message: String? = null,
-)
+) {
+    val serverActive: Boolean get() = settings.accessToken != null || settings.accountId != null
+}
 
 @HiltViewModel
 class SettingsViewModel

@@ -72,6 +72,10 @@ class ActivityRepository
         private val settingsRepository: SettingsRepository,
         private val json: Json,
     ) {
+        private companion object {
+            const val FEED_PAGE_SIZE = 20
+        }
+
         fun activities(search: String): Flow<List<Activity>> =
             settingsRepository.settings
                 .flatMapLatest { settings ->
@@ -102,7 +106,7 @@ class ActivityRepository
 
         suspend fun refresh(search: String = ""): PageResult {
             val account = account()
-            val response = api(account.settings).feed(search = search.trim().ifBlank { null })
+            val response = api(account.settings).feed(limit = FEED_PAGE_SIZE, search = search.trim().ifBlank { null })
             if (search.isBlank()) {
                 activityDao.replaceActivities(account.key, response.activities.map { toEntity(it, account.key) })
             } else {
@@ -116,7 +120,7 @@ class ActivityRepository
             search: String = "",
         ): PageResult {
             val account = account()
-            val response = api(account.settings).feed(cursor = cursor, search = search.trim().ifBlank { null })
+            val response = api(account.settings).feed(cursor = cursor, limit = FEED_PAGE_SIZE, search = search.trim().ifBlank { null })
             activityDao.upsertActivities(response.activities.map { toEntity(it, account.key) })
             return PageResult(response.nextCursor, response.total)
         }
