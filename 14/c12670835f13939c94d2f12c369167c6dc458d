@@ -1,0 +1,19 @@
+scripts/check-i18n.mjs
+  s_108ae286a9c5e0::t_691bf043d52697 65-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "14c12670835f13939c94d2f12c369167c6dc458d",
+  "prompts": {},
+  "sessions": {
+    "s_108ae286a9c5e0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a020c7-e1fc-7c63-978e-71448edb0adf",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
