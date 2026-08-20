@@ -147,8 +147,6 @@ jobs:
           -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts"
           :app:assembleDebug
 
-      # Run release assembly separately: AGP lint reads generated sources, and combining it
-      # with release KSP work in one task graph can race on a clean or incremental checkout.
       - name: Assemble release APK
         if: ${{ !cancelled() }}
         run: >-
@@ -191,6 +189,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
       - name: Set up JDK 21
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
@@ -218,7 +219,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
           script: |
-            ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" :app:connectedDebugAndroidTest || { echo "==== Instrumented test failure details ===="; find app/build/outputs/androidTest-results app/build/reports/androidTests -type f \( -name '*.xml' -o -name '*.html' -o -name '*.txt' \) -print 2>/dev/null || true; find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null | xargs -0 -r grep -H -E '<failure|<error|message=' || true; echo "==== End instrumented test failure details ===="; exit 1; }
+            mise test-instrumented
 
       - name: Upload emulator test artifacts
         if: always()

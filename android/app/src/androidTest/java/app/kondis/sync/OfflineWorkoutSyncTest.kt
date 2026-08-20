@@ -100,9 +100,13 @@ class OfflineWorkoutSyncTest {
 
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
-        check(device.wait(Until.hasObject(By.res("sync-now")), 30_000))
+        check(device.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
+            "Sync button did not appear; server requests=${server.requestCount}"
+        }
         val feed = UiScrollable(UiSelector().scrollable(true))
-        check(feed.scrollIntoView(UiSelector().resourceId("activity-card-local-sync-test")))
+        check(feed.scrollIntoView(UiSelector().resourceId("activity-card-local-sync-test"))) {
+            "Local activity card did not appear; server requests=${server.requestCount}"
+        }
         feed.scrollToBeginning(10)
 
         device.findObject(By.res("sync-now")).click()
@@ -117,7 +121,9 @@ class OfflineWorkoutSyncTest {
             if (request.method == "POST" && request.url.encodedPath == "/api/v1/upload/activity") upload = request
         }
         check(upload != null) { "No upload request received" }
-        check(device.hasObject(By.res("sync-complete")))
+        check(device.hasObject(By.res("sync-complete"))) {
+            "Sync completion indicator disappeared; server requests=${server.requestCount}"
+        }
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val verificationDatabase =
@@ -132,7 +138,9 @@ class OfflineWorkoutSyncTest {
     @Test
     fun deletingActivityReturnsToFeed() {
         val uiDevice = device
-        check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000))
+        check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
+            "Sync button did not appear; server requests=${server.requestCount}"
+        }
         var deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
         repeat(5) {
             if (!deleteActivityVisible) {
@@ -141,8 +149,12 @@ class OfflineWorkoutSyncTest {
                 deleteActivityVisible = uiDevice.hasObject(By.res("activity-card-$deleteId"))
             }
         }
-        check(deleteActivityVisible)
-        check(uiDevice.wait(Until.hasObject(By.res("activity-card-$deleteId")), 10_000))
+        check(deleteActivityVisible) {
+            "Delete activity card was not found after scrolling; server requests=${server.requestCount}"
+        }
+        check(uiDevice.wait(Until.hasObject(By.res("activity-card-$deleteId")), 10_000)) {
+            "Delete activity card disappeared before it could be opened"
+        }
         val deleteActivity = device.findObject(By.res("activity-card-$deleteId"))
         val deleteActivityBounds = deleteActivity.visibleBounds
         device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())

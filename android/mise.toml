@@ -31,6 +31,21 @@ run = """
 	:app:testDebugUnitTest
 """
 
+[tasks."test-instrumented"]
+description = "Run emulator tests and print failure details"
+dir = "{{ config_root }}"
+run = """
+./gradlew $GRADLE_ARGS --stacktrace \
+	-Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" \
+	:app:connectedDebugAndroidTest || {
+	echo "==== Instrumented test failure details ===="
+	find app/build/outputs/androidTest-results app/build/reports/androidTests -type f \\( -name '*.xml' -o -name '*.html' -o -name '*.txt' \\) -print 2>/dev/null || true
+	find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null | xargs -0 -r grep -H -E '<testcase|<failure|<error' || true
+	echo "==== End instrumented test failure details ===="
+	exit 1
+}
+"""
+
 [tasks."lint-fix"]
 description = "Fix Android lint issues"
 dir = "{{ config_root }}"
