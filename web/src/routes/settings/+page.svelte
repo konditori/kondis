@@ -198,9 +198,7 @@
           value="metric"
           bind:group={selected}
         />
-        <span
-          ><strong>Metric</strong></span
-        >
+        <span><strong>Metric</strong></span>
         {#if selected === "metric"}<Check size={19} />{/if}
       </label>
       <label class:selected={selected === "imperial"}>
@@ -210,9 +208,7 @@
           value="imperial"
           bind:group={selected}
         />
-        <span
-          ><strong>Imperial</strong></span
-        >
+        <span><strong>Imperial</strong></span>
         {#if selected === "imperial"}<Check size={19} />{/if}
       </label>
     </fieldset>

@@ -27,6 +27,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   const publicAuthPage =
     url?.pathname === "/login" ||
     url?.pathname === "/setup" ||
+    url?.pathname.startsWith("/setup/") ||
     url?.pathname === "/register";
   if (url && !publicAuthPage && !publicLiveView) {
     const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));

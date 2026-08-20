@@ -29,10 +29,18 @@ export const utils = {
       password: 'e2e-test-password',
     };
     const setupToken = process.env.KONDIS_SETUP_TOKEN ?? 'e2e-setup-token';
+    const verified = await fetch(`${serverUrl}/auth/setup/verify`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ setupToken }),
+    });
     const setup = await fetch(`${serverUrl}/auth/setup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ...credentials, setupToken }),
+      body: JSON.stringify({
+        ...credentials,
+        setupTicket: verified.ok ? ((await verified.json()) as { token: string }).token : '',
+      }),
     });
     let result: { accessToken: string };
     if (setup.ok) {

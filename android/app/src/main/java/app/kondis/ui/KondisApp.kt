@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -131,7 +132,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     }
     val backStack = rememberNavBackStack(if (recordingActive) RecordKey else FeedKey)
     val current = backStack.lastOrNull()
-    val showNavigation = !recordingActive && current != RecordKey
+    val showNavigation = !recordingActive
 
     LaunchedEffect(recordingActive) {
         if (recordingActive && backStack.lastOrNull() != RecordKey) {
@@ -259,16 +260,18 @@ private fun LoginScreen(
     val checking = loginStage == LoginStage.CheckingServer
     val showServerField =
         !isReauth && loginStage !is LoginStage.DirectReady &&
+            loginStage !is LoginStage.InitialSetupRequired &&
             loginStage !is LoginStage.OAuthReady && loginStage !is LoginStage.OAuthSignedIn
 
     Column(
         modifier =
             Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Center,
     ) {
         Text(
             "Kondis 😰",
@@ -282,7 +285,7 @@ private fun LoginScreen(
                 onValueChange = { serverUrlDraft = it },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Server URL") },
-                supportingText = { Text("For example http://192.168.0.10 or https://kondis.example.com") },
+                supportingText = { Text("For example http://192.168.1.10:2293 or https://kondis.example.com") },
                 singleLine = true,
                 enabled = !checking,
             )
@@ -300,6 +303,17 @@ private fun LoginScreen(
         }
 
         when (val stage = loginStage) {
+            is LoginStage.InitialSetupRequired -> {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "The Kondis server requires initial setup. Finish setup in your web browser and then return here to sign in.",
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = { onCheckServer(stage.serverUrl) }) {
+                    Text("Retry")
+                }
+            }
+
             is LoginStage.UnsupportedGateway -> {
                 Spacer(Modifier.height(12.dp))
                 Text(stage.reason, color = MaterialTheme.colorScheme.error)

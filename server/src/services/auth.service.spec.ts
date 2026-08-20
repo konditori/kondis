@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, ForbiddenException, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -86,34 +92,38 @@ describe(AuthService.name, () => {
     await expect(sut.login('user@example.com', 'wrong password')).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('requires the setup token and delegates the first-admin race to one atomic repository operation', async () => {
+  it('verifies the setup token before creating the first administrator', async () => {
     const { sut } = setup();
 
-    await expect(
-      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'wrong-token'),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(sut.verifySetupToken('wrong-token')).rejects.toBeInstanceOf(UnauthorizedException);
     expect(createInitialAdmin).not.toHaveBeenCalled();
-    await expect(
-      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'unit-test-setup-token'),
-    ).resolves.toMatchObject({ setup: true, user: { role: 'admin' } });
+    const { token } = await sut.verifySetupToken('unit-test-setup-token');
+    await expect(sut.validateSetupTicket(token)).resolves.toEqual({ valid: true });
+    await expect(sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', token)).resolves.toMatchObject(
+      { setup: true, user: { role: 'admin' } },
+    );
     expect(createInitialAdmin).toHaveBeenCalledOnce();
 
     createInitialAdmin.mockResolvedValueOnce(undefined);
+    const { token: nextToken } = await sut.verifySetupToken('unit-test-setup-token');
     await expect(
-      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', 'unit-test-setup-token'),
+      sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', nextToken),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('logs the setup token only while the installation has no administrator', async () => {
     const { sut } = setup();
-    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
+    const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
 
     await sut.logSetupTokenIfRequired();
-    expect(warn).toHaveBeenCalledWith('No administrator account exists. Use setup token: unit-test-setup-token');
+    expect(log).toHaveBeenCalledOnce();
+    expect(log.mock.calls[0][0]).toContain('Welcome to Kondis!');
+    expect(log.mock.calls[0][0]).toContain('unit-test-setup-token');
+    expect(log.mock.calls[0][0]).toContain('POST /api/v1/auth/setup/verify');
 
     count.mockResolvedValue({ count: 1 });
     await sut.logSetupTokenIfRequired();
-    expect(warn).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledOnce();
   });
 
   it('disables public registration by default', async () => {

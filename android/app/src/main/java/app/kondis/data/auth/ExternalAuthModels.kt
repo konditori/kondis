@@ -40,6 +40,9 @@ sealed interface ServerCapability {
     /** No perimeter gateway was detected; sign in directly with a Kondis email and password. */
     data object Direct : ServerCapability
 
+    /** The server has no administrator yet and must be initialized in the web app first. */
+    data object InitialSetupRequired : ServerCapability
+
     /**
      * A standards-based OAuth/OIDC authorization server protects this deployment. [resource] is the
      * RFC 8707 resource indicator to request the access token for; [scopes] and

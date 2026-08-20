@@ -110,7 +110,7 @@ fun ActivityCard(
                                     character.titlecase()
                                 }
                             },
-                            modifier = Modifier.padding(top = 4.dp),    
+                            modifier = Modifier.padding(top = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
                         )

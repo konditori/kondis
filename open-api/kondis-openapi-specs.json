@@ -1001,6 +1001,34 @@
         ]
       }
     },
+    "/auth/setup/verify": {
+      "post": {
+        "operationId": "AuthController_verifySetupToken",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/setup/validate": {
+      "post": {
+        "operationId": "AuthController_validateSetupTicket",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "operationId": "AuthController_login",

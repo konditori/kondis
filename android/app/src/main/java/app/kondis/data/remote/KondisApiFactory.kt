@@ -78,20 +78,22 @@ class KondisApiFactory
                     if (accessToken != null) put("X-Kondis-Authorization", "Bearer $accessToken")
                 }
 
-            fun normalizeBaseUrl(
-                value: String,
-            ): String {
+            fun normalizeBaseUrl(value: String): String {
                 val trimmed = value.trim()
                 require(trimmed.startsWith("https://") || (trimmed.startsWith("http://"))) {
-                        "Server URL must start with http:// or https://"
-                   
+                    "Server URL must start with http:// or https://"
                 }
                 val url = trimmed.toHttpUrlOrNull() ?: throw IllegalArgumentException("Server URL is invalid")
                 val path = url.encodedPath.trimEnd('/')
                 require(path.isEmpty()) {
                     "Enter the server URL (without ${API_BASE_PATH.trimEnd('/')})"
                 }
-                return url.newBuilder().encodedPath("/").build().toString().trimEnd('/')
+                return url
+                    .newBuilder()
+                    .encodedPath("/")
+                    .build()
+                    .toString()
+                    .trimEnd('/')
             }
 
             private fun normalizeApiBaseUrl(value: String): String {

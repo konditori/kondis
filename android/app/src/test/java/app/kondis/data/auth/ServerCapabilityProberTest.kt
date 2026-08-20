@@ -33,11 +33,29 @@ class ServerCapabilityProberTest {
     @Test
     fun `a clean 200 response means the deployment can be signed in to directly`() =
         runTest {
-            server.dispatcher = respondTo("/api/v1/auth/capabilities" to response(200, "{\"direct\":true}"))
+            server.dispatcher =
+                respondTo(
+                    "/api/v1/auth/capabilities" to response(200, "{\"direct\":true}"),
+                    "/api/v1/auth/setup" to response(200, "{\"setupRequired\":false}"),
+                )
 
             val capability = prober.probe(server.url("/api/v1/").toString())
 
             assertEquals(ServerCapability.Direct, capability)
+        }
+
+    @Test
+    fun `reports when the server still needs initial setup`() =
+        runTest {
+            server.dispatcher =
+                respondTo(
+                    "/api/v1/auth/capabilities" to response(200, "{\"direct\":true}"),
+                    "/api/v1/auth/setup" to response(200, "{\"setupRequired\":true}"),
+                )
+
+            val capability = prober.probe(server.url("/api/v1/").toString())
+
+            assertEquals(ServerCapability.InitialSetupRequired, capability)
         }
 
     @Test

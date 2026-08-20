@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Logger, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Req, UnauthorizedException } from '@nestjs/common';
+import type { Request } from 'express';
 import { ZodResponse } from 'nestjs-zod';
 import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
 import { ActivityEventsTicketDto } from 'src/dtos/auth.dto';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
+import { SetupTokenRateLimiter } from 'src/setup-token-rate-limiter';
 import { z } from 'zod';
 const credentials = z.object({
   email: z.string(),
@@ -11,7 +13,9 @@ const credentials = z.object({
   lastName: z.string().optional(),
   password: z.string(),
 });
-const setupCredentials = credentials.extend({ setupToken: z.string().min(1) });
+const setupCredentials = credentials.extend({ setupTicket: z.string().min(1) });
+const setupTokenCredentials = z.object({ setupToken: z.string().min(1) });
+const setupTicketCredentials = z.object({ setupTicket: z.string().min(1) });
 const registrationCredentials = z.object({
   email: z.string(),
   firstName: z.string(),
@@ -21,6 +25,7 @@ const registrationCredentials = z.object({
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
+  private readonly setupTokenRateLimiter = new SetupTokenRateLimiter();
 
   constructor(
     private readonly service: AuthService,
@@ -50,13 +55,24 @@ export class AuthController {
         value.firstName ?? '',
         value.lastName ?? '',
         value.password,
-        value.setupToken,
+        value.setupTicket,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`Initial setup request rejected: ${message}`, error instanceof Error ? error.stack : undefined);
       throw error;
     }
+  }
+  @Public() @Post('setup/verify') verifySetupToken(@Body() body: unknown, @Req() request: Request) {
+    const value = setupTokenCredentials.parse(body);
+    const forwardedFor = request.headers['x-forwarded-for'];
+    const clientId = typeof forwardedFor === 'string' ? forwardedFor.split(',', 1)[0]!.trim() : request.ip;
+    this.setupTokenRateLimiter.consume(clientId || 'unknown');
+    return this.service.verifySetupToken(value.setupToken);
+  }
+  @Public() @Post('setup/validate') validateSetupTicket(@Body() body: unknown) {
+    const value = setupTicketCredentials.parse(body);
+    return this.service.validateSetupTicket(value.setupTicket);
   }
   @Public() @Post('login') login(@Body() body: unknown) {
     const value = credentials.parse(body);

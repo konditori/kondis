@@ -2,47 +2,39 @@ import { fail, redirect } from "@sveltejs/kit";
 import { apiUrl } from "$lib/server/api";
 import type { Actions, PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ locals }) => {
-  const response = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
+  const response = await locals.kondisFetch(apiUrl("api/v1/auth/setup"), {
+    cache: "no-store",
+  });
   if (!response.ok || !(await response.json()).setupRequired)
     throw redirect(303, "/login");
   return {};
 };
 export const actions: Actions = {
-  setup: async ({ request, cookies, fetch }) => {
+  verify: async ({ request, cookies, fetch }) => {
     const form = await request.formData();
-    const firstName = String(form.get("firstName") ?? "");
-    const lastName = String(form.get("lastName") ?? "");
-    const email = String(form.get("email") ?? "");
-    const password = String(form.get("password") ?? "");
     const setupToken = String(form.get("setupToken") ?? "");
-    const confirmPassword = String(form.get("confirmPassword") ?? "");
-    const values = { firstName, lastName, email };
-    if (password !== confirmPassword)
-      return fail(400, { ...values, error: "Passwords do not match." });
-    const response = await fetch("/api/v1/auth/setup", {
+    const response = await fetch("/api/v1/auth/setup/verify", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        firstName,
-        lastName,
-        email,
-        password,
-        setupToken,
-      }),
+      body: JSON.stringify({ setupToken }),
     });
-    if (!response.ok)
+    if (!response.ok) {
+      const error =
+        response.status === 429
+          ? "Too many attempts. Please wait a minute and try again."
+          : "That setup token is not valid.";
       return fail(400, {
-        ...values,
-        error: "Check the setup token and account details, then try again.",
+        error,
       });
+    }
     const result = await response.json();
-    cookies.set("kondis_session", result.accessToken, {
+    cookies.set("kondis_setup_ticket", result.token, {
       path: "/",
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "strict",
       secure: true,
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: 10 * 60,
     });
-    throw redirect(303, "/");
+    throw redirect(303, "/setup/account");
   },
 };

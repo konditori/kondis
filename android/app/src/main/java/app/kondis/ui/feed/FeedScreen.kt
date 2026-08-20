@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudDone
 import androidx.compose.material.icons.rounded.CloudOff
@@ -30,19 +30,19 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.collectLatest
 import app.kondis.model.UnitSystem
 import app.kondis.model.formatDateTime
 import app.kondis.ui.components.ActivityCard
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun FeedRoute(
@@ -82,8 +82,11 @@ fun FeedScreen(
             state.errorMessage == null
 
     LaunchedEffect(listState, state.activities.size, state.nextCursor, state.loadingMore) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1 }
-            .distinctUntilChanged()
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index ?: -1
+        }.distinctUntilChanged()
             .collectLatest { lastVisibleIndex ->
                 if (state.nextCursor != null && !state.loadingMore && lastVisibleIndex >= state.activities.size - 3) {
                     onLoadMore()
@@ -139,7 +142,11 @@ fun FeedScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Icon(
+                                Icons.Rounded.CloudOff,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
                             Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
                             TextButton(onClick = onRefresh) { Text("Retry") }
                         }
@@ -153,11 +160,11 @@ fun FeedScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    if (state.search.isBlank()) "Your first activity starts here" else "No matching activities",
+                                    if (state.search.isBlank()) "Nothing to see here!" else "No matching activities",
                                     style = MaterialTheme.typography.titleLarge,
                                 )
                                 Text(
-                                    if (state.search.isBlank()) "Record a workout or connect to your Kondis server." else "Try a different name or sport.",
+                                    if (state.search.isBlank()) "Record a workout" else "Try a different name or sport.",
                                     modifier = Modifier.padding(top = 8.dp),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

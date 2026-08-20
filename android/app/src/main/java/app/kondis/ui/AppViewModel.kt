@@ -42,6 +42,11 @@ sealed interface LoginStage {
         val serverUrl: String,
     ) : LoginStage
 
+    /** The server is uninitialized; setup must be completed in a web app before mobile login. */
+    data class InitialSetupRequired(
+        val serverUrl: String,
+    ) : LoginStage
+
     /** A standards-based OAuth/OIDC gateway protects this server; sign in through the browser first. */
     data class OAuthReady(
         val serverUrl: String,
@@ -130,6 +135,10 @@ class AppViewModel
                     when (capability) {
                         is ServerCapability.Direct -> {
                             _loginStage.value = LoginStage.DirectReady(serverUrl)
+                        }
+
+                        is ServerCapability.InitialSetupRequired -> {
+                            _loginStage.value = LoginStage.InitialSetupRequired(serverUrl)
                         }
 
                         is ServerCapability.ExternalOAuth -> {

@@ -106,10 +106,18 @@ fun SettingsScreen(
             singleLine = true,
         )
         if (state.serverActive) {
-            Button(onClick = { showSignOutConfirmation = true }, modifier = Modifier.fillMaxWidth()) { Text("Sign out") }
+            Button(
+                onClick = { showSignOutConfirmation = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Sign out") }
         } else {
             Button(onClick = onSave, enabled = !state.checking, modifier = Modifier.fillMaxWidth()) {
-                if (state.checking) CircularProgressIndicator(modifier = Modifier.padding(end = 10.dp), strokeWidth = 2.dp)
+                if (state.checking) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 10.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
                 Text(if (state.checking) "Checking…" else "Save and test connection")
             }
         }
@@ -151,17 +159,24 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun UnitOption(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun UnitOption(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Card(
         onClick = onClick,
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+            ),
+        border =
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+            ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(18.dp),

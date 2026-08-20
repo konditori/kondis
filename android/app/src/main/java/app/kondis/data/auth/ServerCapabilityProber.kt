@@ -2,6 +2,7 @@ package app.kondis.data.auth
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -57,7 +58,11 @@ class ServerCapabilityProber
                 response.use {
                     when {
                         it.code == 200 -> {
-                            ServerCapability.Direct
+                            if (initialSetupRequired(apiBaseUrl)) {
+                                ServerCapability.InitialSetupRequired
+                            } else {
+                                ServerCapability.Direct
+                            }
                         }
 
                         it.code == 401 -> {
@@ -178,6 +183,15 @@ class ServerCapabilityProber
                         .build(),
                 ).execute()
 
+        private fun initialSetupRequired(apiBaseUrl: String): Boolean =
+            runCatching {
+                val setupUrl = apiBaseUrl.toHttpUrlOrNull()?.resolve("auth/setup") ?: return false
+                get(setupUrl.toString()).use { response ->
+                    if (!response.isSuccessful) return false
+                    json.decodeFromString<SetupStatusResponse>(response.body.string()).setupRequired
+                }
+            }.getOrDefault(false)
+
         private fun redirectReason(response: Response): String {
             val location = response.header("Location")
             return if (location?.contains("cloudflareaccess.com") == true) {
@@ -220,3 +234,8 @@ class ServerCapabilityProber
             }
         }
     }
+
+@Serializable
+private data class SetupStatusResponse(
+    val setupRequired: Boolean = false,
+)

@@ -120,7 +120,17 @@ class ActivityRepository
             search: String = "",
         ): PageResult {
             val account = account()
-            val response = api(account.settings).feed(cursor = cursor, limit = FEED_PAGE_SIZE, search = search.trim().ifBlank { null })
+            val response =
+                api(
+                    account.settings,
+                ).feed(
+                    cursor = cursor,
+                    limit = FEED_PAGE_SIZE,
+                    search =
+                        search.trim().ifBlank {
+                            null
+                        },
+                )
             activityDao.upsertActivities(response.activities.map { toEntity(it, account.key) })
             return PageResult(response.nextCursor, response.total)
         }
