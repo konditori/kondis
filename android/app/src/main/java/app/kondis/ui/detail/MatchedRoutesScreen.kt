@@ -182,8 +182,8 @@ fun MatchedRoutesScreen(
                         }
                         Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Text(tr("activities_count", activities.size), fontWeight = FontWeight.Bold)
-                            Text("- ${tr("trending_average")}", color = MaterialTheme.colorScheme.primary)
-                            Text("- ${tr("each_effort")}", color = MaterialTheme.colorScheme.secondary)
+                            Text(tr("trending_average"), color = MaterialTheme.colorScheme.primary)
+                            Text(tr("each_effort"), color = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 }

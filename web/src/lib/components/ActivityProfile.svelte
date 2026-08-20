@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   type ProfilePoint = {
     distance: number;
     time: number;
@@ -159,12 +160,12 @@
   }
 </script>
 
-<section class="activity-profile" aria-label="Elevation profile">
+<section class="activity-profile" aria-label={t("elevation_profile")}>
   {#if validPoints.length > 1}
     <svg
       viewBox={`0 0 ${width} ${height}`}
       role="img"
-      aria-label="Elevation by distance"
+      aria-label={t("elevation_by_distance")}
       onpointermove={handleGraphMove}
       onpointerleave={clearGraphHover}
     >
@@ -248,24 +249,24 @@
             rx="3"
           />
           <text x="10" y="19"
-            ><tspan class="profile-tooltip-label">Dist: </tspan><tspan
+            ><tspan class="profile-tooltip-label">{t("dist_label")} </tspan><tspan
               class="profile-tooltip-value"
               >{(displayedPoint.distance / 1000).toFixed(2)} km</tspan
             ></text
           >
           <text x="10" y="37"
-            ><tspan class="profile-tooltip-label">Elev: </tspan><tspan
+            ><tspan class="profile-tooltip-label">{t("elev_label")} </tspan><tspan
               class="profile-tooltip-value"
               >{Math.round(displayedPoint.altitude)} m</tspan
             ></text
           >
           <text x="10" y="55"
-            ><tspan class="profile-tooltip-label">Pace: </tspan><tspan
+            ><tspan class="profile-tooltip-label">{t("pace_label")} </tspan><tspan
               class="profile-tooltip-value">{paceText(pointPace)}</tspan
             ></text
           >
           {#if displayedPoint.heartRate != null}<text x="10" y="73"
-              ><tspan class="profile-tooltip-label">HR: </tspan><tspan
+              ><tspan class="profile-tooltip-label">{t("heart_rate_short_label")} </tspan><tspan
                 class="profile-tooltip-value"
                 >{displayedPoint.heartRate} bpm</tspan
               ></text

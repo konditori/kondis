@@ -13,8 +13,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
 import app.kondis.model.defaultWorkoutTitle
-import app.kondis.recording.GpxWriter
 import app.kondis.recording.EmptyRecordingException
+import app.kondis.recording.GpxWriter
 import app.kondis.recording.LiveTrackingRepository
 import app.kondis.recording.RecordingManager
 import app.kondis.recording.RecordingMode

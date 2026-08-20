@@ -74,7 +74,7 @@
       <p>{t("no_notifications_description")}</p>
     </div>
   {:else}
-    <section class="notifications-panel" aria-label="Notifications">
+    <section class="notifications-panel" aria-label={t("notifications")}>
       {#each notifications as notification (notification.id)}
         <a
           class="notification-row"

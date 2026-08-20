@@ -3,14 +3,15 @@
   import { goto } from "$app/navigation";
   import Sidebar from "$lib/components/Sidebar.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
+  import { t } from "$lib/i18n";
 
   let { children, data } = $props();
 </script>
 
 <svelte:head
-  ><title>Kondis</title><meta
+  ><title>{t("app_name")}</title><meta
     name="description"
-    content="Your self-hosted activity archive"
+    content={t("app_description")}
   /></svelte:head
 >
 

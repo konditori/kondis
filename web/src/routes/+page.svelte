@@ -270,7 +270,7 @@
   };
 </script>
 
-<svelte:head><title>Activities · Kondis</title></svelte:head>
+<svelte:head><title>{t("activities")} · Kondis</title></svelte:head>
 
 <div class="page-shell home-page">
   {#if hasSearch}

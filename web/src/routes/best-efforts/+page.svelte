@@ -15,7 +15,7 @@
   }
 </script>
 
-<svelte:head><title>Best efforts · Kondis</title></svelte:head>
+<svelte:head><title>{t("best_efforts")} · Kondis</title></svelte:head>
 
 <div class="page-shell best-efforts-index-page">
   <header class="page-header">

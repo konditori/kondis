@@ -26,7 +26,7 @@
 <aside class="sidebar">
   <a class="brand" href="/" onclick={goHome} aria-label={t("kondis_home")}>
     <span class="brand-mark" aria-hidden="true">😰</span>
-    <span>kondis</span>
+    <span>{t("app_name")}</span>
   </a>
 
   <nav aria-label={t("primary_navigation")}>

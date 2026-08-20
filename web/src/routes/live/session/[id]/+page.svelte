@@ -1,9 +1,10 @@
 <script lang="ts">
   import LiveWorkoutView from "$lib/components/LiveWorkoutView.svelte";
+  import { t } from "$lib/i18n";
   let { data } = $props();
 </script>
 
-<svelte:head><title>Live workout · Kondis</title></svelte:head>
+<svelte:head><title>{t("live_workout")} · Kondis</title></svelte:head>
 
 <div class="page-shell">
   <LiveWorkoutView

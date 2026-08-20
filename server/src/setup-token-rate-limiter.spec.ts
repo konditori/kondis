@@ -9,7 +9,9 @@ describe(SetupTokenRateLimiter.name, () => {
     const limiter = new SetupTokenRateLimiter();
     const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
 
-    for (let attempt = 0; attempt < 5; attempt += 1) {limiter.consume('client-1', 1000);}
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      limiter.consume('client-1', 1000);
+    }
 
     expect(() => limiter.consume('client-1', 1000)).toThrow(HttpException);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Setup token rate limit exceeded'));

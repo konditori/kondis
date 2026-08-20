@@ -10,6 +10,7 @@
   import UserAvatar from "$lib/components/UserAvatar.svelte";
   import type { ActivityDetail } from "$lib/types";
   import { relativeTime } from "$lib/format";
+  import { t } from "$lib/i18n";
   import { userDisplayName } from "$lib/user-name";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import { onMount } from "svelte";
@@ -160,10 +161,10 @@
   );
 </script>
 
-<section id="comments" class="activity-comments" aria-label="Comments">
+<section id="comments" class="activity-comments" aria-label={t("comments")}>
   {#if error}<p class="form-error" role="alert">{error}</p>{/if}
   {#if loading}
-    <p class="muted-copy">Loading comments…</p>
+    <p class="muted-copy">{t("loading_comments")}</p>
   {:else if comments.length}
     <div class="comment-list">
       {#each comments as comment (comment.id)}
@@ -191,15 +192,15 @@
                 <input
                   bind:value={editingBody}
                   maxlength="2000"
-                  aria-label="Edit comment"
+                  aria-label={t("edit_comment")}
                 />
                 <button type="submit" disabled={saving || !editingBody.trim()}
-                  >Save</button
+                  >{t("common_save")}</button
                 >
                 <button
                   type="button"
                   class="comment-cancel"
-                  onclick={cancelEdit}><X size={15} /> Cancel</button
+                  onclick={cancelEdit}><X size={15} /> {t("common_cancel")}</button
                 >
               </form>
             {:else}
@@ -211,7 +212,7 @@
               <button
                 class="comment-menu-trigger"
                 type="button"
-                aria-label="Comment actions"
+                aria-label={t("comment_actions")}
                 aria-expanded={openMenuId === comment.id}
                 onclick={() =>
                   (openMenuId = openMenuId === comment.id ? null : comment.id)}
@@ -223,14 +224,14 @@
                     type="button"
                     role="menuitem"
                     onclick={() => beginEdit(comment)}
-                    ><Pencil size={14} /> Edit</button
+                    ><Pencil size={14} /> {t("edit")}</button
                   >
                   <button
                     type="button"
                     role="menuitem"
                     class="comment-delete"
                     onclick={() => void remove(comment.id)}
-                    ><Trash2 size={14} /> Delete</button
+                    ><Trash2 size={14} /> {t("common_delete")}</button
                   >
                 </div>
               {/if}
@@ -246,14 +247,14 @@
       <input
         bind:value={body}
         maxlength="2000"
-        placeholder="Add a comment"
-        aria-label="Comment"
+        placeholder={t("add_a_comment")}
+        aria-label={t("comment")}
       />
       <button
         type="submit"
         disabled={sending || !body.trim()}
-        aria-label="Send comment"
-        title="Send comment"
+        aria-label={t("send_comment")}
+        title={t("send_comment")}
       >
         <Send size={16} />
       </button>

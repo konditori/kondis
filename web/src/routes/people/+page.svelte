@@ -71,7 +71,7 @@
   });
 </script>
 
-<svelte:head><title>People · Kondis</title></svelte:head>
+<svelte:head><title>{t("people")} · Kondis</title></svelte:head>
 
 <div class="page-shell">
   <header class="page-header">
@@ -81,14 +81,14 @@
       <p>{t("follow_athletes_description")}</p>
     </div>
     <button class="metadata-save" type="button" onclick={loadRequests}
-      ><UserPlus size={16} /> Requests</button
+      ><UserPlus size={16} /> {t("requests")}</button
     >
   </header>
   {#if showRequests}
-    <section class="settings-panel" aria-label="Follow requests">
+    <section class="settings-panel" aria-label={t("follow_requests")}>
       <h2>{t("incoming_requests")}</h2>
       {#if requests.length === 0}<p class="muted-copy">
-          No pending requests.
+          {t("no_pending_requests")}
         </p>{/if}
       {#each requests as request (request.id)}
         <div class="person-row">
@@ -104,11 +104,11 @@
             class="metadata-save"
             type="button"
             onclick={() => accept(request.id)}
-            ><Check size={16} /> Accept</button
+            ><Check size={16} /> {t("accept")}</button
           ><button
             class="metadata-cancel"
             type="button"
-            onclick={() => ignore(request.id)}><X size={16} /> Ignore</button
+            onclick={() => ignore(request.id)}><X size={16} /> {t("ignore")}</button
           >
         </div>
       {/each}

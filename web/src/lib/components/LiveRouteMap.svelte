@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let {
     coordinates,
@@ -42,8 +43,7 @@
       });
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: t("map_attribution"),
       }).addTo(map);
       L.control.zoom({ position: "bottomright" }).addTo(map);
       line = L.polyline([], {
@@ -73,5 +73,5 @@
 <div
   class="live-route-map"
   bind:this={container}
-  aria-label="Live workout route"
+  aria-label={t("live_workout_route")}
 ></div>

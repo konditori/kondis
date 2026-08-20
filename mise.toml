@@ -119,8 +119,12 @@ run = [
 run = { task = "//server:third-party-licenses" }
 
 [tasks."i18n:check"]
-description = "Validate the shared translation catalogs"
-run = "node ./scripts/check-i18n.mjs"
+description = "Validate translation catalogs and user-visible strings"
+run = [
+  "node ./scripts/check-i18n.mjs",
+  "node ./scripts/check-frontend-i18n.mjs",
+  "node ./scripts/check-server-i18n.mjs",
+]
 
 [tasks."i18n:android"]
 description = "Generate Android string resources from the shared translation catalogs"

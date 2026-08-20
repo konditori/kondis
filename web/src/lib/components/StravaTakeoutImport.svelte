@@ -33,11 +33,14 @@
       clearInterval(progressTimer);
       uploadState = "done";
       const imported = processed - status.duplicates - status.failed;
-      const parts = imported > 0
-        ? [t("strava_imported_activities", { count: imported })]
-        : [];
+      const parts =
+        imported > 0
+          ? [t("strava_imported_activities", { count: imported })]
+          : [];
       if (status.duplicates > 0)
-        parts.push(t("strava_duplicate_activities", { count: status.duplicates }));
+        parts.push(
+          t("strava_duplicate_activities", { count: status.duplicates }),
+        );
       if (status.failed > 0)
         parts.push(t("strava_failed_activities", { count: status.failed }));
       message = `${parts.join("; ")}.`;
@@ -84,7 +87,8 @@
       }
     } catch (error) {
       uploadState = "error";
-      message = error instanceof Error ? error.message : t("strava_import_failed");
+      message =
+        error instanceof Error ? error.message : t("strava_import_failed");
     }
   }
 </script>
@@ -140,7 +144,7 @@
           size={19}
         />{/if}
       {#if uploadState === "done"}<span class="processing"
-          ><Check class="success" size={16} /> Done</span
+          ><Check class="success" size={16} /> {t("done")}</span
         >{/if}
     </div>
   {/if}
@@ -172,6 +176,7 @@
     disabled={!file || uploadState === "uploading"}
     onclick={() => void upload()}
   >
-    {#if uploadState === "uploading"}<LoaderCircle class="spin" size={17} /> {t("strava_importing")}{:else}{t("strava_import_takeout")}{/if}
+    {#if uploadState === "uploading"}<LoaderCircle class="spin" size={17} />
+      {t("strava_importing")}{:else}{t("strava_import_takeout")}{/if}
   </button>
 </div>

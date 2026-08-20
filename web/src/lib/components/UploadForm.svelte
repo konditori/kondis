@@ -130,7 +130,7 @@
           size={19}
         />{/if}
       {#if uploadState === "done"}<span class="processing"
-          ><Check class="success" size={16} /> Done</span
+          ><Check class="success" size={16} /> {t("done")}</span
         >{/if}
     </div>
   {/if}

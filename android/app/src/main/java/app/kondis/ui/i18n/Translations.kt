@@ -1,8 +1,8 @@
 package app.kondis.ui.i18n
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 
 private val legacyKeys =
     setOf("app_name", "recording_channel_name", "recording_channel_description", "recording_notification_title")
