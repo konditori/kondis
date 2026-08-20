@@ -17,6 +17,7 @@ data class Activity(
     val createdAt: String,
     val updatedAt: String,
     val topBestEfforts: List<BestEffortSummary>? = null,
+    val achievementCount: Int? = null,
     val track: Track? = null,
     val images: List<ActivityImage> = emptyList(),
     val userId: String? = null,
@@ -29,9 +30,12 @@ data class Activity(
 @Serializable
 data class SocialUser(
     val id: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val avatarUrl: String? = null,
-)
+) {
+    val name: String get() = "$firstName $lastName".trim()
+}
 
 @Serializable
 data class ActivityImage(
