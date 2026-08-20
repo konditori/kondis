@@ -1,0 +1,21 @@
+.github/workflows/android.yml
+  s_79dd1f11e482f3::t_b9a6fc1ac36f83 42-43,71-75,77,79-138
+android/mise.toml
+  s_79dd1f11e482f3::t_3d7981e3930fc6 4-8,19-32,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "458b16417e016adbde1d11fb0a155ab86eda9a17",
+  "prompts": {},
+  "sessions": {
+    "s_79dd1f11e482f3": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ecd864ca-bfa4-4371-8c9f-60c05838dbc3",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
