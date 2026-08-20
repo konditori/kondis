@@ -238,6 +238,12 @@ private fun SyncStatusCard(
                     )
                 }
             }
+        } else {
+            Text(
+                "Everything is uploaded",
+                modifier = Modifier.padding(16.dp),
+                style = MaterialTheme.typography.titleMedium,
+            )
         }
     }
 }

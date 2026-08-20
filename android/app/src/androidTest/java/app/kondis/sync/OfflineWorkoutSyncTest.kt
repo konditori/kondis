@@ -201,6 +201,10 @@ class OfflineWorkoutSyncTest {
                         response(200, activityPageJson())
                     }
 
+                    request.method == "GET" && request.url.query == "limit=50" -> {
+                        response(200, activityPageJson())
+                    }
+
                     request.method == "GET" && request.url.encodedPath == "/api/v1/activities/$remoteId" -> {
                         response(200, activityDetailJson())
                     }
