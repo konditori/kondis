@@ -43,7 +43,7 @@ class KondisApiFactory
         ): KondisApi =
             Retrofit
                 .Builder()
-                .baseUrl(normalizeBaseUrl(baseUrl))
+                .baseUrl(normalizeApiBaseUrl(baseUrl))
                 .client(
                     client
                         .newBuilder()
@@ -91,13 +91,16 @@ class KondisApiFactory
                     }
                 }
                 val url = trimmed.toHttpUrlOrNull() ?: throw IllegalArgumentException("Server URL is invalid")
-                val apiUrl =
-                    if (url.encodedPath == "/") {
-                        url.newBuilder().addPathSegments("api/v1").build()
-                    } else {
-                        url
-                    }
-                return apiUrl.toString().trimEnd('/') + "/"
+                val path = url.encodedPath.trimEnd('/')
+                require(path.isEmpty() || path == "/api/v1") {
+                    "Server URL must be the server address, without an API path"
+                }
+                return url.newBuilder().encodedPath("/").build().toString().trimEnd('/')
+            }
+
+            private fun normalizeApiBaseUrl(value: String): String {
+                val baseUrl = normalizeBaseUrl(value)
+                return baseUrl.trimEnd('/') + "/api/v1/"
             }
         }
     }

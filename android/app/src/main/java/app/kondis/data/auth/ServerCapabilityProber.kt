@@ -40,9 +40,11 @@ class ServerCapabilityProber
 
         suspend fun probe(baseUrl: String): ServerCapability =
             withContext(Dispatchers.IO) {
-                val resource = baseUrl.trimEnd('/')
+                val serverBaseUrl = baseUrl.trimEnd('/').removeSuffix("/api/v1")
+                val apiBaseUrl = serverBaseUrl + "/api/v1/"
+                val resource = apiBaseUrl.trimEnd('/')
                 val capabilitiesUrl =
-                    baseUrl.toHttpUrlOrNull()?.resolve("auth/capabilities")
+                    apiBaseUrl.toHttpUrlOrNull()?.resolve("auth/capabilities")
                         ?: return@withContext ServerCapability.UnsupportedGateway(
                             "\"$baseUrl\" is not a valid server URL.",
                         )

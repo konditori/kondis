@@ -53,7 +53,7 @@ fun SettingsScreen(
         Text("Settings", style = MaterialTheme.typography.displaySmall)
         Text("Server", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 10.dp))
         Text(
-            "Kondis connects directly to your self-hosted API. HTTPS is strongly recommended outside your local network.",
+            "URL of the Kondis server.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         OutlinedTextField(
@@ -62,7 +62,7 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("API base URL") },
             leadingIcon = { Icon(Icons.Rounded.Dns, null) },
-            supportingText = { Text("Include /api/v1, for example https://kondis.example/api/v1/") },
+            supportingText = { Text("For example https://kondis.example") },
             singleLine = true,
         )
         Button(onClick = onSave, enabled = !state.checking, modifier = Modifier.fillMaxWidth()) {
@@ -98,11 +98,6 @@ fun SettingsScreen(
                 )
             }
         }
-        Text("Privacy", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 18.dp))
-        Text(
-            "Activity data stays in your Kondis installation. Cached activities and unfinished GPX recordings remain in this app's private storage.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         Button(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Sign out and switch account") }
     }
 }

@@ -11,7 +11,7 @@ class KondisApiFactoryTest {
             KondisApiFactory.normalizeBaseUrl("http://kondis.example/api/v1", allowCleartext = false)
         }
         assertEquals(
-            "https://kondis.example/api/v1/",
+            "https://kondis.example",
             KondisApiFactory.normalizeBaseUrl("https://kondis.example/api/v1", allowCleartext = false),
         )
     }
@@ -19,7 +19,7 @@ class KondisApiFactoryTest {
     @Test
     fun `deployment root URL resolves to the Kondis API prefix`() {
         assertEquals(
-            "https://kondis.example/api/v1/",
+            "https://kondis.example",
             KondisApiFactory.normalizeBaseUrl("https://kondis.example", allowCleartext = false),
         )
     }
