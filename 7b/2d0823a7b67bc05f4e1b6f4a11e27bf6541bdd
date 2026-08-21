@@ -1,0 +1,19 @@
+web/src/lib/components/ActivityComments.svelte
+  s_052c98c580d22c::t_1b61bc7a0ecbf5 52,62-68,95-99,169-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7b2d0823a7b67bc05f4e1b6f4a11e27bf6541bdd",
+  "prompts": {},
+  "sessions": {
+    "s_052c98c580d22c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02434-21e7-7a83-890a-4321176756ed",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
