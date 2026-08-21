@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -74,6 +75,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -290,26 +292,13 @@ fun ActivityDetailScreen(
                 }
             }
         }
-        if (!isCycling(activity.sport)) {
-            activity.analysis?.splits?.takeIf(List<*>::isNotEmpty)?.let { splits ->
-                item { SectionTitle(eyebrow = null, title = tr("splits")) }
-                item {
-                    SplitsTable(
-                        splits = splits,
-                        cycling = false,
-                        units = units,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                }
-            }
-        }
         if (activity.matchedRouteCount != null && activity.matchedRouteCount > 1) {
             item {
                 RepeatedRouteCard(
                     count = activity.matchedRouteCount,
                     cycling = isCycling(activity.sport),
                     onClick = { onMatchedRoutes(activity.id) },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 28.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
         }
@@ -321,16 +310,19 @@ fun ActivityDetailScreen(
             }
             if (distanceEfforts.isNotEmpty()) {
                 item {
-                    BestEffortsTable(
-                        efforts = distanceEfforts,
-                        cycling = isCycling(activity.sport),
-                        units = units,
-                        excludedFromRankings = activity.excludeFromRankings,
-                        onEffortClick = { effort ->
-                            onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", effort.type)
-                        },
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        BestEffortsTable(
+                            efforts = distanceEfforts,
+                            cycling = isCycling(activity.sport),
+                            units = units,
+                            excludedFromRankings = activity.excludeFromRankings,
+                            onEffortClick = { effort ->
+                                onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", effort.type)
+                            },
+                            compact = maxWidth < 500.dp,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
+                    }
                 }
             }
             if (powerEfforts.isNotEmpty()) {
@@ -338,6 +330,19 @@ fun ActivityDetailScreen(
                     PowerBestEffortsTable(
                         efforts = powerEfforts,
                         excludedFromRankings = activity.excludeFromRankings,
+                        units = units,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            }
+        }
+        if (!isCycling(activity.sport)) {
+            activity.analysis?.splits?.takeIf(List<*>::isNotEmpty)?.let { splits ->
+                item { SectionTitle(eyebrow = null, title = tr("splits")) }
+                item {
+                    SplitsTable(
+                        splits = splits,
+                        cycling = false,
                         units = units,
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
@@ -460,51 +465,59 @@ private fun BestEffortsTable(
     units: UnitSystem,
     excludedFromRankings: Boolean,
     onEffortClick: (app.kondis.model.BestEffort) -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val hasHeartRate = efforts.any { it.avgHr != null }
     DetailTable(modifier) {
-        TableHeader {
-            TableCell(tr("distance"), 1.45f, bold = true)
-            TableCell(tr("time"), 1f, bold = true)
-            TableCell(if (cycling) tr("speed") else tr("pace"), 1.3f, bold = true)
-            if (hasHeartRate) TableCell("HR", .8f, bold = true)
-            TableCell(tr("elevation_short"), .85f, bold = true)
-        }
         efforts.forEach { effort ->
             val achievement = if (excludedFromRankings) null else achievement(effort)
-            TableRow(onClick = { onEffortClick(effort) }) {
-                Row(Modifier.weight(1.45f), verticalAlignment = Alignment.CenterVertically) {
-                    if (achievement != null) {
-                        MedalIcon(
-                            tint = rankColor(achievement),
-                            modifier = Modifier.size(width = 34.dp, height = 38.dp),
-                        )
-                    } else if (!excludedFromRankings && efforts.any { achievement(it) != null }) {
-                        Spacer(Modifier.width(34.dp))
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onEffortClick(effort) },
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Box(
+                        Modifier.width(42.dp).height(38.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
+                        if (achievement != null) {
+                            MedalIcon(
+                                tint = rankColor(achievement),
+                                modifier = Modifier.size(width = 34.dp, height = 38.dp),
+                            )
+                        } else if (!excludedFromRankings && efforts.any { achievement(it) != null }) {
+                            Spacer(Modifier.width(34.dp))
+                        }
                     }
-                    Column(Modifier.weight(1f).padding(start = 6.dp)) {
+                    Column(Modifier.weight(1f).padding(start = 8.dp)) {
                         Text(bestEffortLabel(effort.type), fontWeight = FontWeight.Bold)
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 3.dp),
+                            horizontalArrangement = Arrangement.spacedBy(18.dp),
+                        ) {
+                            Text(formatDuration(effort.elapsedTime))
+                            Text(
+                                if (cycling) formatSpeed(effort.distance / effort.elapsedTime, units)
+                                else formatPace(effort.distance / effort.elapsedTime, units),
+                            )
+                            if (!compact) Text(formatElevation(effort.elevationChange, units))
+                            if (hasHeartRate) Text(effort.avgHr?.let { "$it bpm" } ?: "—")
+                        }
                         achievement?.let {
                             Text(
                                 achievementText(effort),
-                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(top = 2.dp),
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 }
-                TableCell(formatDuration(effort.elapsedTime), 1f)
-                TableCell(
-                    if (cycling) {
-                        formatSpeed(effort.distance / effort.elapsedTime, units)
-                    } else {
-                        formatPace(effort.distance / effort.elapsedTime, units)
-                    },
-                    1.3f,
-                )
-                if (hasHeartRate) TableCell(effort.avgHr?.let { "$it" } ?: "—", .8f)
-                TableCell(formatElevation(effort.elevationChange, units), .85f)
             }
         }
     }
@@ -895,12 +908,19 @@ private fun DetailHeader(
                             modifier = Modifier.padding(top = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(
-                                sportIcon(activity.sport),
-                                contentDescription = sportLabel(activity.sport),
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
+                            if (activity.sport.contains("run")) {
+                                Text(
+                                    "👟",
+                                    fontSize = 14.sp,
+                                )
+                            } else {
+                                Icon(
+                                    sportIcon(activity.sport),
+                                    contentDescription = sportLabel(activity.sport),
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                             Text(
                                 formatDateTime(activity.startedAt),
                                 modifier = Modifier.padding(start = 5.dp),
@@ -1105,19 +1125,56 @@ private fun ActivitySocialSection(
             CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp).size(20.dp), strokeWidth = 2.dp)
         } else {
             comments.forEach { comment ->
-                Column(Modifier.padding(top = 16.dp)) {
-                    Text(comment.user.name, style = MaterialTheme.typography.labelLarge)
-                    Text(comment.body, modifier = Modifier.padding(top = 2.dp))
-                    Text(
-                        formatDateTime(comment.createdAt),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                val commentAvatar by produceState<Bitmap?>(initialValue = null, key1 = comment.user.avatarUrl) {
+                    value = comment.user.avatarUrl?.let { runCatching { onLoadImage(it) }.getOrNull() }
+                }
+                Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.Top) {
+                    Box(Modifier.size(36.dp).clip(CircleShape), contentAlignment = Alignment.Center) {
+                        commentAvatar?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = comment.user.name,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } ?: Icon(
+                            Icons.Rounded.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer).padding(7.dp),
+                        )
+                    }
+                    Column(Modifier.padding(start = 10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(comment.user.name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Text(
+                                relativeTimestamp(comment.createdAt),
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Text(comment.body, modifier = Modifier.padding(top = 2.dp))
+                    }
                 }
             }
         }
     }
 }
+
+private fun relativeTimestamp(instant: String): String =
+    runCatching {
+        val zone = java.time.ZoneId.systemDefault()
+        val timestamp = java.time.Instant.parse(instant).atZone(zone)
+        val daysAgo = java.time.temporal.ChronoUnit.DAYS.between(timestamp.toLocalDate(), java.time.LocalDate.now(zone))
+        val time = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).format(timestamp)
+        when (daysAgo) {
+            0L -> "Today, $time"
+            1L -> "Yesterday, $time"
+            in 2..6 -> "$daysAgo days ago, $time"
+            else -> formatDateTime(instant)
+        }
+    }.getOrElse { formatDateTime(instant) }
 
 @Composable
 private fun ActivityPhotoViewer(
