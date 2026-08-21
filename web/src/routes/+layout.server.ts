@@ -54,6 +54,7 @@ export const load: LayoutServerLoad = async ({
   }
   const result = {
     user,
+    locale: locals.locale,
     authenticated: !url || (!publicAuthPage && !publicLiveView),
     unitSystem:
       parseUnitSystem(cookies.get(UNIT_SYSTEM_COOKIE)) ?? DEFAULT_UNIT_SYSTEM,

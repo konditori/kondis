@@ -1,7 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { ArrowLeft, RouteOff } from "@lucide/svelte";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 </script>
 
 <div class="empty-state error-page">

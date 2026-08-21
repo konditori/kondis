@@ -57,7 +57,8 @@
     speed,
   } from "$lib/format";
   import type { Activity, ActivityDetail } from "$lib/types";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 
   let { data } = $props();
   let updatedActivity = $state<Partial<Activity> | null>(null);

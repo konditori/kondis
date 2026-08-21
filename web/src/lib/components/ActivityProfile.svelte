@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
   type ProfilePoint = {
     distance: number;
     time: number;

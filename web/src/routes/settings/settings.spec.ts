@@ -11,14 +11,24 @@ describe("unit preference settings", () => {
       .mockReturnValueOnce(undefined)
       .mockReturnValueOnce("imperial");
 
-    expect(await load({ cookies: { get } } as never)).toEqual({
+    const event = {
+      cookies: { get },
+      locals: {
+        locale: "en",
+        kondisFetch: vi.fn().mockRejectedValue(new Error("offline")),
+      },
+    } as never;
+
+    expect(await load(event)).toEqual({
       user: undefined,
+      locale: "en",
       authenticated: true,
       unitSystem: "metric",
       activityTypes: [],
     });
-    expect(await load({ cookies: { get } } as never)).toEqual({
+    expect(await load(event)).toEqual({
       user: undefined,
+      locale: "en",
       authenticated: true,
       unitSystem: "imperial",
       activityTypes: [],

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Archive, ArrowRight, FileUp } from "@lucide/svelte";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 
   const choices = [
     {

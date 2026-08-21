@@ -1,7 +1,8 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight, X } from "@lucide/svelte";
   import type { ActivityImage } from "$lib/types";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 
   let {
     images,

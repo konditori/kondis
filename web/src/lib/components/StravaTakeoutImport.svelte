@@ -7,7 +7,8 @@
     uploadControllerUploadStravaTakeout,
     uploadControllerGetStravaTakeoutStatus,
   } from "$lib/api";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 
   let input = $state<HTMLInputElement>();
   let file = $state<File>();

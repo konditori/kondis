@@ -2,7 +2,8 @@
   import { Activity, Trophy, Users } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 
   const items = [
     { href: "/", label: t("home"), icon: Activity, section: null },

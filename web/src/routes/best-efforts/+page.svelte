@@ -2,7 +2,8 @@
   import { ArrowRight, Trophy } from "@lucide/svelte";
   import { bestEffortLabel } from "$lib/best-efforts";
   import { bestEffortValue } from "$lib/format";
-  import { t } from "$lib/i18n";
+  import { createTranslator } from "$lib/i18n";
+  const t = createTranslator();
 
   let { data } = $props();
   const sports = [
