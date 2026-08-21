@@ -1,0 +1,29 @@
+android/app/src/main/java/app/kondis/ui/components/ActivityStat.kt
+  s_b859363f7d4ffc::t_4e448a70a81dbd 8,15,17
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_d9a1ed14d9b0a5::t_5e60b4364a1321 30-31,39,98,209,263-271,362,700,713-716,766-774,849-857,881-934,936-937,951-968,971,976-977,981,983,985-986,989,991,995,997,1027,1030-1034,1036-1040,1053-1067,1071-1101,1106-1115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "48c26f2d0a4a94f4ed2e6ed535dc546048d53e5d",
+  "prompts": {},
+  "sessions": {
+    "s_b859363f7d4ffc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "513dd143-f8a9-43db-9808-0302f8188e5a",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_d9a1ed14d9b0a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02309-2c19-7b53-b24d-6909a76be2c7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
