@@ -1,0 +1,43 @@
+android/app/src/main/java/app/kondis/data/remote/ActivityEventClient.kt
+  s_66257ecd9f6213::t_95bb74a18179b8 3,6,19,43-46,49-71,73-92,94-99,101-107,109-128,138-143,151-154,165
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_66257ecd9f6213::t_e79204ba4fb67e 114-119
+android/app/src/main/java/app/kondis/ui/detail/ActivityDiscussionScreen.kt
+  s_66257ecd9f6213::t_d462a35a1d9c4b 33-34,76,89,96,124-149
+server/src/repositories/event.repository.ts
+  s_66257ecd9f6213::t_7b884f6f690c56 14,19,39-51,57,70,83-84,102-111,130,136-138,182,184-186
+server/src/services/social.service.ts
+  s_66257ecd9f6213::t_75d372ad4f07b5 4,217,224-225
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_66257ecd9f6213::t_6b898d2046db93 42-59
+web/src/lib/components/ActivityComments.svelte
+  s_66257ecd9f6213::t_0d75ac432133e9 155-164
+web/src/lib/realtime.ts
+  s_66257ecd9f6213::t_9ca52551ddfee7 11-17,99-107
+web/src/lib/server/api.ts
+  s_66257ecd9f6213::t_9d682d061c4118 22-27,29-38
+web/src/routes/+layout.server.ts
+  s_66257ecd9f6213::t_2555f65a0d30d4 15-20,65-73
+web/src/routes/+page.server.ts
+  s_66257ecd9f6213::t_c59d665f56a59a 10-16
+web/src/routes/+page.svelte
+  s_66257ecd9f6213::t_4bfd51c87c3135 166
+web/src/routes/activities/[id]/+page.svelte
+  s_66257ecd9f6213::t_dc44b3fc59f986 63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "edb5133657e810325979e99b403a6ea97df23ba6",
+  "prompts": {},
+  "sessions": {
+    "s_66257ecd9f6213": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02375-158c-7db2-9764-762943a0818b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
