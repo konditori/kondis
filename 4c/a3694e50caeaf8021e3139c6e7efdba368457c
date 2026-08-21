@@ -1,0 +1,19 @@
+web/src/lib/i18n.ts
+  s_052c98c580d22c::t_467bbae34e8d08 1,10-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4ca3694e50caeaf8021e3139c6e7efdba368457c",
+  "prompts": {},
+  "sessions": {
+    "s_052c98c580d22c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02434-21e7-7a83-890a-4321176756ed",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
