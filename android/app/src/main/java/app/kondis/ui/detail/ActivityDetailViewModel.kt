@@ -111,6 +111,12 @@ class ActivityDetailViewModel
             }
         }
 
+        fun refreshDiscussion() {
+            val id = activityId ?: return
+            refresh()
+            loadComments(id)
+        }
+
         fun update(update: ActivityUpdate) {
             val id = activityId ?: return
             if (id.startsWith(LOCAL_ACTIVITY_ID_PREFIX)) return

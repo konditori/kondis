@@ -12,7 +12,12 @@ import { apiUrl } from "$lib/server/api";
 import type { LayoutServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 
-export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
+export const load: LayoutServerLoad = async ({
+  cookies,
+  locals,
+  request,
+  url,
+}) => {
   let user:
     | {
         id: string;
@@ -57,5 +62,13 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   if (!url) {
     return result as typeof result & { eventsUrl: string };
   }
-  return { ...result, eventsUrl: activityEventsUrl(url) };
+  return {
+    ...result,
+    eventsUrl: activityEventsUrl(
+      url,
+      request.headers.get("x-forwarded-proto"),
+      request.headers.get("cf-visitor"),
+      request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
+    ),
+  };
 };

@@ -60,7 +60,7 @@
   import { t } from "$lib/i18n";
 
   let { data } = $props();
-  let updatedActivity = $state<Activity | null>(null);
+  let updatedActivity = $state<Partial<Activity> | null>(null);
   let updatedBestEfforts = $state<ActivityDetail["bestEfforts"] | undefined>(
     undefined,
   );

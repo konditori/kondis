@@ -152,8 +152,16 @@
         if (
           event.type === "activity.comment.created" &&
           event.activity.id === activity.id
-        )
-          void load();
+        ) {
+          if (event.comment) {
+            comments = sortChronologically([
+              ...comments.filter((comment) => comment.id !== event.comment.id),
+              event.comment,
+            ]);
+          } else {
+            void load();
+          }
+        }
       },
       () => {},
       { activityId: activity.id },

@@ -39,7 +39,24 @@ describe(EventRepository.name, () => {
     } as ActivityDto;
 
     await expect(sut.emit('ActivityCreate', activity)).resolves.toBeUndefined();
-    await expect(sut.emit('ActivityCommentCreated', { id: activity.id })).resolves.toBeUndefined();
+    await expect(
+      sut.emit(
+        'ActivityCommentCreated',
+        { id: activity.id },
+        {
+          id: crypto.randomUUID(),
+          body: 'A realtime comment',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          user: {
+            id: crypto.randomUUID(),
+            firstName: 'Test',
+            lastName: 'User',
+            avatarUrl: null,
+          },
+        },
+      ),
+    ).resolves.toBeUndefined();
   });
 
   it('publishes targeted notification and read events', async () => {

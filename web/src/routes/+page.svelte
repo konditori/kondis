@@ -163,7 +163,7 @@
         ];
         void refreshRecent();
       },
-      () => void refreshRecent(),
+      () => {},
     ),
   );
 

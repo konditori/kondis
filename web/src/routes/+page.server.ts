@@ -7,8 +7,13 @@ import {
 import type { ActivityPage, LiveWorkout } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals, url }) => {
-  const eventsUrl = activityEventsUrl(url);
+export const load: PageServerLoad = async ({ locals, request, url }) => {
+  const eventsUrl = activityEventsUrl(
+    url,
+    request.headers.get("x-forwarded-proto"),
+    request.headers.get("cf-visitor"),
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
+  );
   const liveResponse = await locals.kondisFetch(apiUrl("api/v1/live-workouts"));
   const liveWorkouts = liveResponse.ok
     ? ((await liveResponse.json()) as LiveWorkout[])

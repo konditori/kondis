@@ -30,6 +30,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,6 +73,7 @@ fun ActivityDiscussionRoute(
         loading = state.loading || state.commentsLoading,
         commenting = state.commenting,
         onBack = onBack,
+        onRefresh = viewModel::refreshDiscussion,
         onComment = viewModel::addComment,
         onLoadImage = viewModel::loadImage,
     )
@@ -83,12 +86,14 @@ private fun ActivityDiscussionScreen(
     loading: Boolean,
     commenting: Boolean,
     onBack: () -> Unit,
+    onRefresh: () -> Unit,
     onComment: (String) -> Unit,
     onLoadImage: suspend (String) -> Bitmap?,
 ) {
     var draft by remember(activity?.id) { mutableStateOf("") }
     var commentCountBeforeSubmission by remember(activity?.id) { mutableStateOf<Int?>(null) }
     val commentListState = rememberLazyListState()
+    val pullToRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(comments.size, commentCountBeforeSubmission) {
         val previousCommentCount = commentCountBeforeSubmission ?: return@LaunchedEffect
@@ -116,26 +121,33 @@ private fun ActivityDiscussionScreen(
                 }
                 return@Surface
             }
-            LazyColumn(modifier = Modifier.weight(1f), state = commentListState) {
-                item { DiscussionActivityHeader(activity) }
-                item { HorizontalDivider() }
-                if (loading && comments.isEmpty()) {
-                    item {
-                        Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+            PullToRefreshBox(
+                isRefreshing = loading,
+                onRefresh = onRefresh,
+                state = pullToRefreshState,
+                modifier = Modifier.weight(1f),
+            ) {
+                LazyColumn(modifier = Modifier.fillMaxSize(), state = commentListState) {
+                    item { DiscussionActivityHeader(activity) }
+                    item { HorizontalDivider() }
+                    if (loading && comments.isEmpty()) {
+                        item {
+                            Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            }
                         }
-                    }
-                } else if (comments.isEmpty()) {
-                    item {
-                        Text(
-                            "No comments yet",
-                            modifier = Modifier.padding(20.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                } else {
-                    items(comments.size, key = { comments[it].id }) { index ->
-                        DiscussionComment(comments[index], onLoadImage)
+                    } else if (comments.isEmpty()) {
+                        item {
+                            Text(
+                                "No comments yet",
+                                modifier = Modifier.padding(20.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        items(comments.size, key = { comments[it].id }) { index ->
+                            DiscussionComment(comments[index], onLoadImage)
+                        }
                     }
                 }
             }

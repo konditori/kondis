@@ -8,6 +8,13 @@ export type ActivityEvent =
   | {
       type: "activity.comment.created";
       activity: Pick<Activity, "id">;
+      comment: {
+        id: string;
+        body: string;
+        createdAt: string;
+        updatedAt: string;
+        user: NonNullable<Activity["athlete"]>;
+      };
     }
   | {
       type: "activity.like.updated";
@@ -89,7 +96,15 @@ export function subscribeToActivityEvents(
         throw new Error("Unable to authenticate activity events");
       const { token } = (await ticketResponse.json()) as { token?: string };
       if (!token) throw new Error("Activity event ticket was missing");
-      const socketUrl = new URL(url);
+      const socketUrl = new URL(url, window.location.href);
+      if (
+        window.location.protocol === "https:" &&
+        socketUrl.protocol === "ws:"
+      ) {
+        socketUrl.protocol = "wss:";
+        if (socketUrl.hostname === window.location.hostname)
+          socketUrl.port = "";
+      }
       socketUrl.searchParams.set("ticket", token);
       if (stopped) return;
       socket = new WebSocket(socketUrl);
