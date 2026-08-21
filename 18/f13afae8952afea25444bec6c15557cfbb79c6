@@ -1,0 +1,19 @@
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_d976e6cc747bb9::t_0a81ae2f3d3d93 195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "18f13afae8952afea25444bec6c15557cfbb79c6",
+  "prompts": {},
+  "sessions": {
+    "s_d976e6cc747bb9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a025d6-a781-75a0-8d68-6c52774652e0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
