@@ -108,6 +108,9 @@ class OfflineWorkoutSyncTest {
         }
         scrollToActivity("local-sync-test", beginning = true)
 
+        check(device.wait(Until.hasObject(By.res("sync-now")), 5_000)) {
+            "Sync button disappeared after returning to the beginning of the feed"
+        }
         device.findObject(By.res("sync-now")).click()
         check(device.wait(Until.hasObject(By.res("sync-complete")), 45_000)) {
             "Sync did not complete; server requests=${server.requestCount}"
@@ -160,6 +163,11 @@ class OfflineWorkoutSyncTest {
         check(UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().resourceId("activity-editor")))
         check(device.wait(Until.hasObject(By.res("activity-editor")), 5_000))
         UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)
+        check(
+            UiScrollable(UiSelector().scrollable(true)).scrollIntoView(
+                UiSelector().resourceId("activity-delete"),
+            ),
+        )
         check(device.wait(Until.hasObject(By.res("activity-delete")), 5_000))
         device.findObject(By.res("activity-delete")).click()
         check(device.wait(Until.hasObject(By.res("delete-activity-dialog")), 5_000))

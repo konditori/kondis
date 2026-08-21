@@ -458,8 +458,8 @@ private fun BestEffortsTable(
     units: UnitSystem,
     excludedFromRankings: Boolean,
     onEffortClick: (app.kondis.model.BestEffort) -> Unit,
-    compact: Boolean = false,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val hasHeartRate = efforts.any { it.avgHr != null }
     DetailTable(modifier) {
