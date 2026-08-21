@@ -1,0 +1,45 @@
+android/app/src/main/java/app/kondis/ui/detail/ActivityDiscussionScreen.kt
+  s_89f5bac698db3b::t_738a7f23052ad8 115,195,197
+android/app/src/main/res/values-b+sv/strings.xml
+  s_89f5bac698db3b::t_63001931189ff9 15-16
+android/app/src/main/res/values/strings.xml
+  s_89f5bac698db3b::t_d89229f455da96 15-16
+i18n/en.json
+  s_89f5bac698db3b::t_872e04d2b18633 13-14
+i18n/sv.json
+  s_89f5bac698db3b::t_d8fe64fbf14f31 13-14
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_052c98c580d22c::t_cddb090c45ad01 8,79-84,238,243
+web/src/lib/components/Sidebar.svelte
+  s_052c98c580d22c::t_ab797b1d127449 27-33,45,56-60
+web/src/routes/+layout.server.ts
+  s_052c98c580d22c::t_c19dc953ccd5a9 37-39,52
+web/src/routes/+page.server.ts
+  s_052c98c580d22c::t_3d9bd98cbc3758 18-27,36
+web/src/routes/activities/[id]/+page.svelte
+  s_052c98c580d22c::t_19e1f2a53ccb87 545-549
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6cde68cb4094ccb64726582dfe63733d55abe58c",
+  "prompts": {},
+  "sessions": {
+    "s_052c98c580d22c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02434-21e7-7a83-890a-4321176756ed",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_89f5bac698db3b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9fd0ec1b-7854-46f6-b408-464725e08a01",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
