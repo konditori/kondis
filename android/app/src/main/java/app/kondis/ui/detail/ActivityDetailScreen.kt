@@ -495,8 +495,11 @@ private fun BestEffortsTable(
                         ) {
                             Text(formatDuration(effort.elapsedTime))
                             Text(
-                                if (cycling) formatSpeed(effort.distance / effort.elapsedTime, units)
-                                else formatPace(effort.distance / effort.elapsedTime, units),
+                                if (cycling) {
+                                    formatSpeed(effort.distance / effort.elapsedTime, units)
+                                } else {
+                                    formatPace(effort.distance / effort.elapsedTime, units)
+                                },
                             )
                             if (!compact) Text(formatElevation(effort.elevationChange, units))
                             if (hasHeartRate) Text(effort.avgHr?.let { "$it bpm" } ?: "—")

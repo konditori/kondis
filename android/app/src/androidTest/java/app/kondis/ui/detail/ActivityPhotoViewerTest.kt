@@ -68,7 +68,7 @@ class ActivityPhotoViewerTest {
                     onDelete = {},
                     onRefresh = {},
                     onLike = {},
-                    onComment = {},
+                    onDiscussion = {},
                     onAddImages = {},
                     onLoadImage = { null },
                 )

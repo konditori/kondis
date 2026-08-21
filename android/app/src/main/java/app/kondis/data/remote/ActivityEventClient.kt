@@ -58,12 +58,12 @@ class ActivityEventClient
                                             settings.serverUrl,
                                             settings.accessToken,
                                             externalAccessToken,
-                                        )
-                                        .activityEventsTicket()
+                                        ).activityEventsTicket()
                                         .token
                                 val closed = CompletableDeferred<Unit>()
                                 val request =
-                                    Request.Builder()
+                                    Request
+                                        .Builder()
                                         .url(socketUrl(settings, ticket))
                                         .apply {
                                             header("Origin", settings.serverUrl.trimEnd('/'))
@@ -71,8 +71,7 @@ class ActivityEventClient
                                                 header("X-Kondis-Authorization", "Bearer $it")
                                             }
                                             externalAccessToken?.let { header("Authorization", "Bearer $it") }
-                                        }
-                                        .build()
+                                        }.build()
                                 val socket =
                                     httpClient
                                         .newBuilder()
@@ -143,13 +142,13 @@ class ActivityEventClient
                         ?.content ?: return null
                 if (
                     type in
-                        setOf(
-                            "activity.updated",
-                            "activity.comment.created",
-                            "activity.comment.updated",
-                            "activity.comment.deleted",
-                            "activity.like.updated",
-                        )
+                    setOf(
+                        "activity.updated",
+                        "activity.comment.created",
+                        "activity.comment.updated",
+                        "activity.comment.deleted",
+                        "activity.like.updated",
+                    )
                 ) {
                     RealtimeActivityEvent(type, id)
                 } else {

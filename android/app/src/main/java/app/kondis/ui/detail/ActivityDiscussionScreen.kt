@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
@@ -52,12 +53,11 @@ import app.kondis.model.ActivityDetail
 import app.kondis.model.Comment
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
-import app.kondis.model.formatDistance
 import app.kondis.model.formatDateTime
+import app.kondis.model.formatDistance
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.components.sportIcon
 import app.kondis.ui.i18n.tr
-import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun ActivityDiscussionRoute(
@@ -172,7 +172,11 @@ private fun ActivityDiscussionScreen(
                     },
                     enabled = draft.isNotBlank() && !commenting,
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = tr("post"), tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.AutoMirrored.Rounded.Send,
+                        contentDescription = tr("post"),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }
@@ -186,7 +190,11 @@ private fun DiscussionActivityHeader(activity: ActivityDetail) {
             StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(120.dp))
         }
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-            Text(activity.summary().displayName(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                activity.summary().displayName(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
             Row(
                 modifier = Modifier.padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -228,7 +236,10 @@ private fun DiscussionActivityHeader(activity: ActivityDetail) {
 }
 
 @Composable
-private fun DiscussionComment(comment: Comment, onLoadImage: suspend (String) -> Bitmap?) {
+private fun DiscussionComment(
+    comment: Comment,
+    onLoadImage: suspend (String) -> Bitmap?,
+) {
     val avatar by produceState<Bitmap?>(initialValue = null, key1 = comment.user.avatarUrl) {
         value = comment.user.avatarUrl?.let { runCatching { onLoadImage(it) }.getOrNull() }
     }
@@ -250,10 +261,19 @@ private fun DiscussionComment(comment: Comment, onLoadImage: suspend (String) ->
 }
 
 @Composable
-private fun Avatar(bitmap: Bitmap?, name: String?, modifier: Modifier = Modifier) {
+private fun Avatar(
+    bitmap: Bitmap?,
+    name: String?,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier.clip(CircleShape), contentAlignment = Alignment.Center) {
         bitmap?.let {
-            Image(it.asImageBitmap(), contentDescription = name, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Image(
+                it.asImageBitmap(),
+                contentDescription = name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
         } ?: Icon(
             Icons.Rounded.Person,
             contentDescription = null,
@@ -266,19 +286,33 @@ private fun Avatar(bitmap: Bitmap?, name: String?, modifier: Modifier = Modifier
 private fun relativeDiscussionTimestamp(instant: String): String =
     runCatching {
         val timestamp = java.time.Instant.parse(instant)
-        val minutesAgo = java.time.Duration.between(timestamp, java.time.Instant.now()).toMinutes().coerceAtLeast(0)
+        val minutesAgo =
+            java.time.Duration
+                .between(timestamp, java.time.Instant.now())
+                .toMinutes()
+                .coerceAtLeast(0)
         when {
-            minutesAgo < 1 -> "Just now"
-            minutesAgo < 60 -> "$minutesAgo min ago"
+            minutesAgo < 1 -> {
+                "Just now"
+            }
+
+            minutesAgo < 60 -> {
+                "$minutesAgo min ago"
+            }
+
             minutesAgo < 24 * 60 -> {
                 val hoursAgo = minutesAgo / 60
                 "$hoursAgo ${if (hoursAgo == 1L) "hour" else "hours"} ago"
             }
+
             minutesAgo < 7 * 24 * 60 -> {
                 val daysAgo = minutesAgo / (24 * 60)
                 "$daysAgo ${if (daysAgo == 1L) "day" else "days"} ago"
             }
-            else -> formatDateTime(timestamp.toString())
+
+            else -> {
+                formatDateTime(timestamp.toString())
+            }
         }
     }.getOrElse { formatDateTime(instant) }
 
@@ -286,5 +320,9 @@ private fun discussionActivityDate(instant: String): String =
     runCatching {
         java.time.format.DateTimeFormatter
             .ofPattern("M/d/yy", java.util.Locale.US)
-            .format(java.time.Instant.parse(instant).atZone(java.time.ZoneId.systemDefault()))
+            .format(
+                java.time.Instant
+                    .parse(instant)
+                    .atZone(java.time.ZoneId.systemDefault()),
+            )
     }.getOrElse { formatDateTime(instant) }

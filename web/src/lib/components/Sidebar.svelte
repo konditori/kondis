@@ -57,8 +57,7 @@
     class:active={page.url.pathname === "/"}
     href="/"
     data-sveltekit-preload-data="hover"
-    onclick={goHome}
-    ><Activity size={21} /><span>{t("home")}</span></a
+    onclick={goHome}><Activity size={21} /><span>{t("home")}</span></a
   >
   <a
     class:active={page.url.pathname.startsWith("/best-efforts")}

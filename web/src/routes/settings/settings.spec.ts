@@ -10,14 +10,20 @@ describe("unit preference settings", () => {
       .fn()
       .mockReturnValueOnce(undefined)
       .mockReturnValueOnce("imperial");
+    const kondisFetch = vi.fn(() =>
+      Promise.resolve(
+        new Response("[]", { headers: { "content-type": "application/json" } }),
+      ),
+    );
+    const event = () => ({ cookies: { get }, locals: { kondisFetch } });
 
-    expect(await load({ cookies: { get } } as never)).toEqual({
+    expect(await load(event() as never)).toEqual({
       user: undefined,
       authenticated: true,
       unitSystem: "metric",
       activityTypes: [],
     });
-    expect(await load({ cookies: { get } } as never)).toEqual({
+    expect(await load(event() as never)).toEqual({
       user: undefined,
       authenticated: true,
       unitSystem: "imperial",

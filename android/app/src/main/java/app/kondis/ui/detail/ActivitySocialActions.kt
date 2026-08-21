@@ -35,8 +35,14 @@ internal fun ActivitySocialSection(
             IconButton(onClick = onLike, modifier = Modifier.size(32.dp)) {
                 Icon(
                     if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                    contentDescription = if (activity.viewerLiked) tr("unlike_activity") else tr("like_activity"),
-                    tint = if (activity.viewerLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    contentDescription =
+                        if (activity.viewerLiked) tr("unlike_activity") else tr("like_activity"),
+                    tint =
+                        if (activity.viewerLiked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                 )
             }
             Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)

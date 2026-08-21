@@ -79,8 +79,10 @@ class ActivityRepository
             const val IMAGE_CACHE_SIZE_BYTES = 8 * 1024 * 1024
             val imageCache =
                 object : LruCache<String, Bitmap>(IMAGE_CACHE_SIZE_BYTES) {
-                    override fun sizeOf(key: String, value: Bitmap): Int =
-                        value.allocationByteCount
+                    override fun sizeOf(
+                        key: String,
+                        value: Bitmap,
+                    ): Int = value.allocationByteCount
                 }
         }
 
