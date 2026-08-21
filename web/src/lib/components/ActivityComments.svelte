@@ -171,6 +171,12 @@
           } else {
             void load();
           }
+        } else if (
+          (event.type === "activity.comment.updated" ||
+            event.type === "activity.comment.deleted") &&
+          event.activity.id === activity.id
+        ) {
+          void load();
         }
       },
       () => {},

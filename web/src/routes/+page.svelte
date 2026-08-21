@@ -137,7 +137,9 @@
       (event) => {
         if (
           event.type === "activity.best-efforts.available" ||
-          event.type === "activity.comment.created"
+          event.type === "activity.comment.created" ||
+          event.type === "activity.comment.updated" ||
+          event.type === "activity.comment.deleted"
         )
           return;
         if (event.type === "activity.like.updated") {
@@ -154,6 +156,11 @@
           }
           return;
         }
+        if (
+          event.type !== "activity.created" &&
+          event.type !== "activity.updated"
+        )
+          return;
         const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(

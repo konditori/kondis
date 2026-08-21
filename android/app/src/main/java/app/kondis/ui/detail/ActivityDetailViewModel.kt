@@ -75,7 +75,7 @@ class ActivityDetailViewModel
                     viewModelScope.launch {
                         eventClient.observe(id).collect { event ->
                             repository.refreshDetail(id)
-                            if (event.type == "activity.comment.created") loadComments(id)
+                            if (event.type.startsWith("activity.comment.")) loadComments(id)
                         }
                     }
             }

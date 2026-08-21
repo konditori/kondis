@@ -246,13 +246,15 @@ export class SocialService {
     if (!user) {
       throw new NotFoundException('Person does not exist');
     }
-    return {
+    const updatedComment: ActivityCommentEvent = {
       id: row.id,
       body: row.body,
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
       user,
     };
+    await this.eventRepository.emit('ActivityCommentUpdated', { id: activityId }, updatedComment);
+    return updatedComment;
   }
 
   async deleteComment(activityId: string, commentId: string, viewerId: string) {
@@ -266,6 +268,7 @@ export class SocialService {
     if (!row) {
       throw new NotFoundException('Comment does not exist');
     }
+    await this.eventRepository.emit('ActivityCommentDeleted', { id: activityId }, row.id);
   }
 
   async likers(activityId: string, viewerId: string) {

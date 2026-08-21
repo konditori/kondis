@@ -17,6 +17,8 @@ type EventMap = {
   ActivityCreate: [activity: ActivityDto];
   ActivityUpdate: [activity: ActivityDto];
   ActivityCommentCreated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
+  ActivityCommentUpdated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
+  ActivityCommentDeleted: [activity: Pick<ActivityDto, 'id'>, commentId: string];
   ActivityLikeUpdated: [activity: { id: string; likeCount: number }];
   ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
   NotificationCreated: [notification: NotificationCreatedEvent];
@@ -55,6 +57,8 @@ export type ArgsOf<T extends EmitEvent> = EventMap[T];
 type WebsocketEvent =
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
   | { type: 'activity.comment.created'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
+  | { type: 'activity.comment.updated'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
+  | { type: 'activity.comment.deleted'; activity: Pick<ActivityDto, 'id'>; commentId: string }
   | { type: 'activity.like.updated'; activity: { id: string; likeCount: number } }
   | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> }
   | { type: 'notification.created'; notification: NotificationCreatedEvent }
@@ -68,6 +72,8 @@ const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
   ActivityCommentCreated: (activity, comment) => ({ type: 'activity.comment.created', activity, comment }),
+  ActivityCommentUpdated: (activity, comment) => ({ type: 'activity.comment.updated', activity, comment }),
+  ActivityCommentDeleted: (activity, commentId) => ({ type: 'activity.comment.deleted', activity, commentId }),
   ActivityLikeUpdated: (activity) => ({ type: 'activity.like.updated', activity }),
   ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
   NotificationCreated: (notification) => ({ type: 'notification.created', notification }),
@@ -265,7 +271,7 @@ export class EventRepository implements OnApplicationShutdown {
         type?: string;
         activity?: { id?: string };
       };
-      return event.type === 'activity.comment.created' ? event.activity?.id : undefined;
+      return event.type?.startsWith('activity.comment.') ? event.activity?.id : undefined;
     } catch {
       return undefined;
     }

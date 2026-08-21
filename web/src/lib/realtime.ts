@@ -6,7 +6,7 @@ export type ActivityEvent =
       activity: Activity;
     }
   | {
-      type: "activity.comment.created";
+      type: "activity.comment.created" | "activity.comment.updated";
       activity: Pick<Activity, "id">;
       comment: {
         id: string;
@@ -15,6 +15,11 @@ export type ActivityEvent =
         updatedAt: string;
         user: NonNullable<Activity["athlete"]>;
       };
+    }
+  | {
+      type: "activity.comment.deleted";
+      activity: Pick<Activity, "id">;
+      commentId: string;
     }
   | {
       type: "activity.like.updated";
@@ -135,6 +140,8 @@ export function subscribeToActivityEvents(
           (event.type === "activity.created" ||
             event.type === "activity.updated" ||
             event.type === "activity.comment.created" ||
+            event.type === "activity.comment.updated" ||
+            event.type === "activity.comment.deleted" ||
             event.type === "activity.like.updated" ||
             event.type === "activity.best-efforts.available") &&
           event.activity?.id

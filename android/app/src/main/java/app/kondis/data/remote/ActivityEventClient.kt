@@ -141,7 +141,16 @@ class ActivityEventClient
                         ?.get("id")
                         ?.jsonPrimitive
                         ?.content ?: return null
-                if (type in setOf("activity.updated", "activity.comment.created", "activity.like.updated")) {
+                if (
+                    type in
+                        setOf(
+                            "activity.updated",
+                            "activity.comment.created",
+                            "activity.comment.updated",
+                            "activity.comment.deleted",
+                            "activity.like.updated",
+                        )
+                ) {
                     RealtimeActivityEvent(type, id)
                 } else {
                     null
