@@ -1,0 +1,19 @@
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_c3f61e70a485f7::t_4fcaf6df15b743 247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9bd81edac5e57760c0f31b0ca93e7b8015bd120e",
+  "prompts": {},
+  "sessions": {
+    "s_c3f61e70a485f7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "6f93d31c-864d-44fc-a2a5-79272c32f69e",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
