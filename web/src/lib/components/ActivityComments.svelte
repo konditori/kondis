@@ -49,6 +49,7 @@
   let sending = $state(false);
   let saving = $state(false);
   let error = $state("");
+  const locallyAddedCommentIds = new Set<string>();
 
   function sortChronologically(items: Comment[]): Comment[] {
     return [...items].sort(
@@ -56,6 +57,13 @@
         Date.parse(left.createdAt) - Date.parse(right.createdAt) ||
         left.id.localeCompare(right.id),
     );
+  }
+
+  function upsertComment(comment: Comment) {
+    comments = sortChronologically([
+      ...comments.filter((item) => item.id !== comment.id),
+      comment,
+    ]);
   }
 
   async function load() {
@@ -83,8 +91,12 @@
         { id: activity.id, commentCreateDto: { body: body.trim() } },
         getSdkRequestOptions(),
       );
-      comments = sortChronologically([...comments, result as Comment]);
       body = "";
+      const comment = result as Comment;
+      if (!comments.some((item) => item.id === comment.id)) {
+        locallyAddedCommentIds.add(comment.id);
+      }
+      upsertComment(comment);
     } catch {
       error = "Could not add comment.";
     } finally {
@@ -154,10 +166,8 @@
           event.activity.id === activity.id
         ) {
           if (event.comment) {
-            comments = sortChronologically([
-              ...comments.filter((comment) => comment.id !== event.comment.id),
-              event.comment,
-            ]);
+            if (locallyAddedCommentIds.delete(event.comment.id)) return;
+            upsertComment(event.comment);
           } else {
             void load();
           }
