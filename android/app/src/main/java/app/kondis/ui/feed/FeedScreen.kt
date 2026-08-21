@@ -111,119 +111,132 @@ fun FeedScreen(
         state = pullToRefreshState,
         modifier = Modifier.fillMaxSize().imePadding().testTag("activities-feed"),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, top = 22.dp, end = 16.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
+        Column(Modifier.fillMaxSize()) {
             if (state.queuedWorkouts.isNotEmpty() || state.showSyncComplete) {
-                item {
-                    SyncStatusCard(
-                        queuedWorkouts = state.queuedWorkouts,
-                        showSyncComplete = state.showSyncComplete,
-                        onSync = onSyncQueuedWorkouts,
-                    )
-                }
+                SyncStatusCard(
+                    queuedWorkouts = state.queuedWorkouts,
+                    showSyncComplete = state.showSyncComplete,
+                    onSync = onSyncQueuedWorkouts,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
             }
-            if (initialLoading) {
-                item {
-                    Box(
-                        modifier = Modifier.fillParentMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-            } else {
-                item {
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "😰 Kondis",
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.headlineMedium,
-                        )
-                        IconButton(onClick = { searchVisible = !searchVisible }) {
-                            Icon(Icons.Rounded.Search, contentDescription = tr("search_activities"))
-                        }
-                        IconButton(onClick = onPeopleClick) {
-                            Icon(Icons.Rounded.PersonAdd, contentDescription = tr("find_people"))
-                        }
-                    }
-                }
-                if (searchVisible) {
-                    item {
-                        OutlinedTextField(
-                            value = state.search,
-                            onValueChange = onSearchChange,
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                            placeholder = { Text(tr("search_activities")) },
-                            shape = MaterialTheme.shapes.large,
-                        )
-                    }
-                }
-                state.errorMessage?.let { message ->
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Icon(
-                                Icons.Rounded.CloudOff,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                            Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
-                            TextButton(onClick = onRefresh) { Text(tr("retry")) }
-                        }
-                    }
-                }
-                if (state.activities.isEmpty() && !state.refreshing) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding =
+                    PaddingValues(
+                        start = 16.dp,
+                        top = 14.dp,
+                        end = 16.dp,
+                        bottom = 28.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                if (initialLoading) {
                     item {
                         Box(
-                            modifier = Modifier.fillParentMaxSize().padding(horizontal = 16.dp, vertical = 72.dp),
+                            modifier = Modifier.fillParentMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    if (state.search.isBlank()) tr("nothing_to_see") else tr("no_matching_activities"),
-                                    style = MaterialTheme.typography.titleLarge,
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else {
+                    item {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                "😰 Kondis",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.headlineMedium,
+                            )
+                            IconButton(onClick = { searchVisible = !searchVisible }) {
+                                Icon(Icons.Rounded.Search, contentDescription = tr("search_activities"))
+                            }
+                            IconButton(onClick = onPeopleClick) {
+                                Icon(Icons.Rounded.PersonAdd, contentDescription = tr("find_people"))
+                            }
+                        }
+                    }
+                    if (searchVisible) {
+                        item {
+                            OutlinedTextField(
+                                value = state.search,
+                                onValueChange = onSearchChange,
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                                placeholder = { Text(tr("search_activities")) },
+                                shape = MaterialTheme.shapes.large,
+                            )
+                        }
+                    }
+                    state.errorMessage?.let { message ->
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Icon(
+                                    Icons.Rounded.CloudOff,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
                                 )
-                                Text(
-                                    text =
+                                Text(message, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                                TextButton(onClick = onRefresh) { Text(tr("retry")) }
+                            }
+                        }
+                    }
+                    if (state.activities.isEmpty() && !state.refreshing) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillParentMaxSize().padding(horizontal = 16.dp, vertical = 72.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
                                         if (state.search.isBlank()) {
-                                            tr("record_a_activity")
+                                            tr(
+                                                "nothing_to_see",
+                                            )
                                         } else {
-                                            tr("try_different_name_or_sport")
+                                            tr("no_matching_activities")
                                         },
-                                    modifier = Modifier.padding(top = 8.dp),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                                        style = MaterialTheme.typography.titleLarge,
+                                    )
+                                    Text(
+                                        text =
+                                            if (state.search.isBlank()) {
+                                                tr("record_a_activity")
+                                            } else {
+                                                tr("try_different_name_or_sport")
+                                            },
+                                        modifier = Modifier.padding(top = 8.dp),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-            items(state.activities, key = { it.id }) { activity ->
-                ActivityCard(
-                    activity,
-                    units,
-                    onClick = { onActivityClick(activity.id) },
-                    onLike = { onLike(activity.id, !activity.viewerLiked) },
-                    onLoadImage = onLoadImage,
-                    modifier = Modifier.testTag("activity-card-${activity.id}"),
-                )
-            }
-            if (state.loadingMore) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(strokeWidth = 2.dp)
+                items(state.activities, key = { it.id }) { activity ->
+                    ActivityCard(
+                        activity,
+                        units,
+                        onClick = { onActivityClick(activity.id) },
+                        onLike = { onLike(activity.id, !activity.viewerLiked) },
+                        onLoadImage = onLoadImage,
+                        modifier = Modifier.testTag("activity-card-${activity.id}"),
+                    )
+                }
+                if (state.loadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(strokeWidth = 2.dp)
+                        }
                     }
                 }
             }
@@ -236,9 +249,10 @@ private fun SyncStatusCard(
     queuedWorkouts: List<app.kondis.data.QueuedWorkout>,
     showSyncComplete: Boolean,
     onSync: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     androidx.compose.material3.Card(
-        modifier = Modifier.fillMaxWidth().testTag("sync-status"),
+        modifier = modifier.fillMaxWidth().testTag("sync-status"),
         colors =
             androidx.compose.material3.CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,

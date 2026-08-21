@@ -244,7 +244,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
                             onDiscussion = { id -> backStack.add(ActivityDiscussionKey(id)) },
-                            onDeleted = ::navigateToFeed,
+                            onDeleted = ::navigateBack,
                         )
                     }
                     entry<ActivityDiscussionKey> { key ->
