@@ -7,8 +7,7 @@
   } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import type { Activity } from "$lib/types";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
 
   let { eventsUrl }: { eventsUrl: string } = $props();
   let input = $state<HTMLInputElement>();

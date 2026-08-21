@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
   let { data, form } = $props();
 </script>
 

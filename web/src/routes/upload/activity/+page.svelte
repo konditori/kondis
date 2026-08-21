@@ -1,7 +1,6 @@
 <script lang="ts">
   import UploadForm from "$lib/components/UploadForm.svelte";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
 </script>

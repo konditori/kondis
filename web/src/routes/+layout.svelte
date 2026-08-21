@@ -3,11 +3,9 @@
   import { goto } from "$app/navigation";
   import Sidebar from "$lib/components/Sidebar.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
-  import { createTranslator, setLocale } from "$lib/i18n";
+  import { t } from "$lib/i18n";
 
   let { children, data } = $props();
-  setLocale(() => data.locale);
-  const t = createTranslator();
 </script>
 
 <svelte:head

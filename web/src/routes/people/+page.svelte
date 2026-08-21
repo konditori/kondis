@@ -10,8 +10,7 @@
     socialControllerUnfollow,
   } from "$lib/api";
   import { userDisplayName } from "$lib/user-name";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
 
   type Person = Awaited<ReturnType<typeof socialControllerPeople>>[number];
   type RequestItem = Awaited<

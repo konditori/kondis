@@ -10,8 +10,7 @@
   import UserAvatar from "$lib/components/UserAvatar.svelte";
   import type { ActivityDetail } from "$lib/types";
   import { relativeTime } from "$lib/format";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
   import { userDisplayName } from "$lib/user-name";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import { onMount } from "svelte";

@@ -1,7 +1,6 @@
 <script lang="ts">
   import LiveWorkoutView from "$lib/components/LiveWorkoutView.svelte";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
   let { data } = $props();
 </script>
 

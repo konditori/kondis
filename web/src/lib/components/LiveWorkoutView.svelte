@@ -15,8 +15,7 @@
   import type { LiveWorkout } from "$lib/types";
   import type { UnitSystem } from "$lib/units";
   import { distance, duration } from "$lib/format";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
 
   let {
     workout = $bindable(),

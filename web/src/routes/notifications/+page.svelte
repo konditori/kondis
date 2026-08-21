@@ -11,8 +11,7 @@
   import { userDisplayName } from "$lib/user-name";
   import { onMount } from "svelte";
   import { subscribeToActivityEvents } from "$lib/realtime";
-  import { createTranslator } from "$lib/i18n";
-  const t = createTranslator();
+  import { t } from "$lib/i18n";
 
   let { data } = $props<{ data: { eventsUrl: string } }>();
 
