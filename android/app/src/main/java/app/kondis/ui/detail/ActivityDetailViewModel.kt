@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
+import app.kondis.data.remote.ActivityEventClient
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityUpdate
 import app.kondis.model.Comment
@@ -35,16 +36,19 @@ class ActivityDetailViewModel
     @Inject
     constructor(
         private val repository: ActivityRepository,
+        private val eventClient: ActivityEventClient,
     ) : ViewModel() {
         private val mutableState = MutableStateFlow(DetailUiState())
         val state: StateFlow<DetailUiState> = mutableState.asStateFlow()
         private var activityId: String? = null
         private var observeJob: Job? = null
+        private var eventJob: Job? = null
 
         fun load(id: String) {
             if (id == activityId) return
             activityId = id
             observeJob?.cancel()
+            eventJob?.cancel()
             mutableState.value =
                 mutableState.value.copy(
                     activity = null,
@@ -66,6 +70,15 @@ class ActivityDetailViewModel
                 }
             refresh()
             loadComments(id)
+            if (!id.startsWith(LOCAL_ACTIVITY_ID_PREFIX)) {
+                eventJob =
+                    viewModelScope.launch {
+                        eventClient.observe(id).collect { event ->
+                            repository.refreshDetail(id)
+                            if (event.type == "activity.comment.created") loadComments(id)
+                        }
+                    }
+            }
         }
 
         private fun switchToRemoteActivity(remoteId: String) {

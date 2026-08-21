@@ -16,6 +16,7 @@ type EventMap = {
   ActivityCreate: [activity: ActivityDto];
   ActivityUpdate: [activity: ActivityDto];
   ActivityCommentCreated: [activity: Pick<ActivityDto, 'id'>];
+  ActivityLikeUpdated: [activity: { id: string; likeCount: number }];
   ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
   NotificationCreated: [notification: NotificationCreatedEvent];
   NotificationsRead: [notification: NotificationsReadEvent];
@@ -40,6 +41,7 @@ export type ArgsOf<T extends EmitEvent> = EventMap[T];
 type WebsocketEvent =
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
   | { type: 'activity.comment.created'; activity: Pick<ActivityDto, 'id'> }
+  | { type: 'activity.like.updated'; activity: { id: string; likeCount: number } }
   | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> }
   | { type: 'notification.created'; notification: NotificationCreatedEvent }
   | { type: 'notifications.read'; userId: string; readAt: string };
@@ -52,6 +54,7 @@ const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
   ActivityCommentCreated: (activity) => ({ type: 'activity.comment.created', activity }),
+  ActivityLikeUpdated: (activity) => ({ type: 'activity.like.updated', activity }),
   ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
   NotificationCreated: (notification) => ({ type: 'notification.created', notification }),
   NotificationsRead: (notification) => ({ type: 'notifications.read', ...notification }),

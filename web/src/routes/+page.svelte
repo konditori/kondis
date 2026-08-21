@@ -140,6 +140,20 @@
           event.type === "activity.comment.created"
         )
           return;
+        if (event.type === "activity.like.updated") {
+          const current = displayedActivities.find(
+            (activity) => activity.id === event.activity.id,
+          );
+          if (current) {
+            appendedActivities = [
+              ...appendedActivities.filter(
+                ({ uploadId }) => uploadId !== current.uploadId,
+              ),
+              { ...current, likeCount: event.activity.likeCount },
+            ];
+          }
+          return;
+        }
         const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(

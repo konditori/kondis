@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -45,8 +48,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.ActivityDetail
 import app.kondis.model.Comment
+import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
+import app.kondis.model.formatDistance
 import app.kondis.model.formatDateTime
+import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.components.sportIcon
 import app.kondis.ui.i18n.tr
 import androidx.compose.foundation.shape.CircleShape
@@ -81,10 +87,21 @@ private fun ActivityDiscussionScreen(
     onLoadImage: suspend (String) -> Bitmap?,
 ) {
     var draft by remember(activity?.id) { mutableStateOf("") }
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    var commentCountBeforeSubmission by remember(activity?.id) { mutableStateOf<Int?>(null) }
+    val commentListState = rememberLazyListState()
+
+    LaunchedEffect(comments.size, commentCountBeforeSubmission) {
+        val previousCommentCount = commentCountBeforeSubmission ?: return@LaunchedEffect
+        if (comments.size > previousCommentCount) {
+            commentListState.animateScrollToItem(comments.size + 1)
+            commentCountBeforeSubmission = null
+        }
+    }
+
+    Surface(modifier = Modifier.fillMaxSize().imePadding(), color = MaterialTheme.colorScheme.surface) {
         Column {
             Row(
-                Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 12.dp),
+                Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
@@ -99,8 +116,8 @@ private fun ActivityDiscussionScreen(
                 }
                 return@Surface
             }
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                item { DiscussionActivityHeader(activity, onLoadImage) }
+            LazyColumn(modifier = Modifier.weight(1f), state = commentListState) {
+                item { DiscussionActivityHeader(activity) }
                 item { HorizontalDivider() }
                 if (loading && comments.isEmpty()) {
                     item {
@@ -137,6 +154,7 @@ private fun ActivityDiscussionScreen(
                 Spacer(Modifier.width(8.dp))
                 IconButton(
                     onClick = {
+                        commentCountBeforeSubmission = comments.size
                         onComment(draft)
                         draft = ""
                     },
@@ -150,21 +168,47 @@ private fun ActivityDiscussionScreen(
 }
 
 @Composable
-private fun DiscussionActivityHeader(activity: ActivityDetail, onLoadImage: suspend (String) -> Bitmap?) {
-    val avatar by produceState<Bitmap?>(initialValue = null, key1 = activity.athlete?.avatarUrl) {
-        value = activity.athlete?.avatarUrl?.let { runCatching { onLoadImage(it) }.getOrNull() }
-    }
-    Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-        Avatar(avatar, activity.athlete?.name, Modifier.size(48.dp))
-        Column(Modifier.padding(start = 12.dp)) {
-            Text(activity.summary().displayName(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(sportIcon(activity.sport), contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun DiscussionActivityHeader(activity: ActivityDetail) {
+    Column(Modifier.fillMaxWidth()) {
+        activity.track?.takeIf { it.coordinates.size > 1 }?.let { track ->
+            StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(120.dp))
+        }
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Text(activity.summary().displayName(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(activity.athlete?.name.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(" · ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(discussionActivityDate(activity.startedAt), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(" · ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    sportIcon(activity.sport),
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Text(
-                    "${activity.athlete?.name.orEmpty()} · ${formatDateTime(activity.startedAt)}",
+                    formatDistance(activity.metrics?.distance, UnitSystem.Metric),
                     modifier = Modifier.padding(start = 5.dp),
-                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Row(
+                modifier = Modifier.padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Rounded.FavoriteBorder,
+                    contentDescription = tr("like_activity"),
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    activity.likeCount.toString(),
+                    modifier = Modifier.padding(start = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -176,7 +220,7 @@ private fun DiscussionComment(comment: Comment, onLoadImage: suspend (String) ->
     val avatar by produceState<Bitmap?>(initialValue = null, key1 = comment.user.avatarUrl) {
         value = comment.user.avatarUrl?.let { runCatching { onLoadImage(it) }.getOrNull() }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.Top) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.Top) {
         Avatar(avatar, comment.user.name, Modifier.size(42.dp))
         Column(Modifier.weight(1f).padding(start = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -209,12 +253,26 @@ private fun Avatar(bitmap: Bitmap?, name: String?, modifier: Modifier = Modifier
 
 private fun relativeDiscussionTimestamp(instant: String): String =
     runCatching {
-        val zone = java.time.ZoneId.systemDefault()
-        val timestamp = java.time.Instant.parse(instant).atZone(zone)
-        when (java.time.temporal.ChronoUnit.DAYS.between(timestamp.toLocalDate(), java.time.LocalDate.now(zone))) {
-            0L -> "Today"
-            1L -> "Yesterday"
-            in 2..6 -> "${java.time.temporal.ChronoUnit.DAYS.between(timestamp.toLocalDate(), java.time.LocalDate.now(zone))} days ago"
-            else -> formatDateTime(instant)
+        val timestamp = java.time.Instant.parse(instant)
+        val minutesAgo = java.time.Duration.between(timestamp, java.time.Instant.now()).toMinutes().coerceAtLeast(0)
+        when {
+            minutesAgo < 1 -> "Just now"
+            minutesAgo < 60 -> "$minutesAgo min ago"
+            minutesAgo < 24 * 60 -> {
+                val hoursAgo = minutesAgo / 60
+                "$hoursAgo ${if (hoursAgo == 1L) "hour" else "hours"} ago"
+            }
+            minutesAgo < 7 * 24 * 60 -> {
+                val daysAgo = minutesAgo / (24 * 60)
+                "$daysAgo ${if (daysAgo == 1L) "day" else "days"} ago"
+            }
+            else -> formatDateTime(timestamp.toString())
         }
+    }.getOrElse { formatDateTime(instant) }
+
+private fun discussionActivityDate(instant: String): String =
+    runCatching {
+        java.time.format.DateTimeFormatter
+            .ofPattern("M/d/yy", java.util.Locale.US)
+            .format(java.time.Instant.parse(instant).atZone(java.time.ZoneId.systemDefault()))
     }.getOrElse { formatDateTime(instant) }

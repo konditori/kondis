@@ -127,6 +127,10 @@ export class SocialService {
       .select(({ fn }) => fn.countAll<number>().as('count'))
       .where('activity_id', '=', activityId)
       .executeTakeFirstOrThrow();
+    await this.eventRepository.emit('ActivityLikeUpdated', {
+      id: activityId,
+      likeCount: Number(row.count),
+    });
     return { liked, likeCount: Number(row.count) };
   }
 

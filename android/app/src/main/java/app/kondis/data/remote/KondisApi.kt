@@ -92,6 +92,10 @@ import retrofit2.http.Url
     val body: String,
 )
 
+@Serializable data class ActivityEventsTicketResponse(
+    val token: String,
+)
+
 interface KondisApi {
     @POST("auth/login")
     suspend fun login(
@@ -100,6 +104,9 @@ interface KondisApi {
 
     @GET("auth/me")
     suspend fun me(): CurrentUserResponse
+
+    @POST("auth/activity-events-ticket")
+    suspend fun activityEventsTicket(): ActivityEventsTicketResponse
 
     @POST("live-workouts")
     suspend fun createLiveWorkout(

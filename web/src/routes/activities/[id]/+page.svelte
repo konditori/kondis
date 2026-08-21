@@ -323,6 +323,11 @@
           updatedBestEfforts = event.activity.bestEfforts;
         } else if (event.type === "activity.updated") {
           updatedActivity = { ...(updatedActivity ?? {}), ...event.activity };
+        } else if (event.type === "activity.like.updated") {
+          updatedActivity = {
+            ...(updatedActivity ?? {}),
+            likeCount: event.activity.likeCount,
+          };
         }
       },
       () => {},

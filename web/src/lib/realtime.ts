@@ -10,6 +10,10 @@ export type ActivityEvent =
       activity: Pick<Activity, "id">;
     }
   | {
+      type: "activity.like.updated";
+      activity: Pick<Activity, "id" | "likeCount">;
+    }
+  | {
       type: "activity.best-efforts.available";
       activity: Pick<ActivityDetail, "id" | "bestEfforts">;
     };
@@ -116,6 +120,7 @@ export function subscribeToActivityEvents(
           (event.type === "activity.created" ||
             event.type === "activity.updated" ||
             event.type === "activity.comment.created" ||
+            event.type === "activity.like.updated" ||
             event.type === "activity.best-efforts.available") &&
           event.activity?.id
         ) {
