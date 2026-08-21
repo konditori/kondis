@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
@@ -34,6 +36,7 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -47,7 +50,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,7 +71,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -94,6 +95,7 @@ import app.kondis.ui.components.ActivityImageSlide
 import app.kondis.ui.components.ActivityStat
 import app.kondis.ui.components.MedalIcon
 import app.kondis.ui.components.StaticRoutePreview
+import app.kondis.ui.components.sportIcon
 import app.kondis.ui.i18n.tr
 import app.kondis.ui.record.ActivityTypePicker
 import app.kondis.ui.theme.KondisOrange
@@ -204,6 +206,7 @@ fun ActivityDetailScreen(
                     } else {
                         null
                     },
+                onAddImages = if (!queuedForSync) onAddImages else null,
                 onDelete = if (!queuedForSync) ({ showDeleteDialog = true }) else null,
             )
         }
@@ -257,12 +260,15 @@ fun ActivityDetailScreen(
         }
         if (!queuedForSync) {
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    OutlinedButton(onClick = onAddImages) { Text(tr("add_photos")) }
-                }
+                ActivitySocialSection(
+                    activity = activity,
+                    comments = state.comments,
+                    loading = state.commentsLoading,
+                    commenting = state.commenting,
+                    onLike = { onLike(!activity.viewerLiked) },
+                    onComment = onComment,
+                    onLoadImage = onLoadImage,
+                )
             }
         }
         activity.description?.takeIf(String::isNotBlank)?.let { description ->
@@ -350,25 +356,10 @@ fun ActivityDetailScreen(
                 }
             }
         }
-        if (!queuedForSync) {
-            item {
-                ActivitySocialSection(
-                    activity = activity,
-                    comments = state.comments,
-                    loading = state.commentsLoading,
-                    commenting = state.commenting,
-                    onLike = { onLike(!activity.viewerLiked) },
-                    onComment = onComment,
-                )
-            }
-        }
     }
     if (showDeleteDialog) {
         AlertDialog(
-            modifier =
-                Modifier
-                    .semantics { testTagsAsResourceId = true }
-                    .testTag("delete-activity-dialog"),
+            modifier = Modifier.testTag("delete-activity-dialog"),
             onDismissRequest = { if (!state.deleting) showDeleteDialog = false },
             title = { Text(tr("delete_activity")) },
             text = { Text(tr("delete_activity_confirmation")) },
@@ -706,6 +697,7 @@ private fun DetailHeader(
     onBack: () -> Unit,
     onLoadImage: suspend (String) -> Bitmap?,
     onEdit: (() -> Unit)?,
+    onAddImages: (() -> Unit)?,
     onDelete: (() -> Unit)?,
 ) {
     val hasMap =
@@ -717,6 +709,10 @@ private fun DetailHeader(
     val firstImagePath = firstImage?.preview ?: firstImage?.original ?: firstImage?.thumbnail
     val firstImageBitmap by produceState<Bitmap?>(initialValue = null, key1 = firstImagePath) {
         value = firstImagePath?.let { runCatching { onLoadImage(it) }.getOrNull() }
+    }
+    val athleteAvatarPath = activity.athlete?.avatarUrl
+    val athleteAvatarBitmap by produceState<Bitmap?>(initialValue = null, key1 = athleteAvatarPath) {
+        value = athleteAvatarPath?.let { runCatching { onLoadImage(it) }.getOrNull() }
     }
     var showImages by remember(activity.id) { mutableStateOf(false) }
     var showMenu by remember(activity.id) { mutableStateOf(false) }
@@ -767,6 +763,15 @@ private fun DetailHeader(
                             )
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            onAddImages?.let { addImages ->
+                                DropdownMenuItem(
+                                    text = { Text(tr("add_photos")) },
+                                    onClick = {
+                                        showMenu = false
+                                        addImages()
+                                    },
+                                )
+                            }
                             onEdit?.let { edit ->
                                 DropdownMenuItem(
                                     text = { Text(tr("edit")) },
@@ -841,6 +846,15 @@ private fun DetailHeader(
                                 Icon(Icons.Rounded.MoreVert, contentDescription = tr("more_options"))
                             }
                             DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                                onAddImages?.let { addImages ->
+                                    DropdownMenuItem(
+                                        text = { Text(tr("add_photos")) },
+                                        onClick = {
+                                            showMenu = false
+                                            addImages()
+                                        },
+                                    )
+                                }
                                 onEdit?.let { edit ->
                                     DropdownMenuItem(
                                         text = { Text(tr("edit")) },
@@ -864,17 +878,63 @@ private fun DetailHeader(
                         }
                     }
                 }
-                Column(Modifier.padding(start = 12.dp)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Box(
+                        modifier = Modifier.width(56.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            modifier = Modifier.size(44.dp).clip(CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            athleteAvatarBitmap?.let {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = activity.athlete?.name,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            } ?: Icon(
+                                Icons.Rounded.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .padding(10.dp),
+                            )
+                        }
+                    }
+                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            activity.athlete?.name?.takeIf(String::isNotBlank)?.let { athleteName ->
+                                Text(athleteName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.padding(top = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                sportIcon(activity.sport),
+                                contentDescription = sportLabel(activity.sport),
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                formatDateTime(activity.startedAt),
+                                modifier = Modifier.padding(start = 5.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+                Column(Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp)) {
                     Text(
-                        sportLabel(activity.sport),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Text(activity.summary().displayName(), style = MaterialTheme.typography.displaySmall)
-                    Text(
-                        formatDateTime(activity.startedAt),
-                        modifier = Modifier.padding(top = 5.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        activity.summary().displayName(),
+                        style = MaterialTheme.typography.headlineMedium,
                     )
                     if (activity.tags.isNotEmpty()) {
                         Text(
@@ -888,47 +948,53 @@ private fun DetailHeader(
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        val metrics = activity.metrics
-                        ActivityStat(tr("distance"), formatDistance(metrics?.distance, units))
-                        ActivityStat(tr("moving_time"), formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
+                }
+                val metrics = activity.metrics
+                Column(Modifier.fillMaxWidth().padding(top = 24.dp)) {
+                    Row(Modifier.fillMaxWidth()) {
+                        ActivityStat(
+                            tr("distance"),
+                            formatDistance(metrics?.distance, units),
+                            Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        )
+                        ActivityStat(
+                            tr("moving_time"),
+                            formatDuration(metrics?.movingTime ?: metrics?.elapsedTime),
+                            Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        )
+                    }
+                    Row(Modifier.fillMaxWidth().padding(top = 16.dp)) {
                         ActivityStat(
                             if (activity.sport.contains("run")) tr("pace") else tr("average_speed"),
-                            if (activity.sport.contains(
-                                    "run",
-                                )
-                            ) {
+                            if (activity.sport.contains("run")) {
                                 formatPace(metrics?.avgSpeed, units)
                             } else {
                                 formatSpeed(metrics?.avgSpeed, units)
                             },
+                            Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
                         ActivityStat(
                             tr("elevation"),
-                            formatElevation(activity.metrics?.elevationGain, units),
+                            formatElevation(metrics?.elevationGain, units),
                             Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         )
+                    }
+                    Row(Modifier.fillMaxWidth().padding(top = 16.dp)) {
                         ActivityStat(
                             tr("average_heart_rate"),
-                            activity.metrics?.avgHr?.let {
-                                "$it bpm"
-                            } ?: "—",
+                            metrics?.avgHr?.let { "$it bpm" } ?: "—",
                             Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         )
                         ActivityStat(
                             tr("calories"),
-                            activity.metrics?.calories?.let {
-                                "${it.toInt()} kcal"
-                            } ?: "—",
+                            metrics?.calories?.let { "${it.toInt()} kcal" } ?: "—",
                             Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         )
                     }
                 }
@@ -958,11 +1024,20 @@ private fun ActivitySocialSection(
     commenting: Boolean,
     onLike: () -> Unit,
     onComment: (String) -> Unit,
+    onLoadImage: suspend (String) -> Bitmap?,
 ) {
     var draft by remember(activity.id) { mutableStateOf("") }
+    var showCommentField by remember(activity.id) { mutableStateOf(false) }
+    val avatarPath = activity.athlete?.avatarUrl
+    val avatarBitmap by produceState<Bitmap?>(initialValue = null, key1 = avatarPath) {
+        value = avatarPath?.let { runCatching { onLoadImage(it) }.getOrNull() }
+    }
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onLike) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            IconButton(onClick = onLike, modifier = Modifier.size(32.dp)) {
                 Icon(
                     if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     contentDescription = if (activity.viewerLiked) tr("unlike_activity") else tr("like_activity"),
@@ -974,29 +1049,70 @@ private fun ActivitySocialSection(
                         },
                 )
             }
-            Text(tr("likes", activity.likeCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                tr("comments_count", activity.commentCount),
-                modifier = Modifier.padding(start = 18.dp),
+                activity.likeCount.toString(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            IconButton(
+                onClick = { showCommentField = !showCommentField },
+                modifier = Modifier.padding(start = 12.dp).size(32.dp),
+            ) {
+                Icon(
+                    Icons.Rounded.ChatBubbleOutline,
+                    contentDescription = tr("comments_count", activity.commentCount),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                activity.commentCount.toString(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        OutlinedTextField(
-            value = draft,
-            onValueChange = { draft = it.take(2000) },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            label = { Text(tr("add_comment")) },
-            trailingIcon = {
-                TextButton(
-                    enabled = draft.isNotBlank() && !commenting,
+        if (showCommentField) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier.size(42.dp).clip(CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    avatarBitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                        )
+                    } ?: Icon(
+                        Icons.Rounded.Person,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer).padding(8.dp),
+                    )
+                }
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { draft = it.take(2000) },
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                    placeholder = { Text(tr("add_comment")) },
+                    singleLine = true,
+                )
+                IconButton(
                     onClick = {
                         onComment(draft)
                         draft = ""
                     },
-                ) { Text(tr("post")) }
-            },
-            singleLine = false,
-        )
+                    enabled = draft.isNotBlank() && !commenting,
+                    modifier =
+                        Modifier
+                            .size(36.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                ) {
+                    Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = tr("post"), tint = MaterialTheme.colorScheme.onPrimary)
+                }
+            }
+        }
         if (loading) {
             CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp).size(20.dp), strokeWidth = 2.dp)
         } else {
