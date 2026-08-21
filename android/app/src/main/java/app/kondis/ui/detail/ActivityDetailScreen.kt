@@ -69,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -364,7 +365,10 @@ fun ActivityDetailScreen(
     }
     if (showDeleteDialog) {
         AlertDialog(
-            modifier = Modifier.testTag("delete-activity-dialog"),
+            modifier =
+                Modifier
+                    .semantics { testTagsAsResourceId = true }
+                    .testTag("delete-activity-dialog"),
             onDismissRequest = { if (!state.deleting) showDeleteDialog = false },
             title = { Text(tr("delete_activity")) },
             text = { Text(tr("delete_activity_confirmation")) },
