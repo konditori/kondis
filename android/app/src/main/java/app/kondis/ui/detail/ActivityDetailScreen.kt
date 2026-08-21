@@ -29,13 +29,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.automirrored.rounded.Send
-import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Person
@@ -84,7 +81,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.ActivityDetail
 import app.kondis.model.ActivityImage
 import app.kondis.model.ActivityUpdate
-import app.kondis.model.Comment
 import app.kondis.model.UnitSystem
 import app.kondis.model.displayName
 import app.kondis.model.formatDateTime
@@ -116,6 +112,7 @@ fun ActivityDetailRoute(
     onBack: () -> Unit,
     onMatchedRoutes: (String) -> Unit,
     onBestEfforts: (String, String) -> Unit,
+    onDiscussion: (String) -> Unit,
     onDeleted: () -> Unit,
     viewModel: ActivityDetailViewModel = hiltViewModel(),
 ) {
@@ -131,12 +128,12 @@ fun ActivityDetailRoute(
         onBack,
         onMatchedRoutes,
         onBestEfforts,
+        onDiscussion,
         onDeleted,
         viewModel::update,
         viewModel::delete,
         viewModel::refresh,
         viewModel::setLiked,
-        viewModel::addComment,
         onAddImages = { imagePicker.launch("image/*") },
         onLoadImage = viewModel::loadImage,
     )
@@ -149,12 +146,12 @@ fun ActivityDetailScreen(
     onBack: () -> Unit,
     onMatchedRoutes: (String) -> Unit,
     onBestEfforts: (String, String) -> Unit,
+    onDiscussion: (String) -> Unit,
     onDeleted: () -> Unit,
     onUpdate: (ActivityUpdate) -> Unit,
     onDelete: () -> Unit,
     onRefresh: () -> Unit,
     onLike: (Boolean) -> Unit,
-    onComment: (String) -> Unit,
     onAddImages: () -> Unit,
     onLoadImage: suspend (String) -> Bitmap?,
 ) {
@@ -266,12 +263,8 @@ fun ActivityDetailScreen(
             item {
                 ActivitySocialSection(
                     activity = activity,
-                    comments = state.comments,
-                    loading = state.commentsLoading,
-                    commenting = state.commenting,
                     onLike = { onLike(!activity.viewerLiked) },
-                    onComment = onComment,
-                    onLoadImage = onLoadImage,
+                    onOpenDiscussion = { onDiscussion(activity.id) },
                 )
             }
         }
@@ -1014,167 +1007,6 @@ private fun DetailHeader(
         }
     }
 }
-
-@Composable
-private fun ActivitySocialSection(
-    activity: ActivityDetail,
-    comments: List<Comment>,
-    loading: Boolean,
-    commenting: Boolean,
-    onLike: () -> Unit,
-    onComment: (String) -> Unit,
-    onLoadImage: suspend (String) -> Bitmap?,
-) {
-    var draft by remember(activity.id) { mutableStateOf("") }
-    var showCommentField by remember(activity.id) { mutableStateOf(false) }
-    val avatarPath = activity.athlete?.avatarUrl
-    val avatarBitmap by produceState<Bitmap?>(initialValue = null, key1 = avatarPath) {
-        value = avatarPath?.let { runCatching { onLoadImage(it) }.getOrNull() }
-    }
-    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            IconButton(onClick = onLike, modifier = Modifier.size(32.dp)) {
-                Icon(
-                    if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                    contentDescription = if (activity.viewerLiked) tr("unlike_activity") else tr("like_activity"),
-                    tint =
-                        if (activity.viewerLiked) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                )
-            }
-            Text(
-                activity.likeCount.toString(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            IconButton(
-                onClick = { showCommentField = !showCommentField },
-                modifier = Modifier.padding(start = 12.dp).size(32.dp),
-            ) {
-                Icon(
-                    Icons.Rounded.ChatBubbleOutline,
-                    contentDescription = tr("comments_count", activity.commentCount),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Text(
-                activity.commentCount.toString(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (showCommentField) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier.size(42.dp).clip(CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    avatarBitmap?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                        )
-                    } ?: Icon(
-                        Icons.Rounded.Person,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                ).padding(8.dp),
-                    )
-                }
-                OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(2000) },
-                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-                    placeholder = { Text(tr("add_comment")) },
-                    singleLine = true,
-                )
-                IconButton(
-                    onClick = {
-                        onComment(draft)
-                        draft = ""
-                    },
-                    enabled = draft.isNotBlank() && !commenting,
-                    modifier =
-                        Modifier
-                            .size(36.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape),
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.Send,
-                        contentDescription = tr("post"),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                    )
-                }
-            }
-        }
-        if (loading) {
-            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp).size(20.dp), strokeWidth = 2.dp)
-        } else {
-            comments.forEach { comment ->
-                val commentAvatar by produceState<Bitmap?>(initialValue = null, key1 = comment.user.avatarUrl) {
-                    value = comment.user.avatarUrl?.let { runCatching { onLoadImage(it) }.getOrNull() }
-                }
-                Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.Top) {
-                    Box(Modifier.size(36.dp).clip(CircleShape), contentAlignment = Alignment.Center) {
-                        commentAvatar?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = comment.user.name,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                            )
-                        } ?: Icon(
-                            Icons.Rounded.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer).padding(7.dp),
-                        )
-                    }
-                    Column(Modifier.padding(start = 10.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(comment.user.name, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                            Text(
-                                relativeTimestamp(comment.createdAt),
-                                modifier = Modifier.padding(start = 8.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Text(comment.body, modifier = Modifier.padding(top = 2.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
-private fun relativeTimestamp(instant: String): String =
-    runCatching {
-        val zone = java.time.ZoneId.systemDefault()
-        val timestamp = java.time.Instant.parse(instant).atZone(zone)
-        val daysAgo = java.time.temporal.ChronoUnit.DAYS.between(timestamp.toLocalDate(), java.time.LocalDate.now(zone))
-        val time = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).format(timestamp)
-        when (daysAgo) {
-            0L -> "Today, $time"
-            1L -> "Yesterday, $time"
-            in 2..6 -> "$daysAgo days ago, $time"
-            else -> formatDateTime(instant)
-        }
-    }.getOrElse { formatDateTime(instant) }
 
 @Composable
 private fun ActivityPhotoViewer(

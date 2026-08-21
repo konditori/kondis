@@ -48,6 +48,7 @@ import androidx.navigation3.ui.NavDisplay
 import app.kondis.data.settings.AppSettings
 import app.kondis.recording.isActive
 import app.kondis.ui.detail.ActivityDetailRoute
+import app.kondis.ui.detail.ActivityDiscussionRoute
 import app.kondis.ui.detail.BestEffortsRoute
 import app.kondis.ui.detail.MatchedRoutesRoute
 import app.kondis.ui.feed.FeedRoute
@@ -74,6 +75,11 @@ private data object PeopleKey : NavKey
 
 @Serializable
 private data class ActivityDetailKey(
+    val id: String,
+) : NavKey
+
+@Serializable
+private data class ActivityDiscussionKey(
     val id: String,
 ) : NavKey
 
@@ -229,8 +235,12 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
+                            onDiscussion = { id -> backStack.add(ActivityDiscussionKey(id)) },
                             onDeleted = ::navigateToFeed,
                         )
+                    }
+                    entry<ActivityDiscussionKey> { key ->
+                        ActivityDiscussionRoute(id = key.id, onBack = ::navigateBack)
                     }
                     entry<MatchedRoutesKey> { key ->
                         MatchedRoutesRoute(
