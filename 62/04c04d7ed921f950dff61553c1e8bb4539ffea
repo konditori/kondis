@@ -1,0 +1,33 @@
+android/app/src/androidTest/java/app/kondis/ui/detail/ActivityPhotoViewerTest.kt
+  s_89f5bac698db3b::t_0a23a349af85fa 71
+web/src/routes/settings/settings.spec.ts
+  s_89f5bac698db3b::t_12cb263df7a711 13-18,20,26
+android/app/src/main/java/app/kondis/data/ActivityRepository.kt
+  s_89f5bac698db3b::t_724a5dba23d800 82-85
+android/app/src/main/java/app/kondis/data/remote/ActivityEventClient.kt
+  s_89f5bac698db3b::t_39ca4ed91ddd29 61,65-66,74,145-151
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_89f5bac698db3b::t_df9f47c40ff1e0 498-502
+android/app/src/main/java/app/kondis/ui/detail/ActivityDiscussionScreen.kt
+  s_89f5bac698db3b::t_229ce844fe33b9 20,57,175-179,193-197,239-242,264-268,271-276,289-293,295-302,307,312-315,323-327
+android/app/src/main/java/app/kondis/ui/detail/ActivitySocialActions.kt
+  s_89f5bac698db3b::t_8a50857129e5bd 38-45
+web/src/lib/components/Sidebar.svelte
+  s_89f5bac698db3b::t_3b98beb9fe2643 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6204c04d7ed921f950dff61553c1e8bb4539ffea",
+  "prompts": {},
+  "sessions": {
+    "s_89f5bac698db3b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9fd0ec1b-7854-46f6-b408-464725e08a01",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
