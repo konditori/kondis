@@ -112,7 +112,7 @@ private fun ActivityDiscussionScreen(
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = tr("back"))
                 }
-                Text("Discussion", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(tr("discussion"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
             HorizontalDivider()
             if (activity == null) {
@@ -192,9 +192,9 @@ private fun DiscussionActivityHeader(activity: ActivityDetail) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(activity.athlete?.name.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(" · ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr("activity_metadata_separator"), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(discussionActivityDate(activity.startedAt), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(" · ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr("activity_metadata_separator"), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Icon(
                     sportIcon(activity.sport),
                     contentDescription = null,

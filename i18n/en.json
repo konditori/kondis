@@ -10,6 +10,8 @@
   "common_save": "Save",
   "common_retry": "Retry",
   "comments": "Comments",
+  "discussion": "Discussion",
+  "activity_metadata_separator": " · ",
   "loading_comments": "Loading comments...",
   "edit_comment": "Edit comment",
   "comment_actions": "Comment actions",

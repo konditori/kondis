@@ -34,6 +34,9 @@ export const load: LayoutServerLoad = async ({
     url?.pathname === "/setup" ||
     url?.pathname.startsWith("/setup/") ||
     url?.pathname === "/register";
+  const activityTypesPromise = activityControllerListTypes(
+    getServerSdkRequestOptions(locals.kondisFetch),
+  );
   if (url && !publicAuthPage && !publicLiveView) {
     const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));
     if (!me.ok) {
@@ -46,9 +49,7 @@ export const load: LayoutServerLoad = async ({
   }
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
-    activityTypes = await activityControllerListTypes(
-      getServerSdkRequestOptions(locals.kondisFetch),
-    );
+    activityTypes = await activityTypesPromise;
   } catch {
     // Activity pages already surface API availability; keep settings usable.
   }

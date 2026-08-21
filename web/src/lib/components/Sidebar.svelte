@@ -24,7 +24,13 @@
 </script>
 
 <aside class="sidebar">
-  <a class="brand" href="/" onclick={goHome} aria-label={t("kondis_home")}>
+  <a
+    class="brand"
+    href="/"
+    data-sveltekit-preload-data="hover"
+    onclick={goHome}
+    aria-label={t("kondis_home")}
+  >
     <span class="brand-mark" aria-hidden="true">😰</span>
     <span>{t("app_name")}</span>
   </a>
@@ -36,6 +42,7 @@
           ? page.url.pathname.startsWith(item.section)
           : page.url.pathname === item.href}
         href={item.href}
+        data-sveltekit-preload-data={item.href === "/" ? "hover" : undefined}
         onclick={item.href === "/" ? goHome : undefined}
       >
         <item.icon size={19} />
@@ -46,7 +53,11 @@
 </aside>
 
 <nav class="mobile-nav" aria-label={t("mobile_navigation")}>
-  <a class:active={page.url.pathname === "/"} href="/" onclick={goHome}
+  <a
+    class:active={page.url.pathname === "/"}
+    href="/"
+    data-sveltekit-preload-data="hover"
+    onclick={goHome}
     ><Activity size={21} /><span>{t("home")}</span></a
   >
   <a

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import android.util.LruCache
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -75,6 +76,12 @@ class ActivityRepository
     ) {
         private companion object {
             const val FEED_PAGE_SIZE = 20
+            const val IMAGE_CACHE_SIZE_BYTES = 8 * 1024 * 1024
+            val imageCache =
+                object : LruCache<String, Bitmap>(IMAGE_CACHE_SIZE_BYTES) {
+                    override fun sizeOf(key: String, value: Bitmap): Int =
+                        value.allocationByteCount
+                }
         }
 
         fun activities(search: String): Flow<List<Activity>> =
@@ -228,11 +235,12 @@ class ActivityRepository
         suspend fun loadActivityImage(path: String): Bitmap? {
             val settings = settingsRepository.settings.first()
             val url = URI(settings.serverUrl).resolve(path).toString()
+            imageCache.get(url)?.let { return it }
             return runCatching {
                 withContext(Dispatchers.IO) {
                     apiFactory.create(settings).activityImage(url).use { body ->
                         val bytes = body.bytes()
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.also { imageCache.put(url, it) }
                     }
                 }
             }.onFailure { error ->

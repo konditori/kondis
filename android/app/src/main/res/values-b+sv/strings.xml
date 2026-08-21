@@ -12,6 +12,8 @@
     <string name="i18n_common_save">Spara</string>
     <string name="i18n_common_retry">Försök igen</string>
     <string name="i18n_comments">Kommentarer</string>
+    <string name="i18n_discussion">Diskussion</string>
+    <string name="i18n_activity_metadata_separator"> · </string>
     <string name="i18n_loading_comments">Laddar kommentarer&amp;#8230;</string>
     <string name="i18n_edit_comment">Redigera kommentar</string>
     <string name="i18n_comment_actions">Kommentarshandlingar</string>

@@ -14,15 +14,17 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
     request.headers.get("cf-visitor"),
     request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
   );
-  const liveResponse = await locals.kondisFetch(apiUrl("api/v1/live-workouts"));
-  const liveWorkouts = liveResponse.ok
-    ? ((await liveResponse.json()) as LiveWorkout[])
-    : [];
   try {
-    const body = (await socialControllerFeed(
-      {},
-      getServerSdkRequestOptions(locals.kondisFetch),
-    )) as ActivityPage;
+    const [liveResponse, body] = await Promise.all([
+      locals.kondisFetch(apiUrl("api/v1/live-workouts")),
+      socialControllerFeed(
+        {},
+        getServerSdkRequestOptions(locals.kondisFetch),
+      ) as Promise<ActivityPage>,
+    ]);
+    const liveWorkouts = liveResponse.ok
+      ? ((await liveResponse.json()) as LiveWorkout[])
+      : [];
     return { ...body, unavailable: false, eventsUrl, liveWorkouts };
   } catch {
     return {
@@ -31,7 +33,7 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
       total: 0,
       unavailable: true,
       eventsUrl,
-      liveWorkouts,
+      liveWorkouts: [],
     };
   }
 };

@@ -542,7 +542,11 @@
 
 <div class="detail-page">
   <header class="detail-header">
-    <a class="back-link" href="/" onclick={backToActivities}
+    <a
+      class="back-link"
+      href="/"
+      data-sveltekit-preload-data="hover"
+      onclick={backToActivities}
       ><ArrowLeft size={18} /> {t("all_activities")}</a
     >
     <div class="detail-heading">

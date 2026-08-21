@@ -12,6 +12,8 @@
     <string name="i18n_common_save">Save</string>
     <string name="i18n_common_retry">Retry</string>
     <string name="i18n_comments">Comments</string>
+    <string name="i18n_discussion">Discussion</string>
+    <string name="i18n_activity_metadata_separator"> · </string>
     <string name="i18n_loading_comments">Loading comments&amp;#8230;</string>
     <string name="i18n_edit_comment">Edit comment</string>
     <string name="i18n_comment_actions">Comment actions</string>

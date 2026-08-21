@@ -10,6 +10,8 @@
   "common_save": "Spara",
   "common_retry": "Försök igen",
   "comments": "Kommentarer",
+  "discussion": "Diskussion",
+  "activity_metadata_separator": " · ",
   "comments_count": "{count} kommentarer",
   "loading_comments": "Laddar kommentarer...",
   "edit_comment": "Redigera kommentar",
