@@ -3,6 +3,8 @@ package app.kondis.recording
 import java.io.File
 import javax.inject.Inject
 
+class EmptyRecordingException : IllegalArgumentException()
+
 class GpxWriter
     @Inject
     constructor() {
@@ -12,7 +14,7 @@ class GpxWriter
             sport: String,
             title: String = sport,
         ): File {
-            require(recording.points.isNotEmpty()) { "A workout needs at least one GPS point" }
+            if (recording.points.isEmpty()) throw EmptyRecordingException()
             val points =
                 recording.points.joinToString(separator = "\n") { point ->
                     val elevation =

@@ -7,6 +7,7 @@
     uploadControllerUploadStravaTakeout,
     uploadControllerGetStravaTakeoutStatus,
   } from "$lib/api";
+  import { t } from "$lib/i18n";
 
   let input = $state<HTMLInputElement>();
   let file = $state<File>();
@@ -32,16 +33,22 @@
       clearInterval(progressTimer);
       uploadState = "done";
       const imported = processed - status.duplicates - status.failed;
-      const parts = imported > 0 ? [`Imported ${imported} activities`] : [];
+      const parts =
+        imported > 0
+          ? [t("strava_imported_activities", { count: imported })]
+          : [];
       if (status.duplicates > 0)
-        parts.push(`${status.duplicates} activities were duplicates`);
-      if (status.failed > 0) parts.push(`${status.failed} failed`);
+        parts.push(
+          t("strava_duplicate_activities", { count: status.duplicates }),
+        );
+      if (status.failed > 0)
+        parts.push(t("strava_failed_activities", { count: status.failed }));
       message = `${parts.join("; ")}.`;
       await invalidateAll();
     } else if (status.status === "failed") {
       clearInterval(progressTimer);
       uploadState = "error";
-      message = status.error ?? "Import failed.";
+      message = status.error ?? t("strava_import_failed");
     }
   }
 
@@ -50,7 +57,7 @@
     if (!selected.name.toLowerCase().endsWith(".zip")) {
       file = undefined;
       uploadState = "error";
-      message = "Choose a Strava takeout .zip file.";
+      message = t("strava_choose_zip");
       return;
     }
     file = selected;
@@ -70,7 +77,7 @@
         { body: { file } },
         getSdkRequestOptions(),
       );
-      message = "Takeout uploaded. Processing activities…";
+      message = t("strava_takeout_uploaded");
       await pollImport(response.importId);
       if (uploadState === "uploading") {
         progressTimer = setInterval(
@@ -80,20 +87,21 @@
       }
     } catch (error) {
       uploadState = "error";
-      message = error instanceof Error ? error.message : "Import failed.";
+      message =
+        error instanceof Error ? error.message : t("strava_import_failed");
     }
   }
 </script>
 
 <div class="upload-panel">
   <button class="upload-back" type="button" onclick={() => void goto("/upload")}
-    ><ArrowLeft size={17} /> Upload activity</button
+    ><ArrowLeft size={17} /> {t("upload_activity")}</button
   >
   <div class="upload-panel-heading">
     <span class="upload-choice-icon"><Archive size={24} /></span>
     <div>
-      <h2>Import a Strava takeout</h2>
-      <p>Import the activities from your Strava data export.</p>
+      <h2>{t("activity_import_strava")}</h2>
+      <p>{t("activity_import_strava_description")}</p>
     </div>
   </div>
 
@@ -114,8 +122,8 @@
     }}
   >
     <span class="upload-icon"><Archive size={28} /></span>
-    <strong>Drop your Strava takeout here</strong>
-    <span>or click to browse your device</span>
+    <strong>{t("strava_drop_takeout")}</strong>
+    <span>{t("strava_browse_device")}</span>
     <small>.zip</small>
   </button>
   <input
@@ -136,7 +144,7 @@
           size={19}
         />{/if}
       {#if uploadState === "done"}<span class="processing"
-          ><Check class="success" size={16} /> Done</span
+          ><Check class="success" size={16} /> {t("done")}</span
         >{/if}
     </div>
   {/if}
@@ -159,7 +167,7 @@
         <span style={`width: ${total === 0 ? 100 : (processed / total) * 100}%`}
         ></span>
       </div>
-      <small>{processed} of {total} activities processed</small>
+      <small>{t("strava_activities_processed", { processed, total })}</small>
     </div>
   {/if}
   <button
@@ -168,7 +176,7 @@
     disabled={!file || uploadState === "uploading"}
     onclick={() => void upload()}
   >
-    {#if uploadState === "uploading"}<LoaderCircle class="spin" size={17} /> Importing…{:else}Import
-      takeout{/if}
+    {#if uploadState === "uploading"}<LoaderCircle class="spin" size={17} />
+      {t("strava_importing")}{:else}{t("strava_import_takeout")}{/if}
   </button>
 </div>

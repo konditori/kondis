@@ -25,6 +25,7 @@
   } from "$lib/notifications";
   import { userDisplayName } from "$lib/user-name";
   import { subscribeToActivityEvents } from "$lib/realtime";
+  import { t } from "$lib/i18n";
 
   let {
     user,
@@ -80,7 +81,7 @@
       return localPart
         .replace(/[._-]+/g, " ")
         .replace(/\b\w/g, (character) => character.toUpperCase());
-    return "Account";
+    return t("account");
   });
   const initial = $derived(accountName.slice(0, 1).toUpperCase());
 
@@ -245,16 +246,16 @@
         bind:this={searchInput}
         bind:value={search}
         name="search"
-        placeholder="Search activities"
-        aria-label="Search activities"
+        placeholder={t("search_activities")}
+        aria-label={t("search_activities")}
         oninput={updateSearch}
       />
       {#if search}
         <button
           class="top-search-clear"
           type="button"
-          aria-label="Clear search"
-          title="Clear search"
+          aria-label={t("clear_search")}
+          title={t("clear_search")}
           onclick={clearSearch}
         >
           <X size={17} />
@@ -265,7 +266,7 @@
     <button
       class="search-toggle"
       type="button"
-      aria-label="Search activities"
+      aria-label={t("search_activities")}
       onclick={openSearch}
     >
       <Search size={21} />
@@ -278,7 +279,7 @@
     class="notification-menu"
     ontoggle={handleNotificationsToggle}
   >
-    <summary aria-label="Open notifications">
+    <summary aria-label={t("open_notifications")}>
       <Bell size={20} />
       {#if notificationBadgeLabel(notificationCount)}
         <span class="notification-badge"
@@ -288,11 +289,13 @@
     </summary>
     <div class="notification-popover">
       <div class="notification-popover-heading">
-        <strong>Notifications</strong>
-        <a href="/notifications" onclick={viewAllNotifications}>View all</a>
+        <strong>{t("notifications")}</strong>
+        <a href="/notifications" onclick={viewAllNotifications}
+          >{t("view_all")}</a
+        >
       </div>
       {#if notificationsLoading}
-        <p class="notification-empty">Loading\u2026</p>
+        <p class="notification-empty">{t("loading")}</p>
       {:else if notifications?.length}
         <div class="notification-list">
           {#each notifications as notification}
@@ -321,13 +324,13 @@
           {/each}
         </div>
       {:else}
-        <p class="notification-empty">No notifications yet.</p>
+        <p class="notification-empty">{t("no_notifications_yet")}</p>
       {/if}
     </div>
   </details>
 
   <details bind:this={plusMenu} bind:open={plusMenuOpen} class="plus-menu">
-    <summary aria-label="Add activity"><Plus size={20} /></summary>
+    <summary aria-label={t("add_activity")}><Plus size={20} /></summary>
     <div class="plus-menu-popover">
       <button
         type="button"
@@ -336,16 +339,18 @@
           onUpload();
         }}
       >
-        <FileUp size={19} /> Upload activity
+        <FileUp size={19} />
+        {t("upload_activity")}
       </button>
       <button type="button" onclick={closePlusMenu}>
-        <ClipboardPenLine size={19} /> Add manual entry
+        <ClipboardPenLine size={19} />
+        {t("add_manual_entry")}
       </button>
     </div>
   </details>
 
   <details bind:this={menu} bind:open={menuOpen} class="user-menu">
-    <summary aria-label="Open account menu">
+    <summary aria-label={t("open_account_menu")}>
       <UserAvatar name={accountName} src={user?.avatarUrl} size={42} />
     </summary>
     <div class="user-menu-popover">
@@ -353,10 +358,11 @@
         <strong>{accountName}</strong>
         <small>{user?.email}</small>
       </div>
-      <a href="/settings" onclick={closeMenu}><Settings size={17} /> Settings</a
+      <a href="/settings" onclick={closeMenu}
+        ><Settings size={17} /> {t("settings")}</a
       >
       <form method="POST" action="/logout">
-        <button type="submit"><LogOut size={17} /> Log out</button>
+        <button type="submit"><LogOut size={17} /> {t("log_out")}</button>
       </form>
     </div>
   </details>

@@ -1,30 +1,31 @@
 <script lang="ts">
   import { Archive, ArrowRight, FileUp } from "@lucide/svelte";
+  import { t } from "$lib/i18n";
 
   const choices = [
     {
       href: "/upload/activity",
-      title: "Individual workout file",
-      description: "Upload one .fit, .tcx, or .gpx file.",
+      title: t("individual_activity_file"),
+      description: t("upload_one_file"),
       icon: FileUp,
     },
     {
       href: "/upload/strava",
-      title: "Strava takeout",
-      description: "Import your activities from a Strava .zip export.",
+      title: t("strava_takeout"),
+      description: t("activity_import_strava_description"),
       icon: Archive,
     },
   ];
 </script>
 
-<svelte:head><title>Upload activity · Kondis</title></svelte:head>
+<svelte:head><title>{t("upload_activity")} · Kondis</title></svelte:head>
 
 <div class="page-shell upload-page">
   <header class="page-header">
     <div>
-      <span class="eyebrow">New import</span>
-      <h1>Upload activity</h1>
-      <p>Choose how you want to add workouts to your archive.</p>
+      <span class="eyebrow">{t("new_import")}</span>
+      <h1>{t("upload_activity")}</h1>
+      <p>{t("upload_activity_page_description")}</p>
     </div>
   </header>
 

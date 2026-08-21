@@ -15,6 +15,7 @@
   import type { LiveWorkout } from "$lib/types";
   import type { UnitSystem } from "$lib/units";
   import { distance, duration } from "$lib/format";
+  import { t } from "$lib/i18n";
 
   let {
     workout = $bindable(),
@@ -53,6 +54,14 @@
             ? "Catching up"
             : "Live",
   );
+
+  function connectionLabel(value: string) {
+    if (value === "Paused") return t("paused");
+    if (value === "Finished") return t("finished");
+    if (value === "Connection lost") return t("connection_lost");
+    if (value === "Catching up") return t("catching_up");
+    return t("live");
+  }
 
   onMount(() => {
     const resolveFinishedWorkout = async () => {
@@ -116,7 +125,7 @@
           method: "POST",
         },
       );
-      if (!response.ok) throw new Error("Could not create a share link");
+      if (!response.ok) throw new Error(t("could_not_create_share_link"));
       const { token } = (await response.json()) as { token: string };
       shareUrl = `${window.location.origin}/live/${token}`;
       await navigator.clipboard?.writeText(shareUrl);
@@ -124,7 +133,7 @@
       shareError =
         error instanceof Error
           ? error.message
-          : "Could not create a share link";
+          : t("could_not_create_share_link");
     } finally {
       sharing = false;
     }
@@ -142,16 +151,21 @@
           />{:else if connection === "Connection lost"}<WifiOff
             size={15}
           />{:else}<Clock3 size={15} />{/if}
-        {connection}
+        {connectionLabel(connection)}
       </p>
       <h1>
-        {activityTypeLabel(activityTypes, workout.sport)}
-        {workout.status === "ended" ? " finished" : " in progress"}
+        {workout.status === "ended"
+          ? t("live_workout_finished", {
+              activity: activityTypeLabel(activityTypes, workout.sport),
+            })
+          : t("live_workout_in_progress", {
+              activity: activityTypeLabel(activityTypes, workout.sport),
+            })}
       </h1>
       <span
         >{ageSeconds === null
-          ? "Waiting for GPS"
-          : `Updated ${ageSeconds}s ago`}</span
+          ? t("waiting_for_gps")
+          : t("updated_seconds_ago", { seconds: ageSeconds })}</span
       >
     </div>
     {#if allowSharing}
@@ -161,13 +175,17 @@
         disabled={sharing}
       >
         <Link size={17} />
-        {sharing ? "Creating…" : shareUrl ? "New share link" : "Share live"}
+        {sharing
+          ? t("creating_share_link")
+          : shareUrl
+            ? t("new_share_link")
+            : t("share_live")}
       </button>
     {/if}
   </div>
   {#if shareUrl}
     <div class="live-share-link">
-      <strong>Beacon link copied</strong><span>{shareUrl}</span>
+      <strong>{t("beacon_link_copied")}</strong><span>{shareUrl}</span>
     </div>
   {:else if shareError}
     <p class="form-error">{shareError}</p>
@@ -175,18 +193,23 @@
   <div class="live-stats">
     <div>
       <strong>{distance(workout.distanceMeters, unitSystem)}</strong><span
-        >Distance</span
+        >{t("distance")}</span
       >
     </div>
     <div>
-      <strong>{duration(workout.elapsedSeconds)}</strong><span>Elapsed</span>
+      <strong>{duration(workout.elapsedSeconds)}</strong><span
+        >{t("elapsed")}</span
+      >
     </div>
-    <div><strong>{workout.route.length}</strong><span>GPS points</span></div>
+    <div>
+      <strong>{workout.route.length}</strong><span>{t("gps_points")}</span>
+    </div>
   </div>
   <LiveRouteMap coordinates={workout.route} follow={connection === "Live"} />
   {#if workout.route.length === 0}
     <div class="live-waiting">
-      <Activity size={22} /> Waiting for the first GPS position…
+      <Activity size={22} />
+      {t("waiting_for_first_gps_position")}
     </div>
   {/if}
 </section>

@@ -1,23 +1,20 @@
 package app.kondis.sync
 
-import androidx.room.Room
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiScrollable
-import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import app.kondis.MainActivity
 import app.kondis.data.auth.SecureSessionStore
+import app.kondis.data.local.ActivityDao
+import app.kondis.data.local.ActivityDaoEntryPoint
 import app.kondis.data.local.ActivityDetailEntity
 import app.kondis.data.local.ActivityEntity
-import app.kondis.data.local.KondisDatabase
 import app.kondis.data.local.QueuedWorkoutEntity
 import app.kondis.data.settings.SettingsRepository
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -37,7 +34,7 @@ class OfflineWorkoutSyncTest {
     private val device by lazy { UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) }
 
     private lateinit var server: MockWebServer
-    private lateinit var database: KondisDatabase
+    private lateinit var activityDao: ActivityDao
     private lateinit var scenario: ActivityScenario<MainActivity>
     private val remoteId = "remote-sync-test-activity"
     private val deleteId = "zzzz-remote-delete-test-activity"
@@ -50,7 +47,6 @@ class OfflineWorkoutSyncTest {
         server = MockWebServer()
         server.dispatcher = apiDispatcher()
         server.start()
-        // SettingsRepository expects the server origin; the API client adds /api/v1 itself.
         val serverUrl = server.url("/").toString().trimEnd('/')
         accountKey = "$serverUrl|offline-sync-test-user"
         runBlocking {
@@ -61,18 +57,17 @@ class OfflineWorkoutSyncTest {
             }
         }
 
-        database =
-            Room
-                .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-                .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
-                .build()
+        activityDao =
+            EntryPointAccessors
+                .fromApplication(context, ActivityDaoEntryPoint::class.java)
+                .activityDao()
         val file =
             File(context.filesDir, "recordings/sync-test.gpx").apply {
                 parentFile?.mkdirs()
                 writeText("<gpx version=\"1.1\"><trk><trkseg><trkpt lat=\"57.7\" lon=\"11.9\"/></trkseg></trk></gpx>")
             }
         runBlocking {
-            database.activityDao().saveQueuedWorkout(
+            activityDao.saveQueuedWorkout(
                 activity = localActivityEntity(),
                 detail = localDetailEntity(),
                 workout =
@@ -84,12 +79,11 @@ class OfflineWorkoutSyncTest {
                         startedAt,
                     ),
             )
-            database.activityDao().upsertActivities(listOf(remoteActivityEntity()))
-            database.activityDao().upsertDetail(
+            activityDao.upsertActivities(listOf(remoteActivityEntity()))
+            activityDao.upsertDetail(
                 ActivityDetailEntity(accountKey, deleteId, deleteDetailJson(), System.currentTimeMillis()),
             )
         }
-        database.close()
         scenario = ActivityScenario.launch(MainActivity::class.java)
     }
 
@@ -101,14 +95,20 @@ class OfflineWorkoutSyncTest {
 
     @Test
     fun queuedWorkoutSurvivesInLocalFeedAndSyncsToServer() {
-        check(device.wait(Until.hasObject(By.textContains("workout waiting to sync")), 30_000))
-        val feed = UiScrollable(UiSelector().scrollable(true))
-        feed.scrollTextIntoView("Offline test run")
-        check(device.hasObject(By.textContains("Offline test run")))
-        feed.scrollToBeginning(10)
+        check(device.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
+            "Sync button did not appear; server requests=${server.requestCount}"
+        }
+        val localActivity = runBlocking { activityDao.activity(accountKey, "local-sync-test") }
+        check(localActivity?.isLocal == true) {
+            "Local activity was not retained in storage; server requests=${server.requestCount}"
+        }
+        scrollToActivity("local-sync-test")
 
-        device.findObject(By.text("Sync now")).click()
-        check(device.wait(Until.hasObject(By.text("Everything is uploaded")), 45_000)) {
+        check(device.wait(Until.hasObject(By.res("sync-now")), 5_000)) {
+            "Sync button disappeared while inspecting the local activity"
+        }
+        device.findObject(By.res("sync-now")).click()
+        check(device.wait(Until.hasObject(By.res("sync-complete")), 45_000)) {
             "Sync did not complete; server requests=${server.requestCount}"
         }
 
@@ -119,49 +119,43 @@ class OfflineWorkoutSyncTest {
             if (request.method == "POST" && request.url.encodedPath == "/api/v1/upload/activity") upload = request
         }
         check(upload != null) { "No upload request received" }
-        check(device.hasObject(By.text("Everything is uploaded")))
+        check(device.hasObject(By.res("sync-complete"))) {
+            "Sync completion indicator disappeared; server requests=${server.requestCount}"
+        }
 
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val verificationDatabase =
-            Room
-                .databaseBuilder(context, KondisDatabase::class.java, "kondis.db")
-                .addMigrations(TEST_MIGRATION_1_2, TEST_MIGRATION_2_3)
-                .build()
-        runBlocking { check(verificationDatabase.activityDao().queuedWorkouts(accountKey).isEmpty()) }
-        verificationDatabase.close()
+        runBlocking { check(activityDao.queuedWorkouts(accountKey).isEmpty()) }
     }
 
     @Test
     fun deletingActivityReturnsToFeed() {
         val uiDevice = device
-        check(uiDevice.wait(Until.hasObject(By.textContains("workout waiting to sync")), 30_000))
-        var deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
-        repeat(5) {
-            if (!deleteActivityVisible) {
-                val centerX = uiDevice.displayWidth / 2
-                uiDevice.swipe(centerX, uiDevice.displayHeight * 3 / 4, centerX, uiDevice.displayHeight / 4, 10)
-                deleteActivityVisible = uiDevice.hasObject(By.textContains("Delete test run"))
-            }
+        check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
+            "Sync button did not appear; server requests=${server.requestCount}"
         }
-        check(deleteActivityVisible)
-        check(uiDevice.wait(Until.hasObject(By.textContains("Delete test run")), 10_000))
-        val deleteActivity = device.findObject(By.textContains("Delete test run"))
+        scrollToActivity(deleteId)
+        val deleteActivity = device.findObject(By.res("activity-card-$deleteId"))
         val deleteActivityBounds = deleteActivity.visibleBounds
         device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())
-        check(device.wait(Until.hasObject(By.desc("More options")), 5_000))
-        device.findObject(By.desc("More options")).click()
-        check(device.wait(Until.hasObject(By.text("Edit")), 5_000))
-        device.findObject(By.text("Edit")).click()
-        check(UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Edit activity"))
-        check(device.wait(Until.hasObject(By.text("Edit activity")), 5_000))
-        UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)
-        check(device.wait(Until.hasObject(By.desc("Delete activity")), 5_000))
-        device.findObject(By.desc("Delete activity")).click()
-        check(device.wait(Until.hasObject(By.text("Delete activity?")), 5_000))
+        check(device.wait(Until.hasObject(By.res("activity-more-options")), 5_000))
+        device.findObject(By.res("activity-more-options")).click()
+        val editMenuItem = By.res("activity-edit")
+        val editMenuText = By.text("Edit")
+        check(
+            device.wait(Until.hasObject(editMenuItem), 5_000) ||
+                device.wait(Until.hasObject(editMenuText), 5_000),
+        ) {
+            "Activity options menu did not show edit action"
+        }
+        device.findObject(if (device.hasObject(editMenuItem)) editMenuItem else editMenuText).click()
+        swipeUntilVisible("activity-detail-list", "activity-editor")
+        swipeUntilVisible("activity-detail-list", "activity-delete")
+        val deleteButtonBounds = device.findObject(By.res("activity-delete")).visibleBounds
+        device.click(deleteButtonBounds.centerX(), deleteButtonBounds.centerY())
+        check(device.wait(Until.hasObject(By.res("delete-activity-dialog")), 5_000))
 
-        device.findObject(By.text("Delete")).click()
-        check(device.wait(Until.gone(By.text("Delete activity?")), 10_000))
-        check(device.wait(Until.hasObject(By.text("Activities")), 10_000))
+        device.findObject(By.res("delete-activity-confirm")).click()
+        check(device.wait(Until.gone(By.res("delete-activity-dialog")), 10_000))
+        check(device.wait(Until.hasObject(By.res("activities-feed")), 10_000))
 
         var deleteRequest: RecordedRequest? = null
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
@@ -172,6 +166,30 @@ class OfflineWorkoutSyncTest {
             }
         }
         check(deleteRequest != null) { "No delete request received" }
+    }
+
+    private fun scrollToActivity(id: String) = swipeUntilVisible("activities-list", "activity-card-$id")
+
+    private fun swipeUntilVisible(
+        containerTag: String,
+        targetTag: String,
+    ) {
+        val selector = By.res(targetTag)
+        val list =
+            device.wait(Until.findObject(By.res(containerTag)), 5_000)
+                ?: error("Scrollable container $containerTag did not appear")
+        repeat(12) {
+            if (device.wait(Until.hasObject(selector), 1_000)) return
+            val bounds = list.visibleBounds
+            device.swipe(
+                bounds.centerX(),
+                bounds.bottom - 24,
+                bounds.centerX(),
+                bounds.top + 24,
+                20,
+            )
+        }
+        error("UI element $targetTag did not appear; server requests=${server.requestCount}")
     }
 
     private fun apiDispatcher() =
@@ -223,72 +241,6 @@ class OfflineWorkoutSyncTest {
         code: Int,
         body: String,
     ) = MockResponse(code, Headers.Builder().build(), body)
-
-    private companion object {
-        val TEST_MIGRATION_1_2 =
-            object : Migration(1, 2) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE activities ADD COLUMN isLocal INTEGER NOT NULL DEFAULT 0")
-                    db.execSQL(
-                        """
-                        CREATE TABLE IF NOT EXISTS queued_workouts (
-                            localActivityId TEXT NOT NULL PRIMARY KEY,
-                            gpxPath TEXT NOT NULL,
-                            title TEXT NOT NULL,
-                            startedAt TEXT NOT NULL,
-                            uploadStarted INTEGER NOT NULL DEFAULT 0
-                        )
-                        """.trimIndent(),
-                    )
-                }
-            }
-
-        val TEST_MIGRATION_2_3 =
-            object : Migration(2, 3) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("DROP TABLE queued_workouts")
-                    db.execSQL("DROP TABLE activity_details")
-                    db.execSQL("DROP TABLE activities")
-                    db.execSQL(
-                        """
-                        CREATE TABLE activities (
-                            accountKey TEXT NOT NULL,
-                            id TEXT NOT NULL,
-                            startedAt TEXT NOT NULL,
-                            searchableText TEXT NOT NULL,
-                            payload TEXT NOT NULL,
-                            isLocal INTEGER NOT NULL,
-                            PRIMARY KEY(accountKey, id)
-                        )
-                        """.trimIndent(),
-                    )
-                    db.execSQL(
-                        """
-                        CREATE TABLE activity_details (
-                            accountKey TEXT NOT NULL,
-                            id TEXT NOT NULL,
-                            payload TEXT NOT NULL,
-                            cachedAt INTEGER NOT NULL,
-                            PRIMARY KEY(accountKey, id)
-                        )
-                        """.trimIndent(),
-                    )
-                    db.execSQL(
-                        """
-                        CREATE TABLE queued_workouts (
-                            accountKey TEXT NOT NULL,
-                            localActivityId TEXT NOT NULL,
-                            gpxPath TEXT NOT NULL,
-                            title TEXT NOT NULL,
-                            startedAt TEXT NOT NULL,
-                            uploadStarted INTEGER NOT NULL,
-                            PRIMARY KEY(accountKey, localActivityId)
-                        )
-                        """.trimIndent(),
-                    )
-                }
-            }
-    }
 
     private fun localActivityEntity() =
         ActivityEntity(

@@ -36,6 +36,7 @@
     pace,
     speed,
   } from "$lib/format";
+  import { t } from "$lib/i18n";
 
   let {
     activity,
@@ -218,7 +219,7 @@
   >
     <div class="activity-card-identity">
       <UserAvatar
-        name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
+        name={activity.athlete ? userDisplayName(activity.athlete) : t("you")}
         src={activity.athlete?.avatarUrl}
         size={54}
       />
@@ -244,7 +245,7 @@
       </p>
       {#if activity.tags?.length}<div
           class="activity-tags"
-          aria-label="Activity tags"
+          aria-label={t("activity_tags")}
         >
           {#each activity.tags as tag}<span class="activity-tag"
               >{tag.replaceAll("_", " ")}</span
@@ -259,7 +260,7 @@
     <div class="activity-feed-stats">
       <div
         class="activity-stat activity-medal-stat"
-        aria-label={`${achievementCount} medals`}
+        aria-label={t("medals_count", { count: achievementCount })}
       >
         <div class="activity-medal-value">
           {#if shouldShowAchievementCount(achievementCount, activity.topBestEfforts ?? [])}<strong

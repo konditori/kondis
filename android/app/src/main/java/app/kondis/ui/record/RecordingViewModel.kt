@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kondis.data.ActivityRepository
 import app.kondis.model.defaultWorkoutTitle
+import app.kondis.recording.EmptyRecordingException
 import app.kondis.recording.GpxWriter
 import app.kondis.recording.LiveTrackingRepository
 import app.kondis.recording.RecordingManager
@@ -22,6 +23,7 @@ import app.kondis.recording.RecordingState
 import app.kondis.recording.TrackPoint
 import app.kondis.recording.toTrackPoint
 import app.kondis.ui.feed.userMessage
+import app.kondis.ui.i18n.tr
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -147,7 +149,13 @@ class RecordingViewModel
                     savedActivityId.value = it
                 }.onFailure { error ->
                     uploading.value = false
-                    manager.fail("${error.userMessage()}. The GPX remains saved on this device.")
+                    val message =
+                        if (error is EmptyRecordingException) {
+                            context.tr("no_gps_trace")
+                        } else {
+                            error.userMessage()
+                        }
+                    manager.fail("$message. The GPX remains saved on this device.")
                 }
             }
         }

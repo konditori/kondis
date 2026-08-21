@@ -12,7 +12,12 @@ import { apiUrl } from "$lib/server/api";
 import type { LayoutServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 
-export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
+export const load: LayoutServerLoad = async ({
+  cookies,
+  locals,
+  request,
+  url,
+}) => {
   let user:
     | {
         id: string;
@@ -29,6 +34,9 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
     url?.pathname === "/setup" ||
     url?.pathname.startsWith("/setup/") ||
     url?.pathname === "/register";
+  const activityTypesPromise = activityControllerListTypes(
+    getServerSdkRequestOptions(locals.kondisFetch),
+  );
   if (url && !publicAuthPage && !publicLiveView) {
     const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));
     if (!me.ok) {
@@ -41,9 +49,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
   }
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
-    activityTypes = await activityControllerListTypes(
-      getServerSdkRequestOptions(locals.kondisFetch),
-    );
+    activityTypes = await activityTypesPromise;
   } catch {
     // Activity pages already surface API availability; keep settings usable.
   }
@@ -55,10 +61,15 @@ export const load: LayoutServerLoad = async ({ cookies, locals, url }) => {
     activityTypes,
   };
   if (!url) {
-    // Some unit tests call the load function with only the fields they exercise.
-    // SvelteKit always supplies `url` at runtime, so keep the page-data contract
-    // string-valued without forcing those minimal fixtures to construct one.
     return result as typeof result & { eventsUrl: string };
   }
-  return { ...result, eventsUrl: activityEventsUrl(url) };
+  return {
+    ...result,
+    eventsUrl: activityEventsUrl(
+      url,
+      request.headers.get("x-forwarded-proto"),
+      request.headers.get("cf-visitor"),
+      request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
+    ),
+  };
 };

@@ -3,13 +3,17 @@ package app.kondis.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,6 +29,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -46,9 +53,12 @@ import androidx.navigation3.ui.NavDisplay
 import app.kondis.data.settings.AppSettings
 import app.kondis.recording.isActive
 import app.kondis.ui.detail.ActivityDetailRoute
+import app.kondis.ui.detail.ActivityDiscussionRoute
 import app.kondis.ui.detail.BestEffortsRoute
 import app.kondis.ui.detail.MatchedRoutesRoute
 import app.kondis.ui.feed.FeedRoute
+import app.kondis.ui.i18n.tr
+import app.kondis.ui.people.PeopleRoute
 import app.kondis.ui.record.RecordRoute
 import app.kondis.ui.settings.SettingsRoute
 import kotlinx.serialization.Serializable
@@ -66,7 +76,15 @@ private data object SettingsKey : NavKey
 private data object YouKey : NavKey
 
 @Serializable
+private data object PeopleKey : NavKey
+
+@Serializable
 private data class ActivityDetailKey(
+    val id: String,
+) : NavKey
+
+@Serializable
+private data class ActivityDiscussionKey(
     val id: String,
 ) : NavKey
 
@@ -83,18 +101,19 @@ private data class BestEffortsKey(
 
 private data class Destination(
     val key: NavKey,
-    val label: String,
+    val labelKey: String,
     val icon: ImageVector,
 )
 
 private val destinations =
     listOf(
-        Destination(FeedKey, "Activities", Icons.AutoMirrored.Rounded.DirectionsRun),
-        Destination(RecordKey, "Record", Icons.Rounded.AddCircle),
-        Destination(YouKey, "You", Icons.Rounded.Person),
+        Destination(FeedKey, "home", Icons.AutoMirrored.Rounded.DirectionsRun),
+        Destination(RecordKey, "record", Icons.Rounded.AddCircle),
+        Destination(YouKey, "you", Icons.Rounded.Person),
     )
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val loginStage by viewModel.loginStage.collectAsStateWithLifecycle()
@@ -133,6 +152,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     val backStack = rememberNavBackStack(if (recordingActive) RecordKey else FeedKey)
     val current = backStack.lastOrNull()
     val showNavigation = !recordingActive
+    val keyboardVisible = WindowInsets.isImeVisible
 
     LaunchedEffect(recordingActive) {
         if (recordingActive && backStack.lastOrNull() != RecordKey) {
@@ -156,8 +176,10 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
     }
 
     Scaffold(
+        modifier = Modifier.semantics { testTagsAsResourceId = true },
+        contentWindowInsets = if (keyboardVisible) WindowInsets.statusBars else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
-            if (showNavigation) {
+            if (showNavigation && !keyboardVisible) {
                 NavigationBar(tonalElevation = 2.dp) {
                     destinations.forEach { destination ->
                         NavigationBarItem(
@@ -169,8 +191,8 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                                     backStack.add(destination.key)
                                 }
                             },
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
-                            label = { Text(destination.label) },
+                            icon = { Icon(destination.icon, contentDescription = tr(destination.labelKey)) },
+                            label = { Text(tr(destination.labelKey)) },
                         )
                     }
                 }
@@ -187,6 +209,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                         FeedRoute(
                             units = loadedSettings.unitSystem,
                             onActivityClick = { id -> backStack.add(ActivityDetailKey(id)) },
+                            onPeopleClick = { backStack.add(PeopleKey) },
                         )
                     }
                     entry<RecordKey> {
@@ -197,6 +220,7 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             },
                         )
                     }
+                    entry<PeopleKey> { PeopleRoute(onBack = ::navigateBack) }
                     entry<SettingsKey> { SettingsRoute() }
                     entry<YouKey> {
                         BestEffortsRoute(
@@ -219,8 +243,12 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                             onBack = ::navigateBack,
                             onMatchedRoutes = { id -> backStack.add(MatchedRoutesKey(id)) },
                             onBestEfforts = { sport, type -> backStack.add(BestEffortsKey(sport, type)) },
-                            onDeleted = ::navigateToFeed,
+                            onDiscussion = { id -> backStack.add(ActivityDiscussionKey(id)) },
+                            onDeleted = ::navigateBack,
                         )
+                    }
+                    entry<ActivityDiscussionKey> { key ->
+                        ActivityDiscussionRoute(id = key.id, onBack = ::navigateBack)
                     }
                     entry<MatchedRoutesKey> { key ->
                         MatchedRoutesRoute(
@@ -289,8 +317,8 @@ private fun LoginScreen(
                 value = serverUrlDraft,
                 onValueChange = { serverUrlDraft = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Server URL") },
-                supportingText = { Text("For example http://192.168.1.10:2293 or https://kondis.example.com") },
+                label = { Text(tr("server_url")) },
+                supportingText = { Text(tr("server_url_example")) },
                 singleLine = true,
                 enabled = !checking,
             )
@@ -302,7 +330,7 @@ private fun LoginScreen(
                 if (checking) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Continue")
+                    Text(tr("continue"))
                 }
             }
         }
@@ -311,11 +339,11 @@ private fun LoginScreen(
             is LoginStage.InitialSetupRequired -> {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "The Kondis server requires initial setup. Finish setup in your web browser and then return here to sign in.",
+                    tr("server_requires_setup"),
                 )
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = { onCheckServer(stage.serverUrl) }) {
-                    Text("Retry")
+                    Text(tr("retry"))
                 }
             }
 
@@ -329,11 +357,11 @@ private fun LoginScreen(
                 if (errorMessage == null) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.height(8.dp))
-                    Text("Opening identity provider...")
+                    Text(tr("opening_identity_provider"))
                 }
                 Spacer(Modifier.height(8.dp))
                 if (errorMessage != null) {
-                    Button(onClick = onStartBrowserSignIn) { Text("Retry in browser") }
+                    Button(onClick = onStartBrowserSignIn) { Text(tr("retry_in_browser")) }
                 }
             }
 
@@ -343,14 +371,14 @@ private fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Email") },
+                    label = { Text(tr("email")) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Password") },
+                    label = { Text(tr("password")) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                 )
@@ -358,7 +386,7 @@ private fun LoginScreen(
                 Button(
                     onClick = { onLogin(email, password) },
                     enabled = email.isNotBlank() && password.isNotBlank(),
-                ) { Text("Sign in") }
+                ) { Text(tr("auth_sign_in")) }
             }
 
             LoginStage.EnteringServer, LoginStage.CheckingServer -> {}

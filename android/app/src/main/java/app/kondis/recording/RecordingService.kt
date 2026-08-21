@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import app.kondis.MainActivity
 import app.kondis.R
+import app.kondis.ui.i18n.tr
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,8 +86,25 @@ class RecordingService :
     }
 
     private fun start(sport: String) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            recordingManager.fail("Precise location is required to record a GPS workout")
+            stopSelf()
+            return
+        }
         val created = recordingManager.start()
-        startForeground(NOTIFICATION_ID, notification())
+        try {
+            startForeground(NOTIFICATION_ID, notification())
+        } catch (_: SecurityException) {
+            recordingManager.fail("Location permission is required to record a GPS workout")
+            stopSelf()
+            return
+        } catch (_: IllegalStateException) {
+            recordingManager.fail("Recording could not be started while the app is not visible")
+            stopSelf()
+            return
+        }
         startLocationUpdates()
         startTicker()
         if (created) {
@@ -199,9 +217,9 @@ class RecordingService :
                 if (recordingManager.state.value.mode ==
                     RecordingMode.Paused
                 ) {
-                    "Workout paused"
+                    tr("activity_paused")
                 } else {
-                    "Tap to view your workout"
+                    tr("tap_to_view_activity")
                 },
             ).setContentIntent(contentIntent)
             .setOngoing(true)

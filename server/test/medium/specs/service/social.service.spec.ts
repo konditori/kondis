@@ -1,5 +1,6 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { EventRepository } from 'src/repositories/event.repository';
 import { SocialService } from 'src/services/social.service';
 
 import { createMediumFactory } from 'test/medium.factory';
@@ -11,16 +12,19 @@ describe(SocialService.name, () => {
   let testApp: TestApp;
   let sut: SocialService;
   let factory: ReturnType<typeof createMediumFactory>;
+  let eventRepository: EventRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
     testApp = await createTestApp();
     sut = testApp.get(SocialService);
+    eventRepository = testApp.get(EventRepository);
     factory = createMediumFactory(db);
   });
 
   beforeEach(async () => {
     await resetMediumTestDatabase(db);
+    vi.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -46,6 +50,46 @@ describe(SocialService.name, () => {
     await expect(sut.comments(activityId, owner.id)).resolves.toMatchObject({
       comments: [{ id: second.id, body: 'Updated' }],
     });
+  });
+
+  it('emits a realtime event when a comment is created', async () => {
+    const owner = await factory.newUser();
+    const activityId = await factory.newActivity(owner.id, new Date('2024-01-01T08:00:00.000Z'), 'commented activity');
+    const emit = vi.spyOn(eventRepository, 'emit').mockResolvedValue();
+
+    const created = await sut.addComment(activityId, owner.id, '  Original  ');
+    expect(emit).toHaveBeenCalledWith(
+      'ActivityCommentCreated',
+      { id: activityId },
+      expect.objectContaining({ id: created.id, body: 'Original', user: expect.objectContaining({ id: owner.id }) }),
+    );
+  });
+
+  it('emits a realtime event when a comment is edited', async () => {
+    const owner = await factory.newUser();
+    const activityId = await factory.newActivity(owner.id, new Date('2024-01-01T08:00:00.000Z'), 'commented activity');
+    const emit = vi.spyOn(eventRepository, 'emit').mockResolvedValue();
+    const created = await sut.addComment(activityId, owner.id, 'Original');
+    emit.mockClear();
+
+    const updated = await sut.updateComment(activityId, created.id, owner.id, '  Edited  ');
+    expect(emit).toHaveBeenCalledWith(
+      'ActivityCommentUpdated',
+      { id: activityId },
+      expect.objectContaining({ id: created.id, body: 'Edited', user: expect.objectContaining({ id: owner.id }) }),
+    );
+    expect(updated.body).toBe('Edited');
+  });
+
+  it('emits a realtime event when a comment is deleted', async () => {
+    const owner = await factory.newUser();
+    const activityId = await factory.newActivity(owner.id, new Date('2024-01-01T08:00:00.000Z'), 'commented activity');
+    const emit = vi.spyOn(eventRepository, 'emit').mockResolvedValue();
+    const created = await sut.addComment(activityId, owner.id, 'Original');
+    emit.mockClear();
+
+    await sut.deleteComment(activityId, created.id, owner.id);
+    expect(emit).toHaveBeenCalledWith('ActivityCommentDeleted', { id: activityId }, created.id);
   });
 
   it('allows only the comment author to edit or delete a comment', async () => {

@@ -90,10 +90,13 @@ the API or production server dependencies:
 mise run //server:install
 (cd open-api && mise run //:open-api)
 mise run //:third-party-licenses
+mise run //:i18n:android
 ```
 
 The generated files are committed: `open-api/kondis-openapi-specs.json`,
 `server/src/open-api/fetch-client.ts`, and `THIRD-PARTY-LICENSES.md`.
+Android translation resources under `android/app/src/main/res/` are also
+generated and checked for drift in CI.
 
 ## License
 

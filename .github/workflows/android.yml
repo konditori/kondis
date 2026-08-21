@@ -39,8 +39,83 @@ env:
   GRADLE_ARGS: --no-daemon --warning-mode=fail --console=plain
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # This validates the checked-in wrapper before running it and caches Gradle safely.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Kotlin style
+        run: mise check
+
+      - name: Kotlin format
+        if: ${{ !cancelled() }}
+        run: mise format
+
+      - name: Android lint
+        if: ${{ !cancelled() }}
+        run: mise lint
+
   test:
-    name: Lint, Test & Build
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Android unit tests
+        run: mise test
+
+  build:
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -61,26 +136,17 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      # This validates the checked-in wrapper before running it and caches Gradle safely.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
-      - name: Kotlin style
-        run: ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" ktlintCheck
-
-      - name: Android lint, unit tests and debug APK build
-        if: ${{ !cancelled() }}
+      - name: Assemble debug APK
         run: >-
           ./gradlew $GRADLE_ARGS
           -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts"
-          :app:lintDebug
-          :app:testDebugUnitTest
           :app:assembleDebug
 
-      # Run release assembly separately: AGP lint reads generated sources, and combining it
-      # with release KSP work in one task graph can race on a clean or incremental checkout.
       - name: Assemble release APK
         if: ${{ !cancelled() }}
         run: >-
@@ -123,6 +189,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
       - name: Set up JDK 21
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
@@ -150,7 +219,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
           script: |
-            ./gradlew $GRADLE_ARGS -Djavax.net.ssl.trustStore="$JAVA_HOME/lib/security/cacerts" :app:connectedDebugAndroidTest || { echo "==== Instrumented test failure details ===="; find app/build/outputs/androidTest-results app/build/reports/androidTests -type f \( -name '*.xml' -o -name '*.html' -o -name '*.txt' \) -print 2>/dev/null || true; find app/build/outputs/androidTest-results -type f -name '*.xml' -print0 2>/dev/null | xargs -0 -r grep -H -E '<failure|<error|message=' || true; echo "==== End instrumented test failure details ===="; exit 1; }
+            mise test-instrumented
 
       - name: Upload emulator test artifacts
         if: always()
@@ -167,7 +236,7 @@ jobs:
   release:
     name: Sign & Publish
     if: startsWith(github.ref, 'refs/tags/android-v')
-    needs: [test, instrumented]
+    needs: [test, instrumented, build, lint]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

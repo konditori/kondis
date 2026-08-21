@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.kondis.model.UnitSystem
+import app.kondis.ui.i18n.tr
 
 @Composable
 fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
@@ -57,7 +58,7 @@ fun SettingsScreen(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Text("Settings", style = MaterialTheme.typography.displaySmall)
+        Text(tr("settings"), style = MaterialTheme.typography.displaySmall)
         Card(
             modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -69,28 +70,28 @@ fun SettingsScreen(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                     )
-                    Text("Units of measurement", style = MaterialTheme.typography.titleLarge)
+                    Text(tr("units_of_measurement"), style = MaterialTheme.typography.titleLarge)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     UnitOption(
-                        label = "Metric",
+                        label = tr("metric"),
                         selected = state.settings.unitSystem == UnitSystem.Metric,
                         onClick = { onUnitChange(UnitSystem.Metric) },
                         modifier = Modifier.weight(1f),
                     )
                     UnitOption(
-                        label = "Imperial",
+                        label = tr("imperial"),
                         selected = state.settings.unitSystem == UnitSystem.Imperial,
                         onClick = { onUnitChange(UnitSystem.Imperial) },
                         modifier = Modifier.weight(1f),
                     )
                 }
                 Button(onClick = { onUnitChange(state.settings.unitSystem) }) {
-                    Text("Save preference")
+                    Text(tr("save_preference"))
                 }
             }
         }
-        Text("Server URL", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 10.dp))
+        Text(tr("server_url"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 10.dp))
         OutlinedTextField(
             value = state.serverUrlDraft,
             onValueChange = onServerUrlChange,
@@ -99,7 +100,7 @@ fun SettingsScreen(
             leadingIcon = { Icon(Icons.Rounded.Dns, null) },
             supportingText =
                 if (!state.serverActive) {
-                    { Text("For example http://192.168.0.10 or https://kondis.example.com") }
+                    { Text(tr("server_url_settings_example")) }
                 } else {
                     null
                 },
@@ -109,7 +110,7 @@ fun SettingsScreen(
             Button(
                 onClick = { showSignOutConfirmation = true },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Sign out") }
+            ) { Text(tr("auth_sign_out")) }
         } else {
             Button(onClick = onSave, enabled = !state.checking, modifier = Modifier.fillMaxWidth()) {
                 if (state.checking) {
@@ -118,7 +119,7 @@ fun SettingsScreen(
                         strokeWidth = 2.dp,
                     )
                 }
-                Text(if (state.checking) "Checking…" else "Save and test connection")
+                Text(if (state.checking) tr("checking") else tr("save_and_test_connection"))
             }
         }
         state.message?.let { message ->
@@ -139,19 +140,19 @@ fun SettingsScreen(
     if (showSignOutConfirmation) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showSignOutConfirmation = false },
-            title = { Text("Sign out?") },
-            text = { Text("You will sign out from your Kondis server") },
+            title = { Text(tr("sign_out_confirmation_title")) },
+            text = { Text(tr("sign_out_confirmation")) },
             confirmButton = {
                 androidx.compose.material3.TextButton(
                     onClick = {
                         showSignOutConfirmation = false
                         onSignOut()
                     },
-                ) { Text("Sign out") }
+                ) { Text(tr("auth_sign_out")) }
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(onClick = { showSignOutConfirmation = false }) {
-                    Text("Cancel")
+                    Text(tr("common_cancel"))
                 }
             },
         )

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import android.util.LruCache
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -15,6 +16,7 @@ import app.kondis.data.local.ActivityDao
 import app.kondis.data.local.ActivityDetailEntity
 import app.kondis.data.local.ActivityEntity
 import app.kondis.data.local.QueuedWorkoutEntity
+import app.kondis.data.remote.CommentCreateRequest
 import app.kondis.data.remote.KondisApiFactory
 import app.kondis.data.settings.AppSettings
 import app.kondis.data.settings.SettingsRepository
@@ -74,6 +76,14 @@ class ActivityRepository
     ) {
         private companion object {
             const val FEED_PAGE_SIZE = 20
+            const val IMAGE_CACHE_SIZE_BYTES = 8 * 1024 * 1024
+            val imageCache =
+                object : LruCache<String, Bitmap>(IMAGE_CACHE_SIZE_BYTES) {
+                    override fun sizeOf(
+                        key: String,
+                        value: Bitmap,
+                    ): Int = value.allocationByteCount
+                }
         }
 
         fun activities(search: String): Flow<List<Activity>> =
@@ -138,7 +148,23 @@ class ActivityRepository
         suspend fun refreshDetail(id: String) {
             val account = account()
             val detail = api(account.settings).activity(id)
-            activityDao.upsertActivities(listOf(toEntity(detail.summary(), account.key)))
+            // The detail response contains every computed effort, while the feed response contains
+            // the curated medal summary and its total. Retain the latter so opening a detail cannot
+            // turn ordinary best efforts into medals in the feed.
+            val existing = activityDao.activity(account.key, id)?.let { decodeActivity(it.payload) }
+            activityDao.upsertActivities(
+                listOf(
+                    toEntity(
+                        detail
+                            .summary()
+                            .copy(
+                                topBestEfforts = existing?.topBestEfforts,
+                                achievementCount = existing?.achievementCount,
+                            ),
+                        account.key,
+                    ),
+                ),
+            )
             activityDao.upsertDetail(
                 ActivityDetailEntity(
                     accountKey = account.key,
@@ -147,6 +173,24 @@ class ActivityRepository
                     cachedAt = System.currentTimeMillis(),
                 ),
             )
+        }
+
+        suspend fun setLiked(
+            id: String,
+            liked: Boolean,
+        ) {
+            if (liked) api().like(id) else api().unlike(id)
+            refreshDetail(id)
+        }
+
+        suspend fun comments(id: String) = api().comments(id)
+
+        suspend fun addComment(
+            id: String,
+            body: String,
+        ) {
+            api().comment(id, CommentCreateRequest(body))
+            refreshDetail(id)
         }
 
         suspend fun updateActivity(
@@ -193,11 +237,12 @@ class ActivityRepository
         suspend fun loadActivityImage(path: String): Bitmap? {
             val settings = settingsRepository.settings.first()
             val url = URI(settings.serverUrl).resolve(path).toString()
+            imageCache.get(url)?.let { return it }
             return runCatching {
                 withContext(Dispatchers.IO) {
                     apiFactory.create(settings).activityImage(url).use { body ->
                         val bytes = body.bytes()
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.also { imageCache.put(url, it) }
                     }
                 }
             }.onFailure { error ->

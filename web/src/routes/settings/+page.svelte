@@ -11,6 +11,7 @@
   import type { UnitSystem } from "$lib/units";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
   import { userDisplayName } from "$lib/user-name";
+  import { t } from "$lib/i18n";
 
   let { data, form } = $props();
   let selected = $state<UnitSystem>(untrack(() => data.unitSystem));
@@ -96,13 +97,13 @@
   }
 </script>
 
-<svelte:head><title>Settings · Kondis</title></svelte:head>
+<svelte:head><title>{t("settings")} · Kondis</title></svelte:head>
 
 <div class="page-shell settings-page">
   <header class="page-header">
     <div>
-      <h1>Settings</h1>
-      <p>Choose how Kondis displays your activity data.</p>
+      <h1>{t("settings")}</h1>
+      <p>{t("choose_activity_display")}</p>
     </div>
   </header>
 
@@ -110,13 +111,13 @@
     <div class="settings-heading">
       <span class="settings-icon"><UserRound size={21} /></span>
       <div>
-        <h2>Your name</h2>
-        <p>This is the name shown on your activities and profile.</p>
+        <h2>{t("your_name")}</h2>
+        <p>{t("name_description")}</p>
       </div>
     </div>
     <div class="settings-name-fields">
       <label class="settings-field">
-        <span>First name</span>
+        <span>{t("first_name")}</span>
         <input
           bind:value={firstName}
           maxlength="80"
@@ -124,7 +125,7 @@
         />
       </label>
       <label class="settings-field">
-        <span>Last name</span>
+        <span>{t("last_name")}</span>
         <input
           bind:value={lastName}
           maxlength="80"
@@ -139,7 +140,7 @@
         disabled={nameBusy || !firstName.trim() || !lastName.trim()}
       >
         <Check size={17} />
-        {nameBusy ? "Saving…" : "Save name"}
+        {nameBusy ? t("saving") : t("save_name")}
       </button>
       {#if nameError}<span class="settings-error" role="alert">{nameError}</span
         >{/if}
@@ -149,19 +150,19 @@
   <section class="settings-panel profile-picture-panel">
     <div class="settings-heading">
       <UserAvatar
-        name={data.user ? userDisplayName(data.user) : "You"}
+        name={data.user ? userDisplayName(data.user) : t("you")}
         src={avatarUrl}
         size={72}
       />
       <div>
-        <h2>Profile picture</h2>
-        <p>Shown next to your name on activities and profiles.</p>
+        <h2>{t("profile_picture")}</h2>
+        <p>{t("profile_picture_description")}</p>
       </div>
     </div>
     <div class="settings-actions">
       <label class="metadata-save profile-picture-upload">
         <Camera size={17} />
-        {avatarBusy ? "Saving…" : "Choose picture"}
+        {avatarBusy ? t("saving") : t("choose_picture")}
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
@@ -173,7 +174,7 @@
           class="metadata-cancel"
           type="button"
           onclick={removeAvatar}
-          disabled={avatarBusy}><Trash2 size={17} /> Remove</button
+          disabled={avatarBusy}><Trash2 size={17} /> {t("remove")}</button
         >{/if}
     </div>
     {#if avatarError}<p class="settings-error" role="alert">
@@ -185,12 +186,12 @@
     <div class="settings-heading">
       <span class="settings-icon"><Ruler size={21} /></span>
       <div>
-        <h2>Units of measurement</h2>
+        <h2>{t("units_of_measurement")}</h2>
       </div>
     </div>
 
     <fieldset class="unit-options">
-      <legend>Display units</legend>
+      <legend>{t("display_units")}</legend>
       <label class:selected={selected === "metric"}>
         <input
           type="radio"
@@ -198,7 +199,7 @@
           value="metric"
           bind:group={selected}
         />
-        <span><strong>Metric</strong></span>
+        <span><strong>{t("metric")}</strong></span>
         {#if selected === "metric"}<Check size={19} />{/if}
       </label>
       <label class:selected={selected === "imperial"}>
@@ -208,15 +209,15 @@
           value="imperial"
           bind:group={selected}
         />
-        <span><strong>Imperial</strong></span>
+        <span><strong>{t("imperial")}</strong></span>
         {#if selected === "imperial"}<Check size={19} />{/if}
       </label>
     </fieldset>
 
     <div class="settings-actions">
-      <button type="submit"><Gauge size={17} /> Save preference</button>
+      <button type="submit"><Gauge size={17} /> {t("save_preference")}</button>
       {#if form?.saved}<span class="settings-saved" role="status"
-          ><Check size={16} /> Saved</span
+          ><Check size={16} /> {t("saved")}</span
         >{/if}
       {#if form?.error}<span class="settings-error" role="alert"
           >{form.error}</span

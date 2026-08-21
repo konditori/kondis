@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { MapPinOff } from "@lucide/svelte";
   import { ActivityMapStyle } from "$lib/activity-types";
+  import { t } from "$lib/i18n";
 
   let {
     coordinates,
@@ -87,7 +88,7 @@
     const color = rank === 1 ? "#efaa00" : rank === 2 ? "#7b8583" : "#be6739";
     return L.divIcon({
       className: "route-medal-marker",
-      html: `<span style="--medal-color:${color}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.21 15 2.66 7.14A2 2 0 0 1 4.3 4h15.4a2 2 0 0 1 1.64 3.14L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><circle cx="12" cy="16" r="6"/><path d="M12 18v-4"/><path d="m9.5 16 2.5-2 2.5 2"/></svg><strong>${escapeHtml(label)}</strong><em>Lifetime</em></span>`,
+      html: `<span style="--medal-color:${color}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.21 15 2.66 7.14A2 2 0 0 1 4.3 4h15.4a2 2 0 0 1 1.64 3.14L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><circle cx="12" cy="16" r="6"/><path d="M12 18v-4"/><path d="m9.5 16 2.5-2 2.5 2"/></svg><strong>${escapeHtml(label)}</strong><em>${t("lifetime")}</em></span>`,
       iconSize: [190, 38],
       iconAnchor: [16, 36],
     });
@@ -119,7 +120,7 @@
           return leaflet!
             .marker([coordinate[1], coordinate[0]], {
               icon: medalIcon(leaflet!, medal.rank, medal.label),
-              title: `${medal.label} medal`,
+              title: t("medal_title", { label: medal.label }),
               interactive: false,
               zIndexOffset: 500,
             })
@@ -215,8 +216,7 @@
       });
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: t("map_attribution"),
       }).addTo(map);
       if (!compact) L.control.zoom({ position: "bottomright" }).addTo(map);
 
@@ -406,13 +406,13 @@
     class="route-map"
     bind:this={container}
     aria-label={mode === ActivityMapStyle.Heatmap
-      ? "Activity density map"
-      : "Activity route map"}
+      ? t("activity_density_map")
+      : t("activity_route_map")}
   ></div>
 {:else}
   <div class="map-empty">
-    <MapPinOff size={27} /><strong>No GPS route</strong><span
-      >This activity did not include location data.</span
+    <MapPinOff size={27} /><strong>{t("no_gps_route")}</strong><span
+      >{t("no_location_data")}</span
     >
   </div>
 {/if}

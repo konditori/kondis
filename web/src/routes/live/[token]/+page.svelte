@@ -1,9 +1,10 @@
 <script lang="ts">
   import LiveWorkoutView from "$lib/components/LiveWorkoutView.svelte";
+  import { t } from "$lib/i18n";
   let { data } = $props();
 </script>
 
-<svelte:head><title>Live tracking · Kondis</title></svelte:head>
+<svelte:head><title>{t("live_tracking")} · Kondis</title></svelte:head>
 
 <main class="public-live-page">
   <a class="public-live-brand" href="/">⚡ Kondis</a>

@@ -1,28 +1,29 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   let { form } = $props();
 </script>
 
-<svelte:head><title>Create account · Kondis</title></svelte:head>
+<svelte:head><title>{t("auth_create_account")} · Kondis</title></svelte:head>
 <main class="auth-page">
   <section>
-    <h1>Create your account</h1>
+    <h1>{t("create_your_account")}</h1>
     <form method="POST" action="?/register">
       <label
-        >First name<input
+        >{t("first_name")}<input
           required
           name="firstName"
           autocomplete="given-name"
           value={form?.firstName ?? ""}
         /></label
       ><label
-        >Last name<input
+        >{t("last_name")}<input
           required
           name="lastName"
           autocomplete="family-name"
           value={form?.lastName ?? ""}
         /></label
       ><label
-        >Email<input
+        >{t("email")}<input
           required
           type="email"
           name="email"
@@ -30,7 +31,7 @@
           value={form?.email ?? ""}
         /></label
       ><label
-        >Password<input
+        >{t("password")}<input
           required
           minlength="10"
           type="password"
@@ -38,7 +39,7 @@
           autocomplete="new-password"
         /></label
       ><label
-        >Confirm password<input
+        >{t("confirm_password")}<input
           required
           minlength="10"
           type="password"
@@ -46,11 +47,11 @@
           autocomplete="new-password"
         /></label
       >{#if form?.error}<p class="error">{form.error}</p>{/if}<button
-        >Create account</button
+        >{t("auth_create_account")}</button
       >
     </form>
     <p class="auth-switch">
-      Already have an account? <a href="/login">Sign in</a>
+      {t("already_have_account")} <a href="/login">{t("auth_sign_in")}</a>
     </p>
   </section>
 </main>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight, X } from "@lucide/svelte";
   import type { ActivityImage } from "$lib/types";
+  import { t } from "$lib/i18n";
 
   let {
     images,
@@ -50,7 +51,7 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    aria-label={image?.caption ?? "Activity image"}
+    aria-label={image?.caption ?? t("activity_image")}
     onclick={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}
@@ -64,7 +65,7 @@
         <button
           class="image-lightbox-nav image-lightbox-prev"
           type="button"
-          aria-label="Previous image"
+          aria-label={t("previous_image")}
           onclick={() =>
             (currentIndex = (currentIndex - 1 + images.length) % images.length)}
         >
@@ -74,7 +75,7 @@
       <button
         class="image-lightbox-close"
         type="button"
-        aria-label="Close image viewer"
+        aria-label={t("close_image_viewer")}
         onclick={onClose}
       >
         <X size={22} />
@@ -83,7 +84,7 @@
         <button
           class="image-lightbox-nav image-lightbox-next"
           type="button"
-          aria-label="Next image"
+          aria-label={t("next_image")}
           onclick={() => (currentIndex = (currentIndex + 1) % images.length)}
         >
           <ChevronRight size={28} />
@@ -91,7 +92,7 @@
       {/if}
       <img
         src={imageUrl}
-        alt={image?.caption ?? "Activity photo"}
+        alt={image?.caption ?? t("activity_photo")}
         width={image?.width ?? undefined}
         height={image?.height ?? undefined}
       />

@@ -10,6 +10,7 @@
     socialControllerUnfollow,
   } from "$lib/api";
   import { userDisplayName } from "$lib/user-name";
+  import { t } from "$lib/i18n";
 
   type Person = Awaited<ReturnType<typeof socialControllerPeople>>[number];
   type RequestItem = Awaited<
@@ -28,7 +29,7 @@
     try {
       people = (await socialControllerPeople({ query })) as Person[];
     } catch {
-      error = "Could not load people.";
+      error = t("could_not_load_people");
     } finally {
       loading = false;
     }
@@ -44,7 +45,7 @@
         person.relation = { ...person.relation, outgoingRequest: true };
       }
     } catch {
-      error = "Could not update the follow request.";
+      error = t("could_not_update_follow_request");
     }
   }
 
@@ -70,24 +71,24 @@
   });
 </script>
 
-<svelte:head><title>People · Kondis</title></svelte:head>
+<svelte:head><title>{t("people")} · Kondis</title></svelte:head>
 
 <div class="page-shell">
   <header class="page-header">
     <div>
-      <span class="eyebrow">Social</span>
-      <h1>People</h1>
-      <p>Follow athletes and see their activities in your home feed.</p>
+      <span class="eyebrow">{t("social")}</span>
+      <h1>{t("people")}</h1>
+      <p>{t("follow_athletes_description")}</p>
     </div>
     <button class="metadata-save" type="button" onclick={loadRequests}
-      ><UserPlus size={16} /> Requests</button
+      ><UserPlus size={16} /> {t("requests")}</button
     >
   </header>
   {#if showRequests}
-    <section class="settings-panel" aria-label="Follow requests">
-      <h2>Incoming requests</h2>
+    <section class="settings-panel" aria-label={t("follow_requests")}>
+      <h2>{t("incoming_requests")}</h2>
       {#if requests.length === 0}<p class="muted-copy">
-          No pending requests.
+          {t("no_pending_requests")}
         </p>{/if}
       {#each requests as request (request.id)}
         <div class="person-row">
@@ -103,11 +104,12 @@
             class="metadata-save"
             type="button"
             onclick={() => accept(request.id)}
-            ><Check size={16} /> Accept</button
+            ><Check size={16} /> {t("accept")}</button
           ><button
             class="metadata-cancel"
             type="button"
-            onclick={() => ignore(request.id)}><X size={16} /> Ignore</button
+            onclick={() => ignore(request.id)}
+            ><X size={16} /> {t("ignore")}</button
           >
         </div>
       {/each}
@@ -123,12 +125,12 @@
   >
     <UserRound size={18} /><input
       bind:value={query}
-      placeholder="Search by name"
-      aria-label="Search people"
-    /><button type="submit">Search</button>
+      placeholder={t("search_by_name")}
+      aria-label={t("search_people")}
+    /><button type="submit">{t("search")}</button>
   </form>
   {#if error}<p class="form-error">{error}</p>{/if}
-  <section class="people-list" aria-label="People">
+  <section class="people-list" aria-label={t("people")}>
     {#each people as person (person.user.id)}
       <article class="person-row">
         <UserAvatar
@@ -148,16 +150,16 @@
             person.relation.blockedByViewer}
           onclick={() => toggleFollow(person)}
           >{person.relation.following
-            ? "Following"
+            ? t("following")
             : person.relation.outgoingRequest
-              ? "Requested"
-              : "Follow"}</button
+              ? t("requested")
+              : t("follow")}</button
         >
       </article>
     {/each}
     {#if !loading && people.length === 0}<div class="empty-state">
-        <h2>No people found</h2>
-        <p>Try a different name.</p>
+        <h2>{t("no_people_found")}</h2>
+        <p>{t("try_different_name")}</p>
       </div>{/if}
   </section>
 </div>

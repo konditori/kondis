@@ -71,6 +71,7 @@ import app.kondis.recording.RecordingState
 import app.kondis.recording.distanceMeters
 import app.kondis.ui.components.StaticRoutePreview
 import app.kondis.ui.components.sportIcon
+import app.kondis.ui.i18n.tr
 
 @Composable
 fun RecordRoute(
@@ -142,8 +143,8 @@ fun RecordScreen(
     val isRide = state.sport in setOf("ride", "mountain_bike_ride", "gravel_ride", "e_bike_ride", "virtual_ride")
     val gpsWarning =
         when {
-            location == null -> "Looking for GPS…"
-            gpsAccuracy(location) > 30f -> "GPS signal is weak"
+            location == null -> tr("looking_for_gps")
+            gpsAccuracy(location) > 30f -> tr("gps_signal_weak")
             else -> null
         }
     if (recording.mode == RecordingMode.Saving || recording.mode == RecordingMode.Saved) {
@@ -186,13 +187,13 @@ fun RecordScreen(
                         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                     ) {
-                        Metric("Time", formatDuration(recording.elapsedSeconds.toDouble()))
+                        Metric(tr("time"), formatDuration(recording.elapsedSeconds.toDouble()))
                         if (isRide) {
-                            Metric("Speed", formatSpeed(recording.currentSpeedMetersPerSecond(), UnitSystem.Metric))
+                            Metric(tr("speed"), formatSpeed(recording.currentSpeedMetersPerSecond(), UnitSystem.Metric))
                         } else {
-                            Metric("Pace", formatPace(recording.currentSpeedMetersPerSecond(), UnitSystem.Metric))
+                            Metric(tr("pace"), formatPace(recording.currentSpeedMetersPerSecond(), UnitSystem.Metric))
                         }
-                        Metric("Distance", formatDistance(recording.distanceMeters, UnitSystem.Metric))
+                        Metric(tr("distance"), formatDistance(recording.distanceMeters, UnitSystem.Metric))
                     }
                     gpsWarning?.let { warning ->
                         Text(
@@ -214,7 +215,7 @@ fun RecordScreen(
                                 modifier = Modifier.fillMaxWidth().height(56.dp).padding(top = 12.dp),
                             ) {
                                 Icon(Icons.Rounded.PlayArrow, contentDescription = null)
-                                Text("Start workout", modifier = Modifier.padding(start = 8.dp))
+                                Text(tr("recording_start"), modifier = Modifier.padding(start = 8.dp))
                             }
                         }
 
@@ -225,12 +226,12 @@ fun RecordScreen(
                                     modifier = Modifier.fillMaxWidth().height(56.dp),
                                 ) {
                                     Icon(Icons.Rounded.Pause, contentDescription = null)
-                                    Text("Pause")
+                                    Text(tr("pause"))
                                 }
                                 TextButton(
                                     onClick = onShareLive,
                                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp),
-                                ) { Text("Share live tracking") }
+                                ) { Text(tr("share_live_tracking")) }
                             }
                         }
 
@@ -244,7 +245,7 @@ fun RecordScreen(
                                     modifier = Modifier.weight(1f).height(56.dp),
                                 ) {
                                     Icon(Icons.Rounded.PlayArrow, contentDescription = null)
-                                    Text("Resume")
+                                    Text(tr("resume"))
                                 }
                                 Button(
                                     onClick = onFinish,
@@ -252,7 +253,7 @@ fun RecordScreen(
                                     modifier = Modifier.weight(1f).height(56.dp),
                                 ) {
                                     Icon(Icons.Rounded.Stop, contentDescription = null)
-                                    Text("Finish")
+                                    Text(tr("finish"))
                                 }
                             }
                         }
@@ -260,7 +261,7 @@ fun RecordScreen(
                         RecordingMode.Saving -> {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 CircularProgressIndicator()
-                                Text("Saving and syncing workout…", modifier = Modifier.padding(top = 12.dp))
+                                Text(tr("saving_and_syncing_activity"), modifier = Modifier.padding(top = 12.dp))
                             }
                         }
 
@@ -272,25 +273,25 @@ fun RecordScreen(
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(36.dp),
                                 )
-                                Text("Workout saved", style = MaterialTheme.typography.titleLarge)
+                                Text(tr("activity_saved"), style = MaterialTheme.typography.titleLarge)
                                 Button(
                                     onClick = onReset,
                                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                                ) { Text("Done") }
+                                ) { Text(tr("done")) }
                             }
                         }
 
                         RecordingMode.Error -> {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    recording.errorMessage ?: "Recording failed",
+                                    recording.errorMessage ?: tr("recording_failed"),
                                     color = MaterialTheme.colorScheme.error,
                                     textAlign = TextAlign.Center,
                                 )
                                 Button(
                                     onClick = onReset,
                                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                                ) { Text("Dismiss") }
+                                ) { Text(tr("dismiss")) }
                             }
                         }
                     }
@@ -340,12 +341,12 @@ private fun PostRecordingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    if (recording.mode == RecordingMode.Saved) "Workout saved" else "Save activity",
+                    if (recording.mode == RecordingMode.Saved) tr("activity_saved") else tr("save_activity"),
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 if (recording.mode == RecordingMode.Saved) {
-                    TextButton(onClick = onDone) { Text("Done") }
+                    TextButton(onClick = onDone) { Text(tr("done")) }
                 }
             }
         }
@@ -357,7 +358,7 @@ private fun PostRecordingScreen(
                 )
             } else {
                 Text(
-                    "No GPS trace was captured for this activity.",
+                    tr("no_gps_trace"),
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 32.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -365,7 +366,7 @@ private fun PostRecordingScreen(
         }
         item {
             Column(Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
-                Text("Activity title", style = MaterialTheme.typography.labelLarge)
+                Text(tr("activity_title"), style = MaterialTheme.typography.labelLarge)
                 OutlinedTextField(
                     value = state.title,
                     onValueChange = onTitleChange,
@@ -378,8 +379,8 @@ private fun PostRecordingScreen(
                     Modifier.fillMaxWidth().padding(top = 24.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    Metric("Distance", formatDistance(recording.distanceMeters, UnitSystem.Metric))
-                    Metric("Time", formatDuration(recording.elapsedSeconds.toDouble()))
+                    Metric(tr("distance"), formatDistance(recording.distanceMeters, UnitSystem.Metric))
+                    Metric(tr("time"), formatDuration(recording.elapsedSeconds.toDouble()))
                 }
             }
         }
@@ -392,17 +393,20 @@ private fun PostRecordingScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         CircularProgressIndicator(modifier = Modifier.size(22.dp))
-                        Text("Uploading activity…", modifier = Modifier.padding(start = 12.dp))
+                        Text(tr("uploading_activity"), modifier = Modifier.padding(start = 12.dp))
                     }
                 } else if (recording.mode == RecordingMode.Saved) {
                     Text(
-                        "Saved on this device. It will upload when your Kondis server is reachable.",
+                        tr("saved_will_upload_when_reachable"),
                         color = MaterialTheme.colorScheme.primary,
                     )
                 } else {
-                    Button(onClick = onSave, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Save activity") }
+                    Button(
+                        onClick = onSave,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                    ) { Text(tr("save_activity")) }
                     TextButton(onClick = { showDiscardDialog = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Discard activity")
+                        Text(tr("discard_activity"))
                     }
                 }
             }
@@ -411,15 +415,15 @@ private fun PostRecordingScreen(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Discard workout?") },
-            text = { Text("This recording will be permanently deleted and cannot be recovered.") },
+            title = { Text(tr("discard_activity")) },
+            text = { Text(tr("discard_activity_confirmation")) },
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false
                     onDiscard()
-                }) { Text("Discard") }
+                }) { Text(tr("discard")) }
             },
-            dismissButton = { TextButton(onClick = { showDiscardDialog = false }) { Text("Keep workout") } },
+            dismissButton = { TextButton(onClick = { showDiscardDialog = false }) { Text(tr("keep_activity")) } },
         )
     }
 }
@@ -523,7 +527,7 @@ fun ActivityTypePicker(
             modifier = Modifier.weight(1f).padding(start = 12.dp),
             textAlign = TextAlign.Start,
         )
-        Icon(Icons.Rounded.ExpandMore, contentDescription = "Choose activity type")
+        Icon(Icons.Rounded.ExpandMore, contentDescription = tr("choose_activity_type"))
     }
     if (open.value) {
         ActivityTypeSheet(
@@ -560,10 +564,10 @@ private fun ActivityTypeSheet(
         Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Choose a sport", style = MaterialTheme.typography.headlineSmall)
-                    Text("Select what you’re about to record", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(tr("choose_sport"), style = MaterialTheme.typography.headlineSmall)
+                    Text(tr("select_sport_to_record"), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, contentDescription = "Close") }
+                IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, contentDescription = tr("close")) }
             }
             OutlinedTextField(
                 value = query.value,
@@ -571,7 +575,7 @@ private fun ActivityTypeSheet(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                placeholder = { Text("Search sports") },
+                placeholder = { Text(tr("search_sports")) },
                 shape = RoundedCornerShape(14.dp),
             )
             LazyColumn(
@@ -583,7 +587,7 @@ private fun ActivityTypeSheet(
                 if (common.isNotEmpty()) {
                     item {
                         Text(
-                            "Popular",
+                            tr("popular"),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(vertical = 8.dp),
@@ -597,7 +601,7 @@ private fun ActivityTypeSheet(
                 if (more.isNotEmpty()) {
                     item {
                         Text(
-                            "More activities",
+                            tr("more_activities"),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
@@ -613,7 +617,7 @@ private fun ActivityTypeSheet(
                 ) {
                     item {
                         Text(
-                            "No sports found",
+                            tr("no_sports_found"),
                             modifier = Modifier.padding(vertical = 24.dp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -649,7 +653,7 @@ private fun ActivityTypeRow(
         if (selected) {
             Icon(
                 Icons.Rounded.Check,
-                contentDescription = "Selected",
+                contentDescription = tr("selected"),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }

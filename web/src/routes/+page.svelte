@@ -22,6 +22,7 @@
     localTime,
     pace,
   } from "$lib/format";
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
   let query = $state(page.url.searchParams.get("search") ?? "");
@@ -61,10 +62,12 @@
   const displayedNextCursor = $derived(hasSearch ? searchCursor : nextCursor);
   const displayedTotal = $derived(hasSearch ? (searchTotal ?? 0) : total);
   const heading = $derived(
-    hasSearch ? `Search results for “${query.trim()}”` : "Home",
+    hasSearch ? t("search_results_for", { query: query.trim() }) : t("home"),
   );
   const resultSummary = $derived(
-    `${displayedTotal} ${displayedTotal === 1 ? "activity" : "activities"} found`,
+    displayedTotal === 1
+      ? t("activity_found", { count: displayedTotal })
+      : t("activities_found", { count: displayedTotal }),
   );
 
   $effect(() => {
@@ -134,7 +137,28 @@
       (event) => {
         if (
           event.type === "activity.best-efforts.available" ||
-          event.type === "activity.comment.created"
+          event.type === "activity.comment.created" ||
+          event.type === "activity.comment.updated" ||
+          event.type === "activity.comment.deleted"
+        )
+          return;
+        if (event.type === "activity.like.updated") {
+          const current = displayedActivities.find(
+            (activity) => activity.id === event.activity.id,
+          );
+          if (current) {
+            appendedActivities = [
+              ...appendedActivities.filter(
+                ({ uploadId }) => uploadId !== current.uploadId,
+              ),
+              { ...current, likeCount: event.activity.likeCount },
+            ];
+          }
+          return;
+        }
+        if (
+          event.type !== "activity.created" &&
+          event.type !== "activity.updated"
         )
           return;
         const { activity } = event;
@@ -146,7 +170,7 @@
         ];
         void refreshRecent();
       },
-      () => void refreshRecent(),
+      () => {},
     ),
   );
 
@@ -267,7 +291,7 @@
   };
 </script>
 
-<svelte:head><title>Activities · Kondis</title></svelte:head>
+<svelte:head><title>{t("activities")} · Kondis</title></svelte:head>
 
 <div class="page-shell home-page">
   {#if hasSearch}
@@ -282,13 +306,14 @@
   {#if data.unavailable}
     <div class="notice">
       <CloudOff size={20} /><span
-        ><strong>Server unavailable</strong> Start the Kondis API to load your activities.</span
+        ><strong>{t("server_unavailable")}</strong>
+        {t("start_api_to_load_activities")}</span
       >
     </div>
   {/if}
 
   {#if data.liveWorkouts.length}
-    <section class="live-workout-list" aria-label="Live workouts">
+    <section class="live-workout-list" aria-label={t("live_activities")}>
       {#each data.liveWorkouts as workout (workout.id)}
         {@const Icon = sportIcon(workout.sport)}
         {@const averageSpeed =
@@ -302,7 +327,7 @@
               <span
                 class:paused={workout.status === "paused"}
                 class="live-beacon"
-                aria-label="Live recording"
+                aria-label={t("live_recording")}
               ></span>
             </div>
             <div class="activity-primary">
@@ -311,28 +336,28 @@
               </div>
               <p>
                 {localDate(workout.startedAt)} · {localTime(workout.startedAt)} ·
-                {workout.status === "paused" ? "Paused" : "Live"}
+                {workout.status === "paused" ? t("paused") : t("live")}
               </p>
             </div>
             <div class="activity-feed-stats">
               <div class="activity-stat">
                 <strong
                   >{distance(workout.distanceMeters, data.unitSystem)}</strong
-                ><small>Distance</small>
+                ><small>{t("distance")}</small>
               </div>
               <div class="activity-stat">
                 <strong>{pace(averageSpeed, data.unitSystem)}</strong><small
-                  >Pace</small
+                  >{t("pace")}</small
                 >
               </div>
               <div class="activity-stat">
                 <strong>{duration(workout.elapsedSeconds)}</strong><small
-                  >Moving time</small
+                  >{t("moving_time")}</small
                 >
               </div>
               <div class="activity-stat">
                 <strong>{elevation(null, data.unitSystem)}</strong><small
-                  >Elevation</small
+                  >{t("elevation")}</small
                 >
               </div>
             </div>
@@ -371,9 +396,10 @@
     </div>
     {#if displayedNextCursor}
       <div class="load-more" use:infiniteScroll aria-live="polite">
-        {#if loading}<LoaderCircle class="spin" size={18} /> Loading more activities…
+        {#if loading}<LoaderCircle class="spin" size={18} />
+          {t("loading_more_activities")}
         {:else if loadError}<button onclick={() => void loadMore()}
-            >Could not load more. Try again</button
+            >{t("could_not_load_more")}</button
           >
         {/if}
       </div>
@@ -382,12 +408,10 @@
     <div class="empty-state">
       <span class="empty-icon"><ActivityIcon size={28} /></span>
       <h2>
-        {query ? "No matching activities" : "Your first activity starts here"}
+        {query ? t("no_matching_activities") : t("first_activity_starts_here")}
       </h2>
       <p>
-        {query
-          ? "Try a different sport or activity name."
-          : "Import a file to build your private training archive."}
+        {query ? t("try_different_activity_search") : t("no_activities")}
       </p>
     </div>
   {/if}

@@ -11,11 +11,15 @@ import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import { SocialRepository } from 'src/repositories/social.repository';
 
 const EVENT_CHANNEL = 'kondis_realtime';
+const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
 
 type EventMap = {
   ActivityCreate: [activity: ActivityDto];
   ActivityUpdate: [activity: ActivityDto];
-  ActivityCommentCreated: [activity: Pick<ActivityDto, 'id'>];
+  ActivityCommentCreated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
+  ActivityCommentUpdated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
+  ActivityCommentDeleted: [activity: Pick<ActivityDto, 'id'>, commentId: string];
+  ActivityLikeUpdated: [activity: { id: string; likeCount: number }];
   ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
   NotificationCreated: [notification: NotificationCreatedEvent];
   NotificationsRead: [notification: NotificationsReadEvent];
@@ -34,12 +38,28 @@ type NotificationsReadEvent = {
   readAt: string;
 };
 
+export type ActivityCommentEvent = {
+  id: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
+};
+
 export type EmitEvent = keyof EventMap;
 export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent =
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
-  | { type: 'activity.comment.created'; activity: Pick<ActivityDto, 'id'> }
+  | { type: 'activity.comment.created'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
+  | { type: 'activity.comment.updated'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
+  | { type: 'activity.comment.deleted'; activity: Pick<ActivityDto, 'id'>; commentId: string }
+  | { type: 'activity.like.updated'; activity: { id: string; likeCount: number } }
   | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> }
   | { type: 'notification.created'; notification: NotificationCreatedEvent }
   | { type: 'notifications.read'; userId: string; readAt: string };
@@ -51,7 +71,10 @@ type EventSerializers = {
 const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
-  ActivityCommentCreated: (activity) => ({ type: 'activity.comment.created', activity }),
+  ActivityCommentCreated: (activity, comment) => ({ type: 'activity.comment.created', activity, comment }),
+  ActivityCommentUpdated: (activity, comment) => ({ type: 'activity.comment.updated', activity, comment }),
+  ActivityCommentDeleted: (activity, commentId) => ({ type: 'activity.comment.deleted', activity, commentId }),
+  ActivityLikeUpdated: (activity) => ({ type: 'activity.like.updated', activity }),
   ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
   NotificationCreated: (notification) => ({ type: 'notification.created', notification }),
   NotificationsRead: (notification) => ({ type: 'notifications.read', ...notification }),
@@ -63,6 +86,8 @@ export class EventRepository implements OnApplicationShutdown {
   private listener?: pg.Client;
   private reconnectTimer?: NodeJS.Timeout;
   private socketServer?: WebSocketServer;
+  private httpServer?: Server;
+  private upgradeHandler?: Parameters<Server['on']>[1];
   private readonly socketUsers = new Map<WebSocket, string>();
   private readonly socketActivities = new Map<WebSocket, Set<string>>();
   private stopped = false;
@@ -80,7 +105,16 @@ export class EventRepository implements OnApplicationShutdown {
   }
 
   async attach(server: Server): Promise<void> {
-    this.socketServer = new WebSocketServer({ server, path: '/events' });
+    this.socketServer = new WebSocketServer({ noServer: true });
+    this.httpServer = server;
+    this.upgradeHandler = (request, socket, head) => {
+      const path = new URL(request.url ?? '', 'http://localhost').pathname;
+      if (!EVENT_PATHS.has(path)) return;
+      this.socketServer?.handleUpgrade(request, socket, head, (client) => {
+        this.socketServer?.emit('connection', client, request);
+      });
+    };
+    server.on('upgrade', this.upgradeHandler);
     this.socketServer.on('connection', (socket, request) => {
       const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
       const userId = verifyActivityEventsTicket(ticket, this.config.authSecret);
@@ -99,12 +133,15 @@ export class EventRepository implements OnApplicationShutdown {
     });
 
     await this.connectListener();
-    this.logger.log('Activity events available at /events');
+    this.logger.log('Activity events available at /events and /api/v1/events');
   }
 
   async onApplicationShutdown(): Promise<void> {
     this.stopped = true;
     clearTimeout(this.reconnectTimer);
+    if (this.httpServer && this.upgradeHandler) {
+      this.httpServer.off('upgrade', this.upgradeHandler);
+    }
     this.socketServer?.close();
     this.socketUsers.clear();
     this.socketActivities.clear();
@@ -148,8 +185,11 @@ export class EventRepository implements OnApplicationShutdown {
   private async broadcast(payload: string): Promise<void> {
     const commentActivityId = this.commentActivityId(payload);
     if (commentActivityId) {
+      const recipients = await this.recipientsFor(payload);
       for (const client of this.socketServer?.clients ?? []) {
-        if (client.readyState === WebSocket.OPEN && this.socketActivities.get(client)?.has(commentActivityId)) {
+        const subscribed = this.socketActivities.get(client)?.has(commentActivityId) ?? false;
+        const isRecipient = recipients.has(this.socketUsers.get(client) ?? '');
+        if (client.readyState === WebSocket.OPEN && (subscribed || isRecipient)) {
           client.send(payload);
         }
       }
@@ -231,7 +271,7 @@ export class EventRepository implements OnApplicationShutdown {
         type?: string;
         activity?: { id?: string };
       };
-      return event.type === 'activity.comment.created' ? event.activity?.id : undefined;
+      return event.type?.startsWith('activity.comment.') ? event.activity?.id : undefined;
     } catch {
       return undefined;
     }

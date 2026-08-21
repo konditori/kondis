@@ -1,15 +1,17 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
+
   let { form } = $props();
 </script>
 
-<svelte:head><title>Create your Kondis account</title></svelte:head>
+<svelte:head><title>{t("create_kondis_account")}</title></svelte:head>
 <main class="auth-page">
   <section>
-    <h1>Create your account</h1>
-    <p>Your setup token has been verified.</p>
+    <h1>{t("create_your_account")}</h1>
+    <p>{t("setup_token_verified")}</p>
     <form method="POST" action="?/setup">
       <label
-        >First name<input
+        >{t("first_name")}<input
           required
           name="firstName"
           autocomplete="given-name"
@@ -17,7 +19,7 @@
         /></label
       >
       <label
-        >Last name<input
+        >{t("last_name")}<input
           required
           name="lastName"
           autocomplete="family-name"
@@ -25,7 +27,7 @@
         /></label
       >
       <label
-        >Email<input
+        >{t("email")}<input
           required
           type="email"
           name="email"
@@ -34,7 +36,7 @@
         /></label
       >
       <label
-        >Password<input
+        >{t("password")}<input
           required
           minlength="10"
           type="password"
@@ -43,7 +45,7 @@
         /></label
       >
       <label
-        >Confirm password<input
+        >{t("confirm_password")}<input
           required
           minlength="10"
           type="password"
@@ -52,7 +54,7 @@
         /></label
       >
       {#if form?.error}<p class="error">{form.error}</p>{/if}
-      <button>Set up</button>
+      <button>{t("set_up")}</button>
     </form>
   </section>
 </main>

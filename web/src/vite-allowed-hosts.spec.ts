@@ -25,6 +25,7 @@ describe("Vite allowed hosts", () => {
 
   beforeAll(async () => {
     process.env.KONDIS_VITE_ALLOWED_HOSTS = "allowed.example.com";
+    process.env.KONDIS_API_URL = "http://api.example.test:2293";
     const port = await findAvailablePort();
 
     server = await createServer({
@@ -41,6 +42,7 @@ describe("Vite allowed hosts", () => {
   afterAll(async () => {
     await server.close();
     delete process.env.KONDIS_VITE_ALLOWED_HOSTS;
+    delete process.env.KONDIS_API_URL;
   });
 
   const request = (host: string) =>
@@ -69,5 +71,16 @@ describe("Vite allowed hosts", () => {
     const status = await request("untrusted.example.com");
 
     expect(status).toBe(403);
+  });
+
+  it("proxies activity event WebSockets to the API", () => {
+    const eventsProxy = server.config.server.proxy?.["/events"];
+
+    expect(eventsProxy).toMatchObject({
+      target: "http://api.example.test:2293",
+      changeOrigin: true,
+      ws: true,
+    });
+    expect(server.config.server.proxy?.["/api/v1/events"]).toBe(eventsProxy);
   });
 });

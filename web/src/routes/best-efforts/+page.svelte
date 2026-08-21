@@ -2,11 +2,12 @@
   import { ArrowRight, Trophy } from "@lucide/svelte";
   import { bestEffortLabel } from "$lib/best-efforts";
   import { bestEffortValue } from "$lib/format";
+  import { t } from "$lib/i18n";
 
   let { data } = $props();
   const sports = [
-    { key: "run", label: "Run" },
-    { key: "ride", label: "Ride" },
+    { key: "run", label: t("run") },
+    { key: "ride", label: t("ride") },
   ] as const;
 
   function effortsFor(sport: "run" | "ride") {
@@ -14,22 +15,21 @@
   }
 </script>
 
-<svelte:head><title>Best efforts · Kondis</title></svelte:head>
+<svelte:head><title>{t("best_efforts")} · Kondis</title></svelte:head>
 
 <div class="page-shell best-efforts-index-page">
   <header class="page-header">
     <div>
-      <h1>Best efforts</h1>
-      <p>
-        Choose an effort to see how your performances have progressed over time.
-      </p>
+      <h1>{t("best_efforts")}</h1>
+      <p>{t("effort_progress_description")}</p>
     </div>
   </header>
 
   {#if data.unavailable}
     <div class="notice">
       <Trophy size={20} /><span
-        ><strong>Server unavailable</strong> Could not load your best efforts.</span
+        ><strong>{t("server_unavailable")}</strong>
+        {t("could_not_load_best_efforts")}</span
       >
     </div>
   {:else}
@@ -62,7 +62,9 @@
                     >
                   {:else}
                     <span class="best-efforts-index-value">—</span>
-                    <span class="best-efforts-index-empty">No result yet</span>
+                    <span class="best-efforts-index-empty"
+                      >{t("no_result_yet")}</span
+                    >
                   {/if}
                   <ArrowRight size={18} />
                 </a>

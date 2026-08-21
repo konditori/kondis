@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'kysely';
 import { KYSELY, KondisDatabase } from 'src/db/database';
+import type { ActivityCommentEvent } from 'src/repositories/event.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 
@@ -127,6 +128,10 @@ export class SocialService {
       .select(({ fn }) => fn.countAll<number>().as('count'))
       .where('activity_id', '=', activityId)
       .executeTakeFirstOrThrow();
+    await this.eventRepository.emit('ActivityLikeUpdated', {
+      id: activityId,
+      likeCount: Number(row.count),
+    });
     return { liked, likeCount: Number(row.count) };
   }
 
@@ -209,14 +214,15 @@ export class SocialService {
       .returningAll()
       .executeTakeFirstOrThrow();
     await this.notify(activity.user_id, viewerId, 'activity_comment', activityId);
-    await this.eventRepository.emit('ActivityCommentCreated', { id: activityId });
-    return {
+    const comment: ActivityCommentEvent = {
       id: row.id,
       body: row.body,
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
       user,
     };
+    await this.eventRepository.emit('ActivityCommentCreated', { id: activityId }, comment);
+    return comment;
   }
 
   async updateComment(activityId: string, commentId: string, viewerId: string, body: string) {
@@ -240,13 +246,15 @@ export class SocialService {
     if (!user) {
       throw new NotFoundException('Person does not exist');
     }
-    return {
+    const updatedComment: ActivityCommentEvent = {
       id: row.id,
       body: row.body,
       createdAt: new Date(row.created_at).toISOString(),
       updatedAt: new Date(row.updated_at).toISOString(),
       user,
     };
+    await this.eventRepository.emit('ActivityCommentUpdated', { id: activityId }, updatedComment);
+    return updatedComment;
   }
 
   async deleteComment(activityId: string, commentId: string, viewerId: string) {
@@ -260,6 +268,7 @@ export class SocialService {
     if (!row) {
       throw new NotFoundException('Comment does not exist');
     }
+    await this.eventRepository.emit('ActivityCommentDeleted', { id: activityId }, row.id);
   }
 
   async likers(activityId: string, viewerId: string) {

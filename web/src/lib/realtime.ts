@@ -6,8 +6,24 @@ export type ActivityEvent =
       activity: Activity;
     }
   | {
-      type: "activity.comment.created";
+      type: "activity.comment.created" | "activity.comment.updated";
       activity: Pick<Activity, "id">;
+      comment: {
+        id: string;
+        body: string;
+        createdAt: string;
+        updatedAt: string;
+        user: NonNullable<Activity["athlete"]>;
+      };
+    }
+  | {
+      type: "activity.comment.deleted";
+      activity: Pick<Activity, "id">;
+      commentId: string;
+    }
+  | {
+      type: "activity.like.updated";
+      activity: Pick<Activity, "id" | "likeCount">;
     }
   | {
       type: "activity.best-efforts.available";
@@ -85,7 +101,15 @@ export function subscribeToActivityEvents(
         throw new Error("Unable to authenticate activity events");
       const { token } = (await ticketResponse.json()) as { token?: string };
       if (!token) throw new Error("Activity event ticket was missing");
-      const socketUrl = new URL(url);
+      const socketUrl = new URL(url, window.location.href);
+      if (
+        window.location.protocol === "https:" &&
+        socketUrl.protocol === "ws:"
+      ) {
+        socketUrl.protocol = "wss:";
+        if (socketUrl.hostname === window.location.hostname)
+          socketUrl.port = "";
+      }
       socketUrl.searchParams.set("ticket", token);
       if (stopped) return;
       socket = new WebSocket(socketUrl);
@@ -116,6 +140,9 @@ export function subscribeToActivityEvents(
           (event.type === "activity.created" ||
             event.type === "activity.updated" ||
             event.type === "activity.comment.created" ||
+            event.type === "activity.comment.updated" ||
+            event.type === "activity.comment.deleted" ||
+            event.type === "activity.like.updated" ||
             event.type === "activity.best-efforts.available") &&
           event.activity?.id
         ) {
