@@ -5,8 +5,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiScrollable
-import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import app.kondis.MainActivity
 import app.kondis.data.auth.SecureSessionStore
@@ -100,13 +98,14 @@ class OfflineWorkoutSyncTest {
         check(device.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
             "Sync button did not appear; server requests=${server.requestCount}"
         }
-        check(scrollToActivity("local-sync-test")) {
-            "Local activity card did not appear; server requests=${server.requestCount}"
+        val localActivity = runBlocking { activityDao.activity(accountKey, "local-sync-test") }
+        check(localActivity?.isLocal == true) {
+            "Local activity was not retained in storage; server requests=${server.requestCount}"
         }
-        scrollToActivity("local-sync-test", beginning = true)
+        scrollToActivity("local-sync-test")
 
         check(device.wait(Until.hasObject(By.res("sync-now")), 5_000)) {
-            "Sync button disappeared after returning to the beginning of the feed"
+            "Sync button disappeared while inspecting the local activity"
         }
         device.findObject(By.res("sync-now")).click()
         check(device.wait(Until.hasObject(By.res("sync-complete")), 45_000)) {
@@ -133,9 +132,7 @@ class OfflineWorkoutSyncTest {
         check(uiDevice.wait(Until.hasObject(By.res("sync-now")), 30_000)) {
             "Sync button did not appear; server requests=${server.requestCount}"
         }
-        check(scrollToActivity(deleteId)) {
-            "Delete activity card was not found after scrolling; server requests=${server.requestCount}"
-        }
+        scrollToActivity(deleteId)
         val deleteActivity = device.findObject(By.res("activity-card-$deleteId"))
         val deleteActivityBounds = deleteActivity.visibleBounds
         device.click(deleteActivityBounds.centerX(), deleteActivityBounds.centerY())
@@ -150,16 +147,10 @@ class OfflineWorkoutSyncTest {
             "Activity options menu did not show edit action"
         }
         device.findObject(if (device.hasObject(editMenuItem)) editMenuItem else editMenuText).click()
-        check(UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().resourceId("activity-editor")))
-        check(device.wait(Until.hasObject(By.res("activity-editor")), 5_000))
-        UiScrollable(UiSelector().scrollable(true)).scrollToEnd(5)
-        check(
-            UiScrollable(UiSelector().scrollable(true)).scrollIntoView(
-                UiSelector().resourceId("activity-delete"),
-            ),
-        )
-        check(device.wait(Until.hasObject(By.res("activity-delete")), 5_000))
-        device.findObject(By.res("activity-delete")).click()
+        swipeUntilVisible("activity-detail-list", "activity-editor")
+        swipeUntilVisible("activity-detail-list", "activity-delete")
+        val deleteButtonBounds = device.findObject(By.res("activity-delete")).visibleBounds
+        device.click(deleteButtonBounds.centerX(), deleteButtonBounds.centerY())
         check(device.wait(Until.hasObject(By.res("delete-activity-dialog")), 5_000))
 
         device.findObject(By.res("delete-activity-confirm")).click()
@@ -177,18 +168,28 @@ class OfflineWorkoutSyncTest {
         check(deleteRequest != null) { "No delete request received" }
     }
 
-    private fun scrollToActivity(
-        id: String,
-        beginning: Boolean = false,
-    ): Boolean {
-        val selector = By.res("activity-card-$id")
-        val scrollable = UiScrollable(UiSelector().resourceId("activities-list"))
-        if (beginning) scrollable.scrollToBeginning(10)
-        repeat(30) {
-            if (device.wait(Until.hasObject(selector), 1_000)) return true
-            if (scrollable.scrollIntoView(UiSelector().resourceId("activity-card-$id"))) return true
+    private fun scrollToActivity(id: String) = swipeUntilVisible("activities-list", "activity-card-$id")
+
+    private fun swipeUntilVisible(
+        containerTag: String,
+        targetTag: String,
+    ) {
+        val selector = By.res(targetTag)
+        val list =
+            device.wait(Until.findObject(By.res(containerTag)), 5_000)
+                ?: error("Scrollable container $containerTag did not appear")
+        repeat(12) {
+            if (device.wait(Until.hasObject(selector), 1_000)) return
+            val bounds = list.visibleBounds
+            device.swipe(
+                bounds.centerX(),
+                bounds.bottom - 24,
+                bounds.centerX(),
+                bounds.top + 24,
+                20,
+            )
         }
-        return device.hasObject(selector)
+        error("UI element $targetTag did not appear; server requests=${server.requestCount}")
     }
 
     private fun apiDispatcher() =

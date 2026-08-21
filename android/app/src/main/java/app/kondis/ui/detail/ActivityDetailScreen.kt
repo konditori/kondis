@@ -186,7 +186,11 @@ fun ActivityDetailScreen(
     var draftTags by remember(activity.id) { mutableStateOf(activity.tags) }
     var descriptionExpanded by remember(activity.id) { mutableStateOf(false) }
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                .testTag("activity-detail-list"),
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
         item {
