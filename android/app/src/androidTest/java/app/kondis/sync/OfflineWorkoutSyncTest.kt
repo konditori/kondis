@@ -192,7 +192,7 @@ class OfflineWorkoutSyncTest {
         beginning: Boolean = false,
     ): Boolean {
         val selector = By.res("activity-card-$id")
-        val scrollable = UiScrollable(UiSelector().scrollable(true))
+        val scrollable = UiScrollable(UiSelector().resourceId("activities-list"))
         if (beginning) scrollable.scrollToBeginning(10)
         repeat(30) {
             if (device.wait(Until.hasObject(selector), 1_000)) return true

@@ -122,7 +122,7 @@ fun FeedScreen(
             }
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().testTag("activities-list"),
                 contentPadding =
                     PaddingValues(
                         start = 16.dp,
