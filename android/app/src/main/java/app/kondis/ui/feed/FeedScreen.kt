@@ -33,6 +33,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,6 +87,7 @@ fun FeedScreen(
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
+    var searchVisible by remember { mutableStateOf(false) }
     val initialLoading =
         state.activities.isEmpty() &&
             state.total == null &&
@@ -135,25 +139,30 @@ fun FeedScreen(
                 item {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            tr("home"),
+                            "😰 Kondis",
                             modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.headlineMedium,
                         )
+                        IconButton(onClick = { searchVisible = !searchVisible }) {
+                            Icon(Icons.Rounded.Search, contentDescription = tr("search_activities"))
+                        }
                         IconButton(onClick = onPeopleClick) {
                             Icon(Icons.Rounded.PersonAdd, contentDescription = tr("find_people"))
                         }
                     }
                 }
-                item {
-                    OutlinedTextField(
-                        value = state.search,
-                        onValueChange = onSearchChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                        placeholder = { Text(tr("search_activities")) },
-                        shape = MaterialTheme.shapes.large,
-                    )
+                if (searchVisible) {
+                    item {
+                        OutlinedTextField(
+                            value = state.search,
+                            onValueChange = onSearchChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                            placeholder = { Text(tr("search_activities")) },
+                            shape = MaterialTheme.shapes.large,
+                        )
+                    }
                 }
                 state.errorMessage?.let { message ->
                     item {

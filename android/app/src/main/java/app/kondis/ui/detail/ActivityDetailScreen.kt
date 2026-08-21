@@ -25,6 +25,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
@@ -40,7 +41,6 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -72,6 +72,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
@@ -183,8 +184,9 @@ fun ActivityDetailScreen(
     var draftSport by remember(activity.id) { mutableStateOf(activity.sport) }
     var draftExcludeFromRankings by remember(activity.id) { mutableStateOf(activity.excludeFromRankings) }
     var draftTags by remember(activity.id) { mutableStateOf(activity.tags) }
+    var descriptionExpanded by remember(activity.id) { mutableStateOf(false) }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface),
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
         item {
@@ -273,16 +275,24 @@ fun ActivityDetailScreen(
         }
         activity.description?.takeIf(String::isNotBlank)?.let { description ->
             item {
-                Text(
-                    description,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                SelectionContainer {
+                    Text(
+                        description,
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { descriptionExpanded = true }
+                                .padding(horizontal = 20.dp, vertical = 20.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = if (descriptionExpanded) Int.MAX_VALUE else 10,
+                        overflow = if (descriptionExpanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         if (!isCycling(activity.sport)) {
             activity.analysis?.splits?.takeIf(List<*>::isNotEmpty)?.let { splits ->
-                item { SectionTitle(eyebrow = tr("activity_analysis"), title = tr("splits")) }
+                item { SectionTitle(eyebrow = null, title = tr("splits")) }
                 item {
                     SplitsTable(
                         splits = splits,
@@ -307,29 +317,7 @@ fun ActivityDetailScreen(
             val distanceEfforts = efforts.filterNot { it.type.startsWith("power_") }
             val powerEfforts = efforts.filter { it.type.startsWith("power_") }
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(top = 30.dp, start = 20.dp, end = 12.dp),
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    SectionTitle(
-                        eyebrow =
-                            if (isCycling(
-                                    activity.sport,
-                                )
-                            ) {
-                                tr("cycling_performance")
-                            } else {
-                                tr("running_performance")
-                            },
-                        title = tr("best_efforts"),
-                    )
-                    Spacer(Modifier.weight(1f))
-                    TextButton(
-                        onClick = {
-                            onBestEfforts(if (isCycling(activity.sport)) "ride" else "run", efforts.first().type)
-                        },
-                    ) { Text(tr("you")) }
-                }
+                SectionTitle(eyebrow = null, title = tr("best_efforts"))
             }
             if (distanceEfforts.isNotEmpty()) {
                 item {
@@ -392,10 +380,8 @@ private fun RepeatedRouteCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -406,11 +392,6 @@ private fun RepeatedRouteCard(
             )
             Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
                 Text(
-                    tr("repeated_route"),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
                     tr(if (count == 1) "activity_on_route" else "activities_on_route", count),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
@@ -420,11 +401,6 @@ private fun RepeatedRouteCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(
-                tr(if (cycling) "view_matched_rides" else "view_matched_runs"),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-            )
             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         }
     }
@@ -432,11 +408,13 @@ private fun RepeatedRouteCard(
 
 @Composable
 fun SectionTitle(
-    eyebrow: String,
+    eyebrow: String?,
     title: String,
 ) {
     Column(Modifier.padding(start = 20.dp, top = 30.dp, end = 20.dp, bottom = 12.dp)) {
-        Text(eyebrow, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        eyebrow?.takeIf(String::isNotBlank)?.let {
+            Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        }
         Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
     }
 }
@@ -570,11 +548,8 @@ private fun DetailTable(
     modifier: Modifier = Modifier,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         content = content,
     )
 }
@@ -909,7 +884,11 @@ private fun DetailHeader(
                     Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             activity.athlete?.name?.takeIf(String::isNotBlank)?.let { athleteName ->
-                                Text(athleteName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                Text(
+                                    athleteName,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                )
                             }
                         }
                         Row(
@@ -1088,7 +1067,12 @@ private fun ActivitySocialSection(
                         Icons.Rounded.Person,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primaryContainer).padding(8.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(
+                                    MaterialTheme.colorScheme.primaryContainer,
+                                ).padding(8.dp),
                     )
                 }
                 OutlinedTextField(
@@ -1109,7 +1093,11 @@ private fun ActivitySocialSection(
                             .size(36.dp)
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                 ) {
-                    Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = tr("post"), tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(
+                        Icons.AutoMirrored.Rounded.Send,
+                        contentDescription = tr("post"),
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                    )
                 }
             }
         }

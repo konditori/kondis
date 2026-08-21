@@ -1,6 +1,7 @@
 package app.kondis.ui.components
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,17 +22,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.kondis.model.Activity
@@ -43,6 +49,11 @@ import app.kondis.model.formatDuration
 import app.kondis.model.formatPace
 import app.kondis.model.formatSpeed
 import app.kondis.ui.i18n.tr
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.time.temporal.ChronoUnit
 
 @Composable
 fun ActivityCard(
@@ -53,116 +64,128 @@ fun ActivityCard(
     onLike: () -> Unit = {},
     onLoadImage: suspend (String) -> Bitmap? = { null },
 ) {
-    Card(
+    Column(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(18.dp),
-                horizontalArrangement = Arrangement.spacedBy(13.dp),
-            ) {
-                Box(
-                    modifier = Modifier.size(44.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(sportIcon(activity.sport), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    activity.athlete?.let { athlete ->
-                        Text(
-                            athlete.name,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    Text(activity.displayName(), style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        formatDateTime(activity.startedAt),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    if (activity.tags.isNotEmpty()) {
-                        Text(
-                            activity.tags.joinToString(" · ") {
-                                it.replace('_', ' ').replaceFirstChar { character ->
-                                    character.titlecase()
-                                }
-                            },
-                            modifier = Modifier.padding(top = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    ActivityCardVisualPager(activity, onLoadImage)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 18.dp, bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+            val avatarPath = activity.athlete?.avatarUrl
+            val avatarBitmap by produceState<Bitmap?>(initialValue = null, key1 = avatarPath) {
+                value = avatarPath?.let { runCatching { onLoadImage(it) }.getOrNull() }
+            }
+            Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(40.dp).clip(CircleShape),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        IconButton(onClick = onLike) {
+                        avatarBitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = activity.athlete?.name,
+                                modifier = Modifier.size(40.dp),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } ?: Icon(
+                            Icons.Rounded.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier =
+                                Modifier
+                                    .size(
+                                        40.dp,
+                                    ).background(MaterialTheme.colorScheme.primaryContainer)
+                                    .padding(9.dp),
+                        )
+                    }
+                    Column(Modifier.padding(start = 12.dp)) {
+                        activity.athlete?.name?.takeIf(String::isNotBlank)?.let {
+                            Text(it, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                contentDescription =
-                                    if (activity.viewerLiked) {
-                                        tr(
-                                            "unlike_activity",
-                                        )
-                                    } else {
-                                        tr("like_activity")
-                                    },
-                                tint =
-                                    if (activity.viewerLiked) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
+                                sportIcon(activity.sport),
+                                contentDescription = null,
+                                modifier = Modifier.size(13.dp),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                formatFeedDate(activity.startedAt),
+                                modifier = Modifier.padding(start = 2.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Icon(
-                            Icons.Rounded.ChatBubbleOutline,
-                            contentDescription = tr("comments_count", activity.commentCount),
-                            modifier = Modifier.padding(start = 20.dp),
-                        )
-                        Text(
-                            activity.commentCount.toString(),
-                            modifier = Modifier.padding(start = 6.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
-                    val achievements = activity.topBestEfforts.orEmpty()
-                    val achievementCount = activity.achievementCount
-                    if (achievementCount != null && achievements.isNotEmpty()) {
+                }
+                val visibleAchievements = distinctAchievementEfforts(activity.topBestEfforts.orEmpty())
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        activity.displayName(),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (visibleAchievements.isNotEmpty()) {
                         Row(
-                            modifier = Modifier.padding(top = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            distinctAchievementEfforts(achievements).forEach { effort -> AchievementBadge(effort) }
-                            if (shouldShowAchievementCount(achievementCount, achievements)) {
-                                Text(
-                                    achievementCount.toString(),
-                                    modifier = Modifier.padding(end = 2.dp),
-                                    fontSize = 13.sp,
-                                    lineHeight = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                            visibleAchievements.forEach { effort -> AchievementBadge(effort) }
+                            activity.achievementCount?.let { count ->
+                                if (shouldShowAchievementCount(count, activity.topBestEfforts.orEmpty())) {
+                                    Text(
+                                        count.toString(),
+                                        modifier = Modifier.padding(start = 2.dp),
+                                        fontSize = 13.sp,
+                                        lineHeight = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
                             }
                         }
                     }
-                    Spacer(Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        val metrics = activity.metrics
-                        ActivityStat(tr("distance"), formatDistance(metrics?.distance, units))
-                        ActivityStat(tr("time"), formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
-                        val isPace = activity.sport.contains("run") || activity.sport == "walk"
-                        ActivityStat(
-                            if (isPace) tr("pace") else tr("speed"),
-                            if (isPace) formatPace(metrics?.avgSpeed, units) else formatSpeed(metrics?.avgSpeed, units),
-                        )
-                    }
+                }
+                if (activity.tags.isNotEmpty()) {
+                    Text(
+                        activity.tags.joinToString(" · ") {
+                            it.replace('_', ' ').replaceFirstChar { character ->
+                                character.titlecase()
+                            }
+                        },
+                        modifier = Modifier.padding(top = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                activity.description?.takeIf(String::isNotBlank)?.let { description ->
+                    Text(
+                        description,
+                        modifier = Modifier.padding(top = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                ActivityCardVisualPager(
+                    activity,
+                    onLoadImage,
+                )
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    val metrics = activity.metrics
+                    ActivityStat(tr("distance"), formatDistance(metrics?.distance, units))
+                    ActivityStat(tr("time"), formatDuration(metrics?.movingTime ?: metrics?.elapsedTime))
+                    val isPace = activity.sport.contains("run") || activity.sport == "walk"
+                    ActivityStat(
+                        if (isPace) tr("pace") else tr("speed"),
+                        if (isPace) formatPace(metrics?.avgSpeed, units) else formatSpeed(metrics?.avgSpeed, units),
+                    )
                 }
             }
             activity.personalRecord()?.let { effort ->
@@ -184,9 +207,59 @@ fun ActivityCard(
                     )
                 }
             }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 12.dp, end = 18.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onLike, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        if (activity.viewerLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                        contentDescription =
+                            if (activity.viewerLiked) {
+                                tr(
+                                    "unlike_activity",
+                                )
+                            } else {
+                                tr("like_activity")
+                            },
+                        tint =
+                            if (activity.viewerLiked) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
+                Text(activity.likeCount.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(
+                    Icons.Rounded.ChatBubbleOutline,
+                    contentDescription = tr("comments_count", activity.commentCount),
+                    modifier = Modifier.padding(start = 20.dp),
+                )
+                Text(
+                    activity.commentCount.toString(),
+                    modifier = Modifier.padding(start = 6.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            androidx.compose.material3.HorizontalDivider()
         }
     }
 }
+
+private fun formatFeedDate(instant: String): String =
+    runCatching {
+        val zone = ZoneId.systemDefault()
+        val activityTime = Instant.parse(instant).atZone(zone)
+        val daysAgo = ChronoUnit.DAYS.between(activityTime.toLocalDate(), java.time.LocalDate.now(zone))
+        val time = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(activityTime)
+        when (daysAgo) {
+            0L -> "Today, $time"
+            1L -> "Yesterday, $time"
+            in 2..6 -> "$daysAgo days ago, $time"
+            else -> formatDateTime(instant)
+        }
+    }.getOrElse { formatDateTime(instant) }
 
 @Composable
 private fun ActivityCardVisualPager(
@@ -202,22 +275,24 @@ private fun ActivityCardVisualPager(
     if (pageCount == 0) return
 
     val pagerState = rememberPagerState(pageCount = { pageCount })
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxWidth().height(190.dp),
-        contentPadding = PaddingValues(horizontal = 0.dp),
-        pageSpacing = 8.dp,
-    ) { page ->
-        if (hasMap && page == 0) {
-            activity.track.let { track ->
-                StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(190.dp))
+    Box {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth().height(190.dp),
+            contentPadding = PaddingValues(horizontal = 0.dp),
+            pageSpacing = 8.dp,
+        ) { page ->
+            if (hasMap && page == 0) {
+                activity.track.let { track ->
+                    StaticRoutePreview(track = track, modifier = Modifier.fillMaxWidth().height(190.dp))
+                }
+            } else {
+                ActivityImageSlide(
+                    image = activity.images[page - if (hasMap) 1 else 0],
+                    onLoadImage = onLoadImage,
+                    modifier = Modifier.fillMaxWidth().height(190.dp),
+                )
             }
-        } else {
-            ActivityImageSlide(
-                image = activity.images[page - if (hasMap) 1 else 0],
-                onLoadImage = onLoadImage,
-                modifier = Modifier.fillMaxWidth().height(190.dp),
-            )
         }
     }
     if (pageCount > 1) {
