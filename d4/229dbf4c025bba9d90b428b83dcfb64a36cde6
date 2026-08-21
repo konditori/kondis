@@ -1,0 +1,21 @@
+web/src/vite-allowed-hosts.spec.ts
+  s_052c98c580d22c::t_02abf381c17fdf 28,45,75-85
+web/vite.config.ts
+  s_052c98c580d22c::t_1107b2d5a819d8 2,12-17,23-28,34-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d4229dbf4c025bba9d90b428b83dcfb64a36cde6",
+  "prompts": {},
+  "sessions": {
+    "s_052c98c580d22c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02434-21e7-7a83-890a-4321176756ed",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
