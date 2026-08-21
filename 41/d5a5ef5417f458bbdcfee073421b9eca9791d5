@@ -1,0 +1,31 @@
+android/app/src/main/java/app/kondis/data/remote/ActivityEventClient.kt
+  s_052c98c580d22c::t_2e6d7152e37079 144-153
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_052c98c580d22c::t_986d22eb361352 78
+server/src/repositories/event.repository.ts
+  s_052c98c580d22c::t_4c51e20d2edaaa 20-21,60-61,75-76,274
+server/src/services/social.service.ts
+  s_052c98c580d22c::t_d81b3e04516b06 249,256-257,271
+web/src/lib/components/ActivityComments.svelte
+  s_052c98c580d22c::t_a040ce1155fb0b 174-179
+web/src/lib/realtime.ts
+  s_052c98c580d22c::t_fa278d0b0d631f 9,19-23,143-144
+web/src/routes/+page.svelte
+  s_052c98c580d22c::t_b1d5719030d135 140-142,159-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "41d5a5ef5417f458bbdcfee073421b9eca9791d5",
+  "prompts": {},
+  "sessions": {
+    "s_052c98c580d22c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02434-21e7-7a83-890a-4321176756ed",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
