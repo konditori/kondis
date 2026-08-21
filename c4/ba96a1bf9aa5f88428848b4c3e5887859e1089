@@ -1,0 +1,19 @@
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_96e88f48a239fc::t_31b0059bc1a613 11,78,301,313-325,339-351,468,475-495,497,499-510,514-515,911-923,1128-1158,1165-1178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c4ba96a1bf9aa5f88428848b4c3e5887859e1089",
+  "prompts": {},
+  "sessions": {
+    "s_96e88f48a239fc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02309-ca1b-7d62-a53d-4960e5b5d54f",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
