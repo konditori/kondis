@@ -1,0 +1,21 @@
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailScreen.kt
+  s_89f5bac698db3b::t_7a260390ec4eba 462
+android/app/src/androidTest/java/app/kondis/sync/OfflineWorkoutSyncTest.kt
+  s_89f5bac698db3b::t_41ef88e062e929 111-113,166-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5aade7a48447c2ed21107c28fec6c898372dcbda",
+  "prompts": {},
+  "sessions": {
+    "s_89f5bac698db3b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9fd0ec1b-7854-46f6-b408-464725e08a01",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
