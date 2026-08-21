@@ -1,0 +1,53 @@
+android/app/src/main/AndroidManifest.xml
+  s_66257ecd9f6213::t_5e359e6dd13652 36-37
+android/app/src/main/java/app/kondis/data/remote/ActivityEventClient.kt
+  s_96e88f48a239fc::t_69bd0b24040484 1-118
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_d9a1ed14d9b0a5::t_5123067192f518 95-98,108-110
+android/app/src/main/java/app/kondis/ui/KondisApp.kt
+  s_66257ecd9f6213::t_466b1f434595ca 6,8,13,16,32,116,155,180,182
+android/app/src/main/java/app/kondis/ui/detail/ActivityDetailViewModel.kt
+  s_d9a1ed14d9b0a5::t_5d0809c1a3264c 8,39,45,51,73-81
+server/src/repositories/event.repository.ts
+  s_d9a1ed14d9b0a5::t_5ae7f8528051e9 19,44,57
+server/src/services/social.service.ts
+  s_d9a1ed14d9b0a5::t_daf2c5d28a9e38 130-133
+web/src/lib/realtime.ts
+  s_d9a1ed14d9b0a5::t_f940f9cf3d3688 12-15,123
+web/src/routes/+page.svelte
+  s_d9a1ed14d9b0a5::t_991e8e27d57fc0 143-156
+web/src/routes/activities/[id]/+page.svelte
+  s_d9a1ed14d9b0a5::t_acb22c16f1a59f 326-330
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fe83f8afb4cebb626c5482d9b2fe81ac84549bda",
+  "prompts": {},
+  "sessions": {
+    "s_66257ecd9f6213": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02375-158c-7db2-9764-762943a0818b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_96e88f48a239fc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02309-ca1b-7d62-a53d-4960e5b5d54f",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_d9a1ed14d9b0a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02309-2c19-7b53-b24d-6909a76be2c7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
