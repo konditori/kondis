@@ -22,13 +22,14 @@ allowBuilds:
   # supports emitDecoratorMetadata, which NestJS constructor injection depends on.
   '@swc/core': true
   bcrypt: true
-  core-js: set this to true or false
+  core-js: false
   cpu-features: false
   esbuild: false
-  postman-code-generators: set this to true or false
+  postman-code-generators: false
   protobufjs: false
   sharp: true
   ssh2: false
   # Native binary resolver behind eslint-import-resolver-typescript, which import-x/no-cycle
   # needs in order to follow `src/*` path-alias imports.
   unrs-resolver: true
+  workerd: true
