@@ -6,7 +6,7 @@ const config: Config = {
   favicon: "img/favicon.svg",
   url: "https://docs.kondis.org",
   baseUrl: "/",
-  organizationName: "kondis-app",
+  organizationName: "konditori",
   projectName: "kondis",
   onBrokenLinks: "throw",
   markdown: { hooks: { onBrokenMarkdownLinks: "warn" } },
@@ -19,7 +19,7 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           routeBasePath: "/",
           showLastUpdateTime: true,
-          editUrl: "https://github.com/kondis-app/kondis/tree/main/docs/",
+          editUrl: "https://github.com/konditori/kondis/tree/main/docs/",
         },
         api: {
           path: "../open-api/kondis-openapi-specs.json",
@@ -50,7 +50,7 @@ const config: Config = {
         },
         { to: "/api", label: "API", position: "left" },
         {
-          href: "https://github.com/kondis-app/kondis",
+          href: "https://github.com/konditori/kondis",
           label: "GitHub",
           position: "right",
         },
