@@ -14,7 +14,7 @@ The repository includes Docker Compose files for development. Keep PostgreSQL an
 - HTTPS through a reverse proxy for remote access
 
 ```bash
-git clone https://github.com/kondis-app/kondis.git
+git clone https://github.com/konditori/kondis.git
 cd kondis
 docker compose -f docker/docker-compose.dev.yml up --build
 ```

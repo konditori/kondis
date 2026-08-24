@@ -4,16 +4,16 @@ const sidebars: SidebarsConfig = {
     "index",
     {
       type: "category",
-      label: "Get started",
+      label: "Install",
       items: [
-        "getting-started/installation",
-        "getting-started/first-run",
-        "getting-started/configuration",
+        "install/overview",
+        "install/first-run",
+        "install/configuration",
       ],
     },
     {
       type: "category",
-      label: "Using Kondis",
+      label: "Usage",
       items: [
         "using-kondis/activities",
         "using-kondis/importing",
@@ -30,14 +30,28 @@ const sidebars: SidebarsConfig = {
         "operations/troubleshooting",
       ],
     },
+    {
+      type: "category",
+      label: "API",
+      items: [
+        "api",
+      ],
+    },
+    {
+      type: "category",
+      label: "Development",
+      items: [
+        "developer/overview",
+        "developer/api",
+      ],
+    },
   ],
-  developers: [
-    "developers/overview",
-    "developers/local-development",
-    "developers/architecture",
-    "developers/api",
-    "developers/contributing",
-    "developers/cursed-knowledge",
+  developer: [
+    "developer/overview",
+    "developer/local-development",
+    "developer/architecture",
+    "developer/contributing",
+    "developer/cursed-knowledge",
   ],
 };
 export default sidebars;
