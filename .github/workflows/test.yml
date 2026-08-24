@@ -44,6 +44,11 @@ jobs:
               - 'web/**'
               - 'pnpm-lock.yaml'
               - 'mise.toml'
+            docs:
+              - 'docs/**'
+              - 'open-api/kondis-openapi-specs.json'
+              - 'pnpm-lock.yaml'
+              - 'mise.toml'
             workflow:
               - '.github/workflows/test.yml'
 
@@ -178,6 +183,44 @@ jobs:
 
       - name: Run unit tests
         run: pnpm --if-present test
+
+  docs-check:
+    name: Check Documentation
+    needs: pre-job
+    if: ${{ fromJSON(needs.pre-job.outputs.should_run).docs == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./docs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //docs:install
+
+      - name: Check formatting
+        run: mise run //docs:format
+
+      - name: Build documentation
+        run: mise run //docs:build
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-build-output
+          path: docs/build/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 1
 
   server-medium-tests:
     name: Medium Tests (Server)

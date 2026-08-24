@@ -20,6 +20,8 @@ The name is Nordic slang for "conditioning"
 mise run dev
 ```
 
+The project documentation is a Docusaurus app in [`docs/`](./docs). Run it with `pnpm --dir docs start` or build it with `pnpm --dir docs build`.
+
 The web app is available at [http://localhost:3000](http://localhost:3000) and proxies API requests to the server container on port 2293.
 
 ### Android app

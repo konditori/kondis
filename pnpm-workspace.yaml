@@ -3,6 +3,7 @@ packages:
   - server
   - web
   - e2e
+  - docs
   - packages/*
 
 dedupePeerDependents: false
@@ -21,8 +22,10 @@ allowBuilds:
   # supports emitDecoratorMetadata, which NestJS constructor injection depends on.
   '@swc/core': true
   bcrypt: true
+  core-js: set this to true or false
   cpu-features: false
   esbuild: false
+  postman-code-generators: set this to true or false
   protobufjs: false
   sharp: true
   ssh2: false

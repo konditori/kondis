@@ -6,6 +6,7 @@ config_roots = [
   "server",
   "web",
   "e2e",
+  "docs",
 ]
 
 [tools]
@@ -33,6 +34,25 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 
 [tasks.e2e]
 run = { task = "//e2e:test" }
+
+[tasks."docs:install"]
+run = { task = "//docs:install" }
+
+[tasks."docs:dev"]
+description = "Start the Docusaurus documentation site"
+run = { task = "//docs:dev" }
+
+[tasks."docs:build"]
+description = "Build the documentation site, including the generated OpenAPI reference"
+run = { task = "//docs:build" }
+
+[tasks."docs:serve"]
+description = "Serve the built documentation site"
+run = { task = "//docs:serve" }
+
+[tasks."docs:clear"]
+description = "Clear Docusaurus cache and generated files"
+run = { task = "//docs:clear" }
 
 [tasks.format]
 description = "Check formatting across the project"

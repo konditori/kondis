@@ -1,0 +1,26 @@
+[tasks.install]
+run = "pnpm install --filter @kondis/docs --frozen-lockfile"
+
+[tasks.dev]
+env._.path = "./node_modules/.bin"
+run = "docusaurus start"
+
+[tasks.build]
+env._.path = "./node_modules/.bin"
+run = "docusaurus build"
+
+[tasks.serve]
+env._.path = "./node_modules/.bin"
+run = "docusaurus serve"
+
+[tasks.clear]
+env._.path = "./node_modules/.bin"
+run = "docusaurus clear"
+
+[tasks.format]
+env._.path = "./node_modules/.bin"
+run = "prettier --check ."
+
+[tasks."format-fix"]
+env._.path = "./node_modules/.bin"
+run = "prettier --write ."
