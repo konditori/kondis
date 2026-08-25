@@ -1,0 +1,21 @@
+docs/sidebars.ts
+  s_57cee0856236e3::t_1225c3e7f56066 9,36,41
+pnpm-lock.yaml
+  s_57cee0856236e3::t_a95efa8563e883 55-60,245-290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3f94bbbef04e1ccc529c14a526ba5923c9873e14",
+  "prompts": {},
+  "sessions": {
+    "s_57cee0856236e3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fca7d8fe8ffeK3Rcgv8h3liMq5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
