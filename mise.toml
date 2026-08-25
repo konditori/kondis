@@ -9,6 +9,7 @@ config_roots = [
   "packages/sdk",
   "docs",
   "static/apps/api.kondis.org",
+  "static/apps/kondis.org",
 ]
 
 [tools]

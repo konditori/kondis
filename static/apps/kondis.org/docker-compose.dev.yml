@@ -1,0 +1,63 @@
+name: kondis-landing-dev
+
+services:
+  landing-init:
+    build:
+      context: ../../..
+      dockerfile: server/Dockerfile.dev
+      target: dev
+    command:
+      - |
+        pnpm install --frozen-lockfile
+        touch /tmp/init-complete
+        exec tail -f /dev/null
+    volumes:
+      - ../../..:/usr/src/app
+      - landing_node_modules:/usr/src/app/node_modules
+      - landing_package_node_modules:/usr/src/app/static/apps/kondis.org/node_modules
+      - landing_pnpm_store:/usr/src/app/.pnpm-store
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/init-complete"]
+      interval: 2s
+      timeout: 3s
+      retries: 300
+      start_period: 300s
+
+  landing:
+    build:
+      context: ../../..
+      dockerfile: server/Dockerfile.dev
+      target: dev
+    command: ["cd /usr/src/app/static/apps/kondis.org && pnpm exec svelte-kit sync && exec pnpm exec vite dev --host 0.0.0.0 --port 4173"]
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ../../..:/usr/src/app
+      - landing_node_modules:/usr/src/app/node_modules
+      - landing_package_node_modules:/usr/src/app/static/apps/kondis.org/node_modules
+      - landing_sveltekit:/usr/src/app/static/apps/kondis.org/.svelte-kit
+      - landing_pnpm_store:/usr/src/app/.pnpm-store
+    ports:
+      - "4173:4173"
+    depends_on:
+      landing-init:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:4173').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  landing_node_modules:
+  landing_package_node_modules:
+  landing_pnpm_store:
+  landing_sveltekit:

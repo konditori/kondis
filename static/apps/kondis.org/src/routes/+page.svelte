@@ -5,7 +5,7 @@
   const docs = "https://docs.kondis.org";
   type Theme = "dark" | "light";
 
-  let theme = $state<Theme>("dark");
+  let theme = $state<Theme>("light");
 
   function applyTheme(nextTheme: Theme) {
     theme = nextTheme;
@@ -35,7 +35,7 @@
 
 <header class="site-header">
   <a class="brand" href="/" aria-label="Kondis home">
-    <span class="brand-mark" role="img" aria-label="sweating face">🥵</span>
+    <span class="brand-mark" role="img" aria-label="sweating face">😰</span>
     <span>Kondis</span>
   </a>
 
@@ -104,7 +104,7 @@
     <div class="product-showcase" aria-label="Kondis workout dashboard preview">
       <div class="preview-topbar">
         <div class="preview-brand">
-          <span class="preview-k" aria-hidden="true">🥵</span> kondis
+          <span class="preview-k" aria-hidden="true">😰</span> kondis
         </div>
         <div class="preview-search">Search activities</div>
         <div class="preview-avatar">JL</div>
@@ -328,7 +328,7 @@
 
 <footer>
   <a class="brand" href="/" aria-label="Kondis home"
-    ><span class="brand-mark" role="img" aria-label="sweating face">🥵</span
+    ><span class="brand-mark" role="img" aria-label="sweating face">😰</span
     ><span>Kondis</span></a
   >
   <p>Open-source, self-hosted fitness tracking.</p>
