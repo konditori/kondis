@@ -89,6 +89,8 @@
   "add_activity": "Add activity",
   "add_manual_entry": "Add manual entry",
   "open_account_menu": "Open account menu",
+  "switch_to_light_mode": "Switch to light mode",
+  "switch_to_dark_mode": "Switch to dark mode",
   "log_out": "Log out",
   "new_import": "New import",
   "individual_activity_file": "Individual activity file",

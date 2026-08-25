@@ -7,6 +7,8 @@
     Plus,
     Search,
     Settings,
+    Sun,
+    Moon,
     X,
   } from "@lucide/svelte";
   import { goto } from "$app/navigation";
@@ -43,6 +45,7 @@
   } = $props();
   let search = $state("");
   let searchOpen = $state(false);
+  let theme = $state<"dark" | "light">("dark");
   let searchInput = $state<HTMLInputElement>();
   let searchForm = $state<HTMLFormElement>();
   let menu: HTMLDetailsElement;
@@ -161,6 +164,14 @@
   }
 
   onMount(() => {
+    try {
+      const savedTheme = localStorage.getItem("kondis-theme");
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setTheme(savedTheme, false);
+      }
+    } catch {
+      // Dark mode remains the default when storage is unavailable.
+    }
     void loadNotifications();
     const unsubscribe = subscribeToActivityEvents(
       eventsUrl,
@@ -206,6 +217,24 @@
   function openSearch() {
     searchOpen = true;
     requestAnimationFrame(() => searchInput?.focus());
+  }
+
+  function setTheme(nextTheme: "dark" | "light", persist = true) {
+    theme = nextTheme;
+    document.documentElement.dataset.theme = nextTheme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", nextTheme === "dark" ? "#08111f" : "#f4f7fb");
+    if (!persist) return;
+    try {
+      localStorage.setItem("kondis-theme", nextTheme);
+    } catch {
+      // The interface still works when storage is unavailable.
+    }
+  }
+
+  function toggleTheme() {
+    setTheme(theme === "dark" ? "light" : "dark");
   }
 
   function updateSearch() {
@@ -272,6 +301,24 @@
       <Search size={21} />
     </button>
   {/if}
+
+  <button
+    class="theme-toggle"
+    type="button"
+    aria-label={theme === "dark"
+      ? t("switch_to_light_mode")
+      : t("switch_to_dark_mode")}
+    title={theme === "dark"
+      ? t("switch_to_light_mode")
+      : t("switch_to_dark_mode")}
+    onclick={toggleTheme}
+  >
+    {#if theme === "dark"}
+      <Sun size={19} />
+    {:else}
+      <Moon size={19} />
+    {/if}
+  </button>
 
   <details
     bind:this={notificationMenu}

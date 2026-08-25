@@ -1,7 +1,7 @@
 <script lang="ts">
   import CodeBlock from "$lib/components/CodeBlock.svelte";
 
-  const install = `pnpm add @kondis/sdk`;
+  const install = `pnpm --filter <your-workspace-package> add @kondis/sdk@workspace:*`;
   const initialize = `import { init } from "@kondis/sdk";
 
 init({
@@ -34,8 +34,8 @@ const activity = await activityControllerGetById({ id: page.activities[0].id });
     <div>
       <h2>Install</h2>
       <p>
-        Add the generated ESM client and its runtime to a Node.js or browser
-        project.
+        The generated ESM client is currently available to packages in the
+        Kondis workspace. Registry publication is planned.
       </p>
     </div>
     <CodeBlock code={install} label="terminal" />
@@ -57,8 +57,8 @@ const activity = await activityControllerGetById({ id: page.activities[0].id });
   </div>
   <p class="prose">
     Function names are derived from each OpenAPI <code>operationId</code>.
-    Arguments, responses, enumerations, and error unions update whenever the
-    server contract changes.
+    Arguments, responses, and enumerations update whenever the server contract
+    changes. Unsuccessful responses reject with an API error.
   </p>
   <CodeBlock code={usage} label="typescript" />
 

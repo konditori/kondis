@@ -13,7 +13,8 @@
       ? "{ /* typed input */ }"
       : "",
   );
-  const sdkExample = $derived(`import { ${endpoint.sdkName} } from "@kondis/sdk";
+  const sdkExample =
+    $derived(`import { ${endpoint.sdkName} } from "@kondis/sdk";
 
 const result = await ${endpoint.sdkName}(${sdkArguments});`);
 </script>

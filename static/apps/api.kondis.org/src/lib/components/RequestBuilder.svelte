@@ -27,6 +27,17 @@
   const queryParameters = $derived(
     endpoint.parameters.filter((parameter) => parameter.in === "query"),
   );
+  const unsupportedBody = $derived(
+    Boolean(
+      endpoint.request && endpoint.request.contentType !== "application/json",
+    ),
+  );
+  const missingRequiredParameter = $derived(
+    endpoint.parameters.some(
+      (parameter) =>
+        parameter.required && !parameterValues[parameter.name]?.trim(),
+    ),
+  );
   const resolvedPath = $derived(
     endpoint.path.replace(/\{([^}]+)\}/g, (_, name: string) =>
       encodeURIComponent(parameterValues[name] || `{${name}}`),
@@ -161,14 +172,19 @@
         class="button"
         type="button"
         onclick={sendRequest}
-        disabled={loading}
+        disabled={loading || unsupportedBody || missingRequiredParameter}
       >
-        {loading ? "Sending..." : "Send request"}
+        {loading
+          ? "Sending..."
+          : unsupportedBody
+            ? "Multipart unavailable"
+            : "Send request"}
       </button>
     </div>
     <p class="request-note">
       Requests go directly from your browser to the configured server.
-      Credentials are never sent to this documentation site.
+      Credentials are never sent to this documentation site. The server must
+      allow cross-origin requests from this site.
     </p>
     {#if result}
       <div class="request-result">{result}</div>

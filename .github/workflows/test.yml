@@ -110,6 +110,9 @@ jobs:
       - name: Run format check
         run: mise run //e2e:format
 
+      - name: Run type check
+        run: mise run //e2e:check
+
   web-check:
     name: Check Web
     needs: pre-job
@@ -140,6 +143,9 @@ jobs:
 
       - name: Run pnpm install
         run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript SDK
+        run: mise run //packages/sdk:build
 
       - name: Run format check
         run: mise run //web:format
@@ -181,6 +187,9 @@ jobs:
 
       - name: Run pnpm install
         run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript SDK
+        run: mise run //packages/sdk:build
 
       - name: Run unit tests
         run: pnpm --if-present test

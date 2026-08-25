@@ -9,15 +9,23 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  color: #1c211d;
-  background: #f7f7f4;
+  color: #edf3ff;
+  background: #08111f;
   font-synthesis: none;
-  --green: #166534;
-  --green-dark: #0e4825;
-  --green-soft: #e5f2e8;
-  --line: #dedfd8;
-  --muted: #747a73;
-  --surface: #fff;
+  color-scheme: dark;
+  --green: #78a6ff;
+  --green-dark: #b8d0ff;
+  --green-soft: #223a62;
+  --line: #2b3a54;
+  --muted: #8d9bb4;
+  --surface: #151f31;
+  --surface-muted: #101a2a;
+  --text: #edf3ff;
+  --page: #08111f;
+  --shell: #101a2a;
+  --raised: #1a2639;
+  --focus: #78a6ff;
+  --shadow: #02081280;
 }
 
 * {
@@ -25,11 +33,12 @@
 }
 html {
   min-width: 320px;
-  background: #f7f7f4;
+  background: var(--page);
 }
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--page);
 }
 button,
 input,
@@ -4045,4 +4054,322 @@ button {
   color: #fff;
   background: var(--green);
   border-color: var(--green);
+}
+
+/* -------------------------------------------------------------------------- */
+/* App theme                                                                  */
+/* -------------------------------------------------------------------------- */
+
+:root[data-theme="light"] {
+  color: #18243a;
+  background: #f4f7fb;
+  color-scheme: light;
+  --green: #4f7ed5;
+  --green-dark: #315fae;
+  --green-soft: #e5eeff;
+  --line: #d8e0ec;
+  --muted: #68758a;
+  --surface: #ffffff;
+  --surface-muted: #eef3f9;
+  --text: #18243a;
+  --page: #f4f7fb;
+  --shell: #eef3f9;
+  --raised: #ffffff;
+  --focus: #4f7ed5;
+  --shadow: #1c2c4620;
+}
+
+::selection {
+  color: var(--text);
+  background: var(--green-soft);
+}
+
+body,
+.app-main,
+.detail-page,
+.auth-page {
+  color: var(--text);
+  background: var(--page);
+}
+
+.sidebar {
+  width: 244px;
+  padding-top: 28px;
+  background: var(--shell);
+  border-right-color: var(--line);
+}
+
+.brand {
+  color: var(--text);
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  color: inherit;
+  background: transparent;
+  border-radius: 0;
+  font-size: 30px;
+}
+
+.brand-mark::after {
+  content: none;
+}
+
+.sidebar nav a,
+.sidebar-bottom > a {
+  color: var(--muted);
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.sidebar nav a:hover,
+.sidebar-bottom > a:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--green-soft) 65%, transparent);
+}
+
+.sidebar nav a.active,
+.sidebar-bottom > a.active {
+  color: #dce8ff;
+  background: #2b426b;
+}
+
+.topbar {
+  height: 76px;
+  padding: 0 36px;
+  background: color-mix(in srgb, var(--shell) 92%, transparent);
+  border-bottom-color: var(--line);
+}
+
+.top-search,
+.search {
+  color: var(--muted);
+  background: var(--surface);
+  border-color: var(--line);
+  border-radius: 11px;
+}
+
+.top-search input,
+.search input,
+.settings-field input,
+.metadata-editor input,
+.metadata-editor select,
+.metadata-editor textarea,
+.comment-edit-form input {
+  color: var(--text);
+  background: transparent;
+}
+
+.top-search:focus-within,
+.search:focus-within,
+.metadata-editor input:focus,
+.metadata-editor select:focus,
+.metadata-editor textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
+}
+
+.search-toggle,
+.theme-toggle,
+.notification-menu summary {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.theme-toggle {
+  margin-left: auto;
+}
+
+.search-toggle:hover,
+.search-toggle:focus-visible,
+.theme-toggle:hover,
+.theme-toggle:focus-visible,
+.notification-menu summary:hover,
+.notification-menu[open] summary {
+  color: var(--green-dark);
+  background: var(--green-soft);
+  outline: 0;
+}
+
+.notification-menu {
+  margin-left: 8px;
+}
+
+.notification-badge {
+  border-color: var(--shell);
+}
+
+.plus-menu summary {
+  color: var(--text);
+  background: var(--green);
+  border-color: var(--green);
+  border-radius: 11px;
+}
+
+.plus-menu[open] summary,
+.plus-menu summary:hover {
+  color: var(--text);
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+}
+
+.user-menu summary:hover,
+.user-menu[open] summary {
+  background: var(--green-soft);
+}
+
+.notification-popover,
+.plus-menu-popover,
+.user-menu-popover,
+.comment-menu-popover,
+.detail-likers-popover {
+  color: var(--text);
+  background: var(--raised);
+  border-color: var(--line);
+  box-shadow: 0 18px 42px var(--shadow);
+}
+
+.notification-list strong,
+.notification-row strong,
+.detail-likers-popover a,
+.comment-menu-popover button,
+.comment-edit-form button {
+  color: var(--text);
+}
+
+.notification-list a:hover,
+.notification-list a.notification-unread,
+.notification-row:hover,
+.plus-menu-popover button:hover,
+.user-menu-popover a:hover,
+.user-menu-popover button:hover,
+.comment-menu-popover button:hover {
+  background: var(--green-soft);
+}
+
+.page-shell {
+  padding-top: 48px;
+}
+
+.eyebrow,
+.activity-athlete,
+.back-link:hover,
+.upload-back:hover {
+  color: var(--green);
+}
+
+.activity-card,
+.activity-profile,
+.settings-panel,
+.people-list .person-row,
+.notifications-panel,
+.upload-choice,
+.upload-panel,
+.route-match-summary,
+.matched-route-chart,
+.map-panel,
+.splits-section-visual,
+.best-effort-table-wrap,
+.activity-comments,
+.live-workout-view {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 32px var(--shadow);
+}
+
+.activity-card:hover,
+.upload-choice:hover {
+  border-color: color-mix(in srgb, var(--green) 55%, var(--line));
+  box-shadow: 0 16px 35px var(--shadow);
+}
+
+.activity-card-summary,
+.activity-primary,
+.activity-title,
+.activity-stat,
+.person-copy,
+.settings-heading,
+.metric,
+.detail-title,
+.section-heading,
+.page-header,
+.matched-routes-header {
+  color: var(--text);
+}
+
+.activity-card-description,
+.comment-row .person-copy p,
+.metadata-checkbox span,
+.metadata-editor .tag-option {
+  color: var(--text) !important;
+}
+
+.comment-form,
+.comment-row,
+.metric,
+.upload-row,
+.metadata-editor input,
+.metadata-editor select,
+.metadata-editor textarea,
+.metadata-editor .tag-option {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.activity-social-row,
+.notification-row,
+.user-menu-identity,
+.metric,
+.split-row,
+.best-effort-row {
+  border-color: var(--line);
+}
+
+.activity-social-button:hover,
+.activity-social-button.liked {
+  color: #ff9db9;
+  background: #542840;
+}
+
+.leaflet-container {
+  background: var(--surface-muted);
+}
+
+:root:not([data-theme="light"]) .leaflet-tile-pane {
+  filter: brightness(0.56) saturate(0.65) hue-rotate(168deg);
+}
+
+.mobile-nav {
+  background: color-mix(in srgb, var(--shell) 94%, transparent);
+  border-top-color: var(--line);
+}
+
+.mobile-nav a,
+.mobile-nav button {
+  color: var(--muted);
+}
+
+.mobile-nav .active,
+.mobile-nav button {
+  color: var(--green);
+}
+
+:root[data-theme="light"] .sidebar nav a.active,
+:root[data-theme="light"] .sidebar-bottom > a.active {
+  color: #244f9a;
+  background: var(--green-soft);
+}
+
+:root[data-theme="light"] .brand-mark {
+  color: #fff;
 }

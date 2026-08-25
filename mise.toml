@@ -66,6 +66,8 @@ run = [
   { task = "//web:format" },
   { task = "//server:format" },
   { task = "//e2e:format" },
+  { task = "//packages/sdk:format" },
+  { task = "//static/apps/api.kondis.org:format" },
   { task = "//android:format" },
 ]
 
@@ -75,6 +77,8 @@ run = [
   { task = "//web:format-fix" },
   { task = "//server:format-fix" },
   { task = "//e2e:format-fix" },
+  { task = "//packages/sdk:format-fix" },
+  { task = "//static/apps/api.kondis.org:format-fix" },
   { task = "//android:format-fix" },
 ]
 
@@ -84,6 +88,8 @@ run = [
   { task = "//web:check" },
   { task = "//server:lint" },
   { task = "//e2e:lint" },
+  { task = "//packages/sdk:check" },
+  { task = "//static/apps/api.kondis.org:check" },
   { task = "//android:lint" },
 ]
 

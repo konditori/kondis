@@ -2,6 +2,7 @@
 run = "pnpm install --filter @kondis/sdk --frozen-lockfile"
 
 [tasks.build]
+depends = ["//packages/sdk:install"]
 env._.path = "./node_modules/.bin"
 run = "tsc"
 

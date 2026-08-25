@@ -91,7 +91,7 @@
     onclick={() => (mobileOpen = !mobileOpen)}>Menu</button
   >
   <a class="wordmark" href="/">
-    <span class="wordmark-mark">K//</span>
+    <img class="wordmark-mark" src="/img/logo.svg" alt="" />
     <span class="wordmark-text">Kondis <span>API</span></span>
   </a>
   <button class="header-search" type="button" onclick={openSearch}>
