@@ -4,7 +4,7 @@ const sidebars: SidebarsConfig = {
     "index",
     {
       type: "category",
-      label: "Install",
+      label: "Installation",
       items: [
         "install/requirements",
         "install/installation",
