@@ -7,6 +7,7 @@ config_roots = [
   "web",
   "e2e",
   "docs",
+  "static/apps/api.kondis.org",
 ]
 
 [tools]
@@ -43,8 +44,12 @@ description = "Start the Docusaurus documentation site"
 run = { task = "//docs:dev" }
 
 [tasks."docs:build"]
-description = "Build the documentation site, including the generated OpenAPI reference"
+description = "Build the documentation site"
 run = { task = "//docs:build" }
+
+[tasks."api-docs:build"]
+description = "Build the generated API reference"
+run = { task = "//static/apps/api.kondis.org:build" }
 
 [tasks."docs:serve"]
 description = "Serve the built documentation site"

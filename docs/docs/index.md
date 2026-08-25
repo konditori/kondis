@@ -12,9 +12,9 @@ Kondis support importing existing workouts in `.fit`, `.tcx`, and `.gpx` file fo
 
 ## Choose your path
 
-- [Install Kondis](getting-started/installation)
-- [Run it locally](developers/local-development)
+- [Install Kondis](install/installation)
+- [Run it locally](developer/local-development)
 - [Import activities](using-kondis/importing)
-- [API reference](developers/api)
+- [API reference](https://api.kondis.org/introduction)
 
 Kondis includes a Svelte web archive, an Android recorder, route maps, splits, best efforts, photos, tags, social sharing, and offline-first sync. It is under active development and licensed AGPL-3.0-or-later.

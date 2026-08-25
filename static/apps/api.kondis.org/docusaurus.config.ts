@@ -1,10 +1,11 @@
 import type { Config } from "@docusaurus/types";
-import type * as Preset from "@docusaurus/preset-classic";
+import type * as Preset from "docusaurus-preset-openapi";
+
 const config: Config = {
-  title: "Kondis",
-  tagline: "Your self-hosted activity archive",
+  title: "Kondis API",
+  tagline: "Kondis API documentation",
   favicon: "img/favicon.svg",
-  url: "https://docs.kondis.org",
+  url: "https://api.kondis.org",
   baseUrl: "/",
   organizationName: "konditori",
   projectName: "kondis",
@@ -13,13 +14,15 @@ const config: Config = {
   i18n: { defaultLocale: "en", locales: ["en"] },
   presets: [
     [
-      "@docusaurus/preset-classic",
+      "docusaurus-preset-openapi",
       {
-        docs: {
-          sidebarPath: "./sidebars.ts",
+        docs: false,
+        blog: false,
+        api: {
+          path: "../../../open-api/kondis-openapi-specs.json",
           routeBasePath: "/",
-          showLastUpdateTime: true,
-          editUrl: "https://github.com/konditori/kondis/tree/main/docs/",
+          sidebarCollapsible: true,
+          sidebarCollapsed: false,
         },
         theme: { customCss: "./src/css/custom.css" },
       } satisfies Preset.Options,
@@ -27,25 +30,13 @@ const config: Config = {
   ],
   themeConfig: {
     navbar: {
-      title: "Kondis",
+      title: "Kondis API",
       logo: { alt: "Kondis logo", src: "img/logo.svg" },
       items: [
         {
-          type: "docSidebar",
-          sidebarId: "guides",
-          label: "Guides",
-          position: "left",
-        },
-        {
-          type: "docSidebar",
-          sidebarId: "developer",
-          label: "Developers",
-          position: "left",
-        },
-        {
-          href: "https://api.kondis.org/introduction",
-          label: "API",
-          position: "left",
+          href: "https://docs.kondis.org",
+          label: "Documentation",
+          position: "right",
         },
         {
           href: "https://github.com/konditori/kondis",
@@ -62,4 +53,5 @@ const config: Config = {
     },
   } satisfies Preset.ThemeConfig,
 };
+
 export default config;

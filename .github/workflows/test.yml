@@ -46,6 +46,7 @@ jobs:
               - 'mise.toml'
             docs:
               - 'docs/**'
+              - 'static/apps/api.kondis.org/**'
               - 'open-api/kondis-openapi-specs.json'
               - 'pnpm-lock.yaml'
               - 'mise.toml'
@@ -206,18 +207,29 @@ jobs:
       - name: Install dependencies
         run: mise run //docs:install
 
+      - name: Install API documentation dependencies
+        run: mise run //static/apps/api.kondis.org:install
+
       - name: Check formatting
         run: mise run //docs:format
 
+      - name: Check API documentation formatting
+        run: mise run //static/apps/api.kondis.org:format
+
       - name: Build documentation
         run: mise run //docs:build
+
+      - name: Build API documentation
+        run: mise run //static/apps/api.kondis.org:build
 
       - name: Upload build output
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: docs-build-output
-          path: docs/build/
+          path: |
+            docs/build/
+            static/apps/api.kondis.org/build/
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 1

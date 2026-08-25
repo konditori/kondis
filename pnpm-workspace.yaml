@@ -4,6 +4,7 @@ packages:
   - web
   - e2e
   - docs
+  - static/apps/*
   - packages/*
 
 dedupePeerDependents: false

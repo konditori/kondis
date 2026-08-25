@@ -1,0 +1,17 @@
+:root {
+  --ifm-color-primary: #087f68;
+  --ifm-color-primary-dark: #066e5b;
+  --ifm-font-family-base: Inter, ui-sans-serif, system-ui, sans-serif;
+  --ifm-heading-font-family: Georgia, serif;
+}
+[data-theme="dark"] {
+  --ifm-color-primary: #65d5b9;
+  --ifm-background-color: #101815;
+  --ifm-background-surface-color: #16201e;
+}
+.hero {
+  background: linear-gradient(135deg, #e6f3ed, #f8f5e9);
+}
+.hero__title {
+  letter-spacing: -0.04em;
+}

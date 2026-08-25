@@ -6,7 +6,7 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Install",
       items: [
-        "install/overview",
+        "install/installation",
         "install/first-run",
         "install/configuration",
       ],
@@ -33,17 +33,12 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "API",
-      items: [
-        "api",
-      ],
+      items: ["api"],
     },
     {
       type: "category",
       label: "Development",
-      items: [
-        "developer/overview",
-        "developer/api",
-      ],
+      items: ["developer/overview"],
     },
   ],
   developer: [
