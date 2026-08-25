@@ -6,6 +6,7 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Install",
       items: [
+        "install/requirements",
         "install/installation",
         "install/first-run",
         "install/configuration",

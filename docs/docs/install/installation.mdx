@@ -1,0 +1,34 @@
+import ExampleEnv from '!!raw-loader!../../../docker/example.env';
+import CodeBlock from '@theme/CodeBlock';
+
+---
+sidebar_position: 2
+title: Installation
+---
+
+# Installation via docker compose
+
+Docker compose is the recommended install method. 
+
+## Step 1: Clone the files
+
+There is currently no release, so you will have to be on the bleeding edge.
+
+```bash
+git clone https://github.com/konditori/kondis.git
+cd kondis
+```
+
+## Step 2: Populate the env file
+
+<CodeBlock language="bash" title="Default environmental variable content">
+  {ExampleEnv}
+</CodeBlock>
+
+## Step 3: Start the containers
+
+```bash
+mise dev-update
+```
+
+If successful, continue to post-installation steps.
