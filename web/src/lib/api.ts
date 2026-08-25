@@ -36,7 +36,7 @@ import {
   socialControllerLikers,
   socialControllerNotifications,
   socialControllerMarkNotificationsRead,
-} from "../../../server/src/open-api/fetch-client";
+} from "@kondis/sdk";
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
   return {

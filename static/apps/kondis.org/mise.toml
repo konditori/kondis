@@ -1,6 +1,5 @@
 [tasks.install]
-depends = ["//server:install", "//packages/sdk:build"]
-run = "pnpm install --filter @kondis/web --frozen-lockfile"
+run = "pnpm install --filter @kondis/landing --frozen-lockfile"
 
 [tasks.dev]
 env._.path = "./node_modules/.bin"
@@ -10,6 +9,14 @@ run = "vite dev"
 env._.path = "./node_modules/.bin"
 run = "vite build"
 
+[tasks.preview]
+env._.path = "./node_modules/.bin"
+run = "vite preview"
+
+[tasks.check]
+env._.path = "./node_modules/.bin"
+run = "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+
 [tasks.format]
 env._.path = "./node_modules/.bin"
 run = "prettier --check ."
@@ -17,11 +24,3 @@ run = "prettier --check ."
 [tasks."format-fix"]
 env._.path = "./node_modules/.bin"
 run = "prettier --write ."
-
-[tasks.check]
-env._.path = "./node_modules/.bin"
-run = "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
-
-[tasks.test]
-env._.path = "./node_modules/.bin"
-run = "svelte-kit sync && vitest run"

@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
-    "@oazapfts/runtime": "^1.2.0",
+    "@kondis/sdk": "workspace:*",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.1.3",
