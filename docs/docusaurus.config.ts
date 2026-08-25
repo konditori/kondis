@@ -27,19 +27,13 @@ const config: Config = {
   ],
   themeConfig: {
     navbar: {
-      title: "Kondis",
-      logo: { alt: "Kondis logo", src: "img/logo.svg" },
+      title: "Docs",
+      logo: { alt: "Kondis", src: "img/logo.svg" },
       items: [
         {
           type: "docSidebar",
-          sidebarId: "guides",
-          label: "Guides",
-          position: "left",
-        },
-        {
-          type: "docSidebar",
-          sidebarId: "developer",
-          label: "Developers",
+          sidebarId: "dev",
+          label: "Develop",
           position: "left",
         },
         {

@@ -32,21 +32,24 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: "category",
-      label: "API",
-      items: ["api"],
-    },
-    {
-      type: "category",
       label: "Development",
-      items: ["developer/overview"],
+      items: ["dev/overview",
+    "dev/local-development",
+    "dev/architecture",
+    "dev/contributing",
+    "dev/cursed-knowledge",
+    "dev/api",
+
+      ],
     },
   ],
-  developer: [
-    "developer/overview",
-    "developer/local-development",
-    "developer/architecture",
-    "developer/contributing",
-    "developer/cursed-knowledge",
+  dev: [
+    "dev/overview",
+    "dev/local-development",
+    "dev/architecture",
+    "dev/contributing",
+    "dev/cursed-knowledge",
+    "dev/api",
   ],
 };
 export default sidebars;
