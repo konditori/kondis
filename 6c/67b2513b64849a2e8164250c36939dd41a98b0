@@ -1,0 +1,21 @@
+docs/docusaurus.config.ts
+  s_77aa689ac170fd::t_518a29bde26286 59-70
+docs/src/css/custom.css
+  s_77aa689ac170fd::t_99735d0535465d 20-25,97-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6c67b2513b64849a2e8164250c36939dd41a98b0",
+  "prompts": {},
+  "sessions": {
+    "s_77aa689ac170fd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03ab8-b60f-7cf0-a19e-b14d2cc6c6f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
