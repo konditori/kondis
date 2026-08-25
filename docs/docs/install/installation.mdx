@@ -12,7 +12,7 @@ Docker compose is the recommended install method.
 
 ## Step 1: Clone the files
 
-There is currently no release, so you will have to be on the bleeding edge.
+At the moment, the only way to download the app is to clone it with git.
 
 ```bash
 git clone https://github.com/konditori/kondis.git
@@ -20,6 +20,14 @@ cd kondis
 ```
 
 ## Step 2: Populate the env file
+
+Next, setup the environment file. You can begin by coping the sample env file
+
+```bash
+cp docker/env.example .env
+```
+
+Then edit the file to suit your needs. Here are the most important variables:
 
 <CodeBlock language="bash" title="Default environmental variable content">
   {ExampleEnv}

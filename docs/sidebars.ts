@@ -8,8 +8,7 @@ const sidebars: SidebarsConfig = {
       items: [
         "install/requirements",
         "install/installation",
-        "install/first-run",
-        "install/configuration",
+        "install/setup",
       ],
     },
     {

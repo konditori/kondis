@@ -15,6 +15,8 @@ Kondis is a self-hosted application, which means you need a computer to run it o
 
 - Docker Engine
 - Docker Compose
+- git
+- mise
 - A Linux or macOS host
 
 Docker Desktop is not recommended.
