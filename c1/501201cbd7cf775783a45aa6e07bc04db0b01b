@@ -1,0 +1,21 @@
+docs/docs/developer/local-development.md
+  s_b921fe8193480f::t_479bfb7890e3d4 14-15
+docs/docs/install/installation.mdx
+  s_b921fe8193480f::t_eb68de2d793d70 6-8,19-23,29,32,37-38,45-46,51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c1501201cbd7cf775783a45aa6e07bc04db0b01b",
+  "prompts": {},
+  "sessions": {
+    "s_b921fe8193480f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03a5a-99b8-7402-b96b-49c2428d184c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
