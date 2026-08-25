@@ -1,0 +1,19 @@
+docs/src/css/custom.css
+  s_5b9ffa92f31967::t_89e4dca1168622 2-16,19-22,24-92,94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c8527024143ea9cf36a5500a6328611bd23d2f5c",
+  "prompts": {},
+  "sessions": {
+    "s_5b9ffa92f31967": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a038a4-56ad-7041-85d0-9a41ffc31705",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
