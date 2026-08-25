@@ -1,0 +1,97 @@
+pnpm-lock.yaml
+  s_57cee0856236e3::t_1e5b31956033c6 66-68,100-112,260-268,270,272-280,282-319,326-328,3000-3004,3722,6240,7160-7161,11780-11783
+static/apps/api.kondis.org/src/lib/components/SchemaView.svelte
+  s_57cee0856236e3::t_13dd30ca8512ee 1-82
+static/apps/api.kondis.org/src/lib/openapi.ts
+  s_57cee0856236e3::t_dc8a7685c19697 1-321
+static/apps/api.kondis.org/src/routes/+error.svelte
+  s_57cee0856236e3::t_695bacba985846 1-17
+static/apps/api.kondis.org/src/routes/+page.svelte
+  s_57cee0856236e3::t_13e4059fdff469 1-61
+static/apps/api.kondis.org/src/routes/endpoints/+page.svelte
+  s_57cee0856236e3::t_225b1f383b7c82 1-27
+static/apps/api.kondis.org/src/routes/endpoints/[tag]/+page.svelte
+  s_57cee0856236e3::t_13466396c53b1e 1-26
+static/apps/api.kondis.org/src/routes/introduction/+page.svelte
+  s_57cee0856236e3::t_6787c6d25d6a3a 1-73
+static/apps/api.kondis.org/src/routes/models/+page.svelte
+  s_57cee0856236e3::t_8013cc9619160b 1-48
+static/apps/api.kondis.org/.prettierrc
+  s_07a2f1cbc603e1::t_bef4307d8e9809 1-3
+static/apps/api.kondis.org/mise.toml
+  s_07a2f1cbc603e1::t_6ab38a90b1dc48 6,10,14,16,18
+static/apps/api.kondis.org/package.json
+  s_07a2f1cbc603e1::t_fa6fb4a0219c33 5,7-11,16,18-26
+static/apps/api.kondis.org/src/app.d.ts
+  s_07a2f1cbc603e1::t_94768a82ffac2b 1-5
+static/apps/api.kondis.org/src/app.html
+  s_07a2f1cbc603e1::t_74287937222847 1-17
+static/apps/api.kondis.org/svelte.config.js
+  s_07a2f1cbc603e1::t_5cf5c88e8951ea 1-9
+static/apps/api.kondis.org/tsconfig.json
+  s_07a2f1cbc603e1::t_3859454ae64ef4 1-14
+static/apps/api.kondis.org/vite.config.ts
+  s_07a2f1cbc603e1::t_7832da9df1f230 1-4
+static/apps/kondis.org/.gitignore
+  s_fcaa20db6e2b39::t_a741249fc76400 1-3
+static/apps/kondis.org/mise.toml
+  s_fcaa20db6e2b39::t_d1e7ef7978a645 1-26
+static/apps/kondis.org/package.json
+  s_fcaa20db6e2b39::t_d20f3e4b3963d7 1-28
+static/apps/kondis.org/src/app.css
+  s_fcaa20db6e2b39::t_29cf24e17f871e 1-1031
+static/apps/kondis.org/src/app.d.ts
+  s_fcaa20db6e2b39::t_b306bc4ff18a5f 1-5
+static/apps/kondis.org/src/app.html
+  s_fcaa20db6e2b39::t_02506f14b331d3 1-12
+static/apps/kondis.org/src/routes/+layout.svelte
+  s_fcaa20db6e2b39::t_33abc74622fed7 1-7
+static/apps/kondis.org/src/routes/+layout.ts
+  s_fcaa20db6e2b39::t_9b6e41b7d3b7c5 1
+static/apps/kondis.org/src/routes/+page.svelte
+  s_fcaa20db6e2b39::t_ec124d8fec64f7 1-169
+static/apps/kondis.org/static/favicon.svg
+  s_fcaa20db6e2b39::t_04e1a66d200c71 1-4
+static/apps/kondis.org/static/robots.txt
+  s_fcaa20db6e2b39::t_f692f8360d4b33 1-2
+static/apps/kondis.org/svelte.config.js
+  s_fcaa20db6e2b39::t_60a29cc95a16fd 1-2,4-9
+static/apps/kondis.org/tsconfig.json
+  s_fcaa20db6e2b39::t_f0923ad652dcb9 1-14
+static/apps/kondis.org/vite.config.ts
+  s_fcaa20db6e2b39::t_fff8bbbed45655 1-6
+static/apps/kondis.org/wrangler.jsonc
+  s_fcaa20db6e2b39::t_2445ddfa0e1e95 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2f57bb8841c6eb56acadb8103596d21055e816c1",
+  "prompts": {},
+  "sessions": {
+    "s_07a2f1cbc603e1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a037b9-9a82-7801-af31-1d30a0d81add",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_57cee0856236e3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fca7d8fe8ffeK3Rcgv8h3liMq5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_fcaa20db6e2b39": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a037b9-3b87-76c0-90a5-3d9b681448ae",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
