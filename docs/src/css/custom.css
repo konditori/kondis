@@ -17,8 +17,12 @@
 }
 [data-theme="dark"] {
   --ifm-color-primary: #91a0ef;
-  --ifm-background-color: #101217;
-  --ifm-background-surface-color: #191c24;
+  --ifm-background-color: #080808;
+  --ifm-background-surface-color: #101010;
+  --ifm-color-emphasis-100: #151515;
+  --ifm-color-emphasis-200: #292929;
+  --ifm-color-emphasis-300: #3b3b3b;
+  --ifm-code-background: #292a3a;
   --ifm-heading-color: #f5f6fa;
 }
 
@@ -88,6 +92,35 @@ body {
 
 .theme-doc-markdown code {
   border-radius: 0.4rem;
+}
+
+/* Keep dark code examples close to Immich's muted indigo panels. */
+[data-theme="dark"] .theme-code-block,
+[data-theme="dark"] pre.prism-code {
+  background: #292a3a;
+  border: 0;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .theme-code-block {
+  border-radius: 0.45rem;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .theme-code-block > div:first-child {
+  background: #292a3a;
+  border-bottom: 1px solid #515265;
+}
+
+[data-theme="dark"] .theme-code-block code {
+  background: transparent;
+  color: #e7e8f0;
+}
+
+[data-theme="dark"] :not(pre) > code {
+  background: #24252d;
+  border-color: transparent;
+  color: #d9dbea;
 }
 
 .hero {

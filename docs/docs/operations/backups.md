@@ -4,4 +4,6 @@ title: Backups
 
 # Backups
 
-Back up both PostgreSQL and the filesystem used for uploaded activity files and photos. A database dump without files is incomplete. Test restores on a separate instance by opening an activity and verifying its route and photos.
+A good backup strategy is recommended to not lose your data.
+
+In order to backup Kondis, you will need to back up both the database and filesystem.

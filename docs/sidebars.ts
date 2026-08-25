@@ -9,25 +9,25 @@ const sidebars: SidebarsConfig = {
         "install/requirements",
         "install/installation",
         "install/setup",
+        "install/remote",
+        "install/mobile",
       ],
     },
     {
       type: "category",
       label: "Usage",
       items: [
-        "using-kondis/activities",
-        "using-kondis/importing",
-        "using-kondis/recording",
-        "using-kondis/social",
+        "usage/importing",
+        "usage/recording",
+        "usage/activities",
+        "usage/social",
       ],
     },
     {
       type: "category",
       label: "Operations",
       items: [
-        "operations/deployment",
         "operations/backups",
-        "operations/troubleshooting",
       ],
     },
     {

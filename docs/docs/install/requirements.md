@@ -23,3 +23,7 @@ Docker Desktop is not recommended.
 
 Windows is likely not supported as a native host as it is untested. Docker Desktop with the WSL 2 backend may work, but it is not an officially supported setup.
 
+# Client requirements
+
+Recording a workout is usually done on a mobile device, and this device must be Android. iOS and Apple Watch etc. are currently not supported but it is a prioritized feature for us to implement.
+
