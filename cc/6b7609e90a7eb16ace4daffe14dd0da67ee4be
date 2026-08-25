@@ -1,0 +1,19 @@
+docs/static/img/favicon.svg
+  s_fcaa20db6e2b39::t_31a36e2dc028a4 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cc6b7609e90a7eb16ace4daffe14dd0da67ee4be",
+  "prompts": {},
+  "sessions": {
+    "s_fcaa20db6e2b39": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a037b9-3b87-76c0-90a5-3d9b681448ae",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
