@@ -8,7 +8,7 @@ config_roots = [
   "e2e",
   "packages/sdk",
   "docs",
-  "static/apps/api.kondis.org",
+  "static/apps/developers.kondis.org",
   "static/apps/kondis.org",
 ]
 

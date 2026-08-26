@@ -291,6 +291,39 @@ importers:
         specifier: ^4.0.0
         version: 4.125.0
 
+  static/apps/developers.kondis.org:
+    devDependencies:
+      '@sveltejs/adapter-static':
+        specifier: ^3.0.9
+        version: 3.0.10(@sveltejs/kit@2.70.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.8(@typescript-eslint/types@8.65.0))(vite@7.3.6(@types/node@22.20.1)(jiti@1.21.7)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0)))(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)(vite@7.3.6(@types/node@22.20.1)(jiti@1.21.7)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0)))
+      '@sveltejs/kit':
+        specifier: ^2.37.0
+        version: 2.70.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.8(@typescript-eslint/types@8.65.0))(vite@7.3.6(@types/node@22.20.1)(jiti@1.21.7)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0)))(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)(vite@7.3.6(@types/node@22.20.1)(jiti@1.21.7)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^6.1.0
+        version: 6.2.4(svelte@5.56.8(@typescript-eslint/types@8.65.0))(vite@7.3.6(@types/node@22.20.1)(jiti@1.21.7)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0))
+      prettier:
+        specifier: ^3.9.6
+        version: 3.9.6
+      prettier-plugin-svelte:
+        specifier: ^4.1.1
+        version: 4.1.1(prettier@3.9.6)(svelte@5.56.8(@typescript-eslint/types@8.65.0))
+      svelte:
+        specifier: ^5.38.0
+        version: 5.56.8(@typescript-eslint/types@8.65.0)
+      svelte-check:
+        specifier: ^4.3.0
+        version: 4.7.4(picomatch@4.0.5)(svelte@5.56.8(@typescript-eslint/types@8.65.0))(typescript@6.0.3)
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.3
+      vite:
+        specifier: ^7.1.0
+        version: 7.3.6(@types/node@22.20.1)(jiti@1.21.7)(terser@5.50.0)(tsx@4.23.1)(yaml@2.9.0)
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.125.0
+
   static/apps/kondis.org:
     devDependencies:
       '@sveltejs/adapter-static':
