@@ -15,7 +15,7 @@
 
 <article class="page-shell">
   <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/models">Models</a><span>/</span><span>{data.model.name}</span>
+    <a href="/api/models">Models</a><span>/</span><span>{data.model.name}</span>
   </nav>
   <header class="model-hero">
     <div class="eyebrow">{schemaType(data.model.schema)}</div>

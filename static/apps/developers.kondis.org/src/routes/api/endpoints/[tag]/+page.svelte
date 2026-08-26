@@ -10,7 +10,7 @@
 
 <div class="page-shell">
   <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/endpoints">Endpoints</a><span>/</span><span
+    <a href="/api/endpoints">Endpoints</a><span>/</span><span
       >{data.group.name}</span
     >
   </nav>

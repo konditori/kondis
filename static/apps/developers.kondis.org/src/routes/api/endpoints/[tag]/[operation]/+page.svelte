@@ -25,8 +25,8 @@ const result = await ${endpoint.sdkName}(${sdkArguments});`);
 
 <article class="page-shell">
   <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/endpoints">Endpoints</a><span>/</span>
-    <a href="/endpoints/{endpoint.tagSlug}">{endpoint.tag}</a><span>/</span>
+    <a href="/api/endpoints">Endpoints</a><span>/</span>
+    <a href="/api/endpoints/{endpoint.tagSlug}">{endpoint.tag}</a><span>/</span>
     <span>{endpoint.title}</span>
   </nav>
 
