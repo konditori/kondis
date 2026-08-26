@@ -30,26 +30,6 @@ const sidebars: SidebarsConfig = {
         "operations/backups",
       ],
     },
-    {
-      type: "category",
-      label: "Development",
-      items: ["dev/overview",
-    "dev/local-development",
-    "dev/architecture",
-    "dev/contributing",
-    "dev/cursed-knowledge",
-    "dev/api",
-
-      ],
-    },
-  ],
-  dev: [
-    "dev/overview",
-    "dev/local-development",
-    "dev/architecture",
-    "dev/contributing",
-    "dev/cursed-knowledge",
-    "dev/api",
   ],
 };
 export default sidebars;

@@ -13,7 +13,7 @@ Kondis support importing existing workouts in `.fit`, `.tcx`, and `.gpx` file fo
 ## Choose your path
 
 - [Install Kondis](install/installation)
-- [Run it locally](dev/local-development)
+- [Developer documentation](https://developers.kondis.org/guides/overview)
 - [Import activities](usage/importing)
 - [API reference](https://api.kondis.org/introduction)
 

@@ -101,7 +101,7 @@
   </button>
   <nav class="header-links" aria-label="External links">
     <span class="status-pill">v0</span>
-    <a href="https://docs.kondis.org">Guides</a>
+    <a href="https://docs.kondis.org">Kondis docs</a>
     <a href="https://github.com/konditori/kondis">GitHub</a>
   </nav>
 </header>
@@ -113,6 +113,12 @@
 >
   <div class="sidebar-section">
     <p class="sidebar-label">Start</p>
+    <a class="sidebar-link" href="/guides/overview">Overview</a>
+    <a class="sidebar-link" href="/guides/local-development">Local development</a>
+    <a class="sidebar-link" href="/guides/architecture">Architecture</a>
+    <a class="sidebar-link" href="/guides/contributing">Contributing</a>
+    <a class="sidebar-link" href="/guides/cursed-knowledge">Cursed knowledge</a>
+    <a class="sidebar-link" href="/guides/api">API guide</a>
     <a
       class:active={pathActive("/introduction")}
       class="sidebar-link"

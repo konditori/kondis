@@ -17,6 +17,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
+          exclude: ["dev/**"],
           routeBasePath: "/",
           showLastUpdateTime: true,
           editUrl: "https://github.com/konditori/kondis/tree/main/docs/",
@@ -31,8 +32,7 @@ const config: Config = {
       logo: { alt: "Kondis", src: "img/logo.svg" },
       items: [
         {
-          type: "docSidebar",
-          sidebarId: "dev",
+          href: "https://developers.kondis.org/guides/overview",
           label: "Develop",
           position: "left",
         },
