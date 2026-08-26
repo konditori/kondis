@@ -1,0 +1,31 @@
+docs/src/css/custom.css
+  s_54a8985ed16506::t_f7dfdf5fa6b91f 39,44-64,81-88
+static/apps/developers.kondis.org/src/lib/openapi.ts
+  s_54a8985ed16506::t_b4356dc23c3872 201,223,235
+static/apps/developers.kondis.org/src/routes/+error.svelte
+  s_54a8985ed16506::t_73aa60b2603eda 14
+static/apps/developers.kondis.org/src/routes/+page.svelte
+  s_54a8985ed16506::t_c4804c8dfcf7b1 5,9,12,15-16,21-23,27-29,31-33
+static/apps/developers.kondis.org/src/routes/api/+page.svelte
+  s_54a8985ed16506::t_dbd23bdd1c4d69 1-61
+static/apps/developers.kondis.org/src/routes/api/introduction/+page.svelte
+  s_54a8985ed16506::t_4cbe6d50fcf8e9 64,68
+static/apps/developers.kondis.org/src/routes/api/sdk/+page.svelte
+  s_54a8985ed16506::t_b38580bb709b8f 87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e63ab54044eee25b323f0331dc30836633422652",
+  "prompts": {},
+  "sessions": {
+    "s_54a8985ed16506": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03f6d-189a-70f3-bb72-d27f54f90de9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
