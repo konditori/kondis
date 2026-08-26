@@ -264,7 +264,7 @@ export function referenceName(
 
 export function modelHref(reference: Reference | Schema): string | undefined {
   const name = referenceName(reference);
-  return name ? `/models/${encodeURIComponent(name)}` : undefined;
+  return name ? `/api/models/${encodeURIComponent(name)}` : undefined;
 }
 
 export function schemaType(schema?: Schema): string {
