@@ -1,0 +1,19 @@
+static/apps/developers.kondis.org/src/lib/openapi.ts
+  s_54a8985ed16506::t_6a4a8d10983be6 267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cbdbdc5d02d3012ae6ec25a3b5224049cf986da2",
+  "prompts": {},
+  "sessions": {
+    "s_54a8985ed16506": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03f6d-189a-70f3-bb72-d27f54f90de9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
