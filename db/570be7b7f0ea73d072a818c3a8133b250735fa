@@ -1,0 +1,23 @@
+static/apps/developers.kondis.org/src/routes/api/endpoints/[tag]/+page.svelte
+  s_54a8985ed16506::t_d92d5a40112895 13
+static/apps/developers.kondis.org/src/routes/api/endpoints/[tag]/[operation]/+page.svelte
+  s_54a8985ed16506::t_dab6be7e8bb427 28-29
+static/apps/developers.kondis.org/src/routes/api/models/[name]/+page.svelte
+  s_54a8985ed16506::t_97de5b170312fc 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "db570be7b7f0ea73d072a818c3a8133b250735fa",
+  "prompts": {},
+  "sessions": {
+    "s_54a8985ed16506": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03f6d-189a-70f3-bb72-d27f54f90de9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
