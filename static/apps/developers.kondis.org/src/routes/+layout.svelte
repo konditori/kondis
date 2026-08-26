@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { onMount } from "svelte";
   import { tick } from "svelte";
 
   import "../app.css";
@@ -16,6 +17,18 @@
   let mobileOpen = $state(false);
   let query = $state("");
   let searchInput = $state<HTMLInputElement>();
+  let darkMode = $state(false);
+
+  onMount(() => {
+    darkMode = localStorage.getItem("kondis-theme") === "dark";
+    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+  });
+
+  function toggleTheme() {
+    darkMode = !darkMode;
+    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+    localStorage.setItem("kondis-theme", darkMode ? "dark" : "light");
+  }
 
   const searchResults = $derived.by(() => {
     const normalized = query.trim().toLowerCase();
@@ -92,7 +105,7 @@
   >
   <a class="wordmark" href="/">
     <img class="wordmark-mark" src="/img/logo.svg" alt="" />
-    <span class="wordmark-text">Kondis <span>API</span></span>
+    <span class="wordmark-text">Kondis <span>Developers</span></span>
   </a>
   <button class="header-search" type="button" onclick={openSearch}>
     <span aria-hidden="true">/</span>
@@ -100,43 +113,52 @@
     <kbd>CMD K</kbd>
   </button>
   <nav class="header-links" aria-label="External links">
-    <span class="status-pill">v0</span>
-    <a href="https://docs.kondis.org">Kondis docs</a>
-    <a href="https://github.com/konditori/kondis">GitHub</a>
+    <a href="https://docs.kondis.org">User docs <span class="external-icon" aria-hidden="true">↗</span></a>
+    <a href="https://github.com/konditori/kondis">GitHub <span class="external-icon" aria-hidden="true">↗</span></a>
+    <button class="theme-toggle" type="button" aria-label="Toggle dark mode" onclick={toggleTheme}>☼</button>
   </nav>
 </header>
 
 <aside
   class="app-sidebar"
   class:mobile-open={mobileOpen}
-  aria-label="API reference navigation"
+  aria-label={page.url.pathname.startsWith("/api")
+    ? "API reference navigation"
+    : "Developer documentation navigation"}
 >
   <div class="sidebar-section">
+    {#if page.url.pathname.startsWith("/api")}
     <p class="sidebar-label">Start</p>
+    <a class="sidebar-link active" href="/api/">API reference</a>
+    <a class="sidebar-link" href="/api/introduction">Introduction</a>
+    <a class="sidebar-link" href="/api/sdk">SDK</a>
+    <a class="sidebar-link" href="/api/models">
+      Models <span class="count">{models.length}</span>
+    </a>
+    {:else}
     <a class="sidebar-link" href="/guides/overview">Overview</a>
     <a class="sidebar-link" href="/guides/local-development">Local development</a>
     <a class="sidebar-link" href="/guides/architecture">Architecture</a>
     <a class="sidebar-link" href="/guides/contributing">Contributing</a>
     <a class="sidebar-link" href="/guides/cursed-knowledge">Cursed knowledge</a>
     <a class="sidebar-link" href="/guides/api">API guide</a>
-    <a
-      class:active={pathActive("/introduction")}
-      class="sidebar-link"
-      href="/introduction">Introduction</a
-    >
-    <a class:active={pathActive("/sdk")} class="sidebar-link" href="/sdk">SDK</a
-    >
-    <a class:active={pathActive("/models")} class="sidebar-link" href="/models">
-      Models <span class="count">{models.length}</span>
+    <a class="sidebar-link external-link" href="/api/">
+      API reference
+      <svg class="external-link-icon" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M6.5 3.5H3.75A1.25 1.25 0 0 0 2.5 4.75v7.5a1.25 1.25 0 0 0 1.25 1.25h7.5a1.25 1.25 0 0 0 1.25-1.25V9.5" />
+        <path d="M9 2.5h4.5V7M13.25 2.75 7.5 8.5" />
+      </svg>
     </a>
+    {/if}
   </div>
 
+  {#if page.url.pathname.startsWith("/api")}
   <div class="sidebar-section">
     <p class="sidebar-label">Endpoints</p>
     <a
-      class:active={pathActive("/endpoints")}
+      class:active={pathActive("/api/endpoints")}
       class="sidebar-link"
-      href="/endpoints"
+      href="/api/endpoints"
     >
       All endpoints <span class="count">{endpoints.length}</span>
     </a>
@@ -169,9 +191,12 @@
       </details>
     {/each}
   </div>
+  {/if}
 </aside>
 
-<main class="site-main">
+<main
+  class="site-main with-sidebar"
+>
   {@render children()}
 </main>
 

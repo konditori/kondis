@@ -1369,7 +1369,7 @@ h3 {
 
 /* Keep the API reference visually aligned with docs.kondis.org. */
 :root {
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #15171c;
   background: #fff;
   --ink: #15171c;
@@ -1419,6 +1419,17 @@ body {
 kbd { border-color: #d9dce5; color: #60656f; background: #fff; }
 .header-links a { color: #60656f; }
 .header-links a:hover { color: #4255b8; }
+.header-links,
+.header-links a,
+.theme-toggle {
+  font-family: ui-sans-serif, -apple-system, "system-ui", "Segoe UI", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.65;
+}
+.external-icon { font-size: 1.15em; font-weight: 700; }
+.theme-toggle { border: 0; color: #15171c; background: transparent; font-size: 32px; cursor: pointer; }
+.theme-toggle:hover { color: #4255b8; }
 .status-pill { color: #60656f; }
 .status-pill::before { background: #4255b8; box-shadow: 0 0 0 4px rgb(66 85 184 / 12%); }
 
@@ -1428,11 +1439,52 @@ kbd { border-color: #d9dce5; color: #60656f; background: #fff; }
   color: #3d4048;
   background: #fff;
 }
-.sidebar-section { border-bottom-color: #eef0f3; }
-.sidebar-label { color: #737985; }
-.sidebar-link, .sidebar-group-summary { color: #60656f; }
-.sidebar-link:hover, .sidebar-link.active, .sidebar-group-summary:hover { color: #4255b8; background: #f0f2ff; }
-.sidebar-link.active { box-shadow: inset 3px 0 #4255b8; }
+.sidebar-section {
+  padding: 16px 0 22px;
+  border-bottom-color: #e5e7eb;
+}
+.sidebar-label {
+  margin: 10px 35px 12px;
+  color: #737985;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.sidebar-link, .sidebar-group-summary {
+  min-height: 52px;
+  margin: 3px 0;
+  padding: 12px 35px;
+  border-radius: 999px;
+  color: #60656f;
+  font-size: 18px;
+}
+.sidebar-link:hover, .sidebar-link.active, .sidebar-group-summary:hover {
+  color: #4255b8;
+  background: #f1f1f1;
+}
+.sidebar-link.active { box-shadow: none; }
+.sidebar-section:first-child .sidebar-link:first-of-type {
+  color: #4255b8;
+  background: #f1f1f1;
+}
+.sidebar-group-summary { font-weight: 650; }
+.sidebar-children { margin-left: 35px; }
+.sidebar-children .sidebar-link {
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.external-link-icon {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  opacity: 0.65;
+}
 .sidebar-children { border-left-color: #e1e4ed; }
 .sidebar-group summary::before { color: #8b91a0; }
 
@@ -1474,3 +1526,39 @@ h2 { letter-spacing: -0.045em; }
   .wordmark { padding: 0 13px 0 4px; }
   .menu-button { border-color: #d9dce5; color: #4255b8; }
 }
+
+[data-theme="dark"] body { color: #f5f6fa; background: #080808; }
+[data-theme="dark"] .site-header, [data-theme="dark"] .app-sidebar { color: #f5f6fa; border-color: #292929; background: #101010; }
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] .wordmark-text, [data-theme="dark"] .theme-toggle { color: #f5f6fa; }
+[data-theme="dark"] .sidebar-link, [data-theme="dark"] .sidebar-group-summary, [data-theme="dark"] .header-links a { color: #c7c9d2; }
+[data-theme="dark"] .sidebar-link:hover, [data-theme="dark"] .sidebar-link.active { color: #91a0ef; background: #151515; }
+[data-theme="dark"] .sidebar-section:first-child .sidebar-link:first-of-type { color: #91a0ef; background: #242424; }
+[data-theme="dark"] .header-search { color: #b7bad0; border-color: #3b3b3b; background: #151515; }
+[data-theme="dark"] kbd { color: #d9dbea; border-color: #515265; background: #292a3a; }
+[data-theme="dark"] .lede,
+[data-theme="dark"] .prose,
+[data-theme="dark"] .group-card p,
+[data-theme="dark"] .model-card p { color: #c7c9d2; }
+[data-theme="dark"] .section-heading { border-color: #3b3b3b; }
+[data-theme="dark"] .stat-strip,
+[data-theme="dark"] .endpoint-list,
+[data-theme="dark"] .parameter-table,
+[data-theme="dark"] .property-table,
+[data-theme="dark"] .schema-card,
+[data-theme="dark"] .response-card,
+[data-theme="dark"] .request-builder,
+[data-theme="dark"] .group-card,
+[data-theme="dark"] .model-card,
+[data-theme="dark"] .next-card,
+[data-theme="dark"] .route-line,
+[data-theme="dark"] .model-filter,
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field textarea { color: #f5f6fa; border-color: #3b3b3b; background: #101010; }
+[data-theme="dark"] .schema-card-header,
+[data-theme="dark"] .response-card-header,
+[data-theme="dark"] .request-builder-header { border-color: #3b3b3b; background: #151515; }
+[data-theme="dark"] .endpoint-row + .endpoint-row,
+[data-theme="dark"] .parameter-row + .parameter-row,
+[data-theme="dark"] .property-row + .property-row { border-color: #292929; }
+[data-theme="dark"] .endpoint-row:hover { background: #24252d; }
+[data-theme="dark"] .hero::after { border-color: #515265; opacity: .35; }

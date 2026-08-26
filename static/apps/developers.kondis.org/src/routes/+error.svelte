@@ -11,7 +11,7 @@
     {page.error?.message ?? "The requested API reference page was not found."}
   </p>
   <div class="hero-actions">
-    <a class="button" href="/endpoints">Browse endpoints</a>
+    <a class="button" href="/api/endpoints">Browse endpoints</a>
     <a class="button secondary" href="/">Return home</a>
   </div>
 </div>

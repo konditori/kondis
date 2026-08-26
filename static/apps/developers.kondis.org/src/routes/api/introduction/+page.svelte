@@ -61,11 +61,11 @@
   </div>
 
   <div class="next-grid">
-    <a class="next-card" href="/endpoints">
+    <a class="next-card" href="/api/endpoints">
       <small>Next</small>
       <strong>Browse all endpoints</strong>
     </a>
-    <a class="next-card" href="/sdk">
+    <a class="next-card" href="/api/sdk">
       <small>Typed client</small>
       <strong>Use the generated SDK</strong>
     </a>

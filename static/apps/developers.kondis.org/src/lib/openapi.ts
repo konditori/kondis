@@ -198,7 +198,7 @@ export const endpoints: Endpoint[] = Object.entries(spec.paths).flatMap(
           operationId,
           sdkName: sdkName(operationId),
           slug,
-          href: `/endpoints/${tagSlug}/${slug}`,
+          href: `/api/endpoints/${tagSlug}/${slug}`,
           title: operation.summary ?? humanize(operationId),
           description: operation.description,
           tag,
@@ -220,7 +220,7 @@ export const endpointGroups: EndpointGroup[] = Array.from(
     return {
       name,
       slug,
-      href: `/endpoints/${slug}`,
+      href: `/api/endpoints/${slug}`,
       description:
         tagDescriptions[name] ?? `Operations grouped under ${humanize(name)}.`,
       endpoints: endpoints.filter((endpoint) => endpoint.tag === name),
@@ -232,7 +232,7 @@ export const models: ApiModel[] = Object.entries(schemas)
   .map(([name, schema]) => ({
     name,
     slug: encodeURIComponent(name),
-    href: `/models/${encodeURIComponent(name)}`,
+    href: `/api/models/${encodeURIComponent(name)}`,
     schema,
   }))
   .sort((left, right) => left.name.localeCompare(right.name));

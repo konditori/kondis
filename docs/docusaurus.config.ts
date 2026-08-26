@@ -28,18 +28,13 @@ const config: Config = {
   ],
   themeConfig: {
     navbar: {
-      title: "Docs",
+      title: "Kondis Docs",
       logo: { alt: "Kondis", src: "img/logo.svg" },
       items: [
         {
-          href: "https://developers.kondis.org/guides/overview",
-          label: "Develop",
-          position: "left",
-        },
-        {
-          href: "https://api.kondis.org/introduction",
-          label: "API",
-          position: "left",
+          href: "https://developers.kondis.org/",
+          label: "Developers",
+          position: "right",
         },
         {
           href: "https://github.com/konditori/kondis",

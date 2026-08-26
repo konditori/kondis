@@ -84,7 +84,7 @@ const activity = await activityControllerGetById({ id: page.activities[0].id });
   </div>
 
   <div class="next-grid">
-    <a class="next-card" href="/endpoints">
+    <a class="next-card" href="/api/endpoints">
       <small>Operations</small>
       <strong>Find an SDK function</strong>
     </a>
