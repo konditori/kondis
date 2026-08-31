@@ -1,0 +1,25 @@
+pnpm-workspace.yaml
+  s_d67a16eab0588d::t_065d35f4b0f3f1 35
+sites/api.kondis.org/mise.toml
+  s_d67a16eab0588d::t_053cb2d60c1a51 6,9,13,16
+sites/api.kondis.org/package.json
+  s_d67a16eab0588d::t_ae0b1c4fd407be 6-9,15-16,20
+sites/api.kondis.org/static/index.html
+  s_d67a16eab0588d::t_0a8218b63b5165 6-11,13-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2fc6fa432aa118e4ebf0d92ace054fd4bcffd26c",
+  "prompts": {},
+  "sessions": {
+    "s_d67a16eab0588d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05756-6207-7ee2-8443-bfdfe2b2b349",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
