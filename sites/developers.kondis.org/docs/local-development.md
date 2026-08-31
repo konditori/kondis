@@ -4,7 +4,10 @@ title: Local development
 
 # Local development
 
-For local development you should check the Kondis syste requiements but add quite a bit of disk space.
+For local development, please begin by checking the [Kondis system requiements](https://docs.kondis.org/install/requirements) but add quite a bit of disk space.
+
+All the apps below will be accessible at `http://localhost:3000`, meaning you can only run one at a time.
+
 
 ## Kondis app
 
@@ -14,38 +17,58 @@ After cloning the git repo, run the app with the following command:
 mise dev-update
 ```
 
+This will start the main docker compose stack.
+
 The web app will be accessible `http://localhost:3000`.
 
 ## Docs site
 
-In the docs site folder, run
+Go to the docs site folder
+
+```bash
+cd sites/docs.kondis.org
+```
+
+Then run
 
 ```bash
 mise dev-update
 ```
-
-and the docs site will be available on `http://localhost:3000`. Yes, this is the same port as the main app, but you are expected to only run one app at a time.
 
 ## Developer docs site
 
-The developer documentation consists of two parts: these markdown guides in `sites/developers.kondis.org/docs`, and the API reference documentation generated separately from the server code.
-
-In the developer docs site folder, run
+Go to the developer docs site folder
 
 ```bash
 cd sites/developers.kondis.org
-mise dev
 ```
 
-The developer docs site will be available on `http://localhost:3000`.
-
-## kondis.org site
-
-In the `kondis.org` site folder, run
+Then run
 
 ```bash
-cd sites/kondis.org
 mise dev-update
 ```
 
-The `kondis.org` site will be available on `http://localhost:3000`.
+## kondis.org site
+
+```bash
+cd sites/kondis.org
+```
+
+Then run
+
+```bash
+mise dev-update
+```
+
+## API reference site, api.kondis.org
+
+```bash
+cd sites/api.kondis.org
+```
+
+Then run
+
+```bash
+mise dev-update
+```
