@@ -1,0 +1,71 @@
+# syntax=docker/dockerfile:1.7
+ARG NODE_VERSION=24.19.0
+ARG DEBIAN_RELEASE=trixie
+ARG PG_MAJOR=18
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim AS server-build
+
+ENV CI=1
+
+RUN npm install -g pnpm@11.22.0
+
+WORKDIR /usr/src/app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY server/package.json ./server/package.json
+COPY web/package.json ./web/package.json
+COPY e2e/package.json ./e2e/package.json
+RUN pnpm install --frozen-lockfile
+
+COPY server ./server
+RUN rm -rf ./server/dist && \
+    pnpm --filter ./server build && \
+    pnpm --filter ./server --prod deploy /output/server
+
+FROM node:${NODE_VERSION}-${DEBIAN_RELEASE}-slim AS node-runtime
+
+FROM postgres:${PG_MAJOR}-${DEBIAN_RELEASE}
+
+ARG PG_MAJOR
+ARG VECTORCHORD_TAG=1.1.1
+ARG TARGETARCH
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates tini wget && \
+    DEB_ARCH="${TARGETARCH:-$(dpkg --print-architecture)}" && \
+    wget -nv -O /tmp/vchord.deb \
+      "https://github.com/supervc-stack/VectorChord/releases/download/${VECTORCHORD_TAG}/postgresql-${PG_MAJOR}-vchord_${VECTORCHORD_TAG#v}-1_${DEB_ARCH}.deb" && \
+    apt-get install -y --no-install-recommends \
+      /tmp/vchord.deb \
+      "postgresql-${PG_MAJOR}-pgvector" \
+      "postgresql-${PG_MAJOR}-postgis-3" \
+      "postgresql-${PG_MAJOR}-postgis-3-scripts" && \
+    rm -f /tmp/vchord.deb && \
+    apt-get purge -y --auto-remove wget && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+
+WORKDIR /usr/src/app
+
+COPY --from=server-build /output/server ./
+COPY docker/demo-entrypoint.sh /usr/local/bin/kondis-demo-entrypoint
+
+RUN mkdir -p /data/postgres /data/uploads && \
+    chown -R postgres:postgres /data /usr/src/app && \
+    chmod +x /usr/local/bin/kondis-demo-entrypoint
+
+ENV DB_HOSTNAME=127.0.0.1 \
+    DB_PORT=5432 \
+    DB_USERNAME=kondis \
+    DB_PASSWORD=kondis-demo \
+    DB_DATABASE_NAME=kondis \
+    KONDIS_STORAGE_DIR=/data/uploads \
+    PGDATA=/data/postgres \
+    PORT=2293
+
+USER postgres
+
+EXPOSE 2293
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/kondis-demo-entrypoint"]

@@ -38,6 +38,12 @@ describe('ConfigService', () => {
     });
   });
 
+  describe('database', () => {
+    it('uses the Docker database service when the hostname is unset', () => {
+      expect(new ConfigService().database.host).toBe('database');
+    });
+  });
+
   describe('setup token', () => {
     it('generates a UUID instead of requiring an operator-provided token', () => {
       const first = new ConfigService().setupToken;
