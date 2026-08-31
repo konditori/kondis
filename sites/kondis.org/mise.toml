@@ -7,22 +7,11 @@ env._.path = "./node_modules/.bin"
 run = "vite dev"
 
 [tasks.dev]
-description = "Start the landing site in Docker Compose on http://localhost:4173"
+description = "Start the landing site directly on http://localhost:3000"
 interactive = true
-env = { COMPOSE_BAKE = true }
-run = "docker compose -f ./docker-compose.dev.yml up --remove-orphans"
-depends_post = "dev-down"
-
-[tasks.dev-update]
-description = "Rebuild the landing-site Docker environment and start it"
-interactive = true
-env = { COMPOSE_BAKE = true }
-run = "docker compose -f ./docker-compose.dev.yml up --build -V --remove-orphans"
-depends_post = "dev-down"
-
-[tasks.dev-down]
-description = "Stop the landing-site Docker environment"
-run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
+env._.path = "./node_modules/.bin"
+run = "vite dev --host localhost --port 3000"
+depends = ["install"]
 
 [tasks.build]
 env._.path = "./node_modules/.bin"

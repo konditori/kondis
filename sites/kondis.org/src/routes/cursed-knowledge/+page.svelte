@@ -13,33 +13,45 @@
       <span class="brand-mark" role="img" aria-label="sweating face">😰</span>
       <span>Kondis</span>
     </a>
-    <a class="back-link" href="/"
-      >Back to Kondis <span aria-hidden="true">↗</span></a
-    >
+    <nav aria-label="Main navigation">
+      <a href="/">Home</a>
+      <a href="https://docs.kondis.org">Docs <span aria-hidden="true">↗</span></a>
+      <a href="https://github.com/konditori/kondis">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
   </header>
 
-  <article class="knowledge-content">
+  <section class="knowledge-intro">
     <p class="eyebrow"><span></span> Notes from the workshop</p>
-    <h1>Cursed knowledge</h1>
-    <p class="lede">
+    <h1>Cursed Knowledge</h1>
+    <p>
       Cursed knowledge we have learned while building Kondis that we wish we
       never needed to know.
     </p>
+  </section>
 
-    <section class="knowledge-entry">
+  <section class="knowledge-feed" aria-label="Cursed knowledge entries">
+    <article class="knowledge-entry">
       <p class="entry-date">2026-08-11</p>
-      <h2>Strava takeout crops are cursed</h2>
-      <p>
-        Strava takeouts do not store activity crop boundaries. The takeout can
-        contain the original, untrimmed activity file while <code
-          >activities.csv</code
-        >
-        contains summary metrics for the edited activity. Because there is no crop
-        information, Kondis cannot import that edit faithfully. Each cropped workout
-        needs to be re-cropped manually.
-      </p>
-    </section>
-  </article>
+      <div class="entry-visual" aria-hidden="true">
+        <span>FIT</span>
+        <span>TCX</span>
+        <span>GPX</span>
+        <div class="route-line"></div>
+      </div>
+      <div class="entry-copy">
+        <h2>Strava takeout crops are cursed</h2>
+        <p class="entry-reference">Importing edited activities</p>
+        <p>
+          Strava takeouts do not store activity crop boundaries. The takeout can
+          contain the original, untrimmed activity file while <code
+            >activities.csv</code
+          > contains summary metrics for the edited activity. Because there is
+          no crop information, Kondis cannot import that edit faithfully. Each
+          cropped workout needs to be re-cropped manually.
+        </p>
+      </div>
+    </article>
+  </section>
 </main>
 
 <style>
@@ -80,21 +92,28 @@
     line-height: 1;
   }
 
-  .back-link {
+  nav {
+    display: flex;
+    gap: 4px;
+  }
+
+  nav a {
+    padding: 10px 14px;
     color: #aeb9ce;
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
   }
 
-  .back-link:hover {
+  nav a:hover {
     color: #fff;
   }
 
-  .knowledge-content {
+  .knowledge-intro {
     width: min(760px, calc(100% - 48px));
     margin: 0 auto;
-    padding: 130px 0 160px;
+    padding: 142px 0 92px;
+    text-align: center;
   }
 
   .eyebrow {
@@ -108,6 +127,7 @@
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    justify-content: center;
   }
 
   .eyebrow span {
@@ -123,7 +143,7 @@
   }
 
   h1 {
-    margin-bottom: 24px;
+    margin-bottom: 22px;
     color: #f4f7ff;
     font-size: clamp(48px, 7vw, 78px);
     font-weight: 700;
@@ -131,27 +151,73 @@
     line-height: 0.99;
   }
 
-  .lede {
+  .knowledge-intro > p:last-child {
     max-width: 600px;
-    margin-bottom: 88px;
+    margin: 0 auto;
     color: #aeb9cb;
     font-size: 18px;
     line-height: 1.75;
   }
 
+  .knowledge-feed {
+    width: min(920px, calc(100% - 48px));
+    margin: 0 auto;
+    padding-bottom: 160px;
+  }
+
   .knowledge-entry {
-    padding: 32px 0 0;
+    display: grid;
+    grid-template-columns: 110px minmax(260px, 330px) 1fr;
+    gap: 28px;
+    align-items: start;
+    padding: 28px 0 48px;
     border-top: 1px solid #43516b;
   }
 
   .entry-date {
-    margin-bottom: 16px;
+    margin: 8px 0 0;
     color: #a6c5ff;
     font-family: "DM Mono", monospace;
     font-size: 12px;
   }
 
-  h2 {
+  .entry-visual {
+    position: relative;
+    display: flex;
+    min-height: 210px;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    padding: 20px;
+    overflow: hidden;
+    border: 1px solid #43516b;
+    border-radius: 8px;
+    background: #111d2c;
+    color: #a6c5ff;
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+  }
+
+  .entry-visual > span {
+    padding: 5px 7px;
+    border: 1px solid #607aa9;
+    border-radius: 4px;
+    background: #172843;
+  }
+
+  .route-line {
+    position: absolute;
+    right: -22px;
+    bottom: 28px;
+    width: 180px;
+    height: 100px;
+    border: 2px solid #83aeff;
+    border-radius: 48% 52% 42% 58%;
+    box-shadow: 0 0 24px #83aeff66;
+    transform: rotate(-18deg);
+  }
+
+  .entry-copy h2 {
     margin-bottom: 20px;
     color: #f4f7ff;
     font-size: clamp(26px, 4vw, 40px);
@@ -160,7 +226,14 @@
     line-height: 1.1;
   }
 
-  .knowledge-entry > p:last-child {
+  .entry-reference {
+    margin-bottom: 18px;
+    color: #a6c5ff;
+    font-family: "DM Mono", monospace;
+    font-size: 12px;
+  }
+
+  .entry-copy > p:last-child {
     max-width: 680px;
     margin-bottom: 0;
     color: #aeb9cb;
@@ -179,16 +252,39 @@
 
   @media (max-width: 640px) {
     .knowledge-header,
-    .knowledge-content {
+    .knowledge-intro,
+    .knowledge-feed {
       width: min(100% - 32px, 760px);
     }
 
-    .knowledge-content {
-      padding-top: 90px;
+    .knowledge-header {
+      height: auto;
+      padding: 22px 0;
     }
 
-    .lede {
-      margin-bottom: 64px;
+    nav a {
+      padding: 8px 5px;
+      font-size: 11px;
+    }
+
+    .knowledge-intro {
+      padding-top: 82px;
+    }
+
+    .knowledge-entry {
+      display: block;
+    }
+
+    .entry-date {
+      margin-bottom: 18px;
+    }
+
+    .entry-visual {
+      min-height: 150px;
+      margin-bottom: 28px;
+    }
+
+    .knowledge-intro > p:last-child {
       font-size: 16px;
     }
   }

@@ -37,25 +37,13 @@ body {
 }
 
 .navbar__title {
-  font-size: 0;
+  font-size: 1.15rem;
   font-weight: 750;
   letter-spacing: -0.03em;
 }
 
-.navbar__title::before,
-.navbar__title::after {
-  font-size: 1.15rem;
-}
-
-.navbar__title::before {
-  color: var(--ifm-heading-color);
-  content: "Kondis";
-}
-
-.navbar__title::after {
-  margin-left: 0.3rem;
+.navbar__title-accent {
   color: var(--ifm-color-primary);
-  content: "Docs";
 }
 
 .navbar__logo img {
