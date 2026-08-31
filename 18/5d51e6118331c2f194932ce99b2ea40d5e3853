@@ -1,0 +1,31 @@
+.github/workflows/test.yml
+  s_d67a16eab0588d::t_3d51b09caf618f 48,206,243
+README.md
+  s_d67a16eab0588d::t_fa9fdf7ff6a44d 23
+mise.toml
+  s_d67a16eab0588d::t_0c009bc27bd5af 10,42,46,50,58,62
+pnpm-lock.yaml
+  s_d67a16eab0588d::t_78d8c315a17070 15
+static/apps/developers.kondis.org/src/routes/guides/[slug]/+page.ts
+  s_d67a16eab0588d::t_e2a565244195a2 4,23
+static/apps/docs.kondis.org/dev/local-development.md
+  s_d67a16eab0588d::t_653d3147dc8252 31
+static/apps/docs.kondis.org/docusaurus.config.ts
+  s_d67a16eab0588d::t_72d72011448068 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "185d51e6118331c2f194932ce99b2ea40d5e3853",
+  "prompts": {},
+  "sessions": {
+    "s_d67a16eab0588d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05756-6207-7ee2-8443-bfdfe2b2b349",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
