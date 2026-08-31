@@ -13,7 +13,9 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
-  "dependencies": {},
+  "dependencies": {
+    "marked": "^18.0.11"
+  },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.9",
     "@sveltejs/kit": "^2.37.0",
