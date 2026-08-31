@@ -1,0 +1,33 @@
+sites/api.kondis.org/static/img/favicon.svg
+  s_9f296eeea6f532::t_dad4511270a8e0 7
+sites/api.kondis.org/static/img/logo.svg
+  s_9f296eeea6f532::t_c22abe422f78ad 2
+sites/developers.kondis.org/static/img/favicon.svg
+  s_9f296eeea6f532::t_59f2fdae4bc793 7
+sites/developers.kondis.org/static/img/logo.svg
+  s_9f296eeea6f532::t_a939435c122cd0 2
+sites/docs.kondis.org/static/img/favicon.svg
+  s_9f296eeea6f532::t_3803b3b7320c28 7
+sites/docs.kondis.org/static/img/logo.svg
+  s_9f296eeea6f532::t_9fd5a3bff3f426 2
+sites/kondis.org/src/routes/cursed-knowledge/+page.svelte
+  s_9f296eeea6f532::t_6162b33761e920 90
+sites/kondis.org/static/favicon.svg
+  s_9f296eeea6f532::t_fcf2f10a959e15 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "03ca363d06f5f02147d3603b12766ff6b2ded082",
+  "prompts": {},
+  "sessions": {
+    "s_9f296eeea6f532": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a059bf-2686-7630-95d1-ce8e218a1378",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
