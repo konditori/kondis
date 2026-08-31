@@ -5,5 +5,5 @@
   "type": "module",
   "description": "Monorepo for Kondis",
   "license": "AGPL-3.0-or-later",
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@11.22.0"
 }

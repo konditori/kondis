@@ -2,7 +2,7 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "Kondis",
-  tagline: "Your self-hosted activity archive",
+  tagline: "Self-hosted, open source fitness tracker",
   favicon: "img/favicon.svg",
   url: "https://docs.kondis.org",
   baseUrl: "/",

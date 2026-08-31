@@ -26,7 +26,7 @@ async function run(): Promise<void> {
 
   const config = new DocumentBuilder()
     .setTitle('Kondis API')
-    .setDescription('OpenAPI schema for the Kondis server')
+    .setDescription('OpenAPI schema for Kondis')
     .setVersion('0.0.0')
     .addServer(API_PREFIX)
     .build();
