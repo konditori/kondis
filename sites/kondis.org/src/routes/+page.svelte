@@ -115,99 +115,11 @@
     </div>
 
     <div class="product-showcase" aria-label="Kondis workout dashboard preview">
-      <div class="preview-topbar">
-        <div class="preview-brand">
-          <span class="preview-k" aria-hidden="true">😰</span> kondis
-        </div>
-        <div class="preview-search">Search activities</div>
-        <div class="preview-avatar">JL</div>
-      </div>
-      <div class="preview-body">
-        <aside class="preview-sidebar">
-          <span class="side-active">⌂ <b>Home</b></span>
-          <span>◷ Activities</span>
-          <span>◉ Explore</span>
-          <span>♙ People</span>
-          <i></i>
-          <span>⚙ Settings</span>
-        </aside>
-        <div class="preview-content">
-          <div class="preview-heading">
-            <div>
-              <p>Tuesday, 12 March</p>
-              <h2>Good morning, Jamie</h2>
-            </div>
-            <button>+ Add activity</button>
-          </div>
-          <div class="activity-grid">
-            <article class="activity-card run-card">
-              <div class="card-label">
-                <span class="activity-icon">⌁</span><b>Morning run</b><small
-                  >Today · 07:16</small
-                >
-              </div>
-              <div class="route-map">
-                <svg viewBox="0 0 480 220" role="img" aria-label="Route map">
-                  <path
-                    class="map-road"
-                    d="M-8 57C71 37 87 97 150 90s77-79 145-49c56 24 83 63 193 9"
-                  />
-                  <path
-                    class="map-road thin"
-                    d="M19 190c49-46 98-7 148-39 56-36 39-93 119-75 55 12 73 80 174 51"
-                  />
-                  <path
-                    class="map-road thin"
-                    d="M-6 132c89-34 102 21 184 5 73-14 66-78 152-54 59 17 84 44 152 34"
-                  />
-                  <path
-                    class="route-line"
-                    d="M92 167c14-43 42-68 67-73 33-7 40-38 80-37 36 1 37 35 72 46 23 7 41 21 39 42-3 31-46 43-77 25-22-13-29-43-59-44-34-1-39 27-72 33-25 4-35 20-50 8Z"
-                  />
-                  <circle cx="92" cy="167" r="6" class="route-start" />
-                </svg>
-              </div>
-              <div class="activity-stats">
-                <span><b>8.42</b> km</span><span><b>42:16</b> time</span><span
-                  ><b>5:01</b> /km</span
-                >
-              </div>
-            </article>
-            <article class="progress-card">
-              <p>This week</p>
-              <h3>37.6 <small>km</small></h3>
-              <div class="bars">
-                <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-              </div>
-              <div class="week-labels">
-                <span>M</span><span>T</span><span>W</span><span>T</span><span
-                  >F</span
-                ><span>S</span><span>S</span>
-              </div>
-            </article>
-          </div>
-          <div class="preview-section-title">
-            <h3>Recent activities</h3>
-            <span>View all →</span>
-          </div>
-          <div class="recent-activity">
-            <span class="round-icon bike">⌁</span>
-            <div>
-              <b>Lunch ride</b>
-              <p>10 March · Road cycling</p>
-            </div>
-            <strong>42.8 km</strong><small>1:46:12</small>
-          </div>
-          <div class="recent-activity">
-            <span class="round-icon hike">△</span>
-            <div>
-              <b>Sunday hike</b>
-              <p>9 March · Hiking</p>
-            </div>
-            <strong>12.1 km</strong><small>3:12:46</small>
-          </div>
-        </div>
-      </div>
+      <img
+        class="product-screenshot"
+        src="/kondis-dashboard-preview.png"
+        alt="Kondis home feed with fictional running and cycling activities"
+      />
     </div>
   </section>
 

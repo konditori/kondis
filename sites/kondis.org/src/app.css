@@ -51,8 +51,7 @@ button {
   width: 31px;
   height: 31px;
   place-items: center;
-  font-family:
-    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-family: emoji;
   font-size: 27px;
   line-height: 1;
 }
@@ -267,6 +266,12 @@ h2 em {
     0 0 0 1px #ffffff08 inset;
   transform: perspective(1800px) rotateY(-4deg) rotateX(2deg);
 }
+.product-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 11px;
+}
 .preview-topbar {
   display: flex;
   height: 51px;
@@ -292,8 +297,7 @@ h2 em {
   height: 18px;
   place-items: center;
   border-radius: 5px;
-  font-family:
-    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-family: emoji;
   font-size: 15px;
 }
 .preview-search {

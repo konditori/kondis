@@ -87,7 +87,7 @@
     width: 31px;
     height: 31px;
     place-items: center;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+    font-family: emoji;
     font-size: 27px;
     line-height: 1;
   }
