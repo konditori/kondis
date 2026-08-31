@@ -5,12 +5,15 @@
   const docs = "https://docs.kondis.org";
   type Theme = "dark" | "light";
 
-  let theme = $state<Theme>("light");
+  let theme = $state<Theme>("dark");
 
-  function applyTheme(nextTheme: Theme) {
+  function applyTheme(nextTheme: Theme, persist = true) {
     theme = nextTheme;
     document.documentElement.dataset.theme = nextTheme;
-    localStorage.setItem("kondis-theme", nextTheme);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", nextTheme === "dark" ? "#09101d" : "#ffffff");
+    if (persist) localStorage.setItem("kondis-theme", nextTheme);
   }
 
   function toggleTheme() {
@@ -19,7 +22,18 @@
 
   onMount(() => {
     const savedTheme = localStorage.getItem("kondis-theme");
-    if (savedTheme === "dark" || savedTheme === "light") applyTheme(savedTheme);
+    if (savedTheme === "dark" || savedTheme === "light") {
+      applyTheme(savedTheme);
+      return;
+    }
+
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncWithSystemTheme = () =>
+      applyTheme(colorScheme.matches ? "dark" : "light", false);
+    syncWithSystemTheme();
+    colorScheme.addEventListener("change", syncWithSystemTheme);
+
+    return () => colorScheme.removeEventListener("change", syncWithSystemTheme);
   });
 </script>
 
@@ -30,7 +44,6 @@
     content="Kondis is an open-source, self-hosted fitness tracker for recording, importing, and exploring your training."
   />
   <link rel="icon" href="/favicon.svg" />
-  <meta name="theme-color" content={theme === "dark" ? "#09101d" : "#ffffff"} />
 </svelte:head>
 
 <header class="site-header">
