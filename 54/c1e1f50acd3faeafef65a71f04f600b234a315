@@ -1,0 +1,31 @@
+static/apps/developers.kondis.org/package.json
+  s_d6788a03453219::t_007bf1913552ad 16-18
+static/apps/developers.kondis.org/src/routes/guides/[slug]/+page.ts
+  s_d6788a03453219::t_36f4020caf5603 2,4-8,22-24,29
+static/apps/developers.kondis.org/src/app.css
+  s_54a8985ed16506::t_42220fd2a681c9 1457-1460,1521-1522,1541-1542
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "54c1e1f50acd3faeafef65a71f04f600b234a315",
+  "prompts": {},
+  "sessions": {
+    "s_54a8985ed16506": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03f6d-189a-70f3-bb72-d27f54f90de9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_d6788a03453219": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "954826b6-e93d-40bf-8210-4fb695d505dd",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
