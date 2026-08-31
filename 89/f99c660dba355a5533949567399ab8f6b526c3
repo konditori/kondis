@@ -1,0 +1,21 @@
+sites/developers.kondis.org/src/css/custom.css
+  s_cf65fcc5f37627::t_f4ca07a79d94a9 40,45
+sites/developers.kondis.org/src/theme/Logo/index.tsx
+  s_cf65fcc5f37627::t_7238bdb1d7e21d 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "89f99c660dba355a5533949567399ab8f6b526c3",
+  "prompts": {},
+  "sessions": {
+    "s_cf65fcc5f37627": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05983-6a89-76d1-8e4e-a22e2268771e",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
