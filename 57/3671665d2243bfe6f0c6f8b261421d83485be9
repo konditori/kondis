@@ -1,0 +1,19 @@
+package.json
+  s_e50f789a5e1528::t_e15aacc1fedeab 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "573671665d2243bfe6f0c6f8b261421d83485be9",
+  "prompts": {},
+  "sessions": {
+    "s_e50f789a5e1528": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05961-c79c-7173-9530-3d54c3695e29",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
