@@ -20,7 +20,7 @@ const config: Config = {
           exclude: ["dev/**"],
           routeBasePath: "/",
           showLastUpdateTime: true,
-          editUrl: "https://github.com/konditori/kondis/tree/main/docs/",
+          editUrl: "https://github.com/konditori/kondis/tree/main/static/apps/docs.kondis.org/",
         },
         theme: { customCss: "./src/css/custom.css" },
       } satisfies Preset.Options,

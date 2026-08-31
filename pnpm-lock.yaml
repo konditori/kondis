@@ -12,7 +12,7 @@ importers:
 
   .: {}
 
-  docs:
+  static/apps/docs.kondis.org:
     dependencies:
       '@docusaurus/core':
         specifier: ^3.8.1

@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import { marked } from "marked";
 
-const documents = import.meta.glob("../../../../../../../docs/dev/*.md", {
+const documents = import.meta.glob("../../../../../docs.kondis.org/dev/*.md", {
   eager: true,
   query: "?raw",
   import: "default",
@@ -20,7 +20,7 @@ export function entries() {
 
 export function load({ params }: { params: { slug: string } }) {
   const source = Object.entries(documents).find(([path]) =>
-    path.endsWith(`/docs/dev/${params.slug}.md`),
+    path.endsWith(`/docs.kondis.org/dev/${params.slug}.md`),
   )?.[1];
   if (!source) error(404, "Guide not found");
   const frontMatter = source.match(/^---\n([\s\S]*?)\n---\n/);

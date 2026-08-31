@@ -45,7 +45,7 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'mise.toml'
             docs:
-              - 'docs/**'
+              - 'static/apps/docs.kondis.org/**'
               - 'static/apps/api.kondis.org/**'
               - 'open-api/kondis-openapi-specs.json'
               - 'pnpm-lock.yaml'
@@ -203,7 +203,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: ./docs
+        working-directory: ./static/apps/docs.kondis.org
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -240,7 +240,7 @@ jobs:
         with:
           name: docs-build-output
           path: |
-            docs/build/
+            static/apps/docs.kondis.org/build/
             static/apps/api.kondis.org/build/
           include-hidden-files: true
           if-no-files-found: warn

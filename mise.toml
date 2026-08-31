@@ -7,7 +7,7 @@ config_roots = [
   "web",
   "e2e",
   "packages/sdk",
-  "docs",
+  "static/apps/docs.kondis.org",
   "static/apps/developers.kondis.org",
   "static/apps/kondis.org",
 ]
@@ -39,15 +39,15 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 run = { task = "//e2e:test" }
 
 [tasks."docs:install"]
-run = { task = "//docs:install" }
+run = { task = "//static/apps/docs.kondis.org:install" }
 
 [tasks."docs:dev"]
 description = "Start the Docusaurus documentation site"
-run = { task = "//docs:dev" }
+run = { task = "//static/apps/docs.kondis.org:dev" }
 
 [tasks."docs:build"]
 description = "Build the documentation site"
-run = { task = "//docs:build" }
+run = { task = "//static/apps/docs.kondis.org:build" }
 
 [tasks."api-docs:build"]
 description = "Build the generated API reference"
@@ -55,11 +55,11 @@ run = { task = "//static/apps/api.kondis.org:build" }
 
 [tasks."docs:serve"]
 description = "Serve the built documentation site"
-run = { task = "//docs:serve" }
+run = { task = "//static/apps/docs.kondis.org:serve" }
 
 [tasks."docs:clear"]
 description = "Clear Docusaurus cache and generated files"
-run = { task = "//docs:clear" }
+run = { task = "//static/apps/docs.kondis.org:clear" }
 
 [tasks.format]
 description = "Check formatting across the project"
