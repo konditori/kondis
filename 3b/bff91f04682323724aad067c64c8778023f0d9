@@ -1,0 +1,37 @@
+.github/workflows/test.yml
+  s_d67a16eab0588d::t_98d08d8f8bc319 48-49,206,217,220,223,226,229,232,235,243-244
+README.md
+  s_d67a16eab0588d::t_d8878ff92e5d6e 23
+mise.toml
+  s_d67a16eab0588d::t_6ffd1e8609270b 10-12,42,46,50,54,58,62,71,82,93
+pnpm-lock.yaml
+  s_d67a16eab0588d::t_eb6ddf9b4e3316 218,251-255,288-331,5899-5903,14918-14919
+pnpm-workspace.yaml
+  s_d67a16eab0588d::t_e453e61b532166 6
+sites/developers.kondis.org/src/lib/openapi.ts
+  s_d67a16eab0588d::t_b357357622d2e0 1
+sites/docs.kondis.org/dev/local-development.md
+  s_d67a16eab0588d::t_45f2da03894c1c 31,36,47
+sites/docs.kondis.org/docs/install/installation.mdx
+  s_d67a16eab0588d::t_a1cb00d3a7ace9 6
+sites/docs.kondis.org/docusaurus.config.ts
+  s_d67a16eab0588d::t_7b0a3ede59559d 23
+sites/kondis.org/docker-compose.dev.yml
+  s_d67a16eab0588d::t_1bc5850b5b99f4 17,32,38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3bbff91f04682323724aad067c64c8778023f0d9",
+  "prompts": {},
+  "sessions": {
+    "s_d67a16eab0588d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05756-6207-7ee2-8443-bfdfe2b2b349",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
