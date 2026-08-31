@@ -32,4 +32,5 @@ allowBuilds:
   # Native binary resolver behind eslint-import-resolver-typescript, which import-x/no-cycle
   # needs in order to follow `src/*` path-alias imports.
   unrs-resolver: true
+  vue-demi: true
   workerd: true

@@ -3,31 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "docusaurus start",
-    "build": "docusaurus build",
-    "serve": "docusaurus serve",
-    "clear": "docusaurus clear",
+    "start": "wrangler dev --port 3000 --inspector-port 9230",
+    "build": "rm -rf build && mkdir -p build && cp static/index.html build/index.html && cp ../../open-api/kondis-openapi-specs.json build/openapi.json && cp node_modules/@scalar/api-reference/dist/browser/standalone.js build/scalar.js",
+    "serve": "wrangler dev --port 3000 --inspector-port 9230",
+    "clear": "rm -rf build",
     "deploy": "pnpm build && wrangler deploy",
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
   "dependencies": {
-    "@docusaurus/core": "^3.8.1",
-    "@docusaurus/preset-classic": "^3.8.1",
-    "docusaurus-preset-openapi": "^0.8.0",
-    "clsx": "^2.1.1",
-    "prism-react-renderer": "^2.4.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "url": "^0.11.4"
+    "@scalar/api-reference": "^1.64.0",
+    "wrangler": "^4.0.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "^3.8.1",
-    "@docusaurus/tsconfig": "^3.8.1",
-    "@docusaurus/types": "^3.8.1",
     "prettier": "^3.6.2",
-    "raw-loader": "^4.0.2",
-    "typescript": "~5.7.3",
-    "wrangler": "^4.0.0"
+    "typescript": "~5.7.3"
   }
 }
