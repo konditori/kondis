@@ -1,5 +1,5 @@
 [tasks.install]
-run = "pnpm install --filter @kondis/developer-docs --frozen-lockfile"
+run = "pnpm install --filter @kondis/api-docs --frozen-lockfile"
 
 [tasks.dev]
 env._.path = "./node_modules/.bin"

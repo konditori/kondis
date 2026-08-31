@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kondis-api-docs",
+  "compatibility_date": "2026-08-24",
+  "assets": {
+    "directory": "./build",
+    "not_found_handling": "404-page",
+  },
+  "routes": [
+    {
+      "pattern": "api.kondis.org",
+      "custom_domain": true,
+    },
+  ],
+}

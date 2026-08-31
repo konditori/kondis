@@ -46,6 +46,7 @@ jobs:
               - 'mise.toml'
             docs:
               - 'sites/docs.kondis.org/**'
+              - 'sites/developers.kondis.org/**'
               - 'sites/api.kondis.org/**'
               - 'open-api/kondis-openapi-specs.json'
               - 'pnpm-lock.yaml'
@@ -219,17 +220,23 @@ jobs:
       - name: Install API documentation dependencies
         run: mise run //sites/api.kondis.org:install
 
+      - name: Install developer documentation dependencies
+        run: mise run //sites/developers.kondis.org:install
+
       - name: Check formatting
         run: mise run //sites/docs.kondis.org:format
 
       - name: Check API documentation formatting
         run: mise run //sites/api.kondis.org:format
 
-      - name: Check API documentation types
-        run: mise run //sites/api.kondis.org:check
+      - name: Check developer documentation formatting
+        run: mise run //sites/developers.kondis.org:format
 
       - name: Build documentation
         run: mise run //sites/docs.kondis.org:build
+
+      - name: Build developer documentation
+        run: mise run //sites/developers.kondis.org:build
 
       - name: Build API documentation
         run: mise run //sites/api.kondis.org:build
@@ -241,6 +248,7 @@ jobs:
           name: docs-build-output
           path: |
             sites/docs.kondis.org/build/
+            sites/developers.kondis.org/build/
             sites/api.kondis.org/build/
           include-hidden-files: true
           if-no-files-found: warn

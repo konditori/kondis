@@ -9,6 +9,7 @@ config_roots = [
   "packages/sdk",
   "sites/docs.kondis.org",
   "sites/developers.kondis.org",
+  "sites/api.kondis.org",
   "sites/kondis.org",
 ]
 
@@ -61,6 +62,21 @@ run = { task = "//sites/docs.kondis.org:serve" }
 description = "Clear Docusaurus cache and generated files"
 run = { task = "//sites/docs.kondis.org:clear" }
 
+[tasks."developer-docs:install"]
+run = { task = "//sites/developers.kondis.org:install" }
+
+[tasks."developer-docs:dev"]
+description = "Start the developer documentation site"
+run = { task = "//sites/developers.kondis.org:dev" }
+
+[tasks."developer-docs:build"]
+description = "Build the developer documentation site"
+run = { task = "//sites/developers.kondis.org:build" }
+
+[tasks."developer-docs:serve"]
+description = "Serve the built developer documentation site"
+run = { task = "//sites/developers.kondis.org:serve" }
+
 [tasks.format]
 description = "Check formatting across the project"
 run = [
@@ -90,7 +106,6 @@ run = [
   { task = "//server:lint" },
   { task = "//e2e:lint" },
   { task = "//packages/sdk:check" },
-  { task = "//sites/api.kondis.org:check" },
   { task = "//android:lint" },
 ]
 

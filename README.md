@@ -22,6 +22,8 @@ mise run dev
 
 The project documentation is a Docusaurus app in [`sites/docs.kondis.org/`](./sites/docs.kondis.org). Run it with `pnpm --dir sites/docs.kondis.org start` or build it with `pnpm --dir sites/docs.kondis.org build`.
 
+Developer documentation is a separate Docusaurus app in [`sites/developers.kondis.org/`](./sites/developers.kondis.org), with the generated API reference hosted at [api.kondis.org](https://api.kondis.org). Run the developer site with `mise run developer-docs:dev`.
+
 The web app is available at [http://localhost:3000](http://localhost:3000) and proxies API requests to the server container on port 2293.
 
 ### Android app
