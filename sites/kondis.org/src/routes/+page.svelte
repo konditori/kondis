@@ -346,8 +346,8 @@
   >
   <p>Open-source, self-hosted fitness tracking.</p>
   <div>
-    <a href={docs}>Docs</a><a href="https://api.kondis.org">API</a><a
-      href={github}>GitHub</a
-    >
+    <a href={docs}>Docs</a><a href="/cursed-knowledge">Cursed knowledge</a><a
+      href="https://api.kondis.org">API</a
+    ><a href={github}>GitHub</a>
   </div>
 </footer>
