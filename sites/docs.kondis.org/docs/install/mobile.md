@@ -22,3 +22,7 @@ In Android Studio, navigate to the android/ folder in git and run
 ```
 
 The Kondis app will now show in your Android app drawer. Start the app, give it your server address and log in.
+
+# iOS, Apple Watch
+
+Currently not supported, maybe you'll help us?
