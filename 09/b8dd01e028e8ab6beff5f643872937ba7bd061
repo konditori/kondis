@@ -1,0 +1,23 @@
+sites/developers.kondis.org/docs/contributing.md
+  s_2a0a15d3f6e4b8::t_3ced2356e7a4bd 7
+sites/kondis.org/src/routes/+page.svelte
+  s_2a0a15d3f6e4b8::t_51681eed3660f6 349-351
+sites/kondis.org/src/routes/cursed-knowledge/+page.svelte
+  s_2a0a15d3f6e4b8::t_37c919f852af62 1-195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "09b8dd01e028e8ab6beff5f643872937ba7bd061",
+  "prompts": {},
+  "sessions": {
+    "s_2a0a15d3f6e4b8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d4e01b0c-02f4-4fcf-8d32-13b51485a55f",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
