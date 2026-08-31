@@ -1,4 +1,4 @@
-import rawSpec from "../../../../../open-api/kondis-openapi-specs.json";
+import rawSpec from "../../../../open-api/kondis-openapi-specs.json";
 
 export type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 

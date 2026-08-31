@@ -14,7 +14,7 @@ services:
     volumes:
       - ../../..:/usr/src/app
       - landing_node_modules:/usr/src/app/node_modules
-      - landing_package_node_modules:/usr/src/app/static/apps/kondis.org/node_modules
+      - landing_package_node_modules:/usr/src/app/sites/kondis.org/node_modules
       - landing_pnpm_store:/usr/src/app/.pnpm-store
     restart: "no"
     healthcheck:
@@ -29,14 +29,14 @@ services:
       context: ../../..
       dockerfile: server/Dockerfile.dev
       target: dev
-    command: ["cd /usr/src/app/static/apps/kondis.org && pnpm exec svelte-kit sync && exec pnpm exec vite dev --host 0.0.0.0 --port 4173"]
+    command: ["cd /usr/src/app/sites/kondis.org && pnpm exec svelte-kit sync && exec pnpm exec vite dev --host 0.0.0.0 --port 4173"]
     environment:
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ../../..:/usr/src/app
       - landing_node_modules:/usr/src/app/node_modules
-      - landing_package_node_modules:/usr/src/app/static/apps/kondis.org/node_modules
-      - landing_sveltekit:/usr/src/app/static/apps/kondis.org/.svelte-kit
+      - landing_package_node_modules:/usr/src/app/sites/kondis.org/node_modules
+      - landing_sveltekit:/usr/src/app/sites/kondis.org/.svelte-kit
       - landing_pnpm_store:/usr/src/app/.pnpm-store
     ports:
       - "4173:4173"

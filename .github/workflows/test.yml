@@ -45,8 +45,8 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'mise.toml'
             docs:
-              - 'static/apps/docs.kondis.org/**'
-              - 'static/apps/api.kondis.org/**'
+              - 'sites/docs.kondis.org/**'
+              - 'sites/api.kondis.org/**'
               - 'open-api/kondis-openapi-specs.json'
               - 'pnpm-lock.yaml'
               - 'mise.toml'
@@ -203,7 +203,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: ./static/apps/docs.kondis.org
+        working-directory: ./sites/docs.kondis.org
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -214,25 +214,25 @@ jobs:
         uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
 
       - name: Install dependencies
-        run: mise run //docs:install
+        run: mise run //sites/docs.kondis.org:install
 
       - name: Install API documentation dependencies
-        run: mise run //static/apps/api.kondis.org:install
+        run: mise run //sites/api.kondis.org:install
 
       - name: Check formatting
-        run: mise run //docs:format
+        run: mise run //sites/docs.kondis.org:format
 
       - name: Check API documentation formatting
-        run: mise run //static/apps/api.kondis.org:format
+        run: mise run //sites/api.kondis.org:format
 
       - name: Check API documentation types
-        run: mise run //static/apps/api.kondis.org:check
+        run: mise run //sites/api.kondis.org:check
 
       - name: Build documentation
-        run: mise run //docs:build
+        run: mise run //sites/docs.kondis.org:build
 
       - name: Build API documentation
-        run: mise run //static/apps/api.kondis.org:build
+        run: mise run //sites/api.kondis.org:build
 
       - name: Upload build output
         if: always()
@@ -240,8 +240,8 @@ jobs:
         with:
           name: docs-build-output
           path: |
-            static/apps/docs.kondis.org/build/
-            static/apps/api.kondis.org/build/
+            sites/docs.kondis.org/build/
+            sites/api.kondis.org/build/
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 1

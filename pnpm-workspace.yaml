@@ -3,8 +3,7 @@ packages:
   - server
   - web
   - e2e
-  - docs
-  - static/apps/*
+  - sites/*
   - packages/*
 
 dedupePeerDependents: false

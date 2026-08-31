@@ -7,9 +7,9 @@ config_roots = [
   "web",
   "e2e",
   "packages/sdk",
-  "static/apps/docs.kondis.org",
-  "static/apps/developers.kondis.org",
-  "static/apps/kondis.org",
+  "sites/docs.kondis.org",
+  "sites/developers.kondis.org",
+  "sites/kondis.org",
 ]
 
 [tools]
@@ -39,27 +39,27 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 run = { task = "//e2e:test" }
 
 [tasks."docs:install"]
-run = { task = "//static/apps/docs.kondis.org:install" }
+run = { task = "//sites/docs.kondis.org:install" }
 
 [tasks."docs:dev"]
 description = "Start the Docusaurus documentation site"
-run = { task = "//static/apps/docs.kondis.org:dev" }
+run = { task = "//sites/docs.kondis.org:dev" }
 
 [tasks."docs:build"]
 description = "Build the documentation site"
-run = { task = "//static/apps/docs.kondis.org:build" }
+run = { task = "//sites/docs.kondis.org:build" }
 
 [tasks."api-docs:build"]
 description = "Build the generated API reference"
-run = { task = "//static/apps/api.kondis.org:build" }
+run = { task = "//sites/api.kondis.org:build" }
 
 [tasks."docs:serve"]
 description = "Serve the built documentation site"
-run = { task = "//static/apps/docs.kondis.org:serve" }
+run = { task = "//sites/docs.kondis.org:serve" }
 
 [tasks."docs:clear"]
 description = "Clear Docusaurus cache and generated files"
-run = { task = "//static/apps/docs.kondis.org:clear" }
+run = { task = "//sites/docs.kondis.org:clear" }
 
 [tasks.format]
 description = "Check formatting across the project"
@@ -68,7 +68,7 @@ run = [
   { task = "//server:format" },
   { task = "//e2e:format" },
   { task = "//packages/sdk:format" },
-  { task = "//static/apps/api.kondis.org:format" },
+  { task = "//sites/api.kondis.org:format" },
   { task = "//android:format" },
 ]
 
@@ -79,7 +79,7 @@ run = [
   { task = "//server:format-fix" },
   { task = "//e2e:format-fix" },
   { task = "//packages/sdk:format-fix" },
-  { task = "//static/apps/api.kondis.org:format-fix" },
+  { task = "//sites/api.kondis.org:format-fix" },
   { task = "//android:format-fix" },
 ]
 
@@ -90,7 +90,7 @@ run = [
   { task = "//server:lint" },
   { task = "//e2e:lint" },
   { task = "//packages/sdk:check" },
-  { task = "//static/apps/api.kondis.org:check" },
+  { task = "//sites/api.kondis.org:check" },
   { task = "//android:lint" },
 ]
 
