@@ -1,0 +1,37 @@
+.github/workflows/test.yml
+  s_d67a16eab0588d::t_795233721e6bb1 49,223-225,232-233,238-240,251
+sites/api.kondis.org/mise.toml
+  s_d67a16eab0588d::t_cb0f60cbabeda8 1-26
+sites/api.kondis.org/package.json
+  s_d67a16eab0588d::t_e372466d59f7a3 1-33
+sites/api.kondis.org/static/img/favicon.svg
+  s_d67a16eab0588d::t_66d2ef32b91eee 1-11
+sites/api.kondis.org/static/img/logo.svg
+  s_d67a16eab0588d::t_cc8637e117a779 1-3
+sites/developers.kondis.org/docs/index.md
+  s_d67a16eab0588d::t_8596119d61ce34 1-10
+sites/developers.kondis.org/mise.toml
+  s_d67a16eab0588d::t_2107f8c9753e05 2,6,10,14,16,18
+sites/developers.kondis.org/package.json
+  s_d67a16eab0588d::t_8bed3b1e336902 2,6-9,15-20,23-28
+sites/developers.kondis.org/sidebars.ts
+  s_d67a16eab0588d::t_3d4e6651a6096f 1-12
+sites/developers.kondis.org/static/img/logo.svg
+  s_d67a16eab0588d::t_50dee817437edc 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6db42a354f82bab74a939ef5695ea7419c76deb2",
+  "prompts": {},
+  "sessions": {
+    "s_d67a16eab0588d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05756-6207-7ee2-8443-bfdfe2b2b349",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
