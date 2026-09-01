@@ -7,7 +7,8 @@
   --ifm-color-primary-light: #5a6bc4;
   --ifm-color-primary-lighter: #6676cb;
   --ifm-color-primary-lightest: #8390d8;
-  --ifm-font-family-base: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ifm-font-family-base:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --ifm-heading-font-family: var(--ifm-font-family-base);
   --ifm-heading-font-weight: 750;
   --ifm-font-weight-semibold: 650;

@@ -1,0 +1,96 @@
+name: Sites
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'sites/**'
+      - 'open-api/kondis-openapi-specs.json'
+      - 'pnpm-lock.yaml'
+      - 'mise.toml'
+      - '.github/workflows/sites.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'sites/**'
+      - 'open-api/kondis-openapi-specs.json'
+      - 'pnpm-lock.yaml'
+      - 'mise.toml'
+      - '.github/workflows/sites.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  check:
+    name: Check Sites
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./sites/docs.kondis.org
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //sites/docs.kondis.org:install
+
+      - name: Install API documentation dependencies
+        run: mise run //sites/api.kondis.org:install
+
+      - name: Install developer documentation dependencies
+        run: mise run //sites/developers.kondis.org:install
+
+      - name: Install landing site dependencies
+        run: mise run //sites/kondis.org:install
+
+      - name: Check formatting
+        run: mise run //sites/docs.kondis.org:format
+
+      - name: Check API documentation formatting
+        run: mise run //sites/api.kondis.org:format
+
+      - name: Check developer documentation formatting
+        run: mise run //sites/developers.kondis.org:format
+
+      - name: Check landing site formatting
+        run: mise run //sites/kondis.org:format
+
+      - name: Check landing site
+        run: mise run //sites/kondis.org:check
+
+      - name: Build documentation
+        run: mise run //sites/docs.kondis.org:build
+
+      - name: Build developer documentation
+        run: mise run //sites/developers.kondis.org:build
+
+      - name: Build API documentation
+        run: mise run //sites/api.kondis.org:build
+
+      - name: Build landing site
+        run: mise run //sites/kondis.org:build
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sites-build-output
+          path: |
+            sites/docs.kondis.org/build/
+            sites/developers.kondis.org/build/
+            sites/api.kondis.org/build/
+            sites/kondis.org/build/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 1

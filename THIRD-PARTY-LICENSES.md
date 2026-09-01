@@ -12,7 +12,7 @@ distributed and are therefore not listed.
 
 This file is generated. Run `mise run third-party-licenses` to update it; do not edit it by hand.
 
-Packages: 167. Licenses in use: (MIT OR CC0-1.0), 0BSD, Apache-2.0, BSD-3-Clause, ISC, MIT, Python-2.0.
+Packages: 166. Licenses in use: (MIT OR CC0-1.0), 0BSD, Apache-2.0, BSD-3-Clause, ISC, MIT, Python-2.0.
 
 ---
 
@@ -2779,27 +2779,6 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-```
-
----
-
-## has-flag
-
-- Version: 4.0.0
-- License: MIT
-- Author: Sindre Sorhus
-- Homepage: https://github.com/sindresorhus/has-flag#readme
-
-```
-MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 ---
@@ -5603,7 +5582,7 @@ SOFTWARE.
 
 ## supports-color
 
-- Version: 7.2.0
+- Version: 10.2.2
 - License: MIT
 - Author: Sindre Sorhus
 - Homepage: https://github.com/chalk/supports-color#readme
@@ -5611,7 +5590,7 @@ SOFTWARE.
 ```
 MIT License
 
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

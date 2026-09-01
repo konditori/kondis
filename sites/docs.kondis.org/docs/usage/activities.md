@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Activities and analysis
 
-Kondis has several features that help you analyze your workout performance. Each activity is shown with its stats and, if applicable, gps map. 
+Kondis has several features that help you analyze your workout performance. Each activity is shown with its stats and, if applicable, gps map.
 
 For running and cycling, your best efforts are tracked. If you set a personal record, either all-time or for that year, that achievement will be listed.
 

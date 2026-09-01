@@ -1931,7 +1931,7 @@
   },
   "info": {
     "title": "Kondis API",
-    "description": "OpenAPI schema for the Kondis server",
+    "description": "OpenAPI schema for Kondis",
     "version": "0.0.0",
     "contact": {}
   },

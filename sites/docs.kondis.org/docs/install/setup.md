@@ -12,15 +12,15 @@ You will be asked for a setup token. This is found in the server log on startup.
 ```bash title="Setup token in logs"
 kondis_server    | ================================================================================
 kondis_server    | Welcome to Kondis!
-kondis_server    | 
+kondis_server    |
 kondis_server    | For initial setup, go to the app in a web browser (not mobile app)
-kondis_server    | 
+kondis_server    |
 kondis_server    | You will need the following setup token:
-kondis_server    | 
+kondis_server    |
 kondis_server    |    45b8e5a1-684e-41af-9838-4fc3ac9a6644
-kondis_server    | 
+kondis_server    |
 kondis_server    | Do not share this secret token with anyone.
-kondis_server    | 
+kondis_server    |
 kondis_server    | ================================================================================
 ```
 

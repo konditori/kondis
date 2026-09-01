@@ -36,6 +36,9 @@ run = "tsc --noEmit"
 env._.path = "./node_modules/.bin"
 run = "vitest run"
 
+[tasks.audit]
+run = "pnpm audit --prod --audit-level high"
+
 [tasks.migrations]
 env._.path = "./node_modules/.bin"
 usage = '''

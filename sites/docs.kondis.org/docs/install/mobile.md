@@ -14,9 +14,10 @@ To build and install the Android app, you need:
 
 You do not need to install Java separately if you use the JDK bundled with Android Studio. If you run Gradle from a terminal using another JDK, it must be JDK 17 or newer.
 
-For now, the easiest way to install the app on Android is via wireless android debugging. You will need Android Studio on your development machine in order to connect and install the app. 
+For now, the easiest way to install the app on Android is via wireless android debugging. You will need Android Studio on your development machine in order to connect and install the app.
 
 In Android Studio, navigate to the android/ folder in git and run
+
 ```bash
 ./gradlew :app:installDebug
 ```
