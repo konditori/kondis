@@ -12,7 +12,7 @@ distributed and are therefore not listed.
 
 This file is generated. Run `mise run third-party-licenses` to update it; do not edit it by hand.
 
-Packages: 166. Licenses in use: (MIT OR CC0-1.0), 0BSD, Apache-2.0, BSD-3-Clause, ISC, MIT, Python-2.0.
+Packages: 167. Licenses in use: (MIT OR CC0-1.0), 0BSD, Apache-2.0, BSD-3-Clause, ISC, MIT, Python-2.0.
 
 ---
 
@@ -186,7 +186,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## @nestjs/common
 
-- Version: 11.1.28
+- Version: 12.0.1
 - License: MIT
 - Author: Kamil Mysliwiec
 - Homepage: https://nestjs.com
@@ -220,7 +220,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## @nestjs/core
 
-- Version: 11.1.28
+- Version: 12.0.1
 - License: MIT
 - Author: Kamil Mysliwiec
 - Homepage: https://nestjs.com
@@ -254,7 +254,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## @nestjs/mapped-types
 
-- Version: 2.1.1
+- Version: 12.0.0
 - License: MIT
 - Author: Kamil Mysliwiec
 - Homepage: https://github.com/nestjs/mapped-types#readme
@@ -288,7 +288,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## @nestjs/platform-express
 
-- Version: 11.1.28
+- Version: 12.0.1
 - License: MIT
 - Author: Kamil Mysliwiec
 - Homepage: https://nestjs.com
@@ -322,7 +322,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## @nestjs/swagger
 
-- Version: 11.4.6
+- Version: 12.0.1
 - License: MIT
 - Author: Kamil Mysliwiec
 - Homepage: https://github.com/nestjs/swagger#readme
@@ -367,12 +367,12 @@ SOFTWARE.
 
 ## @node-rs/xxhash
 
-- Version: 1.7.6
+- Version: 1.7.7
 - License: MIT
 - Author: LongYinan
 - Homepage: https://github.com/napi-rs/node-rs
 - Also covers these per-platform prebuilt binaries, published under the same license
-  (only the one matching the host is installed): @node-rs/xxhash-android-arm-eabi, @node-rs/xxhash-android-arm64, @node-rs/xxhash-darwin-arm64, @node-rs/xxhash-darwin-x64, @node-rs/xxhash-freebsd-x64, @node-rs/xxhash-linux-arm-gnueabihf, @node-rs/xxhash-linux-arm64-gnu, @node-rs/xxhash-linux-arm64-musl, @node-rs/xxhash-linux-x64-gnu, @node-rs/xxhash-linux-x64-musl, @node-rs/xxhash-wasm32-wasi, @node-rs/xxhash-win32-arm64-msvc, @node-rs/xxhash-win32-ia32-msvc, @node-rs/xxhash-win32-x64-msvc
+  (only the one matching the host is installed): @node-rs/xxhash-android-arm-eabi, @node-rs/xxhash-android-arm64, @node-rs/xxhash-darwin-arm64, @node-rs/xxhash-darwin-x64, @node-rs/xxhash-freebsd-x64, @node-rs/xxhash-linux-arm-gnueabihf, @node-rs/xxhash-linux-arm64-gnu, @node-rs/xxhash-linux-arm64-musl, @node-rs/xxhash-linux-x64-gnu, @node-rs/xxhash-linux-x64-musl, @node-rs/xxhash-win32-arm64-msvc, @node-rs/xxhash-win32-ia32-msvc, @node-rs/xxhash-win32-x64-msvc
 
 ```
 MIT License
@@ -624,6 +624,39 @@ Apache License
 
 ---
 
+## @standard-schema/spec
+
+- Version: 1.1.0
+- License: MIT
+- Author: Colin McDonnell
+- Homepage: https://standardschema.dev
+
+```
+MIT License
+
+Copyright (c) 2024 Colin McDonnell
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
 ## @tokenizer/inflate
 
 - Version: 0.4.1
@@ -665,7 +698,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 ## @types/node
 
-- Version: 22.20.1
+- Version: 26.4.0
 - License: MIT
 - Homepage: https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node
 
@@ -1460,7 +1493,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## content-type
 
-- Version: 1.0.5, 2.0.0
+- Version: 1.0.5, 2.1.0
 - License: MIT
 - Author: Douglas Christopher Wilson
 - Homepage: https://github.com/jshttp/content-type#readme
@@ -1628,7 +1661,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## cron-parser
 
-- Version: 5.6.2
+- Version: 5.10.0
 - License: MIT
 - Author: Harri Siirak
 - Homepage: https://github.com/harrisiirak/cron-parser#readme
@@ -2238,6 +2271,80 @@ SOFTWARE.
 
 ---
 
+## es-toolkit
+
+- Version: 1.51.0
+- License: MIT
+- Homepage: https://es-toolkit.dev
+
+```
+MIT License
+
+Copyright (c) 2024 Viva Republica, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+```
+es-toolkit
+
+Parts of the test suite and compatibility layer in es-toolkit/compat are
+derived from Lodash (https://github.com/lodash/lodash).
+
+Lodash copyright notice and MIT permission notice:
+
+Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
+
+The following license applies to all parts of this software except as
+documented below:
+
+====
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+---
+
 ## escape-html
 
 - Version: 1.0.3
@@ -2379,7 +2486,7 @@ SOFTWARE.
 
 ## fast-xml-builder
 
-- Version: 1.3.0
+- Version: 1.3.1
 - License: MIT
 - Author: Amit Gupta
 - Homepage: https://github.com/NaturalIntelligence/fast-xml-builder#readme
@@ -2412,7 +2519,7 @@ SOFTWARE.
 
 ## fast-xml-parser
 
-- Version: 5.10.1
+- Version: 5.11.1
 - License: MIT
 - Author: Amit Gupta
 - Homepage: https://github.com/NaturalIntelligence/fast-xml-parser#readme
@@ -2445,7 +2552,7 @@ SOFTWARE.
 
 ## file-type
 
-- Version: 21.3.4
+- Version: 22.0.2
 - License: MIT
 - Author: Sindre Sorhus
 - Homepage: https://github.com/sindresorhus/file-type#readme
@@ -2500,7 +2607,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## fit-file-parser
 
-- Version: 4.1.0
+- Version: 5.0.2
 - License: MIT
 - Author: jimmykane
 - Homepage: https://github.com/jimmykane/fit-parser
@@ -3028,7 +3135,7 @@ THE SOFTWARE.
 
 ## is-unsafe
 
-- Version: 2.0.0
+- Version: 2.0.2
 - License: MIT
 - Author: Amit Gupta
 - Homepage: https://github.com/NaturalIntelligence/is-unsafe#readme
@@ -3100,7 +3207,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ## js-yaml
 
-- Version: 5.2.2
+- Version: 5.4.1
 - License: MIT
 - Author: Vladimir Zapparov
 - Homepage: https://github.com/nodeca/js-yaml#readme
@@ -3160,7 +3267,7 @@ OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHE
 
 ## kysely
 
-- Version: 0.29.4
+- Version: 0.29.5
 - License: MIT
 - Author: Sami Koskimäki
 - Homepage: https://kysely.dev
@@ -3224,65 +3331,6 @@ SOFTWARE.
 
 ---
 
-## lodash
-
-- Version: 4.18.1
-- License: MIT
-- Author: John-David Dalton
-- Homepage: https://lodash.com/
-
-```
-Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
-
-Based on Underscore.js, copyright Jeremy Ashkenas,
-DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
-
-This software consists of voluntary contributions made by many
-individuals. For exact contribution history, see the revision history
-available at https://github.com/lodash/lodash
-
-The following license applies to all parts of this software except as
-documented below:
-
-====
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-====
-
-Copyright and related rights for sample code are waived via CC0. Sample
-code is defined as all source code displayed within the prose of the
-documentation.
-
-CC0: http://creativecommons.org/publicdomain/zero/1.0/
-
-====
-
-Files located in the node_modules and vendor directories are externally
-maintained libraries used by this software which have their own
-licenses; we recommend you read them, as their terms may differ from the
-terms above.
-```
-
----
-
 ## luxon
 
 - Version: 3.7.2
@@ -3337,7 +3385,7 @@ SOFTWARE.
 
 ## media-typer
 
-- Version: 0.3.0, 1.1.0
+- Version: 0.3.0, 1.1.1
 - License: MIT
 - Author: Douglas Christopher Wilson
 - Homepage: https://github.com/jshttp/media-typer#readme
@@ -3493,7 +3541,7 @@ SOFTWARE.
 
 ## multer
 
-- Version: 2.2.0
+- Version: 2.2.0, 2.3.0
 - License: MIT
 - Homepage: https://github.com/expressjs/multer#readme
 
@@ -3521,7 +3569,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OU
 
 ## negotiator
 
-- Version: 1.0.0
+- Version: 1.1.0
 - License: MIT
 - Homepage: https://github.com/jshttp/negotiator#readme
 
@@ -3556,7 +3604,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## nestjs-zod
 
-- Version: 5.4.0
+- Version: 5.5.0
 - License: MIT
 - Author: Ben Lorantfy
 - Homepage: https://github.com/BenLorantfy/nestjs-zod#readme
@@ -3899,7 +3947,7 @@ THE SOFTWARE.
 
 ## pg
 
-- Version: 8.22.0
+- Version: 8.23.0
 - License: MIT
 - Author: Brian Carlson
 - Homepage: https://github.com/brianc/node-postgres
@@ -3932,10 +3980,10 @@ SOFTWARE.
 
 ## pg-boss
 
-- Version: 12.26.3
+- Version: 12.29.0
 - License: MIT
 - Author: timgit
-- Homepage: https://timgit.github.io/pg-boss
+- Homepage: https://pgboss.io
 
 ```
 The MIT License (MIT)
@@ -4087,7 +4135,7 @@ SOFTWARE.
 
 ## pg-protocol
 
-- Version: 1.15.0
+- Version: 1.16.0
 - License: MIT
 - Homepage: https://github.com/brianc/node-postgres#readme
 
@@ -4339,7 +4387,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## qs
 
-- Version: 6.15.3
+- Version: 6.16.0
 - License: BSD-3-Clause
 - Homepage: https://github.com/ljharb/qs
 
@@ -5032,7 +5080,7 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ## sharp
 
-- Version: 0.35.3
+- Version: 0.35.4
 - License: Apache-2.0
 - Author: Lovell Fuller
 - Homepage: https://sharp.pixelplumbing.com
@@ -5516,7 +5564,7 @@ IN THE SOFTWARE.
 
 ## strnum
 
-- Version: 2.4.1
+- Version: 2.4.2
 - License: MIT
 - Author: Amit Gupta
 - Homepage: https://github.com/NaturalIntelligence/strnum#readme
@@ -5603,7 +5651,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## swagger-ui-dist
 
-- Version: 5.32.8
+- Version: 5.32.14
 - License: Apache-2.0
 - Homepage: https://github.com/swagger-api/swagger-ui#readme
 
@@ -5919,7 +5967,7 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ## type-fest
 
-- Version: 5.8.0
+- Version: 5.9.0
 - License: (MIT OR CC0-1.0)
 - Author: Sindre Sorhus
 - Homepage: https://github.com/sindresorhus/type-fest#readme
@@ -6187,7 +6235,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## undici-types
 
-- Version: 6.21.0
+- Version: 8.3.0
 - License: MIT
 - Homepage: https://undici.nodejs.org
 
@@ -6516,7 +6564,7 @@ THE SOFTWARE.
 
 ## zod
 
-- Version: 4.4.3
+- Version: 4.5.4
 - License: MIT
 - Author: Colin McDonnell
 - Homepage: https://zod.dev

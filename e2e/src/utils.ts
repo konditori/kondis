@@ -4,7 +4,7 @@ import {
   activityControllerListRecent,
   defaults,
   uploadControllerUploadActivity,
-  type ActivityDtoOutput,
+  type ActivityListResponseDtoOutput,
 } from '@kondis/sdk';
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
@@ -77,7 +77,7 @@ export const utils = {
     return utils.waitForActivity();
   },
 
-  waitForActivity: async (timeoutMs = 25_000): Promise<ActivityDtoOutput> => {
+  waitForActivity: async (timeoutMs = 25_000): Promise<ActivityListResponseDtoOutput['activities'][number]> => {
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
