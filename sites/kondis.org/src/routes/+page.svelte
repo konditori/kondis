@@ -1,44 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-
   const github = "https://github.com/konditori/kondis";
   const docs = "https://docs.kondis.org";
-  type Theme = "dark" | "light";
-
-  let theme = $state<Theme>("dark");
-
-  function applyTheme(nextTheme: Theme, persist = true) {
-    theme = nextTheme;
-    document.documentElement.dataset.theme = nextTheme;
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", nextTheme === "dark" ? "#09101d" : "#ffffff");
-    if (persist) localStorage.setItem("kondis-theme", nextTheme);
-  }
-
-  function toggleTheme() {
-    applyTheme(theme === "dark" ? "light" : "dark");
-  }
-
-  onMount(() => {
-    const savedTheme = localStorage.getItem("kondis-theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      applyTheme(savedTheme);
-      return;
-    }
-
-    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
-    const syncWithSystemTheme = () =>
-      applyTheme(colorScheme.matches ? "dark" : "light", false);
-    syncWithSystemTheme();
-    colorScheme.addEventListener("change", syncWithSystemTheme);
-
-    return () => colorScheme.removeEventListener("change", syncWithSystemTheme);
-  });
 </script>
 
 <svelte:head>
-  <title>Kondis — Your training, at home</title>
+  <title>Kondis - Open Source Fitness</title>
   <meta
     name="description"
     content="Kondis is an open-source, self-hosted fitness tracker for recording, importing, and exploring your training."
@@ -46,60 +12,23 @@
   <link rel="icon" href="/favicon.svg" />
 </svelte:head>
 
-<header class="site-header">
-  <a class="brand" href="/" aria-label="Kondis home">
-    <span class="brand-mark" role="img" aria-label="sweating face">😰</span>
-    <span>Kondis</span>
-  </a>
-
-  <nav aria-label="Main navigation">
-    <a href="#features">Features</a>
-    <a href={docs}>Docs <span aria-hidden="true">↗</span></a>
-    <a href={github}>GitHub <span aria-hidden="true">↗</span></a>
-  </nav>
-
-  <div class="header-actions">
-    <button
-      class="theme-toggle"
-      type="button"
-      onclick={toggleTheme}
-      aria-label={theme === "dark"
-        ? "Switch to light mode"
-        : "Switch to dark mode"}
-      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-    >
-      {#if theme === "dark"}
-        <svg viewBox="0 0 24 24" aria-hidden="true"
-          ><circle cx="12" cy="12" r="4" /><path
-            d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-          /></svg
-        >
-      {:else}
-        <svg viewBox="0 0 24 24" aria-hidden="true"
-          ><path
-            d="M20.4 15.1A8.5 8.5 0 0 1 8.9 3.6a8.5 8.5 0 1 0 11.5 11.5Z"
-          /></svg
-        >
-      {/if}
-    </button>
-    <a class="button button-small" href="#get-started">Get started</a>
-  </div>
-</header>
-
 <main>
   <section class="hero">
     <div class="hero-glow glow-one"></div>
     <div class="hero-glow glow-two"></div>
     <div class="hero-copy">
-      <p class="eyebrow"><span></span> Open source fitness tracking</p>
-      <h1>Your training,<br /><em>at home.</em></h1>
+      <h1>Open Source<br /><em>Fitness</em></h1>
       <p class="hero-description">
-        Record workouts, explore every route, and keep your training history
-        somewhere that belongs to you.
+        Run, ride, train with full control over your data. Self-host your
+        workouts with full multi-user support, letting you share your activities
+        with family and friends. Log your exercises directly from your phone or
+        import your history from other platforms.
+        <br /><br />
+        Kondis is currently under development, feel free to join the effort.
       </p>
       <div class="hero-actions">
         <a class="button" href="#get-started"
-          >Start with Kondis <span aria-hidden="true">→</span></a
+          >Get Started <span aria-hidden="true">→</span></a
         >
         <a class="button button-ghost" href={github}>
           <svg viewBox="0 0 24 24" aria-hidden="true"
@@ -111,45 +40,44 @@
           View on GitHub
         </a>
       </div>
-      <p class="hero-note">Self-host it. Own your data. Keep moving.</p>
     </div>
 
-    <div class="product-showcase" aria-label="Kondis workout dashboard preview">
+    <div class="product-showcase" aria-label="Kondis landing page screenshot">
       <img
         class="product-screenshot"
         src="/kondis-dashboard-preview.png"
-        alt="Kondis home feed with fictional running and cycling activities"
+        alt="Kondis app home feed"
       />
     </div>
   </section>
 
   <section class="trust-row" aria-label="Kondis principles">
-    <p>Built for your training, not your attention.</p>
     <div>
-      <span>Self-hosted</span><i></i><span>Private by default</span><i></i><span
-        >Open source</span
+      <span>Self-Hosted</span><i></i><span>Open Source</span><i></i><span
+        >AGPL3</span
       >
     </div>
   </section>
 
   <section id="features" class="features intro-section">
     <div class="section-heading">
-      <p class="eyebrow"><span></span> Built for the long run</p>
+      <p class="eyebrow"><span></span>Built for the long run</p>
       <h2>Everything you need to<br />know your next move.</h2>
       <p>
-        Kondis gives every workout a durable home—from the first GPS point to
-        the next personal best.
+        Track your training progress, personal bests, and do full workout
+        analysis. We are adding new features all the time and hope to give you
+        maximum control over your training data.
       </p>
     </div>
 
     <div class="feature-grid">
       <article class="feature-card feature-route">
         <div class="feature-copy">
-          <span class="feature-number">01</span>
-          <h3>Every route tells a story.</h3>
+          <h3>Track from your mobile phone.</h3>
           <p>
-            See where your effort took you with clear route maps, elevation
-            profiles, and the details that matter.
+            Log workouts directly from your phone. Currently only Android is
+            supported, but iOS and Apple Watch support is coming soon. You can
+            also import activities from other platforms.
           </p>
         </div>
         <div class="feature-map-art">
@@ -177,22 +105,22 @@
 
       <article class="feature-card feature-import">
         <div class="feature-copy">
-          <span class="feature-number">02</span>
           <h3>Bring your history with you.</h3>
           <p>
-            Import activities from FIT, TCX, and GPX files—or bring over your
-            Strava takeout to start fresh without leaving anything behind.
+            Import activity files such as .fit, .gpx, and .tcx files. Strava
+            takeout file support allows you to import your entire Strava history
+            with a few clicks.
           </p>
         </div>
         <div class="import-art">
           <div class="file-card">
             <span class="file-icon">↗</span><b>morning-run.fit</b><small
-              >8.4 MB</small
+              >134 kB</small
             ><i>Imported</i>
           </div>
           <div class="file-card offset">
             <span class="file-icon">⌁</span><b>sunday-trail.gpx</b><small
-              >1.2 MB</small
+              >76 kB</small
             ><i>Ready</i>
           </div>
         </div>
@@ -200,11 +128,10 @@
 
       <article class="feature-card feature-community">
         <div class="feature-copy">
-          <span class="feature-number">03</span>
-          <h3>Train together, on your terms.</h3>
+          <h3>Keep family and friends informed.</h3>
           <p>
-            Follow the people you choose, share activities, and celebrate the
-            work—without handing your community to an ad network.
+            In-app live tracking allows you to share minute-by-minute updates
+            automatically, both for safety and for fun.
           </p>
         </div>
         <div class="people-art">
@@ -226,7 +153,7 @@
     <div class="privacy-orbit orbit-b"></div>
     <div class="privacy-content">
       <div class="shield">⌁</div>
-      <p class="eyebrow"><span></span> Yours by design</p>
+      <p class="eyebrow"><span></span>Yours by design</p>
       <h2>Your data has<br /><em>one destination:</em> you.</h2>
       <p>
         Kondis is free and open source. Run it on your own server, decide who
@@ -240,13 +167,13 @@
     <p class="eyebrow"><span></span> Get moving</p>
     <h2>Ready when you are.</h2>
     <p>
-      Set up Kondis on your own server and start building a training archive
-      that lasts.
+      Set up Kondis on your server or VPS. We currently only recommend technical
+      users since the project is moving fast.
     </p>
     <div class="hero-actions">
       <a class="button" href={docs}
         >Read the installation guide <span>→</span></a
-      ><a class="button button-ghost" href={github}>Explore the source</a>
+      >
     </div>
   </section>
 </main>
