@@ -29,7 +29,8 @@ const config: Config = {
   themeConfig: {
     navbar: {
       title: "Kondis Docs",
-      logo: { alt: "Kondis", src: "img/logo.svg" },
+      // Required by Docusaurus; the swizzled Logo component renders the emoji instead.
+      logo: { alt: "Kondis", src: "img/favicon.svg" },
       items: [
         {
           href: "https://developers.kondis.org/",

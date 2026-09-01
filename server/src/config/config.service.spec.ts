@@ -101,4 +101,10 @@ describe('ConfigService', () => {
       expect(new ConfigService().jobs.cron).toBe(false);
     });
   });
+
+  describe('database defaults', () => {
+    it('uses the Docker Compose database service when the hostname is unset', () => {
+      expect(new ConfigService().database.host).toBe('database');
+    });
+  });
 });

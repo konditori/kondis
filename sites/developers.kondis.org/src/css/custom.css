@@ -46,9 +46,12 @@ body {
   color: var(--ifm-color-primary);
 }
 
-.navbar__logo img {
-  width: 2.15rem;
+.navbar__logo {
+  align-items: center;
+  display: inline-flex;
+  font-size: 2.15rem;
   height: 2.15rem;
+  line-height: 1;
 }
 
 .navbar__link,
