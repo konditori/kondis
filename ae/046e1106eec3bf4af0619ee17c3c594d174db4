@@ -1,0 +1,37 @@
+docker/docker-compose.dev.yml
+  s_e0cbeefb8aae32::t_7e17fc75583ad5 67-85
+mise.toml
+  s_e0cbeefb8aae32::t_4b8ab8e46bbbfb 38-46
+server/package.json
+  s_e0cbeefb8aae32::t_550c131d5dcd44 25
+server/src/bin/reset-development-data.ts
+  s_e0cbeefb8aae32::t_08a00ed1780a2c 1-65
+sites/developers.kondis.org/docs/local-development.md
+  s_e0cbeefb8aae32::t_8a77f21ce3ee18 23-32
+web/src/routes/activities/[id]/+page.svelte
+  s_ddbdd2dcc08991::t_20463f9bb9a902 25,316-331,350
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ae046e1106eec3bf4af0619ee17c3c594d174db4",
+  "prompts": {},
+  "sessions": {
+    "s_ddbdd2dcc08991": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05d25-e80b-7a40-8fd0-6fda89f832f5",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e0cbeefb8aae32": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05d29-bacc-7c23-9971-9f840547d2e3",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
