@@ -1,0 +1,31 @@
+web/src/lib/api.ts
+  s_b90dabb3cc0ae2::t_82d73288a3f527 11
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_b90dabb3cc0ae2::t_d67b8d9904cb4f 51-53
+web/src/routes/+page.server.ts
+  s_b90dabb3cc0ae2::t_2641c2ea7c7a3b 23
+web/src/routes/+page.svelte
+  s_b90dabb3cc0ae2::t_55f359d2e05703 195,222
+web/src/routes/activities/[id]/+page.server.ts
+  s_b90dabb3cc0ae2::t_1563b239cfa792 12
+web/src/routes/activities/[id]/+page.svelte
+  s_b90dabb3cc0ae2::t_9872a71e12367a 484
+web/src/routes/people/[id]/+page.svelte
+  s_b90dabb3cc0ae2::t_07617f344dcb2e 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f3886226f29b155b99485943679dc7009cafe2c6",
+  "prompts": {},
+  "sessions": {
+    "s_b90dabb3cc0ae2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c2e-17b3-7a33-8a80-9866e7729322",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
