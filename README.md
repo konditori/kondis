@@ -8,6 +8,8 @@ Kondis is usable but under fast-paced development.
 
 The name is Nordic slang for "conditioning"
 
+Main page: [kondis.org](https://kondis.org/).
+
 ## Documentation
 Main documentation is available on the [documentation site](https://docs.kondis.org/).
 
