@@ -20,10 +20,12 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Live workout tracking
 * Multi user support
 * Liking and commenting others workouts
+* Translations
 
 ## Planned features (subject to change)
 * iOS and Apple Watch support
 * Demo site linked from github
+* Translation site such as weblate
 
 ## Development
 Please see the [developer documentation site](https://developers.kondis.org/).
