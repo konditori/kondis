@@ -192,7 +192,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     CREATE TABLE activity_best_effort (
       activity_id uuid NOT NULL REFERENCES activity (id) ON DELETE CASCADE,
-      type text NOT NULL CHECK (
+      type text NOT NULL CONSTRAINT activity_best_effort_type_check CHECK (
         type IN (
           '400m', '1k', 'half_mile', '1_mile', '2_miles', '5k', '10k', '15k', '10_miles',
           '20k', 'half_marathon', '30k', 'marathon', '50k',
