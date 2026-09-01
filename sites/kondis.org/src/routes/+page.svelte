@@ -42,12 +42,20 @@
       </div>
     </div>
 
-    <div class="product-showcase" aria-label="Kondis landing page screenshot">
-      <img
-        class="product-screenshot"
-        src="/kondis-dashboard-preview.png"
-        alt="Kondis app home feed"
-      />
+    <div class="product-previews">
+      <div class="product-showcase" aria-label="Kondis landing page screenshot">
+        <img
+          class="product-screenshot"
+          src="/kondis-dashboard-preview.png"
+          alt="Kondis app home feed"
+        />
+      </div>
+      <aside class="mobile-showcase" aria-label="Kondis mobile app preview">
+        <img
+          src="/kondis-mobile-preview.png"
+          alt="Kondis mobile app with fictional running and cycling activities"
+        />
+      </aside>
     </div>
   </section>
 
