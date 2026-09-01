@@ -1,0 +1,29 @@
+.gitignore
+  s_bd77e1ec54f569::t_fe671646de8612 8
+pnpm-workspace.yaml
+  s_889f12d4fc73d8::t_dc0c9c00990628 20-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "26a21ef94fce675d3eba54e49113bb5cfda789f2",
+  "prompts": {},
+  "sessions": {
+    "s_889f12d4fc73d8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c37-068f-7b33-a0bb-74dc67f15a2b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_bd77e1ec54f569": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a53b701f-8b1d-49a8-878d-75de84d95b8e",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
