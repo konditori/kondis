@@ -1,0 +1,21 @@
+sites/kondis.org/src/app.css
+  s_1978d659897b75::t_18c02c9f94e607 199,257,260-262,278-313,1066-1075,1249,1251-1252,1306-1315
+sites/kondis.org/src/routes/+page.svelte
+  s_1978d659897b75::t_861310f6a7e90f 45-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2c616832f2d23b90cf5ce1a9aad25cc04cab81eb",
+  "prompts": {},
+  "sessions": {
+    "s_1978d659897b75": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a059c4-9ee3-7913-88c4-0f8d7ec264cd",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
