@@ -20,6 +20,16 @@ This will start the main docker compose stack.
 
 The web app will be accessible `http://localhost:3000`.
 
+## Resetting development data
+
+To clear activities, uploads, images, live workouts, social data, notifications, and queued jobs without redoing setup, run:
+
+```bash
+mise dev-reset-data
+```
+
+It preserves all user accounts, including admin roles, passwords, and avatars. This command is for the local development stack only.
+
 ## Docs site
 
 Go to the docs site folder

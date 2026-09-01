@@ -25,6 +25,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Translations
 
 ## Planned features (subject to change)
+* MCP server
 * iOS and Apple Watch support
 * Demo site linked from github
 * Translation site such as weblate
