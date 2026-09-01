@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
       socialControllerFeed(
         {},
         getServerSdkRequestOptions(locals.kondisFetch),
-      ) as Promise<ActivityPage>,
+      ) as unknown as Promise<ActivityPage>,
     ]);
     const liveWorkouts = liveResponse.ok
       ? ((await liveResponse.json()) as LiveWorkout[])

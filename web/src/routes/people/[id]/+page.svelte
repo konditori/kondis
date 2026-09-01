@@ -39,7 +39,7 @@
         socialControllerActivities({ id }, getSdkRequestOptions()),
       ]);
       profile = person;
-      activities = (activityPage as ActivityPage).activities;
+      activities = (activityPage as unknown as ActivityPage).activities;
     } catch {
       profile = null;
       activities = [];

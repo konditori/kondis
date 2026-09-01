@@ -8,7 +8,7 @@ import {
   activityControllerUpdateById,
   type ActivityTypeSettingsOutput,
   AverageMetric,
-  ActivityUpdateDtoActivityType as ActivityUpdateSport,
+  ActivityType as ActivityUpdateSport,
   ActivityType_Output as Sport,
   BestEffortSport as BestEffortSportInput,
   BestEffortType,

@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     const activity = (await activityControllerGetById(
       { id: params.id },
       getServerSdkRequestOptions(locals.kondisFetch),
-    )) as ActivityDetail;
+    )) as unknown as ActivityDetail;
     return { activity };
   } catch (requestError) {
     const status = (requestError as { status?: number }).status;

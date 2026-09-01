@@ -481,7 +481,7 @@
           } as never,
         },
         getSdkRequestOptions(),
-      )) as Activity;
+      )) as unknown as Activity;
       updatedActivity = updated;
       editing = false;
     } catch {

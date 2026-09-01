@@ -48,7 +48,9 @@
     } else if (status.status === "failed") {
       clearInterval(progressTimer);
       uploadState = "error";
-      message = status.error ?? t("strava_import_failed");
+      message = Array.isArray(status.error)
+        ? status.error.join("; ")
+        : (status.error ?? t("strava_import_failed"));
     }
   }
 
