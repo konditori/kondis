@@ -39,7 +39,7 @@ export type TakeoutImportStatusDtoOutput = {
   processed: number;
   failed: number;
   duplicates: number;
-  error: string | null;
+  error: string[];
 };
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */
@@ -59,15 +59,23 @@ export type QueueStatusDtoOutput = {
   /** True when this worker has stopped consuming the queue */
   paused: boolean;
 };
-export type QueueStatusReportDtoOutput = {
-  jobCounts: JobCountsDtoOutput;
-  queueStatus: QueueStatusDtoOutput;
-};
 export type AllJobStatusResponseDtoOutput = {
-  activityParsing: QueueStatusReportDtoOutput;
-  backgroundTask: QueueStatusReportDtoOutput;
-  imageProcessing: QueueStatusReportDtoOutput;
-  storage: QueueStatusReportDtoOutput;
+  activityParsing: {
+    jobCounts: JobCountsDtoOutput;
+    queueStatus: QueueStatusDtoOutput;
+  };
+  backgroundTask: {
+    jobCounts: JobCountsDtoOutput;
+    queueStatus: QueueStatusDtoOutput;
+  };
+  imageProcessing: {
+    jobCounts: JobCountsDtoOutput;
+    queueStatus: QueueStatusDtoOutput;
+  };
+  storage: {
+    jobCounts: JobCountsDtoOutput;
+    queueStatus: QueueStatusDtoOutput;
+  };
 };
 export type JobCreateDto = {
   /** The job to run */
@@ -76,6 +84,28 @@ export type JobCreateDto = {
 export type QueueCommandDto = {
   /** Operation to perform on the queue */
   command: Command;
+};
+export type QueueStatusReportDtoOutput = {
+  jobCounts: JobCountsDtoOutput;
+  queueStatus: QueueStatusDtoOutput;
+};
+export type LiveWorkoutListDtoOutput = {
+  id: string;
+  sport: ActivityType_Output;
+  startedAt: string;
+  status: Status2;
+  canShare: boolean;
+  elapsedSeconds: number;
+  distanceMeters: number;
+  lastSequence: number;
+  lastPointAt: string | null;
+  lastReceivedAt: string | null;
+  route: never[][];
+}[];
+export type LiveWorkoutCreateDto = {
+  clientSessionId: string;
+  sport: ActivityType;
+  startedAt: string;
 };
 export type LiveWorkoutDtoOutput = {
   id: string;
@@ -88,13 +118,7 @@ export type LiveWorkoutDtoOutput = {
   lastSequence: number;
   lastPointAt: string | null;
   lastReceivedAt: string | null;
-  route: [number, number][];
-};
-export type LiveWorkoutListDtoOutput = LiveWorkoutDtoOutput[];
-export type LiveWorkoutCreateDto = {
-  clientSessionId: string;
-  sport: LiveWorkoutCreateDtoActivityType;
-  startedAt: string;
+  route: never[][];
 };
 export type LiveWorkoutStateDto = {
   status: Status3;
@@ -153,17 +177,6 @@ export type ActivityMetricDtoOutput = {
   /** Calories in kcal */
   calories: number | null;
 };
-export type ActivityImageDtoOutput = {
-  id: string;
-  caption: string | null;
-  sortOrder: number;
-  width: number | null;
-  height: number | null;
-  status: Status4;
-  thumbnail: string | null;
-  preview: string | null;
-  original: string | null;
-};
 export type ActivityListResponseDtoOutput = {
   activities: {
     /** Activity id */
@@ -213,12 +226,22 @@ export type ActivityListResponseDtoOutput = {
     /** Simplified GPS route as GeoJSON */
     track: {
       type: Type;
-      coordinates: [number, number][];
+      coordinates: never[][];
     } | null;
-    images: ActivityImageDtoOutput[];
+    images: {
+      id: string;
+      caption: string | null;
+      sortOrder: number;
+      width: number | null;
+      height: number | null;
+      status: Status4;
+      thumbnail: string | null;
+      preview: string | null;
+      original: string | null;
+    }[];
   }[];
   /** Cursor for the next page, or null at the end */
-  nextCursor: string | null;
+  nextCursor: string[];
   /** Total number of activities */
   total: number;
 };
@@ -277,9 +300,9 @@ export type ActivityDetailDtoOutput = {
   viewerLiked?: boolean;
   sport: ActivityType_Output;
   /** Activity name */
-  name: string | null;
+  name: string[];
   /** Activity description */
-  description: string | null;
+  description: string[];
   /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Activity tags */
@@ -294,11 +317,21 @@ export type ActivityDetailDtoOutput = {
   createdAt: string;
   /** Last update timestamp in ISO-8601 format */
   updatedAt: string;
-  images: ActivityImageDtoOutput[];
+  images: {
+    id: string;
+    caption: string | null;
+    sortOrder: number;
+    width: number | null;
+    height: number | null;
+    status: Status4;
+    thumbnail: string | null;
+    preview: string | null;
+    original: string | null;
+  }[];
   /** GPS route as GeoJSON */
   track: {
     type: Type;
-    coordinates: [number, number][];
+    coordinates: never[][];
   } | null;
   /** Split, profile, and route data for activity analysis */
   analysis: {
@@ -327,7 +360,7 @@ export type ActivityDetailDtoOutput = {
     /** Downsampled route points aligned to elapsed time */
     route: {
       time: number;
-      coordinate: [number, number];
+      coordinate: never[];
     }[];
   } | null;
   bestEfforts:
@@ -366,8 +399,8 @@ export type ActivityUpdateDto = {
   /** Exclude from rankings */
   excludeFromRankings?: boolean;
   /** Replace the activity tags */
-  tags?: ActivityUpdateDtoActivityTag[];
-  sport?: ActivityUpdateDtoActivityType;
+  tags?: ActivityTag[];
+  sport?: ActivityType;
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
 };
@@ -389,9 +422,9 @@ export type ActivityDtoOutput = {
   viewerLiked?: boolean;
   sport: ActivityType_Output;
   /** Activity name */
-  name: string | null;
+  name: string[];
   /** Activity description */
-  description: string | null;
+  description: string[];
   /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Activity tags */
@@ -409,9 +442,67 @@ export type ActivityDtoOutput = {
 };
 export type MatchedRouteListResponseDtoOutput = {
   sourceActivityId: string;
-  activities: ActivityDtoOutput[] | null;
+  activities:
+    | {
+        /** Activity id */
+        id: string;
+        /** Source upload id */
+        uploadId: string;
+        /** Activity owner id */
+        userId?: string | null;
+        athlete?: {
+          id: string;
+          firstName: string;
+          lastName: string;
+          avatarUrl: string | null;
+        };
+        likeCount?: number;
+        commentCount?: number;
+        viewerLiked?: boolean;
+        sport: ActivityType_Output;
+        /** Activity name */
+        name: string | null;
+        /** Activity description */
+        description: string | null;
+        /** Exclude from rankings */
+        excludeFromRankings: boolean;
+        /** Activity tags */
+        tags: ActivityTag_Output[];
+        /** Start time in ISO-8601 format */
+        startedAt: string;
+        /** Minutes east of UTC */
+        timezoneOffsetMinutes: number | null;
+        /** Derived metrics, or null while computation is pending */
+        metrics: ActivityMetricDtoOutput | null;
+        /** Creation timestamp in ISO-8601 format */
+        createdAt: string;
+        /** Last update timestamp in ISO-8601 format */
+        updatedAt: string;
+      }[]
+    | null;
 };
-export type ActivityImageListDtoOutput = ActivityImageDtoOutput[];
+export type ActivityImageDtoOutput = {
+  id: string;
+  caption: string[];
+  sortOrder: number;
+  width: number | null;
+  height: number | null;
+  status: Status4;
+  thumbnail: string[];
+  preview: string[];
+  original: string[];
+};
+export type ActivityImageListDtoOutput = {
+  id: string;
+  caption: string | null;
+  sortOrder: number;
+  width: number | null;
+  height: number | null;
+  status: Status4;
+  thumbnail: string | null;
+  preview: string | null;
+  original: string | null;
+}[];
 export type ActivityImageUpdateDto = {
   caption?: string | null;
   sortOrder?: number;
@@ -503,7 +594,7 @@ export type CommentListDtoOutput = {
       avatarUrl: string | null;
     };
   }[];
-  nextCursor: string | null;
+  nextCursor: string[];
 };
 export type CommentCreateDto = {
   body: string;
@@ -1773,7 +1864,7 @@ export enum Status2 {
   Ended = 'ended',
   Discarded = 'discarded',
 }
-export enum LiveWorkoutCreateDtoActivityType {
+export enum ActivityType {
   AlpineSki = 'alpine_ski',
   BackcountrySki = 'backcountry_ski',
   Badminton = 'badminton',
@@ -1965,7 +2056,7 @@ export enum BestEffortValueKind_Output {
   Elevation = 'elevation',
   Power = 'power',
 }
-export enum ActivityUpdateDtoActivityTag {
+export enum ActivityTag {
   Race = 'race',
   LongRun = 'long_run',
   Commute = 'commute',
@@ -1975,65 +2066,6 @@ export enum ActivityUpdateDtoActivityTag {
   WithPet = 'with_pet',
   WithKid = 'with_kid',
   ForACause = 'for_a_cause',
-}
-export enum ActivityUpdateDtoActivityType {
-  AlpineSki = 'alpine_ski',
-  BackcountrySki = 'backcountry_ski',
-  Badminton = 'badminton',
-  Basketball = 'basketball',
-  Canoeing = 'canoeing',
-  Cricket = 'cricket',
-  CrossCountrySki = 'cross_country_ski',
-  Crossfit = 'crossfit',
-  Dance = 'dance',
-  EBikeRide = 'e_bike_ride',
-  Elliptical = 'elliptical',
-  EMountainBikeRide = 'e_mountain_bike_ride',
-  Golf = 'golf',
-  GravelRide = 'gravel_ride',
-  Handcycle = 'handcycle',
-  HighIntensityIntervalTraining = 'high_intensity_interval_training',
-  Hike = 'hike',
-  IceSkate = 'ice_skate',
-  InlineSkate = 'inline_skate',
-  Kayaking = 'kayaking',
-  Kitesurf = 'kitesurf',
-  MountainBikeRide = 'mountain_bike_ride',
-  Padel = 'padel',
-  PhysicalTherapy = 'physical_therapy',
-  Pickleball = 'pickleball',
-  Pilates = 'pilates',
-  Racquetball = 'racquetball',
-  Ride = 'ride',
-  RockClimbing = 'rock_climbing',
-  RollerSki = 'roller_ski',
-  Rowing = 'rowing',
-  Run = 'run',
-  Sail = 'sail',
-  Skateboard = 'skateboard',
-  Snowboard = 'snowboard',
-  Snowshoe = 'snowshoe',
-  Soccer = 'soccer',
-  Squash = 'squash',
-  StairStepper = 'stair_stepper',
-  StandUpPaddling = 'stand_up_paddling',
-  Surfing = 'surfing',
-  Swim = 'swim',
-  TableTennis = 'table_tennis',
-  Tennis = 'tennis',
-  TrailRun = 'trail_run',
-  Velomobile = 'velomobile',
-  VirtualRide = 'virtual_ride',
-  VirtualRow = 'virtual_row',
-  VirtualRun = 'virtual_run',
-  Volleyball = 'volleyball',
-  Walk = 'walk',
-  WeightTraining = 'weight_training',
-  Wheelchair = 'wheelchair',
-  Windsurf = 'windsurf',
-  Workout = 'workout',
-  Yoga = 'yoga',
-  Other = 'other',
 }
 export enum Type2 {
   ActivityLike = 'activity_like',

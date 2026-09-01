@@ -22,30 +22,24 @@ const QueueStatusSchema = z
   })
   .meta({ id: 'QueueStatusDto' });
 
-export const QueueStatusReportSchema = z
-  .object({
-    jobCounts: JobCountsSchema,
-    queueStatus: QueueStatusSchema,
-  })
-  .meta({ id: 'QueueStatusReportDto' });
+export const QueueStatusReportSchema = z.object({
+  jobCounts: JobCountsSchema,
+  queueStatus: QueueStatusSchema,
+});
 
-export const AllJobStatusResponseSchema = z
-  .object(Object.fromEntries(Object.values(QueueName).map((queue) => [queue, QueueStatusReportSchema])))
-  .meta({ id: 'AllJobStatusResponseDto' });
+export const AllJobStatusResponseSchema = z.object(
+  Object.fromEntries(Object.values(QueueName).map((queue) => [queue, QueueStatusReportSchema])),
+);
 
-export const JobCreateSchema = z
-  .object({
-    name: z.enum(ManualJobName).describe('The job to run'),
-  })
-  .meta({ id: 'JobCreateDto' });
+export const JobCreateSchema = z.object({
+  name: z.enum(ManualJobName).describe('The job to run'),
+});
 
-export const QueueCommandSchema = z
-  .object({
-    command: z.enum(QueueCommand).describe('Operation to perform on the queue'),
-  })
-  .meta({ id: 'QueueCommandDto' });
+export const QueueCommandSchema = z.object({
+  command: z.enum(QueueCommand).describe('Operation to perform on the queue'),
+});
 
-export const QueueNameParamSchema = z.object({ name: QueueNameSchema }).meta({ id: 'QueueNameParamDto' });
+export const QueueNameParamSchema = z.object({ name: QueueNameSchema });
 
 export class QueueStatusReportDto extends createZodDto(QueueStatusReportSchema) {}
 export class AllJobStatusResponseDto extends createZodDto(AllJobStatusResponseSchema) {}

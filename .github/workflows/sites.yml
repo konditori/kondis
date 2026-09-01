@@ -7,6 +7,7 @@ on:
       - 'sites/**'
       - 'open-api/kondis-openapi-specs.json'
       - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
       - 'mise.toml'
       - '.github/workflows/sites.yml'
   push:
@@ -15,6 +16,7 @@ on:
       - 'sites/**'
       - 'open-api/kondis-openapi-specs.json'
       - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
       - 'mise.toml'
       - '.github/workflows/sites.yml'
 
@@ -25,8 +27,52 @@ concurrency:
 permissions: {}
 
 jobs:
+  pre-job:
+    name: Check What Should Run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_run: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check which sites changed
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            kondis:
+              - 'sites/kondis.org/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+            docs:
+              - 'sites/docs.kondis.org/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+            developers:
+              - 'sites/developers.kondis.org/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+            api:
+              - 'sites/api.kondis.org/**'
+              - 'open-api/kondis-openapi-specs.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+
   kondis-org:
     name: Check kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).kondis == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,6 +112,8 @@ jobs:
 
   docs-kondis-org:
     name: Check docs.kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).docs == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -102,6 +150,8 @@ jobs:
 
   developers-kondis-org:
     name: Check developers.kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).developers == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -138,6 +188,8 @@ jobs:
 
   api-kondis-org:
     name: Check api.kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).api == true }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
