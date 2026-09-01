@@ -1,4 +1,4 @@
-# Kondis
+# Kondis 😰
 
 An open source, self-hosted fitness tracker.
 
@@ -22,6 +22,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Liking and commenting others workouts
 
 ## Planned features (subject to change)
+* iOS and Apple Watch support
 * Demo site linked from github
 
 ## Development
