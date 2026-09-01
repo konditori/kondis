@@ -8,7 +8,7 @@ import {
   activityControllerUpdateById,
   type ActivityTypeSettingsOutput,
   AverageMetric,
-  ActivityUpdateDtoActivityType as ActivityUpdateSport,
+  ActivityType as ActivityUpdateSport,
   ActivityType_Output as Sport,
   BestEffortSport as BestEffortSportInput,
   BestEffortType,
@@ -36,7 +36,7 @@ import {
   socialControllerLikers,
   socialControllerNotifications,
   socialControllerMarkNotificationsRead,
-} from "../../../server/src/open-api/fetch-client";
+} from "@kondis/sdk";
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
   return {

@@ -1,0 +1,20 @@
+---
+sidebar_position: 1
+slug: /
+title: Kondis documentation
+---
+
+# Kondis
+
+Kondis is an open-source, self-hosted fitness tracker. Android tracking is supported and iOS and Apple Watch are on the to-do list. Kondis is licensed under AGPL 3.0.
+
+For the latest feature matrix, see the [GitHub page](https://github.com/konditori/kondis).
+
+## Choose your path
+
+- [Install Kondis](install/installation)
+- [Developer documentation](https://developers.kondis.org/)
+- [Import activities](usage/importing)
+- [API reference](https://api.kondis.org/introduction)
+
+Kondis includes a Svelte web archive, an Android recorder, route maps, splits, best efforts, photos, tags, social sharing, and offline-first sync. It is under active development and licensed AGPL-3.0-or-later.

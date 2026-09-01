@@ -91,6 +91,8 @@
     <string name="i18n_add_activity">Add activity</string>
     <string name="i18n_add_manual_entry">Add manual entry</string>
     <string name="i18n_open_account_menu">Open account menu</string>
+    <string name="i18n_switch_to_light_mode">Switch to light mode</string>
+    <string name="i18n_switch_to_dark_mode">Switch to dark mode</string>
     <string name="i18n_log_out">Log out</string>
     <string name="i18n_new_import">New import</string>
     <string name="i18n_individual_activity_file">Individual activity file</string>

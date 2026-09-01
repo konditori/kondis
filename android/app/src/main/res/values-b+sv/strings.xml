@@ -91,6 +91,8 @@
     <string name="i18n_add_activity">Lägg till aktivitet</string>
     <string name="i18n_add_manual_entry">Lägg till manuellt</string>
     <string name="i18n_open_account_menu">Öppna kontomeny</string>
+    <string name="i18n_switch_to_light_mode">Byt till ljust läge</string>
+    <string name="i18n_switch_to_dark_mode">Byt till mörkt läge</string>
     <string name="i18n_log_out">Logga ut</string>
     <string name="i18n_new_import">Ny import</string>
     <string name="i18n_individual_activity_file">Enskild träningsfil</string>

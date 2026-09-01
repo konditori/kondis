@@ -88,6 +88,8 @@
   "add_activity": "Lägg till aktivitet",
   "add_manual_entry": "Lägg till manuellt",
   "open_account_menu": "Öppna kontomeny",
+  "switch_to_light_mode": "Byt till ljust läge",
+  "switch_to_dark_mode": "Byt till mörkt läge",
   "log_out": "Logga ut",
   "new_import": "Ny import",
   "individual_activity_file": "Enskild träningsfil",

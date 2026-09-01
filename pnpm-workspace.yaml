@@ -3,6 +3,7 @@ packages:
   - server
   - web
   - e2e
+  - sites/*
   - packages/*
 
 dedupePeerDependents: false
@@ -12,7 +13,17 @@ shamefullyHoist: false
 verifyDepsBeforeRun: install
 
 overrides:
+  image-size: npm:image-size-next@2.1.1
+  'js-yaml@>=4.0.0 <4.3.1': 4.3.1
   'js-yaml@>=5.0.0 <=5.2.1': 5.2.2
+  'nanoid@<3.3.18': 3.3.18
+  # Security overrides for transitive dependencies until their parents widen ranges.
+  'brace-expansion@>=2.0.0 <2.1.4': 2.1.4
+  'brace-expansion@>=4.0.0 <5.0.9': 5.0.9
+  'cookie@<0.7.0': 0.7.2
+  'postcss@<=8.5.22': 8.5.23
+  'serialize-javascript@>=5.0.0 <7.0.5': 7.0.5
+  'uuid@<11.1.1': 11.1.1
 
 allowBuilds:
   '@nestjs/core': false
@@ -21,11 +32,15 @@ allowBuilds:
   # supports emitDecoratorMetadata, which NestJS constructor injection depends on.
   '@swc/core': true
   bcrypt: true
+  core-js: false
   cpu-features: false
   esbuild: false
+  postman-code-generators: false
   protobufjs: false
   sharp: true
   ssh2: false
   # Native binary resolver behind eslint-import-resolver-typescript, which import-x/no-cycle
   # needs in order to follow `src/*` path-alias imports.
   unrs-resolver: true
+  vue-demi: true
+  workerd: true

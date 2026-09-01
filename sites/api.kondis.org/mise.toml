@@ -1,0 +1,24 @@
+[tasks.install]
+run = "pnpm install --filter @kondis/api-docs --frozen-lockfile"
+
+[tasks.dev]
+env._.path = "./node_modules/.bin"
+run = "pnpm build && wrangler dev --port 3000 --inspector-port 9230"
+
+[tasks.build]
+run = "pnpm build"
+
+[tasks.serve]
+env._.path = "./node_modules/.bin"
+run = "wrangler dev --port 3000 --inspector-port 9230"
+
+[tasks.clear]
+run = "pnpm clear"
+
+[tasks.format]
+env._.path = "./node_modules/.bin"
+run = "prettier --check ."
+
+[tasks."format-fix"]
+env._.path = "./node_modules/.bin"
+run = "prettier --write ."

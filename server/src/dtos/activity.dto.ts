@@ -25,28 +25,22 @@ const BestEffortValueKindSchema = z
   .meta({ id: 'BestEffortValueKind' });
 const BestEffortSportSchema = z.enum(['run', 'ride']).meta({ id: 'BestEffortSport' });
 
-export const BestEffortListParamSchema = z
-  .object({
-    sport: BestEffortSportSchema.describe('Best effort sport category'),
-    type: BestEffortTypeSchema.describe('Best effort type'),
-  })
-  .meta({ id: 'BestEffortListParamDto' });
+export const BestEffortListParamSchema = z.object({
+  sport: BestEffortSportSchema.describe('Best effort sport category'),
+  type: BestEffortTypeSchema.describe('Best effort type'),
+});
 
-export const ActivityIdParamSchema = z
-  .object({
-    id: z.string().uuid().describe('Activity id'),
-  })
-  .meta({ id: 'ActivityIdParamDto' });
+export const ActivityIdParamSchema = z.object({
+  id: z.string().uuid().describe('Activity id'),
+});
 
-export const ActivityListQuerySchema = z
-  .object({
-    cursor: z.string().min(1).optional().describe('Opaque cursor returned by the previous page'),
-    limit: z.coerce.number().int().min(1).max(100).default(50).describe('Maximum activities to return'),
-    search: z.string().trim().max(200).optional().describe('Text to search in activity name, description, or sport'),
-    tags: z.string().trim().optional().describe('Comma-separated activity tags to include'),
-    tagMatch: z.enum(['any', 'all']).default('any').describe('Whether any or all requested tags must match'),
-  })
-  .meta({ id: 'ActivityListQueryDto' });
+export const ActivityListQuerySchema = z.object({
+  cursor: z.string().min(1).optional().describe('Opaque cursor returned by the previous page'),
+  limit: z.coerce.number().int().min(1).max(100).default(50).describe('Maximum activities to return'),
+  search: z.string().trim().max(200).optional().describe('Text to search in activity name, description, or sport'),
+  tags: z.string().trim().optional().describe('Comma-separated activity tags to include'),
+  tagMatch: z.enum(['any', 'all']).default('any').describe('Whether any or all requested tags must match'),
+});
 
 export const ActivityMetricSchema = z
   .object({
@@ -68,27 +62,25 @@ export const ActivityMetricSchema = z
   })
   .meta({ id: 'ActivityMetricDto' });
 
-export const ActivitySchema = z
-  .object({
-    id: z.string().uuid().describe('Activity id'),
-    uploadId: z.string().uuid().describe('Source upload id'),
-    userId: z.string().uuid().nullable().optional().describe('Activity owner id'),
-    athlete: SocialUserSchema.optional(),
-    likeCount: z.number().int().nonnegative().optional(),
-    commentCount: z.number().int().nonnegative().optional(),
-    viewerLiked: z.boolean().optional(),
-    sport: ActivityTypeSchema,
-    name: z.string().nullable().describe('Activity name'),
-    description: z.string().nullable().describe('Activity description'),
-    excludeFromRankings: z.boolean().describe('Exclude from rankings'),
-    tags: z.array(ActivityTagSchema).describe('Activity tags'),
-    startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
-    timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
-    metrics: ActivityMetricSchema.nullable().describe('Derived metrics, or null while computation is pending'),
-    createdAt: z.string().datetime().describe('Creation timestamp in ISO-8601 format'),
-    updatedAt: z.string().datetime().describe('Last update timestamp in ISO-8601 format'),
-  })
-  .meta({ id: 'ActivityDto' });
+export const ActivitySchema = z.object({
+  id: z.string().uuid().describe('Activity id'),
+  uploadId: z.string().uuid().describe('Source upload id'),
+  userId: z.string().uuid().nullable().optional().describe('Activity owner id'),
+  athlete: SocialUserSchema.optional(),
+  likeCount: z.number().int().nonnegative().optional(),
+  commentCount: z.number().int().nonnegative().optional(),
+  viewerLiked: z.boolean().optional(),
+  sport: ActivityTypeSchema,
+  name: z.string().nullable().describe('Activity name'),
+  description: z.string().nullable().describe('Activity description'),
+  excludeFromRankings: z.boolean().describe('Exclude from rankings'),
+  tags: z.array(ActivityTagSchema).describe('Activity tags'),
+  startedAt: z.string().datetime().describe('Start time in ISO-8601 format'),
+  timezoneOffsetMinutes: z.number().int().nullable().describe('Minutes east of UTC'),
+  metrics: ActivityMetricSchema.nullable().describe('Derived metrics, or null while computation is pending'),
+  createdAt: z.string().datetime().describe('Creation timestamp in ISO-8601 format'),
+  updatedAt: z.string().datetime().describe('Last update timestamp in ISO-8601 format'),
+});
 
 const ActivityTrackSchema = z.object({
   type: z.literal('LineString'),
@@ -126,60 +118,56 @@ const ActivityAnalysisSchema = z.object({
     .describe('Downsampled route points aligned to elapsed time'),
 });
 
-export const ActivityListResponseSchema = z
-  .object({
-    activities: z.array(
-      ActivitySchema.extend({
-        topBestEfforts: z
-          .array(
-            z.object({
-              type: BestEffortTypeSchema,
-              value: z.number().nonnegative().describe('Best-effort value; watts for power efforts'),
-              overallRank: z.number().int().min(1),
-              yearRank: z.number().int().min(1).max(3),
-            }),
-          )
-          .max(3)
-          .nullable(),
-        achievementCount: z.number().int().nonnegative().nullable(),
-        track: ActivityTrackSchema.nullable().describe('Simplified GPS route as GeoJSON'),
-        images: z.array(ActivityImageSchema),
-      }),
-    ),
-    nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
-    total: z.number().int().nonnegative().describe('Total number of activities'),
-  })
-  .meta({ id: 'ActivityListResponseDto' });
+export const ActivityListResponseSchema = z.object({
+  activities: z.array(
+    ActivitySchema.extend({
+      topBestEfforts: z
+        .array(
+          z.object({
+            type: BestEffortTypeSchema,
+            value: z.number().nonnegative().describe('Best-effort value; watts for power efforts'),
+            overallRank: z.number().int().min(1),
+            yearRank: z.number().int().min(1).max(3),
+          }),
+        )
+        .max(3)
+        .nullable(),
+      achievementCount: z.number().int().nonnegative().nullable(),
+      track: ActivityTrackSchema.nullable().describe('Simplified GPS route as GeoJSON'),
+      images: z.array(ActivityImageSchema),
+    }),
+  ),
+  nextCursor: z.string().nullable().describe('Cursor for the next page, or null at the end'),
+  total: z.number().int().nonnegative().describe('Total number of activities'),
+});
 
-export const BestEffortListResponseSchema = z
-  .object({
-    sport: BestEffortSportSchema,
-    type: BestEffortTypeSchema,
-    valueKind: BestEffortValueKindSchema,
-    higherIsBetter: z.boolean(),
-    distance: z.number().positive().nullable().describe('Selected distance in meters, when applicable'),
-    duration: z.number().positive().nullable().describe('Selected duration in seconds, when applicable'),
-    options: z.array(
-      z.object({
-        type: BestEffortTypeSchema,
-        valueKind: BestEffortValueKindSchema,
-      }),
-    ),
-    efforts: z.array(
-      z.object({
-        activityId: z.string().uuid(),
-        activityName: z.string().nullable(),
-        sport: ActivityTypeSchema,
-        startedAt: z.string().datetime(),
-        elapsedTime: z.number().positive(),
-        value: z.number().positive(),
-        overallRank: z.number().int().positive(),
-        year: z.number().int(),
-        yearRank: z.number().int().positive(),
-      }),
-    ),
-  })
-  .meta({ id: 'BestEffortListResponseDto' });
+export const BestEffortListResponseSchema = z.object({
+  sport: BestEffortSportSchema,
+  type: BestEffortTypeSchema,
+  valueKind: BestEffortValueKindSchema,
+  higherIsBetter: z.boolean(),
+  distance: z.number().positive().nullable().describe('Selected distance in meters, when applicable'),
+  duration: z.number().positive().nullable().describe('Selected duration in seconds, when applicable'),
+  options: z.array(
+    z.object({
+      type: BestEffortTypeSchema,
+      valueKind: BestEffortValueKindSchema,
+    }),
+  ),
+  efforts: z.array(
+    z.object({
+      activityId: z.string().uuid(),
+      activityName: z.string().nullable(),
+      sport: ActivityTypeSchema,
+      startedAt: z.string().datetime(),
+      elapsedTime: z.number().positive(),
+      value: z.number().positive(),
+      overallRank: z.number().int().positive(),
+      year: z.number().int(),
+      yearRank: z.number().int().positive(),
+    }),
+  ),
+});
 
 export const ActivityDetailSchema = ActivitySchema.extend({
   images: z.array(ActivityImageSchema),
@@ -208,14 +196,12 @@ export const ActivityDetailSchema = ActivitySchema.extend({
     .nonnegative()
     .nullable()
     .describe('Activities matched to the same GPS route, or null while matching is pending'),
-}).meta({ id: 'ActivityDetailDto' });
+});
 
-export const MatchedRouteListResponseSchema = z
-  .object({
-    sourceActivityId: z.string().uuid(),
-    activities: z.array(ActivitySchema).nullable(),
-  })
-  .meta({ id: 'MatchedRouteListResponseDto' });
+export const MatchedRouteListResponseSchema = z.object({
+  sourceActivityId: z.string().uuid(),
+  activities: z.array(ActivitySchema).nullable(),
+});
 
 export const ActivityUpdateSchema = z
   .object({
@@ -228,8 +214,7 @@ export const ActivityUpdateSchema = z
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one field is required',
-  })
-  .meta({ id: 'ActivityUpdateDto' });
+  });
 
 export class ActivityIdParamDto extends createZodDto(ActivityIdParamSchema) {}
 export class ActivityListQueryDto extends createZodDto(ActivityListQuerySchema) {}

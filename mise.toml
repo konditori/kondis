@@ -6,6 +6,11 @@ config_roots = [
   "server",
   "web",
   "e2e",
+  "packages/sdk",
+  "sites/docs.kondis.org",
+  "sites/developers.kondis.org",
+  "sites/api.kondis.org",
+  "sites/kondis.org",
 ]
 
 [tools]
@@ -16,6 +21,9 @@ pnpm = "11.22.0"
 [settings]
 pin = true
 lockfile = true
+
+[hooks]
+postinstall = "pnpm install --frozen-lockfile"
 
 [tasks.dev]
 dir = "docker"
@@ -34,12 +42,52 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 [tasks.e2e]
 run = { task = "//e2e:test" }
 
+[tasks."docs:install"]
+run = { task = "//sites/docs.kondis.org:install" }
+
+[tasks."docs:dev"]
+description = "Start the Docusaurus documentation site"
+run = { task = "//sites/docs.kondis.org:dev" }
+
+[tasks."docs:build"]
+description = "Build the documentation site"
+run = { task = "//sites/docs.kondis.org:build" }
+
+[tasks."api-docs:build"]
+description = "Build the generated API reference"
+run = { task = "//sites/api.kondis.org:build" }
+
+[tasks."docs:serve"]
+description = "Serve the built documentation site"
+run = { task = "//sites/docs.kondis.org:serve" }
+
+[tasks."docs:clear"]
+description = "Clear Docusaurus cache and generated files"
+run = { task = "//sites/docs.kondis.org:clear" }
+
+[tasks."developer-docs:install"]
+run = { task = "//sites/developers.kondis.org:install" }
+
+[tasks."developer-docs:dev"]
+description = "Start the developer documentation site"
+run = { task = "//sites/developers.kondis.org:dev" }
+
+[tasks."developer-docs:build"]
+description = "Build the developer documentation site"
+run = { task = "//sites/developers.kondis.org:build" }
+
+[tasks."developer-docs:serve"]
+description = "Serve the built developer documentation site"
+run = { task = "//sites/developers.kondis.org:serve" }
+
 [tasks.format]
 description = "Check formatting across the project"
 run = [
   { task = "//web:format" },
   { task = "//server:format" },
   { task = "//e2e:format" },
+  { task = "//packages/sdk:format" },
+  { task = "//sites/api.kondis.org:format" },
   { task = "//android:format" },
 ]
 
@@ -49,6 +97,8 @@ run = [
   { task = "//web:format-fix" },
   { task = "//server:format-fix" },
   { task = "//e2e:format-fix" },
+  { task = "//packages/sdk:format-fix" },
+  { task = "//sites/api.kondis.org:format-fix" },
   { task = "//android:format-fix" },
 ]
 
@@ -58,6 +108,7 @@ run = [
   { task = "//web:check" },
   { task = "//server:lint" },
   { task = "//e2e:lint" },
+  { task = "//packages/sdk:check" },
   { task = "//android:lint" },
 ]
 
@@ -100,9 +151,10 @@ run = "docker compose -f ./docker-compose.yml down --remove-orphans"
 
 [tasks."open-api:typescript"]
 run = [
-  "mkdir -p server/src/open-api",
-  "oazapfts --optimistic --argumentStyle=object --useEnumType --allSchemas open-api/kondis-openapi-specs.json server/src/open-api/fetch-client.ts",
-  "cd server && ./node_modules/.bin/prettier --log-level warn --write src/open-api/fetch-client.ts",
+  "pnpm install --filter @kondis/sdk --frozen-lockfile",
+  "oazapfts --optimistic --argumentStyle=object --useEnumType --allSchemas open-api/kondis-openapi-specs.json packages/sdk/src/fetch-client.ts",
+  "cd packages/sdk && ./node_modules/.bin/prettier --log-level warn --write src/fetch-client.ts",
+  "pnpm --filter @kondis/sdk build",
 ]
 
 [tasks."open-api"]

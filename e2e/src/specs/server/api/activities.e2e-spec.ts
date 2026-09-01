@@ -2,7 +2,7 @@ import {
   activityControllerDeleteById,
   activityControllerListRecent,
   activityControllerUpdateById,
-  ActivityUpdateDtoActivityType,
+  ActivityType,
 } from '@kondis/sdk';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -56,12 +56,12 @@ describe('PUT /activities/:id', () => {
     const updated = await activityControllerUpdateById({
       id: activity.id,
       activityUpdateDto: {
-        sport: ActivityUpdateDtoActivityType.TrailRun,
+        sport: ActivityType.TrailRun,
         startedAt: UPDATED_STARTED_AT,
       },
     });
 
-    expect(updated.sport).toBe(ActivityUpdateDtoActivityType.TrailRun);
+    expect(updated.sport).toBe(ActivityType.TrailRun);
     expect(updated.startedAt).toBe(UPDATED_STARTED_AT);
   });
 

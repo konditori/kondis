@@ -1,19 +1,17 @@
 import { createZodDto } from 'nestjs-zod';
 import z from 'zod';
 
-export const ActivityImageSchema = z
-  .object({
-    id: z.string().uuid(),
-    caption: z.string().nullable(),
-    sortOrder: z.number().int().nonnegative(),
-    width: z.number().int().positive().nullable(),
-    height: z.number().int().positive().nullable(),
-    status: z.enum(['pending', 'ready', 'failed']),
-    thumbnail: z.string().nullable(),
-    preview: z.string().nullable(),
-    original: z.string().nullable(),
-  })
-  .meta({ id: 'ActivityImageDto' });
+export const ActivityImageSchema = z.object({
+  id: z.string().uuid(),
+  caption: z.string().nullable(),
+  sortOrder: z.number().int().nonnegative(),
+  width: z.number().int().positive().nullable(),
+  height: z.number().int().positive().nullable(),
+  status: z.enum(['pending', 'ready', 'failed']),
+  thumbnail: z.string().nullable(),
+  preview: z.string().nullable(),
+  original: z.string().nullable(),
+});
 
 export const ActivityImageUpdateSchema = z
   .object({

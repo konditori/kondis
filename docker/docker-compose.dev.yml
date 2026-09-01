@@ -60,7 +60,7 @@ services:
       kondis-init:
         condition: service_healthy
       database:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       disable: false
 
@@ -116,7 +116,9 @@ services:
       POSTGRES_DB: ${DB_DATABASE_NAME}
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      - ${DATA_LOCATION}/postgres:/var/lib/postgresql
+      # PostgreSQL 18 expects the volume at /var/lib/postgresql, not /data.
+      # Change DB_DATA_LOCATION in .env to use another volume or a local Linux path.
+      - postgres_data:/var/lib/postgresql
     ports:
       - 5432:5432
     shm_size: 128mb
@@ -130,3 +132,4 @@ volumes:
   server_node_modules:
   web_node_modules:
   sveltekit:
+  postgres_data:

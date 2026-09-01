@@ -192,7 +192,7 @@
       const page = (await socialControllerFeed(
         {},
         getSdkRequestOptions(),
-      )) as ActivityPage;
+      )) as unknown as ActivityPage;
       const refreshedUploads = new Set(
         page.activities.map(({ uploadId }) => uploadId),
       );
@@ -219,7 +219,7 @@
           ? { cursor: searchCursor!, search: query.trim() }
           : { cursor: nextCursor! },
         getSdkRequestOptions(),
-      )) as ActivityPage;
+      )) as unknown as ActivityPage;
       if (hasSearch) {
         const existing = new Set(displayedActivities.map(({ id }) => id));
         searchAppendedActivities = [

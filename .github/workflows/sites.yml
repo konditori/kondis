@@ -1,0 +1,225 @@
+name: Sites
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'sites/**'
+      - 'open-api/kondis-openapi-specs.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'mise.toml'
+      - '.github/workflows/sites.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'sites/**'
+      - 'open-api/kondis-openapi-specs.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'mise.toml'
+      - '.github/workflows/sites.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  pre-job:
+    name: Check What Should Run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_run: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check which sites changed
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            kondis:
+              - 'sites/kondis.org/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+            docs:
+              - 'sites/docs.kondis.org/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+            developers:
+              - 'sites/developers.kondis.org/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+            api:
+              - 'sites/api.kondis.org/**'
+              - 'open-api/kondis-openapi-specs.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'mise.toml'
+              - '.github/workflows/sites.yml'
+
+  kondis-org:
+    name: Check kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).kondis == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./sites/kondis.org
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //sites/kondis.org:install
+
+      - name: Check landing site formatting
+        run: mise run //sites/kondis.org:format
+
+      - name: Check landing site
+        run: mise run //sites/kondis.org:check
+
+      - name: Build landing site
+        run: mise run //sites/kondis.org:build
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kondis-org-build-output
+          path: sites/kondis.org/build/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 1
+
+  docs-kondis-org:
+    name: Check docs.kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).docs == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./sites/docs.kondis.org
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //sites/docs.kondis.org:install
+
+      - name: Check formatting
+        run: mise run //sites/docs.kondis.org:format
+
+      - name: Build documentation
+        run: mise run //sites/docs.kondis.org:build
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-kondis-org-build-output
+          path: sites/docs.kondis.org/build/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 1
+
+  developers-kondis-org:
+    name: Check developers.kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).developers == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./sites/developers.kondis.org
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //sites/developers.kondis.org:install
+
+      - name: Check formatting
+        run: mise run //sites/developers.kondis.org:format
+
+      - name: Build developer documentation
+        run: mise run //sites/developers.kondis.org:build
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: developers-kondis-org-build-output
+          path: sites/developers.kondis.org/build/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 1
+
+  api-kondis-org:
+    name: Check api.kondis.org
+    needs: pre-job
+    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).api == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./sites/api.kondis.org
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //sites/api.kondis.org:install
+
+      - name: Check formatting
+        run: mise run //sites/api.kondis.org:format
+
+      - name: Build API documentation
+        run: mise run //sites/api.kondis.org:build
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: api-kondis-org-build-output
+          path: sites/api.kondis.org/build/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 1

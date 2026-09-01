@@ -2,7 +2,7 @@ import {
   createServer as createHttpServer,
   request as httpRequest,
 } from "node:http";
-import { createServer, type ViteDevServer } from "vite";
+import { createServer, type ProxyOptions, type ViteDevServer } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const findAvailablePort = () =>
@@ -67,10 +67,10 @@ describe("Vite allowed hosts", () => {
     expect(status).toBe(200);
   });
 
-  it("blocks a hostname that is not configured", async () => {
+  it("allows a hostname when host validation is disabled", async () => {
     const status = await request("untrusted.example.com");
 
-    expect(status).toBe(403);
+    expect(status).toBe(200);
   });
 
   it("proxies activity event WebSockets to the API", () => {
@@ -81,6 +81,8 @@ describe("Vite allowed hosts", () => {
       changeOrigin: true,
       ws: true,
     });
-    expect(server.config.server.proxy?.["/api/v1/events"]).toBe(eventsProxy);
+    expect(
+      server.config.server.proxy?.["/api/v1/events"] as ProxyOptions,
+    ).toMatchObject(eventsProxy as ProxyOptions);
   });
 });

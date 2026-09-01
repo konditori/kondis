@@ -5,10 +5,9 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 .idea
+.kotlin/
 
-docker/upload
-docker/library
-uploads
+docker/data
 coverage
 
 vite.config.js.timestamp-*

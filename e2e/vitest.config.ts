@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
 
-const sdkPath = new URL('../server/src/open-api/fetch-client.ts', import.meta.url).pathname;
 const serverUrl = process.env.KONDIS_E2E_SERVER_URL ?? 'http://127.0.0.1:2295/api/v1';
 
 process.env.KONDIS_E2E_SERVER_URL = serverUrl;
@@ -16,7 +15,6 @@ try {
 export default defineConfig({
   resolve: {
     alias: {
-      '@kondis/sdk': sdkPath,
       'src/': new URL('./src/', import.meta.url).pathname,
     },
   },

@@ -1,0 +1,5 @@
+.docusaurus/
+.svelte-kit/
+.wrangler/
+build/
+build-api/

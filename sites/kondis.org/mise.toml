@@ -1,0 +1,34 @@
+[tasks.install]
+run = "pnpm install --filter @kondis/landing --frozen-lockfile"
+
+[tasks.vite]
+description = "Start the landing site directly with Vite"
+env._.path = "./node_modules/.bin"
+run = "vite dev"
+
+[tasks.dev]
+description = "Start the landing site directly on http://localhost:3000"
+interactive = true
+env._.path = "./node_modules/.bin"
+run = "vite dev --host localhost --port 3000"
+depends = ["install"]
+
+[tasks.build]
+env._.path = "./node_modules/.bin"
+run = "vite build"
+
+[tasks.preview]
+env._.path = "./node_modules/.bin"
+run = "vite preview"
+
+[tasks.check]
+env._.path = "./node_modules/.bin"
+run = "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+
+[tasks.format]
+env._.path = "./node_modules/.bin"
+run = "prettier --check ."
+
+[tasks."format-fix"]
+env._.path = "./node_modules/.bin"
+run = "prettier --write ."

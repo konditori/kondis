@@ -1,0 +1,22 @@
+{
+  "name": "@kondis/api-docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev --port 3000 --inspector-port 9230",
+    "build": "rm -rf build && mkdir -p build && cp static/index.html build/index.html && cp ../../open-api/kondis-openapi-specs.json build/openapi.json && cp node_modules/@scalar/api-reference/dist/browser/standalone.js build/scalar.js",
+    "serve": "wrangler dev --port 3000 --inspector-port 9230",
+    "clear": "rm -rf build",
+    "deploy": "pnpm build && wrangler deploy",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write ."
+  },
+  "dependencies": {
+    "@scalar/api-reference": "^1.67.0",
+    "wrangler": "^4.127.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "typescript": "~6.0.3"
+  }
+}

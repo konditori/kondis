@@ -140,7 +140,7 @@ export class ConfigService {
     this.registrationEnabled = readBoolean('KONDIS_REGISTRATION_ENABLED', false);
 
     this.database = {
-      host: readSecret('DB_HOSTNAME') ?? 'localhost',
+      host: readSecret('DB_HOSTNAME') ?? 'database',
       port: Number(readSecret('DB_PORT') ?? 5432),
       user: required('DB_USERNAME'),
       password: required('DB_PASSWORD'),

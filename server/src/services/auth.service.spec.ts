@@ -119,7 +119,7 @@ describe(AuthService.name, () => {
     expect(log).toHaveBeenCalledOnce();
     expect(log.mock.calls[0][0]).toContain('Welcome to Kondis!');
     expect(log.mock.calls[0][0]).toContain('unit-test-setup-token');
-    expect(log.mock.calls[0][0]).toContain('POST /api/v1/auth/setup/verify');
+    expect(log.mock.calls[0][0]).toContain('go to the app in a web browser');
 
     count.mockResolvedValue({ count: 1 });
     await sut.logSetupTokenIfRequired();

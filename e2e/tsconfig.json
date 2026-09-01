@@ -17,8 +17,7 @@
     "incremental": true,
     "skipLibCheck": true,
     "paths": {
-      "src/*": ["./src/*"],
-      "@kondis/sdk": ["../server/src/open-api/fetch-client.ts"]
+      "src/*": ["./src/*"]
     },
     "esModuleInterop": true
   },

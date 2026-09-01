@@ -1,0 +1,51 @@
+---
+sidebar_position: 2
+title: Installation
+---
+
+import ExampleEnv from "!!raw-loader!../../../../docker/example.env";
+import CodeBlock from "@theme/CodeBlock";
+
+# Installation via docker compose
+
+Docker compose is the recommended install method.
+
+## Step 1: Clone the files
+
+At the moment, the only way to download the app is to clone it with git.
+
+```bash
+git clone https://github.com/konditori/kondis.git
+```
+
+Then enter the directory
+
+```bash
+cd kondis
+```
+
+## Step 2: Populate the env file
+
+Next, setup the environment file `docker/.env`. You can begin by copying the sample env file
+
+```bash
+cp docker/example.env docker/.env
+```
+
+Then edit the file to suit your needs. Here are the most important variables:
+
+`DATA_LOCATION` is the host directory for application data. PostgreSQL uses a Docker-managed volume, which avoids filesystem compatibility problems on macOS and Windows.
+
+<CodeBlock language="bash" title="Default environmental variable content">
+  {ExampleEnv}
+</CodeBlock>
+
+## Step 3: Start the containers
+
+Use the mise script to start the containers.
+
+```bash
+mise dev-update
+```
+
+This should start the database, server backend, and frontend. If successful, continue to the setup phase.
