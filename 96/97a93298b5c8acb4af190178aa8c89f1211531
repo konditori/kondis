@@ -1,0 +1,25 @@
+sites/developers.kondis.org/mise.toml
+  s_9c9c504a2d4579::t_44c0c88d10d358 7
+sites/docs.kondis.org/mise.toml
+  s_9c9c504a2d4579::t_9119d128703cd6 7
+mise.toml
+  s_9c9c504a2d4579::t_92d7ee21acea9a 25-27
+sites/developers.kondis.org/sidebars.ts
+  s_9c9c504a2d4579::t_b5c72b2f1b7f66 3-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9697a93298b5c8acb4af190178aa8c89f1211531",
+  "prompts": {},
+  "sessions": {
+    "s_9c9c504a2d4579": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b1de0619-ea48-4909-a223-16e2ee4e39e7",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
