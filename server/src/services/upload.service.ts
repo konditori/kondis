@@ -14,8 +14,10 @@ import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
+import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
+import { EventRepository } from 'src/repositories/event.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -38,6 +40,8 @@ export class UploadService {
     private readonly lagomTakeoutParser: LagomTakeoutParser = new LagomTakeoutParser(),
     private readonly importProgressStore: ImportProgressStore = new ImportProgressStore(),
     @Optional() private readonly userRepository?: UserRepository,
+    @Optional() private readonly activityRepository?: ActivityRepository,
+    @Optional() private readonly eventRepository?: EventRepository,
   ) {
     this.logger.setContext(UploadService.name);
   }
@@ -92,6 +96,14 @@ export class UploadService {
     const existing = await this.uploadRepository.getByChecksum(checksum, userId);
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
+      const activity = await this.activityRepository?.getByUploadId(existing.id);
+      if (activity && this.eventRepository) {
+        await this.eventRepository.emit(
+          'ActivityUploadSkipped',
+          { id: activity.id, name: activity.name, sport: activity.sport },
+          originalName,
+        );
+      }
       if (images?.length) {
         await this.jobRepository.queue({
           name: JobName.ActivityParse,

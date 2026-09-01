@@ -6,7 +6,7 @@
     {
       href: "/upload/activity",
       title: t("individual_activity_file"),
-      description: t("upload_one_file"),
+      description: t("upload_files"),
       icon: FileUp,
     },
     {

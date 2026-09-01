@@ -93,8 +93,8 @@
   "switch_to_dark_mode": "Switch to dark mode",
   "log_out": "Log out",
   "new_import": "New import",
-  "individual_activity_file": "Individual activity file",
-  "upload_one_file": "Upload one .fit, .tcx, or .gpx file.",
+  "individual_activity_file": "Activity files",
+  "upload_files": "Upload .fit, .tcx, or .gpx files.",
   "strava_takeout": "Strava takeout",
   "upload_activity": "Upload activity",
   "upload_activity_page_description": "Choose how you want to add workouts to your archive.",
@@ -174,12 +174,20 @@
   "setup_token": "Setup token",
   "see_latest_reactions": "See the latest reactions and comments on your activities.",
   "no_notifications_description": "Likes and comments on your activities will appear here.",
-  "upload_activity_file": "Upload a activity file",
-  "upload_activity_description": "Add one activity directly to your activity archive.",
+  "upload_activity_file": "Upload activity files",
+  "upload_activity_description": "Add activity files directly to your activity archive.",
   "drop_activity_file": "Drop your activity file here",
+  "drop_activity_files": "Drop your activity files here",
   "click_to_browse": "or click to browse your device",
-  "choose_activity_file": "Choose a .fit, .tcx, or .gpx activity file.",
+  "choose_activity_file": "Choose one or more .fit, .tcx, or .gpx activity files.",
   "activity_uploaded": "Activity uploaded.",
+  "activities_uploaded": "{count} activities uploaded.",
+  "activities_upload_failed": "{uploaded} uploaded; {failed} failed.",
+  "activities_upload_progress": "{uploaded} / {total} uploaded",
+  "upload_queued": "Queued",
+  "upload_skipped": "Skipped",
+  "upload_workout": "Upload workout",
+  "upload_workouts": "Upload workouts",
   "upload_failed": "Upload failed.",
   "processing_taking_long": "Activity processing is taking longer than expected",
   "dont_have_account": "Don't have an account?",
@@ -196,202 +204,202 @@
   "ride": "Ride",
   "remove": "Remove",
   "save_preference": "Save preference",
-  "saved": "Saved"
-  ,"record": "Record"
-  ,"server_url": "Server URL"
-  ,"server_url_example": "For example http://192.168.1.10:2293 or https://kondis.example.com"
-  ,"server_url_settings_example": "For example http://192.168.0.10 or https://kondis.example.com"
-  ,"continue": "Continue"
-  ,"retry": "Retry"
-  ,"opening_identity_provider": "Opening identity provider…"
-  ,"retry_in_browser": "Retry in browser"
-  ,"server_requires_setup": "The Kondis server requires initial setup. Finish setup in your web browser and then return here to sign in."
-  ,"share_live_tracking": "Share live tracking"
-  ,"activity_paused": "Activity paused"
-  ,"tap_to_view_activity": "Tap to view your activity"
-  ,"back": "Back"
-  ,"find_people": "Find people"
-  ,"record_a_activity": "Record a activity"
-  ,"sync_now": "Sync now"
-  ,"everything_uploaded": "Everything is uploaded"
-  ,"untitled_activity": "Untitled activity"
-  ,"try_again": "Try again"
-  ,"saved_waiting_to_sync": "Saved on this device and waiting to sync."
-  ,"add_photos": "Add photos"
-  ,"activity_analysis": "Activity analysis"
-  ,"splits": "Splits"
-  ,"cycling_performance": "Cycling performance"
-  ,"running_performance": "Running performance"
-  ,"delete_activity": "Delete activity"
-  ,"delete_activity_confirmation": "This will permanently delete this activity and its analysis."
-  ,"deleting": "Deleting…"
-  ,"repeated_route": "Repeated route"
-  ,"activities_on_route": "{count} activities on this route"
-  ,"activity_on_route": "{count} activity on this route"
-  ,"compare_matched_efforts": "Compare your performance across every matched effort."
-  ,"view_matched_rides": "View matched rides"
-  ,"view_matched_runs": "View matched runs"
-  ,"speed": "Speed"
-  ,"time": "Time"
-  ,"power": "Power"
-  ,"elevation_short": "Elev"
-  ,"average_speed": "Avg speed"
-  ,"average_heart_rate": "Avg heart rate"
-  ,"calories": "Calories"
-  ,"like_activity": "Like activity"
-  ,"unlike_activity": "Unlike activity"
-  ,"comments_count": "{count} comments"
-  ,"open_activity_photos": "Open activity photos"
-  ,"close_photos": "Close photos"
-  ,"photo_of": "Photo {current} of {total}"
-  ,"return_to_activity": "Return to activity"
-  ,"more_options": "More options"
-  ,"edit_activity": "Edit activity"
-  ,"name": "Name"
-  ,"activity_name": "Activity name"
-  ,"description": "Description"
-  ,"add_description": "Add a description"
-  ,"exclude_from_rankings": "Exclude from rankings"
-  ,"tags": "Tags"
-  ,"race": "Race"
-  ,"commute": "Commute"
-  ,"workout": "Workout"
-  ,"recovery": "Recovery"
-  ,"with_kid": "With Kid"
-  ,"with_pet": "With Pet"
-  ,"for_a_cause": "For a Cause"
-  ,"new_best_all_time": "New best of all time"
-  ,"new_second_best_all_time": "New 2nd best of all time"
-  ,"new_third_best_all_time": "New 3rd best of all time"
-  ,"new_best_year": "New best of {year}"
-  ,"new_second_best_year": "New 2nd best of {year}"
-  ,"new_third_best_year": "New 3rd best of {year}"
-  ,"no_matched_route_data": "No matched route data"
-  ,"back_to_activity": "Back to activity"
-  ,"progress_over_time": "PROGRESS OVER TIME"
-  ,"fastest": "Fastest"
-  ,"all_time_average": "All-time avg"
-  ,"slowest": "Slowest"
-  ,"trending_average": "- Trending average"
-  ,"each_effort": "- Each effort"
-  ,"every_effort": "Every effort"
-  ,"popular": "Popular"
-  ,"more_activities": "More activities"
-  ,"start_activity": "Start activity"
-  ,"pause": "Pause"
-  ,"resume": "Resume"
-  ,"finish": "Finish"
-  ,"saving_and_syncing_activity": "Saving and syncing activity..."
-  ,"activity_saved": "Activity saved"
-  ,"dismiss": "Dismiss"
-  ,"no_gps_trace": "No GPS trace was captured for this activity."
-  ,"activity_title": "Activity title"
-  ,"uploading_activity": "Uploading activity..."
-  ,"save_activity": "Save activity"
-  ,"discard_activity": "Discard activity"
-  ,"discard_activity_confirmation": "This activity will be permanently deleted and cannot be recovered."
-  ,"discard": "Discard"
-  ,"keep_activity": "Keep activity"
-  ,"choose_activity_type": "Choose activity type"
-  ,"choose_sport": "Choose a sport"
-  ,"select_sport_to_record": "Select what you're about to record"
-  ,"close": "Close"
-  ,"search_sports": "Search sports"
-  ,"selected": "Selected"
-  ,"nothing_to_see": "Nothing to see here!"
-  ,"try_different_name_or_sport": "Try a different name or sport."
-  ,"activity_waiting_to_sync": "{count} activity waiting to sync"
-  ,"activities_waiting_to_sync": "{count} activities waiting to sync"
-  ,"activities_saved_on_device": "They are saved on this device and remain available below."
-  ,"request_pending": "Request pending"
-  ,"unfollow": "Unfollow"
-  ,"checking": "Checking..."
-  ,"save_and_test_connection": "Save and test connection"
-  ,"sign_out_confirmation_title": "Sign out?"
-  ,"sign_out_confirmation": "You will sign out from your Kondis server"
-  ,"looking_for_gps": "Looking for GPS..."
-  ,"gps_signal_weak": "GPS signal is weak"
-  ,"recording_failed": "Recording failed"
-  ,"saved_will_upload_when_reachable": "Saved on this device. It will upload when your Kondis server is reachable."
-  ,"no_sports_found": "No sports found"
-  ,"likes": "{count} likes"
-  ,"add_comment": "Add a comment"
-  ,"post": "Post"
-  ,"competition": "Competition"
-  ,"matched_rides": "Matched rides"
-  ,"matched_runs": "Matched runs"
-  ,"compare_route_activities": "Compare your performance across {count} activities on the same route"
-  ,"activities_count": "{count} activities"
-  ,"all_time_ranking": "All-time ranking"
-  ,"your_efforts": "Your {effort} efforts"
-  ,"every_result": "Every result"
-  ,"effort_history": "Effort history"
-  ,"effort": "Effort"
-  ,"kilometre_abbreviation": "KM"
-  ,"achievement_badge_description": "{effort}: {rank}"
-  ,"performance": "performance"
-  ,"best_efforts_progress": "See how your best {activities} have progressed over time."
-  ,"best_effort_sport": "Best effort sport"
-  ,"higher_is_better": "Higher is better"
-  ,"higher_is_faster": "Higher is faster"
-  ,"all_time": "All time"
-  ,"no_efforts_yet": "No {effort} efforts yet"
-  ,"import_more_activities": "Import more {activities} with the required data to start tracking this effort."
-  ,"create_kondis_account": "Create your Kondis account"
-  ,"setup_token_verified": "Your setup token has been verified."
-  ,"set_up": "Set up"
-  ,"profile": "Profile"
-  ,"profile_unavailable": "Profile unavailable"
-  ,"person_not_found": "This person could not be found."
-  ,"loading_profile": "Loading profile…"
-  ,"your_profile": "Your profile"
-  ,"athlete": "Athlete"
-  ,"cancel_request": "Cancel request"
-  ,"unblock": "Unblock"
-  ,"block": "Block"
-  ,"your_activities": "Your activities"
-  ,"your_activities_description": "Your recorded and uploaded activities will appear here."
-  ,"you_blocked_this_person": "You blocked this person"
-  ,"unblock_to_see_activities": "Unblock them to see their activity history."
-  ,"follow_to_see_activities": "Follow to see activities"
-  ,"follow_to_see_activities_description": "When they accept your request, their activities and live sessions will appear here and in Home."
-  ,"athlete_no_activity": "This athlete has not shared an activity yet."
-  ,"activity_likes": "Activity likes"
-  ,"show_people_who_liked": "Show people who liked this activity"
-  ,"likes_label": "Likes"
-  ,"no_likes_yet": "No likes yet."
-  ,"activity_type": "Activity type"
-  ,"activity_description_placeholder": "Activity description"
-  ,"activity_photos": "Activity photos"
-  ,"swipeable_activity_photos": "Swipeable activity photos"
-  ,"photo_carousel_controls": "Photo carousel controls"
-  ,"activity_kilometre_splits": "Activity kilometre splits"
-  ,"start": "Start"
-  ,"elevation_gain": "Elevation gain"
-  ,"average_power": "Average power"
-  ,"energy": "Energy"
-  ,"heart_rate": "Heart rate"
-  ,"view_matched": "View matched {activities}"
-  ,"cycling": "Cycling"
-  ,"running": "Running"
-  ,"excluded_from_rankings_note": "Shown for this activity only; excluded from rankings."
-  ,"distance_best_efforts": "Distance best efforts"
-  ,"power_best_efforts": "Power best efforts"
-  ,"view_best_effort_history": "View best effort history"
-  ,"new_ranked_best_all_time": "New {rank} best of all time"
-  ,"new_ranked_best_year": "New {rank} best of {year}"
-  ,"could_not_save_activity": "Could not save the activity. Please try again."
-  ,"delete_activity_confirmation_prompt": "Delete this activity? This cannot be undone."
-  ,"could_not_delete_activity": "Could not delete the activity. Please try again."
-  ,"matched_routes": "Matched routes"
-  ,"matched": "Matched {activities}"
-  ,"route_performance_over_time": "Route performance over time"
-  ,"performance_summary": "Performance summary"
-  ,"matched_route_activities": "Matched route activities"
-  ,"date": "Date"
-  ,"versus_average": "vs average"
-  ,"this_activity": "This {activity}"
-  ,"all_activities": "All activities"
-  ,"edit_activity_metadata": "Edit activity metadata"
-  ,"could_not_update_block": "Could not update the block."
+  "saved": "Saved",
+  "record": "Record",
+  "server_url": "Server URL",
+  "server_url_example": "For example http://192.168.1.10:2293 or https://kondis.example.com",
+  "server_url_settings_example": "For example http://192.168.0.10 or https://kondis.example.com",
+  "continue": "Continue",
+  "retry": "Retry",
+  "opening_identity_provider": "Opening identity provider…",
+  "retry_in_browser": "Retry in browser",
+  "server_requires_setup": "The Kondis server requires initial setup. Finish setup in your web browser and then return here to sign in.",
+  "share_live_tracking": "Share live tracking",
+  "activity_paused": "Activity paused",
+  "tap_to_view_activity": "Tap to view your activity",
+  "back": "Back",
+  "find_people": "Find people",
+  "record_a_activity": "Record a activity",
+  "sync_now": "Sync now",
+  "everything_uploaded": "Everything is uploaded",
+  "untitled_activity": "Untitled activity",
+  "try_again": "Try again",
+  "saved_waiting_to_sync": "Saved on this device and waiting to sync.",
+  "add_photos": "Add photos",
+  "activity_analysis": "Activity analysis",
+  "splits": "Splits",
+  "cycling_performance": "Cycling performance",
+  "running_performance": "Running performance",
+  "delete_activity": "Delete activity",
+  "delete_activity_confirmation": "This will permanently delete this activity and its analysis.",
+  "deleting": "Deleting…",
+  "repeated_route": "Repeated route",
+  "activities_on_route": "{count} activities on this route",
+  "activity_on_route": "{count} activity on this route",
+  "compare_matched_efforts": "Compare your performance across every matched effort.",
+  "view_matched_rides": "View matched rides",
+  "view_matched_runs": "View matched runs",
+  "speed": "Speed",
+  "time": "Time",
+  "power": "Power",
+  "elevation_short": "Elev",
+  "average_speed": "Avg speed",
+  "average_heart_rate": "Avg heart rate",
+  "calories": "Calories",
+  "like_activity": "Like activity",
+  "unlike_activity": "Unlike activity",
+  "comments_count": "{count} comments",
+  "open_activity_photos": "Open activity photos",
+  "close_photos": "Close photos",
+  "photo_of": "Photo {current} of {total}",
+  "return_to_activity": "Return to activity",
+  "more_options": "More options",
+  "edit_activity": "Edit activity",
+  "name": "Name",
+  "activity_name": "Activity name",
+  "description": "Description",
+  "add_description": "Add a description",
+  "exclude_from_rankings": "Exclude from rankings",
+  "tags": "Tags",
+  "race": "Race",
+  "commute": "Commute",
+  "workout": "Workout",
+  "recovery": "Recovery",
+  "with_kid": "With Kid",
+  "with_pet": "With Pet",
+  "for_a_cause": "For a Cause",
+  "new_best_all_time": "New best of all time",
+  "new_second_best_all_time": "New 2nd best of all time",
+  "new_third_best_all_time": "New 3rd best of all time",
+  "new_best_year": "New best of {year}",
+  "new_second_best_year": "New 2nd best of {year}",
+  "new_third_best_year": "New 3rd best of {year}",
+  "no_matched_route_data": "No matched route data",
+  "back_to_activity": "Back to activity",
+  "progress_over_time": "PROGRESS OVER TIME",
+  "fastest": "Fastest",
+  "all_time_average": "All-time avg",
+  "slowest": "Slowest",
+  "trending_average": "- Trending average",
+  "each_effort": "- Each effort",
+  "every_effort": "Every effort",
+  "popular": "Popular",
+  "more_activities": "More activities",
+  "start_activity": "Start activity",
+  "pause": "Pause",
+  "resume": "Resume",
+  "finish": "Finish",
+  "saving_and_syncing_activity": "Saving and syncing activity...",
+  "activity_saved": "Activity saved",
+  "dismiss": "Dismiss",
+  "no_gps_trace": "No GPS trace was captured for this activity.",
+  "activity_title": "Activity title",
+  "uploading_activity": "Uploading activity...",
+  "save_activity": "Save activity",
+  "discard_activity": "Discard activity",
+  "discard_activity_confirmation": "This activity will be permanently deleted and cannot be recovered.",
+  "discard": "Discard",
+  "keep_activity": "Keep activity",
+  "choose_activity_type": "Choose activity type",
+  "choose_sport": "Choose a sport",
+  "select_sport_to_record": "Select what you're about to record",
+  "close": "Close",
+  "search_sports": "Search sports",
+  "selected": "Selected",
+  "nothing_to_see": "Nothing to see here!",
+  "try_different_name_or_sport": "Try a different name or sport.",
+  "activity_waiting_to_sync": "{count} activity waiting to sync",
+  "activities_waiting_to_sync": "{count} activities waiting to sync",
+  "activities_saved_on_device": "They are saved on this device and remain available below.",
+  "request_pending": "Request pending",
+  "unfollow": "Unfollow",
+  "checking": "Checking...",
+  "save_and_test_connection": "Save and test connection",
+  "sign_out_confirmation_title": "Sign out?",
+  "sign_out_confirmation": "You will sign out from your Kondis server",
+  "looking_for_gps": "Looking for GPS...",
+  "gps_signal_weak": "GPS signal is weak",
+  "recording_failed": "Recording failed",
+  "saved_will_upload_when_reachable": "Saved on this device. It will upload when your Kondis server is reachable.",
+  "no_sports_found": "No sports found",
+  "likes": "{count} likes",
+  "add_comment": "Add a comment",
+  "post": "Post",
+  "competition": "Competition",
+  "matched_rides": "Matched rides",
+  "matched_runs": "Matched runs",
+  "compare_route_activities": "Compare your performance across {count} activities on the same route",
+  "activities_count": "{count} activities",
+  "all_time_ranking": "All-time ranking",
+  "your_efforts": "Your {effort} efforts",
+  "every_result": "Every result",
+  "effort_history": "Effort history",
+  "effort": "Effort",
+  "kilometre_abbreviation": "KM",
+  "achievement_badge_description": "{effort}: {rank}",
+  "performance": "performance",
+  "best_efforts_progress": "See how your best {activities} have progressed over time.",
+  "best_effort_sport": "Best effort sport",
+  "higher_is_better": "Higher is better",
+  "higher_is_faster": "Higher is faster",
+  "all_time": "All time",
+  "no_efforts_yet": "No {effort} efforts yet",
+  "import_more_activities": "Import more {activities} with the required data to start tracking this effort.",
+  "create_kondis_account": "Create your Kondis account",
+  "setup_token_verified": "Your setup token has been verified.",
+  "set_up": "Set up",
+  "profile": "Profile",
+  "profile_unavailable": "Profile unavailable",
+  "person_not_found": "This person could not be found.",
+  "loading_profile": "Loading profile…",
+  "your_profile": "Your profile",
+  "athlete": "Athlete",
+  "cancel_request": "Cancel request",
+  "unblock": "Unblock",
+  "block": "Block",
+  "your_activities": "Your activities",
+  "your_activities_description": "Your recorded and uploaded activities will appear here.",
+  "you_blocked_this_person": "You blocked this person",
+  "unblock_to_see_activities": "Unblock them to see their activity history.",
+  "follow_to_see_activities": "Follow to see activities",
+  "follow_to_see_activities_description": "When they accept your request, their activities and live sessions will appear here and in Home.",
+  "athlete_no_activity": "This athlete has not shared an activity yet.",
+  "activity_likes": "Activity likes",
+  "show_people_who_liked": "Show people who liked this activity",
+  "likes_label": "Likes",
+  "no_likes_yet": "No likes yet.",
+  "activity_type": "Activity type",
+  "activity_description_placeholder": "Activity description",
+  "activity_photos": "Activity photos",
+  "swipeable_activity_photos": "Swipeable activity photos",
+  "photo_carousel_controls": "Photo carousel controls",
+  "activity_kilometre_splits": "Activity kilometre splits",
+  "start": "Start",
+  "elevation_gain": "Elevation gain",
+  "average_power": "Average power",
+  "energy": "Energy",
+  "heart_rate": "Heart rate",
+  "view_matched": "View matched {activities}",
+  "cycling": "Cycling",
+  "running": "Running",
+  "excluded_from_rankings_note": "Shown for this activity only; excluded from rankings.",
+  "distance_best_efforts": "Distance best efforts",
+  "power_best_efforts": "Power best efforts",
+  "view_best_effort_history": "View best effort history",
+  "new_ranked_best_all_time": "New {rank} best of all time",
+  "new_ranked_best_year": "New {rank} best of {year}",
+  "could_not_save_activity": "Could not save the activity. Please try again.",
+  "delete_activity_confirmation_prompt": "Delete this activity? This cannot be undone.",
+  "could_not_delete_activity": "Could not delete the activity. Please try again.",
+  "matched_routes": "Matched routes",
+  "matched": "Matched {activities}",
+  "route_performance_over_time": "Route performance over time",
+  "performance_summary": "Performance summary",
+  "matched_route_activities": "Matched route activities",
+  "date": "Date",
+  "versus_average": "vs average",
+  "this_activity": "This {activity}",
+  "all_activities": "All activities",
+  "edit_activity_metadata": "Edit activity metadata",
+  "could_not_update_block": "Could not update the block."
 }

@@ -67,6 +67,27 @@ describe('computeRunningBestEfforts', () => {
     ]);
   });
 
+  it('computes every requested cycling distance when the ride is long enough', () => {
+    const distance = Array.from({ length: 201 }, (_, index) => index * 1000);
+    const time = distance.map((meters) => meters / 10);
+
+    expect(computeCyclingBestEfforts(distance, time).map(({ type }) => type)).toEqual([
+      '5_miles',
+      '10k',
+      '10_miles',
+      '20k',
+      '30k',
+      '40k',
+      '50k',
+      '80k',
+      '50_miles',
+      '90k',
+      '100k',
+      '100_miles',
+      '180k',
+    ]);
+  });
+
   it('finds biggest climb and duration-based average power', () => {
     expect(computeBiggestClimb([100, 90, 110, 145, 130], [0, 10, 20, 30, 40])).toMatchObject({
       value: 55,
@@ -81,5 +102,24 @@ describe('computeRunningBestEfforts', () => {
       startTime: 10,
       endTime: 15,
     });
+  });
+
+  it('produces the requested power-curve durations', () => {
+    const time = Array.from({ length: 3601 }, (_, index) => index);
+    const power = time.map(() => 250);
+    const types = computeCyclingPowerBestEfforts(power, time).map(({ type }) => type);
+
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'power_5s',
+        'power_30s',
+        'power_1m',
+        'power_5m',
+        'power_10m',
+        'power_20m',
+        'power_30m',
+        'power_1h',
+      ]),
+    );
   });
 });

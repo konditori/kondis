@@ -1693,6 +1693,10 @@ button {
   border-color: var(--green);
   transform: scale(0.995);
 }
+.drop-zone:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
 .upload-icon {
   display: grid;
   place-items: center;
@@ -1728,8 +1732,8 @@ button {
 }
 .upload-list {
   display: grid;
-  gap: 7px;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 18px;
 }
 .upload-choices {
   display: grid;
@@ -1874,22 +1878,45 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  min-height: 76px;
+  padding: 13px 16px;
   background: white;
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.upload-row:has(.activity-title):hover {
+  border-color: color-mix(in srgb, var(--green) 42%, var(--line));
+  box-shadow: 0 5px 16px #0c35150c;
 }
 .file-name {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 .file-name small {
   margin-top: 2px;
   color: var(--muted);
   font-weight: 400;
+}
+.upload-row .activity-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: fit-content;
+  margin-top: 6px;
+  color: var(--green);
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+.upload-row .activity-title:hover {
+  color: var(--green-dark);
+  text-decoration-thickness: 2px;
 }
 .spin {
   color: var(--green);
@@ -1905,6 +1932,21 @@ button {
   color: var(--green);
   font-size: 11px;
   font-weight: 700;
+}
+.upload-file-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.upload-file-status.pending {
+  color: var(--muted);
+}
+.upload-file-status.error {
+  color: #a34227;
 }
 .error {
   color: #a34227;
@@ -4276,7 +4318,6 @@ body,
 .people-list .person-row,
 .notifications-panel,
 .upload-choice,
-.upload-panel,
 .route-match-summary,
 .matched-route-chart,
 .map-panel,

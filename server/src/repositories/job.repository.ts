@@ -342,7 +342,12 @@ export class JobRepository implements OnApplicationShutdown {
   private getJobOptions(item: JobItem): Pick<SendOptions, 'singletonKey' | 'priority'> {
     switch (item.name) {
       case JobName.ActivityUpload: {
-        return { singletonKey: `${item.name}:${item.data.checksum}` };
+        // Disk-backed HTTP uploads do not have a checksum until the worker reads
+        // the staged file. Use the unique temporary path in that case so a batch
+        // of uploads is not collapsed into the singleton key "undefined".
+        return {
+          singletonKey: `${item.name}:${item.data.checksum ?? item.data.storagePath}`,
+        };
       }
 
       case JobName.ActivityMetricCompute:
