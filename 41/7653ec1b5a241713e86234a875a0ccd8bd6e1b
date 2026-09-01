@@ -1,0 +1,65 @@
+.github/workflows/sites.yml
+  s_b90dabb3cc0ae2::t_0472f45c4bcae5 1-96
+.github/workflows/test.yml
+  s_b90dabb3cc0ae2::t_3de420f7b6cb68 83,386
+pnpm-lock.yaml
+  s_a94dfafc91eaca::t_156c7288e9dd8c 9-10,12-13,5903-5905,6160-6161,6747-6748,7977-7979,9071,10621,10743,11298,11332,14532,14551,14561,14631,15960,16162,16961,17749,18381
+pnpm-workspace.yaml
+  s_97e88219954c4d::t_736b075fd9f0f1 16-17,19-20
+sites/developers.kondis.org/docs/contributing.md
+  s_b90dabb3cc0ae2::t_bee714ffa2ba8d 7
+sites/developers.kondis.org/src/theme/Logo/index.tsx
+  s_a94dfafc91eaca::t_4939128c93868e 4-8,12
+sites/docs.kondis.org/docs/install/installation.mdx
+  s_a94dfafc91eaca::t_7a4215c7e3c9df 6-7,11
+sites/docs.kondis.org/docs/install/mobile.md
+  s_a94dfafc91eaca::t_f7497636d7fb7a 17,20,29
+sites/docs.kondis.org/docs/install/remote.md
+  s_a94dfafc91eaca::t_c4591444e963d6 10,26,30
+sites/docs.kondis.org/docs/install/setup.md
+  s_a94dfafc91eaca::t_220f722453ac09 15,17,19,21,23,27
+sites/docs.kondis.org/docs/usage/activities.md
+  s_a94dfafc91eaca::t_6f8a2d62c307e9 8,14
+sites/docs.kondis.org/docs/usage/importing.md
+  s_a94dfafc91eaca::t_3799306faf410f 8,10,12-15,19-23,25
+sites/docs.kondis.org/docs/usage/recording.md
+  s_a94dfafc91eaca::t_44f0c9b4731662 14
+sites/docs.kondis.org/docusaurus.config.ts
+  s_a94dfafc91eaca::t_4248f279675c65 23-24,52-55,57-82
+sites/docs.kondis.org/src/css/custom.css
+  s_a94dfafc91eaca::t_c73d6f08c65870 10-11
+sites/docs.kondis.org/src/theme/Logo/index.tsx
+  s_a94dfafc91eaca::t_4fa6e3d6093707 4-8,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "417653ec1b5a241713e86234a875a0ccd8bd6e1b",
+  "prompts": {},
+  "sessions": {
+    "s_97e88219954c4d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c2e-67d3-7710-8a99-bf74712d3cb8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_a94dfafc91eaca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c2c-aadd-7390-9332-7a48fa5ddbea",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b90dabb3cc0ae2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c2e-17b3-7a33-8a80-9866e7729322",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
