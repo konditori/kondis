@@ -1,0 +1,63 @@
+i18n/en.json
+  s_47bef554b199de::t_edd13e9e81a5c8 96-97,177-178,180,182,184-190,207-404
+i18n/sv.json
+  s_47bef554b199de::t_8aa64d2b42676f 95-96,176-177,179,181,183-189
+packages/sdk/src/fetch-client.ts
+  s_47bef554b199de::t_235a06053335c7 186-187,290-293,414-417,457-458
+server/src/dtos/activity.dto.ts
+  s_47bef554b199de::t_81099d45fb3d1a 68
+server/src/repositories/event.repository.ts
+  s_47bef554b199de::t_6351d19aeead1f 18,60-64,79-83
+server/src/repositories/job.repository.spec.ts
+  s_47bef554b199de::t_d99f41d8418155 1-50
+server/src/repositories/job.repository.ts
+  s_47bef554b199de::t_412b9a0e99ef5d 345-350
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_281f61f121046b::t_361279ee84ac8b 199-200
+server/src/schema/migrations/1788000000000-CompleteCyclingBestEffortTypes.ts
+  s_281f61f121046b::t_3881ccc001f093 1-80
+server/src/services/activity.service.ts
+  s_47bef554b199de::t_a59ff578cf86d6 182,839,864
+server/src/services/upload.service.ts
+  s_47bef554b199de::t_7cc00938e2ee6e 17,20,43-44,99-106
+server/src/utils/best-effort.spec.ts
+  s_281f61f121046b::t_4305f3ed39605a 70-90,106-124
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_47bef554b199de::t_288f45fd3107b7 313-335
+web/src/app.css
+  s_47bef554b199de::t_fd15d377379843 1696-1699,1735-1736,1881-1882,1885-1890,1896,1904-1920,1936-1950
+web/src/lib/activity-upload-queue.spec.ts
+  s_47bef554b199de::t_8ffa0da50c24f5 1-105
+web/src/lib/activity-upload-queue.ts
+  s_47bef554b199de::t_d658eb76d3ae32 1-53
+web/src/lib/components/UploadForm.svelte
+  s_47bef554b199de::t_e9d01203014f99 4-13,17-22,29,33,35-39,46-47,50-57,59-60,69-96,99,106-131,133-134,137-141,143-149,151-168,194,204,208,217-220,223-251,253-258
+web/src/lib/realtime.ts
+  s_47bef554b199de::t_e7c06f90396ab2 8-12,146
+web/src/lib/types.ts
+  s_47bef554b199de::t_c07a9ed10d0093 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "24197ddca9f01ab068b30a2401112f658ec4e55a",
+  "prompts": {},
+  "sessions": {
+    "s_281f61f121046b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05d0a-14c4-78f2-b076-c35a2e032052",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_47bef554b199de": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05ca3-df26-7e83-b27f-b002bffe03e2",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
