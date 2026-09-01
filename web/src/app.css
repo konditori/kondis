@@ -1883,7 +1883,9 @@ button {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .upload-row:has(.activity-title):hover {
   border-color: color-mix(in srgb, var(--green) 42%, var(--line));
