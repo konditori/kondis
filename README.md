@@ -4,22 +4,32 @@ An open source, self-hosted fitness tracker.
 
 Let's do to commercial fitness platforms what Immich did to photo hosting.
 
+Kondis is usable but under fast-paced development.
+
 The name is Nordic slang for "conditioning"
 
-## Goals (subject to change)
+## Documentation
+Main documentation is available on the [documentation site](https://docs.kondis.org/).
 
-1. Mobile apps with fast, reliable workout tracking
-2. Workout analysis and route map display
-3. Support for .fit and .gpx files
-4. Multi-user support with roles and shared environments
-5. Privacy-first defaults with self-hosted ownership of data
+## Completed features
 
-## Development 
+* Strava takeout import
+* Workout analysis and route map display
+* Import .fit, .gpx, and .tcx files
+* Android workout tracking
+* Live workout tracking
+* Multi user support
+* Liking and commenting others workouts
 
+## Planned features (subject to change)
+* Demo site linked from github
+
+## Development
 Please see the [developer documentation site](https://developers.kondis.org/).
 
-## License
+There is a separate [api reference site](https://developers.kondis.org/).
 
+## License
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).
 
 Bundled third-party dependencies and their notices are listed in
