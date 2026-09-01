@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "migrations": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/migrations.ts",
     "migrate": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/migrations.ts run",
+    "db:reset-development-data": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/reset-development-data.ts",
     "db:codegen": "kysely-codegen --dialect postgres --out-file src/db/schema.generated.ts",
     "sync-open-api": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/sync-open-api.ts",
     "third-party-licenses": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/generate-third-party-notices.ts"

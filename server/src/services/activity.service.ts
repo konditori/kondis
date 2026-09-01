@@ -179,7 +179,7 @@ export class ActivityService {
       if (!activity) {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
-      await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
+      await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
       if (takeoutImportId) {
         this.importProgressStore?.increment(takeoutImportId);
       }
@@ -836,7 +836,7 @@ export class ActivityService {
     return status !== JobStatus.Skipped;
   }
 
-  private toActivityDto(activity: ActivityRecord) {
+  private toActivityDto(activity: ActivityRecord, uploadFileName?: string) {
     const {
       metrics,
       metrics_computed_at: metricsComputedAt,
@@ -861,6 +861,7 @@ export class ActivityService {
 
     return ActivitySchema.parse({
       ...camelCased,
+      ...(uploadFileName && { uploadFileName }),
       metrics: metricsComputedAt === null ? null : camelCasedMetrics,
       startedAt: this.toIsoString(activity.started_at),
       createdAt: this.toIsoString(activity.created_at),

@@ -22,6 +22,7 @@
   import { page } from "$app/state";
   import {
     activityControllerDeleteById,
+    activityControllerGetById,
     activityControllerUpdateById,
     ActivityUpdateSport,
     getSdkRequestOptions,
@@ -312,6 +313,22 @@
     },
   ]);
 
+  async function refreshActivityDetail() {
+    try {
+      const detail = (await activityControllerGetById(
+        { id: data.activity.id },
+        getSdkRequestOptions(),
+      )) as unknown as ActivityDetail;
+      updatedActivity = {
+        ...(updatedActivity ?? {}),
+        metrics: detail.metrics,
+      };
+      updatedBestEfforts = detail.bestEfforts;
+    } catch {
+      // Realtime events will continue to update the page after reconnecting.
+    }
+  }
+
   $effect(() => {
     const unsubscribe = subscribeToActivityEvents(
       data.eventsUrl,
@@ -330,7 +347,7 @@
           };
         }
       },
-      () => {},
+      () => void refreshActivityDetail(),
     );
     return unsubscribe;
   });

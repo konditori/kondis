@@ -35,6 +35,15 @@ depends_post = "dev-down"
 [tasks.dev-update]
 run = { task = "//:dev", args = ["--build", "-V"] }
 
+[tasks.dev-reset-data]
+description = "Clear development data while preserving user accounts and avatars"
+dir = "docker"
+run = """
+docker compose -f ./docker-compose.dev.yml stop kondis-server
+trap 'docker compose -f ./docker-compose.dev.yml start kondis-server' EXIT
+docker compose -f ./docker-compose.dev.yml run --rm --no-deps kondis-reset
+"""
+
 [tasks.dev-down]
 dir = "docker"
 run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"

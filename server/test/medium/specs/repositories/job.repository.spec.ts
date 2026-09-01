@@ -310,6 +310,29 @@ describe('JobRepository', () => {
   });
 
   describe('deduplication', () => {
+    it('keeps disk-backed activity uploads with no checksum distinct', async () => {
+      await jobs.pause(QueueName.BackgroundTask);
+
+      try {
+        await jobs.queueAll([
+          {
+            name: JobName.ActivityUpload,
+            data: { originalName: 'one.fit', storagePath: 'temporary/one.fit' },
+          },
+          {
+            name: JobName.ActivityUpload,
+            data: { originalName: 'two.fit', storagePath: 'temporary/two.fit' },
+          },
+        ]);
+
+        const counts = await jobs.getJobCounts(QueueName.BackgroundTask);
+        expect(counts.queued).toBe(2);
+      } finally {
+        await jobs.empty(QueueName.BackgroundTask);
+        await jobs.resume(QueueName.BackgroundTask);
+      }
+    });
+
     it('does not queue a second parse while one is pending', async () => {
       await jobs.pause(QueueName.ActivityParsing);
 

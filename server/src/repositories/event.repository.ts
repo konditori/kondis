@@ -15,6 +15,7 @@ const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
 
 type EventMap = {
   ActivityCreate: [activity: ActivityDto];
+  ActivityUploadSkipped: [activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>, uploadFileName: string];
   ActivityUpdate: [activity: ActivityDto];
   ActivityCommentCreated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
   ActivityCommentUpdated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
@@ -56,6 +57,11 @@ export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent =
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
+  | {
+      type: 'activity.upload.skipped';
+      activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>;
+      uploadFileName: string;
+    }
   | { type: 'activity.comment.created'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
   | { type: 'activity.comment.updated'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
   | { type: 'activity.comment.deleted'; activity: Pick<ActivityDto, 'id'>; commentId: string }
@@ -70,6 +76,11 @@ type EventSerializers = {
 
 const eventSerializers: EventSerializers = {
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
+  ActivityUploadSkipped: (activity, uploadFileName) => ({
+    type: 'activity.upload.skipped',
+    activity,
+    uploadFileName,
+  }),
   ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
   ActivityCommentCreated: (activity, comment) => ({ type: 'activity.comment.created', activity, comment }),
   ActivityCommentUpdated: (activity, comment) => ({ type: 'activity.comment.updated', activity, comment }),

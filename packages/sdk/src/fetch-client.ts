@@ -183,6 +183,8 @@ export type ActivityListResponseDtoOutput = {
     id: string;
     /** Source upload id */
     uploadId: string;
+    /** Original uploaded activity filename */
+    uploadFileName?: string;
     /** Activity owner id */
     userId?: string | null;
     athlete?: {
@@ -287,6 +289,8 @@ export type ActivityDetailDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
+  /** Original uploaded activity filename */
+  uploadFileName?: string;
   /** Activity owner id */
   userId?: string | null;
   athlete?: {
@@ -409,6 +413,8 @@ export type ActivityDtoOutput = {
   id: string;
   /** Source upload id */
   uploadId: string;
+  /** Original uploaded activity filename */
+  uploadFileName?: string;
   /** Activity owner id */
   userId?: string | null;
   athlete?: {
@@ -448,6 +454,8 @@ export type MatchedRouteListResponseDtoOutput = {
         id: string;
         /** Source upload id */
         uploadId: string;
+        /** Original uploaded activity filename */
+        uploadFileName?: string;
         /** Activity owner id */
         userId?: string | null;
         athlete?: {

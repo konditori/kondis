@@ -64,6 +64,25 @@ services:
     healthcheck:
       disable: false
 
+  # A one-off, local-development command used by `mise dev-reset-data`.
+  # Keeping it separate from kondis-server lets the reset run while workers are stopped.
+  kondis-reset:
+    extends:
+      service: kondis-app-base
+    profiles: ['tools']
+    build:
+      context: ../
+      dockerfile: server/Dockerfile.dev
+      target: dev
+    command: ['pnpm --dir server db:reset-development-data -- --confirm']
+    volumes:
+      - ${DATA_LOCATION}/data:/data
+    env_file:
+      - .env
+    depends_on:
+      database:
+        condition: service_healthy
+
   kondis-web:
     extends:
       service: kondis-app-base

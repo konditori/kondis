@@ -1,39 +1,63 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
-  import { ArrowLeft, Check, FileUp, LoaderCircle } from "@lucide/svelte";
   import {
+    ArrowLeft,
+    ArrowUpRight,
+    Check,
+    CircleAlert,
+    Clock3,
+    FileUp,
+    LoaderCircle,
+  } from "@lucide/svelte";
+  import {
+    activityControllerGetById,
     getSdkRequestOptions,
     uploadControllerUploadActivity,
   } from "$lib/api";
+  import {
+    selectActivityFiles,
+    uploadActivityFiles,
+    type ActivityUploadItem,
+  } from "$lib/activity-upload-queue";
+  import { activityName } from "$lib/format";
   import { subscribeToActivityEvents } from "$lib/realtime";
   import type { Activity } from "$lib/types";
   import { t } from "$lib/i18n";
 
   let { eventsUrl }: { eventsUrl: string } = $props();
   let input = $state<HTMLInputElement>();
-  let file = $state<File>();
+  let files = $state<ActivityUploadItem[]>([]);
   let dragging = $state(false);
   let uploadState = $state<"idle" | "uploading" | "done" | "error">("idle");
   let message = $state("");
+  let uploadedCount = $state(0);
 
-  function selectFile(selected?: File) {
-    if (!selected) return;
-    const accepted = [".fit", ".tcx", ".gpx"].some((extension) =>
-      selected.name.toLowerCase().endsWith(extension),
-    );
-    if (!accepted) {
-      file = undefined;
+  function selectFiles(selected: File[]) {
+    if (!selected.length || uploadState === "uploading") return;
+    const selection = selectActivityFiles(selected);
+    files = selection.files;
+    if (selection.hasRejectedFiles) {
       uploadState = "error";
       message = t("choose_activity_file");
       return;
     }
-    file = selected;
     uploadState = "idle";
     message = "";
+    uploadedCount = 0;
+    void upload();
   }
 
-  function waitForActivityCreated(): Promise<Activity> {
+  type UploadedActivity = Pick<Activity, "id" | "name" | "sport"> & {
+    uploadFileName: string;
+    skipped: boolean;
+  };
+
+  function waitForActivitiesCreated(
+    fileNames: string[],
+  ): Promise<UploadedActivity[]> {
     return new Promise((resolve, reject) => {
+      const remaining = [...fileNames];
+      const activities: UploadedActivity[] = [];
       let unsubscribe: (() => void) | undefined;
       const timeout = setTimeout(() => {
         unsubscribe?.();
@@ -42,34 +66,106 @@
       unsubscribe = subscribeToActivityEvents(
         eventsUrl,
         (event) => {
-          if (event.type !== "activity.created") return;
+          if (
+            event.type !== "activity.created" &&
+            event.type !== "activity.upload.skipped"
+          )
+            return;
+          const fileName =
+            event.type === "activity.upload.skipped"
+              ? event.uploadFileName
+              : event.activity.uploadFileName;
+          if (!fileName) return;
+          const matchingFileIndex = remaining.indexOf(fileName);
+          if (matchingFileIndex === -1) return;
+          remaining.splice(matchingFileIndex, 1);
+          const activity = {
+            ...event.activity,
+            uploadFileName: fileName,
+            skipped: event.type === "activity.upload.skipped",
+          };
+          activities.push(activity);
+          const item = files.find(
+            (candidate) => candidate.file.name === fileName,
+          );
+          if (item) {
+            item.activity = activity;
+            if (activity.skipped) item.status = "skipped";
+            void refreshActivityTitle(activity);
+          }
+          if (remaining.length > 0) return;
           clearTimeout(timeout);
           unsubscribe?.();
-          resolve(event.activity);
+          resolve(activities);
         },
         () => {},
       );
     });
   }
 
+  async function refreshActivityTitle(activity: UploadedActivity) {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      try {
+        const detail = (await activityControllerGetById(
+          { id: activity.id },
+          getSdkRequestOptions(),
+        )) as unknown as Activity;
+        if (detail.name) {
+          const item = files.find(
+            (candidate) => candidate.file.name === activity.uploadFileName,
+          );
+          if (item)
+            item.activity = {
+              id: detail.id,
+              name: detail.name,
+              sport: detail.sport,
+            };
+          return;
+        }
+      } catch {
+        // Keep retrying while the asynchronous activity processing settles.
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+
   async function upload() {
-    if (!file || uploadState === "uploading") return;
+    if (!files.length || uploadState === "uploading" || uploadState === "done")
+      return;
     uploadState = "uploading";
     message = "";
-    const activityCreated = waitForActivityCreated();
+    uploadedCount = 0;
+    const pendingFiles = files.filter((item) => item.status !== "done");
+    const activityCreated = waitForActivitiesCreated(
+      pendingFiles.map((item) => item.file.name),
+    );
     try {
-      await uploadControllerUploadActivity(
-        { body: { file } },
-        getSdkRequestOptions(),
-      );
+      const result = await uploadActivityFiles(files, async (file) => {
+        await uploadControllerUploadActivity(
+          { body: { file } },
+          getSdkRequestOptions(),
+        );
+        uploadedCount += 1;
+      });
       await invalidateAll();
-      uploadState = "done";
-      message = t("activity_uploaded");
-      try {
-        const activity = await activityCreated;
-        await goto(`/activities/${activity.id}`);
-      } catch {
-        // Keep the completed upload visible if processing takes longer.
+      uploadState = result.failedCount ? "error" : "done";
+      message = result.failedCount
+        ? t("activities_upload_failed", {
+            uploaded: result.completedCount,
+            failed: result.failedCount,
+          })
+        : result.completedCount === 1
+          ? t("activity_uploaded")
+          : t("activities_uploaded", { count: result.completedCount });
+      if (pendingFiles.length === 1) {
+        try {
+          const [activity] = await activityCreated;
+          await goto(`/activities/${activity.id}`);
+        } catch {
+          // Keep the completed upload visible if processing takes longer.
+        }
+      } else {
+        void activityCreated.catch(() => {});
       }
     } catch (error) {
       void activityCreated.catch(() => {});
@@ -95,6 +191,7 @@
     class:dragging
     class="drop-zone"
     type="button"
+    disabled={uploadState === "uploading"}
     onclick={() => input?.click()}
     ondragover={(event) => {
       event.preventDefault();
@@ -104,11 +201,11 @@
     ondrop={(event) => {
       event.preventDefault();
       dragging = false;
-      selectFile(event.dataTransfer?.files[0]);
+      selectFiles(Array.from(event.dataTransfer?.files ?? []));
     }}
   >
     <span class="upload-icon"><FileUp size={28} /></span>
-    <strong>{t("drop_activity_file")}</strong>
+    <strong>{t("drop_activity_files")}</strong>
     <span>{t("click_to_browse")}</span>
     <small>.fit, .tcx, or .gpx</small>
   </button>
@@ -117,22 +214,48 @@
     class="sr-only"
     type="file"
     accept=".fit,.tcx,.gpx"
-    onchange={(event) => selectFile(event.currentTarget.files?.[0])}
+    multiple
+    disabled={uploadState === "uploading"}
+    onchange={(event) =>
+      selectFiles(Array.from(event.currentTarget.files ?? []))}
   />
 
-  {#if file}
-    <div class="upload-row">
-      <span class="file-name"
-        >{file.name}<small>{(file.size / 1024).toFixed(0)} KB</small></span
-      >
-      {#if uploadState === "uploading"}<LoaderCircle
-          class="spin"
-          size={19}
-        />{/if}
-      {#if uploadState === "done"}<span class="processing"
-          ><Check class="success" size={16} /> {t("done")}</span
-        >{/if}
+  {#if files.length}
+    <div class="upload-list">
+      {#each files as item}
+        <div class="upload-row">
+          <span class="file-name"
+            >{item.file.name}<small
+              >{(item.file.size / 1024).toFixed(0)} KB</small
+            >{#if item.activity}<a
+                class="activity-title"
+                href={`/activities/${item.activity.id}`}
+                >{activityName(item.activity)} <ArrowUpRight size={16} /></a
+              >{/if}</span
+          >
+          {#if item.status === "queued"}<span class="upload-file-status pending"
+              ><Clock3 size={16} /> {t("upload_queued")}</span
+            >{:else if item.status === "uploading"}<span
+              class="upload-file-status"
+              ><LoaderCircle class="spin" size={16} />
+              {t("uploading_activity")}</span
+            >{:else if item.status === "done"}<span class="upload-file-status"
+              ><Check class="success" size={16} /> {t("done")}</span
+            >{:else if item.status === "skipped"}<span
+              class="upload-file-status pending"
+              ><CircleAlert size={16} /> {t("upload_skipped")}</span
+            >{:else}<span class="upload-file-status error"
+              ><CircleAlert size={16} /> {t("upload_failed")}</span
+            >{/if}
+        </div>
+      {/each}
     </div>
+    {#if uploadState === "uploading"}<p class="upload-message">
+        {t("activities_upload_progress", {
+          uploaded: uploadedCount,
+          total: files.length,
+        })}
+      </p>{/if}
   {/if}
   {#if message}<p
       class:error={uploadState === "error"}
@@ -141,13 +264,4 @@
     >
       {message}
     </p>{/if}
-  <button
-    class="upload-submit"
-    type="button"
-    disabled={!file || uploadState === "uploading"}
-    onclick={() => void upload()}
-  >
-    {#if uploadState === "uploading"}<LoaderCircle class="spin" size={17} /> Uploading…{:else}Upload
-      workout{/if}
-  </button>
 </div>

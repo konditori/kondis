@@ -6,6 +6,11 @@ export type ActivityEvent =
       activity: Activity;
     }
   | {
+      type: "activity.upload.skipped";
+      activity: Pick<Activity, "id" | "name" | "sport">;
+      uploadFileName: string;
+    }
+  | {
       type: "activity.comment.created" | "activity.comment.updated";
       activity: Pick<Activity, "id">;
       comment: {
@@ -138,6 +143,7 @@ export function subscribeToActivityEvents(
         };
         if (
           (event.type === "activity.created" ||
+            event.type === "activity.upload.skipped" ||
             event.type === "activity.updated" ||
             event.type === "activity.comment.created" ||
             event.type === "activity.comment.updated" ||
