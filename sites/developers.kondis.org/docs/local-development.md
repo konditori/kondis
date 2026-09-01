@@ -32,7 +32,7 @@ cd sites/docs.kondis.org
 Then run
 
 ```bash
-mise dev-update
+mise dev
 ```
 
 ## Developer docs site
@@ -46,7 +46,7 @@ cd sites/developers.kondis.org
 Then run
 
 ```bash
-mise dev-update
+mise dev
 ```
 
 ## kondis.org site
@@ -58,7 +58,7 @@ cd sites/kondis.org
 Then run
 
 ```bash
-mise dev-update
+mise dev
 ```
 
 ## API reference site, api.kondis.org

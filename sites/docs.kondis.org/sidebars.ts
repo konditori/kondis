@@ -23,13 +23,6 @@ const sidebars: SidebarsConfig = {
         "usage/social",
       ],
     },
-    {
-      type: "category",
-      label: "Operations",
-      items: [
-        "operations/backups",
-      ],
-    },
   ],
 };
 export default sidebars;

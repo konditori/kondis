@@ -37,11 +37,6 @@ const config: Config = {
           position: "right",
         },
         {
-          href: "https://api.kondis.org/",
-          label: "API",
-          position: "right",
-        },
-        {
           href: "https://github.com/konditori/kondis",
           label: "GitHub",
           position: "right",

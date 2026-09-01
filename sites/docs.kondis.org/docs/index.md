@@ -8,7 +8,7 @@ title: Kondis documentation
 
 Kondis is an open-source, self-hosted fitness tracker. Android tracking is supported and iOS and Apple Watch are on the to-do list. Kondis is licensed under AGPL 3.0.
 
-Kondis support importing existing workouts in `.fit`, `.tcx`, and `.gpx` file formats as well as complete Strava takeout files.
+For the latest feature matrix, see the [GitHub page](https://github.com/konditori/kondis).
 
 ## Choose your path
 

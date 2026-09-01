@@ -22,6 +22,9 @@ pnpm = "11.22.0"
 pin = true
 lockfile = true
 
+[hooks]
+postinstall = "pnpm install --frozen-lockfile"
+
 [tasks.dev]
 dir = "docker"
 interactive = true

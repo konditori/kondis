@@ -4,6 +4,7 @@ run = "pnpm install --filter @kondis/developer-docs --frozen-lockfile"
 [tasks.dev]
 env._.path = "./node_modules/.bin"
 run = "docusaurus start"
+depends = ["install"]
 
 [tasks.build]
 env._.path = "./node_modules/.bin"
