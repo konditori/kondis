@@ -1,0 +1,21 @@
+e2e/src/specs/server/api/activities.e2e-spec.ts
+  s_b90dabb3cc0ae2::t_a0f624feebd0f0 5,59,64
+e2e/src/utils.ts
+  s_b90dabb3cc0ae2::t_364b77ac0ab96c 7,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "195587d268fd7d1f901ebe41f710ab36788be0b7",
+  "prompts": {},
+  "sessions": {
+    "s_b90dabb3cc0ae2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05c2e-17b3-7a33-8a80-9866e7729322",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
