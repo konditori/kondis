@@ -81,3 +81,16 @@
 </header>
 
 {@render children()}
+
+<footer>
+  <a class="brand" href="/" aria-label="Kondis home"
+    ><span class="brand-mark" role="img" aria-label="sweating face">😰</span
+    ><span>Kondis</span></a
+  >
+  <p>Open-source, self-hosted fitness tracking.</p>
+  <div>
+    <a href={docs}>Docs</a><a href="/cursed-knowledge">Cursed knowledge</a><a
+      href="https://api.kondis.org">API</a
+    ><a href={github}>GitHub</a>
+  </div>
+</footer>

@@ -52,6 +52,7 @@
   </section>
 
   <section class="trust-row" aria-label="Kondis principles">
+   <p>Kondis is Swedish slang for conditioning. The 😰 emoji represents a workout well done.</p>
     <div>
       <span>Self-Hosted</span><i></i><span>Open Source</span><i></i><span
         >AGPL3</span
@@ -61,7 +62,7 @@
 
   <section id="features" class="features intro-section">
     <div class="section-heading">
-      <p class="eyebrow"><span></span>Built for the long run</p>
+      <p class="eyebrow">Built for the long run</p>
       <h2>Everything you need to<br />know your next move.</h2>
       <p>
         Track your training progress, personal bests, and do full workout
@@ -152,19 +153,17 @@
     <div class="privacy-orbit orbit-a"></div>
     <div class="privacy-orbit orbit-b"></div>
     <div class="privacy-content">
-      <div class="shield">⌁</div>
-      <p class="eyebrow"><span></span>Yours by design</p>
+      <div class="shield">🔒</div>
       <h2>Your data has<br /><em>one destination:</em> you.</h2>
       <p>
-        Kondis is free and open source. Run it on your own server, decide who
-        gets access, and keep your training history yours for the years ahead.
+        Kondis is free and open source. Run it on your own server and decide who gets access.
       </p>
       <a class="text-link" href={docs}>Read the documentation <span>→</span></a>
     </div>
   </section>
 
   <section id="get-started" class="get-started">
-    <p class="eyebrow"><span></span> Get moving</p>
+    <p class="eyebrow">Get moving</p>
     <h2>Ready when you are.</h2>
     <p>
       Set up Kondis on your server or VPS. We currently only recommend technical
@@ -177,16 +176,3 @@
     </div>
   </section>
 </main>
-
-<footer>
-  <a class="brand" href="/" aria-label="Kondis home"
-    ><span class="brand-mark" role="img" aria-label="sweating face">😰</span
-    ><span>Kondis</span></a
-  >
-  <p>Open-source, self-hosted fitness tracking.</p>
-  <div>
-    <a href={docs}>Docs</a><a href="/cursed-knowledge">Cursed knowledge</a><a
-      href="https://api.kondis.org">API</a
-    ><a href={github}>GitHub</a>
-  </div>
-</footer>
