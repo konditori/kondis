@@ -8,7 +8,6 @@ For local development, please begin by checking the [Kondis system requiements](
 
 All the apps below will be accessible at `http://localhost:3000`, meaning you can only run one at a time.
 
-
 ## Kondis app
 
 After cloning the git repo, run the app with the following command:

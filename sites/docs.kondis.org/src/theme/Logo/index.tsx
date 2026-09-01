@@ -9,7 +9,10 @@ export default function Logo({ imageClassName, titleClassName, ...props }: any) 
       <span className={imageClassName} role="img" aria-label="sweating face">
         😰
       </span>
-      <b className={titleClassName}>Kondis Docs</b>
+      <b className={titleClassName}>
+        <span>Kondis</span>{" "}
+        <span className="navbar__title-accent">Docs</span>
+      </b>
     </Link>
   );
 }

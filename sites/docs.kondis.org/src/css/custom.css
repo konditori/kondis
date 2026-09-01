@@ -41,6 +41,10 @@ body {
   letter-spacing: -0.03em;
 }
 
+.navbar__title-accent {
+  color: var(--ifm-color-primary);
+}
+
 .navbar__logo {
   align-items: center;
   display: inline-flex;
