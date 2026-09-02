@@ -1,0 +1,19 @@
+.github/workflows/sites.yml
+  s_3dfd79045cd041::t_8018b91ec753b8 75,116,154,192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "baff93ac1319da4d7669abf52b12c1d1e75f3d95",
+  "prompts": {},
+  "sessions": {
+    "s_3dfd79045cd041": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06149-2c56-7331-8ee4-14dcd6c39459",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
