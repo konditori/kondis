@@ -1,0 +1,19 @@
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_4895b89537bcc3::t_56956a42d4f960 214-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "da594b6f8caf3b245c7f3ad76734be87c419fb96",
+  "prompts": {},
+  "sessions": {
+    "s_4895b89537bcc3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a063ec-92b9-7b20-8b19-429ef0666f38",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
