@@ -51,6 +51,7 @@ export default typescriptEslint.config([
       'unicorn/no-declarations-before-early-exit': 'off',
       'unicorn/prefer-simple-condition-first': 'off',
       curly: 2,
+      'eol-last': ['error', 'always'],
       'prettier/prettier': 0,
       '@typescript-eslint/require-array-sort-compare': 'error',
       '@typescript-eslint/await-thenable': 'error',

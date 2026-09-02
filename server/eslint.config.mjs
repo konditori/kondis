@@ -82,6 +82,7 @@ export default typescriptEslint.config([
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/require-await': 'error',
       curly: 2,
+      'eol-last': ['error', 'always'],
       'prettier/prettier': 0,
       'object-shorthand': ['error', 'always'],
       'no-restricted-imports': ['error', { patterns: [noRelativeImports] }],

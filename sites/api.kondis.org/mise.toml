@@ -16,6 +16,7 @@ run = "wrangler dev --port 3000 --inspector-port 9230"
 run = "pnpm clear"
 
 [tasks.format]
+depends = ["//:final-newlines-check"]
 env._.path = "./node_modules/.bin"
 run = "prettier --check ."
 

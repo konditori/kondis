@@ -47,7 +47,6 @@
   </a>
 
   <nav aria-label="Main navigation">
-    <a href="/#features">Features</a>
     <a href={docs}>Docs <span aria-hidden="true">↗</span></a>
     <a href={github}>GitHub <span aria-hidden="true">↗</span></a>
   </nav>
@@ -85,7 +84,8 @@
 <footer>
   <a class="brand" href="/" aria-label="Kondis home"
     ><span class="brand-mark" role="img" aria-label="sweating face">😰</span
-    ><span>Kondis</span></a
+    >
+    <span>Kondis</span></a
   >
   <p>Open-source, self-hosted fitness tracking.</p>
   <div>

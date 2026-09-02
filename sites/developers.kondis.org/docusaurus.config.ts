@@ -29,12 +29,11 @@ const config: Config = {
   themeConfig: {
     navbar: {
       title: "Kondis Developers",
-      // Required by Docusaurus; the swizzled Logo component renders the emoji instead.
       logo: { alt: "Kondis", src: "img/favicon.svg" },
       items: [
         {
-          href: "https://docs.kondis.org/",
-          label: "User docs",
+          href: "https://kondis.org/",
+          label: "kondis.org",
           position: "right",
         },
         {

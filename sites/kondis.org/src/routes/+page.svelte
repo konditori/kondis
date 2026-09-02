@@ -62,16 +62,13 @@
   <section class="trust-row" aria-label="Kondis principles">
    <p>Kondis is Swedish slang for conditioning. The 😰 emoji represents a workout well done.</p>
     <div>
-      <span>Self-Hosted</span><i></i><span>Open Source</span><i></i><span
-        >AGPL3</span
-      >
+      <span><a href="https://discord.gg/jKjtYVe9uZ">Discord</a></span><i></i><span><a href="https://www.reddit.com/r/kondis/">Reddit</a></span>
     </div>
   </section>
 
   <section id="features" class="features intro-section">
     <div class="section-heading">
-      <p class="eyebrow">Built for the long run</p>
-      <h2>Everything you need to<br />know your next move.</h2>
+      <h2>Forget about becoming<br />a local legend</h2>
       <p>
         Track your training progress, personal bests, and do full workout
         analysis. We are adding new features all the time and hope to give you
@@ -162,7 +159,7 @@
     <div class="privacy-orbit orbit-b"></div>
     <div class="privacy-content">
       <div class="shield">🔒</div>
-      <h2>Your data has<br /><em>one destination:</em> you.</h2>
+      <h2>Your data has<br /><em>one destination:</em> you</h2>
       <p>
         Kondis is free and open source. Run it on your own server and decide who gets access.
       </p>
@@ -171,8 +168,7 @@
   </section>
 
   <section id="get-started" class="get-started">
-    <p class="eyebrow">Get moving</p>
-    <h2>Ready when you are.</h2>
+    <h2>Try it out for yourself</h2>
     <p>
       Set up Kondis on your server or VPS. We currently only recommend technical
       users since the project is moving fast.

@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
     "overview",
     "local-development",
     "contributing",
+    { type: "link", label: "User guides", href: "https://docs.kondis.org/" },
     { type: "link", label: "API reference", href: "https://api.kondis.org/" },
   ],
 };

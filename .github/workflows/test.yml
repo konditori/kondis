@@ -79,8 +79,25 @@ jobs:
         run: mise run //server:test
         continue-on-error: true
 
+  server-audit:
+    name: Audit Server Dependencies
+    needs: pre-job
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+
+      - name: Install dependencies
+        run: mise run //server:install
+
       - name: Audit production dependencies
-        run: mise run server:audit
+        run: mise run //server:audit
 
   e2e-check:
     name: Check E2E

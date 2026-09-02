@@ -11,6 +11,7 @@ env._.path = "./node_modules/.bin"
 run = "vite build"
 
 [tasks.format]
+depends = ["//:final-newlines-check"]
 env._.path = "./node_modules/.bin"
 run = "prettier --check ."
 

@@ -23,6 +23,11 @@ const sidebars: SidebarsConfig = {
         "usage/social",
       ],
     },
+    {
+      type: "link",
+      label: "Developer documentation",
+      href: "https://developers.kondis.org/",
+    },
   ],
 };
 export default sidebars;

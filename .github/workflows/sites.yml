@@ -72,7 +72,7 @@ jobs:
   kondis-org:
     name: Check kondis.org
     needs: pre-job
-    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).kondis == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(fromJSON(needs.pre-job.outputs.should_run), 'kondis') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -113,7 +113,7 @@ jobs:
   docs-kondis-org:
     name: Check docs.kondis.org
     needs: pre-job
-    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).docs == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(fromJSON(needs.pre-job.outputs.should_run), 'docs') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -151,7 +151,7 @@ jobs:
   developers-kondis-org:
     name: Check developers.kondis.org
     needs: pre-job
-    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).developers == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(fromJSON(needs.pre-job.outputs.should_run), 'developers') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -189,7 +189,7 @@ jobs:
   api-kondis-org:
     name: Check api.kondis.org
     needs: pre-job
-    if: ${{ github.event_name == 'workflow_dispatch' || fromJSON(needs.pre-job.outputs.should_run).api == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(fromJSON(needs.pre-job.outputs.should_run), 'api') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
