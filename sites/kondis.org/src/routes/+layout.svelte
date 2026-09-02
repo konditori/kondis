@@ -84,7 +84,8 @@
 <footer>
   <a class="brand" href="/" aria-label="Kondis home"
     ><span class="brand-mark" role="img" aria-label="sweating face">😰</span
-    ><span>Kondis</span></a
+    >
+    <span>Kondis</span></a
   >
   <p>Open-source, self-hosted fitness tracking.</p>
   <div>
