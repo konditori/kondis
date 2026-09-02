@@ -51,8 +51,9 @@ The Android client uses the Gradle wrapper and requires JDK 17 or newer. From
 You'll often want to reset the server contents, but maybe you don't feel like redoing the whole server setup?
 
 Just run
+
 ```bash
 mise dev-reset-data
-````
+```
 
 in the project route and it'll delete all activities (be careful) and other things yet keep accounts in place.

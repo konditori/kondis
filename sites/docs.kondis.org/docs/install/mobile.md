@@ -5,6 +5,8 @@ title: Mobile apps
 
 # Android setup
 
+Due to the early development stage of this project, the Android app is not yet available in the Play store.
+
 To build and install the Android app, you need:
 
 - Android Studio with its bundled JDK 17 or newer. JDK 21 is recommended.

@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Kondis"
 include(":app")
-

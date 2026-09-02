@@ -50,4 +50,3 @@ run = """
 description = "Fix Android lint issues"
 dir = "{{ config_root }}"
 run = "./gradlew :app:lintFixDebug"
-

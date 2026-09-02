@@ -3,4 +3,3 @@
     <include domain="database" path="." />
     <include domain="file" path="datastore/" />
 </full-backup-content>
-

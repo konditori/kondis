@@ -9,4 +9,3 @@
         <include domain="file" path="datastore/" />
     </device-transfer>
 </data-extraction-rules>
-
