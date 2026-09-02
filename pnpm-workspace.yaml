@@ -23,6 +23,7 @@ overrides:
   'cookie@<0.7.0': 0.7.2
   'postcss@<=8.5.22': 8.5.23
   'serialize-javascript@>=5.0.0 <7.0.5': 7.0.5
+  'fast-uri@<3.1.6': 3.1.6
   'uuid@<11.1.1': 11.1.1
 
 allowBuilds:
