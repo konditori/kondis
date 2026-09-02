@@ -1,0 +1,23 @@
+mise.lock
+  s_f6a6cf7efcaad7::t_17b958ff2c64d7 40,44-46,50-52,56-58,62-64,68-70,74-76
+mise.toml
+  s_f6a6cf7efcaad7::t_444de67281bcd8 18
+package.json
+  s_f6a6cf7efcaad7::t_dbe19ad8964e1a 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "df7637f1b11df0e6292f6faebd6c13d70e31ac36",
+  "prompts": {},
+  "sessions": {
+    "s_f6a6cf7efcaad7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06341-76a6-7830-b5f2-e2aa8f2c3bc5",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
