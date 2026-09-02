@@ -47,7 +47,6 @@
   </a>
 
   <nav aria-label="Main navigation">
-    <a href="/#features">Features</a>
     <a href={docs}>Docs <span aria-hidden="true">↗</span></a>
     <a href={github}>GitHub <span aria-hidden="true">↗</span></a>
   </nav>
