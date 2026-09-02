@@ -1,0 +1,45 @@
+.editorconfig
+  s_ec375d2005c240::t_222cf255180359 1-7
+.gitignore
+  s_ec375d2005c240::t_ea63fb0ed74069 21
+android/app/schemas/app.kondis.data.local.KondisDatabase/1.json
+  s_ec375d2005c240::t_4b7aff2a171a35 79
+android/app/schemas/app.kondis.data.local.KondisDatabase/2.json
+  s_ec375d2005c240::t_0602e8eb2c0699 127
+android/app/schemas/app.kondis.data.local.KondisDatabase/3.json
+  s_ec375d2005c240::t_0d4ae2327aa6a3 148
+docker/.gitignore
+  s_ec375d2005c240::t_d0a6a6e40ef1c1 1
+e2e/.prettierignore
+  s_ec375d2005c240::t_dd3479fc7575dd 4
+e2e/eslint.config.mjs
+  s_ec375d2005c240::t_7b0660b7186e06 54
+packages/.gitignore
+  s_ec375d2005c240::t_bdec0784539f65 1
+scripts/check-final-newlines.mjs
+  s_ec375d2005c240::t_f7c1cbe5a18264 1-32
+scripts/check-json-duplicates.mjs
+  s_ec375d2005c240::t_d6a5551739c6e5 109
+server/.gitignore
+  s_ec375d2005c240::t_c72bded47ef293 15
+server/.prettierignore
+  s_ec375d2005c240::t_f1f94e212f6374 17
+server/eslint.config.mjs
+  s_ec375d2005c240::t_27813a00905406 85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cd2e4a0bfcd33f8ce32aa8bfde1556d875425b05",
+  "prompts": {},
+  "sessions": {
+    "s_ec375d2005c240": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a060a7-b91a-7913-b6c2-eb4728de0300",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
