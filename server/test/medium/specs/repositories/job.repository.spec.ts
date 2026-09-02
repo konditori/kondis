@@ -211,6 +211,11 @@ describe('JobRepository', () => {
         await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
         expect(refresh).toHaveBeenCalledTimes(1);
+        await expect(jobs.getJobCounts(QueueName.ActivityParsing)).resolves.toMatchObject({
+          active: 0,
+          queued: 0,
+          failed: 0,
+        });
       } finally {
         refresh.mockRestore();
         await jobs.empty(QueueName.ActivityParsing);

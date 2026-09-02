@@ -538,21 +538,23 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<JobResult[]> {
-    let rankingRefresh: Job<StoredJob> | undefined;
+    const rankingRefreshes: Job<StoredJob>[] = [];
     const results: JobResult[] = [];
 
     for (const job of jobs) {
       if (job.data.name === JobName.ActivityBestEffortRank) {
-        // pg-boss marks the whole prefetched batch active before invoking us, so the ranking
-        // handler cannot delete these duplicates from the queue. Keep one refresh and run it
-        // after every computation in this batch; queued duplicates are discarded by the handler.
-        rankingRefresh = job;
+        // TODO: remove this workaround
+        rankingRefreshes.push(job);
         continue;
       }
 
       results.push(await this.dispatchResult(job));
     }
 
+    const rankingRefresh = rankingRefreshes.pop();
+    for (const duplicate of rankingRefreshes) {
+      results.push({ id: duplicate.id, status: 'completed', output: { status: JobStatus.Skipped } });
+    }
     if (rankingRefresh) {
       results.push(await this.dispatchResult(rankingRefresh));
     }
