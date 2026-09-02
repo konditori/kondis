@@ -22,6 +22,25 @@ const QueueStatusSchema = z
   })
   .meta({ id: 'QueueStatusDto' });
 
+const JobHistoryEntrySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  queue: QueueNameSchema,
+  status: z.enum(['queued', 'running', 'succeeded', 'failed', 'skipped']),
+  createdAt: z.string().datetime(),
+  startedAt: z.string().datetime().nullable(),
+  finishedAt: z.string().datetime().nullable(),
+  durationMs: z.number().int().nonnegative().nullable(),
+  attempt: z.number().int().positive(),
+  error: z.string().nullable(),
+});
+
+export const JobHistoryResponseSchema = z.object({ jobs: z.array(JobHistoryEntrySchema) });
+
+export const JobHistoryQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
 export const QueueStatusReportSchema = z.object({
   jobCounts: JobCountsSchema,
   queueStatus: QueueStatusSchema,
@@ -43,6 +62,8 @@ export const QueueNameParamSchema = z.object({ name: QueueNameSchema });
 
 export class QueueStatusReportDto extends createZodDto(QueueStatusReportSchema) {}
 export class AllJobStatusResponseDto extends createZodDto(AllJobStatusResponseSchema) {}
+export class JobHistoryResponseDto extends createZodDto(JobHistoryResponseSchema) {}
+export class JobHistoryQueryDto extends createZodDto(JobHistoryQuerySchema) {}
 export class JobCreateDto extends createZodDto(JobCreateSchema) {}
 export class QueueCommandDto extends createZodDto(QueueCommandSchema) {}
 export class QueueNameParamDto extends createZodDto(QueueNameParamSchema) {}

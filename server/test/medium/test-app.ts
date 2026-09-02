@@ -28,7 +28,7 @@ export const createTestApp = async (): Promise<TestApp> => {
     DB_PASSWORD: database.password,
     DB_DATABASE_NAME: database.database,
     KONDIS_STORAGE_DIR: storageDir,
-    KONDIS_WORKERS: 'jobs',
+    KONDIS_WORKERS: 'worker',
     // globalSetup already migrated; running it again here would just be slower.
     KONDIS_DB_AUTO_MIGRATE: 'false',
     KONDIS_JOB_SCHEMA: TEST_JOB_SCHEMA,

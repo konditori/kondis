@@ -36,6 +36,13 @@ import {
   socialControllerLikers,
   socialControllerNotifications,
   socialControllerMarkNotificationsRead,
+  jobControllerGetAllJobStatus,
+  jobControllerGetJobHistory,
+  jobControllerRunQueueCommand,
+  type AllJobStatusResponseDtoOutput,
+  type JobHistoryResponseDtoOutput,
+  Command as JobQueueCommand,
+  QueueName as JobQueueName,
 } from "@kondis/sdk";
 
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
@@ -110,4 +117,11 @@ export {
   socialControllerLikers,
   socialControllerNotifications,
   socialControllerMarkNotificationsRead,
+  jobControllerGetAllJobStatus,
+  jobControllerGetJobHistory,
+  jobControllerRunQueueCommand,
+  type AllJobStatusResponseDtoOutput,
+  type JobHistoryResponseDtoOutput,
+  JobQueueCommand,
+  JobQueueName,
 };

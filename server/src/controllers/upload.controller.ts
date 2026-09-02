@@ -93,7 +93,10 @@ export class UploadController {
   @ApiOperation({ summary: 'Get Strava takeout import progress' })
   @ZodResponse({ status: 200, description: 'Current import progress', type: TakeoutImportStatusDto })
   @Get('upload/strava/:id')
-  getStravaTakeoutStatus(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser): TakeoutImportStatusDto {
+  getStravaTakeoutStatus(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<TakeoutImportStatusDto> {
     return this.service.getLagomTakeoutStatus(id, user.id);
   }
 }

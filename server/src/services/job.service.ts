@@ -29,8 +29,8 @@ export class JobService {
   }
 
   async init(): Promise<void> {
-    if (!this.config.hasWorker(WorkerType.JOBS)) {
-      this.logger.log("Worker role 'jobs' is disabled; not consuming jobs in this process");
+    if (!this.config.hasWorker(WorkerType.WORKER)) {
+      this.logger.log("Role 'worker' is disabled; not consuming jobs in this process");
       return;
     }
 
@@ -40,6 +40,10 @@ export class JobService {
 
   create(name: ManualJobName): Promise<void> {
     return this.jobRepository.queue(asJobItem(name));
+  }
+
+  async getJobHistory(limit: number) {
+    return { jobs: await this.jobRepository.getJobHistory(limit) };
   }
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
@@ -86,7 +90,7 @@ export class JobService {
     };
   }
 
-  private async onJobRun(item: JobItem): Promise<void> {
+  private async onJobRun(item: JobItem): Promise<JobStatus> {
     const startedAt = Date.now();
 
     let status: JobStatus;
@@ -101,9 +105,10 @@ export class JobService {
 
     if (status === JobStatus.Failed) {
       this.logger.warn(`Job ${item.name} failed after ${duration}ms and will not be retried`);
-      return;
+      return status;
     }
 
     this.logger.debug(`Job ${item.name} ${status} in ${duration}ms`);
+    return status;
   }
 }

@@ -42,4 +42,4 @@ COPY --from=server-build /output/server-pruned ./
 EXPOSE 2293
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/bin/start.js"]

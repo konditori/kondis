@@ -450,5 +450,25 @@ describe('JobRepository', () => {
       expect(counts.total).toBeGreaterThan(0);
       expect(counts.failed).toBe(0);
     }, 20_000);
+
+    it('keeps recent job names, outcomes and timings for the admin history', async () => {
+      await jobs.queue({ name: JobName.FileDelete, data: { paths: [] } });
+      await jobs.waitForQueueCompletion(QueueName.Storage);
+
+      const history = await jobs.getJobHistory(10);
+      expect(history).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: JobName.FileDelete,
+            queue: QueueName.Storage,
+            status: 'succeeded',
+            attempt: 1,
+            startedAt: expect.any(String),
+            finishedAt: expect.any(String),
+            durationMs: expect.any(Number),
+          }),
+        ]),
+      );
+    });
   });
 });

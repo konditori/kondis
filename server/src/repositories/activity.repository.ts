@@ -287,22 +287,28 @@ export class ActivityRepository {
   }
 
   private async refreshRouteMatches(activityId: string, executor: KondisExecutor = this.db): Promise<void> {
+    const candidateIds = await this.computeMatchingRouteIds(activityId, executor);
+    let ids: string[] = [];
+    if (candidateIds.length > 0) {
+      // This must be the first row lock acquired by a route-match transaction. Locking the
+      // source activity first lets two overlapping routes each hold their own source row and
+      // then wait for the other, even though this query itself has a deterministic order.
+      const locked = await executor
+        .selectFrom('activity')
+        .select('id')
+        .where('id', 'in', [...candidateIds].sort())
+        .orderBy('id')
+        .forUpdate()
+        .execute();
+      ids = locked.map(({ id }) => id);
+    }
+
     await executor.deleteFrom('activity_route_match').where('activity_id', '=', activityId).execute();
     await executor.deleteFrom('activity_route_match').where('matched_activity_id', '=', activityId).execute();
 
-    const candidateIds = await this.computeMatchingRouteIds(activityId, executor);
-    if (candidateIds.length === 0) {
+    if (!ids.includes(activityId)) {
       return;
     }
-
-    const locked = await executor
-      .selectFrom('activity')
-      .select('id')
-      .where('id', 'in', [...candidateIds].sort())
-      .orderBy('id')
-      .forUpdate()
-      .execute();
-    const ids = locked.map(({ id }) => id);
 
     await executor
       .insertInto('activity_route_match')
@@ -318,12 +324,7 @@ export class ActivityRepository {
 
   async recomputeRouteMatches(activityId: string): Promise<boolean> {
     return this.db.transaction().execute(async (trx) => {
-      const activity = await trx
-        .selectFrom('activity')
-        .select('id')
-        .where('id', '=', activityId)
-        .forUpdate()
-        .executeTakeFirst();
+      const activity = await trx.selectFrom('activity').select('id').where('id', '=', activityId).executeTakeFirst();
       if (!activity) {
         return false;
       }

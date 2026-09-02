@@ -18,7 +18,7 @@
 {#if !data.authenticated}
   {@render children()}
 {:else}
-  <Sidebar />
+  <Sidebar user={data.user} />
   <Topbar
     user={data.user}
     eventsUrl={data.eventsUrl}

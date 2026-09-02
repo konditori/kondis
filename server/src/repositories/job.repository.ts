@@ -2,14 +2,14 @@ import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Job, JobInsert, QueuePolicy, SendOptions } from 'pg-boss';
+import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
 import { ConfigService } from 'src/config/config.service';
 import { KondisTransaction } from 'src/db/database';
 import type { JobConfig } from 'src/decorators';
 import { JobName, JobStatus, MetadataKey, QueueName, WorkerType } from 'src/enum';
-import { JobCounts, JobItem, JobOf } from 'src/types/jobs';
+import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'src/types/jobs';
 import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
 
 type StoredJob = { name: JobName; data?: object };
@@ -23,6 +23,19 @@ type JobMapItem = {
 
 type QueueJobOptions = {
   transaction?: KondisTransaction;
+};
+
+type StoredJobRow = {
+  id: string;
+  queue_name: string;
+  source_name: string | null;
+  job_name: string;
+  state: string;
+  retry_count: number;
+  created_on: Date;
+  started_on: Date | null;
+  completed_on: Date | null;
+  output: unknown;
 };
 
 const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
@@ -59,7 +72,7 @@ export class JobRepository implements OnApplicationShutdown {
   private readonly pausedQueues = new Set<QueueName>();
 
   private bossPromise: Promise<PgBoss> | null = null;
-  private onJobRun: ((item: JobItem) => Promise<void>) | null = null;
+  private onJobRun: ((item: JobItem) => Promise<JobStatus>) | null = null;
   private stopped = false;
 
   constructor(
@@ -109,7 +122,7 @@ export class JobRepository implements OnApplicationShutdown {
     }
   }
 
-  async startWorkers(onJobRun: (item: JobItem) => Promise<void>): Promise<void> {
+  async startWorkers(onJobRun: (item: JobItem) => Promise<JobStatus>): Promise<void> {
     this.onJobRun = onJobRun;
 
     const boss = await this.getBoss();
@@ -170,6 +183,34 @@ export class JobRepository implements OnApplicationShutdown {
       // Retained failures plus everything that exhausted its retries and was dead-lettered.
       failed: counts.failed + deadLetter.queued,
     };
+  }
+
+  async getJobHistory(limit: number): Promise<JobHistoryEntry[]> {
+    const boss = await this.getBoss();
+    const schema = this.quoteIdentifier(this.config.jobs.schema);
+    const queueNames = Object.values(QueueName);
+    const historyQueueNames = [...queueNames, ...queueNames.map((queue) => deadLetterName(queue))];
+    const { rows } = await boss.getDb().executeSql(
+      `SELECT
+         id::text,
+         name AS queue_name,
+         source_name,
+         data ->> 'name' AS job_name,
+         state::text,
+         retry_count,
+         created_on,
+         started_on,
+         completed_on,
+         output
+       FROM ${schema}.job
+       WHERE name = ANY($1::text[])
+         AND data ->> 'name' IS NOT NULL
+       ORDER BY COALESCE(started_on, created_on) DESC, created_on DESC
+       LIMIT $2`,
+      [historyQueueNames, limit],
+    );
+
+    return (rows as StoredJobRow[]).map((row) => this.toJobHistoryEntry(row));
   }
 
   async getReferencedTemporaryPaths(): Promise<Set<string>> {
@@ -424,7 +465,7 @@ export class JobRepository implements OnApplicationShutdown {
 
   private async createBoss(): Promise<PgBoss> {
     const { database, jobs } = this.config;
-    const consuming = this.config.hasWorker(WorkerType.JOBS);
+    const consuming = this.config.hasWorker(WorkerType.WORKER);
     const totalConcurrency = Object.values(jobs.concurrency).reduce((sum, value) => sum + value, 0);
 
     const boss = new PgBoss({
@@ -488,17 +529,17 @@ export class JobRepository implements OnApplicationShutdown {
         batchSize: WORKER_BATCH_SIZE,
         burstWhenBatchFull: true,
         localConcurrency: this.config.jobs.concurrency[queue],
+        perJobResults: true,
         pollingIntervalSeconds: 2,
         notifyPollingIntervalSeconds: 30,
       },
-      async (jobs) => {
-        await this.dispatchBatch(jobs);
-      },
+      (jobs) => this.dispatchBatch(jobs),
     );
   }
 
-  private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<void> {
+  private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<JobResult[]> {
     let rankingRefresh: Job<StoredJob> | undefined;
+    const results: JobResult[] = [];
 
     for (const job of jobs) {
       if (job.data.name === JobName.ActivityBestEffortRank) {
@@ -509,20 +550,85 @@ export class JobRepository implements OnApplicationShutdown {
         continue;
       }
 
-      await this.dispatch(job);
+      results.push(await this.dispatchResult(job));
     }
 
     if (rankingRefresh) {
-      await this.dispatch(rankingRefresh);
+      results.push(await this.dispatchResult(rankingRefresh));
     }
+
+    return results;
   }
 
-  private dispatch(job: Job<StoredJob>): Promise<void> {
+  private dispatch(job: Job<StoredJob>): Promise<JobStatus> {
     if (!this.onJobRun) {
       throw new Error('Received a job before workers were started');
     }
 
     return this.onJobRun({ name: job.data.name, data: job.data.data } as JobItem);
+  }
+
+  private async dispatchResult(job: Job<StoredJob>): Promise<JobResult> {
+    try {
+      const status = await this.dispatch(job);
+      return { id: job.id, status: 'completed', output: { status } };
+    } catch (error) {
+      return { id: job.id, status: 'failed', output: { message: asErrorMessage(error) } };
+    }
+  }
+
+  private quoteIdentifier(value: string): string {
+    if (value.startsWith('"') && value.endsWith('"')) {
+      return value;
+    }
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  private toJobHistoryEntry(row: StoredJobRow): JobHistoryEntry {
+    const queueValue = row.source_name ?? row.queue_name.replace(/\.deadLetter$/, '');
+    const queue = Object.values(QueueName).find((value) => value === queueValue);
+    if (!queue) {
+      throw new Error(`Unexpected queue in job history: ${queueValue}`);
+    }
+
+    const output = row.output && typeof row.output === 'object' ? (row.output as Record<string, unknown>) : {};
+    const logicalStatus = output.status ?? output.value;
+    let status: JobHistoryStatus;
+    if (row.queue_name.endsWith('.deadLetter') || row.state === 'failed') {
+      status = 'failed';
+    } else if (row.state === 'active') {
+      status = 'running';
+    } else if (row.state === 'created' || row.state === 'retry') {
+      status = 'queued';
+    } else if (logicalStatus === JobStatus.Skipped) {
+      status = 'skipped';
+    } else if (logicalStatus === JobStatus.Failed) {
+      status = 'failed';
+    } else {
+      status = 'succeeded';
+    }
+
+    const startedAt = row.started_on?.toISOString() ?? null;
+    const finishedAt = row.completed_on?.toISOString() ?? null;
+    const nestedValue = output.value && typeof output.value === 'object' ? output.value : undefined;
+    const nestedMessage =
+      nestedValue && 'message' in nestedValue && typeof nestedValue.message === 'string' ? nestedValue.message : null;
+    const error = typeof output.message === 'string' ? output.message : nestedMessage;
+    const durationMs =
+      row.started_on && row.completed_on ? Math.max(0, row.completed_on.getTime() - row.started_on.getTime()) : null;
+
+    return {
+      id: row.id,
+      name: row.job_name,
+      queue,
+      status,
+      createdAt: row.created_on.toISOString(),
+      startedAt,
+      finishedAt,
+      durationMs,
+      attempt: row.retry_count + 1,
+      error,
+    };
   }
 
   private async applySchedules(boss: PgBoss): Promise<void> {

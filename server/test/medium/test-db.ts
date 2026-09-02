@@ -35,7 +35,7 @@ export const createMediumTestDatabase = (): KondisDatabase => createDatabase(get
 
 export const truncateAllTables = async (db: KondisDatabase): Promise<void> => {
   await sql`
-    TRUNCATE TABLE live_workout_point, live_workout, activity_route_match, activity_stream, activity_best_effort, activity_metric, lap, activity, upload
+    TRUNCATE TABLE takeout_import, live_workout_point, live_workout, activity_route_match, activity_stream, activity_best_effort, activity_metric, lap, activity, upload
     RESTART IDENTITY CASCADE
   `.execute(db);
 };

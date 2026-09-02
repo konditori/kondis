@@ -81,6 +81,20 @@ export type JobCreateDto = {
   /** The job to run */
   name: Name;
 };
+export type JobHistoryResponseDtoOutput = {
+  jobs: {
+    id: string;
+    name: string;
+    queue: QueueName_Output;
+    status: Status2;
+    createdAt: string;
+    startedAt: string | null;
+    finishedAt: string | null;
+    durationMs: number | null;
+    attempt: number;
+    error: string | null;
+  }[];
+};
 export type QueueCommandDto = {
   /** Operation to perform on the queue */
   command: Command;
@@ -93,7 +107,7 @@ export type LiveWorkoutListDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
-  status: Status2;
+  status: Status3;
   canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
@@ -111,7 +125,7 @@ export type LiveWorkoutDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
-  status: Status2;
+  status: Status3;
   canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
@@ -121,7 +135,7 @@ export type LiveWorkoutDtoOutput = {
   route: never[][];
 };
 export type LiveWorkoutStateDto = {
-  status: Status3;
+  status: Status4;
   elapsedSeconds: number;
   distanceMeters: number;
 };
@@ -236,7 +250,7 @@ export type ActivityListResponseDtoOutput = {
       sortOrder: number;
       width: number | null;
       height: number | null;
-      status: Status4;
+      status: Status5;
       thumbnail: string | null;
       preview: string | null;
       original: string | null;
@@ -327,7 +341,7 @@ export type ActivityDetailDtoOutput = {
     sortOrder: number;
     width: number | null;
     height: number | null;
-    status: Status4;
+    status: Status5;
     thumbnail: string | null;
     preview: string | null;
     original: string | null;
@@ -495,7 +509,7 @@ export type ActivityImageDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status4;
+  status: Status5;
   thumbnail: string[];
   preview: string[];
   original: string[];
@@ -506,7 +520,7 @@ export type ActivityImageListDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status4;
+  status: Status5;
   thumbnail: string | null;
   preview: string | null;
   original: string | null;
@@ -743,6 +757,33 @@ export function jobControllerCreateJob(
         method: 'POST',
         body: jobCreateDto,
       }),
+    ),
+  );
+}
+/**
+ * Recent job execution history
+ */
+export function jobControllerGetJobHistory(
+  {
+    limit,
+  }: {
+    limit?: number;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: JobHistoryResponseDtoOutput;
+    }>(
+      `/jobs/history${QS.query(
+        QS.explode({
+          limit,
+        }),
+      )}`,
+      {
+        ...opts,
+      },
     ),
   );
 }
@@ -1795,6 +1836,19 @@ export enum Name {
   ReparseFailedUploads = 'reparse-failed-uploads',
   ReparseAllUploads = 'reparse-all-uploads',
 }
+export enum QueueName_Output {
+  ActivityParsing = 'activityParsing',
+  BackgroundTask = 'backgroundTask',
+  ImageProcessing = 'imageProcessing',
+  Storage = 'storage',
+}
+export enum Status2 {
+  Queued = 'queued',
+  Running = 'running',
+  Succeeded = 'succeeded',
+  Failed = 'failed',
+  Skipped = 'skipped',
+}
 export enum QueueName {
   ActivityParsing = 'activityParsing',
   BackgroundTask = 'backgroundTask',
@@ -1866,7 +1920,7 @@ export enum ActivityType_Output {
   Yoga = 'yoga',
   Other = 'other',
 }
-export enum Status2 {
+export enum Status3 {
   Recording = 'recording',
   Paused = 'paused',
   Ended = 'ended',
@@ -1931,7 +1985,7 @@ export enum ActivityType {
   Yoga = 'yoga',
   Other = 'other',
 }
-export enum Status3 {
+export enum Status4 {
   Recording = 'recording',
   Paused = 'paused',
   Ended = 'ended',
@@ -1992,7 +2046,7 @@ export enum BestEffortType_Output {
 export enum Type {
   LineString = 'LineString',
 }
-export enum Status4 {
+export enum Status5 {
   Pending = 'pending',
   Ready = 'ready',
   Failed = 'failed',

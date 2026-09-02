@@ -127,7 +127,7 @@ export class ActivityService {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
         if (takeoutImportId) {
-          this.importProgressStore?.increment(takeoutImportId);
+          await this.importProgressStore?.increment(takeoutImportId);
         }
         return JobStatus.Skipped;
       }
@@ -181,7 +181,7 @@ export class ActivityService {
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
       if (takeoutImportId) {
-        this.importProgressStore?.increment(takeoutImportId);
+        await this.importProgressStore?.increment(takeoutImportId);
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
@@ -189,7 +189,7 @@ export class ActivityService {
 
       await this.uploadRepository.setStatus(id, 'failed', message);
       if (takeoutImportId) {
-        this.importProgressStore?.increment(takeoutImportId, true);
+        await this.importProgressStore?.increment(takeoutImportId, true);
       }
       throw error;
     }
@@ -220,7 +220,7 @@ export class ActivityService {
         });
       }
       if (job.takeoutImportId) {
-        this.importProgressStore?.increment(job.takeoutImportId, false, true);
+        await this.importProgressStore?.increment(job.takeoutImportId, false, true);
       }
       return JobStatus.Skipped;
     }
@@ -295,7 +295,7 @@ export class ActivityService {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
     if (job.takeoutImportId) {
-      this.importProgressStore?.increment(job.takeoutImportId);
+      await this.importProgressStore?.increment(job.takeoutImportId);
     }
     return JobStatus.Success;
   }

@@ -1,4 +1,5 @@
 import { ConsoleLogger } from '@nestjs/common';
+import { setTimeout as delay } from 'node:timers/promises';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JobName } from 'src/enum';
@@ -9,7 +10,7 @@ import type { JobRepository } from 'src/repositories/job.repository';
 import type { StorageRepository } from 'src/repositories/storage.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
-import { ImportProgressStore } from 'src/state/import-progress.store';
+import type { ImportProgressStore } from 'src/state/import-progress.store';
 import { newTestService } from 'test/utils';
 
 describe(UploadService.name, () => {
@@ -27,7 +28,13 @@ describe(UploadService.name, () => {
     jobRepository: { queue } as unknown as JobRepository,
     logger: new ConsoleLogger({ logLevels: [] }),
     lagomTakeoutParser: new LagomTakeoutParser(),
-    importProgressStore: new ImportProgressStore(),
+    importProgressStore: {
+      create: vi.fn(() => Promise.resolve()),
+      get: vi.fn(() => Promise.resolve(undefined)),
+      setProcessing: vi.fn(() => Promise.resolve()),
+      increment: vi.fn(() => Promise.resolve()),
+      fail: vi.fn(() => Promise.resolve()),
+    } as unknown as ImportProgressStore,
   };
   const setup = () => newTestService(UploadService, Object.values(mocks), mocks);
 
@@ -66,6 +73,32 @@ describe(UploadService.name, () => {
     expect(queue).toHaveBeenCalledWith({
       name: JobName.ActivityUpload,
       data: expect.objectContaining({ userId, originalName: 'run.gpx', storagePath: 'temporary/file.gpx' }),
+    });
+  });
+
+  it('returns after staging a large takeout without running its import on the request path', async () => {
+    const { sut } = setup();
+    const extract = vi.spyOn(mocks.lagomTakeoutParser, 'extractLagomTakeout');
+    const largeArchive = {
+      originalname: 'large-export.zip',
+      path: '/tmp/large-takeout-request-upload',
+      size: 200 * 1024 * 1024,
+    };
+
+    const result = await Promise.race([
+      sut.uploadLagomTakeout(largeArchive, userId),
+      delay(250).then(() => {
+        throw new Error('The upload waited for background import processing');
+      }),
+    ]);
+
+    expect(result).toMatchObject({ byteSize: largeArchive.size, queued: true });
+    expect(extract).not.toHaveBeenCalled();
+    expect(importFile).toHaveBeenCalledWith(largeArchive.path, 'temporary/file.zip');
+    expect(write).not.toHaveBeenCalled();
+    expect(queue).toHaveBeenCalledWith({
+      name: JobName.LagomTakeoutImport,
+      data: expect.objectContaining({ originalName: 'large-export.zip', userId }),
     });
   });
 });

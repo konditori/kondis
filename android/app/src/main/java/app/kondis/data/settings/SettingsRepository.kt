@@ -23,8 +23,10 @@ data class AppSettings(
     val unitSystem: UnitSystem = UnitSystem.Metric,
     val accessToken: String? = null,
     val accountId: String? = null,
+    val role: String? = null,
 ) {
     val accountKey: String? get() = accountId?.let { "$serverUrl|$it" }
+    val isAdmin: Boolean get() = role == "admin"
 }
 
 /**
@@ -60,6 +62,7 @@ class SettingsRepository
                                 ?.let { value -> UnitSystem.entries.firstOrNull { it.name == value } }
                                 ?: UnitSystem.Metric,
                         accountId = preferences[ACCOUNT_ID],
+                        role = preferences[ACCOUNT_ROLE],
                     )
                 }
 
@@ -74,6 +77,7 @@ class SettingsRepository
             context.settingsDataStore.edit { preferences ->
                 if (preferences[SERVER_URL] != null && preferences[SERVER_URL] != normalized) {
                     preferences.remove(ACCOUNT_ID)
+                    preferences.remove(ACCOUNT_ROLE)
                     changed = true
                 }
                 preferences[SERVER_URL] = normalized
@@ -89,16 +93,33 @@ class SettingsRepository
         suspend fun setAccessToken(token: String?) {
             secureSessionStore.setKondisToken(token)
             if (token == null) {
-                context.settingsDataStore.edit { it.remove(ACCOUNT_ID) }
+                context.settingsDataStore.edit {
+                    it.remove(ACCOUNT_ID)
+                    it.remove(ACCOUNT_ROLE)
+                }
             }
         }
 
         suspend fun setSession(
             token: String,
             accountId: String,
+            role: String,
         ) {
             secureSessionStore.setKondisToken(token)
-            context.settingsDataStore.edit { it[ACCOUNT_ID] = accountId }
+            context.settingsDataStore.edit {
+                it[ACCOUNT_ID] = accountId
+                it[ACCOUNT_ROLE] = role
+            }
+        }
+
+        suspend fun setAccount(
+            accountId: String,
+            role: String,
+        ) {
+            context.settingsDataStore.edit {
+                it[ACCOUNT_ID] = accountId
+                it[ACCOUNT_ROLE] = role
+            }
         }
 
         suspend fun setAccountId(accountId: String) {
@@ -109,5 +130,6 @@ class SettingsRepository
             val SERVER_URL = stringPreferencesKey("server_url")
             val UNIT_SYSTEM = stringPreferencesKey("unit_system")
             val ACCOUNT_ID = stringPreferencesKey("account_id")
+            val ACCOUNT_ROLE = stringPreferencesKey("account_role")
         }
     }

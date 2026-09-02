@@ -440,6 +440,32 @@ describe(ActivityService.name, () => {
       expect(detailAfterRemovingPersistedMatches.matchedRouteCount).toBe(0);
     });
 
+    it('recomputes overlapping route matches concurrently without deadlocking', async () => {
+      const route: ActivityStreamInput[] = [
+        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
+      ];
+      const ids = await Promise.all([
+        createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first overlapping route', route),
+        createActivity(new Date('2024-02-01T08:00:00.000Z'), 'second overlapping route', route),
+        createActivity(new Date('2024-03-01T08:00:00.000Z'), 'third overlapping route', route),
+      ]);
+
+      await expect(Promise.all(ids.map((id) => activities.recomputeRouteMatches(id)))).resolves.toEqual([
+        true,
+        true,
+        true,
+      ]);
+
+      await expect(
+        db
+          .selectFrom('activity_route_match')
+          .select(({ fn }) => fn.countAll<number>().as('count'))
+          .where('activity_id', '=', ids[0])
+          .executeTakeFirstOrThrow(),
+      ).resolves.toEqual({ count: 3 });
+    });
+
     it('returns no route matches for an activity without GPS data', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'indoor run');
 

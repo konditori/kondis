@@ -23,8 +23,10 @@ export type JobsConfig = {
 };
 
 const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
-  [QueueName.ActivityParsing]: 2,
-  [QueueName.BackgroundTask]: 2,
+  // These queues perform CPU-heavy parsing and spatial database work. One consumer keeps
+  // imports from starving interactive API requests on small installations.
+  [QueueName.ActivityParsing]: 1,
+  [QueueName.BackgroundTask]: 1,
   [QueueName.ImageProcessing]: 2,
   [QueueName.Storage]: 2,
 };
@@ -79,7 +81,7 @@ const readPositiveInteger = (name: string, fallback: number): number => {
 const parseWorkers = (raw: string | undefined): WorkerType[] => {
   const known = new Set<string>(Object.values(WorkerType));
   if (!raw) {
-    return [WorkerType.API, WorkerType.JOBS];
+    return [WorkerType.API];
   }
 
   const requested = raw
@@ -95,6 +97,11 @@ const parseWorkers = (raw: string | undefined): WorkerType[] => {
 
   if (requested.length === 0) {
     throw new Error('KONDIS_WORKERS was set but contained no valid worker names.');
+  }
+  if (requested.length > 1) {
+    throw new Error(
+      'The api and worker roles must run in separate processes. Set KONDIS_WORKERS to either api or worker.',
+    );
   }
 
   return requested as WorkerType[];
@@ -123,11 +130,17 @@ export class ConfigService {
   readonly autoMigrate: boolean;
   readonly database: DatabaseConfig;
   readonly jobs: JobsConfig;
-  /** Secret used to sign access tokens. Set KONDIS_AUTH_SECRET in production. */
+  /**
+   * Secret used to sign access tokens. Set KONDIS_AUTH_SECRET in production.
+   */
   readonly authSecret: string;
-  /** Ephemeral token required to claim a fresh installation. */
+  /**
+   * Ephemeral token required to claim a fresh installation.
+   */
   readonly setupToken: string;
-  /** Public account creation is opt-in for self-hosted installations. */
+  /**
+   * Public account creation is opt-in for self-hosted installations.
+   */
   readonly registrationEnabled: boolean;
 
   constructor() {
@@ -166,7 +179,7 @@ export class ConfigService {
     this.logger.log(`workers=${this.workers.join(',')} port=${this.port} storage=${this.storageDir}`);
     this.logger.log(`database=${this.database.host}:${this.database.port}/${this.database.database}`);
 
-    if (this.hasWorker(WorkerType.JOBS)) {
+    if (this.hasWorker(WorkerType.WORKER)) {
       const concurrency = Object.entries(this.jobs.concurrency)
         .map(([queue, value]) => `${queue}=${value}`)
         .join(' ');

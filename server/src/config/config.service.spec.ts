@@ -20,21 +20,26 @@ describe('ConfigService', () => {
   });
 
   describe('workers', () => {
-    it('runs every role when unset, which is what a single-container install wants', () => {
-      expect(new ConfigService().workers).toEqual([WorkerType.API, WorkerType.JOBS]);
+    it('runs only the API role when unset so jobs cannot block its event loop', () => {
+      expect(new ConfigService().workers).toEqual([WorkerType.API]);
     });
 
     it('narrows to the requested roles', () => {
-      process.env.KONDIS_WORKERS = 'jobs';
+      process.env.KONDIS_WORKERS = 'worker';
 
       const config = new ConfigService();
-      expect(config.hasWorker(WorkerType.JOBS)).toBe(true);
+      expect(config.hasWorker(WorkerType.WORKER)).toBe(true);
       expect(config.hasWorker(WorkerType.API)).toBe(false);
     });
 
     it('refuses to start on a typo rather than silently running nothing', () => {
       process.env.KONDIS_WORKERS = 'jbos';
       expect(() => new ConfigService()).toThrow(/Unknown KONDIS_WORKERS/);
+    });
+
+    it('requires API and jobs to run in separate processes', () => {
+      process.env.KONDIS_WORKERS = 'api,worker';
+      expect(() => new ConfigService()).toThrow(/separate processes/);
     });
   });
 
@@ -61,6 +66,8 @@ describe('ConfigService', () => {
       for (const queue of Object.values(QueueName)) {
         expect(concurrency[queue]).toBeGreaterThan(0);
       }
+      expect(concurrency[QueueName.ActivityParsing]).toBe(1);
+      expect(concurrency[QueueName.BackgroundTask]).toBe(1);
     });
 
     it('applies a global override to every queue', () => {

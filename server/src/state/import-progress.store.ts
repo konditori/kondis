@@ -1,4 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { sql } from 'kysely';
+
+import { KondisDatabase, KYSELY } from 'src/db/database';
 
 export type ImportProgressStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
@@ -15,58 +18,65 @@ export type ImportProgress = {
 
 @Injectable()
 export class ImportProgressStore {
-  private readonly imports = new Map<string, ImportProgress>();
+  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
 
-  create(importId: string, userId: string): void {
-    this.imports.set(importId, {
-      importId,
-      userId,
-      status: 'queued',
-      total: null,
-      processed: 0,
-      failed: 0,
-      duplicates: 0,
-      error: null,
-    });
+  async create(importId: string, userId: string): Promise<void> {
+    await this.db.insertInto('takeout_import').values({ id: importId, user_id: userId }).execute();
   }
 
-  get(importId: string, userId: string): ImportProgress | undefined {
-    const progress = this.imports.get(importId);
-    return progress?.userId === userId ? progress : undefined;
-  }
+  async get(importId: string, userId: string): Promise<ImportProgress | undefined> {
+    const progress = await this.db
+      .selectFrom('takeout_import')
+      .select(['id', 'user_id', 'status', 'total', 'processed', 'failed', 'duplicates', 'error'])
+      .where('id', '=', importId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
 
-  setProcessing(importId: string, total: number): void {
-    const progress = this.imports.get(importId);
     if (!progress) {
       return;
     }
-    progress.total = total;
-    progress.status = total === 0 ? 'completed' : 'processing';
+
+    return {
+      importId: progress.id,
+      userId: progress.user_id,
+      status: progress.status,
+      total: progress.total,
+      processed: progress.processed,
+      failed: progress.failed,
+      duplicates: progress.duplicates,
+      error: progress.error,
+    };
   }
 
-  increment(importId: string, failed = false, duplicate = false): void {
-    const progress = this.imports.get(importId);
-    if (!progress) {
-      return;
-    }
-    progress.processed += 1;
-    if (failed) {
-      progress.failed += 1;
-    }
-    if (duplicate) {
-      progress.duplicates += 1;
-    }
-    if (progress.status !== 'failed' && progress.total !== null && progress.processed >= progress.total) {
-      progress.status = 'completed';
-    }
+  async setProcessing(importId: string, total: number): Promise<void> {
+    await this.db
+      .updateTable('takeout_import')
+      .set({
+        total,
+        status: sql<ImportProgressStatus>`CASE WHEN processed >= ${total} THEN 'completed' ELSE 'processing' END`,
+      })
+      .where('id', '=', importId)
+      .execute();
   }
 
-  fail(importId: string, error: string): void {
-    const progress = this.imports.get(importId);
-    if (!progress) {
-      return;
-    }
-    progress.status = 'failed';
-    progress.error = error;
+  async increment(importId: string, failed = false, duplicate = false): Promise<void> {
+    await this.db
+      .updateTable('takeout_import')
+      .set({
+        processed: sql`processed + 1`,
+        ...(failed && { failed: sql`failed + 1` }),
+        ...(duplicate && { duplicates: sql`duplicates + 1` }),
+        status: sql`CASE
+          WHEN status = 'failed' THEN status
+          WHEN total IS NOT NULL AND processed + 1 >= total THEN 'completed'
+          ELSE status
+        END`,
+      })
+      .where('id', '=', importId)
+      .execute();
+  }
+
+  async fail(importId: string, error: string): Promise<void> {
+    await this.db.updateTable('takeout_import').set({ status: 'failed', error }).where('id', '=', importId).execute();
   }
 }

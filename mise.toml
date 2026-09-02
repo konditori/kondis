@@ -41,7 +41,7 @@ dir = "docker"
 run = """
 docker compose -f ./docker-compose.dev.yml stop kondis-server
 trap 'docker compose -f ./docker-compose.dev.yml start kondis-server' EXIT
-docker compose -f ./docker-compose.dev.yml run --rm --no-deps kondis-reset
+docker compose -f ./docker-compose.dev.yml run --rm kondis-reset
 """
 
 [tasks.dev-down]

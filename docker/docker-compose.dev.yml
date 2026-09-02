@@ -50,7 +50,7 @@ services:
       target: dev
     restart: unless-stopped
     volumes:
-      - ${DATA_LOCATION}/data:/data
+      - ${DATA_LOCATION}:/data
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -62,10 +62,18 @@ services:
       database:
         condition: service_healthy
     healthcheck:
-      disable: false
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:2293/api/v1/ping').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
 
-  # A one-off, local-development command used by `mise dev-reset-data`.
-  # Keeping it separate from kondis-server lets the reset run while workers are stopped.
   kondis-reset:
     extends:
       service: kondis-app-base

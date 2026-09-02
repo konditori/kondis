@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
@@ -6,6 +6,8 @@ import { AdminOnly } from 'src/auth';
 import {
   AllJobStatusResponseDto,
   JobCreateDto,
+  JobHistoryQueryDto,
+  JobHistoryResponseDto,
   QueueCommandDto,
   QueueNameParamDto,
   QueueStatusReportDto,
@@ -23,6 +25,13 @@ export class JobController {
   @Get()
   getAllJobStatus(): Promise<AllJobStatusResponseDto> {
     return this.service.getAllJobStatus();
+  }
+
+  @ApiOperation({ summary: 'Recent job execution history' })
+  @ZodResponse({ status: 200, description: 'Recently queued and executed jobs', type: JobHistoryResponseDto })
+  @Get('history')
+  getJobHistory(@Query() { limit }: JobHistoryQueryDto): Promise<JobHistoryResponseDto> {
+    return this.service.getJobHistory(limit);
   }
 
   @ApiOperation({

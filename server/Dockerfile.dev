@@ -24,7 +24,8 @@ RUN printf '%s\n' \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
     'cd /usr/src/app/server' \
-    'exec pnpm start:dev' \
+    'pnpm build' \
+    'exec node dist/bin/start.js' \
     > /usr/local/bin/kondis-dev \
     && chmod +x /usr/local/bin/kondis-dev \
     && printf '%s\n' \
