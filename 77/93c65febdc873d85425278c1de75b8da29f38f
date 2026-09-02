@@ -1,0 +1,19 @@
+.github/workflows/test.yml
+  s_f6a6cf7efcaad7::t_d3cc70c69cf26b 82-98,100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7793c65febdc873d85425278c1de75b8da29f38f",
+  "prompts": {},
+  "sessions": {
+    "s_f6a6cf7efcaad7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06341-76a6-7830-b5f2-e2aa8f2c3bc5",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
