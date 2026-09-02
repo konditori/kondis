@@ -25,3 +25,4 @@ kondis_server    | =============================================================
 ```
 
 Do not share this setup token with anyone but you only need to enter it once to prove you control the server. After entering the correct token you will be able to create the admin account.
+
