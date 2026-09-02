@@ -62,9 +62,7 @@
   <section class="trust-row" aria-label="Kondis principles">
    <p>Kondis is Swedish slang for conditioning. The 😰 emoji represents a workout well done.</p>
     <div>
-      <span>Self-Hosted</span><i></i><span>Open Source</span><i></i><span
-        >AGPL3</span
-      >
+      <span><a href="https://discord.gg/jKjtYVe9uZ">Discord</a></span><i></i><span><a href="https://www.reddit.com/r/kondis/">Reddit</a></span>
     </div>
   </section>
 
