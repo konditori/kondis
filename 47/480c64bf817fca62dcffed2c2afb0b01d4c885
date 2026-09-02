@@ -1,0 +1,19 @@
+pnpm-lock.yaml
+  s_a9cbc9f7442554::t_0f7bd119803c94 18,5546-5547,15487,16971
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "47480c64bf817fca62dcffed2c2afb0b01d4c885",
+  "prompts": {},
+  "sessions": {
+    "s_a9cbc9f7442554": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "43961f9b-06e6-4d4b-8a94-1f10061c2e07",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
