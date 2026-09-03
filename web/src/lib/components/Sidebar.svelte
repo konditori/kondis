@@ -82,6 +82,8 @@
     {/if}
     {#if buildInfo.commit}
       <span class="build-revision">{buildInfo.commit}</span>
+    {:else if buildInfo.buildType === "development"}
+      <span class="build-revision">Development build</span>
     {/if}
   </div>
 </aside>
