@@ -1,0 +1,23 @@
+server/src/db/database.ts
+  s_c50c7071b0f17f::t_3231ac97667b48 5-6
+server/src/repositories/database.repository.ts
+  s_c50c7071b0f17f::t_49176ef083cfe8 6
+server/src/types.ts
+  s_c50c7071b0f17f::t_0da3a4c8d6f27a 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5cc7b910c3eac34ac0c58600e9c182a05bacb242",
+  "prompts": {},
+  "sessions": {
+    "s_c50c7071b0f17f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d56b4780-9498-45fe-982a-e6cb44f95f07",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
