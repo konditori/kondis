@@ -1,0 +1,41 @@
+packages/postgres/Dockerfile
+  s_b8d3c581f5cecd::t_5da56afc5ac47f 9
+packages/postgres/docker-compose.yml
+  s_b8d3c581f5cecd::t_f48ee307a9e447 13-14
+packages/postgres/kondis-docker-entrypoint.sh
+  s_b8d3c581f5cecd::t_b8f5c3e41814a9 25,27,29-30,34
+packages/postgres/set-env.sh
+  s_b8d3c581f5cecd::t_a2f2322aa9d887 14-16,22-24
+docker/docker-compose.dev.yml
+  s_b8d3c581f5cecd::t_77648f8df9a1aa 54,86,142-144
+docker/example.env
+  s_b8d3c581f5cecd::t_94a9169fae6885 6,17,20-21
+e2e/docker-compose.yml
+  s_b8d3c581f5cecd::t_3a8b99145f1c3e 11-14
+server/src/bin/sync-open-api.ts
+  s_b8d3c581f5cecd::t_26d49d7db27880 15-17
+server/src/repositories/config.repository.spec.ts
+  s_b8d3c581f5cecd::t_c3c990f9d27ffe 13-15
+server/src/repositories/config.repository.ts
+  s_b8d3c581f5cecd::t_6b24b07882f00e 135-139,153,157-158
+server/test/medium/test-app.ts
+  s_b8d3c581f5cecd::t_1574bc71949465 25-29
+sites/docs.kondis.org/docs/install/installation.mdx
+  s_b8d3c581f5cecd::t_6d263d0d824bfa 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "53e31af518a77a87c363b43cd045fe9d58e31f6c",
+  "prompts": {},
+  "sessions": {
+    "s_b8d3c581f5cecd": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "83f5602c-eab0-41be-bf13-5d674c4d8e39",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
