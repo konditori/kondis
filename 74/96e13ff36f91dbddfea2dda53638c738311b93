@@ -1,0 +1,31 @@
+server/src/repositories/event.repository.ts
+  s_0aa53449942501::t_97b16574f2b1ba 15,103,119-127,133-144,150-152,166-171,191,239-241
+server/src/repositories/job.repository.ts
+  s_0aa53449942501::t_14229d0c729a5f 42-44,192-235,427,432-436
+server/src/services/job.service.spec.ts
+  s_0aa53449942501::t_c6144dbc2f6a09 6,24-33,40,47,57-66,164-165
+server/src/services/job.service.ts
+  s_0aa53449942501::t_c0159af09b0eda 54-61
+web/src/lib/format.spec.ts
+  s_0aa53449942501::t_30cc833538641c 37,47-49
+web/src/lib/format.ts
+  s_0aa53449942501::t_1dd625c21e0df1 10,170,199-202
+web/src/routes/admin/jobs/+page.svelte
+  s_0aa53449942501::t_307790f9fa5857 29-31,49-53,128-130,133-134,136-140,142,144-145,151,154,156-159,164-175,187-190,195-199,202,276,279,282,285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7496e13ff36f91dbddfea2dda53638c738311b93",
+  "prompts": {},
+  "sessions": {
+    "s_0aa53449942501": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0674b-c10a-7e72-83b6-ba544ebae5bb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
