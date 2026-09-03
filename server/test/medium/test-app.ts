@@ -22,11 +22,11 @@ export const createTestApp = async (): Promise<TestApp> => {
   // ConfigRepository reads the environment on first access, so this must happen before the
   // container is built.
   Object.assign(process.env, {
-    DB_HOSTNAME: database.host,
-    DB_PORT: String(database.port),
-    DB_USERNAME: database.user,
-    DB_PASSWORD: database.password,
-    DB_DATABASE_NAME: database.database,
+    KONDIS_DB_HOSTNAME: database.host,
+    KONDIS_DB_PORT: String(database.port),
+    KONDIS_DB_USERNAME: database.user,
+    KONDIS_DB_PASSWORD: database.password,
+    KONDIS_DB_DATABASE_NAME: database.database,
     KONDIS_STORAGE_DIR: storageDir,
     KONDIS_WORKERS: 'worker',
     // globalSetup already migrated; running it again here would just be slower.

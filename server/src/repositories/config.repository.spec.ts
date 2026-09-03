@@ -10,9 +10,9 @@ describe('ConfigRepository', () => {
     clearEnvCache();
     original = process.env;
     process.env = {
-      DB_USERNAME: 'kondis',
-      DB_PASSWORD: 'kondis',
-      DB_DATABASE_NAME: 'kondis',
+      KONDIS_DB_USERNAME: 'kondis',
+      KONDIS_DB_PASSWORD: 'kondis',
+      KONDIS_DB_DATABASE_NAME: 'kondis',
     };
   });
 

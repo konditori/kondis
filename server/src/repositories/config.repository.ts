@@ -132,11 +132,11 @@ const parseConcurrency = (): Record<QueueName, number> => {
 
 const getEnv = (): EnvData => {
   const database: DatabaseConfig = {
-      host: readSecret('DB_HOSTNAME') ?? 'database',
-      port: Number(readSecret('DB_PORT') ?? 5432),
-      user: required('DB_USERNAME'),
-      password: required('DB_PASSWORD'),
-      database: required('DB_DATABASE_NAME'),
+      host: readSecret('KONDIS_DB_HOSTNAME') ?? 'database',
+      port: Number(readSecret('KONDIS_DB_PORT') ?? 5432),
+      user: required('KONDIS_DB_USERNAME'),
+      password: required('KONDIS_DB_PASSWORD'),
+      database: required('KONDIS_DB_DATABASE_NAME'),
   };
 
   const jobs: JobsConfig = {
@@ -150,11 +150,12 @@ const getEnv = (): EnvData => {
   };
 
   return {
-    port: Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293),
+    port: Number(process.env.KONDIS_PORT ?? 2293),
     workers: parseWorkers(process.env.KONDIS_WORKERS),
     storageDir: process.env.KONDIS_STORAGE_DIR ?? '/data',
     autoMigrate: readBoolean('KONDIS_DB_AUTO_MIGRATE', true),
-    authSecret: readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret',
+    authSecret:
+      readSecret('KONDIS_AUTH_SECRET') ?? readSecret('KONDIS_DB_PASSWORD') ?? 'kondis-development-secret',
     setupToken: readSecret('KONDIS_SETUP_TOKEN') ?? randomUUID(),
     registrationEnabled: readBoolean('KONDIS_REGISTRATION_ENABLED', false),
     database,

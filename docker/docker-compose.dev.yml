@@ -51,7 +51,7 @@ services:
       target: dev
     restart: unless-stopped
     volumes:
-      - ${DATA_LOCATION}:/data
+      - ${KONDIS_DATA_LOCATION}:/data
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -83,7 +83,7 @@ services:
       target: dev
     command: ['pnpm --dir server db:reset-development-data -- --confirm']
     volumes:
-      - ${DATA_LOCATION}/data:/data
+      - ${KONDIS_DATA_LOCATION}/data:/data
     env_file:
       - .env
     depends_on:
@@ -139,9 +139,9 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_PASSWORD: ${KONDIS_DB_PASSWORD}
+      POSTGRES_USER: ${KONDIS_DB_USERNAME}
+      POSTGRES_DB: ${KONDIS_DB_DATABASE_NAME}
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
       - postgres_data:/var/lib/postgresql

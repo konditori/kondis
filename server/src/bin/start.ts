@@ -50,7 +50,7 @@ const exitResult = async (child: Runtime): Promise<number> => {
 };
 
 const waitForApi = async (api: ChildProcess): Promise<void> => {
-  const port = process.env.PORT ?? process.env.KONDIS_PORT ?? '2293';
+  const port = process.env.KONDIS_PORT ?? '2293';
   const url = `http://127.0.0.1:${port}/api/v1/ping`;
 
   while (!stopping && api.exitCode === null && api.signalCode === null) {

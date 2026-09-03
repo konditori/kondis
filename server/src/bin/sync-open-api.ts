@@ -12,9 +12,9 @@ import { AppModule } from 'src/app.module';
 const API_PREFIX = '/api/v1';
 
 async function run(): Promise<void> {
-  process.env.DB_USERNAME ??= 'openapi';
-  process.env.DB_PASSWORD ??= 'openapi';
-  process.env.DB_DATABASE_NAME ??= 'openapi';
+  process.env.KONDIS_DB_USERNAME ??= 'openapi';
+  process.env.KONDIS_DB_PASSWORD ??= 'openapi';
+  process.env.KONDIS_DB_DATABASE_NAME ??= 'openapi';
   process.env.KONDIS_WORKERS ??= 'api';
   process.env.KONDIS_DB_AUTO_MIGRATE ??= 'false';
 

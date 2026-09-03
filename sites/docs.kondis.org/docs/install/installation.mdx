@@ -34,7 +34,7 @@ cp docker/example.env docker/.env
 
 Then edit the file to suit your needs. Here are the most important variables:
 
-`DATA_LOCATION` is the host directory for application data. PostgreSQL uses a Docker-managed volume, which avoids filesystem compatibility problems on macOS and Windows.
+`KONDIS_DATA_LOCATION` is the host directory for application data. PostgreSQL uses a Docker-managed volume, which avoids filesystem compatibility problems on macOS and Windows.
 
 <CodeBlock language="bash" title="Default environmental variable content">
   {ExampleEnv}

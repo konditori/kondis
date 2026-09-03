@@ -6,7 +6,7 @@ ARG PG_MAJOR
 ARG VECTORCHORD_TAG
 ARG TARGETARCH
 
-ENV DB_STORAGE_TYPE=SSD
+ENV KONDIS_DB_STORAGE_TYPE=SSD
 
 RUN apt-get update && \
     apt-get install -y wget && \
