@@ -3,6 +3,7 @@ name: kondis-dev
 services:
   kondis-app-base:
     profiles: ['_base']
+    cpus: ${KONDIS_DEV_CPUS:-0}
     tmpfs:
       - /tmp
     volumes:
@@ -128,6 +129,7 @@ services:
 
   database:
     container_name: kondis_postgres
+    cpus: ${KONDIS_DEV_CPUS:-0}
     build:
       context: ../packages/postgres
       dockerfile: Dockerfile
