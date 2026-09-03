@@ -25,6 +25,7 @@ const QueueStatusSchema = z
 const JobHistoryEntrySchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1),
+  activityId: z.string().uuid().nullable(),
   queue: QueueNameSchema,
   status: z.enum(['queued', 'running', 'succeeded', 'failed', 'skipped']),
   createdAt: z.string().datetime(),

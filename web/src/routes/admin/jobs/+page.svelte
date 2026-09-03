@@ -60,6 +60,27 @@
     },
   ] as const;
 
+  const jobTranslationKeys = {
+    ActivityUpload: "job_name_activity_upload",
+    ActivityMetricCompute: "job_name_activity_metric_compute",
+    ActivityBestEffortCompute: "job_name_activity_best_effort_compute",
+    ActivityBestEffortRank: "job_name_activity_best_effort_rank",
+    ActivityRouteMatchCompute: "job_name_activity_route_match_compute",
+    ActivityParse: "job_name_activity_parse",
+    ActivityManualCreate: "job_name_activity_manual_create",
+    ActivityParseQueueAll: "job_name_activity_parse_queue_all",
+    ActivityDelete: "job_name_activity_delete",
+    ActivityImageIngest: "job_name_activity_image_ingest",
+    ActivityImageAttach: "job_name_activity_image_attach",
+    ActivityImageGenerateThumbnails:
+      "job_name_activity_image_generate_thumbnails",
+    ActivityImageGenerateQueueAll: "job_name_activity_image_generate_queue_all",
+    LagomTakeoutImport: "job_name_lagom_takeout_import",
+    UserAvatarUpload: "job_name_user_avatar_upload",
+    FileDelete: "job_name_file_delete",
+    TemporaryFileCleanup: "job_name_temporary_file_cleanup",
+  } as const;
+
   async function refresh(silent = false) {
     if (refreshing) {
       refreshQueued = true;
@@ -87,7 +108,8 @@
   }
 
   function jobLabel(name: string) {
-    return name.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+    const key = jobTranslationKeys[name as keyof typeof jobTranslationKeys];
+    return key ? t(key) : name;
   }
 
   function queueLabel(queue: string) {
@@ -210,7 +232,13 @@
         {#each history as job (job.id)}
           <div class="job-history-row" role="row">
             <span class="job-history-name" role="cell">
-              <strong>{jobLabel(job.name)}</strong>
+              {#if job.activityId}
+                <a href={`/activities/${job.activityId}`}><strong
+                    >{jobLabel(job.name)}</strong
+                  ></a>
+              {:else}
+                <strong>{jobLabel(job.name)}</strong>
+              {/if}
               {#if job.attempt > 1}<small
                   >{t("attempt_number", { number: job.attempt })}</small
                 >{/if}

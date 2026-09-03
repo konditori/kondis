@@ -30,6 +30,7 @@ type StoredJobRow = {
   queue_name: string;
   source_name: string | null;
   job_name: string;
+  activity_id: string | null;
   state: string;
   retry_count: number;
   created_on: Date;
@@ -196,6 +197,7 @@ export class JobRepository implements OnApplicationShutdown {
          name AS queue_name,
          source_name,
          data ->> 'name' AS job_name,
+         CASE WHEN data ->> 'name' LIKE 'Activity%' THEN data -> 'data' ->> 'id' END AS activity_id,
          state::text,
          retry_count,
          created_on,
@@ -622,6 +624,7 @@ export class JobRepository implements OnApplicationShutdown {
     return {
       id: row.id,
       name: row.job_name,
+      activityId: row.activity_id,
       queue,
       status,
       createdAt: row.created_on.toISOString(),

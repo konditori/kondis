@@ -85,6 +85,7 @@ export type JobHistoryResponseDtoOutput = {
   jobs: {
     id: string;
     name: string;
+    activityId: string | null;
     queue: QueueName_Output;
     status: Status2;
     createdAt: string;

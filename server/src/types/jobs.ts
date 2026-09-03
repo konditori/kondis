@@ -133,6 +133,7 @@ export type JobHistoryStatus = 'queued' | 'running' | 'succeeded' | 'failed' | '
 export interface JobHistoryEntry {
   id: string;
   name: string;
+  activityId: string | null;
   queue: QueueName;
   status: JobHistoryStatus;
   createdAt: string;

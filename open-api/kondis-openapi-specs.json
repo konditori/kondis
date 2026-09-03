@@ -2265,6 +2265,11 @@
                   "type": "string",
                   "minLength": 1
                 },
+                "activityId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
                 "queue": {
                   "$ref": "#/components/schemas/QueueName_Output"
                 },
@@ -2317,6 +2322,7 @@
               "required": [
                 "id",
                 "name",
+                "activityId",
                 "queue",
                 "status",
                 "createdAt",

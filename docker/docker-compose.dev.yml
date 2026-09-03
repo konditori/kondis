@@ -64,10 +64,8 @@ services:
     healthcheck:
       test:
         [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://localhost:2293/api/v1/ping').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+          'CMD-SHELL',
+          'timeout 1 bash -c "</dev/tcp/127.0.0.1/2293"',
         ]
       interval: 5s
       timeout: 3s
@@ -113,14 +111,12 @@ services:
       kondis-init:
         condition: service_healthy
       kondis-server:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test:
         [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://localhost:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+          'CMD-SHELL',
+          'timeout 1 bash -c "</dev/tcp/127.0.0.1/3000"',
         ]
       interval: 10s
       timeout: 3s
