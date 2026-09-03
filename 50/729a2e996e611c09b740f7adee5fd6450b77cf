@@ -1,0 +1,27 @@
+docker/docker-compose.dev.yml
+  s_bfac4360cec154::t_90e867b3f42fb9 108-110
+server/Dockerfile.dev
+  s_bfac4360cec154::t_3b74b7656696a8 16,35-38
+web/src/app.css
+  s_bfac4360cec154::t_c18fa89eb1e4e6 124-144
+web/src/lib/build-info.ts
+  s_bfac4360cec154::t_ec6e5cc9edb838 1-13
+web/src/lib/components/Sidebar.svelte
+  s_bfac4360cec154::t_16ba55c53e02a6 6,72-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "50729a2e996e611c09b740f7adee5fd6450b77cf",
+  "prompts": {},
+  "sessions": {
+    "s_bfac4360cec154": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a066ca-962d-7da1-a59f-e9db0ade7d34",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
