@@ -9,7 +9,7 @@ import { extname } from 'node:path';
 import sharp from 'sharp';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { KondisTransaction } from 'src/db/database';
+import type { KondisTransaction } from 'src/types';
 import { ActivityImage, ActivityImageFile } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
 import { JobName, JobStatus, QueueName } from 'src/enum';

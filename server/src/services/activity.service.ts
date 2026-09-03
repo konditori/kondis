@@ -14,7 +14,7 @@ import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
-import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -32,6 +32,7 @@ import {
   CreateActivityInput,
   ParsedActivity,
   ParsedActivityStructure,
+  SocialUser,
   UpdateActivityInput,
 } from 'src/types';
 import { JobItem, JobOf } from 'src/types/jobs';

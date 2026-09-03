@@ -1,6 +1,7 @@
 import { sql } from 'kysely';
 import { JOB_SCHEMA } from 'src/constants';
-import { createDatabase, type KondisDatabase } from 'src/db/database';
+import { createDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import { QueueName } from 'src/enum';
 import type { JobRepository } from 'src/repositories/job.repository';
 import type { DatabaseConfig } from 'src/types';

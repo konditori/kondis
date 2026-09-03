@@ -13,7 +13,7 @@ import {
   TRACK_SIMPLIFY_TOLERANCE_DEG,
   UNRANKED,
 } from 'src/constants';
-import { KondisDatabase, KondisExecutor, KYSELY } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
 import { Activity, ActivityMetric, ActivityStream } from 'src/db/schema';
 import { getColumns } from 'src/schema/decorators';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
@@ -28,6 +28,7 @@ import type {
   CreateActivityInput,
   UpdateActivityInput,
 } from 'src/types';
+import type { KondisDatabase, KondisExecutor } from 'src/types';
 import { BestEffortGroup } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {

@@ -5,7 +5,7 @@ import { UserRepository } from 'src/repositories/user.repository';
 import type { ActivityMetrics, ActivityStreamInput, ActivityType } from 'src/types';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
 
-import type { KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 
 export const makeUploadedFile = (filename: string, buffer: Buffer): BufferedUploadedFileData => ({
   originalname: filename,

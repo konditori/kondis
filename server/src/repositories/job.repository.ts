@@ -16,9 +16,8 @@ import {
   JOB_SCHEMA,
 } from 'src/constants';
 import { ConfigRepository } from 'src/repositories/config.repository';
-import { KondisTransaction } from 'src/db/database';
 import { JobName, JobStatus, MetadataKey, QueueName } from 'src/enum';
-import type { JobConfig } from 'src/types';
+import type { JobConfig, KondisTransaction } from 'src/types';
 import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'src/types/jobs';
 import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
 

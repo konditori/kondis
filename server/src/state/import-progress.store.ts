@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 
-import { KondisDatabase, KYSELY } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 
 export type ImportProgressStatus = 'queued' | 'processing' | 'completed' | 'failed';
 

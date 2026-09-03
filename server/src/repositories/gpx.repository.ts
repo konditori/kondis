@@ -1,7 +1,17 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
-import type { FitLapMesg, FitMessages, FitRecordMesg } from 'src/types';
+import type {
+  FitLapMesg,
+  FitMessages,
+  FitRecordMesg,
+  GpxDocument,
+  GpxPoint,
+  GpxSegment,
+  MaybeArray,
+  ParsedPoint,
+  ParsedSegment,
+} from 'src/types';
 import { haversineDistance } from 'src/utils/geo';
 
 export class GpxDecodeError extends Error {
@@ -10,66 +20,6 @@ export class GpxDecodeError extends Error {
     this.name = 'GpxDecodeError';
   }
 }
-
-type MaybeArray<T> = T | T[] | undefined;
-
-type GpxPoint = {
-  lat?: number | string;
-  lon?: number | string;
-  ele?: number | string;
-  time?: string;
-  Extensions?: Record<string, unknown>;
-  extensions?: Record<string, unknown>;
-};
-
-type GpxTrackSegment = {
-  trkpt?: MaybeArray<GpxPoint>;
-};
-
-type GpxTrack = {
-  name?: string;
-  type?: string;
-  trkseg?: MaybeArray<GpxTrackSegment>;
-  trkpt?: MaybeArray<GpxPoint>;
-};
-
-type GpxRoute = {
-  name?: string;
-  type?: string;
-  rtept?: MaybeArray<GpxPoint>;
-};
-
-type GpxMetadata = {
-  time?: string;
-  type?: string;
-  name?: string;
-};
-
-type GpxDocument = {
-  metadata?: GpxMetadata;
-  trk?: MaybeArray<GpxTrack>;
-  rte?: MaybeArray<GpxRoute>;
-};
-
-type ParsedPoint = {
-  record: FitRecordMesg;
-  timestamp?: Date;
-  lat?: number;
-  lon?: number;
-};
-
-type ParsedSegment = {
-  points: ParsedPoint[];
-  label?: string;
-  startTime?: Date;
-  totalElapsedTime?: number;
-  totalDistance?: number;
-};
-
-type GpxSegment = {
-  points: GpxPoint[];
-  label?: string;
-};
 
 @Injectable()
 export class GpxRepository {

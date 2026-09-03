@@ -1,9 +1,10 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'kysely';
-import { KYSELY, KondisDatabase } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
 import type { ActivityCommentEvent } from 'src/repositories/event.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
+import type { KondisDatabase } from 'src/types';
 
 @Injectable()
 export class SocialService {

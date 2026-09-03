@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import type { DatabaseConfig } from 'src/types';
 import { createDatabase, KYSELY } from 'src/db/database';
-import type { KondisDatabase, KondisTransaction } from 'src/db/database';
+import type { KondisDatabase, KondisTransaction } from 'src/types';
 
 const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 

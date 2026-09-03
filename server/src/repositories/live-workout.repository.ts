@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KondisDatabase, KYSELY } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
-import type { ActivityType } from 'src/types';
+import type { ActivityType, KondisDatabase } from 'src/types';
 
 type LivePointInput = {
   sequence: number;

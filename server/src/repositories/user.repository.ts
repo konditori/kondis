@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
-import { KYSELY, KondisDatabase } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 
 type NewUserInput = {
   email: string;

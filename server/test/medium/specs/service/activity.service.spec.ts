@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { AuthenticatedUser } from 'src/auth';
-import { type KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import { QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { JobRepository } from 'src/repositories/job.repository';

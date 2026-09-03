@@ -6,7 +6,7 @@ import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ConfigRepository } from 'src/repositories/config.repository';
-import { type KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import { JobName, QueueName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { ActivityRepository } from 'src/repositories/activity.repository';

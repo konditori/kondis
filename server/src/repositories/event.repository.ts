@@ -6,9 +6,10 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
 import { ConfigRepository } from 'src/repositories/config.repository';
-import { KYSELY, KondisDatabase } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import { SocialRepository } from 'src/repositories/social.repository';
+import type { KondisDatabase } from 'src/types';
 
 const EVENT_CHANNEL = 'kondis_realtime';
 const EVENT_PATHS = new Set(['/events', '/api/v1/events']);

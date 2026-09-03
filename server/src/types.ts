@@ -1,5 +1,78 @@
-import type { Activity, ActivityMetric, ActivityUpdate, NewActivity, NewLap } from 'src/db/schema';
+import type { Activity, ActivityMetric, ActivityUpdate, DB, NewActivity, NewLap } from 'src/db/schema';
 import type { JobName, QueueName } from 'src/enum';
+import type { Kysely, Transaction } from 'kysely';
+
+export type KondisDatabase = Kysely<DB>;
+export type KondisTransaction = Transaction<DB>;
+export type KondisExecutor = KondisDatabase | KondisTransaction;
+
+export type SocialUser = { id: string; firstName: string; lastName: string; avatarUrl: string | null };
+export type ActivityEngagement = {
+  activity_id: string;
+  like_count: number;
+  comment_count: number;
+  viewer_liked: boolean | null;
+};
+
+export type MaybeArray<T> = T | T[] | undefined;
+
+export type GpxPoint = {
+  lat?: number | string;
+  lon?: number | string;
+  ele?: number | string;
+  time?: string;
+  Extensions?: Record<string, unknown>;
+  extensions?: Record<string, unknown>;
+};
+
+export type GpxTrackSegment = {
+  trkpt?: MaybeArray<GpxPoint>;
+};
+
+export type GpxTrack = {
+  name?: string;
+  type?: string;
+  trkseg?: MaybeArray<GpxTrackSegment>;
+  trkpt?: MaybeArray<GpxPoint>;
+};
+
+export type GpxRoute = {
+  name?: string;
+  type?: string;
+  rtept?: MaybeArray<GpxPoint>;
+};
+
+export type GpxMetadata = {
+  time?: string;
+  type?: string;
+  name?: string;
+};
+
+export type GpxDocument = {
+  metadata?: GpxMetadata;
+  trk?: MaybeArray<GpxTrack>;
+  rte?: MaybeArray<GpxRoute>;
+};
+
+export type ParsedPoint = {
+  record: FitRecordMesg;
+  timestamp?: Date;
+  lat?: number;
+  lon?: number;
+};
+
+export type ParsedSegment = {
+  points: ParsedPoint[];
+  label?: string;
+  startTime?: Date;
+  totalElapsedTime?: number;
+  totalDistance?: number;
+};
+
+export type GpxSegment = {
+  points: GpxPoint[];
+  label?: string;
+};
 
 export type FitRecordMesg = {
   timestamp?: Date | number;
