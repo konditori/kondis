@@ -83,7 +83,7 @@ const run = async (): Promise<void> => {
   const apiExit = exitResult(api);
   await waitForApi(api);
 
-  const worker = startRole(WorkerType.WORKER, { KONDIS_DB_AUTO_MIGRATE: 'false' });
+  const worker = startRole(WorkerType.WORKER);
   const workerExit = exitResult(worker);
   process.exitCode = await Promise.race([apiExit, workerExit]);
   await Promise.allSettled([apiExit, workerExit]);

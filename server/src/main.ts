@@ -16,9 +16,7 @@ export async function bootstrapApi(): Promise<void> {
   const config = new ConfigRepository();
   config.logStartupSummary();
 
-  if (config.autoMigrate) {
-    await migrateDatabase(config.database);
-  }
+  await migrateDatabase(config.database);
 
   const app = await NestFactory.create(AppModule, { cors: false });
   app.setGlobalPrefix(API_PREFIX);

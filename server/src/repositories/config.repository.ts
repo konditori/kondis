@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 
 import { QueueName, WorkerType } from 'src/enum';
 import type { DatabaseConfig, EnvData, JobsConfig } from 'src/types';
@@ -12,27 +11,15 @@ const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QueueName.Storage]: 2,
 };
 
-const readSecret = (name: string): string | undefined => {
-  const filePath = process.env[`${name}_FILE`];
-  if (filePath) {
-    try {
-      const contents = readFileSync(filePath, 'utf8').trim();
-      if (contents.length > 0) {
-        return contents;
-      }
-    } catch {
-      // Fall through to the plain env var below
-    }
-  }
-
+const readEnv = (name: string): string | undefined => {
   const value = process.env[name];
   return value && value.length > 0 ? value : undefined;
 };
 
 const required = (name: string): string => {
-  const value = readSecret(name);
+  const value = readEnv(name);
   if (!value) {
-    throw new Error(`Missing required environment variable: ${name} (or ${name}_FILE)`);
+    throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
 };
@@ -42,7 +29,16 @@ const readBoolean = (name: string, fallback: boolean): boolean => {
   if (value === undefined || value.length === 0) {
     return fallback;
   }
-  return !['0', 'false', 'no', 'off'].includes(value.trim().toLowerCase());
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+
+  throw new Error(`${name} must be true or false, got: ${value}`);
 };
 
 const readPositiveInteger = (name: string, fallback: number): number => {
@@ -103,8 +99,8 @@ const parseConcurrency = (): Record<QueueName, number> => {
 
 const getEnv = (): EnvData => {
   const database: DatabaseConfig = {
-      host: readSecret('KONDIS_DB_HOSTNAME') ?? 'database',
-      port: Number(readSecret('KONDIS_DB_PORT') ?? 5432),
+      host: readEnv('KONDIS_DB_HOSTNAME') ?? 'database',
+      port: Number(readEnv('KONDIS_DB_PORT') ?? 5432),
       user: required('KONDIS_DB_USERNAME'),
       password: required('KONDIS_DB_PASSWORD'),
       database: required('KONDIS_DB_DATABASE_NAME'),
@@ -121,13 +117,12 @@ const getEnv = (): EnvData => {
   };
 
   return {
-    port: Number(process.env.KONDIS_PORT ?? 2293),
+    port: readPositiveInteger('KONDIS_PORT', 2293),
     workers: parseWorkers(process.env.KONDIS_WORKERS),
     storageDir: process.env.KONDIS_STORAGE_DIR ?? '/data',
-    autoMigrate: readBoolean('KONDIS_DB_AUTO_MIGRATE', true),
     authSecret:
-      readSecret('KONDIS_AUTH_SECRET') ?? readSecret('KONDIS_DB_PASSWORD') ?? 'kondis-development-secret',
-    setupToken: readSecret('KONDIS_SETUP_TOKEN') ?? randomUUID(),
+      readEnv('KONDIS_AUTH_SECRET') ?? readEnv('KONDIS_DB_PASSWORD') ?? 'kondis-development-secret',
+    setupToken: readEnv('KONDIS_SETUP_TOKEN') ?? randomUUID(),
     registrationEnabled: readBoolean('KONDIS_REGISTRATION_ENABLED', false),
     database,
     jobs,
@@ -159,10 +154,6 @@ export class ConfigRepository {
 
   get storageDir(): string {
     return this.getEnv().storageDir;
-  }
-
-  get autoMigrate(): boolean {
-    return this.getEnv().autoMigrate;
   }
 
   get database(): DatabaseConfig {

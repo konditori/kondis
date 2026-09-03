@@ -22,7 +22,6 @@ export type EnvData = {
   port: number;
   workers: WorkerType[];
   storageDir: string;
-  autoMigrate: boolean;
   database: DatabaseConfig;
   jobs: JobsConfig;
   authSecret: string;

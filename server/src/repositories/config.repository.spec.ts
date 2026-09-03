@@ -115,11 +115,23 @@ describe('ConfigRepository', () => {
       clearEnvCache();
       expect(new ConfigRepository().getEnv().jobs.cron).toBe(false);
     });
+
+    it('rejects boolean values other than true or false', () => {
+      process.env.KONDIS_JOB_CRON = 'yes';
+
+      expect(() => new ConfigRepository().getEnv()).toThrow(/KONDIS_JOB_CRON must be true or false/);
+    });
   });
 
   describe('database defaults', () => {
     it('uses the Docker Compose database service when the hostname is unset', () => {
       expect(new ConfigRepository().getEnv().database.host).toBe('database');
+    });
+
+    it('rejects an invalid server port', () => {
+      process.env.KONDIS_PORT = 'not-a-port';
+
+      expect(() => new ConfigRepository().getEnv()).toThrow(/KONDIS_PORT must be a positive integer/);
     });
   });
 });
