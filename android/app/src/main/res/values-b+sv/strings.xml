@@ -428,7 +428,6 @@
     <string name="i18n_refresh">Uppdatera</string>
     <string name="i18n_recent_jobs">Senaste jobb</string>
     <string name="i18n_recent_jobs_description">Köat och slutfört arbete som servern sparar.</string>
-    <string name="i18n_auto_refreshes">Uppdateras var femte sekund</string>
     <string name="i18n_no_job_history">Inga jobb har registrerats ännu</string>
     <string name="i18n_no_job_history_description">Bakgrundsarbete visas här efter att det har köats.</string>
     <string name="i18n_status">Status</string>

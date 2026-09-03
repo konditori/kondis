@@ -2,6 +2,7 @@ import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 
 import { ConfigService } from 'src/config/config.service';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
+import { EventRepository } from 'src/repositories/event.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
@@ -23,6 +24,7 @@ export class JobService {
   constructor(
     private readonly config: ConfigService,
     private readonly jobRepository: JobRepository,
+    private readonly events: EventRepository,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(JobService.name);
@@ -38,8 +40,9 @@ export class JobService {
     this.logger.log(`Consuming queues: ${Object.values(QueueName).join(', ')}`);
   }
 
-  create(name: ManualJobName): Promise<void> {
-    return this.jobRepository.queue(asJobItem(name));
+  async create(name: ManualJobName): Promise<void> {
+    await this.jobRepository.queue(asJobItem(name));
+    await this.events.emit('JobUpdated');
   }
 
   async getJobHistory(limit: number) {
@@ -80,7 +83,9 @@ export class JobService {
       }
     }
 
-    return this.getJobStatus(queue);
+    const status = await this.getJobStatus(queue);
+    await this.events.emit('JobUpdated');
+    return status;
   }
 
   private async getJobStatus(queue: QueueName): Promise<QueueStatusReport> {
@@ -91,6 +96,7 @@ export class JobService {
   }
 
   private async onJobRun(item: JobItem): Promise<JobStatus> {
+    await this.events.emit('JobUpdated');
     const startedAt = Date.now();
 
     let status: JobStatus;
@@ -99,6 +105,8 @@ export class JobService {
     } catch (error) {
       this.logger.error(`Job ${item.name} threw after ${Date.now() - startedAt}ms: ${asErrorMessage(error)}`);
       throw error;
+    } finally {
+      await this.events.emit('JobUpdated');
     }
 
     const duration = Date.now() - startedAt;

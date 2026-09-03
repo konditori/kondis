@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Logger, Post, Req, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 import { ZodResponse } from 'nestjs-zod';
-import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
+import { AdminOnly, AuthenticatedUser, CurrentUser, Public } from 'src/auth';
 import { ActivityEventsTicketDto } from 'src/dtos/auth.dto';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
@@ -119,5 +119,15 @@ export class AuthController {
   })
   activityEventsTicket(@CurrentUser() user: AuthenticatedUser): ActivityEventsTicketDto {
     return this.service.createActivityEventsTicket(user.id);
+  }
+  @Post('job-events-ticket')
+  @AdminOnly()
+  @ZodResponse({
+    status: 201,
+    description: 'Short-lived ticket for the job event WebSocket',
+    type: ActivityEventsTicketDto,
+  })
+  jobEventsTicket(@CurrentUser() user: AuthenticatedUser): ActivityEventsTicketDto {
+    return this.service.createJobEventsTicket(user.id);
   }
 }

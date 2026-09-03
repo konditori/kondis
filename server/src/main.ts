@@ -36,5 +36,5 @@ export async function bootstrapWorker(): Promise<void> {
   config.logStartupSummary();
   const app = await NestFactory.createApplicationContext(AppModule);
   app.enableShutdownHooks();
-  logger.log('Kondis worker started');
+  logger.log('Kondis background worker started');
 }

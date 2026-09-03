@@ -143,8 +143,6 @@ services:
       POSTGRES_DB: ${DB_DATABASE_NAME}
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      # PostgreSQL 18 expects the volume at /var/lib/postgresql, not /data.
-      # Change DB_DATA_LOCATION in .env to use another volume or a local Linux path.
       - postgres_data:/var/lib/postgresql
     ports:
       - 5432:5432

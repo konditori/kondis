@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
 import { timingSafeEqual } from 'node:crypto';
-import { createAccessToken, createActivityEventsTicket, createSetupTicket, verifySetupTicket } from 'src/auth';
+import { createAccessToken, createActivityEventsTicket, createJobEventsTicket, createSetupTicket, verifySetupTicket } from 'src/auth';
 import { ConfigService } from 'src/config/config.service';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
@@ -113,6 +113,9 @@ Do not share this secret token with anyone.
   }
   createActivityEventsTicket(userId: string) {
     return createActivityEventsTicket(userId, this.config.authSecret);
+  }
+  createJobEventsTicket(userId: string) {
+    return createJobEventsTicket(userId, this.config.authSecret);
   }
   async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
     const account = this.normalizeAccount(email, firstName, lastName, password);

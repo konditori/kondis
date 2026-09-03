@@ -426,7 +426,6 @@
   "refresh": "Refresh",
   "recent_jobs": "Recent jobs",
   "recent_jobs_description": "Queued and completed work retained by the server.",
-  "auto_refreshes": "Refreshes every 5 seconds",
   "no_job_history": "No jobs recorded yet",
   "no_job_history_description": "Background work will appear here after it is queued.",
   "status": "Status",

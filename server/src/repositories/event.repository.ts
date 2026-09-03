@@ -4,7 +4,7 @@ import type { Server } from 'node:http';
 import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import { verifyActivityEventsTicket } from 'src/auth';
+import { verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
 import { ConfigService } from 'src/config/config.service';
 import { KYSELY, KondisDatabase } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
@@ -14,6 +14,7 @@ const EVENT_CHANNEL = 'kondis_realtime';
 const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
 
 type EventMap = {
+  JobUpdated: [];
   ActivityCreate: [activity: ActivityDto];
   ActivityUploadSkipped: [activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>, uploadFileName: string];
   ActivityUpdate: [activity: ActivityDto];
@@ -56,6 +57,7 @@ export type EmitEvent = keyof EventMap;
 export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent =
+  | { type: 'job.updated' }
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
   | {
       type: 'activity.upload.skipped';
@@ -75,6 +77,7 @@ type EventSerializers = {
 };
 
 const eventSerializers: EventSerializers = {
+  JobUpdated: () => ({ type: 'job.updated' }),
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUploadSkipped: (activity, uploadFileName) => ({
     type: 'activity.upload.skipped',
@@ -101,6 +104,7 @@ export class EventRepository implements OnApplicationShutdown {
   private upgradeHandler?: Parameters<Server['on']>[1];
   private readonly socketUsers = new Map<WebSocket, string>();
   private readonly socketActivities = new Map<WebSocket, Set<string>>();
+  private readonly jobDashboardSockets = new Set<WebSocket>();
   private stopped = false;
 
   constructor(
@@ -129,16 +133,21 @@ export class EventRepository implements OnApplicationShutdown {
     this.socketServer.on('connection', (socket, request) => {
       const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
       const userId = verifyActivityEventsTicket(ticket, this.config.authSecret);
-      if (!userId) {
+      const isJobDashboard = !userId && Boolean(verifyJobEventsTicket(ticket, this.config.authSecret));
+      if (!userId && !isJobDashboard) {
         socket.close(1008, 'Authentication required');
         return;
       }
-      this.socketUsers.set(socket, userId);
+      if (userId) this.socketUsers.set(socket, userId);
+      if (isJobDashboard) this.jobDashboardSockets.add(socket);
       this.socketActivities.set(socket, new Set());
-      socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
+      if (userId) {
+        socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
+      }
       socket.once('close', () => {
         this.socketUsers.delete(socket);
         this.socketActivities.delete(socket);
+        this.jobDashboardSockets.delete(socket);
       });
       socket.send(JSON.stringify({ type: 'connected' }));
     });
@@ -156,6 +165,7 @@ export class EventRepository implements OnApplicationShutdown {
     this.socketServer?.close();
     this.socketUsers.clear();
     this.socketActivities.clear();
+    this.jobDashboardSockets.clear();
     await this.listener?.end();
   }
 
@@ -194,6 +204,12 @@ export class EventRepository implements OnApplicationShutdown {
   }
 
   private async broadcast(payload: string): Promise<void> {
+    if (this.isJobUpdate(payload)) {
+      for (const client of this.jobDashboardSockets) {
+        if (client.readyState === WebSocket.OPEN) client.send(payload);
+      }
+      return;
+    }
     const commentActivityId = this.commentActivityId(payload);
     if (commentActivityId) {
       const recipients = await this.recipientsFor(payload);
@@ -214,6 +230,14 @@ export class EventRepository implements OnApplicationShutdown {
       if (client.readyState === WebSocket.OPEN && recipients.has(this.socketUsers.get(client) ?? '')) {
         client.send(payload);
       }
+    }
+  }
+
+  private isJobUpdate(payload: string): boolean {
+    try {
+      return (JSON.parse(payload) as { type?: string }).type === 'job.updated';
+    } catch {
+      return false;
     }
   }
 

@@ -19,6 +19,7 @@ export type AuthenticatedUser = {
   lastName: string;
 };
 type EventTicket = { id: string; scope: 'activity-events'; exp: number };
+type JobEventsTicket = { id: string; scope: 'job-events'; exp: number };
 type SetupTicket = { scope: 'initial-setup'; exp: number };
 export const PUBLIC = 'kondis:public';
 export const Public = () => SetMetadata(PUBLIC, true);
@@ -61,6 +62,24 @@ export const verifyActivityEventsTicket = (token: string | null, secret: string)
       return undefined;
     }
     return ticket.id;
+  } catch {
+    return undefined;
+  }
+};
+
+export const createJobEventsTicket = (userId: string, secret: string) => {
+  const expiresAt = new Date(Date.now() + 60_000);
+  const payload = encode({ id: userId, scope: 'job-events', exp: Math.floor(expiresAt.getTime() / 1000) });
+  return { token: `${payload}.${sign(payload, secret)}`, expiresAt: expiresAt.toISOString() };
+};
+
+export const verifyJobEventsTicket = (token: string | null, secret: string): string | undefined => {
+  if (!token) return undefined;
+  const [payload, signature] = token.split('.', 2);
+  if (!payload || !signature || !hasValidSignature(payload, signature, secret)) return undefined;
+  try {
+    const ticket = JSON.parse(Buffer.from(payload, 'base64url').toString()) as JobEventsTicket;
+    return ticket.scope === 'job-events' && ticket.id && ticket.exp * 1000 >= Date.now() ? ticket.id : undefined;
   } catch {
     return undefined;
   }

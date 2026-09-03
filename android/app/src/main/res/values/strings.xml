@@ -428,7 +428,6 @@
     <string name="i18n_refresh">Refresh</string>
     <string name="i18n_recent_jobs">Recent jobs</string>
     <string name="i18n_recent_jobs_description">Queued and completed work retained by the server.</string>
-    <string name="i18n_auto_refreshes">Refreshes every 5 seconds</string>
     <string name="i18n_no_job_history">No jobs recorded yet</string>
     <string name="i18n_no_job_history_description">Background work will appear here after it is queued.</string>
     <string name="i18n_status">Status</string>

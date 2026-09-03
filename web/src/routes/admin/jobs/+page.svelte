@@ -20,6 +20,7 @@
     type JobHistoryResponseDtoOutput,
   } from "$lib/api";
   import { t } from "$lib/i18n";
+  import { subscribeToJobEvents } from "$lib/realtime";
 
   let { data } = $props();
   let queues = $state<AllJobStatusResponseDtoOutput>(
@@ -29,6 +30,7 @@
     untrack(() => data.history.jobs),
   );
   let refreshing = $state(false);
+  let refreshQueued = false;
   let error = $state("");
 
   const queueDefinitions = [
@@ -59,7 +61,10 @@
   ] as const;
 
   async function refresh(silent = false) {
-    if (refreshing) return;
+    if (refreshing) {
+      refreshQueued = true;
+      return;
+    }
     refreshing = true;
     if (!silent) error = "";
     try {
@@ -74,6 +79,10 @@
       if (!silent) error = t("job_dashboard_load_error");
     } finally {
       refreshing = false;
+      if (refreshQueued) {
+        refreshQueued = false;
+        void refresh(true);
+      }
     }
   }
 
@@ -119,8 +128,7 @@
   }
 
   onMount(() => {
-    const interval = window.setInterval(() => void refresh(true), 5_000);
-    return () => window.clearInterval(interval);
+    return subscribeToJobEvents(data.eventsUrl, () => void refresh(true));
   });
 </script>
 
@@ -182,7 +190,6 @@
         <h2><ListChecks size={20} /> {t("recent_jobs")}</h2>
         <p>{t("recent_jobs_description")}</p>
       </div>
-      <span><Clock3 size={15} /> {t("auto_refreshes")}</span>
     </div>
 
     {#if history.length === 0}
