@@ -1,0 +1,23 @@
+i18n/en.json
+  s_aed1ed18ad055c::t_c7f92c22abf724 83
+i18n/sv.json
+  s_aed1ed18ad055c::t_78fcd170f74894 82
+web/src/lib/components/Sidebar.svelte
+  s_aed1ed18ad055c::t_e2477f3bf594f1 86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2cc2fab67c3281d8b59db6300c2fda9b6b2f5c76",
+  "prompts": {},
+  "sessions": {
+    "s_aed1ed18ad055c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0692f-8c07-76d2-8e6e-3b8e052c6183",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
