@@ -28,7 +28,10 @@ export const utils = {
       lastName: 'User',
       password: 'e2e-test-password',
     };
-    const setupToken = process.env.KONDIS_SETUP_TOKEN ?? 'e2e-setup-token';
+    const setupToken = process.env.KONDIS_SETUP_TOKEN;
+    if (!setupToken) {
+      throw new Error('KONDIS_SETUP_TOKEN was not captured from the server startup log');
+    }
     const verified = await fetch(`${serverUrl}/auth/setup/verify`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
