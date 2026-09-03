@@ -13,6 +13,7 @@ RUN apt-get update \
         bash \
         ca-certificates \
         coreutils \
+        git \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
@@ -31,6 +32,10 @@ RUN printf '%s\n' \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
     'cd /usr/src/app/web' \
+    'if git -C /usr/src/app rev-parse --git-dir >/dev/null 2>&1; then' \
+    '  export PUBLIC_KONDIS_COMMIT="${PUBLIC_KONDIS_COMMIT:-$(git -C /usr/src/app rev-parse --short HEAD)}"' \
+    '  export PUBLIC_KONDIS_BRANCH="${PUBLIC_KONDIS_BRANCH:-$(git -C /usr/src/app branch --show-current)}"' \
+    'fi' \
     'pnpm --filter @kondis/sdk build' \
     'node node_modules/@sveltejs/kit/svelte-kit.js sync' \
     'exec node node_modules/vite/bin/vite.js dev --host 0.0.0.0 --port 3000' \

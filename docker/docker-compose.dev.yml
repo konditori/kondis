@@ -105,6 +105,9 @@ services:
     environment:
       KONDIS_API_URL: http://kondis-server:2293
       KONDIS_VITE_USE_POLLING: 'true'
+      PUBLIC_KONDIS_VERSION: ${KONDIS_VERSION:-}
+      PUBLIC_KONDIS_COMMIT: ${KONDIS_COMMIT:-}
+      PUBLIC_KONDIS_BRANCH: ${KONDIS_BRANCH:-}
     ports:
       - 3000:3000
     depends_on:

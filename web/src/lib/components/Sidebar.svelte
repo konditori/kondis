@@ -3,6 +3,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { t } from "$lib/i18n";
+  import { buildInfo } from "$lib/build-info";
 
   let { user }: { user?: { role: "admin" | "user" } } = $props();
 
@@ -68,6 +69,21 @@
       </a>
     {/if}
   </nav>
+
+  <div
+    class="build-notice"
+    title={buildInfo.revision
+      ? `${buildInfo.version} · ${buildInfo.revision}`
+      : buildInfo.version}
+  >
+    <span class="build-version">v. {buildInfo.version}</span>
+    {#if buildInfo.branch}
+      <span class="build-revision">{buildInfo.branch}</span>
+    {/if}
+    {#if buildInfo.commit}
+      <span class="build-revision">{buildInfo.commit}</span>
+    {/if}
+  </div>
 </aside>
 
 <nav class="mobile-nav" aria-label={t("mobile_navigation")}>
