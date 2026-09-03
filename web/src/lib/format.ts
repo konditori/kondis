@@ -151,12 +151,18 @@ export function localTime(value: string): string {
   }).format(new Date(value));
 }
 
-export function relativeTime(value: string | Date, now = new Date()): string {
+export function relativeTime(
+  value: string | Date,
+  now = new Date(),
+  options: { justNowSeconds?: number; showSeconds?: boolean } = {},
+): string {
+  const { justNowSeconds = 45, showSeconds = false } = options;
   const seconds = Math.max(
     0,
     Math.floor((now.getTime() - new Date(value).getTime()) / 1000),
   );
-  if (seconds < 45) return "Just now";
+  if (seconds < justNowSeconds) return "Just now";
+  if (showSeconds && seconds < 60) return `${seconds} seconds ago`;
   if (seconds < 90) return "1 minute ago";
 
   const minutes = Math.floor(seconds / 60);
@@ -184,12 +190,13 @@ export function relativeTime(value: string | Date, now = new Date()): string {
 export function relativeOrDateTime(
   value: string | Date,
   now = new Date(),
+  options: { justNowSeconds?: number; showSeconds?: boolean } = {},
 ): string {
   const timestamp = new Date(value);
   const ageInSeconds = (now.getTime() - timestamp.getTime()) / 1000;
 
   if (ageInSeconds >= 0 && ageInSeconds < RELATIVE_TIME_MAX_AGE_SECONDS) {
-    return relativeTime(timestamp, now);
+    return relativeTime(timestamp, now, options);
   }
 
   return new Intl.DateTimeFormat(undefined, {

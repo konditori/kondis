@@ -15,6 +15,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 
 ## Completed features
 
+* Job queues
 * Strava takeout import
 * Workout analysis and route map display
 * Import .fit, .gpx, and .tcx files
@@ -23,6 +24,8 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Multi user support
 * Liking and commenting others workouts
 * Translations
+* Similar route matching
+* Android OIDC redirect for logins
 
 ## Planned features (subject to change)
 * MCP server

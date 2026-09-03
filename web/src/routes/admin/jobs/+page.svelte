@@ -27,6 +27,11 @@
   import { subscribeToJobEvents } from "$lib/realtime";
 
   const HISTORY_PAGE_SIZE = 75;
+  const GRAPH_BUCKETS = 24;
+  const GRAPH_WINDOW_MS = 5 * 60_000;
+  const GRAPH_WIDTH = 500;
+  const GRAPH_BASELINE = 144;
+  const GRAPH_HEIGHT = 62;
   let { data } = $props();
   let queues = $state<AllJobStatusResponseDtoOutput>(
     untrack(() => data.queues),
@@ -40,6 +45,7 @@
     untrack(() => Math.floor(data.historyOffset / HISTORY_PAGE_SIZE) + 1),
   );
   let historyLoading = $state(false);
+  let currentTime = $state(new Date());
   let refreshing = $state(false);
   let refreshQueued = false;
   let error = $state("");
@@ -155,6 +161,37 @@
     return queueDefinitions.find(({ key }) => key === queue)?.label ?? queue;
   }
 
+  function queueGraph(queue: string, now: Date) {
+    const buckets = Array.from({ length: GRAPH_BUCKETS }, () => 0);
+    const nowTimestamp = now.getTime();
+
+    for (const job of history) {
+      if (job.queue !== queue) continue;
+      const timestamp = Date.parse(job.startedAt ?? job.createdAt);
+      const age = nowTimestamp - timestamp;
+      if (!Number.isFinite(timestamp) || age < 0 || age > GRAPH_WINDOW_MS) {
+        continue;
+      }
+      const bucket = Math.min(
+        GRAPH_BUCKETS - 1,
+        Math.floor(((GRAPH_WINDOW_MS - age) / GRAPH_WINDOW_MS) * GRAPH_BUCKETS),
+      );
+      buckets[bucket] += 1;
+    }
+
+    const maximum = Math.max(...buckets, 1);
+    const points = buckets.map((count, index) => {
+      const x = (index / (GRAPH_BUCKETS - 1)) * GRAPH_WIDTH;
+      const y = GRAPH_BASELINE - (count / maximum) * GRAPH_HEIGHT;
+      return `${x.toFixed(1)} ${y.toFixed(1)}`;
+    });
+    const line = `M${points.join(" L")}`;
+    return {
+      line,
+      area: `${line} L${GRAPH_WIDTH} 150 L0 150 Z`,
+    };
+  }
+
   function statusLabel(
     status: JobHistoryResponseDtoOutput["jobs"][number]["status"],
   ) {
@@ -212,7 +249,18 @@
   }
 
   onMount(() => {
-    return subscribeToJobEvents(data.eventsUrl, () => void refresh(true));
+    const unsubscribe = subscribeToJobEvents(
+      data.eventsUrl,
+      () => void refresh(true),
+    );
+    const clock = setInterval(() => {
+      currentTime = new Date();
+    }, 1000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(clock);
+    };
   });
 </script>
 
@@ -244,24 +292,41 @@
   <section class="job-queue-grid" aria-label={t("job_queue_status")}>
     {#each queueDefinitions as definition}
       {@const report = queues[definition.key]}
+      {@const graph = queueGraph(definition.key, currentTime)}
       <article class="job-queue-card">
-        <div class="job-queue-heading">
-          <span class="job-queue-icon"><definition.icon size={21} /></span>
-          <div>
-            <h2>{definition.label}</h2>
-            <p>{definition.description}</p>
+        <svg
+          class="job-queue-graph"
+          viewBox="0 0 500 150"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path class="job-queue-graph-area" d={graph.area} />
+          <path class="job-queue-graph-line" d={graph.line} />
+        </svg>
+        <div class="job-queue-content">
+          <div class="job-queue-heading">
+            <span class="job-queue-icon"><definition.icon size={21} /></span>
+            <div>
+              <h2>{definition.label}</h2>
+              <p>{definition.description}</p>
+            </div>
           </div>
-        </div>
-        <div class="job-counts">
-          <div>
-            <span>{t("active")}</span><strong>{report.jobCounts.active}</strong>
-          </div>
-          <div>
-            <span>{t("waiting")}</span><strong>{report.jobCounts.queued}</strong
-            >
-          </div>
-          <div class:has-failures={report.jobCounts.failed > 0}>
-            <span>{t("failed")}</span><strong>{report.jobCounts.failed}</strong>
+          <div class="job-counts">
+            <div>
+              <span>{t("active")}</span><strong
+                >{report.jobCounts.active}</strong
+              >
+            </div>
+            <div>
+              <span>{t("waiting")}</span><strong
+                >{report.jobCounts.queued}</strong
+              >
+            </div>
+            <div class:has-failures={report.jobCounts.failed > 0}>
+              <span>{t("failed")}</span><strong
+                >{report.jobCounts.failed}</strong
+              >
+            </div>
           </div>
         </div>
       </article>
@@ -313,7 +378,14 @@
             >
             <span role="cell"
               ><time datetime={job.startedAt ?? job.createdAt}
-                >{relativeOrDateTime(job.startedAt ?? job.createdAt)}</time
+                >{relativeOrDateTime(
+                  job.startedAt ?? job.createdAt,
+                  currentTime,
+                  {
+                    justNowSeconds: 5,
+                    showSeconds: true,
+                  },
+                )}</time
               ></span
             >
             <span role="cell">{duration(job.durationMs)}</span>
