@@ -1,0 +1,27 @@
+server/Dockerfile.dev
+  s_daa8d0717ba97c::t_d97f887b96d29d 34
+sites/api.kondis.org/wrangler.jsonc
+  s_daa8d0717ba97c::t_6c98e5b3d7cd0b 4
+sites/developers.kondis.org/wrangler.jsonc
+  s_daa8d0717ba97c::t_243f98dfa290c7 4
+sites/docs.kondis.org/wrangler.jsonc
+  s_daa8d0717ba97c::t_98a292c1550174 4
+sites/kondis.org/wrangler.jsonc
+  s_daa8d0717ba97c::t_a55fa49aa70bd7 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a06fd01df7d339cb86fbb33257c89dabb324c6b0",
+  "prompts": {},
+  "sessions": {
+    "s_daa8d0717ba97c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "c1528b9a-535c-4b48-a422-e703a6791c61",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
