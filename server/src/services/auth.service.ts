@@ -17,8 +17,10 @@ import {
   verifySetupTicket,
 } from 'src/auth';
 import { ConfigRepository } from 'src/repositories/config.repository';
+import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
+const SETUP_TOKEN_RATE_LIMIT = { label: 'Setup token', maxAttempts: 5, windowMs: 60_000 } as const;
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -27,6 +29,7 @@ export class AuthService {
   constructor(
     private readonly users: UserRepository,
     private readonly config: ConfigRepository,
+    private readonly rateLimitingRepository: RateLimitingRepository,
   ) {}
   get registrationEnabled() {
     return this.config.registrationEnabled;
@@ -54,7 +57,8 @@ Do not share this secret token with anyone.
 `);
     }
   }
-  async verifySetupToken(setupToken: string) {
+  async verifySetupToken(setupToken: string, clientId = 'unknown') {
+    this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
     const status = await this.setupStatus();
     if (!status.setupRequired) {
       throw new ConflictException('Initial setup is already complete');

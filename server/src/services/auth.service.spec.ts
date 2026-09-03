@@ -9,6 +9,7 @@ import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ConfigRepository } from 'src/repositories/config.repository';
+import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { newTestService } from 'test/utils';
@@ -23,7 +24,7 @@ describe(AuthService.name, () => {
   const config = {
     registrationEnabled: false,
   } as ConfigRepository;
-  const setup = () => newTestService(AuthService, [users, config], { users, config });
+  const setup = () => newTestService(AuthService, [users, config, new RateLimitingRepository()], { users, config });
   const setupToken = (sut: AuthService): string => (sut as unknown as { setupToken: string }).setupToken;
 
   beforeEach(() => {
