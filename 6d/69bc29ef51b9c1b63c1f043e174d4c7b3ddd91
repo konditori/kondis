@@ -1,0 +1,29 @@
+server/src/auth.ts
+  s_6bb73bd53db10f::t_f98dd8d51e9d70 22,70-87
+server/src/controllers/auth.controller.ts
+  s_6bb73bd53db10f::t_4a4c2d4c8e0256 4,123-132
+server/src/repositories/event.repository.ts
+  s_6bb73bd53db10f::t_395ebc6a28acbe 7,17,60,80,107,136-137,141-142,144-146,150,168,207-212,236-243
+server/src/services/auth.service.ts
+  s_6bb73bd53db10f::t_976789f742de0f 11,117-119
+server/src/services/job.service.ts
+  s_6bb73bd53db10f::t_38414a7cfe98da 5,27,43-45,86-88,99,108-109
+web/src/lib/realtime.ts
+  s_6bb73bd53db10f::t_8baaebaa64a029 173-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6d69bc29ef51b9c1b63c1f043e174d4c7b3ddd91",
+  "prompts": {},
+  "sessions": {
+    "s_6bb73bd53db10f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065e4-d99c-73d3-948a-966163bc7b8b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
