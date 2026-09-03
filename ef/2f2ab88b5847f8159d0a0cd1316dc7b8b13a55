@@ -1,0 +1,43 @@
+i18n/en.json
+  s_eb07ba35c4f30d::t_56e40f9d324e46 451-457
+i18n/sv.json
+  s_eb07ba35c4f30d::t_c02616585457f3 452-458
+open-api/kondis-openapi-specs.json
+  s_eb07ba35c4f30d::t_bcc4fb7cdf3c50 201-211,1154-1174,2303,2370-2374,2378-2379
+packages/sdk/src/fetch-client.ts
+  s_eb07ba35c4f30d::t_4ec5a2cab82e51 98,771,774,786,1340-1350
+server/src/controllers/job.controller.ts
+  s_eb07ba35c4f30d::t_c23ada583c52fd 33-34
+server/src/dtos/job.dto.ts
+  s_eb07ba35c4f30d::t_ca1dff7bdfb4c7 39-42,46
+server/src/repositories/job.repository.ts
+  s_eb07ba35c4f30d::t_f33725a05ddbd6 189,194-203,219-222,224-227
+server/src/services/job.service.spec.ts
+  s_eb07ba35c4f30d::t_06e8979f7b072a 28,148-149
+server/src/services/job.service.ts
+  s_eb07ba35c4f30d::t_0d651e6b787624 48-49
+server/src/types/jobs.ts
+  s_eb07ba35c4f30d::t_4e815c398cb658 149
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_eb07ba35c4f30d::t_f3bc69c065d812 464
+web/src/app.css
+  s_eb07ba35c4f30d::t_3c766cba6494e7 4677-4738,4797-4803
+web/src/routes/admin/jobs/+page.svelte
+  s_eb07ba35c4f30d::t_90abd940cde6dc 4-5,35-38,42-49,109-112,116,164-192,277-279,308-364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ef2f2ab88b5847f8159d0a0cd1316dc7b8b13a55",
+  "prompts": {},
+  "sessions": {
+    "s_eb07ba35c4f30d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "aa7612db-ebe4-40b6-9678-58ce3c5f420f",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
