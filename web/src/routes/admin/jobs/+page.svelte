@@ -1,6 +1,8 @@
 <script lang="ts">
   import {
     Archive,
+    ChevronLeft,
+    ChevronRight,
     CircleAlert,
     Clock3,
     Database,
@@ -30,9 +32,21 @@
   let history = $state<JobHistoryResponseDtoOutput["jobs"]>(
     untrack(() => data.history.jobs),
   );
+  let totalHistory = $state(untrack(() => data.history.total));
+  let historyOffset = $state(0);
+  let pageInput = $state(1);
+  let historyLoading = $state(false);
   let refreshing = $state(false);
   let refreshQueued = false;
   let error = $state("");
+  const HISTORY_PAGE_SIZE = 75;
+  let totalPages = $derived(
+    Math.max(1, Math.ceil(totalHistory / HISTORY_PAGE_SIZE)),
+  );
+  let currentPage = $derived(Math.floor(historyOffset / HISTORY_PAGE_SIZE) + 1);
+  let canLoadMore = $derived(
+    historyOffset === 0 && history.length < totalHistory,
+  );
 
   const queueDefinitions = [
     {
@@ -92,10 +106,14 @@
     try {
       const [nextQueues, nextHistory] = await Promise.all([
         jobControllerGetAllJobStatus(getSdkRequestOptions()),
-        jobControllerGetJobHistory({ limit: 75 }, getSdkRequestOptions()),
+        jobControllerGetJobHistory(
+          { limit: HISTORY_PAGE_SIZE, offset: historyOffset },
+          getSdkRequestOptions(),
+        ),
       ]);
       queues = nextQueues;
       history = nextHistory.jobs;
+      totalHistory = nextHistory.total;
       error = "";
     } catch {
       if (!silent) error = t("job_dashboard_load_error");
@@ -141,6 +159,35 @@
     return seconds < 60
       ? `${seconds.toFixed(seconds < 10 ? 1 : 0)} s`
       : `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+  }
+
+  async function loadHistoryPage(page: number, append = false) {
+    if (historyLoading) return;
+    historyLoading = true;
+    error = "";
+    const offset = append ? history.length : (page - 1) * HISTORY_PAGE_SIZE;
+    try {
+      const nextHistory = await jobControllerGetJobHistory(
+        { limit: HISTORY_PAGE_SIZE, offset },
+        getSdkRequestOptions(),
+      );
+      history = append ? [...history, ...nextHistory.jobs] : nextHistory.jobs;
+      totalHistory = nextHistory.total;
+      historyOffset = append ? 0 : offset;
+      pageInput = append ? 1 : page;
+    } catch {
+      error = t("job_dashboard_load_error");
+    } finally {
+      historyLoading = false;
+    }
+  }
+
+  function goToPage() {
+    const page = Math.min(Math.max(1, pageInput), totalPages);
+    pageInput = page;
+    if (page !== currentPage || historyOffset === 0) {
+      void loadHistoryPage(page);
+    }
   }
 
   onMount(() => {
@@ -227,9 +274,9 @@
           <div class="job-history-row" role="row">
             <span class="job-history-name" role="cell">
               {#if job.activityId}
-                <a href={`/activities/${job.activityId}`}><strong
-                    >{jobLabel(job.name)}</strong
-                  ></a>
+                <a href={`/activities/${job.activityId}`}
+                  ><strong>{jobLabel(job.name)}</strong></a
+                >
               {:else}
                 <strong>{jobLabel(job.name)}</strong>
               {/if}
@@ -257,6 +304,63 @@
             {/if}
           </div>
         {/each}
+      </div>
+      <div class="job-history-pagination">
+        <span class="job-history-count">
+          {t("jobs_shown", { shown: history.length, total: totalHistory })}
+        </span>
+        <div class="job-history-actions">
+          {#if canLoadMore}
+            <button
+              class="job-page-button"
+              type="button"
+              onclick={() => void loadHistoryPage(2, true)}
+              disabled={historyLoading}
+            >
+              {t("load_more")}
+            </button>
+          {/if}
+          {#if totalPages > 1}
+            <button
+              class="job-icon-button"
+              type="button"
+              aria-label={t("previous_page")}
+              onclick={() => {
+                pageInput = currentPage - 1;
+                void loadHistoryPage(currentPage - 1);
+              }}
+              disabled={historyLoading || currentPage <= 1}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <label class="job-page-input">
+              <span>{t("page")}</span>
+              <input
+                type="number"
+                min="1"
+                max={totalPages}
+                bind:value={pageInput}
+                onkeydown={(event) => {
+                  if (event.key === "Enter") goToPage();
+                }}
+                aria-label={t("go_to_page")}
+              />
+              <span>{t("of_pages", { total: totalPages })}</span>
+            </label>
+            <button
+              class="job-icon-button"
+              type="button"
+              aria-label={t("next_page")}
+              onclick={() => {
+                pageInput = currentPage + 1;
+                void loadHistoryPage(currentPage + 1);
+              }}
+              disabled={historyLoading || currentPage >= totalPages}
+            >
+              <ChevronRight size={16} />
+            </button>
+          {/if}
+        </div>
       </div>
     {/if}
   </section>

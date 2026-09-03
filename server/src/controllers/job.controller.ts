@@ -30,8 +30,8 @@ export class JobController {
   @ApiOperation({ summary: 'Recent job execution history' })
   @ZodResponse({ status: 200, description: 'Recently queued and executed jobs', type: JobHistoryResponseDto })
   @Get('history')
-  getJobHistory(@Query() { limit }: JobHistoryQueryDto): Promise<JobHistoryResponseDto> {
-    return this.service.getJobHistory(limit);
+  getJobHistory(@Query() { limit, offset }: JobHistoryQueryDto): Promise<JobHistoryResponseDto> {
+    return this.service.getJobHistory(limit, offset);
   }
 
   @ApiOperation({

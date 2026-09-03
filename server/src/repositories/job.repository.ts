@@ -186,13 +186,21 @@ export class JobRepository implements OnApplicationShutdown {
     };
   }
 
-  async getJobHistory(limit: number): Promise<JobHistoryEntry[]> {
+  async getJobHistory(limit: number, offset = 0): Promise<{ jobs: JobHistoryEntry[]; total: number }> {
     const boss = await this.getBoss();
     const schema = this.quoteIdentifier(this.config.jobs.schema);
     const queueNames = Object.values(QueueName);
     const historyQueueNames = [...queueNames, ...queueNames.map((queue) => deadLetterName(queue))];
-    const { rows } = await boss.getDb().executeSql(
-      `SELECT
+    const [countResult, historyResult] = await Promise.all([
+      boss.getDb().executeSql(
+        `SELECT COUNT(*)::int AS total
+         FROM ${schema}.job
+         WHERE name = ANY($1::text[])
+           AND data ->> 'name' IS NOT NULL`,
+        [historyQueueNames],
+      ),
+      boss.getDb().executeSql(
+        `SELECT
          id::text,
          name AS queue_name,
          source_name,
@@ -208,11 +216,15 @@ export class JobRepository implements OnApplicationShutdown {
        WHERE name = ANY($1::text[])
          AND data ->> 'name' IS NOT NULL
        ORDER BY COALESCE(started_on, created_on) DESC, created_on DESC
-       LIMIT $2`,
-      [historyQueueNames, limit],
-    );
+       LIMIT $2 OFFSET $3`,
+        [historyQueueNames, limit, offset],
+      ),
+    ]);
 
-    return (rows as StoredJobRow[]).map((row) => this.toJobHistoryEntry(row));
+    return {
+      jobs: (historyResult.rows as StoredJobRow[]).map((row) => this.toJobHistoryEntry(row)),
+      total: Number((countResult.rows[0] as { total: number }).total),
+    };
   }
 
   async getReferencedTemporaryPaths(): Promise<Set<string>> {

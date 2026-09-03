@@ -146,4 +146,5 @@ export interface JobHistoryEntry {
 
 export interface JobHistoryResponse {
   jobs: JobHistoryEntry[];
+  total: number;
 }

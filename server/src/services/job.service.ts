@@ -45,8 +45,8 @@ export class JobService {
     await this.events.emit('JobUpdated');
   }
 
-  async getJobHistory(limit: number) {
-    return { jobs: await this.jobRepository.getJobHistory(limit) };
+  async getJobHistory(limit: number, offset = 0) {
+    return this.jobRepository.getJobHistory(limit, offset);
   }
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {

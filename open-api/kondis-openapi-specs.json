@@ -198,6 +198,17 @@
               "default": 50,
               "type": "integer"
             }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "default": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -1126,6 +1137,27 @@
         "responses": {
           "201": {
             "description": "Short-lived ticket for the activity event WebSocket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityEventsTicketDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/job-events-ticket": {
+      "post": {
+        "operationId": "AuthController_jobEventsTicket",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Short-lived ticket for the job event WebSocket",
             "content": {
               "application/json": {
                 "schema": {
@@ -2268,6 +2300,7 @@
                 "activityId": {
                   "type": "string",
                   "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                   "nullable": true
                 },
                 "queue": {
@@ -2334,10 +2367,16 @@
               ],
               "additionalProperties": false
             }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           }
         },
         "required": [
-          "jobs"
+          "jobs",
+          "total"
         ],
         "additionalProperties": false
       },

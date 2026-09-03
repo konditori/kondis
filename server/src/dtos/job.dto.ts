@@ -36,10 +36,14 @@ const JobHistoryEntrySchema = z.object({
   error: z.string().nullable(),
 });
 
-export const JobHistoryResponseSchema = z.object({ jobs: z.array(JobHistoryEntrySchema) });
+export const JobHistoryResponseSchema = z.object({
+  jobs: z.array(JobHistoryEntrySchema),
+  total: z.number().int().nonnegative(),
+});
 
 export const JobHistoryQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 export const QueueStatusReportSchema = z.object({

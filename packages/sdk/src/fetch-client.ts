@@ -95,6 +95,7 @@ export type JobHistoryResponseDtoOutput = {
     attempt: number;
     error: string | null;
   }[];
+  total: number;
 };
 export type QueueCommandDto = {
   /** Operation to perform on the queue */
@@ -767,8 +768,10 @@ export function jobControllerCreateJob(
 export function jobControllerGetJobHistory(
   {
     limit,
+    offset,
   }: {
     limit?: number;
+    offset?: number;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -780,6 +783,7 @@ export function jobControllerGetJobHistory(
       `/jobs/history${QS.query(
         QS.explode({
           limit,
+          offset,
         }),
       )}`,
       {
@@ -1328,6 +1332,17 @@ export function authControllerActivityEventsTicket(opts?: Oazapfts.RequestOpts) 
       status: 201;
       data: ActivityEventsTicketDtoOutput;
     }>('/auth/activity-events-ticket', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+export function authControllerJobEventsTicket(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: ActivityEventsTicketDtoOutput;
+    }>('/auth/job-events-ticket', {
       ...opts,
       method: 'POST',
     }),

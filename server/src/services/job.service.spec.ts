@@ -25,7 +25,7 @@ describe('JobService', () => {
   const resume = vi.fn(async () => {});
   const empty = vi.fn(async () => {});
   const clearFailed = vi.fn(async () => {});
-  const getJobHistory = vi.fn(() => Promise.resolve([]));
+  const getJobHistory = vi.fn(() => Promise.resolve({ jobs: [], total: 0 }));
 
   const jobRepository = {
     run,
@@ -145,8 +145,8 @@ describe('JobService', () => {
     });
 
     it('returns recent job history with the requested limit', async () => {
-      await expect(makeService().getJobHistory(25)).resolves.toEqual({ jobs: [] });
-      expect(getJobHistory).toHaveBeenCalledWith(25);
+      await expect(makeService().getJobHistory(25)).resolves.toEqual({ jobs: [], total: 0 });
+      expect(getJobHistory).toHaveBeenCalledWith(25, 0);
     });
   });
 });

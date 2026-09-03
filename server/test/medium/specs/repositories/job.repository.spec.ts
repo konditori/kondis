@@ -461,7 +461,7 @@ describe('JobRepository', () => {
       await jobs.waitForQueueCompletion(QueueName.Storage);
 
       const history = await jobs.getJobHistory(10);
-      expect(history).toEqual(
+      expect(history.jobs).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             name: JobName.FileDelete,
