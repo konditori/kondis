@@ -6,6 +6,7 @@ const METERS_PER_MILE = 1609.344;
 const METERS_PER_YARD = 0.9144;
 const FEET_PER_METER = 3.28084;
 const MILES_PER_HOUR_PER_METER_PER_SECOND = 2.236936;
+const RELATIVE_TIME_MAX_AGE_SECONDS = 7 * 86_400;
 
 export function activityName(activity: {
   name: string | null;
@@ -178,4 +179,21 @@ export function relativeTime(value: string | Date, now = new Date()): string {
   if (months < 12) return `${months} months ago`;
   if (days < 730) return "1 year ago";
   return `${Math.floor(days / 365)} years ago`;
+}
+
+export function relativeOrDateTime(
+  value: string | Date,
+  now = new Date(),
+): string {
+  const timestamp = new Date(value);
+  const ageInSeconds = (now.getTime() - timestamp.getTime()) / 1000;
+
+  if (ageInSeconds >= 0 && ageInSeconds < RELATIVE_TIME_MAX_AGE_SECONDS) {
+    return relativeTime(timestamp, now);
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "medium",
+  }).format(timestamp);
 }

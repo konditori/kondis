@@ -19,6 +19,7 @@
     type AllJobStatusResponseDtoOutput,
     type JobHistoryResponseDtoOutput,
   } from "$lib/api";
+  import { relativeOrDateTime } from "$lib/format";
   import { t } from "$lib/i18n";
   import { subscribeToJobEvents } from "$lib/realtime";
 
@@ -142,13 +143,6 @@
       : `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
   }
 
-  function timestamp(value: string) {
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "medium",
-    }).format(new Date(value));
-  }
-
   onMount(() => {
     return subscribeToJobEvents(data.eventsUrl, () => void refresh(true));
   });
@@ -251,7 +245,7 @@
             >
             <span role="cell"
               ><time datetime={job.startedAt ?? job.createdAt}
-                >{timestamp(job.startedAt ?? job.createdAt)}</time
+                >{relativeOrDateTime(job.startedAt ?? job.createdAt)}</time
               ></span
             >
             <span role="cell">{duration(job.durationMs)}</span>
