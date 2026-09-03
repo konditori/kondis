@@ -82,6 +82,7 @@
     <string name="i18n_primary_navigation">Huvudnavigering</string>
     <string name="i18n_mobile_navigation">Mobilnavigering</string>
     <string name="i18n_kondis_home">Kondis startsida</string>
+    <string name="i18n_development_build">Utvecklingsversion</string>
     <string name="i18n_search_activities">Sök aktiviteter</string>
     <string name="i18n_clear_search">Töm sökning</string>
     <string name="i18n_open_notifications">Öppna notiser</string>

@@ -82,6 +82,7 @@
     <string name="i18n_primary_navigation">Primary navigation</string>
     <string name="i18n_mobile_navigation">Mobile navigation</string>
     <string name="i18n_kondis_home">Kondis home</string>
+    <string name="i18n_development_build">Development build</string>
     <string name="i18n_search_activities">Search activities</string>
     <string name="i18n_clear_search">Clear search</string>
     <string name="i18n_open_notifications">Open notifications</string>
