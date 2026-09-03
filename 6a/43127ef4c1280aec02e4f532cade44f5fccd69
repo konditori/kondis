@@ -1,0 +1,19 @@
+server/src/constants.ts
+  s_aed1ed18ad055c::t_636f43ee45af8c 287
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6a43127ef4c1280aec02e4f532cade44f5fccd69",
+  "prompts": {},
+  "sessions": {
+    "s_aed1ed18ad055c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0692f-8c07-76d2-8e6e-3b8e052c6183",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
