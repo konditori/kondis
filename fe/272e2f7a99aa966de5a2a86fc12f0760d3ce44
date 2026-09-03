@@ -1,0 +1,59 @@
+server/src/db/database.ts
+  s_760b9dbd6813f7::t_6fbcd0843a9061 2,6-7
+server/src/repositories/activity-image.repository.ts
+  s_760b9dbd6813f7::t_07a0cc34a91200 3,11
+server/src/repositories/activity.repository.ts
+  s_760b9dbd6813f7::t_0262cb140c3e18 16,31
+server/src/repositories/database.repository.ts
+  s_760b9dbd6813f7::t_09296ab2304c92 8
+server/src/repositories/event.repository.ts
+  s_760b9dbd6813f7::t_ac6123cd644713 9,12
+server/src/repositories/job.repository.ts
+  s_760b9dbd6813f7::t_4fd36943d41c93 20
+server/src/repositories/live-workout.repository.ts
+  s_760b9dbd6813f7::t_9065d793588281 2,4
+server/src/repositories/social.repository.ts
+  s_760b9dbd6813f7::t_11b666749276d5 3-4
+server/src/repositories/upload.repository.ts
+  s_760b9dbd6813f7::t_86e1e5a48e1496 3,5
+server/src/repositories/user.repository.ts
+  s_760b9dbd6813f7::t_a3fc950b6f7f7f 3-4
+server/src/services/activity-image.service.ts
+  s_760b9dbd6813f7::t_6d295a7d106e52 12
+server/src/services/social.service.spec.ts
+  s_760b9dbd6813f7::t_64e5e7a56a4212 4
+server/src/services/social.service.ts
+  s_760b9dbd6813f7::t_e7293398346065 3,7
+server/src/state/import-progress.store.ts
+  s_760b9dbd6813f7::t_346fcfcd26f798 4-5
+server/test/medium.factory.ts
+  s_760b9dbd6813f7::t_3e365f56d7a0be 8
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_760b9dbd6813f7::t_c3a4920d04a3c2 3
+server/test/medium/specs/repositories/job.repository.spec.ts
+  s_760b9dbd6813f7::t_ae61e209ff8702 7
+server/test/medium/specs/service/activity.service.spec.ts
+  s_760b9dbd6813f7::t_6eb27e74c247b8 4
+server/test/medium/specs/service/auth.service.spec.ts
+  s_760b9dbd6813f7::t_7f4d23c3f798ef 4
+server/test/medium/specs/service/upload.service.spec.ts
+  s_760b9dbd6813f7::t_882042fd9bb394 9
+server/test/medium/test-db.ts
+  s_760b9dbd6813f7::t_0fcc64d7993645 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fe272e2f7a99aa966de5a2a86fc12f0760d3ce44",
+  "prompts": {},
+  "sessions": {
+    "s_760b9dbd6813f7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ff4297ac-3464-4ed3-bbca-c801c5cbe57a",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
