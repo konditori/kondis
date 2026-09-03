@@ -3,10 +3,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { AuthenticatedUser } from 'src/auth';
 import { type KondisDatabase } from 'src/db/database';
 import { QueueName } from 'src/enum';
-import { ActivityRepository, type ActivityStreamInput } from 'src/repositories/activity.repository';
+import { ActivityRepository } from 'src/repositories/activity.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
+import type { ActivityStreamInput } from 'src/types';
 
 import { createMediumFactory } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';

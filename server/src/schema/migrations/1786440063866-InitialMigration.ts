@@ -1,6 +1,6 @@
 import { Kysely, sql } from 'kysely';
 
-const UNRANKED = 2_147_483_647;
+import { UNRANKED } from 'src/constants';
 
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`CREATE EXTENSION IF NOT EXISTS postgis`.execute(db);

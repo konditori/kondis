@@ -1,3 +1,4 @@
+import type { Activity, ActivityMetric, ActivityUpdate, NewActivity, NewLap } from 'src/db/schema';
 import type { JobName, QueueName } from 'src/enum';
 
 export type FitRecordMesg = {
@@ -179,3 +180,22 @@ export type ParsedActivity = ParsedActivityStructure & {
   normalizedPower: number | null; // watts
   calories: number | null; // kilocalories
 };
+
+export type ActivityStreamInput = { type: StreamType; data: number[] };
+
+export type CreateActivityInput = {
+  activity: Omit<NewActivity, 'detail_track' | 'track'>;
+  streams: ActivityStreamInput[];
+  laps: Omit<NewLap, 'activity_id' | 'id'>[];
+};
+
+export type ActivityMetrics = Omit<ActivityMetric, 'activity_id'>;
+export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' | 'track'> & {
+  metrics: ActivityMetrics | null;
+};
+export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
+
+export type UpdateActivityInput = Pick<
+  ActivityUpdate,
+  'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings' | 'tags'
+>;

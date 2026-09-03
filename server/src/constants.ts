@@ -1,6 +1,6 @@
 import { QueueName } from 'src/enum';
-import { AverageMetric, BestEffortGroup } from 'src/types';
 import type { ActivityTagSettings, ActivityTypeSettings, BestEffortType } from 'src/types';
+import { AverageMetric, BestEffortGroup } from 'src/types';
 
 export const JOB_SCHEMA = 'kondis_jobs';
 export const JOB_CONCURRENCY: Record<QueueName, number> = {
@@ -14,6 +14,16 @@ export const JOB_RETRY_DELAY_SECONDS = 5;
 export const JOB_EXPIRE_SECONDS = 900;
 export const JOB_RETENTION_SECONDS = 7 * 24 * 60 * 60;
 export const JOB_CRON = true;
+
+export const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
+export const ROUTE_CANDIDATE_LIMIT = 250;
+export const ROUTE_PREFILTER_RADIUS_METERS = 250;
+export const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
+export const ROUTE_MIN_LENGTH_RATIO = 0.88;
+export const ROUTE_MAX_LENGTH_RATIO = 1.14;
+export const ROUTE_FRECHET_TOLERANCE_METERS = 200;
+export const UNRANKED = 2_147_483_647;
+export const RANKING_UPDATE_BATCH_SIZE = 1000;
 
 export const ACTIVITY_TAG_IDS = [
   'race',

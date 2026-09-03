@@ -4,9 +4,9 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { DatabaseConfig } from 'src/types';
-import { createDatabase, KondisDatabase, KondisTransaction, KYSELY } from 'src/db/database';
+import { createDatabase, KYSELY } from 'src/db/database';
+import type { KondisDatabase, KondisTransaction } from 'src/db/database';
 
-// File migrations are loaded from this module's source/compiled sibling directory.
 const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 
 @Injectable()

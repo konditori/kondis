@@ -2,21 +2,33 @@ import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
-import { KondisDatabase, KondisExecutor, KYSELY } from 'src/db/database';
 import {
-  Activity,
-  ActivityMetric,
-  ActivityStream,
-  ActivityUpdate,
-  NewActivity,
-  NewLap,
-  StreamType,
-} from 'src/db/schema';
+  RANKING_UPDATE_BATCH_SIZE,
+  ROUTE_CANDIDATE_LIMIT,
+  ROUTE_ENDPOINT_TOLERANCE_METERS,
+  ROUTE_FRECHET_TOLERANCE_METERS,
+  ROUTE_MAX_LENGTH_RATIO,
+  ROUTE_MIN_LENGTH_RATIO,
+  ROUTE_PREFILTER_RADIUS_METERS,
+  TRACK_SIMPLIFY_TOLERANCE_DEG,
+  UNRANKED,
+} from 'src/constants';
+import { KondisDatabase, KondisExecutor, KYSELY } from 'src/db/database';
+import { Activity, ActivityMetric, ActivityStream } from 'src/db/schema';
 import { getColumns } from 'src/schema/decorators';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
+import type {
+  ActivityMetrics,
+  ActivityRecord,
+  ActivityStreamInput,
+  ActivityTag,
+  ActivityType,
+  BestEffortType,
+  CreateActivityInput,
+  UpdateActivityInput,
+} from 'src/types';
 import { BestEffortGroup } from 'src/types';
-import type { ActivityTag, ActivityType, BestEffortType } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
   computeBiggestClimb,
@@ -26,48 +38,16 @@ import {
   computeRunningBestEfforts,
 } from 'src/utils/best-effort';
 
-// TODO: should we move these values somewhere else than the repo?
-const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
-const ROUTE_CANDIDATE_LIMIT = 250;
-const ROUTE_PREFILTER_RADIUS_METERS = 250;
-const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
-const ROUTE_MIN_LENGTH_RATIO = 0.88;
-const ROUTE_MAX_LENGTH_RATIO = 1.14;
-const ROUTE_FRECHET_TOLERANCE_METERS = 200;
-const UNRANKED = 2_147_483_647;
-const RANKING_UPDATE_BATCH_SIZE = 1000;
-
-// Heavy geo/vector columns fetched separately (e.g. via ST_AsGeoJSON) instead of by default.
 const ACTIVITY_EXCLUDED_COLUMNS = new Set<keyof Activity>(['track', 'detail_track', 'route_embedding']);
 type ActivityColumn = Exclude<keyof Activity, 'track' | 'detail_track' | 'route_embedding'>;
 const ACTIVITY_COLUMNS = getColumns(ActivityTable)
   .filter((column): column is ActivityColumn => !ACTIVITY_EXCLUDED_COLUMNS.has(column))
   .map((column) => `activity.${column}` as const);
 
-// activity_id is the join key, embedded separately as the parent activity's id.
 const METRIC_EXCLUDED_COLUMNS = new Set<keyof ActivityMetric>(['activity_id']);
 const METRIC_COLUMNS = getColumns(ActivityMetricTable).filter(
   (column): column is Exclude<keyof ActivityMetric, 'activity_id'> => !METRIC_EXCLUDED_COLUMNS.has(column),
 );
-
-export type ActivityStreamInput = { type: StreamType; data: number[] };
-
-export type CreateActivityInput = {
-  activity: Omit<NewActivity, 'detail_track' | 'track'>;
-  streams: ActivityStreamInput[];
-  laps: Omit<NewLap, 'activity_id' | 'id'>[];
-};
-
-export type ActivityMetrics = Omit<ActivityMetric, 'activity_id'>;
-export type ActivityRecord = Omit<Activity, 'detail_track' | 'route_embedding' | 'track'> & {
-  metrics: ActivityMetrics | null;
-};
-export type ActivityListRecord = ActivityRecord & { track_geojson: string | null };
-
-export type UpdateActivityInput = Pick<
-  ActivityUpdate,
-  'name' | 'description' | 'sport' | 'started_at' | 'exclude_from_rankings' | 'tags'
->;
 
 type ActivityCursor = {
   startedAt: Date;
