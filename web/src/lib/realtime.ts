@@ -171,7 +171,10 @@ export function subscribeToActivityEvents(
   };
 }
 
-export function subscribeToJobEvents(url: string, onUpdate: () => void): () => void {
+export function subscribeToJobEvents(
+  url: string,
+  onUpdate: () => void,
+): () => void {
   let socket: WebSocket | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
@@ -188,12 +191,16 @@ export function subscribeToJobEvents(url: string, onUpdate: () => void): () => v
 
   const connect = async () => {
     try {
-      const ticketResponse = await fetch("/api/v1/auth/job-events-ticket", { method: "POST" });
-      if (!ticketResponse.ok) throw new Error("Unable to authenticate job events");
+      const ticketResponse = await fetch("/api/v1/auth/job-events-ticket", {
+        method: "POST",
+      });
+      if (!ticketResponse.ok)
+        throw new Error("Unable to authenticate job events");
       const { token } = (await ticketResponse.json()) as { token?: string };
       if (!token) throw new Error("Job event ticket was missing");
       const socketUrl = new URL(url, window.location.href);
-      if (window.location.protocol === "https:" && socketUrl.protocol === "ws:") socketUrl.protocol = "wss:";
+      if (window.location.protocol === "https:" && socketUrl.protocol === "ws:")
+        socketUrl.protocol = "wss:";
       socketUrl.searchParams.set("ticket", token);
       if (stopped) return;
       socket = new WebSocket(socketUrl);
@@ -206,7 +213,10 @@ export function subscribeToJobEvents(url: string, onUpdate: () => void): () => v
     };
     socket.onmessage = ({ data }) => {
       try {
-        if ((JSON.parse(String(data)) as { type?: string }).type === "job.updated") onUpdate();
+        if (
+          (JSON.parse(String(data)) as { type?: string }).type === "job.updated"
+        )
+          onUpdate();
       } catch {
         // Ignore malformed and forward-incompatible messages.
       }

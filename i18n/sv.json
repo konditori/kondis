@@ -443,7 +443,6 @@
   "refresh": "Uppdatera",
   "recent_jobs": "Senaste jobb",
   "recent_jobs_description": "Köat och slutfört arbete som servern sparar.",
-  "auto_refreshes": "Uppdateras var femte sekund",
   "no_job_history": "Inga jobb har registrerats ännu",
   "no_job_history_description": "Bakgrundsarbete visas här efter att det har köats.",
   "status": "Status",
