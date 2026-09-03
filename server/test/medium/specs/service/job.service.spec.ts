@@ -15,8 +15,9 @@ const makeJobService = () => {
     pause: (queue: QueueName) => void paused.add(queue),
     resume: (queue: QueueName) => void paused.delete(queue),
   } as unknown as JobRepository;
+  const events = { emit: async () => undefined } as never;
   return {
-    sut: new JobService({ hasWorker: () => false } as never, jobs, new ConsoleLogger()),
+    sut: new JobService(jobs, events, new ConsoleLogger()),
   };
 };
 

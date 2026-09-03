@@ -4,16 +4,19 @@ import type { Server } from 'node:http';
 import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import { verifyActivityEventsTicket } from 'src/auth';
-import { ConfigService } from 'src/config/config.service';
-import { KYSELY, KondisDatabase } from 'src/db/database';
+import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import { KYSELY } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import { SocialRepository } from 'src/repositories/social.repository';
+import type { KondisDatabase } from 'src/types';
 
 const EVENT_CHANNEL = 'kondis_realtime';
 const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
+const JOB_UPDATE_INTERVAL_MS = 250;
 
 type EventMap = {
+  JobUpdated: [];
   ActivityCreate: [activity: ActivityDto];
   ActivityUploadSkipped: [activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>, uploadFileName: string];
   ActivityUpdate: [activity: ActivityDto];
@@ -56,6 +59,7 @@ export type EmitEvent = keyof EventMap;
 export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent =
+  | { type: 'job.updated' }
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
   | {
       type: 'activity.upload.skipped';
@@ -75,6 +79,7 @@ type EventSerializers = {
 };
 
 const eventSerializers: EventSerializers = {
+  JobUpdated: () => ({ type: 'job.updated' }),
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUploadSkipped: (activity, uploadFileName) => ({
     type: 'activity.upload.skipped',
@@ -96,23 +101,46 @@ export class EventRepository implements OnApplicationShutdown {
   private readonly logger = new Logger(EventRepository.name);
   private listener?: pg.Client;
   private reconnectTimer?: NodeJS.Timeout;
+  private jobUpdateTimer?: NodeJS.Timeout;
   private socketServer?: WebSocketServer;
   private httpServer?: Server;
   private upgradeHandler?: Parameters<Server['on']>[1];
   private readonly socketUsers = new Map<WebSocket, string>();
   private readonly socketActivities = new Map<WebSocket, Set<string>>();
+  private readonly jobDashboardSockets = new Set<WebSocket>();
   private stopped = false;
 
   constructor(
     @Inject(KYSELY) private readonly db: KondisDatabase,
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
     private readonly social: SocialRepository,
   ) {}
 
   async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
+    if (event === 'JobUpdated') {
+      this.scheduleJobUpdate();
+      return;
+    }
+
+    await this.publish(event, ...args);
+  }
+
+  private async publish<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
     const serialize = eventSerializers[event] as (...values: ArgsOf<T>) => WebsocketEvent;
     const payload = JSON.stringify(serialize(...args));
     await sql`SELECT pg_notify(${EVENT_CHANNEL}, ${payload})`.execute(this.db);
+  }
+
+  private scheduleJobUpdate(): void {
+    if (this.stopped || this.jobUpdateTimer) {
+      return;
+    }
+    this.jobUpdateTimer = setTimeout(() => {
+      this.jobUpdateTimer = undefined;
+      void this.publish('JobUpdated').catch((error: unknown) => {
+        this.logger.warn(`Could not publish job update: ${error instanceof Error ? error.message : String(error)}`);
+      });
+    }, JOB_UPDATE_INTERVAL_MS);
   }
 
   async attach(server: Server): Promise<void> {
@@ -120,7 +148,9 @@ export class EventRepository implements OnApplicationShutdown {
     this.httpServer = server;
     this.upgradeHandler = (request, socket, head) => {
       const path = new URL(request.url ?? '', 'http://localhost').pathname;
-      if (!EVENT_PATHS.has(path)) return;
+      if (!EVENT_PATHS.has(path)) {
+        return;
+      }
       this.socketServer?.handleUpgrade(request, socket, head, (client) => {
         this.socketServer?.emit('connection', client, request);
       });
@@ -128,17 +158,26 @@ export class EventRepository implements OnApplicationShutdown {
     server.on('upgrade', this.upgradeHandler);
     this.socketServer.on('connection', (socket, request) => {
       const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
-      const userId = verifyActivityEventsTicket(ticket, this.config.authSecret);
-      if (!userId) {
+      const userId = verifyActivityEventsTicket(ticket, AUTH_SECRET);
+      const isJobDashboard = !userId && Boolean(verifyJobEventsTicket(ticket, AUTH_SECRET));
+      if (!userId && !isJobDashboard) {
         socket.close(1008, 'Authentication required');
         return;
       }
-      this.socketUsers.set(socket, userId);
+      if (userId) {
+        this.socketUsers.set(socket, userId);
+      }
+      if (isJobDashboard) {
+        this.jobDashboardSockets.add(socket);
+      }
       this.socketActivities.set(socket, new Set());
-      socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
+      if (userId) {
+        socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
+      }
       socket.once('close', () => {
         this.socketUsers.delete(socket);
         this.socketActivities.delete(socket);
+        this.jobDashboardSockets.delete(socket);
       });
       socket.send(JSON.stringify({ type: 'connected' }));
     });
@@ -150,12 +189,14 @@ export class EventRepository implements OnApplicationShutdown {
   async onApplicationShutdown(): Promise<void> {
     this.stopped = true;
     clearTimeout(this.reconnectTimer);
+    clearTimeout(this.jobUpdateTimer);
     if (this.httpServer && this.upgradeHandler) {
       this.httpServer.off('upgrade', this.upgradeHandler);
     }
     this.socketServer?.close();
     this.socketUsers.clear();
     this.socketActivities.clear();
+    this.jobDashboardSockets.clear();
     await this.listener?.end();
   }
 
@@ -194,6 +235,14 @@ export class EventRepository implements OnApplicationShutdown {
   }
 
   private async broadcast(payload: string): Promise<void> {
+    if (this.isJobUpdate(payload)) {
+      for (const client of this.jobDashboardSockets) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(payload);
+        }
+      }
+      return;
+    }
     const commentActivityId = this.commentActivityId(payload);
     if (commentActivityId) {
       const recipients = await this.recipientsFor(payload);
@@ -214,6 +263,14 @@ export class EventRepository implements OnApplicationShutdown {
       if (client.readyState === WebSocket.OPEN && recipients.has(this.socketUsers.get(client) ?? '')) {
         client.send(payload);
       }
+    }
+  }
+
+  private isJobUpdate(payload: string): boolean {
+    try {
+      return (JSON.parse(payload) as { type?: string }).type === 'job.updated';
+    } catch {
+      return false;
     }
   }
 

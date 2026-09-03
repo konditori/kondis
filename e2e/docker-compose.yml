@@ -8,13 +8,13 @@ services:
       context: ../
       dockerfile: server/Dockerfile
     environment:
-      DB_HOSTNAME: database
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_DATABASE_NAME: kondis
+      KONDIS_SETUP_TOKEN: e2e-setup-token
+      KONDIS_DB_HOSTNAME: database
+      KONDIS_DB_USERNAME: postgres
+      KONDIS_DB_PASSWORD: postgres
+      KONDIS_DB_DATABASE_NAME: kondis
       KONDIS_PORT: '2295'
       KONDIS_STORAGE_DIR: /tmp/kondis-uploads
-      KONDIS_SETUP_TOKEN: e2e-setup-token
     volumes:
       - ./test-assets:/test-assets
     depends_on:

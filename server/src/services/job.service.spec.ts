@@ -1,51 +1,72 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type ConfigService } from 'src/config/config.service';
-import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
+import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
+import { type EventRepository } from 'src/repositories/event.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
 import { newTestService } from 'test/utils';
 
-const makeConfig = (workers: WorkerType[]): ConfigService =>
-  ({ workers, hasWorker: (worker: WorkerType) => workers.includes(worker) }) as ConfigService;
-
 describe('JobService', () => {
   const run = vi.fn<(item: JobItem) => Promise<JobStatus>>();
   const queue = vi.fn(async () => {});
-  const startWorkers = vi.fn<(onJobRun: (item: JobItem) => Promise<void>) => Promise<void>>(() => Promise.resolve());
+  const startWorkers = vi.fn<(onJobRun: (item: JobItem) => Promise<JobStatus>) => Promise<void>>(() =>
+    Promise.resolve(),
+  );
   const getJobCounts = vi.fn(() =>
     Promise.resolve({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 }),
+  );
+  const getAllJobCounts = vi.fn(() =>
+    Promise.resolve(
+      Object.fromEntries(
+        Object.values(QueueName).map((queue) => [
+          queue,
+          { active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 },
+        ]),
+      ) as Record<QueueName, Awaited<ReturnType<typeof getJobCounts>>>,
+    ),
   );
   const isPaused = vi.fn(() => false);
   const pause = vi.fn(async () => {});
   const resume = vi.fn(async () => {});
   const empty = vi.fn(async () => {});
   const clearFailed = vi.fn(async () => {});
+  const getJobHistory = vi.fn(() => Promise.resolve({ jobs: [], total: 0 }));
+  const emit = vi.fn(async () => {});
 
   const jobRepository = {
     run,
     queue,
     startWorkers,
     getJobCounts,
+    getAllJobCounts,
     isPaused,
     pause,
     resume,
     empty,
     clearFailed,
+    getJobHistory,
   } as unknown as JobRepository;
 
-  const setup = (workers = [WorkerType.API, WorkerType.JOBS]) =>
-    newTestService(JobService, [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })], {
-      jobRepository,
-    });
+  const setup = () =>
+    newTestService(
+      JobService,
+      [
+        jobRepository,
+        { emit } as unknown as EventRepository,
+        new ConsoleLogger({ logLevels: [] }),
+      ],
+      { jobRepository },
+    );
 
-  const makeService = (workers = [WorkerType.API, WorkerType.JOBS]) => setup(workers).sut;
+  const makeService = () => setup().sut;
 
-  const captureRunner = async (): Promise<(item: JobItem) => Promise<void>> => {
-    await makeService().init();
-    return startWorkers.mock.calls.at(-1)![0];
+  const captureRunner = async (): Promise<(item: JobItem) => Promise<JobStatus>> => {
+    const service = makeService() as unknown as {
+      onJobRun: (item: JobItem) => Promise<JobStatus>;
+    };
+    return service.onJobRun.bind(service);
   };
 
   beforeEach(() => {
@@ -55,13 +76,8 @@ describe('JobService', () => {
   });
 
   describe('init', () => {
-    it('consumes when the jobs role is enabled', async () => {
+    it('does not consume jobs in the API process', async () => {
       await makeService().init();
-      expect(startWorkers).toHaveBeenCalledTimes(1);
-    });
-
-    it('stays a pure producer when it is not', async () => {
-      await makeService([WorkerType.API]).init();
       expect(startWorkers).not.toHaveBeenCalled();
     });
   });
@@ -80,7 +96,7 @@ describe('JobService', () => {
       run.mockResolvedValue(JobStatus.Failed);
 
       // JobStatus.Failed means "retrying cannot help", so the job is settled rather than retried.
-      await expect(runner({ name: JobName.FileDelete, data: { paths: [] } })).resolves.toBeUndefined();
+      await expect(runner({ name: JobName.FileDelete, data: { paths: [] } })).resolves.toBe(JobStatus.Failed);
     });
 
     it('passes the job straight through to the repository', async () => {
@@ -137,7 +153,13 @@ describe('JobService', () => {
       const status = await makeService().getAllJobStatus();
 
       expect(Object.keys(status).sort()).toEqual(Object.values(QueueName).sort());
-      expect(getJobCounts).toHaveBeenCalledTimes(Object.values(QueueName).length);
+      expect(getAllJobCounts).toHaveBeenCalledOnce();
+      expect(getJobCounts).not.toHaveBeenCalled();
+    });
+
+    it('returns recent job history with the requested limit', async () => {
+      await expect(makeService().getJobHistory(25)).resolves.toEqual({ jobs: [], total: 0 });
+      expect(getJobHistory).toHaveBeenCalledWith(25, 0);
     });
   });
 });

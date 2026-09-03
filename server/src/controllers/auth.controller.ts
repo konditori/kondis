@@ -1,11 +1,10 @@
 import { Body, Controller, Get, Logger, Post, Req, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 import { ZodResponse } from 'nestjs-zod';
-import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
+import { AdminOnly, AuthenticatedUser, CurrentUser, Public } from 'src/auth';
 import { ActivityEventsTicketDto } from 'src/dtos/auth.dto';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
-import { SetupTokenRateLimiter } from 'src/setup-token-rate-limiter';
 import { z } from 'zod';
 const credentials = z.object({
   email: z.string(),
@@ -25,7 +24,6 @@ const registrationCredentials = z.object({
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  private readonly setupTokenRateLimiter = new SetupTokenRateLimiter();
 
   constructor(
     private readonly service: AuthService,
@@ -67,8 +65,7 @@ export class AuthController {
     const value = setupTokenCredentials.parse(body);
     const forwardedFor = request.headers['x-forwarded-for'];
     const clientId = typeof forwardedFor === 'string' ? forwardedFor.split(',', 1)[0]!.trim() : request.ip;
-    this.setupTokenRateLimiter.consume(clientId || 'unknown');
-    return this.service.verifySetupToken(value.setupToken);
+    return this.service.verifySetupToken(value.setupToken, clientId || 'unknown');
   }
   @Public() @Post('setup/validate') validateSetupTicket(@Body() body: unknown) {
     const value = setupTicketCredentials.parse(body);
@@ -119,5 +116,15 @@ export class AuthController {
   })
   activityEventsTicket(@CurrentUser() user: AuthenticatedUser): ActivityEventsTicketDto {
     return this.service.createActivityEventsTicket(user.id);
+  }
+  @Post('job-events-ticket')
+  @AdminOnly()
+  @ZodResponse({
+    status: 201,
+    description: 'Short-lived ticket for the job event WebSocket',
+    type: ActivityEventsTicketDto,
+  })
+  jobEventsTicket(@CurrentUser() user: AuthenticatedUser): ActivityEventsTicketDto {
+    return this.service.createJobEventsTicket(user.id);
   }
 }

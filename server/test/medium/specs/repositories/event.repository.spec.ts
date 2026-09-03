@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { type KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import type { ActivityDto } from 'src/dtos/activity.dto';
 import { EventRepository } from 'src/repositories/event.repository';
 import { SocialRepository } from 'src/repositories/social.repository';

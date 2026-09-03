@@ -1,12 +1,11 @@
 import type { AuthenticatedUser } from 'src/auth';
-import type { ActivityMetrics, ActivityStreamInput } from 'src/repositories/activity.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
-import type { ActivityType } from 'src/types';
+import type { ActivityMetrics, ActivityStreamInput, ActivityType } from 'src/types';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
 
-import type { KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 
 export const makeUploadedFile = (filename: string, buffer: Buffer): BufferedUploadedFileData => ({
   originalname: filename,

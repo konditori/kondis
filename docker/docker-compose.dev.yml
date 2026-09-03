@@ -3,6 +3,7 @@ name: kondis-dev
 services:
   kondis-app-base:
     profiles: ['_base']
+    cpus: ${KONDIS_DEV_CPUS:-0}
     tmpfs:
       - /tmp
     volumes:
@@ -50,7 +51,7 @@ services:
       target: dev
     restart: unless-stopped
     volumes:
-      - ${DATA_LOCATION}/data:/data
+      - ${KONDIS_DATA_LOCATION}:/data
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -62,10 +63,16 @@ services:
       database:
         condition: service_healthy
     healthcheck:
-      disable: false
+      test:
+        [
+          'CMD-SHELL',
+          'timeout 1 bash -c "</dev/tcp/127.0.0.1/2293"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
 
-  # A one-off, local-development command used by `mise dev-reset-data`.
-  # Keeping it separate from kondis-server lets the reset run while workers are stopped.
   kondis-reset:
     extends:
       service: kondis-app-base
@@ -76,7 +83,7 @@ services:
       target: dev
     command: ['pnpm --dir server db:reset-development-data -- --confirm']
     volumes:
-      - ${DATA_LOCATION}/data:/data
+      - ${KONDIS_DATA_LOCATION}/data:/data
     env_file:
       - .env
     depends_on:
@@ -99,20 +106,21 @@ services:
     environment:
       KONDIS_API_URL: http://kondis-server:2293
       KONDIS_VITE_USE_POLLING: 'true'
+      PUBLIC_KONDIS_VERSION: ${KONDIS_VERSION:-}
+      PUBLIC_KONDIS_COMMIT: ${KONDIS_COMMIT:-}
+      PUBLIC_KONDIS_BRANCH: ${KONDIS_BRANCH:-}
     ports:
       - 3000:3000
     depends_on:
       kondis-init:
         condition: service_healthy
       kondis-server:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test:
         [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://localhost:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+          'CMD-SHELL',
+          'timeout 1 bash -c "</dev/tcp/127.0.0.1/3000"',
         ]
       interval: 10s
       timeout: 3s
@@ -121,6 +129,7 @@ services:
 
   database:
     container_name: kondis_postgres
+    cpus: ${KONDIS_DEV_CPUS:-0}
     build:
       context: ../packages/postgres
       dockerfile: Dockerfile
@@ -130,13 +139,11 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_PASSWORD: ${KONDIS_DB_PASSWORD}
+      POSTGRES_USER: ${KONDIS_DB_USERNAME}
+      POSTGRES_DB: ${KONDIS_DB_DATABASE_NAME}
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      # PostgreSQL 18 expects the volume at /var/lib/postgresql, not /data.
-      # Change DB_DATA_LOCATION in .env to use another volume or a local Linux path.
       - postgres_data:/var/lib/postgresql
     ports:
       - 5432:5432

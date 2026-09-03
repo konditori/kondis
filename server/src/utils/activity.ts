@@ -1,4 +1,5 @@
-import { ACTIVITY_TYPES, ActivityType, ActivityTypeSettings } from 'src/types';
+import { ACTIVITY_TYPES } from 'src/constants';
+import type { ActivityType, ActivityTypeSettings } from 'src/types';
 
 const ACTIVITY_TYPE_BY_ID = new Map<ActivityType, ActivityTypeSettings>(
   ACTIVITY_TYPES.map((settings) => [settings.type, settings]),

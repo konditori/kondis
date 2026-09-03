@@ -13,7 +13,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
-import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
+import { LagomTakeoutParser, type LagomTakeoutContents } from 'src/imports/lagom-takeout.parser';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -25,6 +25,7 @@ import { UserRepository } from 'src/repositories/user.repository';
 import { ImportProgressStore } from 'src/state/import-progress.store';
 import { JobOf } from 'src/types/jobs';
 import { BufferedUploadedFileData, UploadedFileData } from 'src/types/uploads';
+import { asErrorMessage } from 'src/utils/misc';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -37,8 +38,8 @@ export class UploadService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobRepository,
     private readonly logger: ConsoleLogger,
-    private readonly lagomTakeoutParser: LagomTakeoutParser = new LagomTakeoutParser(),
-    private readonly importProgressStore: ImportProgressStore = new ImportProgressStore(),
+    private readonly lagomTakeoutParser: LagomTakeoutParser,
+    private readonly importProgressStore: ImportProgressStore,
     @Optional() private readonly userRepository?: UserRepository,
     @Optional() private readonly activityRepository?: ActivityRepository,
     @Optional() private readonly eventRepository?: EventRepository,
@@ -111,7 +112,7 @@ export class UploadService {
         });
       }
       if (takeoutImportId) {
-        this.importProgressStore.increment(takeoutImportId, false, true);
+        await this.importProgressStore.increment(takeoutImportId, false, true);
       }
       return JobStatus.Skipped;
     }
@@ -152,7 +153,7 @@ export class UploadService {
       const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId) {
-          this.importProgressStore.increment(takeoutImportId, false, true);
+          await this.importProgressStore.increment(takeoutImportId, false, true);
         }
         return JobStatus.Skipped;
       }
@@ -179,22 +180,27 @@ export class UploadService {
     await this.stageUploadedFile(file, storagePath);
 
     const importId = crypto.randomUUID();
-    this.importProgressStore.create(importId, userId);
-    await this.jobRepository.queue({
-      name: JobName.LagomTakeoutImport,
-      data: {
-        originalName: file.originalname,
-        storagePath,
-        takeoutImportId: importId,
-        userId,
-      },
-    });
+    await this.importProgressStore.create(importId, userId);
+    try {
+      await this.jobRepository.queue({
+        name: JobName.LagomTakeoutImport,
+        data: {
+          originalName: file.originalname,
+          storagePath,
+          takeoutImportId: importId,
+          userId,
+        },
+      });
+    } catch (error) {
+      await this.importProgressStore.fail(importId, asErrorMessage(error));
+      throw error;
+    }
 
     return { byteSize: file.size, queued: true, importId };
   }
 
-  getLagomTakeoutStatus(id: string, userId: string) {
-    const importRecord = this.importProgressStore.get(id, userId);
+  async getLagomTakeoutStatus(id: string, userId: string) {
+    const importRecord = await this.importProgressStore.get(id, userId);
     if (!importRecord) {
       throw new NotFoundException('Lagom import not found');
     }
@@ -220,40 +226,48 @@ export class UploadService {
       throw new Error('Takeout import job has no owner');
     }
     let queued = 0;
-    const takeout = await this.lagomTakeoutParser.extractLagomTakeout(
-      await this.storageRepository.read(storagePath),
-      async (activity) => {
-        if (activity.manual) {
-          await this.jobRepository.queue({
-            name: JobName.ActivityManualCreate,
-            data: {
-              id: crypto.randomUUID(),
-              userId,
-              takeoutImportId,
-              activityName: activity.name ?? undefined,
-              activityDescription: activity.description ?? undefined,
-              activitySport: activity.sport ?? 'other',
-              activityTags: activity.tags,
-              ...activity.manual,
-              images: await this.stageImages(activity.images),
-            },
-          });
+    let takeout: LagomTakeoutContents;
+    try {
+      takeout = await this.lagomTakeoutParser.extractLagomTakeout(
+        await this.storageRepository.read(storagePath),
+        async (activity) => {
+          if (activity.manual) {
+            await this.jobRepository.queue({
+              name: JobName.ActivityManualCreate,
+              data: {
+                id: crypto.randomUUID(),
+                userId,
+                takeoutImportId,
+                activityName: activity.name ?? undefined,
+                activityDescription: activity.description ?? undefined,
+                activitySport: activity.sport ?? 'other',
+                activityTags: activity.tags,
+                ...activity.manual,
+                images: await this.stageImages(activity.images),
+              },
+            });
+            queued += 1;
+            return;
+          }
+          await this.queueActivityUpload(
+            activity.file!,
+            userId,
+            activity.name ?? undefined,
+            activity.description ?? undefined,
+            activity.sport ?? undefined,
+            takeoutImportId,
+            activity.images,
+            activity.tags,
+          );
           queued += 1;
-          return;
-        }
-        await this.queueActivityUpload(
-          activity.file!,
-          userId,
-          activity.name ?? undefined,
-          activity.description ?? undefined,
-          activity.sport ?? undefined,
-          takeoutImportId,
-          activity.images,
-          activity.tags,
-        );
-        queued += 1;
-      },
-    );
+        },
+      );
+    } catch (error) {
+      if (takeoutImportId) {
+        await this.importProgressStore.fail(takeoutImportId, asErrorMessage(error));
+      }
+      throw error;
+    }
 
     if (takeout.profile) {
       if (takeout.profile.firstName && takeout.profile.lastName && this.userRepository) {
@@ -267,10 +281,10 @@ export class UploadService {
     }
 
     if (takeoutImportId) {
-      this.importProgressStore.setProcessing(takeoutImportId, queued);
+      await this.importProgressStore.setProcessing(takeoutImportId, queued);
     }
     if (takeoutImportId && takeout.errors.length > 0) {
-      this.importProgressStore.fail(takeoutImportId, `${takeout.errors.length} activities could not be imported`);
+      await this.importProgressStore.fail(takeoutImportId, `${takeout.errors.length} activities could not be imported`);
     }
 
     this.logger.log(

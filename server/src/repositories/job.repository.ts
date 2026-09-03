@@ -1,15 +1,24 @@
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
+import { isMainThread } from 'node:worker_threads';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Job, JobInsert, QueuePolicy, SendOptions } from 'pg-boss';
+import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
-import { ConfigService } from 'src/config/config.service';
-import { KondisTransaction } from 'src/db/database';
-import type { JobConfig } from 'src/decorators';
-import { JobName, JobStatus, MetadataKey, QueueName, WorkerType } from 'src/enum';
-import { JobCounts, JobItem, JobOf } from 'src/types/jobs';
+import {
+  JOB_CONCURRENCY,
+  JOB_CRON,
+  JOB_EXPIRE_SECONDS,
+  JOB_RETRY_DELAY_SECONDS,
+  JOB_RETRY_LIMIT,
+  JOB_RETENTION_SECONDS,
+  JOB_SCHEMA,
+} from 'src/constants';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import { JobName, JobStatus, MetadataKey, QueueName } from 'src/enum';
+import type { JobConfig, KondisTransaction } from 'src/types';
+import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'src/types/jobs';
 import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
 
 type StoredJob = { name: JobName; data?: object };
@@ -24,6 +33,23 @@ type JobMapItem = {
 type QueueJobOptions = {
   transaction?: KondisTransaction;
 };
+
+type StoredJobRow = {
+  id: string;
+  queue_name: string;
+  source_name: string | null;
+  job_name: string;
+  activity_id: string | null;
+  state: string;
+  retry_count: number;
+  created_on: Date;
+  started_on: Date | null;
+  completed_on: Date | null;
+  output: unknown;
+};
+
+type RawJobCounts = Omit<JobCounts, 'ready'>;
+type StoredJobCounts = RawJobCounts & { name: string };
 
 const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
   [QueueName.ActivityParsing]: 'exclusive',
@@ -59,13 +85,13 @@ export class JobRepository implements OnApplicationShutdown {
   private readonly pausedQueues = new Set<QueueName>();
 
   private bossPromise: Promise<PgBoss> | null = null;
-  private onJobRun: ((item: JobItem) => Promise<void>) | null = null;
+  private onJobRun: ((item: JobItem) => Promise<JobStatus>) | null = null;
   private stopped = false;
 
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly reflector: Reflector,
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
   ) {}
 
   setup(services: (new (...args: never[]) => unknown)[]): void {
@@ -109,7 +135,7 @@ export class JobRepository implements OnApplicationShutdown {
     }
   }
 
-  async startWorkers(onJobRun: (item: JobItem) => Promise<void>): Promise<void> {
+  async startWorkers(onJobRun: (item: JobItem) => Promise<JobStatus>): Promise<void> {
     this.onJobRun = onJobRun;
 
     const boss = await this.getBoss();
@@ -172,6 +198,91 @@ export class JobRepository implements OnApplicationShutdown {
     };
   }
 
+  async getAllJobCounts(): Promise<Record<QueueName, JobCounts>> {
+    const boss = await this.getBoss();
+    const queues = Object.values(QueueName);
+    const names = [...queues, ...queues.map((queue) => deadLetterName(queue))];
+    const definitions = await boss.getQueues(names);
+    const namesByTable = new Map<string, string[]>();
+
+    for (const { name, table } of definitions) {
+      const tableNames = namesByTable.get(table) ?? [];
+      tableNames.push(name);
+      namesByTable.set(table, tableNames);
+    }
+
+    const rowGroups = await Promise.all(
+      [...namesByTable].map(async ([table, tableNames]) => {
+        const result = await boss.getDb().executeSql(
+          `SELECT
+               name,
+               count(*)::int AS total,
+               count(*) FILTER (WHERE state = 'active')::int AS active,
+               count(*) FILTER (WHERE state IN ('created', 'retry'))::int AS queued,
+               count(*) FILTER (WHERE state IN ('created', 'retry') AND start_after > now())::int AS deferred,
+               count(*) FILTER (WHERE state = 'failed')::int AS failed
+             FROM ${this.quoteIdentifier(JOB_SCHEMA)}.${this.quoteIdentifier(table)}
+             WHERE name = ANY($1::text[])
+             GROUP BY name`,
+          [tableNames],
+        );
+        return result.rows as StoredJobCounts[];
+      }),
+    );
+    const rows = rowGroups.flat();
+    const countsByName = new Map(rows.map(({ name, ...counts }) => [name, this.withReadyCount(counts)]));
+    const empty = (): JobCounts => ({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 });
+
+    return Object.fromEntries(
+      queues.map((queue) => {
+        const counts = countsByName.get(queue) ?? empty();
+        const deadLetter = countsByName.get(deadLetterName(queue)) ?? empty();
+        return [queue, { ...counts, failed: counts.failed + deadLetter.queued }];
+      }),
+    ) as Record<QueueName, JobCounts>;
+  }
+
+  async getJobHistory(limit: number, offset = 0): Promise<{ jobs: JobHistoryEntry[]; total: number }> {
+    const boss = await this.getBoss();
+    const schema = this.quoteIdentifier(JOB_SCHEMA);
+    const queueNames = Object.values(QueueName);
+    const historyQueueNames = [...queueNames, ...queueNames.map((queue) => deadLetterName(queue))];
+    const [countResult, historyResult] = await Promise.all([
+      boss.getDb().executeSql(
+        `SELECT COUNT(*)::int AS total
+         FROM ${schema}.job
+         WHERE name = ANY($1::text[])
+           AND data ->> 'name' IS NOT NULL`,
+        [historyQueueNames],
+      ),
+      boss.getDb().executeSql(
+        `SELECT
+         id::text,
+         name AS queue_name,
+         source_name,
+         data ->> 'name' AS job_name,
+         CASE WHEN data ->> 'name' LIKE 'Activity%' THEN data -> 'data' ->> 'id' END AS activity_id,
+         state::text,
+         retry_count,
+         created_on,
+         started_on,
+         completed_on,
+         output
+       FROM ${schema}.job
+       WHERE name = ANY($1::text[])
+         AND data ->> 'name' IS NOT NULL
+       ORDER BY COALESCE(started_on, created_on) DESC, created_on DESC
+       LIMIT $2 OFFSET $3`,
+        [historyQueueNames, limit, offset],
+      ),
+    ]);
+
+    return {
+      jobs: (historyResult.rows as StoredJobRow[]).map((row) => this.toJobHistoryEntry(row)),
+      total: Number((countResult.rows[0] as { total: number }).total),
+    };
+  }
+
   async getReferencedTemporaryPaths(): Promise<Set<string>> {
     const boss = await this.getBoss();
     const paths = new Set<string>();
@@ -182,7 +293,7 @@ export class JobRepository implements OnApplicationShutdown {
         continue;
       }
 
-      const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+      const table = `"${JOB_SCHEMA}"."${queue.table}"`;
       const { rows } = await boss.getDb().executeSql(
         `SELECT jsonb_path_query(data, '$.**.storagePath') #>> '{}' AS storage_path
          FROM ${table}
@@ -249,7 +360,7 @@ export class JobRepository implements OnApplicationShutdown {
       return;
     }
 
-    const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+    const table = `"${JOB_SCHEMA}"."${queue.table}"`;
     await boss.getDb().executeSql(
       `DELETE FROM ${table}
        WHERE name = $1
@@ -309,7 +420,7 @@ export class JobRepository implements OnApplicationShutdown {
       return empty;
     }
 
-    const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+    const table = `"${JOB_SCHEMA}"."${queue.table}"`;
     const { rows } = await boss.getDb().executeSql(
       `SELECT
          count(*)::int AS total,
@@ -322,12 +433,16 @@ export class JobRepository implements OnApplicationShutdown {
       [name],
     );
 
-    const row = rows.at(0) as JobCounts | undefined;
+    const row = rows.at(0) as RawJobCounts | undefined;
     if (!row) {
       return empty;
     }
 
-    return { ...row, ready: Math.max(row.queued - row.deferred, 0) };
+    return this.withReadyCount(row);
+  }
+
+  private withReadyCount(counts: RawJobCounts): JobCounts {
+    return { ...counts, ready: Math.max(counts.queued - counts.deferred, 0) };
   }
 
   private getQueueName(name: JobName): QueueName {
@@ -423,9 +538,9 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   private async createBoss(): Promise<PgBoss> {
-    const { database, jobs } = this.config;
-    const consuming = this.config.hasWorker(WorkerType.JOBS);
-    const totalConcurrency = Object.values(jobs.concurrency).reduce((sum, value) => sum + value, 0);
+    const { database } = this.config;
+    const consuming = !isMainThread;
+    const totalConcurrency = Object.values(JOB_CONCURRENCY).reduce((sum, value) => sum + value, 0);
 
     const boss = new PgBoss({
       host: database.host,
@@ -435,11 +550,11 @@ export class JobRepository implements OnApplicationShutdown {
       database: database.database,
       application_name: 'kondis-jobs',
       max: consuming ? totalConcurrency + 4 : 2,
-      schema: jobs.schema,
+      schema: JOB_SCHEMA,
       createSchema: true,
       migrate: true,
       supervise: consuming,
-      schedule: consuming && jobs.cron,
+      schedule: consuming && JOB_CRON,
       useListenNotify: consuming,
     });
 
@@ -449,14 +564,12 @@ export class JobRepository implements OnApplicationShutdown {
     await boss.start();
     await this.createQueues(boss);
 
-    this.logger.log(`Connected to job schema "${jobs.schema}" (consuming=${consuming})`);
+    this.logger.log(`Connected to job schema "${JOB_SCHEMA}" (consuming=${consuming})`);
 
     return boss;
   }
 
   private async createQueues(boss: PgBoss): Promise<void> {
-    const { retryLimit, retryDelaySeconds, expireInSeconds, deleteAfterSeconds } = this.config.jobs;
-
     for (const queue of Object.values(QueueName)) {
       const deadLetter = deadLetterName(queue);
 
@@ -464,11 +577,11 @@ export class JobRepository implements OnApplicationShutdown {
 
       const options = {
         deadLetter,
-        retryLimit,
-        retryDelay: retryDelaySeconds,
+        retryLimit: JOB_RETRY_LIMIT,
+        retryDelay: JOB_RETRY_DELAY_SECONDS,
         retryBackoff: true,
-        expireInSeconds,
-        deleteAfterSeconds,
+        expireInSeconds: JOB_EXPIRE_SECONDS,
+        deleteAfterSeconds: JOB_RETENTION_SECONDS,
         notify: true,
       };
 
@@ -487,37 +600,41 @@ export class JobRepository implements OnApplicationShutdown {
       {
         batchSize: WORKER_BATCH_SIZE,
         burstWhenBatchFull: true,
-        localConcurrency: this.config.jobs.concurrency[queue],
+        localConcurrency: JOB_CONCURRENCY[queue],
+        perJobResults: true,
         pollingIntervalSeconds: 2,
         notifyPollingIntervalSeconds: 30,
       },
-      async (jobs) => {
-        await this.dispatchBatch(jobs);
-      },
+      (jobs) => this.dispatchBatch(jobs),
     );
   }
 
-  private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<void> {
-    let rankingRefresh: Job<StoredJob> | undefined;
+  private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<JobResult[]> {
+    const rankingRefreshes: Job<StoredJob>[] = [];
+    const results: JobResult[] = [];
 
     for (const job of jobs) {
       if (job.data.name === JobName.ActivityBestEffortRank) {
-        // pg-boss marks the whole prefetched batch active before invoking us, so the ranking
-        // handler cannot delete these duplicates from the queue. Keep one refresh and run it
-        // after every computation in this batch; queued duplicates are discarded by the handler.
-        rankingRefresh = job;
+        // TODO: remove this workaround
+        rankingRefreshes.push(job);
         continue;
       }
 
-      await this.dispatch(job);
+      results.push(await this.dispatchResult(job));
     }
 
-    if (rankingRefresh) {
-      await this.dispatch(rankingRefresh);
+    const rankingRefresh = rankingRefreshes.pop();
+    for (const duplicate of rankingRefreshes) {
+      results.push({ id: duplicate.id, status: 'completed', output: { status: JobStatus.Skipped } });
     }
+    if (rankingRefresh) {
+      results.push(await this.dispatchResult(rankingRefresh));
+    }
+
+    return results;
   }
 
-  private dispatch(job: Job<StoredJob>): Promise<void> {
+  private dispatch(job: Job<StoredJob>): Promise<JobStatus> {
     if (!this.onJobRun) {
       throw new Error('Received a job before workers were started');
     }
@@ -525,8 +642,72 @@ export class JobRepository implements OnApplicationShutdown {
     return this.onJobRun({ name: job.data.name, data: job.data.data } as JobItem);
   }
 
+  private async dispatchResult(job: Job<StoredJob>): Promise<JobResult> {
+    try {
+      const status = await this.dispatch(job);
+      return { id: job.id, status: 'completed', output: { status } };
+    } catch (error) {
+      return { id: job.id, status: 'failed', output: { message: asErrorMessage(error) } };
+    }
+  }
+
+  private quoteIdentifier(value: string): string {
+    if (value.startsWith('"') && value.endsWith('"')) {
+      return value;
+    }
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  private toJobHistoryEntry(row: StoredJobRow): JobHistoryEntry {
+    const queueValue = row.source_name ?? row.queue_name.replace(/\.deadLetter$/, '');
+    const queue = Object.values(QueueName).find((value) => value === queueValue);
+    if (!queue) {
+      throw new Error(`Unexpected queue in job history: ${queueValue}`);
+    }
+
+    const output = row.output && typeof row.output === 'object' ? (row.output as Record<string, unknown>) : {};
+    const logicalStatus = output.status ?? output.value;
+    let status: JobHistoryStatus;
+    if (row.queue_name.endsWith('.deadLetter') || row.state === 'failed') {
+      status = 'failed';
+    } else if (row.state === 'active') {
+      status = 'running';
+    } else if (row.state === 'created' || row.state === 'retry') {
+      status = 'queued';
+    } else if (logicalStatus === JobStatus.Skipped) {
+      status = 'skipped';
+    } else if (logicalStatus === JobStatus.Failed) {
+      status = 'failed';
+    } else {
+      status = 'succeeded';
+    }
+
+    const startedAt = row.started_on?.toISOString() ?? null;
+    const finishedAt = row.completed_on?.toISOString() ?? null;
+    const nestedValue = output.value && typeof output.value === 'object' ? output.value : undefined;
+    const nestedMessage =
+      nestedValue && 'message' in nestedValue && typeof nestedValue.message === 'string' ? nestedValue.message : null;
+    const error = typeof output.message === 'string' ? output.message : nestedMessage;
+    const durationMs =
+      row.started_on && row.completed_on ? Math.max(0, row.completed_on.getTime() - row.started_on.getTime()) : null;
+
+    return {
+      id: row.id,
+      name: row.job_name,
+      activityId: row.activity_id,
+      queue,
+      status,
+      createdAt: row.created_on.toISOString(),
+      startedAt,
+      finishedAt,
+      durationMs,
+      attempt: row.retry_count + 1,
+      error,
+    };
+  }
+
   private async applySchedules(boss: PgBoss): Promise<void> {
-    if (!this.config.jobs.cron) {
+    if (!JOB_CRON) {
       return;
     }
 

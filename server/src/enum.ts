@@ -1,6 +1,6 @@
 export enum WorkerType {
   API = 'api',
-  JOBS = 'jobs',
+  WORKER = 'worker',
 }
 
 export enum QueueName {

@@ -7,9 +7,10 @@ import {
   SetMetadata,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ConfigService } from 'src/config/config.service';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { UserRepository } from 'src/repositories/user.repository';
+
+export const AUTH_SECRET = randomUUID();
 
 export type AuthenticatedUser = {
   id: string;
@@ -19,6 +20,7 @@ export type AuthenticatedUser = {
   lastName: string;
 };
 type EventTicket = { id: string; scope: 'activity-events'; exp: number };
+type JobEventsTicket = { id: string; scope: 'job-events'; exp: number };
 type SetupTicket = { scope: 'initial-setup'; exp: number };
 export const PUBLIC = 'kondis:public';
 export const Public = () => SetMetadata(PUBLIC, true);
@@ -40,7 +42,6 @@ export const createAccessToken = (user: AuthenticatedUser, secret: string) => {
   return `${payload}.${sign(payload, secret)}`;
 };
 
-/** A deliberately short-lived, single-purpose credential for the browser WebSocket handshake. */
 export const createActivityEventsTicket = (userId: string, secret: string) => {
   const expiresAt = new Date(Date.now() + 60_000);
   const payload = encode({ id: userId, scope: 'activity-events', exp: Math.floor(expiresAt.getTime() / 1000) });
@@ -66,7 +67,24 @@ export const verifyActivityEventsTicket = (token: string | null, secret: string)
   }
 };
 
-/** A short-lived credential issued only after the installation token is verified. */
+export const createJobEventsTicket = (userId: string, secret: string) => {
+  const expiresAt = new Date(Date.now() + 60_000);
+  const payload = encode({ id: userId, scope: 'job-events', exp: Math.floor(expiresAt.getTime() / 1000) });
+  return { token: `${payload}.${sign(payload, secret)}`, expiresAt: expiresAt.toISOString() };
+};
+
+export const verifyJobEventsTicket = (token: string | null, secret: string): string | undefined => {
+  if (!token) return undefined;
+  const [payload, signature] = token.split('.', 2);
+  if (!payload || !signature || !hasValidSignature(payload, signature, secret)) return undefined;
+  try {
+    const ticket = JSON.parse(Buffer.from(payload, 'base64url').toString()) as JobEventsTicket;
+    return ticket.scope === 'job-events' && ticket.id && ticket.exp * 1000 >= Date.now() ? ticket.id : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const createSetupTicket = (secret: string) => {
   const expiresAt = new Date(Date.now() + 10 * 60_000);
   const payload = encode({ scope: 'initial-setup', exp: Math.floor(expiresAt.getTime() / 1000) });
@@ -92,7 +110,6 @@ export const verifySetupTicket = (token: string | null, secret: string): boolean
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private readonly config: ConfigService,
     private readonly users: UserRepository,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -123,7 +140,7 @@ export class AuthGuard implements CanActivate {
     if (!payload || !signature) {
       throw new UnauthorizedException('Invalid access token');
     }
-    if (!hasValidSignature(payload, signature, this.config.authSecret)) {
+    if (!hasValidSignature(payload, signature, AUTH_SECRET)) {
       throw new UnauthorizedException('Invalid access token');
     }
     let parsed: AuthenticatedUser & { exp: number };

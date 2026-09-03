@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { type ConfigService } from 'src/config/config.service';
+import { type ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 
@@ -13,7 +13,7 @@ describe('StorageRepository', () => {
 
   beforeEach(async () => {
     storageDir = await mkdtemp(join(tmpdir(), 'kondis-storage-'));
-    repository = new StorageRepository({ storageDir } as ConfigService, new CryptoRepository());
+    repository = new StorageRepository({ storageDir } as ConfigRepository, new CryptoRepository());
   });
 
   afterEach(async () => {

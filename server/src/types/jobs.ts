@@ -127,3 +127,24 @@ export type QueueStatusReport = {
 };
 
 export type AllJobStatusResponse = Record<QueueName, QueueStatusReport>;
+
+export type JobHistoryStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
+
+export interface JobHistoryEntry {
+  id: string;
+  name: string;
+  activityId: string | null;
+  queue: QueueName;
+  status: JobHistoryStatus;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  durationMs: number | null;
+  attempt: number;
+  error: string | null;
+}
+
+export interface JobHistoryResponse {
+  jobs: JobHistoryEntry[];
+  total: number;
+}

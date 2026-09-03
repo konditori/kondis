@@ -15,6 +15,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 
 ## Completed features
 
+* Job queues
 * Strava takeout import
 * Workout analysis and route map display
 * Import .fit, .gpx, and .tcx files
@@ -23,14 +24,25 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Multi user support
 * Liking and commenting others workouts
 * Translations
+* Similar route matching
+* Android OIDC redirect for logins
 
 ## Planned features (subject to change)
 * MCP server
 * iOS and Apple Watch support
+* Listen address is hardcoded 0.0.0.0, make configurable
 * Demo site linked from github
+* Audio coach with TTS during activities
+* Audio coach with ETA if following known route
+* Percieved effort tracking
+* Full strava takeout compatibility, private notes, shoes, etc.
+* Beat yourself, like Endomondo did
 * Translation site such as weblate
 * Power curve generation
 * S3 support for file storage
+* Peptalk during live runs, with TTS
+* Auto-pause workouts
+* Power curves and other detailed stats
 
 ## Development
 Please see the [developer documentation site](https://developers.kondis.org/).

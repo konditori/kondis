@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
@@ -211,6 +211,11 @@ describe('JobRepository', () => {
         await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
 
         expect(refresh).toHaveBeenCalledTimes(1);
+        await expect(jobs.getJobCounts(QueueName.ActivityParsing)).resolves.toMatchObject({
+          active: 0,
+          queued: 0,
+          failed: 0,
+        });
       } finally {
         refresh.mockRestore();
         await jobs.empty(QueueName.ActivityParsing);
@@ -450,5 +455,25 @@ describe('JobRepository', () => {
       expect(counts.total).toBeGreaterThan(0);
       expect(counts.failed).toBe(0);
     }, 20_000);
+
+    it('keeps recent job names, outcomes and timings for the admin history', async () => {
+      await jobs.queue({ name: JobName.FileDelete, data: { paths: [] } });
+      await jobs.waitForQueueCompletion(QueueName.Storage);
+
+      const history = await jobs.getJobHistory(10);
+      expect(history.jobs).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: JobName.FileDelete,
+            queue: QueueName.Storage,
+            status: 'succeeded',
+            attempt: 1,
+            startedAt: expect.any(String),
+            finishedAt: expect.any(String),
+            durationMs: expect.any(Number),
+          }),
+        ]),
+      );
+    });
   });
 });

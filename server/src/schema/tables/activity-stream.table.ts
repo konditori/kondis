@@ -1,5 +1,5 @@
 import { Column, Table } from 'src/schema/decorators';
-import { StreamType } from 'src/types';
+import type { StreamType } from 'src/types';
 
 export interface ActivityStreamTable {
   activity_id: string;

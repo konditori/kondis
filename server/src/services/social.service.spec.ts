@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { KondisDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import type { EventRepository } from 'src/repositories/event.repository';
 import { SocialService } from 'src/services/social.service';
 

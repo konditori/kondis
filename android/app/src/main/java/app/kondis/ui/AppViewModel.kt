@@ -120,7 +120,7 @@ class AppViewModel
                     if (error is HttpException && error.code() in setOf(401, 403, 404)) {
                         settingsRepository.setAccessToken(null)
                     }
-                }.onSuccess { user -> settingsRepository.setAccountId(user.id) }
+                }.onSuccess { user -> settingsRepository.setAccount(user.id, user.role) }
             }
             viewModelScope.launch {
                 externalAuthManager.reauthorizationRequired.collect { required ->
@@ -209,7 +209,7 @@ class AppViewModel
                 val settings = settingsRepository.settings.first()
                 apiFactory.create(settings).login(LoginRequest(email.trim(), password))
             }.onSuccess { response ->
-                settingsRepository.setSession(response.accessToken, response.user.id)
+                settingsRepository.setSession(response.accessToken, response.user.id, response.user.role)
                 _loginStage.value = LoginStage.EnteringServer
             }.onFailure { error ->
                 if (error is HttpException && error.code() in 300..399) {

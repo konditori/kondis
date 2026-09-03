@@ -1,12 +1,14 @@
 import { sql } from 'kysely';
-import { type DatabaseConfig } from 'src/config/config.service';
-import { createDatabase, type KondisDatabase } from 'src/db/database';
+import { JOB_SCHEMA } from 'src/constants';
+import { createDatabase } from 'src/db/database';
+import type { KondisDatabase } from 'src/types';
 import { QueueName } from 'src/enum';
 import type { JobRepository } from 'src/repositories/job.repository';
+import type { DatabaseConfig } from 'src/types';
 
 export const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
 
-export const TEST_JOB_SCHEMA = 'kondis_jobs_test';
+export const TEST_JOB_SCHEMA = JOB_SCHEMA;
 
 const getRequired = (name: string): string => {
   const value = process.env[name];
@@ -35,7 +37,7 @@ export const createMediumTestDatabase = (): KondisDatabase => createDatabase(get
 
 export const truncateAllTables = async (db: KondisDatabase): Promise<void> => {
   await sql`
-    TRUNCATE TABLE live_workout_point, live_workout, activity_route_match, activity_stream, activity_best_effort, activity_metric, lap, activity, upload
+    TRUNCATE TABLE takeout_import, live_workout_point, live_workout, activity_route_match, activity_stream, activity_best_effort, activity_metric, lap, activity, upload
     RESTART IDENTITY CASCADE
   `.execute(db);
 };

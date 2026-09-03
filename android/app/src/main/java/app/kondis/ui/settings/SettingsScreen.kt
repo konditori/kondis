@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ListAlt
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Straighten
@@ -33,7 +34,11 @@ import app.kondis.model.UnitSystem
 import app.kondis.ui.i18n.tr
 
 @Composable
-fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsRoute(
+    isAdmin: Boolean,
+    onJobs: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsScreen(
         state = state,
@@ -41,6 +46,8 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
         onUnitChange = viewModel::setUnits,
         onSave = viewModel::saveAndTest,
         onSignOut = viewModel::signOut,
+        isAdmin = isAdmin,
+        onJobs = onJobs,
     )
 }
 
@@ -51,6 +58,8 @@ fun SettingsScreen(
     onUnitChange: (UnitSystem) -> Unit,
     onSave: () -> Unit,
     onSignOut: () -> Unit,
+    isAdmin: Boolean,
+    onJobs: () -> Unit,
 ) {
     var showSignOutConfirmation by remember { mutableStateOf(false) }
 
@@ -88,6 +97,32 @@ fun SettingsScreen(
                 }
                 Button(onClick = { onUnitChange(state.settings.unitSystem) }) {
                     Text(tr("save_preference"))
+                }
+            }
+        }
+        if (isAdmin) {
+            Card(
+                onClick = onJobs,
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.ListAlt,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(tr("job_queues"), style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            tr("job_queues_description"),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }

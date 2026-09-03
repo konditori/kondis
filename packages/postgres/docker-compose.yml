@@ -10,8 +10,8 @@ services:
         VECTORCHORD_TAG: 0.3.0
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/kondis_db_password
-      DB_USERNAME_FILE: /run/secrets/kondis_db_user
-      DB_DATABASE_NAME: "database_name"
+      KONDIS_DB_USERNAME_FILE: /run/secrets/kondis_db_user
+      KONDIS_DB_DATABASE_NAME: "database_name"
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
       - ./data:/var/lib/postgresql

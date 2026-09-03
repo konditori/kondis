@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { Activity, Trophy, Users } from "@lucide/svelte";
+  import { Activity, ListChecks, Trophy, Users } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { t } from "$lib/i18n";
+  import { buildInfo } from "$lib/build-info";
+
+  let { user }: { user?: { role: "admin" | "user" } } = $props();
 
   const items = [
     { href: "/", label: t("home"), icon: Activity, section: null },
@@ -14,6 +17,13 @@
     },
     { href: "/people", label: t("people"), icon: Users, section: "/people" },
   ];
+
+  const adminItem = {
+    href: "/admin/jobs",
+    label: t("job_queues"),
+    icon: ListChecks,
+    section: "/admin/jobs",
+  };
 
   function goHome(event: MouseEvent) {
     event.preventDefault();
@@ -49,7 +59,33 @@
         {item.label}
       </a>
     {/each}
+    {#if user?.role === "admin"}
+      <a
+        class:active={page.url.pathname.startsWith(adminItem.section)}
+        href={adminItem.href}
+      >
+        <adminItem.icon size={19} />
+        {adminItem.label}
+      </a>
+    {/if}
   </nav>
+
+  <div
+    class="build-notice"
+    title={buildInfo.revision
+      ? `${buildInfo.version} · ${buildInfo.revision}`
+      : buildInfo.version}
+  >
+    <span class="build-version">v. {buildInfo.version}</span>
+    {#if buildInfo.branch}
+      <span class="build-revision">{buildInfo.branch}</span>
+    {/if}
+    {#if buildInfo.commit}
+      <span class="build-revision">{buildInfo.commit}</span>
+    {:else if buildInfo.buildType === "development"}
+      <span class="build-revision">{t("development_build")}</span>
+    {/if}
+  </div>
 </aside>
 
 <nav class="mobile-nav" aria-label={t("mobile_navigation")}>
@@ -66,4 +102,10 @@
   <a class:active={page.url.pathname.startsWith("/people")} href="/people"
     ><Users size={21} /><span>{t("people")}</span></a
   >
+  {#if user?.role === "admin"}
+    <a
+      class:active={page.url.pathname.startsWith("/admin/jobs")}
+      href="/admin/jobs"><ListChecks size={21} /><span>{t("jobs")}</span></a
+    >
+  {/if}
 </nav>

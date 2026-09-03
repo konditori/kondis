@@ -1,20 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
 import { NewUpload, Upload, UploadStatus } from 'src/db/schema';
-import { ActivityType } from 'src/types';
-
-type UploadPageOptions = {
-  force: boolean;
-  after?: string;
-  limit: number;
-};
-
-type ManualActivitySignature = {
-  startedAt: Date;
-  sport: ActivityType;
-  elapsedTime: number;
-};
+import type { KondisDatabase, KondisExecutor, ManualActivitySignature, UploadPageOptions } from 'src/types';
 
 @Injectable()
 export class UploadRepository {

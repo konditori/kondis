@@ -13,6 +13,7 @@ RUN apt-get update \
         bash \
         ca-certificates \
         coreutils \
+        git \
         tini \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,15 +25,21 @@ RUN printf '%s\n' \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
     'cd /usr/src/app/server' \
-    'exec pnpm start:dev' \
+    'exec node scripts/start-dev-watch.mjs' \
     > /usr/local/bin/kondis-dev \
     && chmod +x /usr/local/bin/kondis-dev \
     && printf '%s\n' \
     '#!/usr/bin/env bash' \
     'set -euo pipefail' \
     'cd /usr/src/app/web' \
-    'pnpm exec svelte-kit sync' \
-    'exec pnpm dev --host 0.0.0.0 --port 3000' \
+    'if git -C /usr/src/app rev-parse --git-dir >/dev/null 2>&1; then' \
+    '  export PUBLIC_KONDIS_COMMIT="${PUBLIC_KONDIS_COMMIT:-$(git -C /usr/src/app rev-parse --short HEAD)}"' \
+    '  export PUBLIC_KONDIS_BRANCH="${PUBLIC_KONDIS_BRANCH:-$(git -C /usr/src/app symbolic-ref --short -q HEAD || true)}"' \
+    'fi' \
+    'export PUBLIC_KONDIS_BUILD_TYPE="${PUBLIC_KONDIS_BUILD_TYPE:-development}"' \
+    'pnpm --filter @kondis/sdk build' \
+    'node node_modules/@sveltejs/kit/svelte-kit.js sync' \
+    'exec node node_modules/vite/bin/vite.js dev --host 0.0.0.0 --port 3000' \
     > /usr/local/bin/kondis-web \
     && chmod +x /usr/local/bin/kondis-web
 

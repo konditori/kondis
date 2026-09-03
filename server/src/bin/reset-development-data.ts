@@ -1,7 +1,8 @@
 import { rm } from 'node:fs/promises';
 
 import { sql } from 'kysely';
-import { ConfigService } from 'src/config/config.service';
+import { JOB_SCHEMA } from 'src/constants';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { createDatabase } from 'src/db/database';
 
 const CONFIRMATION_FLAG = '--confirm';
@@ -13,14 +14,14 @@ async function resetDevelopmentData(): Promise<void> {
     throw new Error(`Refusing to reset data without ${CONFIRMATION_FLAG}.`);
   }
 
-  const config = new ConfigService();
+  const config = new ConfigRepository().getEnv();
   const db = createDatabase(config.database);
 
   try {
     const queueTables = await sql<{ tablename: string }>`
       SELECT tablename
       FROM pg_catalog.pg_tables
-      WHERE schemaname = ${config.jobs.schema}
+      WHERE schemaname = ${JOB_SCHEMA}
         AND tablename <> 'version'
     `.execute(db);
 
@@ -40,7 +41,7 @@ async function resetDevelopmentData(): Promise<void> {
 
       if (queueTables.rows.length > 0) {
         const tables = queueTables.rows
-          .map(({ tablename }) => `${quoteIdentifier(config.jobs.schema)}.${quoteIdentifier(tablename)}`)
+          .map(({ tablename }) => `${quoteIdentifier(JOB_SCHEMA)}.${quoteIdentifier(tablename)}`)
           .join(', ');
         await sql.raw(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`).execute(trx);
       }

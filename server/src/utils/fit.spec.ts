@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FitMessages } from 'src/repositories/fit.repository';
+import type { FitMessages } from 'src/types';
 import { computeRunningBestEfforts } from 'src/utils/best-effort';
 import { findStream, FitParseError, parseFitMessages } from 'src/utils/fit';
 

@@ -1,10 +1,5 @@
-import {
-  BestEffort,
-  BestEffortType,
-  CYCLING_BEST_EFFORTS,
-  DistanceBestEffortDefinition,
-  RUNNING_BEST_EFFORTS,
-} from 'src/types';
+import { CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
+import type { BestEffort, BestEffortType, DistanceBestEffortDefinition } from 'src/types';
 
 type DistanceTimePoint = { distance: number; time: number };
 

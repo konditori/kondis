@@ -3,10 +3,10 @@ import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { DatabaseConfig } from 'src/config/config.service';
-import { createDatabase, KondisDatabase, KondisTransaction, KYSELY } from 'src/db/database';
+import type { DatabaseConfig } from 'src/types';
+import { createDatabase, KYSELY } from 'src/db/database';
+import type { KondisDatabase, KondisTransaction } from 'src/types';
 
-// File migrations are loaded from this module's source/compiled sibling directory.
 const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 
 @Injectable()

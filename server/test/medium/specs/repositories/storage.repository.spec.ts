@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import type { ConfigService } from 'src/config/config.service';
+import type { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 
@@ -23,7 +23,7 @@ describe(StorageRepository.name, () => {
     await rm(storageDir, { recursive: true, force: true });
   });
 
-  const setup = () => ({ sut: new StorageRepository({ storageDir } as ConfigService, new CryptoRepository()) });
+  const setup = () => ({ sut: new StorageRepository({ storageDir } as ConfigRepository, new CryptoRepository()) });
 
   it('writes, reads, and deletes files in the configured storage directory', async () => {
     const { sut } = setup();

@@ -2,41 +2,38 @@ import { BadRequestException, ConsoleLogger, Injectable, NotFoundException, Opti
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
 import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
+import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
-import {
-  ActivityListRecord,
-  ActivityMetrics,
-  ActivityRecord,
-  ActivityRepository,
-  CreateActivityInput,
-  UpdateActivityInput,
-} from 'src/repositories/activity.repository';
+import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
-import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
+import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
-import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
 import { ImportProgressStore } from 'src/state/import-progress.store';
+import type { FitMessages } from 'src/types';
 import {
-  ACTIVITY_TAG_IDS,
-  ACTIVITY_TYPES,
+  ActivityListRecord,
+  ActivityMetrics,
+  ActivityRecord,
   ActivityTag,
   ActivityType,
   BestEffortGroup,
   BestEffortType,
-  CYCLING_BEST_EFFORTS,
+  CreateActivityInput,
   ParsedActivity,
   ParsedActivityStructure,
-  RUNNING_BEST_EFFORTS,
+  UpdateActivityInput,
 } from 'src/types';
 import { JobItem, JobOf } from 'src/types/jobs';
 import { buildActivityAnalysis } from 'src/utils/activity-details';
@@ -127,7 +124,7 @@ export class ActivityService {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
         if (takeoutImportId) {
-          this.importProgressStore?.increment(takeoutImportId);
+          await this.importProgressStore?.increment(takeoutImportId);
         }
         return JobStatus.Skipped;
       }
@@ -181,7 +178,7 @@ export class ActivityService {
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
       if (takeoutImportId) {
-        this.importProgressStore?.increment(takeoutImportId);
+        await this.importProgressStore?.increment(takeoutImportId);
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
@@ -189,7 +186,7 @@ export class ActivityService {
 
       await this.uploadRepository.setStatus(id, 'failed', message);
       if (takeoutImportId) {
-        this.importProgressStore?.increment(takeoutImportId, true);
+        await this.importProgressStore?.increment(takeoutImportId, true);
       }
       throw error;
     }
@@ -220,7 +217,7 @@ export class ActivityService {
         });
       }
       if (job.takeoutImportId) {
-        this.importProgressStore?.increment(job.takeoutImportId, false, true);
+        await this.importProgressStore?.increment(job.takeoutImportId, false, true);
       }
       return JobStatus.Skipped;
     }
@@ -246,6 +243,7 @@ export class ActivityService {
       const id = await this.activityRepository.create(
         {
           activity: {
+            id: job.id,
             upload_id: job.id,
             user_id: userId,
             sport: job.activitySport,
@@ -295,7 +293,7 @@ export class ActivityService {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
     if (job.takeoutImportId) {
-      this.importProgressStore?.increment(job.takeoutImportId);
+      await this.importProgressStore?.increment(job.takeoutImportId);
     }
     return JobStatus.Success;
   }

@@ -1,5 +1,5 @@
-import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
-import { ParsedActivity, ParsedActivityStructure, ParsedLap, ParsedStream, StreamType } from 'src/types';
+import type { FitLapMesg, FitMessages, FitRecordMesg } from 'src/types';
+import type { ParsedActivity, ParsedActivityStructure, ParsedLap, ParsedStream, StreamType } from 'src/types';
 import { toActivityType } from 'src/utils/activity';
 import {
   computeElevationChange,

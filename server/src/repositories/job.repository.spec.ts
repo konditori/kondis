@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { JobName } from 'src/enum';
 import { JobRepository } from 'src/repositories/job.repository';
 import type { JobItem } from 'src/types/jobs';
@@ -13,7 +13,7 @@ const getJobOptions = (item: JobItem) => {
   const repository = new JobRepository(
     {} as ConstructorParameters<typeof JobRepository>[0],
     {} as ConstructorParameters<typeof JobRepository>[1],
-    {} as ConfigService,
+    {} as ConfigRepository,
   );
 
   return (repository as unknown as JobOptionsAccessor).getJobOptions(item);

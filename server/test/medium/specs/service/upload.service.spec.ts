@@ -5,9 +5,10 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type ConfigService } from 'src/config/config.service';
-import { type KondisDatabase } from 'src/db/database';
+import { type ConfigRepository } from 'src/repositories/config.repository';
+import type { KondisDatabase } from 'src/types';
 import { JobName, QueueName } from 'src/enum';
+import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -16,6 +17,7 @@ import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { UploadService } from 'src/services/upload.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 
 import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -48,10 +50,19 @@ describe(UploadService.name, () => {
     uploadRepository = new UploadRepository(db);
 
     storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-uploads-'));
-    const config = { storageDir } as unknown as ConfigService;
+    const config = { storageDir } as unknown as ConfigRepository;
 
     storageRepository = new StorageRepository(config, crypto);
-    sut = new UploadService(uploadRepository, storageRepository, crypto, new DatabaseRepository(db), jobs, logger);
+    sut = new UploadService(
+      uploadRepository,
+      storageRepository,
+      crypto,
+      new DatabaseRepository(db),
+      jobs,
+      logger,
+      new LagomTakeoutParser(),
+      new ImportProgressStore(db),
+    );
 
     testApp = await createTestApp();
     queuedSut = testApp.get(UploadService);
@@ -282,8 +293,14 @@ describe(UploadService.name, () => {
     const result = await sut.uploadLagomTakeout(makeUploadedFile('export.zip', archive), ownerId);
 
     expect(result.queued).toBe(true);
-    const [item] = queue.mock.calls[0] as unknown as [{ data: { originalName: string; storagePath: string } }];
+    const [item] = queue.mock.calls[0] as unknown as [
+      { data: { originalName: string; storagePath: string; takeoutImportId: string; userId: string } },
+    ];
     await expect(sut.handleLagomTakeout(item.data)).rejects.toThrow();
+    await expect(sut.getLagomTakeoutStatus(item.data.takeoutImportId, ownerId)).resolves.toMatchObject({
+      status: 'failed',
+      error: expect.stringContaining('ZIP archive'),
+    });
     await expect(storageRepository.read(item.data.storagePath)).resolves.toEqual(archive);
     expect(await uploadRepository.getIdsToParse({ force: true, limit: 100 })).toEqual([]);
   });
@@ -357,7 +374,7 @@ describe(UploadService.name, () => {
       );
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(updatedResult.importId, ownerId)).toMatchObject({
+      expect(await queuedSut.getLagomTakeoutStatus(updatedResult.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,
@@ -381,7 +398,7 @@ describe(UploadService.name, () => {
       );
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, ownerId)).toMatchObject({
+      expect(await queuedSut.getLagomTakeoutStatus(iceSkateResult.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,
@@ -454,13 +471,13 @@ describe(UploadService.name, () => {
       const second = await queuedSut.uploadLagomTakeout(makeUploadedFile('manual-again.zip', archive), ownerId);
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      expect(queuedSut.getLagomTakeoutStatus(first.importId, ownerId)).toMatchObject({
+      expect(await queuedSut.getLagomTakeoutStatus(first.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 0,
         status: 'completed',
       });
-      expect(queuedSut.getLagomTakeoutStatus(second.importId, ownerId)).toMatchObject({
+      expect(await queuedSut.getLagomTakeoutStatus(second.importId, ownerId)).toMatchObject({
         total: 1,
         processed: 1,
         duplicates: 1,

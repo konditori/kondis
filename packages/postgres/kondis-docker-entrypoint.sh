@@ -22,16 +22,16 @@ EOF
     ;;
 esac
 
-: "${DB_STORAGE_TYPE:=SSD}"
+: "${KONDIS_DB_STORAGE_TYPE:=SSD}"
 
-case "${DB_STORAGE_TYPE^^}" in
+case "${KONDIS_DB_STORAGE_TYPE^^}" in
   SSD|HDD)
-    echo "Using ${DB_STORAGE_TYPE^^} storage"
-    cp -n --preserve=mode "/var/postgresql-conf-tpl/postgresql.${DB_STORAGE_TYPE,,}.conf" /etc/postgresql/postgresql.conf
+    echo "Using ${KONDIS_DB_STORAGE_TYPE^^} storage"
+    cp -n --preserve=mode "/var/postgresql-conf-tpl/postgresql.${KONDIS_DB_STORAGE_TYPE,,}.conf" /etc/postgresql/postgresql.conf
     sed -i "s@##PGDATA@$PGDATA@" /etc/postgresql/postgresql.conf; \
     ;;
   *)
-    echo "Error: DB_STORAGE_TYPE must be set to 'SSD' or 'HDD'" >&2
+    echo "Error: KONDIS_DB_STORAGE_TYPE must be set to 'SSD' or 'HDD'" >&2
     exit 1
     ;;
 esac

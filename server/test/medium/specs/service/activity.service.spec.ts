@@ -1,12 +1,13 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuthenticatedUser } from 'src/auth';
-import { type KondisDatabase } from 'src/db/database';
-import { QueueName } from 'src/enum';
-import { ActivityRepository, type ActivityStreamInput } from 'src/repositories/activity.repository';
+import type { KondisDatabase } from 'src/types';
+import { JobStatus, QueueName } from 'src/enum';
+import { ActivityRepository } from 'src/repositories/activity.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
+import type { ActivityStreamInput } from 'src/types';
 
 import { createMediumFactory } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -194,6 +195,23 @@ describe(ActivityService.name, () => {
       expect(activity?.topBestEfforts?.some(({ type }) => type.startsWith('power_'))).toBe(true);
       expect(activity?.achievementCount).toBeGreaterThan(activity?.topBestEfforts?.length ?? 0);
     });
+
+    it('rejects unknown tags and malformed cursors', async () => {
+      await expect(serviceApi.listRecent({ tags: 'race,unknown' })).rejects.toMatchObject({ status: 400 });
+      await expect(serviceApi.listRecent({ cursor: 'not-json' })).rejects.toThrow('Invalid activity cursor');
+      await expect(serviceApi.listRecent({ cursor: Buffer.from(JSON.stringify(['not-a-date', 'id'])).toString('base64url') })).rejects.toThrow(
+        'Invalid activity cursor',
+      );
+    });
+
+    it('normalizes tags and removes duplicate tags before querying', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'tagged run');
+      await activities.update(activityId, { tags: ['race'] });
+
+      const response = await serviceApi.listRecent({ tags: ' race, race, ' });
+
+      expect(response.activities.map(({ id }) => id)).toEqual([activityId]);
+    });
   });
 
   describe('GET /activities/best-efforts', () => {
@@ -302,6 +320,12 @@ describe(ActivityService.name, () => {
       expect(response.options.map(({ type }) => type)).not.toContain('100k');
       expect(response.efforts).toHaveLength(1);
       expect(response.efforts[0]).toMatchObject({ activityId: rideId, value: 2400 });
+    });
+
+    it('rejects a best-effort type from another sport', async () => {
+      await expect(serviceApi.listBestEfforts({ sport: 'run', type: '100k' as '5k' })).rejects.toThrow(
+        '100k is not a supported run best-effort distance',
+      );
     });
   });
 
@@ -438,6 +462,32 @@ describe(ActivityService.name, () => {
       await db.deleteFrom('activity_route_match').where('activity_id', '=', first).execute();
       const detailAfterRemovingPersistedMatches = await serviceApi.getById({ id: first });
       expect(detailAfterRemovingPersistedMatches.matchedRouteCount).toBe(0);
+    });
+
+    it('recomputes overlapping route matches concurrently without deadlocking', async () => {
+      const route: ActivityStreamInput[] = [
+        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
+      ];
+      const ids = await Promise.all([
+        createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first overlapping route', route),
+        createActivity(new Date('2024-02-01T08:00:00.000Z'), 'second overlapping route', route),
+        createActivity(new Date('2024-03-01T08:00:00.000Z'), 'third overlapping route', route),
+      ]);
+
+      await expect(Promise.all(ids.map((id) => activities.recomputeRouteMatches(id)))).resolves.toEqual([
+        true,
+        true,
+        true,
+      ]);
+
+      await expect(
+        db
+          .selectFrom('activity_route_match')
+          .select(({ fn }) => fn.countAll<number>().as('count'))
+          .where('activity_id', '=', ids[0])
+          .executeTakeFirstOrThrow(),
+      ).resolves.toEqual({ count: 3 });
     });
 
     it('returns no route matches for an activity without GPS data', async () => {
@@ -591,6 +641,104 @@ describe(ActivityService.name, () => {
         sut.updateById(activityId, otherUser.id, { name: 'changed by another user' }),
       ).resolves.toBeUndefined();
       await expect(activities.getById(activityId)).resolves.toMatchObject({ name: 'owner activity' });
+    });
+
+    it('rejects incompatible long-run tags and deduplicates valid tags', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'ride', [], 'ride');
+
+      await expect(serviceApi.updateById({ id: activityId }, { tags: ['long_run'] })).rejects.toThrow(
+        'Long Run is only available for run activities',
+      );
+
+      const updated = await serviceApi.updateById({ id: activityId }, { tags: ['race', 'race'] });
+      expect(updated.tags).toEqual(['race']);
+    });
+
+    it('rejects unknown tags before changing the activity', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'tagged run');
+
+      await expect(
+        sut.updateById(activityId, testUser.id, { tags: ['not-a-tag' as 'race'] }),
+      ).rejects.toThrow('Unknown activity tag');
+      await expect(activities.getById(activityId)).resolves.toMatchObject({ tags: [] });
+    });
+  });
+
+  describe('activity workers', () => {
+    it('skips parsing when the source upload no longer exists', async () => {
+      await expect(sut.handleActivityParse({ id: MISSING_UUID })).resolves.toBe(JobStatus.Skipped);
+    });
+
+    it('marks a failed parse and preserves the original error', async () => {
+      const upload = await uploads.create({
+        checksum: crypto.randomUUID().replaceAll('-', ''),
+        original_name: 'broken.fit',
+        byte_size: 1,
+        storage_path: 'missing/broken.fit',
+        user_id: testUser.id,
+      });
+
+      await expect(sut.handleActivityParse({ id: upload.id })).rejects.toThrow();
+      await expect(uploads.getById(upload.id)).resolves.toMatchObject({ status: 'failed' });
+    });
+
+    it('skips best-effort work when metrics are pending or the activity is gone', async () => {
+      const recompute = vi.spyOn(activities, 'recomputeBestEfforts');
+
+      recompute.mockResolvedValueOnce(null);
+      await expect(sut.handleActivityBestEffortCompute({ id: MISSING_UUID })).resolves.toBe(JobStatus.Skipped);
+
+      recompute.mockResolvedValueOnce(false);
+      await expect(sut.handleActivityBestEffortCompute({ id: MISSING_UUID })).resolves.toBe(JobStatus.Skipped);
+      expect(recompute).toHaveBeenCalledTimes(2);
+      recompute.mockRestore();
+    });
+
+    it('skips metric and route work when the activity is missing', async () => {
+      await expect(sut.handleActivityMetricCompute({ id: MISSING_UUID })).resolves.toBe(JobStatus.Skipped);
+      await expect(sut.handleActivityRouteMatchCompute({ id: MISSING_UUID })).resolves.toBe(JobStatus.Skipped);
+    });
+
+    it('skips metric work when the source upload is missing', async () => {
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'missing source');
+      const activity = await activities.getById(activityId);
+      expect(activity).toBeDefined();
+      const getById = vi.spyOn(uploads, 'getById').mockResolvedValueOnce(undefined);
+
+      await expect(sut.handleActivityMetricCompute({ id: activityId })).resolves.toBe(JobStatus.Skipped);
+      getById.mockRestore();
+    });
+
+    it('skips manual creation when the job has no owner', async () => {
+      await expect(
+        sut.handleActivityManualCreate({
+          id: crypto.randomUUID(),
+          activitySport: 'run',
+          startedAt: '2024-01-01T08:00:00.000Z',
+          elapsedTime: 0,
+        }),
+      ).rejects.toThrow('Manual activity job has no owner');
+    });
+
+    it('creates a manual activity with null average speed for zero distance and time', async () => {
+      const activityId = crypto.randomUUID();
+      await expect(
+        sut.handleActivityManualCreate({
+          id: activityId,
+          userId: testUser.id,
+          activitySport: 'run',
+          startedAt: '2024-01-01T08:00:00.000Z',
+          elapsedTime: 0,
+          movingTime: 0,
+          distance: 0,
+        }),
+      ).resolves.toBe(JobStatus.Success);
+
+      const activity = await activities.getById(activityId);
+      expect(activity).toBeDefined();
+      await expect(
+        db.selectFrom('activity_metric').select('avg_speed').where('activity_id', '=', activityId).executeTakeFirstOrThrow(),
+      ).resolves.toMatchObject({ avg_speed: null });
     });
   });
 

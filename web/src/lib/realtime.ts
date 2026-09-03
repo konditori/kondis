@@ -170,3 +170,64 @@ export function subscribeToActivityEvents(
     socket?.close();
   };
 }
+
+export function subscribeToJobEvents(
+  url: string,
+  onUpdate: () => void,
+): () => void {
+  let socket: WebSocket | undefined;
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  let stopped = false;
+  let retryMs = 500;
+
+  const retry = () => {
+    if (stopped || retryTimer) return;
+    retryTimer = setTimeout(() => {
+      retryTimer = undefined;
+      void connect();
+    }, retryMs);
+    retryMs = Math.min(retryMs * 2, 10_000);
+  };
+
+  const connect = async () => {
+    try {
+      const ticketResponse = await fetch("/api/v1/auth/job-events-ticket", {
+        method: "POST",
+      });
+      if (!ticketResponse.ok)
+        throw new Error("Unable to authenticate job events");
+      const { token } = (await ticketResponse.json()) as { token?: string };
+      if (!token) throw new Error("Job event ticket was missing");
+      const socketUrl = new URL(url, window.location.href);
+      if (window.location.protocol === "https:" && socketUrl.protocol === "ws:")
+        socketUrl.protocol = "wss:";
+      socketUrl.searchParams.set("ticket", token);
+      if (stopped) return;
+      socket = new WebSocket(socketUrl);
+    } catch {
+      retry();
+      return;
+    }
+    socket.onopen = () => {
+      retryMs = 500;
+    };
+    socket.onmessage = ({ data }) => {
+      try {
+        if (
+          (JSON.parse(String(data)) as { type?: string }).type === "job.updated"
+        )
+          onUpdate();
+      } catch {
+        // Ignore malformed and forward-incompatible messages.
+      }
+    };
+    socket.onclose = retry;
+  };
+
+  void connect();
+  return () => {
+    stopped = true;
+    clearTimeout(retryTimer);
+    socket?.close();
+  };
+}

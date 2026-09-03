@@ -52,6 +52,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import app.kondis.data.settings.AppSettings
 import app.kondis.recording.isActive
+import app.kondis.ui.admin.JobQueuesRoute
 import app.kondis.ui.detail.ActivityDetailRoute
 import app.kondis.ui.detail.ActivityDiscussionRoute
 import app.kondis.ui.detail.BestEffortsRoute
@@ -77,6 +78,9 @@ private data object YouKey : NavKey
 
 @Serializable
 private data object PeopleKey : NavKey
+
+@Serializable
+private data object JobQueuesKey : NavKey
 
 @Serializable
 private data class ActivityDetailKey(
@@ -221,7 +225,13 @@ fun KondisApp(viewModel: AppViewModel = hiltViewModel()) {
                         )
                     }
                     entry<PeopleKey> { PeopleRoute(onBack = ::navigateBack) }
-                    entry<SettingsKey> { SettingsRoute() }
+                    entry<SettingsKey> {
+                        SettingsRoute(
+                            isAdmin = loadedSettings.isAdmin,
+                            onJobs = { backStack.add(JobQueuesKey) },
+                        )
+                    }
+                    entry<JobQueuesKey> { JobQueuesRoute(onBack = ::navigateBack) }
                     entry<YouKey> {
                         BestEffortsRoute(
                             sport = "run",

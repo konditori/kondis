@@ -1,7 +1,8 @@
 import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { isMainThread } from 'node:worker_threads';
 
-import { ConfigService } from 'src/config/config.service';
-import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
+import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
+import { EventRepository } from 'src/repositories/event.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
@@ -21,16 +22,16 @@ const asJobItem = (name: ManualJobName): JobItem => {
 @Injectable()
 export class JobService {
   constructor(
-    private readonly config: ConfigService,
     private readonly jobRepository: JobRepository,
+    private readonly events: EventRepository,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(JobService.name);
   }
 
   async init(): Promise<void> {
-    if (!this.config.hasWorker(WorkerType.JOBS)) {
-      this.logger.log("Worker role 'jobs' is disabled; not consuming jobs in this process");
+    if (isMainThread) {
+      this.logger.log("Role 'worker' is disabled; not consuming jobs in this process");
       return;
     }
 
@@ -38,15 +39,27 @@ export class JobService {
     this.logger.log(`Consuming queues: ${Object.values(QueueName).join(', ')}`);
   }
 
-  create(name: ManualJobName): Promise<void> {
-    return this.jobRepository.queue(asJobItem(name));
+  async create(name: ManualJobName): Promise<void> {
+    await this.jobRepository.queue(asJobItem(name));
+    await this.events.emit('JobUpdated');
+  }
+
+  async getJobHistory(limit: number, offset = 0) {
+    return this.jobRepository.getJobHistory(limit, offset);
   }
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
     const queues = Object.values(QueueName);
-    const reports = await Promise.all(queues.map((queue) => this.getJobStatus(queue)));
+    const counts = this.jobRepository.getAllJobCounts
+      ? await this.jobRepository.getAllJobCounts()
+      : Object.fromEntries(await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])));
 
-    return Object.fromEntries(queues.map((queue, index) => [queue, reports[index]])) as AllJobStatusResponse;
+    return Object.fromEntries(
+      queues.map((queue) => [
+        queue,
+        { jobCounts: counts[queue], queueStatus: { paused: this.jobRepository.isPaused(queue) } },
+      ]),
+    ) as AllJobStatusResponse;
   }
 
   async handleCommand(queue: QueueName, command: QueueCommand): Promise<QueueStatusReport> {
@@ -76,7 +89,9 @@ export class JobService {
       }
     }
 
-    return this.getJobStatus(queue);
+    const status = await this.getJobStatus(queue);
+    await this.events.emit('JobUpdated');
+    return status;
   }
 
   private async getJobStatus(queue: QueueName): Promise<QueueStatusReport> {
@@ -86,7 +101,8 @@ export class JobService {
     };
   }
 
-  private async onJobRun(item: JobItem): Promise<void> {
+  private async onJobRun(item: JobItem): Promise<JobStatus> {
+    await this.events.emit('JobUpdated');
     const startedAt = Date.now();
 
     let status: JobStatus;
@@ -95,15 +111,18 @@ export class JobService {
     } catch (error) {
       this.logger.error(`Job ${item.name} threw after ${Date.now() - startedAt}ms: ${asErrorMessage(error)}`);
       throw error;
+    } finally {
+      await this.events.emit('JobUpdated');
     }
 
     const duration = Date.now() - startedAt;
 
     if (status === JobStatus.Failed) {
       this.logger.warn(`Job ${item.name} failed after ${duration}ms and will not be retried`);
-      return;
+      return status;
     }
 
     this.logger.debug(`Job ${item.name} ${status} in ${duration}ms`);
+    return status;
   }
 }

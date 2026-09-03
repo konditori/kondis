@@ -9,9 +9,9 @@
     "dist"
   ],
   "scripts": {
-    "start": "node dist/main.js",
-    "start:dev": "node --watch -r @swc-node/register scripts/run-typescript.cjs src/main.ts",
-    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "start": "node dist/bin/start.js",
+    "start:dev": "node scripts/start-dev-watch.mjs",
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "format": "prettier --cache --check .",
     "format:fix": "prettier --cache --write --list-different .",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",

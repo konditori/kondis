@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { ACTIVITY_TYPE_IDS, ACTIVITY_TYPES, AverageMetric, BestEffortGroup } from 'src/types';
+import { ACTIVITY_TYPE_IDS, ACTIVITY_TYPES } from 'src/constants';
+import { AverageMetric, BestEffortGroup } from 'src/types';
 import { getActivityTypeSettings, toActivityType } from 'src/utils/activity';
 
 describe('toActivityType', () => {

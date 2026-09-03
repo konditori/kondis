@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
+import { KYSELY } from 'src/db/database';
 import {
   ActivityImage,
   ActivityImageFile,
@@ -8,6 +8,7 @@ import {
   NewActivityImage,
   NewActivityImageFile,
 } from 'src/db/schema';
+import type { KondisDatabase, KondisExecutor } from 'src/types';
 
 @Injectable()
 export class ActivityImageRepository {

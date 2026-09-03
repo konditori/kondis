@@ -7,18 +7,29 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { compare, hash } from 'bcrypt';
-import { timingSafeEqual } from 'node:crypto';
-import { createAccessToken, createActivityEventsTicket, createSetupTicket, verifySetupTicket } from 'src/auth';
-import { ConfigService } from 'src/config/config.service';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
+import {
+  AUTH_SECRET,
+  createAccessToken,
+  createActivityEventsTicket,
+  createJobEventsTicket,
+  createSetupTicket,
+  verifySetupTicket,
+} from 'src/auth';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
+const SETUP_TOKEN_RATE_LIMIT = { label: 'Setup token', maxAttempts: 5, windowMs: 60_000 } as const;
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly setupToken = randomUUID();
 
   constructor(
     private readonly users: UserRepository,
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
+    private readonly rateLimitingRepository: RateLimitingRepository,
   ) {}
   get registrationEnabled() {
     return this.config.registrationEnabled;
@@ -38,7 +49,7 @@ For initial setup, go to the app in a web browser (not mobile app)
 
 You will need the following setup token:
 
-   ${this.config.setupToken}
+  ${this.setupToken}
 
 Do not share this secret token with anyone.
 
@@ -46,7 +57,8 @@ Do not share this secret token with anyone.
 `);
     }
   }
-  async verifySetupToken(setupToken: string) {
+  async verifySetupToken(setupToken: string, clientId = 'unknown') {
+    this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
     const status = await this.setupStatus();
     if (!status.setupRequired) {
       throw new ConflictException('Initial setup is already complete');
@@ -55,11 +67,11 @@ Do not share this secret token with anyone.
       this.logger.warn('Invalid setup token supplied during initial setup verification');
       throw new UnauthorizedException('Invalid setup token');
     }
-    return createSetupTicket(this.config.authSecret);
+    return createSetupTicket(AUTH_SECRET);
   }
   async validateSetupTicket(setupTicket: string) {
     const status = await this.setupStatus();
-    if (!status.setupRequired || !verifySetupTicket(setupTicket, this.config.authSecret)) {
+    if (!status.setupRequired || !verifySetupTicket(setupTicket, AUTH_SECRET)) {
       throw new UnauthorizedException('Setup verification is no longer valid');
     }
     return { valid: true };
@@ -67,7 +79,7 @@ Do not share this secret token with anyone.
   async setup(email: string, firstName: string, lastName: string, password: string, setupTicket: string) {
     this.logger.log(`Initial account setup attempt for ${email || '<missing email>'}`);
     try {
-      if (!verifySetupTicket(setupTicket, this.config.authSecret)) {
+      if (!verifySetupTicket(setupTicket, AUTH_SECRET)) {
         throw new UnauthorizedException('Verify the setup token before creating the administrator account');
       }
       const account = this.normalizeAccount(email, firstName, lastName, password);
@@ -112,7 +124,10 @@ Do not share this secret token with anyone.
     }
   }
   createActivityEventsTicket(userId: string) {
-    return createActivityEventsTicket(userId, this.config.authSecret);
+    return createActivityEventsTicket(userId, AUTH_SECRET);
+  }
+  createJobEventsTicket(userId: string) {
+    return createJobEventsTicket(userId, AUTH_SECRET);
   }
   async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
     const account = this.normalizeAccount(email, firstName, lastName, password);
@@ -135,7 +150,7 @@ Do not share this secret token with anyone.
   }
 
   private matchesSetupToken(candidate: string): boolean {
-    const actual = Buffer.from(this.config.setupToken);
+    const actual = Buffer.from(this.setupToken);
     const supplied = Buffer.from(candidate);
     return actual.length === supplied.length && timingSafeEqual(actual, supplied);
   }
@@ -152,7 +167,7 @@ Do not share this secret token with anyone.
           firstName: user.first_name,
           lastName: user.last_name,
         },
-        this.config.authSecret,
+        AUTH_SECRET,
       ),
       setup,
       user: {

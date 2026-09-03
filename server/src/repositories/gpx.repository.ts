@@ -1,8 +1,18 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
-import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
+import type {
+  FitLapMesg,
+  FitMessages,
+  FitRecordMesg,
+  GpxDocument,
+  GpxPoint,
+  GpxSegment,
+  ParsedPoint,
+  ParsedSegment,
+} from 'src/types';
 import { haversineDistance } from 'src/utils/geo';
+import { asArray, asRecord, firstObject, normalizeSport, toDate, toNumber } from 'src/utils/parser';
 
 export class GpxDecodeError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -10,66 +20,6 @@ export class GpxDecodeError extends Error {
     this.name = 'GpxDecodeError';
   }
 }
-
-type MaybeArray<T> = T | T[] | undefined;
-
-type GpxPoint = {
-  lat?: number | string;
-  lon?: number | string;
-  ele?: number | string;
-  time?: string;
-  Extensions?: Record<string, unknown>;
-  extensions?: Record<string, unknown>;
-};
-
-type GpxTrackSegment = {
-  trkpt?: MaybeArray<GpxPoint>;
-};
-
-type GpxTrack = {
-  name?: string;
-  type?: string;
-  trkseg?: MaybeArray<GpxTrackSegment>;
-  trkpt?: MaybeArray<GpxPoint>;
-};
-
-type GpxRoute = {
-  name?: string;
-  type?: string;
-  rtept?: MaybeArray<GpxPoint>;
-};
-
-type GpxMetadata = {
-  time?: string;
-  type?: string;
-  name?: string;
-};
-
-type GpxDocument = {
-  metadata?: GpxMetadata;
-  trk?: MaybeArray<GpxTrack>;
-  rte?: MaybeArray<GpxRoute>;
-};
-
-type ParsedPoint = {
-  record: FitRecordMesg;
-  timestamp?: Date;
-  lat?: number;
-  lon?: number;
-};
-
-type ParsedSegment = {
-  points: ParsedPoint[];
-  label?: string;
-  startTime?: Date;
-  totalElapsedTime?: number;
-  totalDistance?: number;
-};
-
-type GpxSegment = {
-  points: GpxPoint[];
-  label?: string;
-};
 
 @Injectable()
 export class GpxRepository {
@@ -300,66 +250,6 @@ export class GpxRepository {
     return Math.max(0, Math.round((lastTimestamp.getTime() - startedAt.getTime()) / 1000));
   }
 }
-
-const asRecord = (value: unknown): Record<string, unknown> | undefined =>
-  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
-
-const asArray = <T>(value: MaybeArray<T>): T[] => {
-  if (value === undefined) {
-    return [];
-  }
-
-  return Array.isArray(value) ? value : [value];
-};
-
-const firstObject = (value: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  for (const candidate of Object.values(value)) {
-    const parsed = asRecord(candidate);
-    if (parsed) {
-      return parsed;
-    }
-  }
-
-  return undefined;
-};
-
-const toNumber = (value: unknown): number | undefined => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined;
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-
-  return undefined;
-};
-
-const toDate = (value: unknown): Date | undefined => {
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? undefined : value;
-  }
-
-  if (typeof value !== 'string' && typeof value !== 'number') {
-    return undefined;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-};
-
-const normalizeSport = (value: unknown): string => {
-  if (typeof value !== 'string') {
-    return 'unknown';
-  }
-
-  return value.trim().toLowerCase() || 'unknown';
-};
 
 const lastFinite = (values: Array<number | undefined>): number | undefined => {
   for (let index = values.length - 1; index >= 0; index--) {

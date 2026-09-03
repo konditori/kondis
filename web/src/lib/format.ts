@@ -6,6 +6,8 @@ const METERS_PER_MILE = 1609.344;
 const METERS_PER_YARD = 0.9144;
 const FEET_PER_METER = 3.28084;
 const MILES_PER_HOUR_PER_METER_PER_SECOND = 2.236936;
+const RELATIVE_TIME_MAX_AGE_SECONDS = 7 * 86_400;
+const RELATIVE_TIME_FUTURE_TOLERANCE_SECONDS = 60;
 
 export function activityName(activity: {
   name: string | null;
@@ -150,16 +152,22 @@ export function localTime(value: string): string {
   }).format(new Date(value));
 }
 
-export function relativeTime(value: string | Date, now = new Date()): string {
+export function relativeTime(
+  value: string | Date,
+  now = new Date(),
+  options: { justNowSeconds?: number; showSeconds?: boolean } = {},
+): string {
+  const { justNowSeconds = 45, showSeconds = false } = options;
   const seconds = Math.max(
     0,
     Math.floor((now.getTime() - new Date(value).getTime()) / 1000),
   );
-  if (seconds < 45) return "Just now";
+  if (seconds < justNowSeconds) return "Just now";
+  if (showSeconds && seconds < 60) return `${seconds} seconds ago`;
   if (seconds < 90) return "1 minute ago";
 
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 45) return `${minutes} minutes ago`;
+  if (minutes < 45) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
   if (minutes < 90) return "1 hour ago";
 
   const hours = Math.floor(minutes / 60);
@@ -178,4 +186,25 @@ export function relativeTime(value: string | Date, now = new Date()): string {
   if (months < 12) return `${months} months ago`;
   if (days < 730) return "1 year ago";
   return `${Math.floor(days / 365)} years ago`;
+}
+
+export function relativeOrDateTime(
+  value: string | Date,
+  now = new Date(),
+  options: { justNowSeconds?: number; showSeconds?: boolean } = {},
+): string {
+  const timestamp = new Date(value);
+  const ageInSeconds = (now.getTime() - timestamp.getTime()) / 1000;
+
+  if (
+    ageInSeconds > -RELATIVE_TIME_FUTURE_TOLERANCE_SECONDS &&
+    ageInSeconds < RELATIVE_TIME_MAX_AGE_SECONDS
+  ) {
+    return relativeTime(timestamp, now, options);
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "medium",
+  }).format(timestamp);
 }

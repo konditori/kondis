@@ -1,16 +1,12 @@
 import { Inject, Injectable, Logger, OnApplicationShutdown, Provider } from '@nestjs/common';
-import { Kysely, PostgresDialect, Transaction } from 'kysely';
+import { Kysely, PostgresDialect } from 'kysely';
 import pg from 'pg';
 
-import { ConfigService, DatabaseConfig } from 'src/config/config.service';
-import { DB } from 'src/db/schema';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import type { DatabaseConfig, KondisDatabase } from 'src/types';
+import type { DB } from 'src/db/schema';
 
 export const KYSELY = Symbol('KYSELY');
-
-export type KondisDatabase = Kysely<DB>;
-export type KondisTransaction = Transaction<DB>;
-
-export type KondisExecutor = KondisDatabase | KondisTransaction;
 
 let typeParsersConfigured = false;
 
@@ -39,8 +35,8 @@ export const createDatabase = (config: DatabaseConfig): KondisDatabase => {
 
 export const databaseProvider: Provider = {
   provide: KYSELY,
-  inject: [ConfigService],
-  useFactory: (config: ConfigService): KondisDatabase => createDatabase(config.database),
+  inject: [ConfigRepository],
+  useFactory: (config: ConfigRepository): KondisDatabase => createDatabase(config.getEnv().database),
 };
 
 @Injectable()

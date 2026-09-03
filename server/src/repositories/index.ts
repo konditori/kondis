@@ -1,12 +1,14 @@
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
@@ -17,12 +19,14 @@ export const repositories = [
   ActivityRepository,
   ActivityImageRepository,
   CryptoRepository,
+  ConfigRepository,
   DatabaseRepository,
   EventRepository,
   FitRepository,
   GpxRepository,
   JobRepository,
   LiveWorkoutRepository,
+  RateLimitingRepository,
   StorageRepository,
   TcxRepository,
   UploadRepository,

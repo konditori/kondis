@@ -41,6 +41,7 @@ import retrofit2.http.Url
 
 @Serializable data class LoginUserResponse(
     val id: String,
+    val role: String = "user",
 )
 
 @Serializable data class CurrentUserResponse(
@@ -96,6 +97,52 @@ import retrofit2.http.Url
     val token: String,
 )
 
+@Serializable data class JobCountsResponse(
+    val active: Int,
+    val queued: Int,
+    val deferred: Int,
+    val ready: Int,
+    val failed: Int,
+    val total: Int,
+)
+
+@Serializable data class QueueStateResponse(
+    val paused: Boolean,
+)
+
+@Serializable data class QueueStatusResponse(
+    val jobCounts: JobCountsResponse,
+    val queueStatus: QueueStateResponse,
+)
+
+@Serializable data class AllJobStatusResponse(
+    val activityParsing: QueueStatusResponse,
+    val backgroundTask: QueueStatusResponse,
+    val imageProcessing: QueueStatusResponse,
+    val storage: QueueStatusResponse,
+)
+
+@Serializable data class JobHistoryEntryResponse(
+    val id: String,
+    val name: String,
+    val queue: String,
+    val status: String,
+    val createdAt: String,
+    val startedAt: String? = null,
+    val finishedAt: String? = null,
+    val durationMs: Long? = null,
+    val attempt: Int,
+    val error: String? = null,
+)
+
+@Serializable data class JobHistoryResponse(
+    val jobs: List<JobHistoryEntryResponse>,
+)
+
+@Serializable data class QueueCommandRequest(
+    val command: String,
+)
+
 interface KondisApi {
     @POST("auth/login")
     suspend fun login(
@@ -107,6 +154,20 @@ interface KondisApi {
 
     @POST("auth/activity-events-ticket")
     suspend fun activityEventsTicket(): ActivityEventsTicketResponse
+
+    @GET("jobs")
+    suspend fun jobStatus(): AllJobStatusResponse
+
+    @GET("jobs/history")
+    suspend fun jobHistory(
+        @Query("limit") limit: Int = 75,
+    ): JobHistoryResponse
+
+    @PUT("jobs/{name}")
+    suspend fun updateJobQueue(
+        @Path("name") name: String,
+        @Body request: QueueCommandRequest,
+    ): QueueStatusResponse
 
     @POST("live-workouts")
     suspend fun createLiveWorkout(

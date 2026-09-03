@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
-import { ActivityType } from 'src/types';
+import type { ActivityType } from 'src/types';
 
 type PointInput = {
   sequence: number;
