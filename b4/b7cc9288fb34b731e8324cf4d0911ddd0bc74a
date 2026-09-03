@@ -1,0 +1,25 @@
+server/src/constants.ts
+  s_d28218ad243c8d::t_3338984684051e 3,18-27
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_d28218ad243c8d::t_19255d50cb9f96 3
+server/src/services/activity.service.ts
+  s_d28218ad243c8d::t_78a9527ff29a5d 5,11,23,25-27,32,35
+server/src/types.ts
+  s_d28218ad243c8d::t_a7f7c5501ed196 1,183-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b4b7cc9288fb34b731e8324cf4d0911ddd0bc74a",
+  "prompts": {},
+  "sessions": {
+    "s_d28218ad243c8d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "127515b4-5ac2-420f-be3f-5ce4a6a3d41b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
