@@ -1,0 +1,23 @@
+server/src/types.ts
+  s_205716446b7db3::t_1f167373c067fd 19-54
+server/src/repositories/gpx.repository.ts
+  s_205716446b7db3::t_3354e1d3b2990b 15
+server/src/repositories/tcx.repository.ts
+  s_205716446b7db3::t_b101be378f7bbe 4-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "66cd4303f809a13be34d320289b8d791c4fea9b9",
+  "prompts": {},
+  "sessions": {
+    "s_205716446b7db3": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "522ebf7d-6db6-4ef7-94de-6ece4bbd7f44",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
