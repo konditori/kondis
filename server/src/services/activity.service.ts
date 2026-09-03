@@ -6,6 +6,7 @@ import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EF
 import { ActivityImage } from 'src/db/schema';
 import { OnJob } from 'src/decorators';
 import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
+import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
@@ -32,7 +33,6 @@ import {
   CreateActivityInput,
   ParsedActivity,
   ParsedActivityStructure,
-  SocialUser,
   UpdateActivityInput,
 } from 'src/types';
 import { JobItem, JobOf } from 'src/types/jobs';

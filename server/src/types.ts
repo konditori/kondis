@@ -6,12 +6,16 @@ export type KondisDatabase = Kysely<DB>;
 export type KondisTransaction = Transaction<DB>;
 export type KondisExecutor = KondisDatabase | KondisTransaction;
 
-export type SocialUser = { id: string; firstName: string; lastName: string; avatarUrl: string | null };
-export type ActivityEngagement = {
-  activity_id: string;
-  like_count: number;
-  comment_count: number;
-  viewer_liked: boolean | null;
+export type UploadPageOptions = {
+  force: boolean;
+  after?: string;
+  limit: number;
+};
+
+export type ManualActivitySignature = {
+  startedAt: Date;
+  sport: ActivityType;
+  elapsedTime: number;
 };
 
 export type MaybeArray<T> = T | T[] | undefined;

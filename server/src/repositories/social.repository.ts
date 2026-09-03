@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 import { KYSELY } from 'src/db/database';
-import type { ActivityEngagement, KondisDatabase, KondisExecutor, SocialUser } from 'src/types';
+import type { ActivityEngagement, SocialUser } from 'src/dtos/social.dto';
+import type { KondisDatabase, KondisExecutor } from 'src/types';
 
 @Injectable()
 export class SocialRepository {
