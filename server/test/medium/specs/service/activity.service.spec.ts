@@ -323,8 +323,8 @@ describe(ActivityService.name, () => {
     });
 
     it('rejects a best-effort type from another sport', async () => {
-      await expect(serviceApi.listBestEfforts({ sport: 'run', type: '20k' as '5k' })).rejects.toThrow(
-        '20k is not a supported run best-effort distance',
+      await expect(serviceApi.listBestEfforts({ sport: 'run', type: '100k' as '5k' })).rejects.toThrow(
+        '100k is not a supported run best-effort distance',
       );
     });
   });
