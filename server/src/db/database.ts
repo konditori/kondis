@@ -2,7 +2,8 @@ import { Inject, Injectable, Logger, OnApplicationShutdown, Provider } from '@ne
 import { Kysely, PostgresDialect, Transaction } from 'kysely';
 import pg from 'pg';
 
-import { ConfigRepository, DatabaseConfig } from 'src/repositories/config.repository';
+import { ConfigRepository } from 'src/repositories/config.repository';
+import type { DatabaseConfig } from 'src/types';
 import { DB } from 'src/db/schema';
 
 export const KYSELY = Symbol('KYSELY');

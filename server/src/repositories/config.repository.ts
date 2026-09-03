@@ -3,36 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { QueueName, WorkerType } from 'src/enum';
-
-export type DatabaseConfig = {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-};
-
-export type JobsConfig = {
-  schema: string;
-  concurrency: Record<QueueName, number>;
-  retryLimit: number;
-  retryDelaySeconds: number;
-  expireInSeconds: number;
-  deleteAfterSeconds: number;
-  cron: boolean;
-};
-
-export type EnvData = {
-  port: number;
-  workers: WorkerType[];
-  storageDir: string;
-  autoMigrate: boolean;
-  database: DatabaseConfig;
-  jobs: JobsConfig;
-  authSecret: string;
-  setupToken: string;
-  registrationEnabled: boolean;
-};
+import type { DatabaseConfig, EnvData, JobsConfig } from 'src/types';
 
 const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QueueName.ActivityParsing]: 1,

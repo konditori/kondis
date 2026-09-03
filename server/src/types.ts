@@ -1,3 +1,40 @@
+import { JobName, QueueName, WorkerType } from 'src/enum';
+
+export type DatabaseConfig = {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+};
+
+export type JobsConfig = {
+  schema: string;
+  concurrency: Record<QueueName, number>;
+  retryLimit: number;
+  retryDelaySeconds: number;
+  expireInSeconds: number;
+  deleteAfterSeconds: number;
+  cron: boolean;
+};
+
+export type EnvData = {
+  port: number;
+  workers: WorkerType[];
+  storageDir: string;
+  autoMigrate: boolean;
+  database: DatabaseConfig;
+  jobs: JobsConfig;
+  authSecret: string;
+  setupToken: string;
+  registrationEnabled: boolean;
+};
+
+export type JobConfig = {
+  name: JobName;
+  queue: QueueName;
+};
+
 export enum AverageMetric {
   None = 'none',
   Pace = 'pace',

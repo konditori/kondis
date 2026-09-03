@@ -7,8 +7,8 @@ import { PgBoss, fromKysely } from 'pg-boss';
 
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { KondisTransaction } from 'src/db/database';
-import type { JobConfig } from 'src/decorators';
 import { JobName, JobStatus, MetadataKey, QueueName, WorkerType } from 'src/enum';
+import type { JobConfig } from 'src/types';
 import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'src/types/jobs';
 import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
 
