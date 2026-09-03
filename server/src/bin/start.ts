@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Worker } from 'node:worker_threads';
 
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { WorkerType } from 'src/enum';
 
 const apiEntry = resolve(import.meta.dirname, '..', 'workers', 'api.js');
@@ -15,7 +16,7 @@ let stopping = false;
 
 const startRole = (role: WorkerType, environment: NodeJS.ProcessEnv = {}): Runtime => {
   console.log(`Starting ${role}`);
-  const env = { ...process.env, ...environment, KONDIS_WORKERS: role };
+  const env = { ...process.env, ...environment };
   const child: Runtime =
     role === WorkerType.API
       ? fork(apiEntry, [], { env, stdio: ['inherit', 'inherit', 'inherit', 'ipc'] })
@@ -50,8 +51,11 @@ const exitResult = async (child: Runtime): Promise<number> => {
 };
 
 const waitForApi = async (api: ChildProcess): Promise<void> => {
-  const port = process.env.KONDIS_PORT ?? '2293';
-  const url = `http://127.0.0.1:${port}/api/v1/ping`;
+  const config = new ConfigRepository();
+  const port = config.port;
+  const address = config.listenAddress;
+  const host = address === '0.0.0.0' ? '127.0.0.1' : address;
+  const url = `http://${host}:${port}/api/v1/ping`;
 
   while (!stopping && api.exitCode === null && api.signalCode === null) {
     try {
@@ -71,13 +75,6 @@ const waitForApi = async (api: ChildProcess): Promise<void> => {
 const run = async (): Promise<void> => {
   process.once('SIGINT', () => stopChildren('SIGINT'));
   process.once('SIGTERM', () => stopChildren('SIGTERM'));
-
-  const configuredRole = process.env.KONDIS_WORKERS?.trim() as WorkerType | undefined;
-  if (configuredRole) {
-    const child = startRole(configuredRole);
-    process.exitCode = await exitResult(child);
-    return;
-  }
 
   const api = startRole(WorkerType.API) as ChildProcess;
   const apiExit = exitResult(api);

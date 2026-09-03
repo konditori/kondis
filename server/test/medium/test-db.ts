@@ -1,4 +1,5 @@
 import { sql } from 'kysely';
+import { JOB_SCHEMA } from 'src/constants';
 import { createDatabase, type KondisDatabase } from 'src/db/database';
 import { QueueName } from 'src/enum';
 import type { JobRepository } from 'src/repositories/job.repository';
@@ -6,7 +7,7 @@ import type { DatabaseConfig } from 'src/types';
 
 export const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
 
-export const TEST_JOB_SCHEMA = 'kondis_jobs_test';
+export const TEST_JOB_SCHEMA = JOB_SCHEMA;
 
 const getRequired = (name: string): string => {
   const value = process.env[name];

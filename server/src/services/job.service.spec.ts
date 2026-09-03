@@ -1,16 +1,12 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type ConfigRepository } from 'src/repositories/config.repository';
-import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
+import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { type EventRepository } from 'src/repositories/event.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
 import { newTestService } from 'test/utils';
-
-const makeConfig = (workers: WorkerType[]): ConfigRepository =>
-  ({ workers, hasWorker: (worker: WorkerType) => workers.includes(worker) }) as ConfigRepository;
 
 describe('JobService', () => {
   const run = vi.fn<(item: JobItem) => Promise<JobStatus>>();
@@ -53,11 +49,10 @@ describe('JobService', () => {
     getJobHistory,
   } as unknown as JobRepository;
 
-  const setup = (workers = [WorkerType.API, WorkerType.WORKER]) =>
+  const setup = () =>
     newTestService(
       JobService,
       [
-        makeConfig(workers),
         jobRepository,
         { emit } as unknown as EventRepository,
         new ConsoleLogger({ logLevels: [] }),
@@ -65,11 +60,13 @@ describe('JobService', () => {
       { jobRepository },
     );
 
-  const makeService = (workers = [WorkerType.API, WorkerType.WORKER]) => setup(workers).sut;
+  const makeService = () => setup().sut;
 
   const captureRunner = async (): Promise<(item: JobItem) => Promise<JobStatus>> => {
-    await makeService().init();
-    return startWorkers.mock.calls.at(-1)![0];
+    const service = makeService() as unknown as {
+      onJobRun: (item: JobItem) => Promise<JobStatus>;
+    };
+    return service.onJobRun.bind(service);
   };
 
   beforeEach(() => {
@@ -79,13 +76,8 @@ describe('JobService', () => {
   });
 
   describe('init', () => {
-    it('consumes when the jobs role is enabled', async () => {
+    it('does not consume jobs in the API process', async () => {
       await makeService().init();
-      expect(startWorkers).toHaveBeenCalledTimes(1);
-    });
-
-    it('stays a pure producer when it is not', async () => {
-      await makeService([WorkerType.API]).init();
       expect(startWorkers).not.toHaveBeenCalled();
     });
   });

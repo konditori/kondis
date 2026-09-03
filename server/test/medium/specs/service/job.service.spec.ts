@@ -17,7 +17,7 @@ const makeJobService = () => {
   } as unknown as JobRepository;
   const events = { emit: async () => undefined } as never;
   return {
-    sut: new JobService({ hasWorker: () => false } as never, jobs, events, new ConsoleLogger()),
+    sut: new JobService(jobs, events, new ConsoleLogger()),
   };
 };
 

@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { clearEnvCache, ConfigRepository, concurrencyEnvVar } from 'src/repositories/config.repository';
-import { QueueName, WorkerType } from 'src/enum';
+import { ConfigRepository } from 'src/repositories/config.repository';
 
 describe('ConfigRepository', () => {
   let original: NodeJS.ProcessEnv;
 
   beforeEach(() => {
-    clearEnvCache();
     original = process.env;
     process.env = {
       KONDIS_DB_USERNAME: 'kondis',
@@ -17,109 +15,24 @@ describe('ConfigRepository', () => {
   });
 
   afterEach(() => {
-    clearEnvCache();
     process.env = original;
   });
 
-  describe('workers', () => {
-    it('runs only the API role when unset so jobs cannot block its event loop', () => {
-      expect(new ConfigRepository().getEnv().workers).toEqual([WorkerType.API]);
-    });
-
-    it('narrows to the requested roles', () => {
-      process.env.KONDIS_WORKERS = 'worker';
-
-      const config = new ConfigRepository();
-      expect(config.hasWorker(WorkerType.WORKER)).toBe(true);
-      expect(config.hasWorker(WorkerType.API)).toBe(false);
-    });
-
-    it('refuses to start on a typo rather than silently running nothing', () => {
-      process.env.KONDIS_WORKERS = 'jbos';
-      expect(() => new ConfigRepository().getEnv()).toThrow(/Unknown KONDIS_WORKERS/);
-    });
-
-    it('requires API and jobs to run in separate processes', () => {
-      process.env.KONDIS_WORKERS = 'api,worker';
-      expect(() => new ConfigRepository().getEnv()).toThrow(/separate processes/);
-    });
-  });
-
-  describe('setup token', () => {
-    it('generates and caches a UUID instead of requiring an operator-provided token', () => {
-      const first = new ConfigRepository().getEnv().setupToken;
-      const second = new ConfigRepository().getEnv().setupToken;
-
-      expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-      expect(second).toBe(first);
-    });
-
-    it('caches the parsed environment', () => {
+  describe('environment cache', () => {
+    it('caches the parsed environment per repository', () => {
       const repository = new ConfigRepository();
-      expect(repository.getEnv()).toBe(repository.getEnv());
-    });
-  });
+      const first = repository.getEnv();
 
-  describe('job concurrency', () => {
-    it('derives the environment variable name from the queue name', () => {
-      expect(concurrencyEnvVar(QueueName.ActivityParsing)).toBe('KONDIS_JOB_CONCURRENCY_ACTIVITY_PARSING');
-      expect(concurrencyEnvVar(QueueName.BackgroundTask)).toBe('KONDIS_JOB_CONCURRENCY_BACKGROUND_TASK');
-      expect(concurrencyEnvVar(QueueName.Storage)).toBe('KONDIS_JOB_CONCURRENCY_STORAGE');
+      process.env.KONDIS_PORT = '8080';
+
+      expect(repository.getEnv()).toBe(first);
+      expect(repository.getEnv().port).toBe(2293);
     });
 
-    it('gives every queue a default', () => {
-      const { concurrency } = new ConfigRepository().getEnv().jobs;
+    it('uses a fresh cache for a new repository', () => {
+      process.env.KONDIS_PORT = '8080';
 
-      for (const queue of Object.values(QueueName)) {
-        expect(concurrency[queue]).toBeGreaterThan(0);
-      }
-      expect(concurrency[QueueName.ActivityParsing]).toBe(1);
-      expect(concurrency[QueueName.BackgroundTask]).toBe(1);
-    });
-
-    it('applies a global override to every queue', () => {
-      process.env.KONDIS_JOB_CONCURRENCY = '7';
-
-      const { concurrency } = new ConfigRepository().getEnv().jobs;
-      expect(Object.values(concurrency)).toEqual([7, 7, 7, 7]);
-    });
-
-    it('lets a per-queue override win over the global one', () => {
-      process.env.KONDIS_JOB_CONCURRENCY = '7';
-      process.env[concurrencyEnvVar(QueueName.ActivityParsing)] = '2';
-
-      const { concurrency } = new ConfigRepository().getEnv().jobs;
-      expect(concurrency[QueueName.ActivityParsing]).toBe(2);
-      expect(concurrency[QueueName.Storage]).toBe(7);
-    });
-
-    it('rejects a value that is not a positive integer', () => {
-      process.env[concurrencyEnvVar(QueueName.Storage)] = 'lots';
-      expect(() => new ConfigRepository().getEnv()).toThrow(/must be a positive integer/);
-    });
-  });
-
-  describe('job defaults', () => {
-    it('keeps pg-boss out of the public schema', () => {
-      expect(new ConfigRepository().getEnv().jobs.schema).toBe('kondis_jobs');
-    });
-
-    it('retries a few times before giving up', () => {
-      expect(new ConfigRepository().getEnv().jobs.retryLimit).toBeGreaterThan(0);
-    });
-
-    it('can turn the scheduler off', () => {
-      expect(new ConfigRepository().getEnv().jobs.cron).toBe(true);
-
-      process.env.KONDIS_JOB_CRON = 'false';
-      clearEnvCache();
-      expect(new ConfigRepository().getEnv().jobs.cron).toBe(false);
-    });
-
-    it('rejects boolean values other than true or false', () => {
-      process.env.KONDIS_JOB_CRON = 'yes';
-
-      expect(() => new ConfigRepository().getEnv()).toThrow(/KONDIS_JOB_CRON must be true or false/);
+      expect(new ConfigRepository().getEnv().port).toBe(8080);
     });
   });
 
@@ -128,10 +41,34 @@ describe('ConfigRepository', () => {
       expect(new ConfigRepository().getEnv().database.host).toBe('database');
     });
 
+    it('uses the configured database hostname when provided', () => {
+      process.env.KONDIS_DB_HOSTNAME = 'localhost';
+
+      expect(new ConfigRepository().getEnv().database.host).toBe('localhost');
+    });
+
+    it('rejects an invalid database port', () => {
+      process.env.KONDIS_DB_PORT = '5432.5';
+
+      expect(() => new ConfigRepository().getEnv()).toThrow(/KONDIS_DB_PORT must be a positive integer/);
+    });
+
     it('rejects an invalid server port', () => {
       process.env.KONDIS_PORT = 'not-a-port';
 
       expect(() => new ConfigRepository().getEnv()).toThrow(/KONDIS_PORT must be a positive integer/);
+    });
+  });
+
+  describe('server defaults', () => {
+    it('listens on all interfaces by default', () => {
+      expect(new ConfigRepository().getEnv().listenAddress).toBe('0.0.0.0');
+    });
+
+    it('uses the configured listen address when provided', () => {
+      process.env.KONDIS_LISTEN_ADDRESS = '127.0.0.1';
+
+      expect(new ConfigRepository().getEnv().listenAddress).toBe('127.0.0.1');
     });
   });
 });

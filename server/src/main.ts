@@ -24,8 +24,8 @@ export async function bootstrapApi(): Promise<void> {
   await app.init();
   await app.get(AuthService).logSetupTokenIfRequired();
   await app.get(EventRepository).attach(app.getHttpServer());
-  await app.listen(config.port, '0.0.0.0'); // TODO: make host configurable
-  logger.log(`Kondis api listening on 0.0.0.0 on port ${config.port}`);
+  await app.listen(config.port, config.listenAddress);
+  logger.log(`Kondis api listening on ${config.listenAddress} on port ${config.port}`);
 }
 
 export async function bootstrapWorker(): Promise<void> {

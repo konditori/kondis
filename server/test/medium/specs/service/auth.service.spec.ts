@@ -15,7 +15,7 @@ describe(AuthService.name, () => {
   beforeAll(() => {
     db = createMediumTestDatabase();
     users = new UserRepository(db);
-    sut = new AuthService(users, { authSecret: 'medium-test-secret', setupToken: 'medium-setup-token' } as never);
+    sut = new AuthService(users, {} as never);
   });
 
   beforeEach(() => resetMediumTestDatabase(db));
@@ -78,7 +78,8 @@ describe(AuthService.name, () => {
 
     await expect(sut.verifySetupToken('invalid-medium-token')).rejects.toBeInstanceOf(UnauthorizedException);
 
-    const ticket = await sut.verifySetupToken('medium-setup-token');
+    const setupToken = (sut as unknown as { setupToken: string }).setupToken;
+    const ticket = await sut.verifySetupToken(setupToken);
     const result = await sut.setup(
       `admin-${crypto.randomUUID()}@example.com`,
       'Medium',

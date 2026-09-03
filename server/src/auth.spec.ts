@@ -1,8 +1,14 @@
 import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ADMIN, AuthGuard, createAccessToken, createActivityEventsTicket, verifyActivityEventsTicket } from 'src/auth';
-import { type ConfigRepository } from 'src/repositories/config.repository';
+import {
+  ADMIN,
+  AUTH_SECRET,
+  AuthGuard,
+  createAccessToken,
+  createActivityEventsTicket,
+  verifyActivityEventsTicket,
+} from 'src/auth';
 import { type UserRepository } from 'src/repositories/user.repository';
 
 const TOKEN_USER = {
@@ -65,12 +71,10 @@ const contextFor = (token: string, adminOnly = false) => {
 };
 
 describe(AuthGuard.name, () => {
-  const config = { authSecret: 'unit-test-secret' } as ConfigRepository;
-
   it('rejects an otherwise valid token after its account is deleted', async () => {
     const users = { findById: vi.fn().mockResolvedValue(undefined) } as unknown as UserRepository;
-    const guard = new AuthGuard(config, users);
-    const { context } = contextFor(createAccessToken(TOKEN_USER, config.authSecret));
+    const guard = new AuthGuard(users);
+    const { context } = contextFor(createAccessToken(TOKEN_USER, AUTH_SECRET));
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
@@ -85,8 +89,8 @@ describe(AuthGuard.name, () => {
         last_name: 'Name',
       }),
     } as unknown as UserRepository;
-    const guard = new AuthGuard(config, users);
-    const { context } = contextFor(createAccessToken(TOKEN_USER, config.authSecret), true);
+    const guard = new AuthGuard(users);
+    const { context } = contextFor(createAccessToken(TOKEN_USER, AUTH_SECRET), true);
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(ForbiddenException);
   });
@@ -101,8 +105,8 @@ describe(AuthGuard.name, () => {
         last_name: 'Name',
       }),
     } as unknown as UserRepository;
-    const guard = new AuthGuard(config, users);
-    const token = createAccessToken(TOKEN_USER, config.authSecret);
+    const guard = new AuthGuard(users);
+    const token = createAccessToken(TOKEN_USER, AUTH_SECRET);
     const { context } = contextFor(token);
     const request = context.switchToHttp().getRequest<{ headers: Record<string, string> }>();
     delete request.headers.authorization;
@@ -121,8 +125,8 @@ describe(AuthGuard.name, () => {
         last_name: 'Name',
       }),
     } as unknown as UserRepository;
-    const guard = new AuthGuard(config, users);
-    const kondisToken = createAccessToken(TOKEN_USER, config.authSecret);
+    const guard = new AuthGuard(users);
+    const kondisToken = createAccessToken(TOKEN_USER, AUTH_SECRET);
     const { context, request } = contextFor(kondisToken);
     request.headers.authorization = 'Bearer opaque-perimeter-access-token';
     (request.headers as Record<string, string>)['x-kondis-authorization'] = `Bearer ${kondisToken}`;
@@ -133,7 +137,7 @@ describe(AuthGuard.name, () => {
 
   it('rejects an invalid perimeter Authorization token when no Kondis header is present', async () => {
     const users = { findById: vi.fn() } as unknown as UserRepository;
-    const guard = new AuthGuard(config, users);
+    const guard = new AuthGuard(users);
     const { context, request } = contextFor('not-a-real-token');
     request.headers.authorization = 'Bearer opaque-perimeter-access-token';
 

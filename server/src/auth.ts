@@ -7,9 +7,10 @@ import {
   SetMetadata,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ConfigRepository } from 'src/repositories/config.repository';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { UserRepository } from 'src/repositories/user.repository';
+
+export const AUTH_SECRET = randomUUID();
 
 export type AuthenticatedUser = {
   id: string;
@@ -111,7 +112,6 @@ export const verifySetupTicket = (token: string | null, secret: string): boolean
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private readonly config: ConfigRepository,
     private readonly users: UserRepository,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -142,7 +142,7 @@ export class AuthGuard implements CanActivate {
     if (!payload || !signature) {
       throw new UnauthorizedException('Invalid access token');
     }
-    if (!hasValidSignature(payload, signature, this.config.authSecret)) {
+    if (!hasValidSignature(payload, signature, AUTH_SECRET)) {
       throw new UnauthorizedException('Invalid access token');
     }
     let parsed: AuthenticatedUser & { exp: number };

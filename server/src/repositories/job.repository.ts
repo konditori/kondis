@@ -1,13 +1,23 @@
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
+import { isMainThread } from 'node:worker_threads';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
+import {
+  JOB_CONCURRENCY,
+  JOB_CRON,
+  JOB_EXPIRE_SECONDS,
+  JOB_RETRY_DELAY_SECONDS,
+  JOB_RETRY_LIMIT,
+  JOB_RETENTION_SECONDS,
+  JOB_SCHEMA,
+} from 'src/constants';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { KondisTransaction } from 'src/db/database';
-import { JobName, JobStatus, MetadataKey, QueueName, WorkerType } from 'src/enum';
+import { JobName, JobStatus, MetadataKey, QueueName } from 'src/enum';
 import type { JobConfig } from 'src/types';
 import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'src/types/jobs';
 import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
@@ -212,7 +222,7 @@ export class JobRepository implements OnApplicationShutdown {
                count(*) FILTER (WHERE state IN ('created', 'retry'))::int AS queued,
                count(*) FILTER (WHERE state IN ('created', 'retry') AND start_after > now())::int AS deferred,
                count(*) FILTER (WHERE state = 'failed')::int AS failed
-             FROM ${this.quoteIdentifier(this.config.jobs.schema)}.${this.quoteIdentifier(table)}
+             FROM ${this.quoteIdentifier(JOB_SCHEMA)}.${this.quoteIdentifier(table)}
              WHERE name = ANY($1::text[])
              GROUP BY name`,
           [tableNames],
@@ -235,7 +245,7 @@ export class JobRepository implements OnApplicationShutdown {
 
   async getJobHistory(limit: number, offset = 0): Promise<{ jobs: JobHistoryEntry[]; total: number }> {
     const boss = await this.getBoss();
-    const schema = this.quoteIdentifier(this.config.jobs.schema);
+    const schema = this.quoteIdentifier(JOB_SCHEMA);
     const queueNames = Object.values(QueueName);
     const historyQueueNames = [...queueNames, ...queueNames.map((queue) => deadLetterName(queue))];
     const [countResult, historyResult] = await Promise.all([
@@ -284,7 +294,7 @@ export class JobRepository implements OnApplicationShutdown {
         continue;
       }
 
-      const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+      const table = `"${JOB_SCHEMA}"."${queue.table}"`;
       const { rows } = await boss.getDb().executeSql(
         `SELECT jsonb_path_query(data, '$.**.storagePath') #>> '{}' AS storage_path
          FROM ${table}
@@ -351,7 +361,7 @@ export class JobRepository implements OnApplicationShutdown {
       return;
     }
 
-    const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+    const table = `"${JOB_SCHEMA}"."${queue.table}"`;
     await boss.getDb().executeSql(
       `DELETE FROM ${table}
        WHERE name = $1
@@ -411,7 +421,7 @@ export class JobRepository implements OnApplicationShutdown {
       return empty;
     }
 
-    const table = `"${this.config.jobs.schema}"."${queue.table}"`;
+    const table = `"${JOB_SCHEMA}"."${queue.table}"`;
     const { rows } = await boss.getDb().executeSql(
       `SELECT
          count(*)::int AS total,
@@ -529,9 +539,9 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   private async createBoss(): Promise<PgBoss> {
-    const { database, jobs } = this.config;
-    const consuming = this.config.hasWorker(WorkerType.WORKER);
-    const totalConcurrency = Object.values(jobs.concurrency).reduce((sum, value) => sum + value, 0);
+    const { database } = this.config;
+    const consuming = !isMainThread;
+    const totalConcurrency = Object.values(JOB_CONCURRENCY).reduce((sum, value) => sum + value, 0);
 
     const boss = new PgBoss({
       host: database.host,
@@ -541,11 +551,11 @@ export class JobRepository implements OnApplicationShutdown {
       database: database.database,
       application_name: 'kondis-jobs',
       max: consuming ? totalConcurrency + 4 : 2,
-      schema: jobs.schema,
+      schema: JOB_SCHEMA,
       createSchema: true,
       migrate: true,
       supervise: consuming,
-      schedule: consuming && jobs.cron,
+      schedule: consuming && JOB_CRON,
       useListenNotify: consuming,
     });
 
@@ -555,14 +565,12 @@ export class JobRepository implements OnApplicationShutdown {
     await boss.start();
     await this.createQueues(boss);
 
-    this.logger.log(`Connected to job schema "${jobs.schema}" (consuming=${consuming})`);
+    this.logger.log(`Connected to job schema "${JOB_SCHEMA}" (consuming=${consuming})`);
 
     return boss;
   }
 
   private async createQueues(boss: PgBoss): Promise<void> {
-    const { retryLimit, retryDelaySeconds, expireInSeconds, deleteAfterSeconds } = this.config.jobs;
-
     for (const queue of Object.values(QueueName)) {
       const deadLetter = deadLetterName(queue);
 
@@ -570,11 +578,11 @@ export class JobRepository implements OnApplicationShutdown {
 
       const options = {
         deadLetter,
-        retryLimit,
-        retryDelay: retryDelaySeconds,
+        retryLimit: JOB_RETRY_LIMIT,
+        retryDelay: JOB_RETRY_DELAY_SECONDS,
         retryBackoff: true,
-        expireInSeconds,
-        deleteAfterSeconds,
+        expireInSeconds: JOB_EXPIRE_SECONDS,
+        deleteAfterSeconds: JOB_RETENTION_SECONDS,
         notify: true,
       };
 
@@ -593,7 +601,7 @@ export class JobRepository implements OnApplicationShutdown {
       {
         batchSize: WORKER_BATCH_SIZE,
         burstWhenBatchFull: true,
-        localConcurrency: this.config.jobs.concurrency[queue],
+        localConcurrency: JOB_CONCURRENCY[queue],
         perJobResults: true,
         pollingIntervalSeconds: 2,
         notifyPollingIntervalSeconds: 30,
@@ -700,7 +708,7 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   private async applySchedules(boss: PgBoss): Promise<void> {
-    if (!this.config.jobs.cron) {
+    if (!JOB_CRON) {
       return;
     }
 

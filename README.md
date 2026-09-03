@@ -32,9 +32,17 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * iOS and Apple Watch support
 * Listen address is hardcoded 0.0.0.0, make configurable
 * Demo site linked from github
+* Audio coach with TTS during activities
+* Audio coach with ETA if following known route
+* Percieved effort tracking
+* Full strava takeout compatibility, private notes, shoes, etc.
+* Beat yourself, like Endomondo did
 * Translation site such as weblate
 * Power curve generation
 * S3 support for file storage
+* Peptalk during live runs, with TTS
+* Auto-pause workouts
+* Power curves and other detailed stats
 
 ## Development
 Please see the [developer documentation site](https://developers.kondis.org/).

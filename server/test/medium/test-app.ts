@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 import { AppModule } from 'src/app.module';
 
-import { TEST_JOB_SCHEMA, getTestDatabaseConfig } from 'test/medium/test-db';
+import { getTestDatabaseConfig } from 'test/medium/test-db';
 
 export type TestApp = {
   app: INestApplicationContext;
@@ -28,17 +28,6 @@ export const createTestApp = async (): Promise<TestApp> => {
     KONDIS_DB_PASSWORD: database.password,
     KONDIS_DB_DATABASE_NAME: database.database,
     KONDIS_STORAGE_DIR: storageDir,
-    KONDIS_WORKERS: 'worker',
-    // globalSetup already migrated; running it again here would just be slower.
-    KONDIS_DB_AUTO_MIGRATE: 'false',
-    KONDIS_JOB_SCHEMA: TEST_JOB_SCHEMA,
-    // A cron tick firing mid-assertion would make these tests flaky for no coverage in return.
-    KONDIS_JOB_CRON: 'false',
-    // Deterministic ordering: with one worker per queue, a job either ran or it did not.
-    KONDIS_JOB_CONCURRENCY: '1',
-    // Fail fast. The default backoff would push a retry past any reasonable test timeout.
-    KONDIS_JOB_RETRY_LIMIT: '1',
-    KONDIS_JOB_RETRY_DELAY_SECONDS: '1',
   });
 
   const app = await NestFactory.createApplicationContext(AppModule, { abortOnError: false });

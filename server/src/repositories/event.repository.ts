@@ -4,7 +4,7 @@ import type { Server } from 'node:http';
 import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import { verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
+import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { KYSELY, KondisDatabase } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
@@ -157,8 +157,8 @@ export class EventRepository implements OnApplicationShutdown {
     server.on('upgrade', this.upgradeHandler);
     this.socketServer.on('connection', (socket, request) => {
       const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
-      const userId = verifyActivityEventsTicket(ticket, this.config.authSecret);
-      const isJobDashboard = !userId && Boolean(verifyJobEventsTicket(ticket, this.config.authSecret));
+      const userId = verifyActivityEventsTicket(ticket, AUTH_SECRET);
+      const isJobDashboard = !userId && Boolean(verifyJobEventsTicket(ticket, AUTH_SECRET));
       if (!userId && !isJobDashboard) {
         socket.close(1008, 'Authentication required');
         return;

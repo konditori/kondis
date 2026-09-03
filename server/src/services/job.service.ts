@@ -1,7 +1,7 @@
 import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { isMainThread } from 'node:worker_threads';
 
-import { ConfigRepository } from 'src/repositories/config.repository';
-import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
+import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { EventRepository } from 'src/repositories/event.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
@@ -22,7 +22,6 @@ const asJobItem = (name: ManualJobName): JobItem => {
 @Injectable()
 export class JobService {
   constructor(
-    private readonly config: ConfigRepository,
     private readonly jobRepository: JobRepository,
     private readonly events: EventRepository,
     private readonly logger: ConsoleLogger,
@@ -31,7 +30,7 @@ export class JobService {
   }
 
   async init(): Promise<void> {
-    if (!this.config.hasWorker(WorkerType.WORKER)) {
+    if (isMainThread) {
       this.logger.log("Role 'worker' is disabled; not consuming jobs in this process");
       return;
     }

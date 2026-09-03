@@ -21,11 +21,10 @@ describe(AuthService.name, () => {
 
   const users = { findByEmail, count, create, createInitialAdmin } as unknown as UserRepository;
   const config = {
-    authSecret: 'unit-test-secret',
-    setupToken: 'unit-test-setup-token',
     registrationEnabled: false,
   } as ConfigRepository;
   const setup = () => newTestService(AuthService, [users, config], { users, config });
+  const setupToken = (sut: AuthService): string => (sut as unknown as { setupToken: string }).setupToken;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,7 +96,7 @@ describe(AuthService.name, () => {
 
     await expect(sut.verifySetupToken('wrong-token')).rejects.toBeInstanceOf(UnauthorizedException);
     expect(createInitialAdmin).not.toHaveBeenCalled();
-    const { token } = await sut.verifySetupToken('unit-test-setup-token');
+    const { token } = await sut.verifySetupToken(setupToken(sut));
     await expect(sut.validateSetupTicket(token)).resolves.toEqual({ valid: true });
     await expect(sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', token)).resolves.toMatchObject(
       { setup: true, user: { role: 'admin' } },
@@ -105,7 +104,7 @@ describe(AuthService.name, () => {
     expect(createInitialAdmin).toHaveBeenCalledOnce();
 
     createInitialAdmin.mockResolvedValueOnce(undefined);
-    const { token: nextToken } = await sut.verifySetupToken('unit-test-setup-token');
+    const { token: nextToken } = await sut.verifySetupToken(setupToken(sut));
     await expect(
       sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', nextToken),
     ).rejects.toBeInstanceOf(ConflictException);
@@ -118,7 +117,7 @@ describe(AuthService.name, () => {
     await sut.logSetupTokenIfRequired();
     expect(log).toHaveBeenCalledOnce();
     expect(log.mock.calls[0][0]).toContain('Welcome to Kondis!');
-    expect(log.mock.calls[0][0]).toContain('unit-test-setup-token');
+    expect(log.mock.calls[0][0]).toContain(setupToken(sut));
     expect(log.mock.calls[0][0]).toContain('go to the app in a web browser');
 
     count.mockResolvedValue({ count: 1 });

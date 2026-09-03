@@ -15,7 +15,6 @@ async function run(): Promise<void> {
   process.env.KONDIS_DB_USERNAME ??= 'openapi';
   process.env.KONDIS_DB_PASSWORD ??= 'openapi';
   process.env.KONDIS_DB_DATABASE_NAME ??= 'openapi';
-  process.env.KONDIS_WORKERS ??= 'api';
 
   const app = await NestFactory.create(AppModule, {
     logger: false,

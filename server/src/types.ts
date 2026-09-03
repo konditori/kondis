@@ -1,4 +1,4 @@
-import { JobName, QueueName, WorkerType } from 'src/enum';
+import { JobName, QueueName } from 'src/enum';
 
 export type DatabaseConfig = {
   host: string;
@@ -8,24 +8,11 @@ export type DatabaseConfig = {
   database: string;
 };
 
-export type JobsConfig = {
-  schema: string;
-  concurrency: Record<QueueName, number>;
-  retryLimit: number;
-  retryDelaySeconds: number;
-  expireInSeconds: number;
-  deleteAfterSeconds: number;
-  cron: boolean;
-};
-
 export type EnvData = {
   port: number;
-  workers: WorkerType[];
+  listenAddress: string;
   storageDir: string;
   database: DatabaseConfig;
-  jobs: JobsConfig;
-  authSecret: string;
-  setupToken: string;
   registrationEnabled: boolean;
 };
 
