@@ -12,6 +12,7 @@ import { SocialRepository } from 'src/repositories/social.repository';
 
 const EVENT_CHANNEL = 'kondis_realtime';
 const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
+const JOB_UPDATE_INTERVAL_MS = 250;
 
 type EventMap = {
   JobUpdated: [];
@@ -99,6 +100,7 @@ export class EventRepository implements OnApplicationShutdown {
   private readonly logger = new Logger(EventRepository.name);
   private listener?: pg.Client;
   private reconnectTimer?: NodeJS.Timeout;
+  private jobUpdateTimer?: NodeJS.Timeout;
   private socketServer?: WebSocketServer;
   private httpServer?: Server;
   private upgradeHandler?: Parameters<Server['on']>[1];
@@ -114,9 +116,30 @@ export class EventRepository implements OnApplicationShutdown {
   ) {}
 
   async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
+    if (event === 'JobUpdated') {
+      this.scheduleJobUpdate();
+      return;
+    }
+
+    await this.publish(event, ...args);
+  }
+
+  private async publish<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
     const serialize = eventSerializers[event] as (...values: ArgsOf<T>) => WebsocketEvent;
     const payload = JSON.stringify(serialize(...args));
     await sql`SELECT pg_notify(${EVENT_CHANNEL}, ${payload})`.execute(this.db);
+  }
+
+  private scheduleJobUpdate(): void {
+    if (this.stopped || this.jobUpdateTimer) {
+      return;
+    }
+    this.jobUpdateTimer = setTimeout(() => {
+      this.jobUpdateTimer = undefined;
+      void this.publish('JobUpdated').catch((error: unknown) => {
+        this.logger.warn(`Could not publish job update: ${error instanceof Error ? error.message : String(error)}`);
+      });
+    }, JOB_UPDATE_INTERVAL_MS);
   }
 
   async attach(server: Server): Promise<void> {
@@ -124,7 +147,9 @@ export class EventRepository implements OnApplicationShutdown {
     this.httpServer = server;
     this.upgradeHandler = (request, socket, head) => {
       const path = new URL(request.url ?? '', 'http://localhost').pathname;
-      if (!EVENT_PATHS.has(path)) return;
+      if (!EVENT_PATHS.has(path)) {
+        return;
+      }
       this.socketServer?.handleUpgrade(request, socket, head, (client) => {
         this.socketServer?.emit('connection', client, request);
       });
@@ -138,8 +163,12 @@ export class EventRepository implements OnApplicationShutdown {
         socket.close(1008, 'Authentication required');
         return;
       }
-      if (userId) this.socketUsers.set(socket, userId);
-      if (isJobDashboard) this.jobDashboardSockets.add(socket);
+      if (userId) {
+        this.socketUsers.set(socket, userId);
+      }
+      if (isJobDashboard) {
+        this.jobDashboardSockets.add(socket);
+      }
       this.socketActivities.set(socket, new Set());
       if (userId) {
         socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
@@ -159,6 +188,7 @@ export class EventRepository implements OnApplicationShutdown {
   async onApplicationShutdown(): Promise<void> {
     this.stopped = true;
     clearTimeout(this.reconnectTimer);
+    clearTimeout(this.jobUpdateTimer);
     if (this.httpServer && this.upgradeHandler) {
       this.httpServer.off('upgrade', this.upgradeHandler);
     }
@@ -206,7 +236,9 @@ export class EventRepository implements OnApplicationShutdown {
   private async broadcast(payload: string): Promise<void> {
     if (this.isJobUpdate(payload)) {
       for (const client of this.jobDashboardSockets) {
-        if (client.readyState === WebSocket.OPEN) client.send(payload);
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(payload);
+        }
       }
       return;
     }

@@ -51,9 +51,14 @@ export class JobService {
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
     const queues = Object.values(QueueName);
-    const reports = await Promise.all(queues.map((queue) => this.getJobStatus(queue)));
+    const counts = await this.jobRepository.getAllJobCounts();
 
-    return Object.fromEntries(queues.map((queue, index) => [queue, reports[index]])) as AllJobStatusResponse;
+    return Object.fromEntries(
+      queues.map((queue) => [
+        queue,
+        { jobCounts: counts[queue], queueStatus: { paused: this.jobRepository.isPaused(queue) } },
+      ]),
+    ) as AllJobStatusResponse;
   }
 
   async handleCommand(queue: QueueName, command: QueueCommand): Promise<QueueStatusReport> {

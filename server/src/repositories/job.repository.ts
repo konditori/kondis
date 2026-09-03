@@ -39,6 +39,9 @@ type StoredJobRow = {
   output: unknown;
 };
 
+type RawJobCounts = Omit<JobCounts, 'ready'>;
+type StoredJobCounts = RawJobCounts & { name: string };
+
 const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
   [QueueName.ActivityParsing]: 'exclusive',
   [QueueName.BackgroundTask]: 'exclusive',
@@ -184,6 +187,50 @@ export class JobRepository implements OnApplicationShutdown {
       // Retained failures plus everything that exhausted its retries and was dead-lettered.
       failed: counts.failed + deadLetter.queued,
     };
+  }
+
+  async getAllJobCounts(): Promise<Record<QueueName, JobCounts>> {
+    const boss = await this.getBoss();
+    const queues = Object.values(QueueName);
+    const names = [...queues, ...queues.map((queue) => deadLetterName(queue))];
+    const definitions = await boss.getQueues(names);
+    const namesByTable = new Map<string, string[]>();
+
+    for (const { name, table } of definitions) {
+      const tableNames = namesByTable.get(table) ?? [];
+      tableNames.push(name);
+      namesByTable.set(table, tableNames);
+    }
+
+    const rowGroups = await Promise.all(
+      [...namesByTable].map(async ([table, tableNames]) => {
+        const result = await boss.getDb().executeSql(
+          `SELECT
+               name,
+               count(*)::int AS total,
+               count(*) FILTER (WHERE state = 'active')::int AS active,
+               count(*) FILTER (WHERE state IN ('created', 'retry'))::int AS queued,
+               count(*) FILTER (WHERE state IN ('created', 'retry') AND start_after > now())::int AS deferred,
+               count(*) FILTER (WHERE state = 'failed')::int AS failed
+             FROM ${this.quoteIdentifier(this.config.jobs.schema)}.${this.quoteIdentifier(table)}
+             WHERE name = ANY($1::text[])
+             GROUP BY name`,
+          [tableNames],
+        );
+        return result.rows as StoredJobCounts[];
+      }),
+    );
+    const rows = rowGroups.flat();
+    const countsByName = new Map(rows.map(({ name, ...counts }) => [name, this.withReadyCount(counts)]));
+    const empty = (): JobCounts => ({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 });
+
+    return Object.fromEntries(
+      queues.map((queue) => {
+        const counts = countsByName.get(queue) ?? empty();
+        const deadLetter = countsByName.get(deadLetterName(queue)) ?? empty();
+        return [queue, { ...counts, failed: counts.failed + deadLetter.queued }];
+      }),
+    ) as Record<QueueName, JobCounts>;
   }
 
   async getJobHistory(limit: number, offset = 0): Promise<{ jobs: JobHistoryEntry[]; total: number }> {
@@ -377,12 +424,16 @@ export class JobRepository implements OnApplicationShutdown {
       [name],
     );
 
-    const row = rows.at(0) as JobCounts | undefined;
+    const row = rows.at(0) as RawJobCounts | undefined;
     if (!row) {
       return empty;
     }
 
-    return { ...row, ready: Math.max(row.queued - row.deferred, 0) };
+    return this.withReadyCount(row);
+  }
+
+  private withReadyCount(counts: RawJobCounts): JobCounts {
+    return { ...counts, ready: Math.max(counts.queued - counts.deferred, 0) };
   }
 
   private getQueueName(name: JobName): QueueName {

@@ -10,7 +10,6 @@
     HardDrive,
     Image,
     ListChecks,
-    RefreshCw,
   } from "@lucide/svelte";
   import { replaceState } from "$app/navigation";
   import { onMount, untrack } from "svelte";
@@ -27,8 +26,9 @@
   import { subscribeToJobEvents } from "$lib/realtime";
 
   const HISTORY_PAGE_SIZE = 75;
-  const GRAPH_BUCKETS = 24;
-  const GRAPH_WINDOW_MS = 5 * 60_000;
+  const EVENT_REFRESH_INTERVAL_MS = 1_000;
+  const GRAPH_BUCKET_MS = 15_000;
+  const GRAPH_BUCKETS = 20;
   const GRAPH_WIDTH = 500;
   const GRAPH_BASELINE = 144;
   const GRAPH_HEIGHT = 62;
@@ -46,8 +46,11 @@
   );
   let historyLoading = $state(false);
   let currentTime = $state(new Date());
-  let refreshing = $state(false);
-  let refreshQueued = false;
+  let refreshInFlight = false;
+  let refreshPending = false;
+  let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+  let lastRefreshStartedAt = 0;
+  let disposed = false;
   let error = $state("");
   let totalPages = $derived(
     Math.max(1, Math.ceil(totalHistory / HISTORY_PAGE_SIZE)),
@@ -122,34 +125,52 @@
     TemporaryFileCleanup: "job_name_temporary_file_cleanup",
   } as const;
 
-  async function refresh(silent = false) {
-    if (refreshing) {
-      refreshQueued = true;
+  async function refresh() {
+    if (refreshInFlight) {
+      refreshPending = true;
       return;
     }
-    refreshing = true;
-    if (!silent) error = "";
+    refreshInFlight = true;
+    lastRefreshStartedAt = Date.now();
     try {
+      const options = getSdkRequestOptions();
+      const historyLimit =
+        historyOffset === 0
+          ? Math.min(Math.max(history.length, HISTORY_PAGE_SIZE), 200)
+          : HISTORY_PAGE_SIZE;
       const [nextQueues, nextHistory] = await Promise.all([
-        jobControllerGetAllJobStatus(getSdkRequestOptions()),
+        jobControllerGetAllJobStatus(options),
         jobControllerGetJobHistory(
-          { limit: HISTORY_PAGE_SIZE, offset: historyOffset },
-          getSdkRequestOptions(),
+          { limit: historyLimit, offset: historyOffset },
+          options,
         ),
       ]);
       queues = nextQueues;
       history = nextHistory.jobs;
       totalHistory = nextHistory.total;
+      currentTime = new Date();
       error = "";
     } catch {
-      if (!silent) error = t("job_dashboard_load_error");
+      // A later job event will retry. Keep the last usable dashboard state.
     } finally {
-      refreshing = false;
-      if (refreshQueued) {
-        refreshQueued = false;
-        void refresh(true);
+      refreshInFlight = false;
+      if (refreshPending) {
+        refreshPending = false;
+        scheduleRefresh();
       }
     }
+  }
+
+  function scheduleRefresh() {
+    if (disposed || refreshTimer) return;
+    const delay = Math.max(
+      0,
+      EVENT_REFRESH_INTERVAL_MS - (Date.now() - lastRefreshStartedAt),
+    );
+    refreshTimer = setTimeout(() => {
+      refreshTimer = undefined;
+      void refresh();
+    }, delay);
   }
 
   function jobLabel(name: string) {
@@ -163,19 +184,22 @@
 
   function queueGraph(queue: string, now: Date) {
     const buckets = Array.from({ length: GRAPH_BUCKETS }, () => 0);
-    const nowTimestamp = now.getTime();
+    const windowEnd =
+      Math.floor(now.getTime() / GRAPH_BUCKET_MS) * GRAPH_BUCKET_MS +
+      GRAPH_BUCKET_MS;
+    const windowStart = windowEnd - GRAPH_BUCKETS * GRAPH_BUCKET_MS;
 
     for (const job of history) {
       if (job.queue !== queue) continue;
       const timestamp = Date.parse(job.startedAt ?? job.createdAt);
-      const age = nowTimestamp - timestamp;
-      if (!Number.isFinite(timestamp) || age < 0 || age > GRAPH_WINDOW_MS) {
+      if (
+        !Number.isFinite(timestamp) ||
+        timestamp < windowStart ||
+        timestamp >= windowEnd
+      ) {
         continue;
       }
-      const bucket = Math.min(
-        GRAPH_BUCKETS - 1,
-        Math.floor(((GRAPH_WINDOW_MS - age) / GRAPH_WINDOW_MS) * GRAPH_BUCKETS),
-      );
+      const bucket = Math.floor((timestamp - windowStart) / GRAPH_BUCKET_MS);
       buckets[bucket] += 1;
     }
 
@@ -249,17 +273,16 @@
   }
 
   onMount(() => {
-    const unsubscribe = subscribeToJobEvents(
-      data.eventsUrl,
-      () => void refresh(true),
-    );
+    const unsubscribe = subscribeToJobEvents(data.eventsUrl, scheduleRefresh);
     const clock = setInterval(() => {
       currentTime = new Date();
-    }, 1000);
+    }, GRAPH_BUCKET_MS);
 
     return () => {
+      disposed = true;
       unsubscribe();
       clearInterval(clock);
+      clearTimeout(refreshTimer);
     };
   });
 </script>
@@ -273,15 +296,6 @@
       <h1>{t("job_queues")}</h1>
       <p>{t("job_queues_description")}</p>
     </div>
-    <button
-      class="job-refresh"
-      type="button"
-      onclick={() => refresh()}
-      disabled={refreshing}
-    >
-      <RefreshCw size={17} class={refreshing ? "spinning" : undefined} />
-      {t("refresh")}
-    </button>
   </header>
 
   {#if error}<p class="job-dashboard-error" role="alert">
@@ -381,10 +395,6 @@
                 >{relativeOrDateTime(
                   job.startedAt ?? job.createdAt,
                   currentTime,
-                  {
-                    justNowSeconds: 5,
-                    showSeconds: true,
-                  },
                 )}</time
               ></span
             >

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ConfigService } from 'src/config/config.service';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
+import { type EventRepository } from 'src/repositories/event.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
@@ -20,18 +21,30 @@ describe('JobService', () => {
   const getJobCounts = vi.fn(() =>
     Promise.resolve({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 }),
   );
+  const getAllJobCounts = vi.fn(() =>
+    Promise.resolve(
+      Object.fromEntries(
+        Object.values(QueueName).map((queue) => [
+          queue,
+          { active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 },
+        ]),
+      ) as Record<QueueName, Awaited<ReturnType<typeof getJobCounts>>>,
+    ),
+  );
   const isPaused = vi.fn(() => false);
   const pause = vi.fn(async () => {});
   const resume = vi.fn(async () => {});
   const empty = vi.fn(async () => {});
   const clearFailed = vi.fn(async () => {});
   const getJobHistory = vi.fn(() => Promise.resolve({ jobs: [], total: 0 }));
+  const emit = vi.fn(async () => {});
 
   const jobRepository = {
     run,
     queue,
     startWorkers,
     getJobCounts,
+    getAllJobCounts,
     isPaused,
     pause,
     resume,
@@ -41,9 +54,16 @@ describe('JobService', () => {
   } as unknown as JobRepository;
 
   const setup = (workers = [WorkerType.API, WorkerType.WORKER]) =>
-    newTestService(JobService, [makeConfig(workers), jobRepository, new ConsoleLogger({ logLevels: [] })], {
-      jobRepository,
-    });
+    newTestService(
+      JobService,
+      [
+        makeConfig(workers),
+        jobRepository,
+        { emit } as unknown as EventRepository,
+        new ConsoleLogger({ logLevels: [] }),
+      ],
+      { jobRepository },
+    );
 
   const makeService = (workers = [WorkerType.API, WorkerType.WORKER]) => setup(workers).sut;
 
@@ -141,7 +161,8 @@ describe('JobService', () => {
       const status = await makeService().getAllJobStatus();
 
       expect(Object.keys(status).sort()).toEqual(Object.values(QueueName).sort());
-      expect(getJobCounts).toHaveBeenCalledTimes(Object.values(QueueName).length);
+      expect(getAllJobCounts).toHaveBeenCalledOnce();
+      expect(getJobCounts).not.toHaveBeenCalled();
     });
 
     it('returns recent job history with the requested limit', async () => {

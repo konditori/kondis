@@ -34,6 +34,7 @@ describe("unit-aware activity formatting", () => {
         showSeconds: true,
       }),
     ).toBe("6 seconds ago");
+    expect(relativeTime("2026-08-18T09:58:30.000Z", now)).toBe("1 minute ago");
     expect(relativeTime("2026-08-18T09:55:00.000Z", now)).toBe("5 minutes ago");
     expect(relativeTime("2026-08-18T08:30:00.000Z", now)).toBe("1 hour ago");
     expect(relativeTime("2026-08-16T10:00:00.000Z", now)).toBe("2 days ago");
@@ -43,6 +44,9 @@ describe("unit-aware activity formatting", () => {
 
   it("uses relative timestamps only for recent values", () => {
     const now = new Date("2026-08-18T10:00:00.000Z");
+    expect(relativeOrDateTime("2026-08-18T10:00:00.250Z", now)).toBe(
+      "Just now",
+    );
     expect(relativeOrDateTime("2026-08-17T10:00:00.000Z", now)).toBe(
       "1 day ago",
     );
