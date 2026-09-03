@@ -3,7 +3,7 @@ import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { DatabaseConfig } from 'src/config/config.service';
+import { DatabaseConfig } from 'src/repositories/config.repository';
 import { createDatabase, KondisDatabase, KondisTransaction, KYSELY } from 'src/db/database';
 
 // File migrations are loaded from this module's source/compiled sibling directory.

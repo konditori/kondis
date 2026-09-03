@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 
 export type AuthenticatedUser = {
@@ -111,7 +111,7 @@ export const verifySetupTicket = (token: string | null, secret: string): boolean
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
     private readonly users: UserRepository,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {

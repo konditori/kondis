@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from 'src/app.module';
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { AuthService } from 'src/services/auth.service';
@@ -13,7 +13,7 @@ const API_PREFIX = 'api/v1';
 
 export async function bootstrapApi(): Promise<void> {
   const logger = new Logger('Bootstrap');
-  const config = new ConfigService();
+  const config = new ConfigRepository();
   config.logStartupSummary();
 
   if (config.autoMigrate) {
@@ -32,7 +32,7 @@ export async function bootstrapApi(): Promise<void> {
 
 export async function bootstrapWorker(): Promise<void> {
   const logger = new Logger('Bootstrap');
-  const config = new ConfigService();
+  const config = new ConfigRepository();
   config.logStartupSummary();
   const app = await NestFactory.createApplicationContext(AppModule);
   app.enableShutdownHooks();

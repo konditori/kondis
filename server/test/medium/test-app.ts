@@ -19,7 +19,7 @@ export const createTestApp = async (): Promise<TestApp> => {
   const database = getTestDatabaseConfig();
   const storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-app-'));
 
-  // ConfigService reads the environment in its constructor, so this must happen before the
+  // ConfigRepository reads the environment on first access, so this must happen before the
   // container is built.
   Object.assign(process.env, {
     DB_HOSTNAME: database.host,

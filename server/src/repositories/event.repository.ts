@@ -5,7 +5,7 @@ import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import { verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { KYSELY, KondisDatabase } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -111,7 +111,7 @@ export class EventRepository implements OnApplicationShutdown {
 
   constructor(
     @Inject(KYSELY) private readonly db: KondisDatabase,
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
     private readonly social: SocialRepository,
   ) {}
 

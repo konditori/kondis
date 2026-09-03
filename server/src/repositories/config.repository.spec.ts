@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ConfigService, concurrencyEnvVar } from 'src/config/config.service';
+import { clearEnvCache, ConfigRepository, concurrencyEnvVar } from 'src/repositories/config.repository';
 import { QueueName, WorkerType } from 'src/enum';
 
-describe('ConfigService', () => {
+describe('ConfigRepository', () => {
   let original: NodeJS.ProcessEnv;
 
   beforeEach(() => {
+    clearEnvCache();
     original = process.env;
     process.env = {
       DB_USERNAME: 'kondis',
@@ -16,40 +17,46 @@ describe('ConfigService', () => {
   });
 
   afterEach(() => {
+    clearEnvCache();
     process.env = original;
   });
 
   describe('workers', () => {
     it('runs only the API role when unset so jobs cannot block its event loop', () => {
-      expect(new ConfigService().workers).toEqual([WorkerType.API]);
+      expect(new ConfigRepository().getEnv().workers).toEqual([WorkerType.API]);
     });
 
     it('narrows to the requested roles', () => {
       process.env.KONDIS_WORKERS = 'worker';
 
-      const config = new ConfigService();
+      const config = new ConfigRepository();
       expect(config.hasWorker(WorkerType.WORKER)).toBe(true);
       expect(config.hasWorker(WorkerType.API)).toBe(false);
     });
 
     it('refuses to start on a typo rather than silently running nothing', () => {
       process.env.KONDIS_WORKERS = 'jbos';
-      expect(() => new ConfigService()).toThrow(/Unknown KONDIS_WORKERS/);
+      expect(() => new ConfigRepository().getEnv()).toThrow(/Unknown KONDIS_WORKERS/);
     });
 
     it('requires API and jobs to run in separate processes', () => {
       process.env.KONDIS_WORKERS = 'api,worker';
-      expect(() => new ConfigService()).toThrow(/separate processes/);
+      expect(() => new ConfigRepository().getEnv()).toThrow(/separate processes/);
     });
   });
 
   describe('setup token', () => {
-    it('generates a UUID instead of requiring an operator-provided token', () => {
-      const first = new ConfigService().setupToken;
-      const second = new ConfigService().setupToken;
+    it('generates and caches a UUID instead of requiring an operator-provided token', () => {
+      const first = new ConfigRepository().getEnv().setupToken;
+      const second = new ConfigRepository().getEnv().setupToken;
 
       expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-      expect(second).not.toBe(first);
+      expect(second).toBe(first);
+    });
+
+    it('caches the parsed environment', () => {
+      const repository = new ConfigRepository();
+      expect(repository.getEnv()).toBe(repository.getEnv());
     });
   });
 
@@ -61,7 +68,7 @@ describe('ConfigService', () => {
     });
 
     it('gives every queue a default', () => {
-      const { concurrency } = new ConfigService().jobs;
+      const { concurrency } = new ConfigRepository().getEnv().jobs;
 
       for (const queue of Object.values(QueueName)) {
         expect(concurrency[queue]).toBeGreaterThan(0);
@@ -73,7 +80,7 @@ describe('ConfigService', () => {
     it('applies a global override to every queue', () => {
       process.env.KONDIS_JOB_CONCURRENCY = '7';
 
-      const { concurrency } = new ConfigService().jobs;
+      const { concurrency } = new ConfigRepository().getEnv().jobs;
       expect(Object.values(concurrency)).toEqual([7, 7, 7, 7]);
     });
 
@@ -81,37 +88,38 @@ describe('ConfigService', () => {
       process.env.KONDIS_JOB_CONCURRENCY = '7';
       process.env[concurrencyEnvVar(QueueName.ActivityParsing)] = '2';
 
-      const { concurrency } = new ConfigService().jobs;
+      const { concurrency } = new ConfigRepository().getEnv().jobs;
       expect(concurrency[QueueName.ActivityParsing]).toBe(2);
       expect(concurrency[QueueName.Storage]).toBe(7);
     });
 
     it('rejects a value that is not a positive integer', () => {
       process.env[concurrencyEnvVar(QueueName.Storage)] = 'lots';
-      expect(() => new ConfigService()).toThrow(/must be a positive integer/);
+      expect(() => new ConfigRepository().getEnv()).toThrow(/must be a positive integer/);
     });
   });
 
   describe('job defaults', () => {
     it('keeps pg-boss out of the public schema', () => {
-      expect(new ConfigService().jobs.schema).toBe('kondis_jobs');
+      expect(new ConfigRepository().getEnv().jobs.schema).toBe('kondis_jobs');
     });
 
     it('retries a few times before giving up', () => {
-      expect(new ConfigService().jobs.retryLimit).toBeGreaterThan(0);
+      expect(new ConfigRepository().getEnv().jobs.retryLimit).toBeGreaterThan(0);
     });
 
     it('can turn the scheduler off', () => {
-      expect(new ConfigService().jobs.cron).toBe(true);
+      expect(new ConfigRepository().getEnv().jobs.cron).toBe(true);
 
       process.env.KONDIS_JOB_CRON = 'false';
-      expect(new ConfigService().jobs.cron).toBe(false);
+      clearEnvCache();
+      expect(new ConfigRepository().getEnv().jobs.cron).toBe(false);
     });
   });
 
   describe('database defaults', () => {
     it('uses the Docker Compose database service when the hostname is unset', () => {
-      expect(new ConfigService().database.host).toBe('database');
+      expect(new ConfigRepository().getEnv().database.host).toBe('database');
     });
   });
 });

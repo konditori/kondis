@@ -1,7 +1,7 @@
 import { rm } from 'node:fs/promises';
 
 import { sql } from 'kysely';
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { createDatabase } from 'src/db/database';
 
 const CONFIRMATION_FLAG = '--confirm';
@@ -13,7 +13,7 @@ async function resetDevelopmentData(): Promise<void> {
     throw new Error(`Refusing to reset data without ${CONFIRMATION_FLAG}.`);
   }
 
-  const config = new ConfigService();
+  const config = new ConfigRepository().getEnv();
   const db = createDatabase(config.database);
 
   try {

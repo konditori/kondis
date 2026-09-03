@@ -1,6 +1,7 @@
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
@@ -17,6 +18,7 @@ export const repositories = [
   ActivityRepository,
   ActivityImageRepository,
   CryptoRepository,
+  ConfigRepository,
   DatabaseRepository,
   EventRepository,
   FitRepository,

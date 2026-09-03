@@ -2,7 +2,7 @@ import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@ne
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ADMIN, AuthGuard, createAccessToken, createActivityEventsTicket, verifyActivityEventsTicket } from 'src/auth';
-import { type ConfigService } from 'src/config/config.service';
+import { type ConfigRepository } from 'src/repositories/config.repository';
 import { type UserRepository } from 'src/repositories/user.repository';
 
 const TOKEN_USER = {
@@ -65,7 +65,7 @@ const contextFor = (token: string, adminOnly = false) => {
 };
 
 describe(AuthGuard.name, () => {
-  const config = { authSecret: 'unit-test-secret' } as ConfigService;
+  const config = { authSecret: 'unit-test-secret' } as ConfigRepository;
 
   it('rejects an otherwise valid token after its account is deleted', async () => {
     const users = { findById: vi.fn().mockResolvedValue(undefined) } as unknown as UserRepository;

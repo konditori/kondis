@@ -30,6 +30,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 ## Planned features (subject to change)
 * MCP server
 * iOS and Apple Watch support
+* Listen address is hardcoded 0.0.0.0, make configurable
 * Demo site linked from github
 * Translation site such as weblate
 * Power curve generation

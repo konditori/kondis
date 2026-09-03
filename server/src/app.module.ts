@@ -3,7 +3,6 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { AuthGuard } from 'src/auth';
 
-import { ConfigService } from 'src/config/config.service';
 import { controllers } from 'src/controllers';
 import { databaseProviders } from 'src/db';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
@@ -16,7 +15,6 @@ import { ImportProgressStore } from 'src/state/import-progress.store';
 @Module({
   controllers,
   providers: [
-    ConfigService,
     ConsoleLogger,
     ...databaseProviders,
     ...repositories,

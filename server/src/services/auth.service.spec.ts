@@ -8,7 +8,7 @@ import {
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ConfigService } from 'src/config/config.service';
+import type { ConfigRepository } from 'src/repositories/config.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { newTestService } from 'test/utils';
@@ -24,7 +24,7 @@ describe(AuthService.name, () => {
     authSecret: 'unit-test-secret',
     setupToken: 'unit-test-setup-token',
     registrationEnabled: false,
-  } as ConfigService;
+  } as ConfigRepository;
   const setup = () => newTestService(AuthService, [users, config], { users, config });
 
   beforeEach(() => {

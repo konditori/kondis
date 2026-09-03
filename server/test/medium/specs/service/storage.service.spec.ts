@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ConsoleLogger } from '@nestjs/common';
-import type { ConfigService } from 'src/config/config.service';
+import type { ConfigRepository } from 'src/repositories/config.repository';
 import { JobStatus } from 'src/enum';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import type { JobRepository } from 'src/repositories/job.repository';
@@ -29,7 +29,7 @@ describe(StorageService.name, () => {
   });
 
   const setup = () => {
-    const repository = new StorageRepository({ storageDir } as ConfigService, new CryptoRepository());
+    const repository = new StorageRepository({ storageDir } as ConfigRepository, new CryptoRepository());
     const jobs = { getReferencedTemporaryPaths: () => new Set<string>() } as unknown as JobRepository;
     return { sut: new StorageService(repository, jobs, new ConsoleLogger()), repository };
   };

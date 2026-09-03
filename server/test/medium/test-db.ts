@@ -1,5 +1,5 @@
 import { sql } from 'kysely';
-import { type DatabaseConfig } from 'src/config/config.service';
+import { type DatabaseConfig } from 'src/repositories/config.repository';
 import { createDatabase, type KondisDatabase } from 'src/db/database';
 import { QueueName } from 'src/enum';
 import type { JobRepository } from 'src/repositories/job.repository';

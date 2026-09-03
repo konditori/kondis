@@ -1,7 +1,7 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type ConfigService } from 'src/config/config.service';
+import { type ConfigRepository } from 'src/repositories/config.repository';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
 import { type EventRepository } from 'src/repositories/event.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
@@ -9,8 +9,8 @@ import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
 import { newTestService } from 'test/utils';
 
-const makeConfig = (workers: WorkerType[]): ConfigService =>
-  ({ workers, hasWorker: (worker: WorkerType) => workers.includes(worker) }) as ConfigService;
+const makeConfig = (workers: WorkerType[]): ConfigRepository =>
+  ({ workers, hasWorker: (worker: WorkerType) => workers.includes(worker) }) as ConfigRepository;
 
 describe('JobService', () => {
   const run = vi.fn<(item: JobItem) => Promise<JobStatus>>();

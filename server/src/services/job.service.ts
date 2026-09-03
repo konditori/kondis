@@ -1,6 +1,6 @@
 import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
 
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName, WorkerType } from 'src/enum';
 import { EventRepository } from 'src/repositories/event.repository';
 import { JobRepository } from 'src/repositories/job.repository';
@@ -22,7 +22,7 @@ const asJobItem = (name: ManualJobName): JobItem => {
 @Injectable()
 export class JobService {
   constructor(
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
     private readonly jobRepository: JobRepository,
     private readonly events: EventRepository,
     private readonly logger: ConsoleLogger,

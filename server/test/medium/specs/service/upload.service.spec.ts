@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type ConfigService } from 'src/config/config.service';
+import { type ConfigRepository } from 'src/repositories/config.repository';
 import { type KondisDatabase } from 'src/db/database';
 import { JobName, QueueName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
@@ -50,7 +50,7 @@ describe(UploadService.name, () => {
     uploadRepository = new UploadRepository(db);
 
     storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-uploads-'));
-    const config = { storageDir } as unknown as ConfigService;
+    const config = { storageDir } as unknown as ConfigRepository;
 
     storageRepository = new StorageRepository(config, crypto);
     sut = new UploadService(

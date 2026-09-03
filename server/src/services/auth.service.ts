@@ -9,7 +9,7 @@ import {
 import { compare, hash } from 'bcrypt';
 import { timingSafeEqual } from 'node:crypto';
 import { createAccessToken, createActivityEventsTicket, createJobEventsTicket, createSetupTicket, verifySetupTicket } from 'src/auth';
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
 @Injectable()
@@ -18,7 +18,7 @@ export class AuthService {
 
   constructor(
     private readonly users: UserRepository,
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
   ) {}
   get registrationEnabled() {
     return this.config.registrationEnabled;

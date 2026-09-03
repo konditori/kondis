@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, OnApplicationShutdown, Provider } from '@ne
 import { Kysely, PostgresDialect, Transaction } from 'kysely';
 import pg from 'pg';
 
-import { ConfigService, DatabaseConfig } from 'src/config/config.service';
+import { ConfigRepository, DatabaseConfig } from 'src/repositories/config.repository';
 import { DB } from 'src/db/schema';
 
 export const KYSELY = Symbol('KYSELY');
@@ -39,8 +39,8 @@ export const createDatabase = (config: DatabaseConfig): KondisDatabase => {
 
 export const databaseProvider: Provider = {
   provide: KYSELY,
-  inject: [ConfigService],
-  useFactory: (config: ConfigService): KondisDatabase => createDatabase(config.database),
+  inject: [ConfigRepository],
+  useFactory: (config: ConfigRepository): KondisDatabase => createDatabase(config.getEnv().database),
 };
 
 @Injectable()

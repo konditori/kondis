@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { copyFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 
 @Injectable()
 export class StorageRepository {
   constructor(
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
     private readonly crypto: CryptoRepository,
   ) {}
 

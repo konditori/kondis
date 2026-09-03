@@ -22,9 +22,19 @@ export type JobsConfig = {
   cron: boolean;
 };
 
+export type EnvData = {
+  port: number;
+  workers: WorkerType[];
+  storageDir: string;
+  autoMigrate: boolean;
+  database: DatabaseConfig;
+  jobs: JobsConfig;
+  authSecret: string;
+  setupToken: string;
+  registrationEnabled: boolean;
+};
+
 const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
-  // These queues perform CPU-heavy parsing and spatial database work. One consumer keeps
-  // imports from starving interactive API requests on small installations.
   [QueueName.ActivityParsing]: 1,
   [QueueName.BackgroundTask]: 1,
   [QueueName.ImageProcessing]: 2,
@@ -120,47 +130,16 @@ const parseConcurrency = (): Record<QueueName, number> => {
   return Object.fromEntries(entries) as Record<QueueName, number>;
 };
 
-@Injectable()
-export class ConfigService {
-  private readonly logger = new Logger(ConfigService.name);
-
-  readonly port: number;
-  readonly workers: WorkerType[];
-  readonly storageDir: string;
-  readonly autoMigrate: boolean;
-  readonly database: DatabaseConfig;
-  readonly jobs: JobsConfig;
-  /**
-   * Secret used to sign access tokens. Set KONDIS_AUTH_SECRET in production.
-   */
-  readonly authSecret: string;
-  /**
-   * Ephemeral token required to claim a fresh installation.
-   */
-  readonly setupToken: string;
-  /**
-   * Public account creation is opt-in for self-hosted installations.
-   */
-  readonly registrationEnabled: boolean;
-
-  constructor() {
-    this.port = Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293);
-    this.workers = parseWorkers(process.env.KONDIS_WORKERS);
-    this.storageDir = process.env.KONDIS_STORAGE_DIR ?? '/data';
-    this.autoMigrate = readBoolean('KONDIS_DB_AUTO_MIGRATE', true);
-    this.authSecret = readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret';
-    this.setupToken = readSecret('KONDIS_SETUP_TOKEN') ?? randomUUID();
-    this.registrationEnabled = readBoolean('KONDIS_REGISTRATION_ENABLED', false);
-
-    this.database = {
+const getEnv = (): EnvData => {
+  const database: DatabaseConfig = {
       host: readSecret('DB_HOSTNAME') ?? 'database',
       port: Number(readSecret('DB_PORT') ?? 5432),
       user: required('DB_USERNAME'),
       password: required('DB_PASSWORD'),
       database: required('DB_DATABASE_NAME'),
-    };
+  };
 
-    this.jobs = {
+  const jobs: JobsConfig = {
       schema: process.env.KONDIS_JOB_SCHEMA ?? 'kondis_jobs',
       concurrency: parseConcurrency(),
       retryLimit: readPositiveInteger('KONDIS_JOB_RETRY_LIMIT', 3),
@@ -168,22 +147,86 @@ export class ConfigService {
       expireInSeconds: readPositiveInteger('KONDIS_JOB_EXPIRE_SECONDS', 900),
       deleteAfterSeconds: readPositiveInteger('KONDIS_JOB_RETENTION_SECONDS', 7 * 24 * 60 * 60),
       cron: readBoolean('KONDIS_JOB_CRON', true),
-    };
+  };
+
+  return {
+    port: Number(process.env.PORT ?? process.env.KONDIS_PORT ?? 2293),
+    workers: parseWorkers(process.env.KONDIS_WORKERS),
+    storageDir: process.env.KONDIS_STORAGE_DIR ?? '/data',
+    autoMigrate: readBoolean('KONDIS_DB_AUTO_MIGRATE', true),
+    authSecret: readSecret('KONDIS_AUTH_SECRET') ?? readSecret('DB_PASSWORD') ?? 'kondis-development-secret',
+    setupToken: readSecret('KONDIS_SETUP_TOKEN') ?? randomUUID(),
+    registrationEnabled: readBoolean('KONDIS_REGISTRATION_ENABLED', false),
+    database,
+    jobs,
+  };
+};
+
+let cached: EnvData | undefined;
+
+export const clearEnvCache = (): void => {
+  cached = undefined;
+};
+
+@Injectable()
+export class ConfigRepository {
+  private readonly logger = new Logger(ConfigRepository.name);
+
+  getEnv(): EnvData {
+    cached ??= getEnv();
+    return cached;
+  }
+
+  get port(): number {
+    return this.getEnv().port;
+  }
+
+  get workers(): WorkerType[] {
+    return this.getEnv().workers;
+  }
+
+  get storageDir(): string {
+    return this.getEnv().storageDir;
+  }
+
+  get autoMigrate(): boolean {
+    return this.getEnv().autoMigrate;
+  }
+
+  get database(): DatabaseConfig {
+    return this.getEnv().database;
+  }
+
+  get jobs(): JobsConfig {
+    return this.getEnv().jobs;
+  }
+
+  get authSecret(): string {
+    return this.getEnv().authSecret;
+  }
+
+  get setupToken(): string {
+    return this.getEnv().setupToken;
+  }
+
+  get registrationEnabled(): boolean {
+    return this.getEnv().registrationEnabled;
   }
 
   hasWorker(worker: WorkerType): boolean {
-    return this.workers.includes(worker);
+    return this.getEnv().workers.includes(worker);
   }
 
   logStartupSummary(): void {
-    this.logger.log(`workers=${this.workers.join(',')} port=${this.port} storage=${this.storageDir}`);
-    this.logger.log(`database=${this.database.host}:${this.database.port}/${this.database.database}`);
+    const config = this.getEnv();
+    this.logger.log(`workers=${config.workers.join(',')} port=${config.port} storage=${config.storageDir}`);
+    this.logger.log(`database=${config.database.host}:${config.database.port}/${config.database.database}`);
 
     if (this.hasWorker(WorkerType.WORKER)) {
-      const concurrency = Object.entries(this.jobs.concurrency)
+      const concurrency = Object.entries(config.jobs.concurrency)
         .map(([queue, value]) => `${queue}=${value}`)
         .join(' ');
-      this.logger.log(`jobs schema=${this.jobs.schema} cron=${this.jobs.cron} concurrency: ${concurrency}`);
+      this.logger.log(`jobs schema=${config.jobs.schema} cron=${config.jobs.cron} concurrency: ${concurrency}`);
     }
   }
 }

@@ -5,7 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
-import { ConfigService } from 'src/config/config.service';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { KondisTransaction } from 'src/db/database';
 import type { JobConfig } from 'src/decorators';
 import { JobName, JobStatus, MetadataKey, QueueName, WorkerType } from 'src/enum';
@@ -82,7 +82,7 @@ export class JobRepository implements OnApplicationShutdown {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly reflector: Reflector,
-    private readonly config: ConfigService,
+    private readonly config: ConfigRepository,
   ) {}
 
   setup(services: (new (...args: never[]) => unknown)[]): void {
