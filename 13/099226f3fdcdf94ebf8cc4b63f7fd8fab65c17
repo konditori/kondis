@@ -1,0 +1,57 @@
+server/src/constants.ts
+  s_2953fb0837b87a::t_227a37f24ea82a 2-3,17-308
+server/src/controllers/activity.controller.ts
+  s_2953fb0837b87a::t_5d94472709b5d0 31
+server/src/dtos/activity.dto.ts
+  s_2953fb0837b87a::t_9b2d7a96911f6b 6-7
+server/src/repositories/activity.repository.ts
+  s_2953fb0837b87a::t_328fa12fb77416 18-19
+server/src/repositories/live-workout.repository.ts
+  s_2953fb0837b87a::t_d1a91bee5d194f 4
+server/src/repositories/upload.repository.ts
+  s_2953fb0837b87a::t_bca6fc13509e9b 5
+server/src/schema/tables/activity-best-effort.table.ts
+  s_2953fb0837b87a::t_e0212fa5b7a832 2
+server/src/schema/tables/activity-stream.table.ts
+  s_2953fb0837b87a::t_c9d1e0750ededb 2
+server/src/schema/tables/activity.table.ts
+  s_2953fb0837b87a::t_92df3a0f678676 12
+server/src/schema/tables/live-workout.table.ts
+  s_2953fb0837b87a::t_a724543338413a 10
+server/src/services/activity.service.ts
+  s_2953fb0837b87a::t_2234bba137f1a4 20-27
+server/src/services/live-workout.service.ts
+  s_2953fb0837b87a::t_8d2ca2083c01df 6
+server/src/utils/activity.spec.ts
+  s_2953fb0837b87a::t_fbf3076593996f 3-4
+server/src/utils/activity.ts
+  s_2953fb0837b87a::t_9b0cbe9795171a 1-2
+server/src/utils/best-effort.ts
+  s_2953fb0837b87a::t_cd194ff7d812f2 1-2
+server/src/utils/fit.ts
+  s_2953fb0837b87a::t_fba0468fca272c 1-2
+server/src/repositories/fit.repository.ts
+  s_2953fb0837b87a::t_64b4c62227b7dd 3
+server/src/repositories/gpx.repository.ts
+  s_2953fb0837b87a::t_b0ae68f3c8cf82 4
+server/src/repositories/tcx.repository.ts
+  s_2953fb0837b87a::t_ca18d81142bcea 4
+server/src/utils/fit.spec.ts
+  s_2953fb0837b87a::t_1a3f73cfe7338c 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "13099226f3fdcdf94ebf8cc4b63f7fd8fab65c17",
+  "prompts": {},
+  "sessions": {
+    "s_2953fb0837b87a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2ec4fb02-642e-4b2c-bf8c-52c7cac87615",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
