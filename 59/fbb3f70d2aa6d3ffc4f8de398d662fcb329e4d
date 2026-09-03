@@ -1,0 +1,21 @@
+web/src/app.css
+  s_eb07ba35c4f30d::t_7f4d152649cf1f 4496-4497,4502-4526,4574
+web/src/routes/admin/jobs/+page.svelte
+  s_eb07ba35c4f30d::t_b2e73a5144d0ac 30-34,48,164-194,252-263,295,297-312,314-329,381-388
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "59fbb3f70d2aa6d3ffc4f8de398d662fcb329e4d",
+  "prompts": {},
+  "sessions": {
+    "s_eb07ba35c4f30d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "aa7612db-ebe4-40b6-9678-58ce3c5f420f",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
