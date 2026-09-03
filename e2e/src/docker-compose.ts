@@ -16,7 +16,7 @@ const setup = async () => {
   const command = 'compose up --build --renew-anon-volumes --force-recreate --remove-orphans';
   const child = spawn('docker', command.split(' '), { stdio: 'pipe' });
 
-  child.stdout.on('data', (data) => {
+  const handleOutput = (data: Buffer) => {
     const input = data.toString();
     output += input;
     console.log(input);
@@ -27,9 +27,10 @@ const setup = async () => {
     if (input.includes('Nest application successfully started')) {
       _resolve();
     }
-  });
+  };
 
-  child.stderr.on('data', (data) => console.log(data.toString()));
+  child.stdout.on('data', handleOutput);
+  child.stderr.on('data', handleOutput);
 
   await ready;
   clearTimeout(timeout);

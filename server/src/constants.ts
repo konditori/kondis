@@ -284,7 +284,6 @@ export const RUNNING_BEST_EFFORTS = [
   { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
   { type: '15k', distance: 15_000, valueKind: 'duration', higherIsBetter: false },
   { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
   { type: 'half_marathon', distance: 21_097.5, valueKind: 'duration', higherIsBetter: false },
   { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
   { type: 'marathon', distance: 42_195, valueKind: 'duration', higherIsBetter: false },

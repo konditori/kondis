@@ -243,6 +243,7 @@ export class ActivityService {
       const id = await this.activityRepository.create(
         {
           activity: {
+            id: job.id,
             upload_id: job.id,
             user_id: userId,
             sport: job.activitySport,

@@ -50,7 +50,9 @@ export class JobService {
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
     const queues = Object.values(QueueName);
-    const counts = await this.jobRepository.getAllJobCounts();
+    const counts = this.jobRepository.getAllJobCounts
+      ? await this.jobRepository.getAllJobCounts()
+      : Object.fromEntries(await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])));
 
     return Object.fromEntries(
       queues.map((queue) => [
