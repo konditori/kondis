@@ -1,0 +1,67 @@
+README.md
+  s_b8d3c581f5cecd::t_98c57f23a337cc 33
+server/src/auth.spec.ts
+  s_b8d3c581f5cecd::t_6a4671fc4dc374 5,68
+server/src/auth.ts
+  s_b8d3c581f5cecd::t_b1165d5110ddd2 11,114
+server/src/bin/migrations.ts
+  s_b8d3c581f5cecd::t_2b922ed7a57779 4,48,52
+server/src/bin/reset-development-data.ts
+  s_b8d3c581f5cecd::t_f683905c7b8a7c 4,16
+server/src/db/database.ts
+  s_b8d3c581f5cecd::t_1da3593558ec17 5,42-43
+server/src/main.ts
+  s_b8d3c581f5cecd::t_bf01de32f34eba 7,16,35
+server/src/repositories/config.repository.spec.ts
+  s_b8d3c581f5cecd::t_a8f39bf8f0bd14 3,6,10,20,26,32,39,44,49-51,54-59,71,83,91,98,104,108,112,115-116,122
+server/src/repositories/config.repository.ts
+  s_b8d3c581f5cecd::t_a8e37c761b6c2e 25-36,133-134,140,142,150-213,217,221-223,226,229
+server/src/repositories/database.repository.ts
+  s_b8d3c581f5cecd::t_fa17c9298a1a97 6
+server/src/repositories/event.repository.ts
+  s_b8d3c581f5cecd::t_34d8eaf838fc9e 8,114
+server/src/repositories/index.ts
+  s_b8d3c581f5cecd::t_d433601cac3798 4,21
+server/src/repositories/job.repository.spec.ts
+  s_b8d3c581f5cecd::t_6682256f6a30be 3,16
+server/src/repositories/job.repository.ts
+  s_b8d3c581f5cecd::t_0e0bea82d8277f 8,85
+server/src/repositories/storage.repository.spec.ts
+  s_b8d3c581f5cecd::t_e90b0d32fd6772 6,16
+server/src/repositories/storage.repository.ts
+  s_b8d3c581f5cecd::t_3d67dcf075f85a 5,11
+server/src/services/auth.service.spec.ts
+  s_b8d3c581f5cecd::t_35149d9f432bad 11,27
+server/src/services/auth.service.ts
+  s_b8d3c581f5cecd::t_fc40d90bef22ea 12,21
+server/src/services/job.service.spec.ts
+  s_b8d3c581f5cecd::t_b4ae2caf2b2bc7 4,12-13
+server/src/services/job.service.ts
+  s_b8d3c581f5cecd::t_472dfe41019501 3,25
+server/test/medium/specs/repositories/storage.repository.spec.ts
+  s_b8d3c581f5cecd::t_6bc93fcc0679e0 6,26
+server/test/medium/specs/service/storage.service.spec.ts
+  s_b8d3c581f5cecd::t_e32646b0dde2a5 4,32
+server/test/medium/specs/service/upload.service.spec.ts
+  s_b8d3c581f5cecd::t_de445a338e1b7f 8,53
+server/test/medium/test-app.ts
+  s_b8d3c581f5cecd::t_2509a958bdccb9 22
+server/test/medium/test-db.ts
+  s_b8d3c581f5cecd::t_25f2281748966e 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ab984eab01f58703fabfe64b8c82d78105a91d9d",
+  "prompts": {},
+  "sessions": {
+    "s_b8d3c581f5cecd": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "83f5602c-eab0-41be-bf13-5d674c4d8e39",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
