@@ -1,0 +1,47 @@
+e2e/docker-compose.yml
+  s_2953fb0837b87a::t_b68af8398a0562 11
+server/src/bin/reset-development-data.ts
+  s_2953fb0837b87a::t_b75251635da2aa 4,24,44
+server/src/constants.ts
+  s_2953fb0837b87a::t_3b6e20463a3dea 1-14
+server/src/repositories/config.repository.spec.ts
+  s_2953fb0837b87a::t_39fc71e12c9d6e 3,21-22,24,26,28-29,32-33,35,39-41,44-47,50-51,53,56-57,59,63-65,68-69,71
+server/src/repositories/job.repository.ts
+  s_2953fb0837b87a::t_d14ebe3307a4e4 2,9-17,20,225,248,297,364,424,542-544,554,558,568,581-582,584-585,604,711
+server/test/medium/test-db.ts
+  s_2953fb0837b87a::t_c1bfccf7d3928f 2,10
+README.md
+  s_100906a235a3fa::t_3fcf835d188201 35-39,43-45
+server/src/services/job.service.spec.ts
+  s_100906a235a3fa::t_bd8fe6035e8c2a 4,52,63,66-69,79
+server/src/services/job.service.ts
+  s_100906a235a3fa::t_548d42e1d1aff8 2,4,33
+server/test/medium/specs/service/job.service.spec.ts
+  s_100906a235a3fa::t_e69d93789ce41d 20
+server/test/medium/test-app.ts
+  s_2953fb0837b87a::t_ca928f95f18e0f 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "993114c1a9ed11675fdf16fe373138693244a85e",
+  "prompts": {},
+  "sessions": {
+    "s_100906a235a3fa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a068ad-db18-7e42-a35e-ab05757407a8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_2953fb0837b87a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2ec4fb02-642e-4b2c-bf8c-52c7cac87615",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
