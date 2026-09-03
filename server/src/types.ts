@@ -16,6 +16,42 @@ export type ActivityEngagement = {
 
 export type MaybeArray<T> = T | T[] | undefined;
 
+export type TcxTrackpoint = {
+  Time?: string;
+  Position?: {
+    LatitudeDegrees?: number | string;
+    LongitudeDegrees?: number | string;
+  };
+  AltitudeMeters?: number | string;
+  DistanceMeters?: number | string;
+  HeartRateBpm?: {
+    Value?: number | string;
+  };
+  Cadence?: number | string;
+  Extensions?: Record<string, unknown>;
+};
+
+export type TcxTrack = {
+  Trackpoint?: MaybeArray<TcxTrackpoint>;
+};
+
+export type TcxLap = {
+  StartTime?: string;
+  TotalTimeSeconds?: number | string;
+  DistanceMeters?: number | string;
+  Calories?: number | string;
+  AverageHeartRateBpm?: { Value?: number | string };
+  MaximumHeartRateBpm?: { Value?: number | string };
+  Cadence?: number | string;
+  Track?: MaybeArray<TcxTrack>;
+};
+
+export type TcxActivity = {
+  Sport?: string;
+  Id?: string;
+  Lap?: MaybeArray<TcxLap>;
+};
+
 export type GpxPoint = {
   lat?: number | string;
   lon?: number | string;

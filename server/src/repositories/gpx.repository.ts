@@ -8,11 +8,11 @@ import type {
   GpxDocument,
   GpxPoint,
   GpxSegment,
-  MaybeArray,
   ParsedPoint,
   ParsedSegment,
 } from 'src/types';
 import { haversineDistance } from 'src/utils/geo';
+import { asArray, asRecord, firstObject, normalizeSport, toDate, toNumber } from 'src/utils/parser';
 
 export class GpxDecodeError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -250,66 +250,6 @@ export class GpxRepository {
     return Math.max(0, Math.round((lastTimestamp.getTime() - startedAt.getTime()) / 1000));
   }
 }
-
-const asRecord = (value: unknown): Record<string, unknown> | undefined =>
-  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
-
-const asArray = <T>(value: MaybeArray<T>): T[] => {
-  if (value === undefined) {
-    return [];
-  }
-
-  return Array.isArray(value) ? value : [value];
-};
-
-const firstObject = (value: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  for (const candidate of Object.values(value)) {
-    const parsed = asRecord(candidate);
-    if (parsed) {
-      return parsed;
-    }
-  }
-
-  return undefined;
-};
-
-const toNumber = (value: unknown): number | undefined => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined;
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-
-  return undefined;
-};
-
-const toDate = (value: unknown): Date | undefined => {
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? undefined : value;
-  }
-
-  if (typeof value !== 'string' && typeof value !== 'number') {
-    return undefined;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-};
-
-const normalizeSport = (value: unknown): string => {
-  if (typeof value !== 'string') {
-    return 'unknown';
-  }
-
-  return value.trim().toLowerCase() || 'unknown';
-};
 
 const lastFinite = (values: Array<number | undefined>): number | undefined => {
   for (let index = values.length - 1; index >= 0; index--) {

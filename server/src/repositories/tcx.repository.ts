@@ -1,7 +1,16 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
-import type { FitLapMesg, FitMessages, FitRecordMesg, FitSessionMesg } from 'src/types';
+import type {
+  FitLapMesg,
+  FitMessages,
+  FitRecordMesg,
+  FitSessionMesg,
+  TcxActivity,
+  TcxLap,
+  TcxTrackpoint,
+} from 'src/types';
+import { asArray, asRecord, firstObject, normalizeSport, toDate, toInteger, toNumber } from 'src/utils/parser';
 
 export class TcxDecodeError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -9,44 +18,6 @@ export class TcxDecodeError extends Error {
     this.name = 'TcxDecodeError';
   }
 }
-
-type MaybeArray<T> = T | T[] | undefined;
-
-type TcxTrackpoint = {
-  Time?: string;
-  Position?: {
-    LatitudeDegrees?: number | string;
-    LongitudeDegrees?: number | string;
-  };
-  AltitudeMeters?: number | string;
-  DistanceMeters?: number | string;
-  HeartRateBpm?: {
-    Value?: number | string;
-  };
-  Cadence?: number | string;
-  Extensions?: Record<string, unknown>;
-};
-
-type TcxTrack = {
-  Trackpoint?: MaybeArray<TcxTrackpoint>;
-};
-
-type TcxLap = {
-  StartTime?: string;
-  TotalTimeSeconds?: number | string;
-  DistanceMeters?: number | string;
-  Calories?: number | string;
-  AverageHeartRateBpm?: { Value?: number | string };
-  MaximumHeartRateBpm?: { Value?: number | string };
-  Cadence?: number | string;
-  Track?: MaybeArray<TcxTrack>;
-};
-
-type TcxActivity = {
-  Sport?: string;
-  Id?: string;
-  Lap?: MaybeArray<TcxLap>;
-};
 
 @Injectable()
 export class TcxRepository {
@@ -174,59 +145,6 @@ export class TcxRepository {
   }
 }
 
-const asRecord = (value: unknown): Record<string, unknown> | undefined =>
-  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
-
-const asArray = <T>(value: MaybeArray<T>): T[] => {
-  if (value === undefined) {
-    return [];
-  }
-  return Array.isArray(value) ? value : [value];
-};
-
-const firstObject = (value: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  for (const candidate of Object.values(value)) {
-    const parsed = asRecord(candidate);
-    if (parsed) {
-      return parsed;
-    }
-  }
-
-  return undefined;
-};
-
-const toNumber = (value: unknown): number | undefined => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-  return undefined;
-};
-
-const toInteger = (value: unknown): number | undefined => {
-  const parsed = toNumber(value);
-  return parsed === undefined ? undefined : Math.round(parsed);
-};
-
-const toDate = (value: unknown): Date | undefined => {
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? undefined : value;
-  }
-  if (typeof value !== 'string' && typeof value !== 'number') {
-    return undefined;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-};
-
 const sumNumbers = (values: Array<number | undefined>): number | undefined => {
   const valid = values.filter((value): value is number => value !== undefined);
   if (valid.length === 0) {
@@ -246,11 +164,4 @@ const maxInteger = (values: Array<number | undefined>): number | undefined => {
     return undefined;
   }
   return Math.max(...valid);
-};
-
-const normalizeSport = (value: unknown): string => {
-  if (typeof value !== 'string') {
-    return 'unknown';
-  }
-  return value.trim().toLowerCase() || 'unknown';
 };
