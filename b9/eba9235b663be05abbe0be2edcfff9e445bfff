@@ -1,0 +1,21 @@
+server/src/repositories/index.ts
+  s_d28218ad243c8d::t_de6d77087d0b0c 11,29
+server/src/repositories/rate-limiting.repository.ts
+  s_d28218ad243c8d::t_341d4d6a7f2bf4 3-7,9-10,13-16,18,21,25-29,31-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b9eba9235b663be05abbe0be2edcfff9e445bfff",
+  "prompts": {},
+  "sessions": {
+    "s_d28218ad243c8d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "127515b4-5ac2-420f-be3f-5ce4a6a3d41b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
