@@ -1,0 +1,23 @@
+server/Dockerfile.dev
+  s_63e3a9df45dce2::t_f11307a58be003 37,39
+web/src/lib/build-info.ts
+  s_63e3a9df45dce2::t_fc9cd69948dab5 7,13
+web/src/lib/components/Sidebar.svelte
+  s_63e3a9df45dce2::t_4c23ad8f5b56fc 85-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ce02e5e56ba8b4eae37c3f3f30ecc99d8bbd17b9",
+  "prompts": {},
+  "sessions": {
+    "s_63e3a9df45dce2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06746-6063-7020-9a0c-5b1a2e0c8a4d",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
