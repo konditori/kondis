@@ -17,6 +17,7 @@ if (!serverUrl) {
 }
 
 export const testAssetDirectory = resolve(import.meta.dirname, '../../test/test-assets');
+const setupTokenFile = resolve(import.meta.dirname, '../.setup-token');
 
 export const utils = {
   init: async () => {
@@ -28,10 +29,8 @@ export const utils = {
       lastName: 'User',
       password: 'e2e-test-password',
     };
-    const setupToken = process.env.KONDIS_SETUP_TOKEN;
-    if (!setupToken) {
-      throw new Error('KONDIS_SETUP_TOKEN was not captured from the server startup log');
-    }
+    const setupTokenFileContents = await readFile(setupTokenFile, 'utf8');
+    const setupToken = setupTokenFileContents.trim();
     const verified = await fetch(`${serverUrl}/auth/setup/verify`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
