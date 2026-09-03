@@ -8,6 +8,13 @@ import {
 import { extname } from 'node:path';
 import sharp from 'sharp';
 
+import {
+  IMAGE_MIME_TYPES,
+  IMAGE_PREVIEW_SIZE,
+  IMAGE_PROCESSING_VERSION,
+  IMAGE_SUPPORTED_FORMATS,
+  IMAGE_THUMBNAIL_SIZE,
+} from 'src/constants';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import type { KondisTransaction } from 'src/types';
 import { ActivityImage, ActivityImageFile } from 'src/db/schema';
@@ -22,18 +29,6 @@ import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { JobOf } from 'src/types/jobs';
 import { BufferedUploadedFileData } from 'src/types/uploads';
-
-const SUPPORTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'heif', 'avif']);
-const MIME_TYPES: Record<string, string> = {
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-  heif: 'image/heif',
-  avif: 'image/avif',
-};
-const THUMBNAIL_SIZE = 250;
-const PREVIEW_SIZE = 1440;
-const IMAGE_PROCESSING_VERSION = 1;
 
 @Injectable()
 export class ActivityImageService {
@@ -198,7 +193,7 @@ export class ActivityImageService {
     imageId: string,
     variant: 'original' | 'thumbnail' | 'preview',
     userId: string,
-  ): Promise<ActivityImageFile> {
+  ): Promise<ActivityImageFile & { absolutePath: string }> {
     const image = await this.images.getById(imageId);
     if (!image) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
@@ -212,11 +207,7 @@ export class ActivityImageService {
     if (!file) {
       throw new NotFoundException(`Image ${imageId} variant ${variant} is not ready`);
     }
-    return file;
-  }
-
-  absolutePath(path: string): string {
-    return this.storage.absolutePath(path);
+        return { ...file, absolutePath: this.storage.absolutePath(file.storage_path) };
   }
 
   @OnJob({ name: JobName.ActivityImageIngest, queue: QueueName.ImageProcessing })
@@ -237,10 +228,10 @@ export class ActivityImageService {
       }
       const metadata = await sharp(buffer, { limitInputPixels: UPLOAD_LIMITS.imagePixels }).metadata();
       const format = metadata.format ?? '';
-      if (!SUPPORTED_FORMATS.has(format) || !metadata.width || !metadata.height) {
+      if (!IMAGE_SUPPORTED_FORMATS.has(format) || !metadata.width || !metadata.height) {
         throw new Error('Unsupported or invalid image');
       }
-      const mimeType = MIME_TYPES[format];
+      const mimeType = IMAGE_MIME_TYPES[format];
       const extension = format === 'jpeg' ? '.jpg' : `.${format}`;
       const permanentPath = this.storage.buildImagePath(imageId, 'original', extension);
       await this.storage.write(permanentPath, buffer);
@@ -305,12 +296,12 @@ export class ActivityImageService {
       const input = this.storage.absolutePath(original.storage_path);
       const preview = await sharp(input)
         .rotate()
-        .resize(PREVIEW_SIZE, PREVIEW_SIZE, { fit: 'inside', withoutEnlargement: true })
+        .resize(IMAGE_PREVIEW_SIZE, IMAGE_PREVIEW_SIZE, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 80 })
         .toBuffer({ resolveWithObject: true });
       const thumbnail = await sharp(input)
         .rotate()
-        .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, { fit: 'inside', withoutEnlargement: true })
+        .resize(IMAGE_THUMBNAIL_SIZE, IMAGE_THUMBNAIL_SIZE, { fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 80 })
         .toBuffer({ resolveWithObject: true });
       const previewPath = this.storage.buildImagePath(id, 'preview', '.jpg');

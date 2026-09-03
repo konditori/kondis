@@ -15,6 +15,18 @@ export const JOB_EXPIRE_SECONDS = 900;
 export const JOB_RETENTION_SECONDS = 7 * 24 * 60 * 60;
 export const JOB_CRON = true;
 
+export const IMAGE_SUPPORTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'heif', 'avif']);
+export const IMAGE_MIME_TYPES: Record<string, string> = {
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heif: 'image/heif',
+  avif: 'image/avif',
+};
+export const IMAGE_THUMBNAIL_SIZE = 250;
+export const IMAGE_PREVIEW_SIZE = 1440;
+export const IMAGE_PROCESSING_VERSION = 1;
+
 export const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
 export const ROUTE_CANDIDATE_LIMIT = 250;
 export const ROUTE_PREFILTER_RADIUS_METERS = 250;
