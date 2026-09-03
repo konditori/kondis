@@ -1,0 +1,21 @@
+server/src/constants.ts
+  s_cb147fc3616b4c::t_bea5eb88716f40 18-29
+server/src/controllers/activity-image.controller.ts
+  s_cb147fc3616b4c::t_80e6f096dd5591 94-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3a9251dc64cc16c0ac96d188e5c970c4ad635854",
+  "prompts": {},
+  "sessions": {
+    "s_cb147fc3616b4c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5eacb8d8-e9ae-4f4f-bf7b-f60e92be7d61",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
