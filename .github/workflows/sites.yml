@@ -45,28 +45,18 @@ jobs:
           filters: |
             kondis:
               - 'sites/kondis.org/**'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'mise.toml'
               - '.github/workflows/sites.yml'
             docs:
               - 'sites/docs.kondis.org/**'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'mise.toml'
               - '.github/workflows/sites.yml'
             developers:
               - 'sites/developers.kondis.org/**'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'mise.toml'
               - '.github/workflows/sites.yml'
             api:
               - 'sites/api.kondis.org/**'
               - 'open-api/kondis-openapi-specs.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
-              - 'mise.toml'
               - '.github/workflows/sites.yml'
 
   kondis-org:
