@@ -12,6 +12,7 @@
     ListChecks,
     RefreshCw,
   } from "@lucide/svelte";
+  import { replaceState } from "$app/navigation";
   import { onMount, untrack } from "svelte";
   import {
     getSdkRequestOptions,
@@ -25,6 +26,7 @@
   import { t } from "$lib/i18n";
   import { subscribeToJobEvents } from "$lib/realtime";
 
+  const HISTORY_PAGE_SIZE = 75;
   let { data } = $props();
   let queues = $state<AllJobStatusResponseDtoOutput>(
     untrack(() => data.queues),
@@ -33,13 +35,14 @@
     untrack(() => data.history.jobs),
   );
   let totalHistory = $state(untrack(() => data.history.total));
-  let historyOffset = $state(0);
-  let pageInput = $state(1);
+  let historyOffset = $state(untrack(() => data.historyOffset));
+  let pageInput = $state(
+    untrack(() => Math.floor(data.historyOffset / HISTORY_PAGE_SIZE) + 1),
+  );
   let historyLoading = $state(false);
   let refreshing = $state(false);
   let refreshQueued = false;
   let error = $state("");
-  const HISTORY_PAGE_SIZE = 75;
   let totalPages = $derived(
     Math.max(1, Math.ceil(totalHistory / HISTORY_PAGE_SIZE)),
   );
@@ -47,6 +50,23 @@
   let canLoadMore = $derived(
     historyOffset === 0 && history.length < totalHistory,
   );
+
+  function updateHistoryUrl({
+    page,
+    count,
+  }: {
+    page?: number;
+    count?: number;
+  }) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("jobsPage");
+    url.searchParams.delete("jobsCount");
+    if (page && page > 1) url.searchParams.set("jobsPage", String(page));
+    if (count && count > HISTORY_PAGE_SIZE) {
+      url.searchParams.set("jobsCount", String(count));
+    }
+    replaceState(url, {});
+  }
 
   const queueDefinitions = [
     {
@@ -175,6 +195,7 @@
       totalHistory = nextHistory.total;
       historyOffset = append ? 0 : offset;
       pageInput = append ? 1 : page;
+      updateHistoryUrl(append ? { count: history.length } : { page });
     } catch {
       error = t("job_dashboard_load_error");
     } finally {
