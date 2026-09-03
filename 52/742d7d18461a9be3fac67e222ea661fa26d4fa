@@ -1,0 +1,23 @@
+e2e/src/docker-compose.ts
+  s_aed1ed18ad055c::t_c6d5a595644720 19,30,32-33
+server/src/services/activity.service.ts
+  s_aed1ed18ad055c::t_22234491759fee 246
+server/src/services/job.service.ts
+  s_aed1ed18ad055c::t_000f735ce8a855 53-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "52742d7d18461a9be3fac67e222ea661fa26d4fa",
+  "prompts": {},
+  "sessions": {
+    "s_aed1ed18ad055c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0692f-8c07-76d2-8e6e-3b8e052c6183",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
