@@ -15,7 +15,8 @@ import {
 import { getColumns } from 'src/schema/decorators';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
-import { ActivityTag, ActivityType, BestEffortGroup, BestEffortType } from 'src/types';
+import { BestEffortGroup } from 'src/types';
+import type { ActivityTag, ActivityType, BestEffortType } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
   computeBiggestClimb,

@@ -3,7 +3,8 @@ import z from 'zod';
 
 import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
 import { SocialUserSchema } from 'src/dtos/social.dto';
-import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, AverageMetric, BEST_EFFORT_TYPES, BestEffortGroup } from 'src/types';
+import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, BEST_EFFORT_TYPES } from 'src/constants';
+import { AverageMetric, BestEffortGroup } from 'src/types';
 
 export const ActivityTypeSchema = z
   .enum(ACTIVITY_TYPE_IDS)

@@ -28,7 +28,7 @@ import {
   MatchedRouteListResponseDto,
 } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
-import { ACTIVITY_TAGS, ACTIVITY_TYPES } from 'src/types';
+import { ACTIVITY_TAGS, ACTIVITY_TYPES } from 'src/constants';
 
 @ApiTags('activities')
 @Controller('activities')

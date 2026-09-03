@@ -1,7 +1,7 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
-import { FitLapMesg, FitMessages, FitRecordMesg } from 'src/repositories/fit.repository';
+import type { FitLapMesg, FitMessages, FitRecordMesg } from 'src/types';
 import { haversineDistance } from 'src/utils/geo';
 
 export class GpxDecodeError extends Error {

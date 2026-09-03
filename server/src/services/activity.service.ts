@@ -17,7 +17,14 @@ import {
 } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
-import { FitMessages, FitRepository } from 'src/repositories/fit.repository';
+import { FitRepository } from 'src/repositories/fit.repository';
+import type { FitMessages } from 'src/types';
+import {
+  ACTIVITY_TAG_IDS,
+  ACTIVITY_TYPES,
+  CYCLING_BEST_EFFORTS,
+  RUNNING_BEST_EFFORTS,
+} from 'src/constants';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { SocialRepository, SocialUser } from 'src/repositories/social.repository';
@@ -27,16 +34,12 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
 import { ImportProgressStore } from 'src/state/import-progress.store';
 import {
-  ACTIVITY_TAG_IDS,
-  ACTIVITY_TYPES,
   ActivityTag,
   ActivityType,
   BestEffortGroup,
   BestEffortType,
-  CYCLING_BEST_EFFORTS,
   ParsedActivity,
   ParsedActivityStructure,
-  RUNNING_BEST_EFFORTS,
 } from 'src/types';
 import { JobItem, JobOf } from 'src/types/jobs';
 import { buildActivityAnalysis } from 'src/utils/activity-details';

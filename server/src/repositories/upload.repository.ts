@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { KYSELY, KondisDatabase, KondisExecutor } from 'src/db/database';
 import { NewUpload, Upload, UploadStatus } from 'src/db/schema';
-import { ActivityType } from 'src/types';
+import type { ActivityType } from 'src/types';
 
 type UploadPageOptions = {
   force: boolean;

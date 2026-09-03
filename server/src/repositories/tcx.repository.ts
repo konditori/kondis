@@ -1,7 +1,7 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
-import { FitLapMesg, FitMessages, FitRecordMesg, FitSessionMesg } from 'src/repositories/fit.repository';
+import type { FitLapMesg, FitMessages, FitRecordMesg, FitSessionMesg } from 'src/types';
 
 export class TcxDecodeError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {

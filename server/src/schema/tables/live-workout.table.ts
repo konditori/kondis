@@ -7,7 +7,7 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from 'src/schema/decorators';
-import { ActivityType } from 'src/types';
+import type { ActivityType } from 'src/types';
 
 export type LiveWorkoutStatus = 'recording' | 'paused' | 'ended' | 'discarded';
 

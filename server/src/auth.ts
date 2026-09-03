@@ -42,7 +42,6 @@ export const createAccessToken = (user: AuthenticatedUser, secret: string) => {
   return `${payload}.${sign(payload, secret)}`;
 };
 
-/** A deliberately short-lived, single-purpose credential for the browser WebSocket handshake. */
 export const createActivityEventsTicket = (userId: string, secret: string) => {
   const expiresAt = new Date(Date.now() + 60_000);
   const payload = encode({ id: userId, scope: 'activity-events', exp: Math.floor(expiresAt.getTime() / 1000) });
@@ -86,7 +85,6 @@ export const verifyJobEventsTicket = (token: string | null, secret: string): str
   }
 };
 
-/** A short-lived credential issued only after the installation token is verified. */
 export const createSetupTicket = (secret: string) => {
   const expiresAt = new Date(Date.now() + 10 * 60_000);
   const payload = encode({ scope: 'initial-setup', exp: Math.floor(expiresAt.getTime() / 1000) });

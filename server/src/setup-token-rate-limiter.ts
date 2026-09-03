@@ -3,7 +3,6 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 60_000;
 
-/** Request-boundary limiter for setup-token guesses. Kept outside the service layer. */
 export class SetupTokenRateLimiter {
   private readonly logger = new Logger(SetupTokenRateLimiter.name);
   private readonly attempts = new Map<string, number[]>();
