@@ -1,0 +1,35 @@
+pnpm-lock.yaml
+  s_d3210ac169a236::t_af470eb616619e 62,217,220,334,337,340,358,377,380,383,404,407,8697-8698,14528,14534,14537,14539,14541,14545,14557,14564,14570-14571,15216,15222,20969,21115,21120,21132,21141,21253,21266,21269,21271,21273,21276,21293
+i18n/en.json
+  s_d3210ac169a236::t_66e8e1cda9cc6d 408-424
+i18n/sv.json
+  s_d3210ac169a236::t_3e26140c1742a9 408-424
+open-api/kondis-openapi-specs.json
+  s_d3210ac169a236::t_5dd476e5c6ac11 2268-2272,2325
+packages/sdk/src/fetch-client.ts
+  s_d3210ac169a236::t_62c9de468fb080 88
+server/src/dtos/job.dto.ts
+  s_d3210ac169a236::t_a823d52b90b074 28
+server/src/repositories/job.repository.ts
+  s_d3210ac169a236::t_b3d2b59c890b7f 33,200,627
+server/src/types/jobs.ts
+  s_d3210ac169a236::t_0f88045309570b 136
+web/src/routes/admin/jobs/+page.svelte
+  s_d3210ac169a236::t_702d1436eba0a0 63-83,111-112,235-241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "75a3254affe0f6bb45ed6b6377075717db12750a",
+  "prompts": {},
+  "sessions": {
+    "s_d3210ac169a236": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "98c63a22-609b-415f-abd8-cca84244d217",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
