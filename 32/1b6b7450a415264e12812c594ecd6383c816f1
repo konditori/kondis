@@ -1,0 +1,41 @@
+open-api/kondis-openapi-specs.json
+  s_55dd8817d3daa3::t_8f3b13dbb559c8 1260-1273
+packages/sdk/src/fetch-client.ts
+  s_55dd8817d3daa3::t_76c15b74459e47 1496-1503
+server/src/api/routes/auth.spec.ts
+  s_55dd8817d3daa3::t_7f155d14488398 45-68,70-75,90-99
+server/src/api/routes/auth.ts
+  s_55dd8817d3daa3::t_49adcce3a9856a 29,171-178,211,231-235,270-278,280,284-287
+server/src/repositories/auth-credential.repository.ts
+  s_55dd8817d3daa3::t_48b473727d4b80 1-259
+server/src/services/activity.service.ts
+  s_5fc93a51132e6d::t_3c536c7162fb20 11,77
+server/src/services/storage.service.ts
+  s_5fc93a51132e6d::t_d9f4bd5ea2499f 3,12
+server/src/services/upload.service.ts
+  s_5fc93a51132e6d::t_cd563372b63278 10,30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "321b6b7450a415264e12812c594ecd6383c816f1",
+  "prompts": {},
+  "sessions": {
+    "s_55dd8817d3daa3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f92165dabffe2c5fpMoYY7x1qg",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_5fc93a51132e6d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06dc9-6a0c-7191-a440-f33d2ff3b7d6",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
