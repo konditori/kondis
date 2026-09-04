@@ -1,0 +1,19 @@
+server/src/api/validation.ts
+  s_7e570469b234ca::t_bf18fe2db2fc57 28-47,49-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8b35d02df0359004cfd688ff142c6ce29b08531b",
+  "prompts": {},
+  "sessions": {
+    "s_7e570469b234ca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d78-828d-7e52-987f-ec95950932f7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
