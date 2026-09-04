@@ -1,0 +1,27 @@
+server/src/db/schema.ts
+  s_5fc93a51132e6d::t_88f16a57dd2077 14,32
+server/src/errors.ts
+  s_5fc93a51132e6d::t_16257cfc9b4322 9,106-111
+server/src/job-handler.registry.ts
+  s_5fc93a51132e6d::t_035234ff9e4d75 33
+server/src/schema/migrations/1788558664154-AddBackgroundJobs.ts
+  s_5fc93a51132e6d::t_0a807114a163bb 1-38
+server/src/schema/tables/background-job.table.ts
+  s_5fc93a51132e6d::t_5fbfcc3f50f580 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0aeeb23574bb9969c6883651448b2ee9c817a918",
+  "prompts": {},
+  "sessions": {
+    "s_5fc93a51132e6d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06dc9-6a0c-7191-a440-f33d2ff3b7d6",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
