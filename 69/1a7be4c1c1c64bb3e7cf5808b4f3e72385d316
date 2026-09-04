@@ -1,0 +1,43 @@
+THIRD-PARTY-LICENSES.md
+  s_b300d8afd5c24d::t_d60987a499b7e9 15-48,73-127,3047-3079,3970-4001,6718-6742
+pnpm-lock.yaml
+  s_b300d8afd5c24d::t_04decdb87ee003 79-84,115-117,533-537,1985-2003,5925-5928,7117-7119,9510-9514,13160-13176,17513-17514,18872-18875
+server/package.json
+  s_b300d8afd5c24d::t_c69f7b1dc06f04 31-32,43
+server/src/hono/node.ts
+  s_b300d8afd5c24d::t_8933914aaf2f67 1-21
+server/src/main.ts
+  s_b300d8afd5c24d::t_b86d9bf0b06a88 7-8,12,14,24-25
+server/src/decorators.ts
+  s_734385a9440784::t_083b43de48cfa5 3
+server/src/services/auth.service.spec.ts
+  s_734385a9440784::t_53840c683308ce 17-18
+server/src/services/job.service.spec.ts
+  s_734385a9440784::t_db8fa9b1b88cc2 65,87,95,103
+server/test/medium/specs/service/job.service.spec.ts
+  s_734385a9440784::t_0c50a188e977d9 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "691a7be4c1c1c64bb3e7cf5808b4f3e72385d316",
+  "prompts": {},
+  "sessions": {
+    "s_734385a9440784": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06b00-7210-7b30-89fd-a400e1c274ca",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b300d8afd5c24d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f969eb4b2ffe1YJT70oMiuqyhX",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
