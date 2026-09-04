@@ -1,0 +1,33 @@
+server/src/cloudflare/entrypoint.ts
+  s_e0cb7e48353308::t_309b08d58fbbcd 1-52
+server/package.json
+  s_5fc93a51132e6d::t_62eff39e2b6ef3 20
+server/tsconfig.worker.json
+  s_5fc93a51132e6d::t_254ee34aaa4668 1-12
+server/worker-env.d.ts
+  s_5fc93a51132e6d::t_fb3c9347bb1140 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fbff45c4326d5ffd72f013a79087336a718f3eff",
+  "prompts": {},
+  "sessions": {
+    "s_5fc93a51132e6d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06dc9-6a0c-7191-a440-f33d2ff3b7d6",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e0cb7e48353308": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "ea06f30c-5fc2-47c3-b9f8-3c7c01e70cdd",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
