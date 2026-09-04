@@ -8,8 +8,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 import { AppModule } from 'src/app.module';
-
-const API_PREFIX = '/api/v1';
+import { API_PREFIX, createHonoApp, createHonoOpenApiDocument } from 'src/hono/app';
+import { UserRepository } from 'src/repositories/user.repository';
+import { ServerService } from 'src/services/server.service';
 
 async function run(): Promise<void> {
   process.env.KONDIS_DB_USERNAME ??= 'openapi';
@@ -29,7 +30,34 @@ async function run(): Promise<void> {
     .addServer(API_PREFIX)
     .build();
 
-  const document = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config, { ignoreGlobalPrefix: true }));
+  const nestDocument = cleanupOpenApiDoc(SwaggerModule.createDocument(app, config, { ignoreGlobalPrefix: true }));
+  const honoDocument = createHonoOpenApiDocument(
+    createHonoApp({ server: app.get(ServerService), users: app.get(UserRepository) }),
+  );
+  const honoPingOperation = honoDocument.paths['/ping']?.get;
+  if (!honoPingOperation) {
+    throw new Error('Hono OpenAPI document is missing GET /ping');
+  }
+  const document = {
+    ...nestDocument,
+    paths: {
+      ...nestDocument.paths,
+      '/ping': {
+        ...nestDocument.paths['/ping'],
+        get: {
+          ...nestDocument.paths['/ping']?.get,
+          ...honoPingOperation,
+        },
+      },
+    },
+    components: {
+      ...nestDocument.components,
+      schemas: {
+        ...nestDocument.components?.schemas,
+        ...honoDocument.components?.schemas,
+      },
+    },
+  };
   const outputPath = resolve(process.cwd(), '..', 'open-api', 'kondis-openapi-specs.json');
 
   await mkdir(dirname(outputPath), { recursive: true });

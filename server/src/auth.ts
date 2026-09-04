@@ -19,6 +19,13 @@ export type AuthenticatedUser = {
   firstName: string;
   lastName: string;
 };
+type AccessTokenHeaders = {
+  authorization?: string;
+  cookie?: string;
+  kondisAuthorization?: string;
+};
+type AccessTokenVerification =
+  { authenticated: true; user: AuthenticatedUser } | { authenticated: false; message: string };
 type EventTicket = { id: string; scope: 'activity-events'; exp: number };
 type JobEventsTicket = { id: string; scope: 'job-events'; exp: number };
 type SetupTicket = { scope: 'initial-setup'; exp: number };
@@ -40,6 +47,37 @@ const hasValidSignature = (payload: string, signature: string, secret: string): 
 export const createAccessToken = (user: AuthenticatedUser, secret: string) => {
   const payload = encode({ ...user, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 });
   return `${payload}.${sign(payload, secret)}`;
+};
+
+export const verifyAccessToken = (headers: AccessTokenHeaders, secret: string): AccessTokenVerification => {
+  const kondisHeaderToken = headers.kondisAuthorization?.startsWith('Bearer ')
+    ? headers.kondisAuthorization.slice(7)
+    : undefined;
+  const bearerToken = headers.authorization?.startsWith('Bearer ') ? headers.authorization.slice(7) : undefined;
+  const cookieToken = headers.cookie
+    ?.split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith('kondis_session='))
+    ?.slice('kondis_session='.length);
+  const token = kondisHeaderToken ?? bearerToken ?? cookieToken;
+  if (!token) {
+    return { authenticated: false, message: 'Sign in is required' };
+  }
+
+  const [payload, signature] = token.split('.', 2);
+  if (!payload || !signature || !hasValidSignature(payload, signature, secret)) {
+    return { authenticated: false, message: 'Invalid access token' };
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
+    if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) {
+      throw new Error('Invalid access token');
+    }
+    return { authenticated: true, user: parsed };
+  } catch {
+    return { authenticated: false, message: 'Invalid or expired access token' };
+  }
 };
 
 export const createActivityEventsTicket = (userId: string, secret: string) => {
@@ -74,9 +112,13 @@ export const createJobEventsTicket = (userId: string, secret: string) => {
 };
 
 export const verifyJobEventsTicket = (token: string | null, secret: string): string | undefined => {
-  if (!token) return undefined;
+  if (!token) {
+    return undefined;
+  }
   const [payload, signature] = token.split('.', 2);
-  if (!payload || !signature || !hasValidSignature(payload, signature, secret)) return undefined;
+  if (!payload || !signature || !hasValidSignature(payload, signature, secret)) {
+    return undefined;
+  }
   try {
     const ticket = JSON.parse(Buffer.from(payload, 'base64url').toString()) as JobEventsTicket;
     return ticket.scope === 'job-events' && ticket.id && ticket.exp * 1000 >= Date.now() ? ticket.id : undefined;
@@ -109,9 +151,7 @@ export const verifySetupTicket = (token: string | null, secret: string): boolean
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    private readonly users: UserRepository,
-  ) {}
+  constructor(private readonly users: UserRepository) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const handler = context.getHandler() as object;
     const controller = context.getClass() as object;
@@ -123,36 +163,18 @@ export class AuthGuard implements CanActivate {
     const request = context
       .switchToHttp()
       .getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
-    const kondisHeader = request.headers['x-kondis-authorization'];
-    const kondisHeaderToken = kondisHeader?.startsWith('Bearer ') ? kondisHeader.slice(7) : undefined;
-    const value = request.headers.authorization;
-    const bearerToken = value?.startsWith('Bearer ') ? value.slice(7) : undefined;
-    const cookieToken = request.headers.cookie
-      ?.split(';')
-      .map((part) => part.trim())
-      .find((part) => part.startsWith('kondis_session='))
-      ?.slice('kondis_session='.length);
-    const token = kondisHeaderToken ?? bearerToken ?? cookieToken;
-    if (!token) {
-      throw new UnauthorizedException('Sign in is required');
+    const verification = verifyAccessToken(
+      {
+        authorization: request.headers.authorization,
+        cookie: request.headers.cookie,
+        kondisAuthorization: request.headers['x-kondis-authorization'],
+      },
+      AUTH_SECRET,
+    );
+    if (!verification.authenticated) {
+      throw new UnauthorizedException(verification.message);
     }
-    const [payload, signature] = token.split('.', 2);
-    if (!payload || !signature) {
-      throw new UnauthorizedException('Invalid access token');
-    }
-    if (!hasValidSignature(payload, signature, AUTH_SECRET)) {
-      throw new UnauthorizedException('Invalid access token');
-    }
-    let parsed: AuthenticatedUser & { exp: number };
-    try {
-      parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as AuthenticatedUser & { exp: number };
-      if (!parsed.id || !parsed.email || !['admin', 'user'].includes(parsed.role) || parsed.exp * 1000 < Date.now()) {
-        throw new Error('Invalid access token');
-      }
-    } catch {
-      throw new UnauthorizedException('Invalid or expired access token');
-    }
-    const stored = await this.users.findById(parsed.id);
+    const stored = await this.users.findById(verification.user.id);
     if (!stored) {
       throw new UnauthorizedException('Account no longer exists');
     }

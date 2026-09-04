@@ -14,6 +14,8 @@ import type { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { newTestService } from 'test/utils';
 
+const setupToken = (sut: AuthService): string => (sut as unknown as { setupToken: string }).setupToken;
+
 describe(AuthService.name, () => {
   const findByEmail = vi.fn();
   const count = vi.fn();
@@ -25,8 +27,6 @@ describe(AuthService.name, () => {
     registrationEnabled: false,
   } as ConfigRepository;
   const setup = () => newTestService(AuthService, [users, config, new RateLimitingRepository()], { users, config });
-  const setupToken = (sut: AuthService): string => (sut as unknown as { setupToken: string }).setupToken;
-
   beforeEach(() => {
     vi.clearAllMocks();
     count.mockResolvedValue({ count: 0 });

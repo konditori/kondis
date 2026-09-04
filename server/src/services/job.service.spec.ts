@@ -62,7 +62,7 @@ describe('JobService', () => {
 
   const makeService = () => setup().sut;
 
-  const captureRunner = async (): Promise<(item: JobItem) => Promise<JobStatus>> => {
+  const captureRunner = (): ((item: JobItem) => Promise<JobStatus>) => {
     const service = makeService() as unknown as {
       onJobRun: (item: JobItem) => Promise<JobStatus>;
     };
@@ -84,7 +84,7 @@ describe('JobService', () => {
 
   describe('running a job', () => {
     it('rethrows an unexpected error so the queue can retry it', async () => {
-      const runner = await captureRunner();
+      const runner = captureRunner();
       run.mockRejectedValue(new Error('connection reset'));
 
       // Swallowing here would mark the job complete and lose the work silently.
@@ -92,7 +92,7 @@ describe('JobService', () => {
     });
 
     it('does not rethrow when a handler reports an expected failure', async () => {
-      const runner = await captureRunner();
+      const runner = captureRunner();
       run.mockResolvedValue(JobStatus.Failed);
 
       // JobStatus.Failed means "retrying cannot help", so the job is settled rather than retried.
@@ -100,7 +100,7 @@ describe('JobService', () => {
     });
 
     it('passes the job straight through to the repository', async () => {
-      const runner = await captureRunner();
+      const runner = captureRunner();
       const item: JobItem = { name: JobName.ActivityParse, data: { id: 'abc' } };
 
       await runner(item);
