@@ -1,0 +1,33 @@
+.gitignore
+  s_5fc93a51132e6d::t_b0b036af222dfb 12-13
+packages/postgres/Dockerfile
+  s_5fc93a51132e6d::t_ca7c8f6c65a876 1
+packages/postgres/docker-compose.yml
+  s_5fc93a51132e6d::t_417cbf57f3e9b9 9-10
+pnpm-lock.yaml
+  s_5fc93a51132e6d::t_5c28d3209fb13b 209-211
+server/docs/cloudflare.md
+  s_5fc93a51132e6d::t_c10ead5f90bf2b 1-52
+server/package.json
+  s_5fc93a51132e6d::t_07f2f1a1b1c768 21,76-77
+server/tsconfig.worker.json
+  s_5fc93a51132e6d::t_03a75c9c39405f 11-15
+server/wrangler.jsonc
+  s_5fc93a51132e6d::t_e59f212a9581a6 2,6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "798ec9c29b924f114ed2a61c7f758cfa55160cd3",
+  "prompts": {},
+  "sessions": {
+    "s_5fc93a51132e6d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06dc9-6a0c-7191-a440-f33d2ff3b7d6",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
