@@ -28,7 +28,7 @@
     error = "";
     try {
       const result = await socialControllerNotifications(
-        { limit: "50" },
+        { limit: 50 },
         getSdkRequestOptions(),
       );
       notifications = result.notifications;

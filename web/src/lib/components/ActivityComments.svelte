@@ -70,7 +70,7 @@
     loading = true;
     try {
       const result = await socialControllerComments(
-        { id: activity.id, cursor: "", limit: "50" },
+        { id: activity.id, cursor: "", limit: 50 },
         getSdkRequestOptions(),
       );
       comments = sortChronologically(result.comments as Comment[]);

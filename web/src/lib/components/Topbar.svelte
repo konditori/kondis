@@ -140,7 +140,7 @@
     notificationsLoading = true;
     try {
       const result = await socialControllerNotifications(
-        { limit: "21" },
+        { limit: 21 },
         getSdkRequestOptions(),
       );
       notifications = result.notifications.slice(0, 5);
