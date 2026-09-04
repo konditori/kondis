@@ -1,18 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
+import type { Job, JobInsert, JobResult, SendOptions } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
+import { JOB_SCHEMA } from 'src/constants';
+import { JobName, JobStatus, QueueName } from 'src/enum';
 import {
+  CRON_JOBS,
   JOB_CONCURRENCY,
   JOB_CRON,
   JOB_EXPIRE_SECONDS,
   JOB_RETENTION_SECONDS,
   JOB_RETRY_DELAY_SECONDS,
   JOB_RETRY_LIMIT,
-  JOB_SCHEMA,
-} from 'src/constants';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+  QUEUE_POLICY,
+} from 'src/jobs/job-semantics';
 import { Logger } from 'src/logger';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import type { KondisTransaction } from 'src/types';
@@ -56,28 +58,6 @@ type StoredJobRow = {
 
 type RawJobCounts = Omit<JobCounts, 'ready'>;
 type StoredJobCounts = RawJobCounts & { name: string };
-
-const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
-  [QueueName.ActivityParsing]: 'exclusive',
-  [QueueName.BackgroundTask]: 'exclusive',
-  [QueueName.ImageProcessing]: 'standard',
-  [QueueName.Storage]: 'standard',
-};
-
-const CRON_JOBS: { item: JobItem; cron: string }[] = [
-  {
-    item: { name: JobName.ActivityParseQueueAll, data: { force: false } },
-    cron: '30 3 * * *',
-  },
-  {
-    item: { name: JobName.TemporaryFileCleanup, data: {} },
-    cron: '0 4 * * *',
-  },
-  {
-    item: { name: JobName.ActivityImageGenerateQueueAll, data: { force: false } },
-    cron: '30 4 * * *',
-  },
-];
 
 const COMPLETION_POLL_MS = 100;
 const WORKER_BATCH_SIZE = 25;
@@ -450,6 +430,10 @@ export class JobRepository {
 
   private getJobOptions(item: JobItem): Pick<SendOptions, 'singletonKey' | 'priority'> {
     switch (item.name) {
+      case JobName.AuthCredentialCleanup: {
+        return { singletonKey: item.name };
+      }
+
       case JobName.ActivityUpload: {
         // Disk-backed HTTP uploads do not have a checksum until the worker reads
         // the staged file. Use the unique temporary path in that case so a batch

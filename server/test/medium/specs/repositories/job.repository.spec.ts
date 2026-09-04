@@ -69,6 +69,7 @@ describe('JobRepository', () => {
     // This fixture builder is scoped with the related tests for readability.
     // eslint-disable-next-line unicorn/consistent-function-scoping
     const buildSamples = (ownerId: string): Record<JobName, JobItem> => ({
+      [JobName.AuthCredentialCleanup]: { name: JobName.AuthCredentialCleanup, data: {} },
       [JobName.ActivityUpload]: {
         name: JobName.ActivityUpload,
         data: {

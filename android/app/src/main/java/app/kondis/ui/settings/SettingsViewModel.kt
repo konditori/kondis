@@ -59,6 +59,7 @@ class SettingsViewModel
 
         fun signOut() {
             viewModelScope.launch {
+                runCatching { activityRepository.logout() }
                 settingsRepository.setAccessToken(null)
                 externalAuthManager.signOut()
             }

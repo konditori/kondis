@@ -1493,6 +1493,14 @@ export function authControllerMe(opts?: Oazapfts.RequestOpts) {
     }),
   );
 }
+export function authControllerLogout(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchText('/auth/logout', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
 export function authControllerActivityEventsTicket(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchJson<{

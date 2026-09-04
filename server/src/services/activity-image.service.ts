@@ -13,11 +13,11 @@ import { ActivityImage, ActivityImageFile } from 'src/db/schema';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
+import type { JobProducerPort } from 'src/ports/queue.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import type { KondisTransaction } from 'src/types';
@@ -31,7 +31,7 @@ export class ActivityImageService {
     private readonly storage: StorageRepository,
     private readonly crypto: CryptoRepository,
     private readonly database: DatabaseRepository,
-    private readonly jobs: JobRepository,
+    private readonly jobs: JobProducerPort,
     private readonly logger: ConsoleLogger,
     private readonly socialRepository: SocialRepository,
   ) {

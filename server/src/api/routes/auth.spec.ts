@@ -42,11 +42,37 @@ describe('API auth routes', () => {
     expect(findById).not.toHaveBeenCalled();
   });
 
+  it('ignores client-supplied proxy addresses unless proxy trust is enabled', async () => {
+    const verifySetupToken = vi.fn(() =>
+      Promise.resolve({ token: 'setup-ticket', expiresAt: '2026-09-04T10:00:00.000Z' }),
+    );
+    const request = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'CF-Connecting-IP': '198.51.100.1',
+        'X-Forwarded-For': '198.51.100.2',
+      },
+      body: JSON.stringify({ setupToken: 'bootstrap-token' }),
+    } as const;
+
+    await createApiApp(newApiDependencies({ auth: { verifySetupToken } })).request('/auth/setup/verify', request);
+    expect(verifySetupToken).toHaveBeenLastCalledWith('bootstrap-token', 'unknown');
+
+    await createApiApp(newApiDependencies({ auth: { verifySetupToken }, config: { trustProxyHeaders: true } })).request(
+      '/auth/setup/verify',
+      request,
+    );
+    expect(verifySetupToken).toHaveBeenLastCalledWith('bootstrap-token', '198.51.100.1');
+  });
+
   it('returns the current stored account and restricts job tickets to admins', async () => {
-    const createJobEventsTicket = vi.fn(() => ({
-      token: 'a-valid-ticket-token-value',
-      expiresAt: '2026-09-04T10:00:00.000Z',
-    }));
+    const createJobEventsTicket = vi.fn(() =>
+      Promise.resolve({
+        token: 'a-valid-ticket-token-value',
+        expiresAt: '2026-09-04T10:00:00.000Z',
+      }),
+    );
     const users = newApiUsers();
     const app = createApiApp(newApiDependencies({ auth: { createJobEventsTicket }, users }));
 
@@ -59,6 +85,16 @@ describe('API auth routes', () => {
     });
     expect(ticketResponse.status).toBe(403);
     expect(createJobEventsTicket).not.toHaveBeenCalled();
+  });
+
+  it('revokes the current session on logout', async () => {
+    const revokeSession = vi.fn(() => Promise.resolve());
+    const app = createApiApp(newApiDependencies({ auth: { revokeSession } }));
+
+    const response = await app.request('/auth/logout', { method: 'POST', headers: apiAuthHeaders() });
+
+    expect(response.status).toBe(204);
+    expect(revokeSession).toHaveBeenCalledWith(`session-${TEST_API_USER.id}`);
   });
 
   it('uses the established validation error shape for invalid auth bodies', async () => {

@@ -8,7 +8,7 @@ import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
-import type { QueuePort } from 'src/ports/queue.port';
+import type { JobProducerPort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
@@ -74,7 +74,7 @@ export class ActivityService {
     private readonly activityRepository: ActivityRepository,
     private readonly databaseRepository: DatabaseRepository,
     private readonly eventRepository: RealtimePort,
-    private readonly jobRepository: QueuePort,
+    private readonly jobRepository: JobProducerPort,
     private readonly fitRepository: FitRepository,
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,

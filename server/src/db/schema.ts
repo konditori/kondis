@@ -7,6 +7,10 @@ import { ActivityLikeTable } from 'src/schema/tables/activity-like.table';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityStreamTable } from 'src/schema/tables/activity-stream.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
+import { AuthBootstrapTable } from 'src/schema/tables/auth-bootstrap.table';
+import { AuthRateLimitTable } from 'src/schema/tables/auth-rate-limit.table';
+import { AuthSessionTable } from 'src/schema/tables/auth-session.table';
+import { AuthTicketTable } from 'src/schema/tables/auth-ticket.table';
 import { FollowRequestTable } from 'src/schema/tables/follow-request.table';
 import { LapTable } from 'src/schema/tables/lap.table';
 import { LiveWorkoutPointTable } from 'src/schema/tables/live-workout-point.table';
@@ -20,6 +24,10 @@ import { UserTable } from 'src/schema/tables/user.table';
 
 export interface DB {
   user: UserTable;
+  auth_bootstrap: AuthBootstrapTable;
+  auth_rate_limit: AuthRateLimitTable;
+  auth_session: AuthSessionTable;
+  auth_ticket: AuthTicketTable;
   upload: UploadTable;
   activity: ActivityTable;
   activity_best_effort: ActivityBestEffortTable;

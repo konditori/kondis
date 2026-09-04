@@ -1264,6 +1264,20 @@
         ]
       }
     },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Current session revoked"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/activity-events-ticket": {
       "post": {
         "operationId": "AuthController_activityEventsTicket",

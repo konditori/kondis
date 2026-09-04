@@ -1,7 +1,7 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
-import { createApiAuthMiddleware, type ApiEnv, type ApiUserLookup } from 'src/api/auth';
+import { createApiAuthMiddleware, type ApiEnv, type ApiSessionLookup, type ApiUserLookup } from 'src/api/auth';
 import { registerActivityReadRoutes, type ActivityReadService } from 'src/api/routes/activity';
 import { registerActivityImageRoutes, type ActivityImageRouteService } from 'src/api/routes/activity-image';
 import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
@@ -38,11 +38,12 @@ export type ApiDependencies = {
   activities: ActivityReadService & SocialActivityReadService;
   activityImages: ActivityImageRouteService;
   auth: AuthRouteService & UserCreationService;
-  config: Pick<ConfigPort, 'registrationEnabled'>;
+  config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>;
   files: FileReader;
   jobs: JobRouteService;
   liveWorkouts: LiveWorkoutRouteService;
   server: Pick<ServerService, 'ping'>;
+  sessions: ApiSessionLookup;
   social: SocialReadService & SocialMutationService;
   uploads: UploadReader;
   uploadService: UploadRouteService;
@@ -90,6 +91,7 @@ export const createApiApp = ({
   jobs,
   liveWorkouts,
   server,
+  sessions,
   social,
   uploads,
   uploadService,
@@ -107,7 +109,7 @@ export const createApiApp = ({
 
   app.use(
     '*',
-    createApiAuthMiddleware(users, (method, path) => {
+    createApiAuthMiddleware(sessions, (method, path) => {
       const normalizedMethod = method === 'HEAD' ? 'GET' : method;
       const runtimePath = path.startsWith(`${API_PREFIX}/`) ? path.slice(API_PREFIX.length) : path;
       const normalizedPath = runtimePath.length > 1 ? runtimePath.replace(/\/+$/, '') : runtimePath;

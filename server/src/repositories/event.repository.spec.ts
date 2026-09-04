@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { describe, expect, it, vi } from 'vitest';
 import { WebSocket, type WebSocketServer } from 'ws';
 
-import { AUTH_SECRET, createActivityEventsTicket } from 'src/auth';
+import type { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import type { ConfigRepository } from 'src/repositories/config.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import type { SocialRepository } from 'src/repositories/social.repository';
@@ -12,6 +12,7 @@ import type { KondisDatabase } from 'src/types';
 
 const USER_ID = '8300a315-5101-4bbf-8813-6244965ed9b5';
 const ACTIVITY_ID = '77d8c0b4-5d9b-44df-8676-8a15abf27d50';
+const ACTIVITY_TICKET = 'activity-ticket';
 
 type TestableEventRepository = {
   activeActivityAuthorizations: number;
@@ -19,11 +20,21 @@ type TestableEventRepository = {
   activityAuthorizationQueue: unknown[];
   pendingActivitySubscriptions: Set<WebSocket>;
   socketActivities: Map<WebSocket, Set<string>>;
+  socketSessions: Map<WebSocket, string>;
   socketServer?: WebSocketServer;
+  broadcast(payload: string): Promise<void>;
+  validateSocketSessions(): Promise<void>;
+  handleConnection(socket: WebSocket, auth: { jobDashboard: boolean; sessionId: string; userId?: string }): void;
   subscribeToActivity(socket: WebSocket, userId: string, message: string): Promise<void>;
 };
 
 type CanViewActivity = (...args: Parameters<SocialRepository['canViewActivity']>) => Promise<unknown>;
+
+const findActiveSessionIds = vi.fn((sessionIds: string[]) => Promise.resolve(new Set(sessionIds)));
+const credentials = {
+  findEventTicket: () => Promise.resolve({ scope: 'activity-events', sessionId: 'session-id', userId: USER_ID }),
+  findActiveSessionIds,
+} as unknown as AuthCredentialRepository;
 
 const setup = (
   canViewActivity: CanViewActivity = vi.fn(() => Promise.resolve({ id: ACTIVITY_ID, user_id: USER_ID })),
@@ -32,6 +43,7 @@ const setup = (
     {} as KondisDatabase,
     { database: {} } as ConfigRepository,
     { canViewActivity } as unknown as SocialRepository,
+    credentials,
   );
   const testable = repository as unknown as TestableEventRepository;
   const socket = {} as WebSocket;
@@ -65,6 +77,7 @@ describe(EventRepository.name, () => {
       {} as KondisDatabase,
       { database: {} } as ConfigRepository,
       {} as SocialRepository,
+      credentials,
     );
     const socket = { destroy: vi.fn() };
     await repository.attach(server);
@@ -85,6 +98,27 @@ describe(EventRepository.name, () => {
     await repository.stop();
   });
 
+  it('closes sockets when their session is revoked', async () => {
+    const { testable } = setup();
+    const socket = { close: vi.fn() } as unknown as WebSocket;
+    testable.socketSessions.set(socket, 'revoked-session');
+
+    await testable.broadcast(JSON.stringify({ type: 'session.revoked', sessionId: 'revoked-session' }));
+
+    expect(socket.close).toHaveBeenCalledWith(1008, 'Session revoked');
+  });
+
+  it('closes sockets whose database session is no longer active', async () => {
+    const { testable } = setup();
+    const socket = { close: vi.fn() } as unknown as WebSocket;
+    testable.socketSessions.set(socket, 'expired-session');
+    findActiveSessionIds.mockResolvedValueOnce(new Set());
+
+    await testable.validateSocketSessions();
+
+    expect(socket.close).toHaveBeenCalledWith(1008, 'Session expired');
+  });
+
   it('closes an oversized frame with 1009 without an uncaught socket error', async () => {
     const { repository } = setup();
     const server = createServer();
@@ -94,8 +128,7 @@ describe(EventRepository.name, () => {
     if (!address || typeof address === 'string') {
       throw new Error('Expected HTTP server to listen on a TCP port');
     }
-    const ticket = createActivityEventsTicket(USER_ID, AUTH_SECRET).token;
-    const client = new WebSocket(`ws://127.0.0.1:${address.port}/events?ticket=${ticket}`);
+    const client = new WebSocket(`ws://127.0.0.1:${address.port}/events?ticket=${ACTIVITY_TICKET}`);
 
     try {
       await new Promise<void>((resolve, reject) => {
@@ -168,9 +201,8 @@ describe(EventRepository.name, () => {
     const { repository, testable } = setup(vi.fn(() => authorization.promise));
     const server = createServer();
     const socket = Object.assign(new EventEmitter(), { close: vi.fn(), send: vi.fn() }) as unknown as WebSocket;
-    const ticket = createActivityEventsTicket(USER_ID, AUTH_SECRET).token;
     await repository.attach(server);
-    testable.socketServer?.emit('connection', socket, { url: `/events?ticket=${ticket}` });
+    testable.handleConnection(socket, { jobDashboard: false, sessionId: 'session-id', userId: USER_ID });
 
     socket.emit('message', JSON.stringify({ type: 'activity.subscribe', activityId: ACTIVITY_ID }));
     expect(testable.pendingActivitySubscriptions.has(socket)).toBe(true);

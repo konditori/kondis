@@ -179,6 +179,8 @@ export type DatabaseConfig = {
 };
 
 export type EnvData = {
+  setupToken?: string;
+  trustProxyHeaders: boolean;
   port: number;
   listenAddress: string;
   storageDir: string;

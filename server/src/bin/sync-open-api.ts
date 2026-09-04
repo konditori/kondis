@@ -57,6 +57,7 @@ const legacyPathOrder = [
   '/auth/login',
   '/auth/register',
   '/auth/me',
+  '/auth/logout',
   '/auth/activity-events-ticket',
   '/auth/job-events-ticket',
   '/users',

@@ -149,6 +149,9 @@ interface KondisApi {
         @Body request: LoginRequest,
     ): LoginResponse
 
+    @POST("auth/logout")
+    suspend fun logout()
+
     @GET("auth/me")
     suspend fun me(): CurrentUserResponse
 

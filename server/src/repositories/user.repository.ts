@@ -1,5 +1,5 @@
 import type { NewUserInput } from 'src/dtos/user.dto';
-import type { KondisDatabase } from 'src/types';
+import type { KondisDatabase, KondisExecutor } from 'src/types';
 
 export class UserRepository {
   constructor(private readonly db: KondisDatabase) {}
@@ -11,8 +11,8 @@ export class UserRepository {
       .executeTakeFirstOrThrow();
   }
 
-  findByEmail(email: string) {
-    return this.db.selectFrom('user').selectAll().where('email', '=', email).executeTakeFirst();
+  findByEmail(email: string, executor: KondisExecutor = this.db) {
+    return executor.selectFrom('user').selectAll().where('email', '=', email).executeTakeFirst();
   }
   findById(id: string) {
     return this.db.selectFrom('user').selectAll().where('id', '=', id).executeTakeFirst();
@@ -52,12 +52,12 @@ export class UserRepository {
       .executeTakeFirstOrThrow();
   }
 
-  create(input: NewUserInput) {
-    return this.db.insertInto('user').values(input).returningAll().executeTakeFirstOrThrow();
+  create(input: NewUserInput, executor: KondisExecutor = this.db) {
+    return executor.insertInto('user').values(input).returningAll().executeTakeFirstOrThrow();
   }
 
-  createInitialAdmin(input: NewUserInput) {
-    return this.db
+  createInitialAdmin(input: NewUserInput, executor: KondisExecutor = this.db) {
+    return executor
       .insertInto('user')
       .values(input)
       .onConflict((conflict) => conflict.doNothing())

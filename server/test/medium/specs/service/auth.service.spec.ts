@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ConflictException, UnauthorizedException } from 'src/errors';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { DatabaseRepository } from 'src/repositories/database.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
@@ -11,13 +13,23 @@ import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/t
 
 describe(AuthService.name, () => {
   let db: KondisDatabase;
+  let credentials: AuthCredentialRepository;
   let users: UserRepository;
   let sut: AuthService;
 
   beforeAll(() => {
     db = createMediumTestDatabase();
+    credentials = new AuthCredentialRepository(db);
     users = new UserRepository(db);
-    sut = new AuthService(users, {} as never, new RateLimitingRepository(), new CryptoRepository());
+    sut = new AuthService(
+      users,
+      {} as never,
+      new RateLimitingRepository(db),
+      new CryptoRepository(),
+      credentials,
+      { emit: () => Promise.resolve() } as never,
+      new DatabaseRepository(db),
+    );
   });
 
   beforeEach(() => resetMediumTestDatabase(db));
@@ -80,17 +92,29 @@ describe(AuthService.name, () => {
 
     await expect(sut.verifySetupToken('invalid-medium-token')).rejects.toBeInstanceOf(UnauthorizedException);
 
-    const setupToken = (sut as unknown as { setupToken: string }).setupToken;
-    const ticket = await sut.verifySetupToken(setupToken);
-    const result = await sut.setup(
-      `admin-${crypto.randomUUID()}@example.com`,
-      'Medium',
-      'Admin',
-      'a sufficiently long password',
-      ticket.token,
-    );
+    const setupToken = await credentials.getOrCreateSetupToken();
+    const ticket = await sut.verifySetupToken(setupToken!);
+    const secondTicket = await sut.verifySetupToken(setupToken!);
+    const attempts = await Promise.allSettled([
+      sut.setup(
+        `admin-${crypto.randomUUID()}@example.com`,
+        'Medium',
+        'Admin',
+        'a sufficiently long password',
+        ticket.token,
+      ),
+      sut.setup(
+        `second-admin-${crypto.randomUUID()}@example.com`,
+        'Second',
+        'Admin',
+        'a sufficiently long password',
+        secondTicket.token,
+      ),
+    ]);
+    const successes = attempts.filter((attempt) => attempt.status === 'fulfilled');
 
-    expect(result).toMatchObject({ setup: true, user: { role: 'admin', firstName: 'Medium', lastName: 'Admin' } });
+    expect(successes).toHaveLength(1);
+    expect(successes[0]).toMatchObject({ value: { setup: true, user: { role: 'admin' } } });
     await expect(sut.setupStatus()).resolves.toEqual({ setupRequired: false });
   });
 });

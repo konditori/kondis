@@ -4,6 +4,7 @@ import { JobName, JobStatus, QueueName } from 'src/enum';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import type { ActivityImageService } from 'src/services/activity-image.service';
 import type { ActivityService } from 'src/services/activity.service';
+import type { AuthService } from 'src/services/auth.service';
 import type { StorageService } from 'src/services/storage.service';
 import type { UploadService } from 'src/services/upload.service';
 import type { UserService } from 'src/services/user.service';
@@ -27,6 +28,7 @@ const setup = () => {
     handleGenerateThumbnails: success(),
     handleQueueAll: success(),
   } as unknown as ActivityImageService;
+  const authService = { handleCredentialCleanup: success() } as unknown as AuthService;
   const storageService = {
     handleFileDelete: success(),
     handleTemporaryFileCleanup: success(),
@@ -41,6 +43,7 @@ const setup = () => {
     handlers: createJobHandlerRegistry({
       activityService,
       activityImageService,
+      authService,
       storageService,
       uploadService,
       userService,
@@ -56,6 +59,7 @@ describe('createJobHandlerRegistry', () => {
 
     expect(handlers.map(({ jobName }) => jobName).sort()).toEqual(Object.values(JobName).sort());
     expect(queues).toEqual({
+      [JobName.AuthCredentialCleanup]: QueueName.BackgroundTask,
       [JobName.ActivityUpload]: QueueName.BackgroundTask,
       [JobName.ActivityMetricCompute]: QueueName.ActivityParsing,
       [JobName.ActivityBestEffortCompute]: QueueName.ActivityParsing,

@@ -26,6 +26,7 @@ export type AuthRouteService = Pick<
   | 'createJobEventsTicket'
   | 'login'
   | 'register'
+  | 'revokeSession'
   | 'setup'
   | 'setupStatus'
   | 'validateSetupTicket'
@@ -167,6 +168,14 @@ const meRoute = createRoute({
   },
   tags: ['Auth'],
 });
+const logoutRoute = createRoute({
+  method: 'post',
+  path: '/auth/logout',
+  operationId: 'AuthController_logout',
+  parameters: [],
+  responses: { 204: { description: 'Current session revoked' } },
+  tags: ['Auth'],
+});
 const ticketResponse = ActivityEventsTicketSchema.openapi('ActivityEventsTicketDto_Output');
 const activityTicketRoute = createRoute({
   method: 'post',
@@ -199,7 +208,7 @@ export const registerAuthRoutes = (
   app: OpenAPIHono<ApiEnv>,
   service: AuthRouteService,
   users: ApiUserLookup,
-  config: Pick<ConfigPort, 'registrationEnabled'>,
+  config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
 ): void => {
   app.openapi(capabilitiesRoute, (context) => context.json({ direct: true }, 200) as never);
   app.openapi(setupStatusRoute, async (context) => {
@@ -219,8 +228,11 @@ export const registerAuthRoutes = (
   });
   app.openapi(verifySetupRoute, async (context) => {
     const value = context.req.valid('json');
-    const forwardedFor = context.req.header('X-Forwarded-For');
-    const clientId = forwardedFor?.split(',', 1)[0]?.trim() || context.env.incoming?.socket?.remoteAddress || 'unknown';
+    const socketAddress = context.env?.incoming?.socket?.remoteAddress;
+    const forwardedFor = context.req.header('X-Forwarded-For')?.split(',', 1)[0]?.trim();
+    const clientId = config.trustProxyHeaders
+      ? context.req.header('CF-Connecting-IP') || forwardedFor || socketAddress || 'unknown'
+      : socketAddress || 'unknown';
     return context.json(await service.verifySetupToken(value.setupToken, clientId), 201) as never;
   });
   app.openapi(validateSetupRoute, async (context) => {
@@ -255,13 +267,23 @@ export const registerAuthRoutes = (
       200,
     ) as never;
   });
-  app.openapi(activityTicketRoute, (context) =>
-    context.json(ticketResponse.parse(service.createActivityEventsTicket(context.get('user').id)), 201),
+  app.openapi(logoutRoute, async (context) => {
+    await service.revokeSession(context.get('sessionId'));
+    return context.body(null, 204);
+  });
+  app.openapi(activityTicketRoute, async (context) =>
+    context.json(
+      ticketResponse.parse(await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId'))),
+      201,
+    ),
   );
-  app.openapi(jobTicketRoute, (context) => {
+  app.openapi(jobTicketRoute, async (context) => {
     if (context.get('user').role !== 'admin') {
       throw new ForbiddenException('Administrator access is required');
     }
-    return context.json(ticketResponse.parse(service.createJobEventsTicket(context.get('user').id)), 201);
+    return context.json(
+      ticketResponse.parse(await service.createJobEventsTicket(context.get('user').id, context.get('sessionId'))),
+      201,
+    );
   });
 };

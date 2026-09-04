@@ -1,9 +1,11 @@
+import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -50,19 +52,20 @@ export const createApplicationComposition = ({
 
   const activityRepository = new ActivityRepository(database);
   const activityImageRepository = new ActivityImageRepository(database);
+  const authCredentialRepository = new AuthCredentialRepository(database);
   const cryptoRepository = new CryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
   const gpxRepository = new GpxRepository(newLogger());
   const liveWorkoutRepository = new LiveWorkoutRepository(database);
-  const rateLimitingRepository = new RateLimitingRepository();
+  const rateLimitingRepository = new RateLimitingRepository(database);
   const socialRepository = new SocialRepository(database);
   const storageRepository = new StorageRepository(configRepository, cryptoRepository);
   const tcxRepository = new TcxRepository(newLogger());
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
-  const eventRepository = new EventRepository(database, configRepository, socialRepository);
-  const jobRepository = new JobRepository(configRepository, consumeJobs, newLogger());
+  const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
+  const jobRepository = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
 
   const importProgressStore = new ImportProgressStore(database);
   const lagomTakeoutParser = new LagomTakeoutParser();
@@ -92,7 +95,15 @@ export const createApplicationComposition = ({
     newLogger(),
     socialRepository,
   );
-  const authService = new AuthService(userRepository, configRepository, rateLimitingRepository, cryptoRepository);
+  const authService = new AuthService(
+    userRepository,
+    configRepository,
+    rateLimitingRepository,
+    cryptoRepository,
+    authCredentialRepository,
+    eventRepository,
+    databaseRepository,
+  );
   const jobService = new JobService(jobRepository, eventRepository, newLogger());
   const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository);
   const serverService = new ServerService();
@@ -117,6 +128,7 @@ export const createApplicationComposition = ({
     createJobHandlerRegistry({
       activityService,
       activityImageService,
+      authService,
       storageService,
       uploadService,
       userService,
@@ -130,6 +142,7 @@ export const createApplicationComposition = ({
     configRepository,
     activityRepository,
     activityImageRepository,
+    authCredentialRepository,
     cryptoRepository,
     databaseRepository,
     eventRepository,
@@ -160,11 +173,13 @@ export const createApplicationComposition = ({
     [ConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
     [ActivityImageRepository, activityImageRepository],
+    [AuthCredentialRepository, authCredentialRepository],
     [CryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],
     [EventRepository, eventRepository],
     [FitRepository, fitRepository],
     [GpxRepository, gpxRepository],
+    [PgBossQueueAdapter, jobRepository],
     [JobRepository, jobRepository],
     [LiveWorkoutRepository, liveWorkoutRepository],
     [RateLimitingRepository, rateLimitingRepository],

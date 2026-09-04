@@ -45,6 +45,7 @@ const expectedOperations = [
   'POST /auth/login AuthController_login',
   'POST /auth/register AuthController_register',
   'GET /auth/me AuthController_me',
+  'POST /auth/logout AuthController_logout',
   'POST /auth/activity-events-ticket AuthController_activityEventsTicket',
   'POST /auth/job-events-ticket AuthController_jobEventsTicket',
   'GET /users UserController_list',

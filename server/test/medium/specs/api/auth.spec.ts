@@ -40,11 +40,22 @@ describe('authentication API smoke tests', () => {
     });
 
     expect(response.status).toBe(201);
-    expect(await response.json()).toMatchObject({
+    const session = await response.json();
+    expect(session).toMatchObject({
       setup: false,
       user: { id: user.id, email, firstName: 'Medium', lastName: 'Test', role: 'user' },
       accessToken: expect.any(String),
     });
+
+    const headers = { Authorization: `Bearer ${session.accessToken}` };
+    const me = await api.request('/auth/me', { headers });
+    expect(me.status).toBe(200);
+    expect(await me.json()).toMatchObject({ id: user.id, email });
+
+    const logout = await api.request('/auth/logout', { method: 'POST', headers });
+    const revoked = await api.request('/auth/me', { headers });
+    expect(logout.status).toBe(204);
+    expect(revoked.status).toBe(401);
   });
 
   it('rejects invalid login credentials without issuing a session', async () => {

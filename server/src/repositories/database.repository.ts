@@ -4,11 +4,12 @@ import { join } from 'node:path';
 
 import { createDatabase } from 'src/db/database';
 import { Logger } from 'src/logger';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import type { DatabaseConfig, KondisDatabase, KondisTransaction } from 'src/types';
 
 const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 
-export class DatabaseRepository {
+export class DatabaseRepository implements TransactionPort {
   private readonly logger = new Logger(DatabaseRepository.name);
 
   constructor(private readonly db: KondisDatabase) {}
