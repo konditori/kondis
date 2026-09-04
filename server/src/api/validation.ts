@@ -1,4 +1,3 @@
-import { bodyLimit } from 'hono/body-limit';
 import { createMiddleware } from 'hono/factory';
 import type { z } from 'zod';
 
@@ -6,13 +5,6 @@ import type { ApiEnv } from 'src/api/auth';
 import { BadRequestException, PayloadTooLargeException } from 'src/errors';
 
 const JSON_BODY_LIMIT_BYTES = 100 * 1024;
-const jsonLimit = bodyLimit({
-  maxSize: JSON_BODY_LIMIT_BYTES,
-  onError: () => {
-    throw new PayloadTooLargeException();
-  },
-});
-
 export class RequestValidationError extends Error {
   constructor(readonly issues: z.core.$ZodIssue[]) {
     super('Validation failed');
@@ -33,12 +25,33 @@ export const jsonBodyMiddleware = createMiddleware<ApiEnv>(async (context, next)
     throw new BadRequestException('Content-Type must be application/json');
   }
 
-  return jsonLimit(context, async () => {
-    try {
-      await context.req.json();
-    } catch {
-      throw new BadRequestException('Request body is not valid JSON');
+  const contentLength = context.req.header('Content-Length');
+  if (contentLength !== undefined && Number(contentLength) > JSON_BODY_LIMIT_BYTES) {
+    throw new PayloadTooLargeException();
+  }
+
+  // Read a clone to enforce the limit without reconstructing the Request. The latter
+  // is incompatible with Node 24's native Request private state in Hono's bodyLimit.
+  if (contentLength === undefined) {
+    const reader = context.req.raw.clone().body?.getReader();
+    if (reader) {
+      let size = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > JSON_BODY_LIMIT_BYTES) {
+          await reader.cancel();
+          throw new PayloadTooLargeException();
+        }
+      }
     }
-    await next();
-  });
+  }
+
+  try {
+    await context.req.json();
+  } catch {
+    throw new BadRequestException('Request body is not valid JSON');
+  }
+  await next();
 });
