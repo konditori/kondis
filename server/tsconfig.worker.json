@@ -8,5 +8,9 @@
     "noEmit": true,
     "paths": { "src/*": ["./src/*.ts", "./src/*/index.ts"] }
   },
-  "include": ["src/cloudflare/**/*.ts", "src/dtos/ping.dto.ts", "worker-env.d.ts"]
+  "include": [
+    "src/cloudflare/**/*.ts",
+    "src/dtos/ping.dto.ts",
+    "worker-env.d.ts"
+  ]
 }
