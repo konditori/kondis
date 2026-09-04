@@ -1,0 +1,91 @@
+e2e/src/docker-compose.ts
+  s_2507d5c92ede59::t_0c375213829da4 32
+open-api/kondis-openapi-specs.json
+  s_d55f0eb5b2632d::t_0e8bd4a071ce42 1014-1042,1057-1064,1078-1085,1095-1104,1107-1114,1126-1135,1138-1145,1157-1166,1169-1176,1188-1197,1200-1207,1219-1228,1231-1238,1252-1259,1325-1334,1349-1358,1429-1457,1471,1973,1976-1978,2034,2042,2045-2047,2303-2304,2533-2534,2738-2742,2906-2910,2961-2962,3091,3093,3096,3098,3101,3103,3106,3108,3111,3113,3282-3283,3312-3313,3317-3318,3419-3423,3446-3447,3456,3458-3459,3463,3465-3466,3477-3478,3481-3482,3485-3486,3526,3528,3654,3656-3657,3661,3663-3664,3696-3697,3803-3804,3832,3834,3837,3839,3897-3898,3907,3909-3910,3914,3916-3917,3928-3929,3932-3933,3936-3937,3967-3971,4016,4019-4020,4023,4025,4058,4060-4061,4085-4089,4148,4151-4152,4155,4157,4277-4278,4307-4308,4312-4313,4479-4480,4508,4510,4513,4515,4588-4589,4598,4600-4601,4605,4607-4608,4619-4620,4623-4624,4627-4628,4655-4656,4665,4667-4668,4672,4674-4675,4686-4687,4690-4691,4694-4695,4727-4888,4928-4929,4994-4995,5071-5072,5127-5128,5181-5182,5200-5201,5287-5288,5311-5312,5370-5371,5466-5609
+packages/sdk/src/fetch-client.ts
+  s_d33de69b6c6a55::t_66b9c95eae3e91 119,137,247,354,383,534-592,597-607,1333-1351,1358-1361,1368-1371,1376-1383,1385-1395,1398-1405,1407-1417,1420-1427,1429-1439,1442-1449,1451-1461,1464-1471,1473-1483,1488-1491,1525-1532,1534-1541,1544-1551,1553-1560,1601-1619,1628,1925,1963-1964,2355-2362
+server/eslint.config.mjs
+  s_2507d5c92ede59::t_c71812a36b9e23 100
+server/src/api/app.spec.ts
+  s_2507d5c92ede59::t_0a5431609e8e2f 8-77,150-165
+server/src/api/node.spec.ts
+  s_469b493132a02d::t_9a9bef0e5ad403 1-3,190,247-299
+server/src/api/routes/activity-image.spec.ts
+  s_35cc59fcb0b02f::t_3ef9fa41361fed 20-36,94,101,104,106,121-123,128-130,137,139,149,155,161-233,236,241,243,251-252,257-259,305-317
+server/src/api/routes/activity-image.ts
+  s_2507d5c92ede59::t_433a82d0b6a702 1,19-21,100-106
+server/src/api/routes/auth.spec.ts
+  s_2507d5c92ede59::t_276ee5625c5325 107-129
+server/src/api/routes/auth.ts
+  s_2507d5c92ede59::t_1ca6fde282bde4 7-9,13,15,17,40-45,51-56,64-69,81-86,98-103,115-120,132-137,149-154,162-167
+server/src/api/routes/social.ts
+  s_c5d20ecfc89798::t_c6dc1989041398 188
+server/src/api/routes/user.ts
+  s_2507d5c92ede59::t_68ce0836a9c2c1 1,15-17,33-39
+server/src/bin/start.ts
+  s_d55f0eb5b2632d::t_3c340e41432b42 69-74,77
+server/src/bin/sync-open-api.ts
+  s_2507d5c92ede59::t_fcbfc4a042488f 15,124-129,346-398
+server/src/dtos/auth.dto.ts
+  s_2507d5c92ede59::t_7658762f58a734 19-42
+server/src/errors.spec.ts
+  s_2507d5c92ede59::t_24047a560a64c4 14
+server/src/main.spec.ts
+  s_d55f0eb5b2632d::t_385e043dda6b06 9,18-52,54,62,64,68,70,77,85,89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ebcfe9a8cfc26543bd9ce910595d19614f3323a5",
+  "prompts": {},
+  "sessions": {
+    "s_2507d5c92ede59": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f940056f8ffe5RI5lJ7IK5ivpC",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_35cc59fcb0b02f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f93eeab06ffeDXnr62B2po0nKA",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_469b493132a02d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f93eeabadffeeg1UuOmjvzdFo1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_c5d20ecfc89798": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f941aaf7cffejb6d2wHuW59svc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_d33de69b6c6a55": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f94d4ef3fffeiexP043QE08WrY",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_d55f0eb5b2632d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f9400575effe2lKy6ODDS46J3x",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
