@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-
+import { Logger } from 'src/logger';
+import type { ConfigPort } from 'src/ports/config.port';
 import type { DatabaseConfig, EnvData } from 'src/types';
 
 function readEnv(name: string): string | undefined;
@@ -50,11 +50,11 @@ const readPositiveInteger = (name: string, fallback: number): number => {
 
 const getEnv = (): EnvData => {
   const database: DatabaseConfig = {
-      host: readEnv('KONDIS_DB_HOSTNAME', 'database'),
-      port: readPositiveInteger('KONDIS_DB_PORT', 5432),
-      user: required('KONDIS_DB_USERNAME'),
-      password: required('KONDIS_DB_PASSWORD'),
-      database: required('KONDIS_DB_DATABASE_NAME'),
+    host: readEnv('KONDIS_DB_HOSTNAME', 'database'),
+    port: readPositiveInteger('KONDIS_DB_PORT', 5432),
+    user: required('KONDIS_DB_USERNAME'),
+    password: required('KONDIS_DB_PASSWORD'),
+    database: required('KONDIS_DB_DATABASE_NAME'),
   };
 
   return {
@@ -66,8 +66,7 @@ const getEnv = (): EnvData => {
   };
 };
 
-@Injectable()
-export class ConfigRepository {
+export class ConfigRepository implements ConfigPort {
   private readonly logger = new Logger(ConfigRepository.name);
   private envCache: EnvData | undefined;
 

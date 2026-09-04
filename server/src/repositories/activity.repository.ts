@@ -1,4 +1,3 @@
-import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 import { jsonObjectFrom } from 'kysely/helpers/postgres';
 
@@ -13,7 +12,6 @@ import {
   TRACK_SIMPLIFY_TOLERANCE_DEG,
   UNRANKED,
 } from 'src/constants';
-import { KYSELY } from 'src/db/database';
 import { Activity, ActivityMetric, ActivityStream } from 'src/db/schema';
 import { getColumns } from 'src/schema/decorators';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
@@ -26,9 +24,10 @@ import type {
   ActivityType,
   BestEffortType,
   CreateActivityInput,
+  KondisDatabase,
+  KondisExecutor,
   UpdateActivityInput,
 } from 'src/types';
-import type { KondisDatabase, KondisExecutor } from 'src/types';
 import { BestEffortGroup } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
@@ -95,9 +94,8 @@ const valueAtTime = (points: TimedValue[], targetTime: number): number | null =>
   return points.at(-1)!.value;
 };
 
-@Injectable()
 export class ActivityRepository {
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   private trackCoordinates(streams: ActivityStreamInput[]): [number, number][] {
     const latitude = streams.find((stream) => stream.type === 'latitude')?.data;

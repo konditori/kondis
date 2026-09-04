@@ -20,6 +20,7 @@
     "check": "tsc --noEmit",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
+    "test": "node --test test/*.test.mjs",
     "prepack": "pnpm build"
   },
   "publishConfig": {

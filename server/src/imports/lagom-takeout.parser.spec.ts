@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 
@@ -199,5 +202,44 @@ describe('extractLagomTakeout', () => {
 
     expect(result.activities).toEqual([]);
     expect(imported).toEqual(['fit contents']);
+  });
+
+  it('opens staged takeouts by path without buffering the archive first', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'kondis-takeout-'));
+    const path = join(directory, 'takeout.zip');
+    await writeFile(
+      path,
+      createTestZip({
+        'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit'),
+        'activities/run.fit': Buffer.from('fit contents'),
+      }),
+    );
+
+    try {
+      const result = await extractLagomTakeout(path);
+      expect(result.activities[0]?.file.buffer.toString()).toBe('fit contents');
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
+  it('anchors file parsing to the validated final ZIP directory record', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'kondis-takeout-'));
+    const path = join(directory, 'takeout.zip');
+    await writeFile(
+      path,
+      createTestZip({
+        'PK\u{5}\u{6}fake.txt': Buffer.from('fake signature in the central directory'),
+        'activities.csv': Buffer.from('Activity ID,Filename\n1,activities/run.fit'),
+        'activities/run.fit': Buffer.from('fit contents'),
+      }),
+    );
+
+    try {
+      const result = await extractLagomTakeout(path);
+      expect(result.activities).toHaveLength(1);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
   });
 });

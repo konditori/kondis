@@ -1,12 +1,11 @@
-import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import { z } from '@hono/zod-openapi';
 
 export const FitUploadResponseSchema = z.object({
   byteSize: z.number().int().nonnegative().describe('Uploaded activity file size in bytes'),
   queued: z.literal(true).describe('True when activity processing was submitted to the queue'),
 });
 
-export class FitUploadResponseDto extends createZodDto(FitUploadResponseSchema) {}
+export type FitUploadResponseDto = z.output<typeof FitUploadResponseSchema>;
 
 export const LagomTakeoutUploadResponseSchema = z.object({
   byteSize: z.number().int().nonnegative().describe('Uploaded takeout size in bytes'),
@@ -14,7 +13,7 @@ export const LagomTakeoutUploadResponseSchema = z.object({
   importId: z.string().uuid().describe('Identifier used to poll import progress'),
 });
 
-export class LagomTakeoutUploadResponseDto extends createZodDto(LagomTakeoutUploadResponseSchema) {}
+export type LagomTakeoutUploadResponseDto = z.output<typeof LagomTakeoutUploadResponseSchema>;
 
 export const TakeoutImportStatusSchema = z.object({
   importId: z.string().uuid(),
@@ -26,4 +25,4 @@ export const TakeoutImportStatusSchema = z.object({
   error: z.string().nullable(),
 });
 
-export class TakeoutImportStatusDto extends createZodDto(TakeoutImportStatusSchema) {}
+export type TakeoutImportStatusDto = z.output<typeof TakeoutImportStatusSchema>;

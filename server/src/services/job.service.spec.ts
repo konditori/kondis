@@ -1,7 +1,7 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
 import { type EventRepository } from 'src/repositories/event.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
@@ -52,17 +52,13 @@ describe('JobService', () => {
   const setup = () =>
     newTestService(
       JobService,
-      [
-        jobRepository,
-        { emit } as unknown as EventRepository,
-        new ConsoleLogger({ logLevels: [] }),
-      ],
+      [jobRepository, { emit } as unknown as EventRepository, new ConsoleLogger({ logLevels: [] })],
       { jobRepository },
     );
 
   const makeService = () => setup().sut;
 
-  const captureRunner = async (): Promise<(item: JobItem) => Promise<JobStatus>> => {
+  const captureRunner = (): ((item: JobItem) => Promise<JobStatus>) => {
     const service = makeService() as unknown as {
       onJobRun: (item: JobItem) => Promise<JobStatus>;
     };
@@ -77,14 +73,19 @@ describe('JobService', () => {
 
   describe('init', () => {
     it('does not consume jobs in the API process', async () => {
-      await makeService().init();
+      await makeService().init(false);
       expect(startWorkers).not.toHaveBeenCalled();
+    });
+
+    it('starts workers when job consumption is enabled', async () => {
+      await makeService().init(true);
+      expect(startWorkers).toHaveBeenCalledOnce();
     });
   });
 
   describe('running a job', () => {
     it('rethrows an unexpected error so the queue can retry it', async () => {
-      const runner = await captureRunner();
+      const runner = captureRunner();
       run.mockRejectedValue(new Error('connection reset'));
 
       // Swallowing here would mark the job complete and lose the work silently.
@@ -92,7 +93,7 @@ describe('JobService', () => {
     });
 
     it('does not rethrow when a handler reports an expected failure', async () => {
-      const runner = await captureRunner();
+      const runner = captureRunner();
       run.mockResolvedValue(JobStatus.Failed);
 
       // JobStatus.Failed means "retrying cannot help", so the job is settled rather than retried.
@@ -100,7 +101,7 @@ describe('JobService', () => {
     });
 
     it('passes the job straight through to the repository', async () => {
-      const runner = await captureRunner();
+      const runner = captureRunner();
       const item: JobItem = { name: JobName.ActivityParse, data: { id: 'abc' } };
 
       await runner(item);

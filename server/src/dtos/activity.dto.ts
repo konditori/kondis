@@ -1,9 +1,8 @@
-import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import { z } from '@hono/zod-openapi';
 
+import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, BEST_EFFORT_TYPES } from 'src/constants';
 import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
 import { SocialUserSchema } from 'src/dtos/social.dto';
-import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, BEST_EFFORT_TYPES } from 'src/constants';
 import { AverageMetric, BestEffortGroup } from 'src/types';
 
 export const ActivityTypeSchema = z
@@ -205,6 +204,14 @@ export const MatchedRouteListResponseSchema = z.object({
   activities: z.array(ActivitySchema).nullable(),
 });
 
+export const ActivityTagListResponseSchema = z.array(
+  z.object({
+    tag: ActivityTagSchema,
+    label: z.string(),
+    sports: z.union([z.literal('all'), z.array(ActivityTypeSchema)]),
+  }),
+);
+
 export const ActivityUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).nullable().optional().describe('Display name for the activity'),
@@ -218,22 +225,14 @@ export const ActivityUpdateSchema = z
     message: 'At least one field is required',
   });
 
-export class ActivityIdParamDto extends createZodDto(ActivityIdParamSchema) {}
-export class ActivityListQueryDto extends createZodDto(ActivityListQuerySchema) {}
-export class ActivityDto extends createZodDto(ActivitySchema) {}
-export class ActivityDetailDto extends createZodDto(ActivityDetailSchema) {}
-export class MatchedRouteListResponseDto extends createZodDto(MatchedRouteListResponseSchema) {}
-export class ActivityListResponseDto extends createZodDto(ActivityListResponseSchema) {}
-export class ActivityTypeListResponseDto extends createZodDto(ActivityTypeListResponseSchema) {}
-export class ActivityTagListResponseDto extends createZodDto(
-  z.array(
-    z.object({
-      tag: ActivityTagSchema,
-      label: z.string(),
-      sports: z.union([z.literal('all'), z.array(ActivityTypeSchema)]),
-    }),
-  ),
-) {}
-export class BestEffortListParamDto extends createZodDto(BestEffortListParamSchema) {}
-export class BestEffortListResponseDto extends createZodDto(BestEffortListResponseSchema) {}
-export class ActivityUpdateDto extends createZodDto(ActivityUpdateSchema) {}
+export type ActivityIdParamDto = z.output<typeof ActivityIdParamSchema>;
+export type ActivityListQueryDto = z.output<typeof ActivityListQuerySchema>;
+export type ActivityDto = z.output<typeof ActivitySchema>;
+export type ActivityDetailDto = z.output<typeof ActivityDetailSchema>;
+export type MatchedRouteListResponseDto = z.output<typeof MatchedRouteListResponseSchema>;
+export type ActivityListResponseDto = z.output<typeof ActivityListResponseSchema>;
+export type ActivityTypeListResponseDto = z.output<typeof ActivityTypeListResponseSchema>;
+export type ActivityTagListResponseDto = z.output<typeof ActivityTagListResponseSchema>;
+export type BestEffortListParamDto = z.output<typeof BestEffortListParamSchema>;
+export type BestEffortListResponseDto = z.output<typeof BestEffortListResponseSchema>;
+export type ActivityUpdateDto = z.output<typeof ActivityUpdateSchema>;

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { ConsoleLogger } from '@nestjs/common';
 import { QueueCommand, QueueName } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
 import type { JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 
@@ -15,7 +15,7 @@ const makeJobService = () => {
     pause: (queue: QueueName) => void paused.add(queue),
     resume: (queue: QueueName) => void paused.delete(queue),
   } as unknown as JobRepository;
-  const events = { emit: async () => undefined } as never;
+  const events = { emit: () => {} } as never;
   return {
     sut: new JobService(jobs, events, new ConsoleLogger()),
   };

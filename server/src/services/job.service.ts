@@ -1,9 +1,8 @@
-import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
-import { isMainThread } from 'node:worker_threads';
-
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
-import { EventRepository } from 'src/repositories/event.repository';
-import { JobRepository } from 'src/repositories/job.repository';
+import { BadRequestException } from 'src/errors';
+import { ConsoleLogger } from 'src/logger';
+import type { QueuePort } from 'src/ports/queue.port';
+import type { RealtimePort } from 'src/ports/realtime.port';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
 
@@ -19,18 +18,17 @@ const asJobItem = (name: ManualJobName): JobItem => {
   }
 };
 
-@Injectable()
 export class JobService {
   constructor(
-    private readonly jobRepository: JobRepository,
-    private readonly events: EventRepository,
+    private readonly jobRepository: QueuePort,
+    private readonly events: RealtimePort,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(JobService.name);
   }
 
-  async init(): Promise<void> {
-    if (isMainThread) {
+  async init(consumeJobs: boolean): Promise<void> {
+    if (!consumeJobs) {
       this.logger.log("Role 'worker' is disabled; not consuming jobs in this process");
       return;
     }
@@ -52,7 +50,9 @@ export class JobService {
     const queues = Object.values(QueueName);
     const counts = this.jobRepository.getAllJobCounts
       ? await this.jobRepository.getAllJobCounts()
-      : Object.fromEntries(await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])));
+      : Object.fromEntries(
+          await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])),
+        );
 
     return Object.fromEntries(
       queues.map((queue) => [

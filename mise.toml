@@ -183,9 +183,6 @@ run = [
   { task = ":open-api:typescript" },
 ]
 
-[tasks."third-party-licenses"]
-run = { task = "//server:third-party-licenses" }
-
 [tasks."i18n:check"]
 description = "Validate translation catalogs and user-visible strings"
 run = [

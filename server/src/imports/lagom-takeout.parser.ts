@@ -1,3 +1,4 @@
+import { open, stat } from 'node:fs/promises';
 import { basename, extname, posix } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 
@@ -73,7 +74,11 @@ export type LagomTakeoutContents = {
 class TakeoutLimitError extends Error {}
 
 export class LagomTakeoutParser {
-  private readonly assertSafeZipStructure = (contents: Buffer): void => {
+  private readonly assertSafeZipStructure = (
+    contents: Buffer,
+    sourceOffset = 0,
+    sourceSize = contents.length,
+  ): number => {
     const earliestOffset = Math.max(0, contents.length - END_OF_CENTRAL_DIRECTORY_BYTES - MAX_ZIP_COMMENT_BYTES);
     let offset = contents.length - END_OF_CENTRAL_DIRECTORY_BYTES;
 
@@ -83,7 +88,7 @@ export class LagomTakeoutParser {
       }
 
       const commentLength = contents.readUInt16LE(offset + 20);
-      if (offset + END_OF_CENTRAL_DIRECTORY_BYTES + commentLength === contents.length) {
+      if (sourceOffset + offset + END_OF_CENTRAL_DIRECTORY_BYTES + commentLength === sourceSize) {
         break;
       }
     }
@@ -112,9 +117,10 @@ export class LagomTakeoutParser {
     if (recordCount > UPLOAD_LIMITS.zipEntries) {
       throw new Error(`ZIP archive contains too many entries (maximum ${UPLOAD_LIMITS.zipEntries})`);
     }
-    if (centralDirectoryOffset + centralDirectoryBytes > offset) {
+    if (centralDirectoryOffset + centralDirectoryBytes > sourceOffset + offset) {
       throw new Error('ZIP archive has an invalid central directory range');
     }
+    return sourceOffset + offset;
   };
 
   private readonly normalizeArchivePath = (filename: string): string | undefined => {
@@ -179,7 +185,7 @@ export class LagomTakeoutParser {
     }
 
     try {
-      return Buffer.from(gunzipSync(contents, { maxOutputLength: UPLOAD_LIMITS.activityFileBytes }));
+      return gunzipSync(contents, { maxOutputLength: UPLOAD_LIMITS.activityFileBytes });
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE') {
         throw new TakeoutLimitError(`GZIP activity exceeded ${UPLOAD_LIMITS.activityFileBytes} expanded bytes`, {
@@ -210,17 +216,47 @@ export class LagomTakeoutParser {
   };
 
   public readonly extractLagomTakeout = async (
-    contents: Buffer,
+    source: Buffer | string,
     onActivity?: (activity: LagomTakeoutActivity) => Promise<void>,
   ): Promise<LagomTakeoutContents> => {
-    if (contents.length > UPLOAD_LIMITS.takeoutFileBytes) {
+    const sourceMetadata = typeof source === 'string' ? await stat(source) : undefined;
+    const sourceSize = sourceMetadata?.size ?? source.length;
+    if (sourceSize > UPLOAD_LIMITS.takeoutFileBytes) {
       throw new Error(`ZIP archive exceeds the ${UPLOAD_LIMITS.takeoutFileBytes}-byte upload limit`);
     }
 
     let directory: Awaited<ReturnType<typeof Open.buffer>>;
     try {
-      this.assertSafeZipStructure(contents);
-      directory = await Open.buffer(contents);
+      if (typeof source === 'string') {
+        const probeSize = Math.min(sourceSize, END_OF_CENTRAL_DIRECTORY_BYTES + MAX_ZIP_COMMENT_BYTES);
+        const tail = Buffer.allocUnsafe(probeSize);
+        const file = await open(source, 'r');
+        try {
+          const { bytesRead } = await file.read({ buffer: tail, position: sourceSize - probeSize });
+          if (bytesRead !== probeSize) {
+            throw new Error('ZIP archive changed while it was being opened');
+          }
+        } finally {
+          await file.close();
+        }
+        const endOfCentralDirectory = this.assertSafeZipStructure(tail, sourceSize - probeSize, sourceSize);
+        const tailSize = sourceSize - endOfCentralDirectory;
+        directory = await (
+          Open.file as unknown as (
+            path: string,
+            options: { tailSize: number },
+          ) => Promise<Awaited<ReturnType<typeof Open.buffer>>>
+        )(source, { tailSize });
+      } else {
+        const endOfCentralDirectory = this.assertSafeZipStructure(source);
+        const tailSize = source.length - endOfCentralDirectory;
+        directory = await (
+          Open.buffer as unknown as (
+            contents: Buffer,
+            options: { tailSize: number },
+          ) => Promise<Awaited<ReturnType<typeof Open.buffer>>>
+        )(source, { tailSize });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Could not open ZIP archive: ${message}`, { cause: error });

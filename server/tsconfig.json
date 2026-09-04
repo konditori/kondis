@@ -3,7 +3,6 @@
     "module": "nodenext",
     "removeComments": true,
     "moduleResolution": "node16",
-    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "es2024",

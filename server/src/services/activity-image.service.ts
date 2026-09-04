@@ -1,13 +1,7 @@
-import {
-  BadRequestException,
-  ConsoleLogger,
-  Injectable,
-  NotFoundException,
-  PayloadTooLargeException,
-} from '@nestjs/common';
 import { extname } from 'node:path';
 import sharp from 'sharp';
 
+import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import {
   IMAGE_MIME_TYPES,
   IMAGE_PREVIEW_SIZE,
@@ -15,11 +9,10 @@ import {
   IMAGE_SUPPORTED_FORMATS,
   IMAGE_THUMBNAIL_SIZE,
 } from 'src/constants';
-import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { KondisTransaction } from 'src/types';
 import { ActivityImage, ActivityImageFile } from 'src/db/schema';
-import { OnJob } from 'src/decorators';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+import { JobName, JobStatus } from 'src/enum';
+import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
+import { ConsoleLogger } from 'src/logger';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
@@ -27,10 +20,10 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
+import type { KondisTransaction } from 'src/types';
 import { JobOf } from 'src/types/jobs';
 import { BufferedUploadedFileData } from 'src/types/uploads';
 
-@Injectable()
 export class ActivityImageService {
   constructor(
     private readonly images: ActivityImageRepository,
@@ -207,10 +200,9 @@ export class ActivityImageService {
     if (!file) {
       throw new NotFoundException(`Image ${imageId} variant ${variant} is not ready`);
     }
-        return { ...file, absolutePath: this.storage.absolutePath(file.storage_path) };
+    return { ...file, absolutePath: this.storage.absolutePath(file.storage_path) };
   }
 
-  @OnJob({ name: JobName.ActivityImageIngest, queue: QueueName.ImageProcessing })
   async handleIngest({
     imageId,
     storagePath,
@@ -275,13 +267,11 @@ export class ActivityImageService {
     }
   }
 
-  @OnJob({ name: JobName.ActivityImageAttach, queue: QueueName.ImageProcessing })
   async handleAttach({ uploadId, images }: JobOf<JobName.ActivityImageAttach>): Promise<JobStatus> {
     await this.queueForUpload(uploadId, images);
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityImageGenerateThumbnails, queue: QueueName.ImageProcessing })
   async handleGenerateThumbnails({ id }: JobOf<JobName.ActivityImageGenerateThumbnails>): Promise<JobStatus> {
     const image = await this.images.getById(id);
     if (!image) {
@@ -344,7 +334,6 @@ export class ActivityImageService {
     }
   }
 
-  @OnJob({ name: JobName.ActivityImageGenerateQueueAll, queue: QueueName.BackgroundTask })
   async handleQueueAll({ force = false }: JobOf<JobName.ActivityImageGenerateQueueAll>): Promise<JobStatus> {
     const rows = await this.images.listForThumbnailGeneration(force);
     for (const row of rows) {

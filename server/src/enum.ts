@@ -47,7 +47,3 @@ export enum ManualJobName {
   ReparseFailedUploads = 'reparse-failed-uploads',
   ReparseAllUploads = 'reparse-all-uploads',
 }
-
-export enum MetadataKey {
-  JobConfig = 'kondis:job-config',
-}

@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import sharp from 'sharp';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { OnJob } from 'src/decorators';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+import { JobName, JobStatus } from 'src/enum';
+import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
+import type { StoragePort } from 'src/ports/storage.port';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { JobOf } from 'src/types/jobs';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
@@ -13,13 +12,28 @@ import type { BufferedUploadedFileData } from 'src/types/uploads';
 const AVATAR_SIZE = 512;
 const AVATAR_MIME_TYPE = 'image/webp';
 
-@Injectable()
 export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
-    private readonly storage: StorageRepository,
+    private readonly storage: StoragePort,
   ) {}
+
+  async updateProfile(userId: string, firstName: string, lastName: string) {
+    await this.users.setNameParts(userId, firstName, lastName);
+    const updated = await this.users.findById(userId);
+    if (!updated) {
+      throw new NotFoundException('User does not exist');
+    }
+    return {
+      id: updated.id,
+      email: updated.email,
+      firstName: updated.first_name,
+      lastName: updated.last_name,
+      role: updated.role,
+      avatarUrl: updated.avatar_path ? `/api/v1/users/${updated.id}/avatar` : null,
+    };
+  }
 
   async uploadAvatar(userId: string, file: BufferedUploadedFileData | undefined) {
     if (!file) {
@@ -50,7 +64,6 @@ export class UserService {
     return { avatarUrl: `/api/v1/users/${userId}/avatar` };
   }
 
-  @OnJob({ name: JobName.UserAvatarUpload, queue: QueueName.ImageProcessing })
   async handleAvatarUpload({ userId, storagePath }: JobOf<JobName.UserAvatarUpload>): Promise<JobStatus> {
     if (!(await this.users.findById(userId))) {
       return JobStatus.Skipped;

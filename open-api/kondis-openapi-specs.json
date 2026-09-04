@@ -1011,7 +1011,35 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Image variant",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Requested image byte range",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Image variant was not modified"
+          },
+          "404": {
+            "description": "Image variant does not exist"
+          },
+          "416": {
+            "description": "Requested byte range is not satisfiable"
           }
         },
         "summary": "Read an image variant",
@@ -1026,7 +1054,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Authentication capabilities supported by the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthCapabilitiesDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1040,7 +1075,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Initial setup and registration status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1050,9 +1092,26 @@
       "post": {
         "operationId": "AuthController_setup",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupCredentialsDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Administrator session created during initial setup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1064,9 +1123,26 @@
       "post": {
         "operationId": "AuthController_verifySetupToken",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupTokenCredentialsDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Short-lived initial setup ticket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupTicketDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1078,9 +1154,26 @@
       "post": {
         "operationId": "AuthController_validateSetupTicket",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupTicketCredentialsDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Setup ticket validation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupValidationDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1092,9 +1185,26 @@
       "post": {
         "operationId": "AuthController_login",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialsDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Authenticated session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1106,9 +1216,26 @@
       "post": {
         "operationId": "AuthController_register",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationCredentialsDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Registered user session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1122,7 +1249,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Current authenticated account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto_Output"
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1188,6 +1322,16 @@
       "post": {
         "operationId": "UserController_create",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreateDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": ""
@@ -1202,6 +1346,16 @@
       "patch": {
         "operationId": "UserController_updateMe",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": ""
@@ -1272,7 +1426,35 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Profile picture",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Requested profile picture byte range",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Profile picture was not modified"
+          },
+          "404": {
+            "description": "Profile picture does not exist"
+          },
+          "416": {
+            "description": "Requested byte range is not satisfiable"
           }
         },
         "tags": [
@@ -1286,7 +1468,7 @@
         "parameters": [
           {
             "name": "query",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
               "type": "string"
@@ -1788,10 +1970,12 @@
         "parameters": [
           {
             "name": "limit",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
-              "type": "string"
+              "minimum": 1,
+              "maximum": 50,
+              "type": "integer"
             }
           }
         ],
@@ -1847,7 +2031,7 @@
           },
           {
             "name": "cursor",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
               "type": "string"
@@ -1855,10 +2039,12 @@
           },
           {
             "name": "limit",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
-              "type": "string"
+              "minimum": 1,
+              "maximum": 50,
+              "type": "integer"
             }
           }
         ],
@@ -2114,10 +2300,8 @@
             "maximum": 9007199254740991
           },
           "error": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -2346,10 +2530,8 @@
                   "minimum": 0
                 },
                 "error": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 }
               },
               "required": [
@@ -2552,18 +2734,12 @@
             "route": {
               "type": "array",
               "items": {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "number"
-                  }
-                ],
-                "items": false,
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
               }
             }
           },
@@ -2726,18 +2902,12 @@
           "route": {
             "type": "array",
             "items": {
-              "type": "array",
-              "prefixItems": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "number"
-                }
-              ],
-              "items": false,
               "minItems": 2,
-              "maxItems": 2
+              "maxItems": 2,
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
             }
           }
         },
@@ -2788,10 +2958,8 @@
                   "maximum": 180
                 },
                 "altitude": {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
+                  "type": "number",
+                  "nullable": true
                 },
                 "accuracyMeters": {
                   "type": "number",
@@ -2920,39 +3088,29 @@
             "nullable": true
           },
           "distance": {
+            "type": "number",
             "description": "Distance in meters",
-            "type": [
-              "number",
-              "null"
-            ]
+            "nullable": true
           },
           "elevationGain": {
+            "type": "number",
             "description": "Total elevation gain in meters",
-            "type": [
-              "number",
-              "null"
-            ]
+            "nullable": true
           },
           "elevationLoss": {
+            "type": "number",
             "description": "Total elevation loss in meters",
-            "type": [
-              "number",
-              "null"
-            ]
+            "nullable": true
           },
           "avgSpeed": {
+            "type": "number",
             "description": "Average speed in meters per second",
-            "type": [
-              "number",
-              "null"
-            ]
+            "nullable": true
           },
           "maxSpeed": {
+            "type": "number",
             "description": "Peak speed in meters per second",
-            "type": [
-              "number",
-              "null"
-            ]
+            "nullable": true
           },
           "avgHr": {
             "type": "integer",
@@ -3121,10 +3279,8 @@
                       "type": "string"
                     },
                     "avatarUrl": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -3153,17 +3309,13 @@
                 },
                 "name": {
                   "description": "Activity name",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "description": {
                   "description": "Activity description",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "excludeFromRankings": {
                   "type": "boolean",
@@ -3263,18 +3415,12 @@
                     "coordinates": {
                       "type": "array",
                       "items": {
-                        "type": "array",
-                        "prefixItems": [
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "number"
-                          }
-                        ],
-                        "items": false,
                         "minItems": 2,
-                        "maxItems": 2
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
                       }
                     }
                   },
@@ -3297,10 +3443,8 @@
                         "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                       },
                       "caption": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
+                        "type": "string",
+                        "nullable": true
                       },
                       "sortOrder": {
                         "type": "integer",
@@ -3309,15 +3453,17 @@
                       },
                       "width": {
                         "type": "integer",
-                        "exclusiveMinimum": 0,
+                        "exclusiveMinimum": true,
                         "maximum": 9007199254740991,
-                        "nullable": true
+                        "nullable": true,
+                        "minimum": 0
                       },
                       "height": {
                         "type": "integer",
-                        "exclusiveMinimum": 0,
+                        "exclusiveMinimum": true,
                         "maximum": 9007199254740991,
-                        "nullable": true
+                        "nullable": true,
+                        "minimum": 0
                       },
                       "status": {
                         "type": "string",
@@ -3328,22 +3474,16 @@
                         ]
                       },
                       "thumbnail": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
+                        "type": "string",
+                        "nullable": true
                       },
                       "preview": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
+                        "type": "string",
+                        "nullable": true
                       },
                       "original": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
+                        "type": "string",
+                        "nullable": true
                       }
                     },
                     "required": [
@@ -3383,11 +3523,9 @@
             }
           },
           "nextCursor": {
+            "type": "string",
             "description": "Cursor for the next page, or null at the end",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "nullable": true
           },
           "total": {
             "type": "integer",
@@ -3513,15 +3651,17 @@
           },
           "distance": {
             "type": "number",
-            "exclusiveMinimum": 0,
+            "exclusiveMinimum": true,
             "description": "Selected distance in meters, when applicable",
-            "nullable": true
+            "nullable": true,
+            "minimum": 0
           },
           "duration": {
             "type": "number",
-            "exclusiveMinimum": 0,
+            "exclusiveMinimum": true,
             "description": "Selected duration in seconds, when applicable",
-            "nullable": true
+            "nullable": true,
+            "minimum": 0
           },
           "options": {
             "type": "array",
@@ -3553,10 +3693,8 @@
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
                 "activityName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "sport": {
                   "$ref": "#/components/schemas/ActivityType_Output"
@@ -3662,10 +3800,8 @@
                 "type": "string"
               },
               "avatarUrl": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -3693,18 +3829,14 @@
             "$ref": "#/components/schemas/ActivityType_Output"
           },
           "name": {
+            "type": "string",
             "description": "Activity name",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "nullable": true
           },
           "description": {
+            "type": "string",
             "description": "Activity description",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "nullable": true
           },
           "excludeFromRankings": {
             "type": "boolean",
@@ -3762,10 +3894,8 @@
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
                 "caption": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "sortOrder": {
                   "type": "integer",
@@ -3774,15 +3904,17 @@
                 },
                 "width": {
                   "type": "integer",
-                  "exclusiveMinimum": 0,
+                  "exclusiveMinimum": true,
                   "maximum": 9007199254740991,
-                  "nullable": true
+                  "nullable": true,
+                  "minimum": 0
                 },
                 "height": {
                   "type": "integer",
-                  "exclusiveMinimum": 0,
+                  "exclusiveMinimum": true,
                   "maximum": 9007199254740991,
-                  "nullable": true
+                  "nullable": true,
+                  "minimum": 0
                 },
                 "status": {
                   "type": "string",
@@ -3793,22 +3925,16 @@
                   ]
                 },
                 "thumbnail": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "preview": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "original": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 }
               },
               "required": [
@@ -3837,18 +3963,12 @@
               "coordinates": {
                 "type": "array",
                 "items": {
-                  "type": "array",
-                  "prefixItems": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "number"
-                    }
-                  ],
-                  "items": false,
                   "minItems": 2,
-                  "maxItems": 2
+                  "maxItems": 2,
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
                 }
               }
             },
@@ -3893,17 +4013,16 @@
                     },
                     "avgHr": {
                       "type": "integer",
-                      "exclusiveMinimum": 0,
+                      "exclusiveMinimum": true,
                       "maximum": 9007199254740991,
                       "description": "Average heart rate during the split",
-                      "nullable": true
+                      "nullable": true,
+                      "minimum": 0
                     },
                     "elevationChange": {
+                      "type": "number",
                       "description": "Net elevation change during the split in meters",
-                      "type": [
-                        "number",
-                        "null"
-                      ]
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -3936,9 +4055,10 @@
                     },
                     "heartRate": {
                       "type": "integer",
-                      "exclusiveMinimum": 0,
+                      "exclusiveMinimum": true,
                       "maximum": 9007199254740991,
-                      "nullable": true
+                      "nullable": true,
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -3961,18 +4081,12 @@
                       "minimum": 0
                     },
                     "coordinate": {
-                      "type": "array",
-                      "prefixItems": [
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "number"
-                        }
-                      ],
-                      "items": false,
                       "minItems": 2,
-                      "maxItems": 2
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
                     }
                   },
                   "required": [
@@ -4031,17 +4145,16 @@
                 },
                 "avgHr": {
                   "type": "integer",
-                  "exclusiveMinimum": 0,
+                  "exclusiveMinimum": true,
                   "maximum": 9007199254740991,
                   "description": "Average heart rate during the effort",
-                  "nullable": true
+                  "nullable": true,
+                  "minimum": 0
                 },
                 "elevationChange": {
+                  "type": "number",
                   "description": "Net elevation change during the effort in meters",
-                  "type": [
-                    "number",
-                    "null"
-                  ]
+                  "nullable": true
                 },
                 "overallRank": {
                   "type": "integer",
@@ -4161,10 +4274,8 @@
                       "type": "string"
                     },
                     "avatarUrl": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -4193,17 +4304,13 @@
                 },
                 "name": {
                   "description": "Activity name",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "description": {
                   "description": "Activity description",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "excludeFromRankings": {
                   "type": "boolean",
@@ -4369,10 +4476,8 @@
                 "type": "string"
               },
               "avatarUrl": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -4400,18 +4505,14 @@
             "$ref": "#/components/schemas/ActivityType_Output"
           },
           "name": {
+            "type": "string",
             "description": "Activity name",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "nullable": true
           },
           "description": {
+            "type": "string",
             "description": "Activity description",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "nullable": true
           },
           "excludeFromRankings": {
             "type": "boolean",
@@ -4484,10 +4585,8 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "caption": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string",
+            "nullable": true
           },
           "sortOrder": {
             "type": "integer",
@@ -4496,15 +4595,17 @@
           },
           "width": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "exclusiveMinimum": true,
             "maximum": 9007199254740991,
-            "nullable": true
+            "nullable": true,
+            "minimum": 0
           },
           "height": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "exclusiveMinimum": true,
             "maximum": 9007199254740991,
-            "nullable": true
+            "nullable": true,
+            "minimum": 0
           },
           "status": {
             "type": "string",
@@ -4515,22 +4616,16 @@
             ]
           },
           "thumbnail": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string",
+            "nullable": true
           },
           "preview": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string",
+            "nullable": true
           },
           "original": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -4557,10 +4652,8 @@
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
             "caption": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string",
+              "nullable": true
             },
             "sortOrder": {
               "type": "integer",
@@ -4569,15 +4662,17 @@
             },
             "width": {
               "type": "integer",
-              "exclusiveMinimum": 0,
+              "exclusiveMinimum": true,
               "maximum": 9007199254740991,
-              "nullable": true
+              "nullable": true,
+              "minimum": 0
             },
             "height": {
               "type": "integer",
-              "exclusiveMinimum": 0,
+              "exclusiveMinimum": true,
               "maximum": 9007199254740991,
-              "nullable": true
+              "nullable": true,
+              "minimum": 0
             },
             "status": {
               "type": "string",
@@ -4588,22 +4683,16 @@
               ]
             },
             "thumbnail": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string",
+              "nullable": true
             },
             "preview": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string",
+              "nullable": true
             },
             "original": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string",
+              "nullable": true
             }
           },
           "required": [
@@ -4634,6 +4723,168 @@
             "maximum": 9007199254740991
           }
         }
+      },
+      "AuthCapabilitiesDto_Output": {
+        "type": "object",
+        "properties": {
+          "direct": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "direct"
+        ],
+        "additionalProperties": false
+      },
+      "SetupStatusDto_Output": {
+        "type": "object",
+        "properties": {
+          "setupRequired": {
+            "type": "boolean"
+          },
+          "registrationEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "setupRequired",
+          "registrationEnabled"
+        ],
+        "additionalProperties": false
+      },
+      "SetupTicketDto_Output": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 20
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "SetupValidationDto_Output": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "valid"
+        ],
+        "additionalProperties": false
+      },
+      "AuthSessionDto_Output": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "setup": {
+            "type": "boolean"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "admin",
+                  "user"
+                ]
+              },
+              "avatarUrl": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "firstName",
+              "lastName",
+              "role",
+              "avatarUrl"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "accessToken",
+          "setup",
+          "user"
+        ],
+        "additionalProperties": false
+      },
+      "AuthUserDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "user"
+            ]
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "firstName",
+          "lastName",
+          "role",
+          "avatarUrl"
+        ],
+        "additionalProperties": false
       },
       "ActivityEventsTicketDto_Output": {
         "type": "object",
@@ -4674,10 +4925,8 @@
                   "type": "string"
                 },
                 "avatarUrl": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 }
               },
               "required": [
@@ -4742,10 +4991,8 @@
                 "type": "string"
               },
               "avatarUrl": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -4821,10 +5068,8 @@
                   "type": "string"
                 },
                 "avatarUrl": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 }
               },
               "required": [
@@ -4879,10 +5124,8 @@
               "type": "string"
             },
             "avatarUrl": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string",
+              "nullable": true
             }
           },
           "required": [
@@ -4935,10 +5178,8 @@
                       "type": "string"
                     },
                     "avatarUrl": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -4956,10 +5197,8 @@
                   "nullable": true
                 },
                 "activityName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string",
+                  "nullable": true
                 },
                 "readAt": {
                   "type": "string",
@@ -5045,10 +5284,8 @@
                       "type": "string"
                     },
                     "avatarUrl": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -5071,10 +5308,8 @@
             }
           },
           "nextCursor": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -5132,10 +5367,8 @@
                 "type": "string"
               },
               "avatarUrl": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -5229,6 +5462,150 @@
           "power_45m",
           "power_1h",
           "power_2h"
+        ]
+      },
+      "SetupCredentialsDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "setupTicket": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "setupTicket"
+        ]
+      },
+      "SetupTokenCredentialsDto": {
+        "type": "object",
+        "properties": {
+          "setupToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "setupToken"
+        ]
+      },
+      "SetupTicketCredentialsDto": {
+        "type": "object",
+        "properties": {
+          "setupTicket": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "setupTicket"
+        ]
+      },
+      "CredentialsDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RegistrationCredentialsDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "firstName",
+          "lastName",
+          "password"
+        ]
+      },
+      "UserCreateDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "default": "user"
+          }
+        },
+        "required": [
+          "email",
+          "firstName",
+          "lastName",
+          "password"
+        ]
+      },
+      "UserUpdateDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName"
         ]
       }
     }

@@ -1,5 +1,4 @@
-import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import { z } from '@hono/zod-openapi';
 
 export const SocialUserSchema = z.object({
   id: z.uuid(),
@@ -26,6 +25,7 @@ export const RelationSchema = z.object({
 });
 
 export const PersonSchema = z.object({ user: SocialUserSchema, relation: RelationSchema });
+export const PeopleListSchema = z.array(PersonSchema);
 
 export const RequestSchema = z.object({
   id: z.uuid(),
@@ -34,6 +34,8 @@ export const RequestSchema = z.object({
 });
 
 export const RequestDirectionSchema = z.enum(['incoming', 'outgoing']).default('incoming');
+export const RequestDirectionQuerySchema = z.object({ direction: RequestDirectionSchema });
+export const RequestListSchema = z.array(RequestSchema);
 
 export const CommentSchema = z.object({
   id: z.uuid(),
@@ -70,28 +72,16 @@ export const NotificationListSchema = z.object({
 
 export const NotificationsReadSchema = z.object({ markedRead: z.boolean() });
 
-export class PersonDto extends createZodDto(PersonSchema) {}
-
-export class PeopleListDto extends createZodDto(z.array(PersonSchema)) {}
-
-export class RequestDto extends createZodDto(RequestSchema) {}
-
-export class RequestListDto extends createZodDto(z.array(RequestSchema)) {}
-
-export class RequestDirectionDto extends createZodDto(z.object({ direction: RequestDirectionSchema })) {}
-
-export class CommentDto extends createZodDto(CommentSchema) {}
-
-export class CommentListDto extends createZodDto(CommentListSchema) {}
-
-export class CommentCreateDto extends createZodDto(CommentCreateSchema) {}
-
-export class CommentUpdateDto extends createZodDto(CommentUpdateSchema) {}
-
-export class LikeStateDto extends createZodDto(LikeStateSchema) {}
-
-export class LikerListDto extends createZodDto(LikerListSchema) {}
-
-export class NotificationListDto extends createZodDto(NotificationListSchema) {}
-
-export class NotificationsReadDto extends createZodDto(NotificationsReadSchema) {}
+export type PersonDto = z.output<typeof PersonSchema>;
+export type PeopleListDto = z.output<typeof PeopleListSchema>;
+export type RequestDto = z.output<typeof RequestSchema>;
+export type RequestListDto = z.output<typeof RequestListSchema>;
+export type RequestDirectionDto = z.output<typeof RequestDirectionQuerySchema>;
+export type CommentDto = z.output<typeof CommentSchema>;
+export type CommentListDto = z.output<typeof CommentListSchema>;
+export type CommentCreateDto = z.output<typeof CommentCreateSchema>;
+export type CommentUpdateDto = z.output<typeof CommentUpdateSchema>;
+export type LikeStateDto = z.output<typeof LikeStateSchema>;
+export type LikerListDto = z.output<typeof LikerListSchema>;
+export type NotificationListDto = z.output<typeof NotificationListSchema>;
+export type NotificationsReadDto = z.output<typeof NotificationsReadSchema>;

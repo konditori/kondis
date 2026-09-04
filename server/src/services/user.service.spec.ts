@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
 import { JobStatus } from 'src/enum';
+import { NotFoundException } from 'src/errors';
 import type { SocialRepository } from 'src/repositories/social.repository';
 import type { StorageRepository } from 'src/repositories/storage.repository';
 import type { UserRepository } from 'src/repositories/user.repository';

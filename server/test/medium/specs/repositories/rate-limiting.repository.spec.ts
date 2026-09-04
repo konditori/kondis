@@ -1,6 +1,6 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 
+import { HttpException, HttpStatus } from 'src/errors';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 
 describe(RateLimitingRepository.name, () => {

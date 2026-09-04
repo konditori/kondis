@@ -1,6 +1,3 @@
-import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
-import { isMainThread } from 'node:worker_threads';
-import { ModuleRef, Reflector } from '@nestjs/core';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
@@ -10,24 +7,33 @@ import {
   JOB_CONCURRENCY,
   JOB_CRON,
   JOB_EXPIRE_SECONDS,
+  JOB_RETENTION_SECONDS,
   JOB_RETRY_DELAY_SECONDS,
   JOB_RETRY_LIMIT,
-  JOB_RETENTION_SECONDS,
   JOB_SCHEMA,
 } from 'src/constants';
+import { JobName, JobStatus, QueueName } from 'src/enum';
+import { Logger } from 'src/logger';
 import { ConfigRepository } from 'src/repositories/config.repository';
-import { JobName, JobStatus, MetadataKey, QueueName } from 'src/enum';
-import type { JobConfig, KondisTransaction } from 'src/types';
+import type { KondisTransaction } from 'src/types';
 import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'src/types/jobs';
-import { KondisStartupError, asErrorMessage, getKeyByValue, getMethodNames } from 'src/utils/misc';
+import { KondisStartupError, asErrorMessage } from 'src/utils/misc';
 
 type StoredJob = { name: JobName; data?: object };
 
-type JobMapItem = {
-  jobName: JobName;
+export type JobHandlerDescriptor<T extends JobName = JobName> = {
+  jobName: T;
   queueName: QueueName;
-  handler: (data: never) => Promise<JobStatus>;
+  handler: (data: JobOf<T>) => Promise<JobStatus>;
   label: string;
+};
+
+export type AnyJobHandlerDescriptor = {
+  [T in JobName]: JobHandlerDescriptor<T>;
+}[JobName];
+
+type RegisteredJobHandler = Omit<JobHandlerDescriptor, 'handler'> & {
+  handler: (data: never) => Promise<JobStatus>;
 };
 
 type QueueJobOptions = {
@@ -78,10 +84,8 @@ const WORKER_BATCH_SIZE = 25;
 
 const deadLetterName = (queue: QueueName): string => `${queue}.deadLetter`;
 
-@Injectable()
-export class JobRepository implements OnApplicationShutdown {
-  private readonly logger = new Logger(JobRepository.name);
-  private readonly handlers: Partial<Record<JobName, JobMapItem>> = {};
+export class JobRepository {
+  private readonly handlers = new Map<JobName, RegisteredJobHandler>();
   private readonly pausedQueues = new Set<QueueName>();
 
   private bossPromise: Promise<PgBoss> | null = null;
@@ -89,53 +93,40 @@ export class JobRepository implements OnApplicationShutdown {
   private stopped = false;
 
   constructor(
-    private readonly moduleRef: ModuleRef,
-    private readonly reflector: Reflector,
     private readonly config: ConfigRepository,
+    private readonly consumeJobs: boolean,
+    private readonly logger: Pick<Logger, 'error' | 'log' | 'verbose' | 'warn'> = new Logger(JobRepository.name),
   ) {}
 
-  setup(services: (new (...args: never[]) => unknown)[]): void {
-    for (const Service of services) {
-      const instance = this.moduleRef.get<Record<string, unknown>>(Service, { strict: false });
+  setup(descriptors: readonly AnyJobHandlerDescriptor[]): void {
+    for (const descriptor of descriptors) {
+      const { jobName, label } = descriptor;
+      const existing = this.handlers.get(jobName);
 
-      for (const methodName of getMethodNames(instance)) {
-        const handler = instance[methodName] as ((data: never) => Promise<JobStatus>) | undefined;
-        if (typeof handler !== 'function') {
-          continue;
-        }
-
-        const config = this.reflector.get<JobConfig | undefined>(MetadataKey.JobConfig, handler);
-        if (!config) {
-          continue;
-        }
-
-        const { name: jobName, queue: queueName } = config;
-        const label = `${Service.name}.${methodName}`;
-        const existing = this.handlers[jobName];
-
-        if (existing) {
-          const jobKey = getKeyByValue(JobName, jobName);
-          throw new KondisStartupError(
-            `Failed to add job handler for ${label}. JobName.${jobKey} is already handled by ${existing.label}.`,
-          );
-        }
-
-        this.handlers[jobName] = { jobName, queueName, label, handler: handler.bind(instance) };
-        this.logger.verbose(`Added job handler: ${jobName} => ${label}`);
+      if (existing) {
+        throw new KondisStartupError(
+          `Failed to add job handler for ${label}. JobName.${jobName} is already handled by ${existing.label}.`,
+        );
       }
+
+      this.handlers.set(jobName, descriptor as RegisteredJobHandler);
+      this.logger.verbose(`Added job handler: ${jobName} => ${label}`);
     }
 
     for (const [jobKey, jobName] of Object.entries(JobName)) {
-      if (!this.handlers[jobName]) {
+      if (!this.handlers.has(jobName)) {
         throw new KondisStartupError(
           `Failed to find a job handler for JobName.${jobKey} ("${jobName}"). ` +
-            `Add @OnJob({ name: JobName.${jobKey}, queue: QueueName.XYZ }) to a method on a class listed in src/services/index.ts.`,
+            `Register an explicit JobName.${jobKey} handler descriptor before calling JobRepository.setup.`,
         );
       }
     }
   }
 
   async startWorkers(onJobRun: (item: JobItem) => Promise<JobStatus>): Promise<void> {
+    if (!this.consumeJobs) {
+      throw new Error('Job consumption is disabled for this application role');
+    }
     this.onJobRun = onJobRun;
 
     const boss = await this.getBoss();
@@ -147,7 +138,7 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   run<T extends JobName>({ name, data }: JobItem): Promise<JobStatus> {
-    const item = this.handlers[name];
+    const item = this.handlers.get(name);
     if (!item) {
       this.logger.warn(`Skipping unknown job: "${name}"`);
       return Promise.resolve(JobStatus.Skipped);
@@ -396,12 +387,15 @@ export class JobRepository implements OnApplicationShutdown {
     }
   }
 
-  async onApplicationShutdown(): Promise<void> {
-    if (!this.bossPromise || this.stopped) {
+  async stop(): Promise<void> {
+    if (this.stopped) {
       return;
     }
 
     this.stopped = true;
+    if (!this.bossPromise) {
+      return;
+    }
     this.logger.log('Stopping job workers');
 
     try {
@@ -446,7 +440,7 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   private getQueueName(name: JobName): QueueName {
-    const item = this.handlers[name];
+    const item = this.handlers.get(name);
     if (!item) {
       throw new Error(`No handler registered for job "${name}"; was JobRepository.setup called?`);
     }
@@ -529,6 +523,9 @@ export class JobRepository implements OnApplicationShutdown {
   }
 
   private getBoss(): Promise<PgBoss> {
+    if (this.stopped) {
+      return Promise.reject(new Error('Job repository is stopped'));
+    }
     this.bossPromise ??= this.createBoss().catch((error: unknown) => {
       this.bossPromise = null;
       throw error;
@@ -539,7 +536,6 @@ export class JobRepository implements OnApplicationShutdown {
 
   private async createBoss(): Promise<PgBoss> {
     const { database } = this.config;
-    const consuming = !isMainThread;
     const totalConcurrency = Object.values(JOB_CONCURRENCY).reduce((sum, value) => sum + value, 0);
 
     const boss = new PgBoss({
@@ -549,13 +545,13 @@ export class JobRepository implements OnApplicationShutdown {
       password: database.password,
       database: database.database,
       application_name: 'kondis-jobs',
-      max: consuming ? totalConcurrency + 4 : 2,
+      max: this.consumeJobs ? totalConcurrency + 4 : 2,
       schema: JOB_SCHEMA,
       createSchema: true,
       migrate: true,
-      supervise: consuming,
-      schedule: consuming && JOB_CRON,
-      useListenNotify: consuming,
+      supervise: this.consumeJobs,
+      schedule: this.consumeJobs && JOB_CRON,
+      useListenNotify: this.consumeJobs,
     });
 
     boss.on('error', (error) => this.logger.error(`Queue error: ${asErrorMessage(error)}`));
@@ -564,7 +560,7 @@ export class JobRepository implements OnApplicationShutdown {
     await boss.start();
     await this.createQueues(boss);
 
-    this.logger.log(`Connected to job schema "${JOB_SCHEMA}" (consuming=${consuming})`);
+    this.logger.log(`Connected to job schema "${JOB_SCHEMA}" (consuming=${this.consumeJobs})`);
 
     return boss;
   }

@@ -1,9 +1,9 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { setTimeout as delay } from 'node:timers/promises';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JobName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
+import { ConsoleLogger } from 'src/logger';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import type { DatabaseRepository } from 'src/repositories/database.repository';
 import type { JobRepository } from 'src/repositories/job.repository';

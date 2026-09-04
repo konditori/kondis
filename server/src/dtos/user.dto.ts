@@ -1,5 +1,4 @@
-import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import { z } from '@hono/zod-openapi';
 
 export const NewUserInputSchema = z.object({
   email: z.string().email(),
@@ -11,4 +10,4 @@ export const NewUserInputSchema = z.object({
 
 export type NewUserInput = z.infer<typeof NewUserInputSchema>;
 
-export class NewUserInputDto extends createZodDto(NewUserInputSchema) {}
+export type NewUserInputDto = z.output<typeof NewUserInputSchema>;

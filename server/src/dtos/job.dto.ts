@@ -1,5 +1,4 @@
-import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import { z } from '@hono/zod-openapi';
 
 import { ManualJobName, QueueCommand, QueueName } from 'src/enum';
 
@@ -65,10 +64,10 @@ export const QueueCommandSchema = z.object({
 
 export const QueueNameParamSchema = z.object({ name: QueueNameSchema });
 
-export class QueueStatusReportDto extends createZodDto(QueueStatusReportSchema) {}
-export class AllJobStatusResponseDto extends createZodDto(AllJobStatusResponseSchema) {}
-export class JobHistoryResponseDto extends createZodDto(JobHistoryResponseSchema) {}
-export class JobHistoryQueryDto extends createZodDto(JobHistoryQuerySchema) {}
-export class JobCreateDto extends createZodDto(JobCreateSchema) {}
-export class QueueCommandDto extends createZodDto(QueueCommandSchema) {}
-export class QueueNameParamDto extends createZodDto(QueueNameParamSchema) {}
+export type QueueStatusReportDto = z.output<typeof QueueStatusReportSchema>;
+export type AllJobStatusResponseDto = z.output<typeof AllJobStatusResponseSchema>;
+export type JobHistoryResponseDto = z.output<typeof JobHistoryResponseSchema>;
+export type JobHistoryQueryDto = z.output<typeof JobHistoryQuerySchema>;
+export type JobCreateDto = z.output<typeof JobCreateSchema>;
+export type QueueCommandDto = z.output<typeof QueueCommandSchema>;
+export type QueueNameParamDto = z.output<typeof QueueNameParamSchema>;

@@ -1,18 +1,16 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
+import { Logger } from 'src/logger';
 import type { ConfigRepository } from 'src/repositories/config.repository';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { newTestService } from 'test/utils';
+
+const setupToken = (sut: AuthService): string => (sut as unknown as { setupToken: string }).setupToken;
 
 describe(AuthService.name, () => {
   const findByEmail = vi.fn();
@@ -24,9 +22,11 @@ describe(AuthService.name, () => {
   const config = {
     registrationEnabled: false,
   } as ConfigRepository;
-  const setup = () => newTestService(AuthService, [users, config, new RateLimitingRepository()], { users, config });
-  const setupToken = (sut: AuthService): string => (sut as unknown as { setupToken: string }).setupToken;
-
+  const setup = () =>
+    newTestService(AuthService, [users, config, new RateLimitingRepository(), new CryptoRepository()], {
+      users,
+      config,
+    });
   beforeEach(() => {
     vi.clearAllMocks();
     count.mockResolvedValue({ count: 0 });

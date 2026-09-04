@@ -30,7 +30,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 ## Planned features (subject to change)
 * MCP server
 * iOS and Apple Watch support
-* Listen address is hardcoded 0.0.0.0, make configurable
+* Scoped API keys
 * Demo site linked from github
 * Audio coach with TTS during activities
 * Audio coach with ETA if following known route
@@ -43,6 +43,8 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Peptalk during live runs, with TTS
 * Auto-pause workouts
 * Power curves and other detailed stats
+* Warn user about bad GPS recordings i.e. large jumps in tracks etc.
+* Use weblate for translations (need to wait a few more weeks to be accepted)
 
 ## Development
 Please see the [developer documentation site](https://developers.kondis.org/).
@@ -51,6 +53,3 @@ There is a separate [api reference site](https://developers.kondis.org/).
 
 ## License
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).
-
-Bundled third-party dependencies and their notices are listed in
-[THIRD-PARTY-LICENSES.md](./THIRD-PARTY-LICENSES.md).

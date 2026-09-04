@@ -1,6 +1,6 @@
-import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
+import { ConsoleLogger } from 'src/logger';
 import type {
   FitLapMesg,
   FitMessages,
@@ -21,7 +21,6 @@ export class GpxDecodeError extends Error {
   }
 }
 
-@Injectable()
 export class GpxRepository {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,

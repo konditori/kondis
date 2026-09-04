@@ -1,6 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { NotFoundException } from 'src/errors';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { type LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutService } from 'src/services/live-workout.service';
 import { newTestService } from 'test/utils';
@@ -45,7 +46,7 @@ describe(LiveWorkoutService.name, () => {
     setShareToken,
     listPoints,
   } as unknown as LiveWorkoutRepository;
-  const setup = () => newTestService(LiveWorkoutService, [repository], { repository });
+  const setup = () => newTestService(LiveWorkoutService, [repository, new CryptoRepository()], { repository });
 
   beforeEach(() => {
     vi.clearAllMocks();

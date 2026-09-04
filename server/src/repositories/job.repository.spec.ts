@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import { JobName, JobStatus, QueueName } from 'src/enum';
 import { ConfigRepository } from 'src/repositories/config.repository';
-import { JobName } from 'src/enum';
-import { JobRepository } from 'src/repositories/job.repository';
+import { AnyJobHandlerDescriptor, JobRepository } from 'src/repositories/job.repository';
 import type { JobItem } from 'src/types/jobs';
 
 type JobOptionsAccessor = {
@@ -10,14 +10,39 @@ type JobOptionsAccessor = {
 };
 
 const getJobOptions = (item: JobItem) => {
-  const repository = new JobRepository(
-    {} as ConstructorParameters<typeof JobRepository>[0],
-    {} as ConstructorParameters<typeof JobRepository>[1],
-    {} as ConfigRepository,
-  );
+  const repository = new JobRepository({} as ConfigRepository, false);
 
   return (repository as unknown as JobOptionsAccessor).getJobOptions(item);
 };
+
+const makeHandlers = (): AnyJobHandlerDescriptor[] =>
+  Object.values(JobName).map((jobName) => ({
+    jobName,
+    queueName: QueueName.BackgroundTask,
+    handler: vi.fn(() => Promise.resolve(JobStatus.Success)),
+    label: `TestService.${jobName}`,
+  })) as AnyJobHandlerDescriptor[];
+
+describe('JobRepository handler registration', () => {
+  it('rejects duplicate handlers with useful labels', () => {
+    const repository = new JobRepository({} as ConfigRepository, false);
+    const handlers = makeHandlers();
+    repository.setup(handlers);
+
+    expect(() => repository.setup([{ ...handlers[0]!, label: 'DuplicateService.handle' }])).toThrow(
+      `Failed to add job handler for DuplicateService.handle. JobName.${handlers[0]!.jobName} is already handled by ${handlers[0]!.label}.`,
+    );
+  });
+
+  it('requires a handler for every JobName', () => {
+    const repository = new JobRepository({} as ConfigRepository, false);
+    const handlers = makeHandlers();
+
+    expect(() => repository.setup(handlers.slice(1))).toThrow(
+      `Failed to find a job handler for JobName.${handlers[0]!.jobName}`,
+    );
+  });
+});
 
 describe('JobRepository activity-upload deduplication', () => {
   it('uses the staged path when a disk-backed upload has no checksum', () => {

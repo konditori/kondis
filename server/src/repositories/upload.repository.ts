@@ -1,12 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-
-import { KYSELY } from 'src/db/database';
 import { NewUpload, Upload, UploadStatus } from 'src/db/schema';
 import type { KondisDatabase, KondisExecutor, ManualActivitySignature, UploadPageOptions } from 'src/types';
 
-@Injectable()
 export class UploadRepository {
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   create(upload: NewUpload, executor: KondisExecutor = this.db): Promise<Upload> {
     return executor.insertInto('upload').values(upload).returningAll().executeTakeFirstOrThrow();

@@ -1,14 +1,4 @@
 import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { compare, hash } from 'bcrypt';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
-import {
   AUTH_SECRET,
   createAccessToken,
   createActivityEventsTicket,
@@ -16,21 +6,26 @@ import {
   createSetupTicket,
   verifySetupTicket,
 } from 'src/auth';
-import { ConfigRepository } from 'src/repositories/config.repository';
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
+import { Logger } from 'src/logger';
+import type { ConfigPort } from 'src/ports/config.port';
+import type { CryptoPort } from 'src/ports/crypto.port';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
 const SETUP_TOKEN_RATE_LIMIT = { label: 'Setup token', maxAttempts: 5, windowMs: 60_000 } as const;
-@Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly setupToken = randomUUID();
+  private readonly setupToken: string;
 
   constructor(
     private readonly users: UserRepository,
-    private readonly config: ConfigRepository,
+    private readonly config: Pick<ConfigPort, 'registrationEnabled'>,
     private readonly rateLimitingRepository: RateLimitingRepository,
-  ) {}
+    private readonly crypto: CryptoPort,
+  ) {
+    this.setupToken = this.crypto.uuid();
+  }
   get registrationEnabled() {
     return this.config.registrationEnabled;
   }
@@ -85,7 +80,7 @@ Do not share this secret token with anyone.
       const account = this.normalizeAccount(email, firstName, lastName, password);
       const user = await this.users.createInitialAdmin({
         ...account,
-        password_hash: await hash(password, BCRYPT_WORK_FACTOR),
+        password_hash: await this.crypto.hashPassword(password, BCRYPT_WORK_FACTOR),
         role: 'admin',
       });
       if (!user) {
@@ -102,7 +97,7 @@ Do not share this secret token with anyone.
   }
   async login(email: string, password: string) {
     const user = await this.users.findByEmail(email.toLowerCase());
-    const isValid = user ? await compare(password, user.password_hash) : false;
+    const isValid = user ? await this.crypto.comparePassword(password, user.password_hash) : false;
     if (!user || !isValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -136,7 +131,7 @@ Do not share this secret token with anyone.
     }
     const user = await this.users.create({
       ...account,
-      password_hash: await hash(password, BCRYPT_WORK_FACTOR),
+      password_hash: await this.crypto.hashPassword(password, BCRYPT_WORK_FACTOR),
       role,
     });
     return user;
@@ -150,9 +145,7 @@ Do not share this secret token with anyone.
   }
 
   private matchesSetupToken(candidate: string): boolean {
-    const actual = Buffer.from(this.setupToken);
-    const supplied = Buffer.from(candidate);
-    return actual.length === supplied.length && timingSafeEqual(actual, supplied);
+    return this.crypto.safeEqual(this.setupToken, candidate);
   }
   private issue(
     user: { id: string; role: 'admin' | 'user'; email: string; first_name: string; last_name: string },

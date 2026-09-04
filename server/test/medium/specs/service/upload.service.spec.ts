@@ -1,15 +1,14 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type ConfigRepository } from 'src/repositories/config.repository';
-import type { KondisDatabase } from 'src/types';
 import { JobName, QueueName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
+import { ConsoleLogger } from 'src/logger';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { type ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { JobRepository } from 'src/repositories/job.repository';
@@ -18,6 +17,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { UploadService } from 'src/services/upload.service';
 import { ImportProgressStore } from 'src/state/import-progress.store';
+import type { KondisDatabase } from 'src/types';
 
 import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';

@@ -1,9 +1,9 @@
-import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { KondisDatabase } from 'src/types';
+import { NotFoundException } from 'src/errors';
 import type { EventRepository } from 'src/repositories/event.repository';
 import { SocialService } from 'src/services/social.service';
+import type { KondisDatabase } from 'src/types';
 
 const makeService = () => {
   const social = {
