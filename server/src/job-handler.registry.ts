@@ -30,6 +30,7 @@ export const createJobHandlerRegistry = ({
       queueName: QueueName.BackgroundTask,
       handler: authService.handleCredentialCleanup.bind(authService),
       label: 'AuthService.handleCredentialCleanup',
+      cloudConsumer: 'worker',
     },
     [JobName.ActivityUpload]: {
       jobName: JobName.ActivityUpload,

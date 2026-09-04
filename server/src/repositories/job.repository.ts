@@ -1,6 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Job, JobInsert, JobResult, SendOptions } from 'pg-boss';
+import type { Job, JobInsert, JobResult } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
 import { JOB_SCHEMA } from 'src/constants';
@@ -14,6 +13,7 @@ import {
   JOB_RETRY_DELAY_SECONDS,
   JOB_RETRY_LIMIT,
   QUEUE_POLICY,
+  getJobOptions as getSharedJobOptions,
 } from 'src/jobs/job-semantics';
 import { Logger } from 'src/logger';
 import { ConfigRepository } from 'src/repositories/config.repository';
@@ -28,6 +28,7 @@ export type JobHandlerDescriptor<T extends JobName = JobName> = {
   queueName: QueueName;
   handler: (data: JobOf<T>) => Promise<JobStatus>;
   label: string;
+  cloudConsumer?: 'worker' | 'node';
 };
 
 export type AnyJobHandlerDescriptor = {
@@ -202,7 +203,14 @@ export class JobRepository {
     );
     const rows = rowGroups.flat();
     const countsByName = new Map(rows.map(({ name, ...counts }) => [name, this.withReadyCount(counts)]));
-    const empty = (): JobCounts => ({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 });
+    const empty = (): JobCounts => ({
+      active: 0,
+      queued: 0,
+      deferred: 0,
+      ready: 0,
+      failed: 0,
+      total: 0,
+    });
 
     return Object.fromEntries(
       queues.map((queue) => {
@@ -387,7 +395,14 @@ export class JobRepository {
   }
 
   private async countJobs(boss: PgBoss, name: string): Promise<JobCounts> {
-    const empty: JobCounts = { active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 };
+    const empty: JobCounts = {
+      active: 0,
+      queued: 0,
+      deferred: 0,
+      ready: 0,
+      failed: 0,
+      total: 0,
+    };
 
     const queue = await boss.getQueue(name);
     if (!queue) {
@@ -428,82 +443,11 @@ export class JobRepository {
     return item.queueName;
   }
 
-  private getJobOptions(item: JobItem): Pick<SendOptions, 'singletonKey' | 'priority'> {
-    switch (item.name) {
-      case JobName.AuthCredentialCleanup: {
-        return { singletonKey: item.name };
-      }
-
-      case JobName.ActivityUpload: {
-        // Disk-backed HTTP uploads do not have a checksum until the worker reads
-        // the staged file. Use the unique temporary path in that case so a batch
-        // of uploads is not collapsed into the singleton key "undefined".
-        return {
-          singletonKey: `${item.name}:${item.data.checksum ?? item.data.storagePath}`,
-        };
-      }
-
-      case JobName.ActivityMetricCompute:
-      case JobName.ActivityBestEffortCompute:
-      case JobName.ActivityRouteMatchCompute:
-      case JobName.ActivityParse: {
-        return {
-          singletonKey: `${item.name}:${item.data.id}`,
-        };
-      }
-
-      case JobName.ActivityManualCreate: {
-        return { singletonKey: `${item.name}:${item.data.id}` };
-      }
-
-      case JobName.ActivityBestEffortRank: {
-        // The queue itself is exclusive, so an empty singleton key silently drops a later
-        // refresh while another is queued or active. Give every request a key; the handler
-        // removes redundant queued refreshes immediately before calculating the rankings.
-        return { singletonKey: `${item.name}:${randomUUID()}`, priority: -1 };
-      }
-
-      case JobName.ActivityDelete: {
-        return { singletonKey: `${item.name}:${item.data.id}` };
-      }
-
-      case JobName.ActivityImageIngest: {
-        return { singletonKey: `${item.name}:${item.data.imageId}` };
-      }
-
-      case JobName.ActivityImageAttach: {
-        return { singletonKey: `${item.name}:${item.data.uploadId}` };
-      }
-
-      case JobName.ActivityImageGenerateThumbnails: {
-        return { singletonKey: `${item.name}:${item.data.id}` };
-      }
-
-      case JobName.ActivityImageGenerateQueueAll: {
-        return { singletonKey: item.name };
-      }
-
-      case JobName.LagomTakeoutImport: {
-        return {};
-      }
-
-      case JobName.UserAvatarUpload: {
-        return {};
-      }
-
-      case JobName.ActivityParseQueueAll: {
-        // A constant key: one full scan at a time, however many times it is requested.
-        return { singletonKey: item.name };
-      }
-
-      case JobName.FileDelete: {
-        return {};
-      }
-
-      case JobName.TemporaryFileCleanup: {
-        return { singletonKey: item.name };
-      }
-    }
+  // Kept as a small compatibility seam for callers that previously inspected
+  // the repository's singleton policy; the implementation is shared by both
+  // queue adapters.
+  private getJobOptions(item: JobItem): ReturnType<typeof getSharedJobOptions> {
+    return getSharedJobOptions(item);
   }
 
   private getBoss(): Promise<PgBoss> {
@@ -565,7 +509,10 @@ export class JobRepository {
         notify: true,
       };
 
-      await boss.createQueue(queue, { ...options, policy: QUEUE_POLICY[queue] });
+      await boss.createQueue(queue, {
+        ...options,
+        policy: QUEUE_POLICY[queue],
+      });
       await boss.updateQueue(queue, options);
     }
   }
@@ -605,7 +552,11 @@ export class JobRepository {
 
     const rankingRefresh = rankingRefreshes.pop();
     for (const duplicate of rankingRefreshes) {
-      results.push({ id: duplicate.id, status: 'completed', output: { status: JobStatus.Skipped } });
+      results.push({
+        id: duplicate.id,
+        status: 'completed',
+        output: { status: JobStatus.Skipped },
+      });
     }
     if (rankingRefresh) {
       results.push(await this.dispatchResult(rankingRefresh));
@@ -619,7 +570,10 @@ export class JobRepository {
       throw new Error('Received a job before workers were started');
     }
 
-    return this.onJobRun({ name: job.data.name, data: job.data.data } as JobItem);
+    return this.onJobRun({
+      name: job.data.name,
+      data: job.data.data,
+    } as JobItem);
   }
 
   private async dispatchResult(job: Job<StoredJob>): Promise<JobResult> {
@@ -627,7 +581,11 @@ export class JobRepository {
       const status = await this.dispatch(job);
       return { id: job.id, status: 'completed', output: { status } };
     } catch (error) {
-      return { id: job.id, status: 'failed', output: { message: asErrorMessage(error) } };
+      return {
+        id: job.id,
+        status: 'failed',
+        output: { message: asErrorMessage(error) },
+      };
     }
   }
 

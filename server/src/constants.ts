@@ -1,19 +1,15 @@
-import { QueueName } from 'src/enum';
 import type { ActivityTagSettings, ActivityTypeSettings, BestEffortType } from 'src/types';
 import { AverageMetric, BestEffortGroup } from 'src/types';
+export {
+  JOB_CONCURRENCY,
+  JOB_CRON,
+  JOB_EXPIRE_SECONDS,
+  JOB_RETENTION_SECONDS,
+  JOB_RETRY_DELAY_SECONDS,
+  JOB_RETRY_LIMIT,
+} from 'src/jobs/job-semantics';
 
 export const JOB_SCHEMA = 'kondis_jobs';
-export const JOB_CONCURRENCY: Record<QueueName, number> = {
-  [QueueName.ActivityParsing]: 1,
-  [QueueName.BackgroundTask]: 1,
-  [QueueName.ImageProcessing]: 2,
-  [QueueName.Storage]: 2,
-};
-export const JOB_RETRY_LIMIT = 3;
-export const JOB_RETRY_DELAY_SECONDS = 5;
-export const JOB_EXPIRE_SECONDS = 900;
-export const JOB_RETENTION_SECONDS = 7 * 24 * 60 * 60;
-export const JOB_CRON = true;
 
 export const IMAGE_SUPPORTED_FORMATS = new Set(['jpeg', 'png', 'webp', 'heif', 'avif']);
 export const IMAGE_MIME_TYPES: Record<string, string> = {
@@ -51,7 +47,11 @@ export const ACTIVITY_TAG_IDS = [
 
 export const ACTIVITY_TAGS: readonly ActivityTagSettings[] = [
   { tag: 'race', label: 'Race', sports: 'all' },
-  { tag: 'long_run', label: 'Long Run', sports: ['run', 'trail_run', 'virtual_run'] },
+  {
+    tag: 'long_run',
+    label: 'Long Run',
+    sports: ['run', 'trail_run', 'virtual_run'],
+  },
   { tag: 'commute', label: 'Commute', sports: 'all' },
   { tag: 'workout', label: 'Workout', sports: 'all' },
   { tag: 'competition', label: 'Competition', sports: 'all' },
@@ -79,17 +79,36 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   }),
-  defineActivityType('backcountry_ski', { averageMetric: AverageMetric.Speed, showAveragePower: false }),
-  defineActivityType('badminton', { averageMetric: AverageMetric.None, showAveragePower: false }),
-  defineActivityType('basketball', { averageMetric: AverageMetric.None, showAveragePower: false }),
-  defineActivityType('canoeing', { aliases: ['canoe'], averageMetric: AverageMetric.Speed, showAveragePower: false }),
-  defineActivityType('cricket', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('backcountry_ski', {
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
+  defineActivityType('badminton', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
+  defineActivityType('basketball', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
+  defineActivityType('canoeing', {
+    aliases: ['canoe'],
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
+  defineActivityType('cricket', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('cross_country_ski', {
     aliases: ['cross_country_skiing', 'nordic_ski', 'nordic_skiing'],
     averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   }),
-  defineActivityType('crossfit', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('crossfit', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('dance', {
     averageMetric: AverageMetric.None,
     showAveragePower: false,
@@ -99,7 +118,10 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   }),
-  defineActivityType('elliptical', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('elliptical', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('e_mountain_bike_ride', {
     aliases: ['e_mountain_biking'],
     averageMetric: AverageMetric.Speed,
@@ -115,7 +137,10 @@ export const ACTIVITY_TYPES = [
     showAveragePower: true,
     bestEffortGroup: BestEffortGroup.Ride,
   }),
-  defineActivityType('handcycle', { averageMetric: AverageMetric.Speed, showAveragePower: true }),
+  defineActivityType('handcycle', {
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: true,
+  }),
   defineActivityType('high_intensity_interval_training', {
     aliases: ['hiit'],
     averageMetric: AverageMetric.None,
@@ -131,9 +156,19 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.None,
     showAveragePower: false,
   }),
-  defineActivityType('inline_skate', { averageMetric: AverageMetric.Speed, showAveragePower: false }),
-  defineActivityType('kayaking', { aliases: ['kayak'], averageMetric: AverageMetric.Speed, showAveragePower: false }),
-  defineActivityType('kitesurf', { averageMetric: AverageMetric.Speed, showAveragePower: false }),
+  defineActivityType('inline_skate', {
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
+  defineActivityType('kayaking', {
+    aliases: ['kayak'],
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
+  defineActivityType('kitesurf', {
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
   defineActivityType('mountain_bike_ride', {
     aliases: ['mountain_biking'],
     averageMetric: AverageMetric.Speed,
@@ -144,10 +179,22 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.None,
     showAveragePower: false,
   }),
-  defineActivityType('physical_therapy', { averageMetric: AverageMetric.None, showAveragePower: false }),
-  defineActivityType('pickleball', { averageMetric: AverageMetric.None, showAveragePower: false }),
-  defineActivityType('pilates', { averageMetric: AverageMetric.None, showAveragePower: false }),
-  defineActivityType('racquetball', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('physical_therapy', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
+  defineActivityType('pickleball', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
+  defineActivityType('pilates', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
+  defineActivityType('racquetball', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('ride', {
     aliases: ['cycling', 'biking', 'bike'],
     averageMetric: AverageMetric.Speed,
@@ -164,7 +211,11 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.Pace,
     showAveragePower: false,
   }),
-  defineActivityType('rowing', { aliases: ['row'], averageMetric: AverageMetric.Speed, showAveragePower: false }),
+  defineActivityType('rowing', {
+    aliases: ['row'],
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
   defineActivityType('run', {
     aliases: ['running'],
     averageMetric: AverageMetric.Pace,
@@ -200,19 +251,29 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.None,
     showAveragePower: false,
   }),
-  defineActivityType('stair_stepper', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('stair_stepper', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('stand_up_paddling', {
     aliases: ['stand_up_paddleboarding', 'standup_paddling'],
     averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   }),
-  defineActivityType('surfing', { aliases: ['surf'], averageMetric: AverageMetric.Speed, showAveragePower: false }),
+  defineActivityType('surfing', {
+    aliases: ['surf'],
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: false,
+  }),
   defineActivityType('swim', {
     aliases: ['swimming'],
     averageMetric: AverageMetric.SwimPace,
     showAveragePower: false,
   }),
-  defineActivityType('table_tennis', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('table_tennis', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('tennis', {
     averageMetric: AverageMetric.None,
     showAveragePower: false,
@@ -223,7 +284,10 @@ export const ACTIVITY_TYPES = [
     showAveragePower: false,
     bestEffortGroup: BestEffortGroup.Run,
   }),
-  defineActivityType('velomobile', { averageMetric: AverageMetric.Speed, showAveragePower: true }),
+  defineActivityType('velomobile', {
+    averageMetric: AverageMetric.Speed,
+    showAveragePower: true,
+  }),
   defineActivityType('virtual_ride', {
     aliases: ['virtual_cycling'],
     averageMetric: AverageMetric.Speed,
@@ -241,7 +305,10 @@ export const ACTIVITY_TYPES = [
     showAveragePower: false,
     bestEffortGroup: BestEffortGroup.Run,
   }),
-  defineActivityType('volleyball', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('volleyball', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('walk', {
     aliases: ['walking'],
     averageMetric: AverageMetric.Pace,
@@ -252,13 +319,19 @@ export const ACTIVITY_TYPES = [
     averageMetric: AverageMetric.None,
     showAveragePower: false,
   }),
-  defineActivityType('wheelchair', { averageMetric: AverageMetric.Pace, showAveragePower: false }),
+  defineActivityType('wheelchair', {
+    averageMetric: AverageMetric.Pace,
+    showAveragePower: false,
+  }),
   defineActivityType('windsurf', {
     aliases: ['windsurfing'],
     averageMetric: AverageMetric.Speed,
     showAveragePower: false,
   }),
-  defineActivityType('workout', { averageMetric: AverageMetric.None, showAveragePower: false }),
+  defineActivityType('workout', {
+    averageMetric: AverageMetric.None,
+    showAveragePower: false,
+  }),
   defineActivityType('yoga', {
     averageMetric: AverageMetric.None,
     showAveragePower: false,
@@ -277,37 +350,157 @@ export const ACTIVITY_TYPE_IDS = ACTIVITY_TYPES.map(({ type }) => type) as [
 export const RUNNING_BEST_EFFORTS = [
   { type: '400m', distance: 400, valueKind: 'duration', higherIsBetter: false },
   { type: '1k', distance: 1000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_mile', distance: 804.672, valueKind: 'duration', higherIsBetter: false },
-  { type: '1_mile', distance: 1609.344, valueKind: 'duration', higherIsBetter: false },
-  { type: '2_miles', distance: 3218.688, valueKind: 'duration', higherIsBetter: false },
+  {
+    type: 'half_mile',
+    distance: 804.672,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '1_mile',
+    distance: 1609.344,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '2_miles',
+    distance: 3218.688,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
   { type: '5k', distance: 5000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '15k', distance: 15_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'half_marathon', distance: 21_097.5, valueKind: 'duration', higherIsBetter: false },
-  { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
-  { type: 'marathon', distance: 42_195, valueKind: 'duration', higherIsBetter: false },
-  { type: '50k', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
+  {
+    type: '10k',
+    distance: 10_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '15k',
+    distance: 15_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '10_miles',
+    distance: 16_093.44,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '20k',
+    distance: 20_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: 'half_marathon',
+    distance: 21_097.5,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '30k',
+    distance: 30_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: 'marathon',
+    distance: 42_195,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '50k',
+    distance: 50_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
 ] as const;
 
 export const CYCLING_BEST_EFFORTS = [
   { type: 'longest_ride', valueKind: 'distance', higherIsBetter: true },
   { type: 'biggest_climb', valueKind: 'elevation', higherIsBetter: true },
   { type: 'elevation_gain', valueKind: 'elevation', higherIsBetter: true },
-  { type: '5_miles', distance: 8046.72, valueKind: 'duration', higherIsBetter: false },
-  { type: '10k', distance: 10_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '10_miles', distance: 16_093.44, valueKind: 'duration', higherIsBetter: false },
-  { type: '20k', distance: 20_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '30k', distance: 30_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '40k', distance: 40_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '50k', distance: 50_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '80k', distance: 80_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '50_miles', distance: 80_467.2, valueKind: 'duration', higherIsBetter: false },
-  { type: '90k', distance: 90_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '100k', distance: 100_000, valueKind: 'duration', higherIsBetter: false },
-  { type: '100_miles', distance: 160_934.4, valueKind: 'duration', higherIsBetter: false },
-  { type: '180k', distance: 180_000, valueKind: 'duration', higherIsBetter: false },
+  {
+    type: '5_miles',
+    distance: 8046.72,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '10k',
+    distance: 10_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '10_miles',
+    distance: 16_093.44,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '20k',
+    distance: 20_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '30k',
+    distance: 30_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '40k',
+    distance: 40_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '50k',
+    distance: 50_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '80k',
+    distance: 80_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '50_miles',
+    distance: 80_467.2,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '90k',
+    distance: 90_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '100k',
+    distance: 100_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '100_miles',
+    distance: 160_934.4,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
+  {
+    type: '180k',
+    distance: 180_000,
+    valueKind: 'duration',
+    higherIsBetter: false,
+  },
   { type: 'power_5s', duration: 5, valueKind: 'power', higherIsBetter: true },
   { type: 'power_15s', duration: 15, valueKind: 'power', higherIsBetter: true },
   { type: 'power_30s', duration: 30, valueKind: 'power', higherIsBetter: true },
@@ -316,13 +509,48 @@ export const CYCLING_BEST_EFFORTS = [
   { type: 'power_3m', duration: 180, valueKind: 'power', higherIsBetter: true },
   { type: 'power_5m', duration: 300, valueKind: 'power', higherIsBetter: true },
   { type: 'power_8m', duration: 480, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_10m', duration: 600, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_15m', duration: 900, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_20m', duration: 1200, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_30m', duration: 1800, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_45m', duration: 2700, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_1h', duration: 3600, valueKind: 'power', higherIsBetter: true },
-  { type: 'power_2h', duration: 7200, valueKind: 'power', higherIsBetter: true },
+  {
+    type: 'power_10m',
+    duration: 600,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
+  {
+    type: 'power_15m',
+    duration: 900,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
+  {
+    type: 'power_20m',
+    duration: 1200,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
+  {
+    type: 'power_30m',
+    duration: 1800,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
+  {
+    type: 'power_45m',
+    duration: 2700,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
+  {
+    type: 'power_1h',
+    duration: 3600,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
+  {
+    type: 'power_2h',
+    duration: 7200,
+    valueKind: 'power',
+    higherIsBetter: true,
+  },
 ] as const;
 
 export const BEST_EFFORT_TYPES = [

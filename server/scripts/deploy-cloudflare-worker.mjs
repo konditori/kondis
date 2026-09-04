@@ -1,6 +1,10 @@
 import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
+
+const require = createRequire(import.meta.url);
+const { generateCloudflareConfig, parseJsonc } = require('./generate-cloudflare-config.cjs');
 
 const environment = process.env.CLOUDFLARE_ENV ?? 'staging';
 const hyperdriveId = process.env.KONDIS_HYPERDRIVE_ID;
@@ -12,12 +16,12 @@ if (!/^[a-f0-9]{32}$/i.test(hyperdriveId)) {
 }
 
 const serverDir = resolve(import.meta.dirname, '..');
-const baseConfig = JSON.parse(await readFile(resolve(serverDir, 'wrangler.jsonc'), 'utf8'));
-const environmentConfig = {
-  ...baseConfig,
-  name: `${baseConfig.name}-${environment}`,
-  hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
-};
+const baseConfig = parseJsonc(await readFile(resolve(serverDir, 'wrangler.jsonc'), 'utf8'));
+const environmentConfig = generateCloudflareConfig({
+  baseConfig,
+  environment,
+  hyperdriveId,
+});
 const outputPath = resolve(serverDir, `wrangler.${environment}.generated.json`);
 await writeFile(outputPath, `${JSON.stringify(environmentConfig, null, 2)}\n`);
 

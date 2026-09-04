@@ -11,6 +11,7 @@ import { AuthBootstrapTable } from 'src/schema/tables/auth-bootstrap.table';
 import { AuthRateLimitTable } from 'src/schema/tables/auth-rate-limit.table';
 import { AuthSessionTable } from 'src/schema/tables/auth-session.table';
 import { AuthTicketTable } from 'src/schema/tables/auth-ticket.table';
+import { BackgroundJobTable } from 'src/schema/tables/background-job.table';
 import { FollowRequestTable } from 'src/schema/tables/follow-request.table';
 import { LapTable } from 'src/schema/tables/lap.table';
 import { LiveWorkoutPointTable } from 'src/schema/tables/live-workout-point.table';
@@ -28,6 +29,7 @@ export interface DB {
   auth_rate_limit: AuthRateLimitTable;
   auth_session: AuthSessionTable;
   auth_ticket: AuthTicketTable;
+  background_job: BackgroundJobTable;
   upload: UploadTable;
   activity: ActivityTable;
   activity_best_effort: ActivityBestEffortTable;
