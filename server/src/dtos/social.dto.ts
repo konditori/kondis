@@ -1,5 +1,5 @@
+import { z } from '@hono/zod-openapi';
 import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
 
 export const SocialUserSchema = z.object({
   id: z.uuid(),
@@ -26,6 +26,7 @@ export const RelationSchema = z.object({
 });
 
 export const PersonSchema = z.object({ user: SocialUserSchema, relation: RelationSchema });
+export const PeopleListSchema = z.array(PersonSchema);
 
 export const RequestSchema = z.object({
   id: z.uuid(),
@@ -34,6 +35,8 @@ export const RequestSchema = z.object({
 });
 
 export const RequestDirectionSchema = z.enum(['incoming', 'outgoing']).default('incoming');
+export const RequestDirectionQuerySchema = z.object({ direction: RequestDirectionSchema });
+export const RequestListSchema = z.array(RequestSchema);
 
 export const CommentSchema = z.object({
   id: z.uuid(),
@@ -72,13 +75,13 @@ export const NotificationsReadSchema = z.object({ markedRead: z.boolean() });
 
 export class PersonDto extends createZodDto(PersonSchema) {}
 
-export class PeopleListDto extends createZodDto(z.array(PersonSchema)) {}
+export class PeopleListDto extends createZodDto(PeopleListSchema) {}
 
 export class RequestDto extends createZodDto(RequestSchema) {}
 
-export class RequestListDto extends createZodDto(z.array(RequestSchema)) {}
+export class RequestListDto extends createZodDto(RequestListSchema) {}
 
-export class RequestDirectionDto extends createZodDto(z.object({ direction: RequestDirectionSchema })) {}
+export class RequestDirectionDto extends createZodDto(RequestDirectionQuerySchema) {}
 
 export class CommentDto extends createZodDto(CommentSchema) {}
 

@@ -91,12 +91,12 @@ export class ActivityImageController {
     if (!['original', 'thumbnail', 'preview'].includes(variant)) {
       throw new NotFoundException('Image variant does not exist');
     }
-        const file = await this.service.getFile(imageId, variant as 'original' | 'thumbnail' | 'preview', user.id);
-        response.setHeader('Content-Type', file.mime_type);
-        response.setHeader('Content-Length', String(file.byte_size));
-        response.setHeader('Content-Disposition', 'inline');
-        response.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
-        response.setHeader('X-Content-Type-Options', 'nosniff');
-        response.sendFile(file.absolutePath);
+    const file = await this.service.getFile(imageId, variant as 'original' | 'thumbnail' | 'preview', user.id);
+    response.setHeader('Content-Type', file.mime_type);
+    response.setHeader('Content-Length', String(file.byte_size));
+    response.setHeader('Content-Disposition', 'inline');
+    response.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    response.sendFile(file.absolutePath);
   }
 }

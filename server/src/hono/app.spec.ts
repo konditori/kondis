@@ -1,14 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createHonoApp, createHonoOpenApiDocument } from 'src/hono/app';
+import { newHonoDependencies } from 'test/hono';
 
 const findNoUser = (_id: string) => Promise.resolve(undefined);
+const listNoUsers = () => Promise.resolve([]);
 
 describe('Hono application', () => {
   it('serves the health check', async () => {
     const ping = vi.fn(() => ({ status: 'pong' }));
     const findById = vi.fn(findNoUser);
-    const response = await createHonoApp({ server: { ping }, users: { findById } }).request('/ping');
+    const response = await createHonoApp(
+      newHonoDependencies({ server: { ping }, users: { all: listNoUsers, findById } }),
+    ).request('/ping');
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: 'pong' });
@@ -19,14 +23,16 @@ describe('Hono application', () => {
   it('uses the existing internal error response shape', async () => {
     const error = new Error('test failure');
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const response = await createHonoApp({
-      server: {
-        ping: () => {
-          throw error;
+    const response = await createHonoApp(
+      newHonoDependencies({
+        server: {
+          ping: () => {
+            throw error;
+          },
         },
-      },
-      users: { findById: vi.fn(findNoUser) },
-    }).request('/ping');
+        users: { all: listNoUsers, findById: vi.fn(findNoUser) },
+      }),
+    ).request('/ping');
 
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ statusCode: 500, message: 'Internal server error' });
@@ -36,10 +42,12 @@ describe('Hono application', () => {
 
   it('preserves the ping operation contract', () => {
     const document = createHonoOpenApiDocument(
-      createHonoApp({
-        server: { ping: () => ({ status: 'pong' }) },
-        users: { findById: vi.fn(findNoUser) },
-      }),
+      createHonoApp(
+        newHonoDependencies({
+          server: { ping: () => ({ status: 'pong' }) },
+          users: { all: listNoUsers, findById: vi.fn(findNoUser) },
+        }),
+      ),
     );
 
     expect(document.paths['/ping']?.get).toMatchObject({

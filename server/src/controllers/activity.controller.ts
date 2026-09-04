@@ -1,107 +1,15 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  NotFoundException,
-  Param,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, NotFoundException, Param, Put } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZodResponse } from 'nestjs-zod';
 
-import { AuthenticatedUser, CurrentUser, Public } from 'src/auth';
-import {
-  ActivityDetailDto,
-  ActivityDto,
-  ActivityIdParamDto,
-  ActivityListQueryDto,
-  ActivityListResponseDto,
-  ActivityTagListResponseDto,
-  ActivityTypeListResponseDto,
-  ActivityUpdateDto,
-  BestEffortListParamDto,
-  BestEffortListResponseDto,
-  MatchedRouteListResponseDto,
-} from 'src/dtos/activity.dto';
+import { AuthenticatedUser, CurrentUser } from 'src/auth';
+import { ActivityDto, ActivityIdParamDto, ActivityUpdateDto } from 'src/dtos/activity.dto';
 import { ActivityService } from 'src/services/activity.service';
-import { ACTIVITY_TAGS, ACTIVITY_TYPES } from 'src/constants';
 
 @ApiTags('activities')
 @Controller('activities')
 export class ActivityController {
   constructor(private readonly service: ActivityService) {}
-
-  @ApiOperation({ summary: 'List recent activities' })
-  @ZodResponse({ status: 200, description: 'Recent activities', type: ActivityListResponseDto })
-  @Get()
-  async listRecent(
-    @Query() query: ActivityListQueryDto,
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<ActivityListResponseDto> {
-    return this.service.listRecent(query, user.id);
-  }
-
-  @ApiOperation({ summary: 'List activity types and their behavior' })
-  @ZodResponse({ status: 200, description: 'Activity type settings', type: ActivityTypeListResponseDto })
-  @Get('types')
-  @Public()
-  listTypes(): ActivityTypeListResponseDto {
-    return [...ACTIVITY_TYPES];
-  }
-
-  @ApiOperation({ summary: 'List activity tags and their applicability' })
-  @ZodResponse({ status: 200, description: 'Activity tag settings', type: ActivityTagListResponseDto })
-  @Get('tags')
-  listTags(): ActivityTagListResponseDto {
-    return ACTIVITY_TAGS.map((tag) => ({
-      ...tag,
-      sports: tag.sports === 'all' ? 'all' : [...tag.sports],
-    })) as unknown as ActivityTagListResponseDto;
-  }
-
-  @ApiOperation({ summary: 'List best efforts over time for a sport' })
-  @ZodResponse({ status: 200, description: 'Best effort history', type: BestEffortListResponseDto })
-  @Get('best-efforts/:sport/:type')
-  async listBestEfforts(
-    @Param() params: BestEffortListParamDto,
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<BestEffortListResponseDto> {
-    return this.service.listBestEfforts(params.sport, params.type, user.id);
-  }
-
-  @ApiOperation({ summary: 'Get one activity and its route' })
-  @ZodResponse({ status: 200, description: 'Activity details', type: ActivityDetailDto })
-  @Get(':id')
-  async getById(
-    @Param() { id }: ActivityIdParamDto,
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<ActivityDetailDto> {
-    const activity = await this.service.getById(id, user.id);
-    if (!activity) {
-      throw new NotFoundException(`Activity ${id} does not exist`);
-    }
-
-    return activity;
-  }
-
-  @ApiOperation({ summary: 'List activities matched to the same GPS route' })
-  @ZodResponse({ status: 200, description: 'Matched route activities', type: MatchedRouteListResponseDto })
-  @Get(':id/matched-routes')
-  async listMatchedRoutes(
-    @Param() { id }: ActivityIdParamDto,
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<MatchedRouteListResponseDto> {
-    const matches = await this.service.listMatchedRoutes(id, user.id);
-    if (!matches) {
-      throw new NotFoundException(`Activity ${id} does not exist`);
-    }
-
-    return matches;
-  }
 
   @ApiOperation({ summary: 'Update one activity' })
   @ZodResponse({ status: 200, description: 'Updated activity', type: ActivityDto })

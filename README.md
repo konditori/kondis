@@ -43,6 +43,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Peptalk during live runs, with TTS
 * Auto-pause workouts
 * Power curves and other detailed stats
+* Warn user about bad GPS recordings i.e. large jumps in tracks etc.
 
 ## Development
 Please see the [developer documentation site](https://developers.kondis.org/).

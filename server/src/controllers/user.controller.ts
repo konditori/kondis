@@ -2,20 +2,16 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   HttpCode,
   HttpStatus,
   NotFoundException,
-  Param,
   Patch,
   Post,
-  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import type { Response } from 'express';
 import { z } from 'zod';
 
 import { AdminOnly, AuthenticatedUser, CurrentUser } from 'src/auth';
@@ -44,13 +40,6 @@ export class UserController {
     private readonly users: UserRepository,
     private readonly userService: UserService,
   ) {}
-
-  @Get()
-  @AdminOnly()
-  async list() {
-    const users = await this.users.all();
-    return users.map(({ password_hash: _passwordHash, ...user }) => user);
-  }
   @Post()
   @AdminOnly()
   async create(@Body() body: unknown) {
@@ -97,23 +86,5 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAvatar(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.userService.clearAvatar(user.id);
-  }
-
-  @Get(':id/avatar')
-  async avatarFile(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Res() response: Response,
-  ): Promise<void> {
-    const avatar = await this.userService.avatarFile(id, user.id);
-    if (!avatar.avatar_path || !avatar.avatar_mime_type || avatar.avatar_size === null) {
-      throw new NotFoundException('Profile picture does not exist');
-    }
-    response.setHeader('Content-Type', avatar.avatar_mime_type);
-    response.setHeader('Content-Length', String(avatar.avatar_size));
-    response.setHeader('Content-Disposition', 'inline');
-    response.setHeader('Cache-Control', 'private, max-age=3600');
-    response.setHeader('X-Content-Type-Options', 'nosniff');
-    response.sendFile(this.userService.avatarAbsolutePath(avatar.avatar_path));
   }
 }
