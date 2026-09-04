@@ -1,5 +1,4 @@
 import { z } from '@hono/zod-openapi';
-import { createZodDto } from 'nestjs-zod';
 
 export const PingResponseSchema = z
   .object({
@@ -8,4 +7,4 @@ export const PingResponseSchema = z
   .strict()
   .openapi('PingResponseDto_Output');
 
-export class PingResponseDto extends createZodDto(PingResponseSchema) {}
+export type PingResponseDto = z.output<typeof PingResponseSchema>;

@@ -1,12 +1,11 @@
-import { Inject, Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { sql } from 'kysely';
 import type { Server } from 'node:http';
 import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
-import { KYSELY } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
+import { Logger } from 'src/logger';
 import type {
   ActivityCommentEvent,
   ArgsOf,
@@ -62,8 +61,7 @@ const eventSerializers: EventSerializers = {
   NotificationsRead: (notification) => ({ type: 'notifications.read', ...notification }),
 };
 
-@Injectable()
-export class EventRepository implements OnApplicationShutdown, RealtimePort {
+export class EventRepository implements RealtimePort {
   private readonly logger = new Logger(EventRepository.name);
   private listener?: pg.Client;
   private reconnectTimer?: NodeJS.Timeout;
@@ -75,9 +73,10 @@ export class EventRepository implements OnApplicationShutdown, RealtimePort {
   private readonly socketActivities = new Map<WebSocket, Set<string>>();
   private readonly jobDashboardSockets = new Set<WebSocket>();
   private stopped = false;
+  private stopPromise?: Promise<void>;
 
   constructor(
-    @Inject(KYSELY) private readonly db: KondisDatabase,
+    private readonly db: KondisDatabase,
     private readonly config: ConfigRepository,
     private readonly social: SocialRepository,
   ) {}
@@ -152,18 +151,35 @@ export class EventRepository implements OnApplicationShutdown, RealtimePort {
     this.logger.log('Activity events available at /events and /api/v1/events');
   }
 
-  async onApplicationShutdown(): Promise<void> {
+  stop(): Promise<void> {
+    this.stopPromise ??= this.stopRealtime();
+    return this.stopPromise;
+  }
+
+  private async stopRealtime(): Promise<void> {
     this.stopped = true;
     clearTimeout(this.reconnectTimer);
     clearTimeout(this.jobUpdateTimer);
     if (this.httpServer && this.upgradeHandler) {
       this.httpServer.off('upgrade', this.upgradeHandler);
     }
-    this.socketServer?.close();
+    const socketServer = this.socketServer;
+    if (socketServer) {
+      for (const socket of socketServer.clients) {
+        socket.terminate();
+      }
+      await new Promise<void>((resolve, reject) => {
+        socketServer.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
     this.socketUsers.clear();
     this.socketActivities.clear();
     this.jobDashboardSockets.clear();
     await this.listener?.end();
+    this.listener = undefined;
+    this.socketServer = undefined;
+    this.httpServer = undefined;
+    this.upgradeHandler = undefined;
   }
 
   private async connectListener(): Promise<void> {

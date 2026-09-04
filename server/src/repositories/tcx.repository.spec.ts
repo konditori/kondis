@@ -1,6 +1,6 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 
+import { ConsoleLogger } from 'src/logger';
 import { TcxDecodeError, TcxRepository } from 'src/repositories/tcx.repository';
 
 const makeRepository = () => new TcxRepository(new ConsoleLogger({ logLevels: [] }));

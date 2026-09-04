@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { KondisDatabase } from 'src/types';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
@@ -15,6 +14,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { JobService } from 'src/services/job.service';
 import { UploadService } from 'src/services/upload.service';
+import type { KondisDatabase } from 'src/types';
 import { type JobItem } from 'src/types/jobs';
 
 import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';

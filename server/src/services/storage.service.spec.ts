@@ -1,7 +1,7 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 
 import { JobStatus } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
 import { StorageService } from 'src/services/storage.service';
 import { newTestService } from 'test/utils';
 

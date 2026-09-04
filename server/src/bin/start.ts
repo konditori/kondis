@@ -4,14 +4,15 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Worker } from 'node:worker_threads';
 
-import { ConfigRepository } from 'src/repositories/config.repository';
 import { WorkerType } from 'src/enum';
+import { ConfigRepository } from 'src/repositories/config.repository';
 
 const apiEntry = resolve(import.meta.dirname, '..', 'workers', 'api.js');
 const workerEntry = resolve(import.meta.dirname, '..', 'workers', 'worker.js');
 type Runtime = ChildProcess | Worker;
 
 const children = new Map<Runtime, WorkerType>();
+const WORKER_SHUTDOWN_TIMEOUT_MS = 35_000;
 let stopping = false;
 
 const startRole = (role: WorkerType, environment: NodeJS.ProcessEnv = {}): Runtime => {
@@ -36,7 +37,11 @@ const stopChildren = (signal: NodeJS.Signals = 'SIGTERM'): void => {
     if (role === WorkerType.API) {
       (child as ChildProcess).kill(signal);
     } else {
-      void (child as Worker).terminate();
+      const worker = child as Worker;
+      worker.postMessage({ type: 'shutdown' });
+      const timeout = setTimeout(() => void worker.terminate(), WORKER_SHUTDOWN_TIMEOUT_MS);
+      timeout.unref();
+      worker.once('exit', () => clearTimeout(timeout));
     }
   }
 };

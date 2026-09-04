@@ -1,5 +1,3 @@
-import 'reflect-metadata';
-
 import { bootstrapApi } from 'src/main';
 
 process.title = 'kondis-api';

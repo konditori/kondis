@@ -1,12 +1,10 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import sharp from 'sharp';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { OnJob } from 'src/decorators';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+import { JobName, JobStatus } from 'src/enum';
+import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import type { StoragePort } from 'src/ports/storage.port';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { JobOf } from 'src/types/jobs';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
@@ -14,12 +12,11 @@ import type { BufferedUploadedFileData } from 'src/types/uploads';
 const AVATAR_SIZE = 512;
 const AVATAR_MIME_TYPE = 'image/webp';
 
-@Injectable()
 export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
-    @Inject(StorageRepository) private readonly storage: StoragePort,
+    private readonly storage: StoragePort,
   ) {}
 
   async updateProfile(userId: string, firstName: string, lastName: string) {
@@ -67,7 +64,6 @@ export class UserService {
     return { avatarUrl: `/api/v1/users/${userId}/avatar` };
   }
 
-  @OnJob({ name: JobName.UserAvatarUpload, queue: QueueName.ImageProcessing })
   async handleAvatarUpload({ userId, storagePath }: JobOf<JobName.UserAvatarUpload>): Promise<JobStatus> {
     if (!(await this.users.findById(userId))) {
       return JobStatus.Skipped;

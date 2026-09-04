@@ -1,5 +1,5 @@
-import { ConsoleLogger, Injectable } from '@nestjs/common';
 import FitParser from 'fit-file-parser';
+import { ConsoleLogger } from 'src/logger';
 import type { FitMessages } from 'src/types';
 
 export class FitDecodeError extends Error {
@@ -18,7 +18,6 @@ const NOT_A_FIT_FILE = [
 
 type ParsedFit = Awaited<ReturnType<FitParser['parseAsync']>>;
 
-@Injectable()
 export class FitRepository {
   private readonly fitParser = new FitParser({
     force: true, // Keep partially corrupt files, for example when a device battery dies while recording

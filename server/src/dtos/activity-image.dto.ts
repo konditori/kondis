@@ -1,5 +1,4 @@
-import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
+import { z } from '@hono/zod-openapi';
 
 export const ActivityImageSchema = z.object({
   id: z.string().uuid(),
@@ -20,6 +19,8 @@ export const ActivityImageUpdateSchema = z
   })
   .refine((value) => Object.keys(value).length > 0, { message: 'At least one field is required' });
 
-export class ActivityImageDto extends createZodDto(ActivityImageSchema) {}
-export class ActivityImageListDto extends createZodDto(z.array(ActivityImageSchema)) {}
-export class ActivityImageUpdateDto extends createZodDto(ActivityImageUpdateSchema) {}
+export const ActivityImageListSchema = z.array(ActivityImageSchema);
+
+export type ActivityImageDto = z.output<typeof ActivityImageSchema>;
+export type ActivityImageListDto = z.output<typeof ActivityImageListSchema>;
+export type ActivityImageUpdateDto = z.output<typeof ActivityImageUpdateSchema>;

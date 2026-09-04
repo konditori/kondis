@@ -1,14 +1,4 @@
-import {
-  CanActivate,
-  createParamDecorator,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  SetMetadata,
-  UnauthorizedException,
-} from '@nestjs/common';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
-import { UserRepository } from 'src/repositories/user.repository';
 
 export const AUTH_SECRET = randomUUID();
 
@@ -29,15 +19,6 @@ type AccessTokenVerification =
 type EventTicket = { id: string; scope: 'activity-events'; exp: number };
 type JobEventsTicket = { id: string; scope: 'job-events'; exp: number };
 type SetupTicket = { scope: 'initial-setup'; exp: number };
-export const PUBLIC = 'kondis:public';
-export const Public = () => SetMetadata(PUBLIC, true);
-export const ADMIN = 'kondis:admin';
-export const AdminOnly = () => SetMetadata(ADMIN, true);
-export const CurrentUser = createParamDecorator(
-  (_data: unknown, context: ExecutionContext): AuthenticatedUser =>
-    context.switchToHttp().getRequest<{ user: AuthenticatedUser }>().user,
-);
-
 const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
 const sign = (value: string, secret: string) => createHmac('sha256', secret).update(value).digest('base64url');
 const hasValidSignature = (payload: string, signature: string, secret: string): boolean => {
@@ -148,52 +129,3 @@ export const verifySetupTicket = (token: string | null, secret: string): boolean
     return false;
   }
 };
-
-@Injectable()
-export class AuthGuard implements CanActivate {
-  constructor(private readonly users: UserRepository) {}
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const handler = context.getHandler() as object;
-    const controller = context.getClass() as object;
-    // reflect-metadata augments the standard Reflect object at runtime.
-    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
-    if (Reflect.getMetadata(PUBLIC, handler) || Reflect.getMetadata(PUBLIC, controller)) {
-      return true;
-    }
-    const request = context
-      .switchToHttp()
-      .getRequest<{ headers: Record<string, string | undefined>; user?: AuthenticatedUser }>();
-    const verification = verifyAccessToken(
-      {
-        authorization: request.headers.authorization,
-        cookie: request.headers.cookie,
-        kondisAuthorization: request.headers['x-kondis-authorization'],
-      },
-      AUTH_SECRET,
-    );
-    if (!verification.authenticated) {
-      throw new UnauthorizedException(verification.message);
-    }
-    const stored = await this.users.findById(verification.user.id);
-    if (!stored) {
-      throw new UnauthorizedException('Account no longer exists');
-    }
-    request.user = {
-      id: stored.id,
-      email: stored.email,
-      role: stored.role,
-      firstName: stored.first_name,
-      lastName: stored.last_name,
-    };
-    // reflect-metadata augments the standard Reflect object at runtime.
-    /* eslint-disable unicorn/no-nonstandard-builtin-properties */
-    if (
-      (Reflect.getMetadata(ADMIN, handler) || Reflect.getMetadata(ADMIN, controller)) &&
-      request.user.role !== 'admin'
-    ) {
-      throw new ForbiddenException('Administrator access is required');
-    }
-    /* eslint-enable unicorn/no-nonstandard-builtin-properties */
-    return true;
-  }
-}

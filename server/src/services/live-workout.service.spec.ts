@@ -1,6 +1,6 @@
-import { NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { NotFoundException } from 'src/errors';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { type LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutService } from 'src/services/live-workout.service';

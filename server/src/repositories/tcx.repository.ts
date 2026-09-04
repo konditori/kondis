@@ -1,6 +1,6 @@
-import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { XMLParser } from 'fast-xml-parser';
 
+import { ConsoleLogger } from 'src/logger';
 import type {
   FitLapMesg,
   FitMessages,
@@ -19,7 +19,6 @@ export class TcxDecodeError extends Error {
   }
 }
 
-@Injectable()
 export class TcxRepository {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,

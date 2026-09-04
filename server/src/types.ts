@@ -1,6 +1,5 @@
-import type { Activity, ActivityMetric, ActivityUpdate, DB, NewActivity, NewLap } from 'src/db/schema';
-import type { JobName, QueueName } from 'src/enum';
 import type { Kysely, Transaction } from 'kysely';
+import type { Activity, ActivityMetric, ActivityUpdate, DB, NewActivity, NewLap } from 'src/db/schema';
 
 export type KondisDatabase = Kysely<DB>;
 export type KondisTransaction = Transaction<DB>;
@@ -185,11 +184,6 @@ export type EnvData = {
   storageDir: string;
   database: DatabaseConfig;
   registrationEnabled: boolean;
-};
-
-export type JobConfig = {
-  name: JobName;
-  queue: QueueName;
 };
 
 export enum AverageMetric {

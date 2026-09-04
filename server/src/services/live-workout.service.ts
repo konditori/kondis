@@ -1,7 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-
+import { NotFoundException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import type { ActivityType } from 'src/types';
@@ -16,11 +14,10 @@ type PointInput = {
 };
 const SHARE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
-@Injectable()
 export class LiveWorkoutService {
   constructor(
     private readonly repository: LiveWorkoutRepository,
-    @Inject(CryptoRepository) private readonly crypto: CryptoPort,
+    private readonly crypto: CryptoPort,
   ) {}
 
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {

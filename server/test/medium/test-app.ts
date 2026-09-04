@@ -1,15 +1,13 @@
-import { INestApplicationContext } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { AppModule } from 'src/app.module';
+import { createApplicationComposition, type ApplicationComposition } from 'src/composition';
 
 import { getTestDatabaseConfig } from 'test/medium/test-db';
 
 export type TestApp = {
-  app: INestApplicationContext;
+  app: ApplicationComposition;
   storageDir: string;
   get: <T>(token: new (...args: never[]) => T) => T;
   destroy: () => Promise<void>;
@@ -19,8 +17,7 @@ export const createTestApp = async (): Promise<TestApp> => {
   const database = getTestDatabaseConfig();
   const storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-app-'));
 
-  // ConfigRepository reads the environment on first access, so this must happen before the
-  // container is built.
+  // ConfigRepository reads the environment on first access, so this must happen before composition.
   Object.assign(process.env, {
     KONDIS_DB_HOSTNAME: database.host,
     KONDIS_DB_PORT: String(database.port),
@@ -30,7 +27,14 @@ export const createTestApp = async (): Promise<TestApp> => {
     KONDIS_STORAGE_DIR: storageDir,
   });
 
-  const app = await NestFactory.createApplicationContext(AppModule, { abortOnError: false });
+  const app = createApplicationComposition({ role: 'worker' });
+  try {
+    await app.initialize();
+  } catch (error) {
+    await app.close();
+    await rm(storageDir, { recursive: true, force: true });
+    throw error;
+  }
 
   return {
     app,

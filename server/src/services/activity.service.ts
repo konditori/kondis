@@ -1,25 +1,22 @@
-import { BadRequestException, ConsoleLogger, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
-import { OnJob } from 'src/decorators';
 import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+import { JobName, JobStatus } from 'src/enum';
+import { BadRequestException, NotFoundException } from 'src/errors';
+import { ConsoleLogger } from 'src/logger';
 import type { QueuePort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
@@ -70,27 +67,25 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
     definition.type.startsWith('power_'),
 );
 
-@Injectable()
 export class ActivityService {
   constructor(
     private readonly uploadRepository: UploadRepository,
-    @Inject(StorageRepository) private readonly storageRepository: StoragePort,
+    private readonly storageRepository: StoragePort,
     private readonly activityRepository: ActivityRepository,
     private readonly databaseRepository: DatabaseRepository,
-    @Inject(EventRepository) private readonly eventRepository: RealtimePort,
-    @Inject(JobRepository) private readonly jobRepository: QueuePort,
+    private readonly eventRepository: RealtimePort,
+    private readonly jobRepository: QueuePort,
     private readonly fitRepository: FitRepository,
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
-    @Optional() private readonly importProgressStore?: ImportProgressStore,
-    @Optional() private readonly activityImageRepository?: ActivityImageRepository,
-    @Optional() private readonly socialRepository?: SocialRepository,
+    private readonly importProgressStore?: ImportProgressStore,
+    private readonly activityImageRepository?: ActivityImageRepository,
+    private readonly socialRepository?: SocialRepository,
   ) {
     this.logger.setContext(ActivityService.name);
   }
 
-  @OnJob({ name: JobName.ActivityParse, queue: QueueName.ActivityParsing })
   async handleActivityParse({
     id,
     force,
@@ -194,7 +189,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityManualCreate, queue: QueueName.ActivityParsing })
   async handleActivityManualCreate(job: JobOf<JobName.ActivityManualCreate>): Promise<JobStatus> {
     if (!job.userId) {
       throw new Error('Manual activity job has no owner');
@@ -298,7 +292,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityMetricCompute, queue: QueueName.ActivityParsing })
   async handleActivityMetricCompute({ id }: JobOf<JobName.ActivityMetricCompute>): Promise<JobStatus> {
     const activity = await this.activityRepository.getById(id);
     if (!activity) {
@@ -390,7 +383,6 @@ export class ActivityService {
     }
   }
 
-  @OnJob({ name: JobName.ActivityParseQueueAll, queue: QueueName.BackgroundTask })
   async handleActivityParseQueueAll({ force = false }: JobOf<JobName.ActivityParseQueueAll>): Promise<JobStatus> {
     let after: string | undefined;
     let total = 0;
@@ -417,7 +409,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityBestEffortCompute, queue: QueueName.ActivityParsing })
   async handleActivityBestEffortCompute({ id }: JobOf<JobName.ActivityBestEffortCompute>): Promise<JobStatus> {
     const found = await this.activityRepository.recomputeBestEfforts(id);
     if (found === null) {
@@ -434,7 +425,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityRouteMatchCompute, queue: QueueName.ActivityParsing })
   async handleActivityRouteMatchCompute({ id }: JobOf<JobName.ActivityRouteMatchCompute>): Promise<JobStatus> {
     const found = await this.activityRepository.recomputeRouteMatches(id);
     if (!found) {
@@ -446,7 +436,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityBestEffortRank, queue: QueueName.ActivityParsing })
   async handleActivityBestEffortRank({ id }: JobOf<JobName.ActivityBestEffortRank> = {}): Promise<JobStatus> {
     await this.jobRepository.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
     await this.activityRepository.refreshBestEffortRankings();
@@ -470,7 +459,6 @@ export class ActivityService {
     return JobStatus.Success;
   }
 
-  @OnJob({ name: JobName.ActivityDelete, queue: QueueName.BackgroundTask })
   async handleActivityDelete({ id }: JobOf<JobName.ActivityDelete>): Promise<JobStatus> {
     const activity = await this.activityRepository.getById(id);
     if (!activity) {

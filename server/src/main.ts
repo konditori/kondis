@@ -1,39 +1,110 @@
-import 'reflect-metadata';
+import type { Server } from 'node:http';
 
-import { Logger } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
-
-import { AppModule } from 'src/app.module';
-import { API_PREFIX } from 'src/hono/app';
-import { createNodeHonoApp, mountHonoApp } from 'src/hono/node';
+import { createNodeApiApp, createNodeServer } from 'src/api/node';
+import { createApplicationComposition, type ApplicationComposition } from 'src/composition';
+import { Logger } from 'src/logger';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
-import { EventRepository } from 'src/repositories/event.repository';
-import { AuthService } from 'src/services/auth.service';
 
-export async function bootstrapApi(): Promise<void> {
+export type ApiRuntime = {
+  application: ApplicationComposition;
+  server: Server;
+  close: () => Promise<void>;
+};
+
+const listen = (server: Server, port: number, host: string): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const onError = (error: Error) => {
+      server.off('listening', onListening);
+      reject(error);
+    };
+    const onListening = () => {
+      server.off('error', onError);
+      resolve();
+    };
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(port, host);
+  });
+
+const closeServer = (server: Server): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (!server.listening) {
+      resolve();
+      return;
+    }
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+
+const installApiShutdown = (runtime: ApiRuntime, logger: Logger): void => {
+  const shutdown = (signal: NodeJS.Signals) => {
+    logger.log(`Received ${signal}; shutting down`);
+    void runtime
+      .close()
+      .catch((error: unknown) => {
+        logger.error('Graceful shutdown failed', error instanceof Error ? error.stack : String(error));
+        process.exitCode = 1;
+      })
+      .finally(() => {
+        if (process.connected && typeof process.disconnect === 'function') {
+          process.disconnect();
+        }
+      });
+  };
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+};
+
+export async function bootstrapApi(): Promise<ApiRuntime> {
   const logger = new Logger('Bootstrap');
-  const config = new ConfigRepository();
-  config.logStartupSummary();
+  const configRepository = new ConfigRepository();
+  configRepository.logStartupSummary();
 
-  await migrateDatabase(config.database);
+  await migrateDatabase(configRepository.database);
 
-  const app = await NestFactory.create(AppModule, { cors: false });
-  mountHonoApp(app, createNodeHonoApp(app, config.getEnv()));
-  app.setGlobalPrefix(API_PREFIX.slice(1));
-  app.enableShutdownHooks();
-  await app.init();
-  await app.get(AuthService).logSetupTokenIfRequired();
-  await app.get(EventRepository).attach(app.getHttpServer());
-  await app.listen(config.port, config.listenAddress);
-  logger.log(`Kondis api listening on ${config.listenAddress} on port ${config.port}`);
+  const application = createApplicationComposition({ role: 'api', configRepository });
+  const server = createNodeServer(createNodeApiApp(application));
+  let closePromise: Promise<void> | undefined;
+  const runtime: ApiRuntime = {
+    application,
+    server,
+    close: () => {
+      closePromise ??= (async () => {
+        try {
+          await closeServer(server);
+        } finally {
+          await application.close();
+        }
+      })();
+      return closePromise;
+    },
+  };
+
+  try {
+    await application.initialize();
+    await application.authService.logSetupTokenIfRequired();
+    await application.eventRepository.attach(server);
+    await listen(server, configRepository.port, configRepository.listenAddress);
+  } catch (error) {
+    await runtime.close();
+    throw error;
+  }
+
+  logger.log(`Kondis api listening on ${configRepository.listenAddress} on port ${configRepository.port}`);
+  installApiShutdown(runtime, logger);
+  return runtime;
 }
 
-export async function bootstrapWorker(): Promise<void> {
+export async function bootstrapWorker(): Promise<ApplicationComposition> {
   const logger = new Logger('Bootstrap');
-  const config = new ConfigRepository();
-  config.logStartupSummary();
-  const app = await NestFactory.createApplicationContext(AppModule);
-  app.enableShutdownHooks();
+  const application = createApplicationComposition({ role: 'worker' });
+  application.configRepository.logStartupSummary();
+  try {
+    await application.initialize();
+  } catch (error) {
+    await application.close();
+    throw error;
+  }
   logger.log('Kondis background worker started');
+  return application;
 }

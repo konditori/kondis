@@ -49,7 +49,11 @@ const readLicenseTexts = (directory: string): string[] => {
     .sort()
     .flatMap((entry) => {
       try {
-        const text = readFileSync(join(directory, entry), 'utf8').trim();
+        const text = readFileSync(join(directory, entry), 'utf8')
+          .trim()
+          .split(/\r?\n/)
+          .map((line) => line.trimEnd())
+          .join('\n');
         return text.length > 0 ? [text] : [];
       } catch {
         // A directory named `license`, or an unreadable file. Neither is a licence text.

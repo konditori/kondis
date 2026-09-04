@@ -1,29 +1,17 @@
-import {
-  BadRequestException,
-  ConsoleLogger,
-  Inject,
-  Injectable,
-  NotFoundException,
-  Optional,
-  PayloadTooLargeException,
-} from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { OnJob } from 'src/decorators';
 import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+import { JobName, JobStatus } from 'src/enum';
+import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { LagomTakeoutParser, type LagomTakeoutContents } from 'src/imports/lagom-takeout.parser';
+import { ConsoleLogger } from 'src/logger';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { QueuePort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { EventRepository } from 'src/repositories/event.repository';
-import { JobRepository } from 'src/repositories/job.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ImportProgressStore } from 'src/state/import-progress.store';
@@ -33,20 +21,19 @@ import { asErrorMessage } from 'src/utils/misc';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
-@Injectable()
 export class UploadService {
   constructor(
     private readonly uploadRepository: UploadRepository,
-    @Inject(StorageRepository) private readonly storageRepository: StoragePort,
-    @Inject(CryptoRepository) private readonly cryptoRepository: CryptoPort,
+    private readonly storageRepository: StoragePort,
+    private readonly cryptoRepository: CryptoPort,
     private readonly databaseRepository: DatabaseRepository,
-    @Inject(JobRepository) private readonly jobRepository: QueuePort,
+    private readonly jobRepository: QueuePort,
     private readonly logger: ConsoleLogger,
     private readonly lagomTakeoutParser: LagomTakeoutParser,
     private readonly importProgressStore: ImportProgressStore,
-    @Optional() private readonly userRepository?: UserRepository,
-    @Optional() private readonly activityRepository?: ActivityRepository,
-    @Optional() @Inject(EventRepository) private readonly eventRepository?: RealtimePort,
+    private readonly userRepository?: UserRepository,
+    private readonly activityRepository?: ActivityRepository,
+    private readonly eventRepository?: RealtimePort,
   ) {
     this.logger.setContext(UploadService.name);
   }
@@ -71,7 +58,6 @@ export class UploadService {
     return { byteSize: file.size, queued: true };
   }
 
-  @OnJob({ name: JobName.ActivityUpload, queue: QueueName.BackgroundTask })
   async handleActivityUpload({
     originalName,
     storagePath,
@@ -220,7 +206,6 @@ export class UploadService {
     };
   }
 
-  @OnJob({ name: JobName.LagomTakeoutImport, queue: QueueName.BackgroundTask })
   async handleLagomTakeout({
     originalName,
     storagePath,

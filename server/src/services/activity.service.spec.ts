@@ -1,8 +1,8 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { JobName, JobStatus } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
 import { type ActivityRepository } from 'src/repositories/activity.repository';
 import { type DatabaseRepository } from 'src/repositories/database.repository';
 import { type EventRepository } from 'src/repositories/event.repository';

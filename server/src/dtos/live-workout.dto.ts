@@ -1,5 +1,4 @@
 import { z } from '@hono/zod-openapi';
-import { createZodDto } from 'nestjs-zod';
 
 import { ActivityTypeSchema } from 'src/dtos/activity.dto';
 
@@ -61,10 +60,10 @@ export const LiveWorkoutAckSchema = z.object({
   lastSequence: z.number().int().nonnegative(),
 });
 
-export class LiveWorkoutDto extends createZodDto(LiveWorkoutSchema) {}
-export class LiveWorkoutCreateDto extends createZodDto(LiveWorkoutCreateSchema) {}
-export class LiveWorkoutListDto extends createZodDto(LiveWorkoutListSchema) {}
-export class LiveWorkoutPointsDto extends createZodDto(LiveWorkoutPointsSchema) {}
-export class LiveWorkoutStateDto extends createZodDto(LiveWorkoutStateSchema) {}
-export class LiveWorkoutShareDto extends createZodDto(LiveWorkoutShareSchema) {}
-export class LiveWorkoutAckDto extends createZodDto(LiveWorkoutAckSchema) {}
+export type LiveWorkoutDto = z.output<typeof LiveWorkoutSchema>;
+export type LiveWorkoutCreateDto = z.output<typeof LiveWorkoutCreateSchema>;
+export type LiveWorkoutListDto = z.output<typeof LiveWorkoutListSchema>;
+export type LiveWorkoutPointsDto = z.output<typeof LiveWorkoutPointsSchema>;
+export type LiveWorkoutStateDto = z.output<typeof LiveWorkoutStateSchema>;
+export type LiveWorkoutShareDto = z.output<typeof LiveWorkoutShareSchema>;
+export type LiveWorkoutAckDto = z.output<typeof LiveWorkoutAckSchema>;

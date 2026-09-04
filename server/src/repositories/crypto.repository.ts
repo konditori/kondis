@@ -1,11 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { xxh3 } from '@node-rs/xxhash';
 import { compare, hash } from 'bcrypt';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import type { CryptoPort } from 'src/ports/crypto.port';
 
-@Injectable()
 export class CryptoRepository implements CryptoPort {
   comparePassword(password: string, passwordHash: string): Promise<boolean> {
     return compare(password, passwordHash);

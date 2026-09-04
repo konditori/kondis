@@ -1,6 +1,6 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { ConflictException, UnauthorizedException } from 'src/errors';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';

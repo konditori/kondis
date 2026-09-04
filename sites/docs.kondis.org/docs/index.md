@@ -14,7 +14,7 @@ I, [Jonathan Jogenfors](https://jogenfors.com), was tired of the usual commercia
 
 Developing a brand-new fitness app didn't seem that difficult since there actually aren't any hard problems to solve, just a bunch of smaller problems that can be tackled one by one.
 
-In 2026, I had done enough thinking and just started implementing, seeing where this all would land. Since I have been contributing to the Immich project for several years, I had seen its architecture evolve over time, which helped me with the usually difficult initial choices: NestJS, Postgres with VectorChord, and Svelte. However, I made the conscious decision to avoid Flutter since it never felt like the right choice to me. Instead, I decided to try my luck with native mobile apps.
+In 2026, I had done enough thinking and just started implementing, seeing where this all would land. Since I have been contributing to the Immich project for several years, I had seen its architecture evolve over time, which helped me with the usually difficult initial choices: Hono, Postgres with VectorChord, and Svelte. However, I made the conscious decision to avoid Flutter since it never felt like the right choice to me. Instead, I decided to try my luck with native mobile apps.
 
 The name? In Swedish (and other Nordic languages), "Kondition" means "(physical) condition/health, shape, stamina." The slang term is "Kondis," which is short and sweet yet quirky enough to be memorable. The 😰 emoji was just added as an afterthought; let's see if we keep it.
 

@@ -1,6 +1,6 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 
+import { ConsoleLogger } from 'src/logger';
 import { GpxDecodeError, GpxRepository } from 'src/repositories/gpx.repository';
 
 const makeRepository = () => new GpxRepository(new ConsoleLogger({ logLevels: [] }));

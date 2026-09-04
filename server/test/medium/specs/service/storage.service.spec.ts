@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { ConsoleLogger } from '@nestjs/common';
-import type { ConfigRepository } from 'src/repositories/config.repository';
 import { JobStatus } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
+import type { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import type { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Logger } from '@nestjs/common';
+
+import { Logger } from 'src/logger';
 
 const mocks = vi.hoisted(() => ({
   createDatabase: vi.fn(),
@@ -30,8 +31,8 @@ describe(DatabaseRepository.name, () => {
     vi.clearAllMocks();
     mocks.Migrator.mockImplementation(function () {
       return {
-      migrateDown: mocks.migrateDown,
-      migrateToLatest: mocks.migrateToLatest,
+        migrateDown: mocks.migrateDown,
+        migrateToLatest: mocks.migrateToLatest,
       };
     });
     mocks.FileMigrationProvider.mockImplementation(function (options) {

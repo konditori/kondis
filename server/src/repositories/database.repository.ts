@@ -1,19 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
 import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { DatabaseConfig } from 'src/types';
-import { createDatabase, KYSELY } from 'src/db/database';
-import type { KondisDatabase, KondisTransaction } from 'src/types';
+import { createDatabase } from 'src/db/database';
+import { Logger } from 'src/logger';
+import type { DatabaseConfig, KondisDatabase, KondisTransaction } from 'src/types';
 
 const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 
-@Injectable()
 export class DatabaseRepository {
   private readonly logger = new Logger(DatabaseRepository.name);
 
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   withTransaction<T>(fn: (trx: KondisTransaction) => Promise<T>): Promise<T> {
     return this.db.transaction().execute(fn);

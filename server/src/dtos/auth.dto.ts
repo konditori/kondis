@@ -1,5 +1,4 @@
 import { z } from '@hono/zod-openapi';
-import { createZodDto } from 'nestjs-zod';
 
 export const CredentialsSchema = z.object({
   email: z.string(),
@@ -22,4 +21,4 @@ export const ActivityEventsTicketSchema = z.object({
   expiresAt: z.string().datetime(),
 });
 
-export class ActivityEventsTicketDto extends createZodDto(ActivityEventsTicketSchema) {}
+export type ActivityEventsTicketDto = z.output<typeof ActivityEventsTicketSchema>;

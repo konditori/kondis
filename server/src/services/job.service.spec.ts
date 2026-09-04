@@ -1,7 +1,7 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
 import { type EventRepository } from 'src/repositories/event.repository';
 import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
@@ -52,11 +52,7 @@ describe('JobService', () => {
   const setup = () =>
     newTestService(
       JobService,
-      [
-        jobRepository,
-        { emit } as unknown as EventRepository,
-        new ConsoleLogger({ logLevels: [] }),
-      ],
+      [jobRepository, { emit } as unknown as EventRepository, new ConsoleLogger({ logLevels: [] })],
       { jobRepository },
     );
 
@@ -77,8 +73,13 @@ describe('JobService', () => {
 
   describe('init', () => {
     it('does not consume jobs in the API process', async () => {
-      await makeService().init();
+      await makeService().init(false);
       expect(startWorkers).not.toHaveBeenCalled();
+    });
+
+    it('starts workers when job consumption is enabled', async () => {
+      await makeService().init(true);
+      expect(startWorkers).toHaveBeenCalledOnce();
     });
   });
 

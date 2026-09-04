@@ -1,4 +1,5 @@
-import { HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus } from 'src/errors';
+import { Logger } from 'src/logger';
 
 export type RateLimitOptions = {
   label: string;

@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { createReadStream } from 'node:fs';
 import { copyFile, mkdir, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -7,7 +6,6 @@ import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 
-@Injectable()
 export class StorageRepository implements StoragePort {
   constructor(
     private readonly config: ConfigRepository,

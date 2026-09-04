@@ -1,11 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { KYSELY } from 'src/db/database';
 import type { NewUserInput } from 'src/dtos/user.dto';
 import type { KondisDatabase } from 'src/types';
 
-@Injectable()
 export class UserRepository {
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   count() {
     return this.db
@@ -60,6 +57,11 @@ export class UserRepository {
   }
 
   createInitialAdmin(input: NewUserInput) {
-    return this.db.insertInto('user').values(input).onConflict((conflict) => conflict.doNothing()).returningAll().executeTakeFirst();
+    return this.db
+      .insertInto('user')
+      .values(input)
+      .onConflict((conflict) => conflict.doNothing())
+      .returningAll()
+      .executeTakeFirst();
   }
 }

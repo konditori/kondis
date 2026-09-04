@@ -1,5 +1,3 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { KYSELY } from 'src/db/database';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import type { ActivityType, KondisDatabase } from 'src/types';
 
@@ -12,9 +10,8 @@ type LivePointInput = {
   accuracyMeters: number;
 };
 
-@Injectable()
 export class LiveWorkoutRepository {
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   getById(id: string, userId?: string) {
     return this.db

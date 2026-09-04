@@ -1,12 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
-import { KYSELY } from 'src/db/database';
 import type { ActivityEngagement, SocialUser } from 'src/dtos/social.dto';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
 
-@Injectable()
 export class SocialRepository {
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   activityEngagement(ids: string[], viewerId: string): Promise<ActivityEngagement[]> {
     return this.db

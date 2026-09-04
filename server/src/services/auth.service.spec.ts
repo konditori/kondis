@@ -1,13 +1,8 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
+import { Logger } from 'src/logger';
 import type { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';

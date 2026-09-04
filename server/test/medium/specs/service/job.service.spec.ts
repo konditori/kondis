@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { ConsoleLogger } from '@nestjs/common';
 import { QueueCommand, QueueName } from 'src/enum';
+import { ConsoleLogger } from 'src/logger';
 import type { JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 

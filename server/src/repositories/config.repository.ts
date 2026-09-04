@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-
+import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { DatabaseConfig, EnvData } from 'src/types';
 
@@ -67,7 +66,6 @@ const getEnv = (): EnvData => {
   };
 };
 
-@Injectable()
 export class ConfigRepository implements ConfigPort {
   private readonly logger = new Logger(ConfigRepository.name);
   private envCache: EnvData | undefined;

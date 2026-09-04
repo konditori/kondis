@@ -39,7 +39,7 @@ export type TakeoutImportStatusDtoOutput = {
   processed: number;
   failed: number;
   duplicates: number;
-  error: string[];
+  error: string | null;
 };
 export type JobCountsDtoOutput = {
   /** Jobs currently executing */
@@ -259,7 +259,7 @@ export type ActivityListResponseDtoOutput = {
     }[];
   }[];
   /** Cursor for the next page, or null at the end */
-  nextCursor: string[];
+  nextCursor: string | null;
   /** Total number of activities */
   total: number;
 };
@@ -320,9 +320,9 @@ export type ActivityDetailDtoOutput = {
   viewerLiked?: boolean;
   sport: ActivityType_Output;
   /** Activity name */
-  name: string[];
+  name: string | null;
   /** Activity description */
-  description: string[];
+  description: string | null;
   /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Activity tags */
@@ -444,9 +444,9 @@ export type ActivityDtoOutput = {
   viewerLiked?: boolean;
   sport: ActivityType_Output;
   /** Activity name */
-  name: string[];
+  name: string | null;
   /** Activity description */
-  description: string[];
+  description: string | null;
   /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Activity tags */
@@ -507,14 +507,14 @@ export type MatchedRouteListResponseDtoOutput = {
 };
 export type ActivityImageDtoOutput = {
   id: string;
-  caption: string[];
+  caption: string | null;
   sortOrder: number;
   width: number | null;
   height: number | null;
   status: Status5;
-  thumbnail: string[];
-  preview: string[];
-  original: string[];
+  thumbnail: string | null;
+  preview: string | null;
+  original: string | null;
 };
 export type ActivityImageListDtoOutput = {
   id: string;
@@ -618,7 +618,7 @@ export type CommentListDtoOutput = {
       avatarUrl: string | null;
     };
   }[];
-  nextCursor: string[];
+  nextCursor: string | null;
 };
 export type CommentCreateDto = {
   body: string;

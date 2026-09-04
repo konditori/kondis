@@ -1,13 +1,4 @@
 import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
-import {
   AUTH_SECRET,
   createAccessToken,
   createActivityEventsTicket,
@@ -15,24 +6,23 @@ import {
   createSetupTicket,
   verifySetupTicket,
 } from 'src/auth';
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
+import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { CryptoPort } from 'src/ports/crypto.port';
-import { ConfigRepository } from 'src/repositories/config.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 const BCRYPT_WORK_FACTOR = 12;
 const SETUP_TOKEN_RATE_LIMIT = { label: 'Setup token', maxAttempts: 5, windowMs: 60_000 } as const;
-@Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly setupToken: string;
 
   constructor(
     private readonly users: UserRepository,
-    @Inject(ConfigRepository) private readonly config: Pick<ConfigPort, 'registrationEnabled'>,
+    private readonly config: Pick<ConfigPort, 'registrationEnabled'>,
     private readonly rateLimitingRepository: RateLimitingRepository,
-    @Inject(CryptoRepository) private readonly crypto: CryptoPort,
+    private readonly crypto: CryptoPort,
   ) {
     this.setupToken = this.crypto.uuid();
   }

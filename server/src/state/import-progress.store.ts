@@ -1,7 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'kysely';
 
-import { KYSELY } from 'src/db/database';
 import type { KondisDatabase } from 'src/types';
 
 export type ImportProgressStatus = 'queued' | 'processing' | 'completed' | 'failed';
@@ -17,9 +15,8 @@ export type ImportProgress = {
   error: string | null;
 };
 
-@Injectable()
 export class ImportProgressStore {
-  constructor(@Inject(KYSELY) private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {}
 
   async create(importId: string, userId: string): Promise<void> {
     await this.db.insertInto('takeout_import').values({ id: importId, user_id: userId }).execute();

@@ -1,7 +1,7 @@
-import { ConsoleLogger } from '@nestjs/common';
 import { FitBaseType, FitEncoder } from 'fit-file-parser';
 import { describe, expect, it } from 'vitest';
 
+import { ConsoleLogger } from 'src/logger';
 import { FitDecodeError, FitRepository } from 'src/repositories/fit.repository';
 
 const MESG_FILE_ID = 0;
