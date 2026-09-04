@@ -1,0 +1,39 @@
+server/src/controllers/index.ts
+  s_d33de69b6c6a55::t_52136fd7357912 4
+server/src/hono/auth.ts
+  s_d33de69b6c6a55::t_32879de887e92c 1,7,13-17,25,64-70
+server/src/hono/routes/auth.ts
+  s_d33de69b6c6a55::t_844faffdf153dc 1-71,73-124,127-145,147-171,175-196
+server/src/hono/routes/upload.ts
+  s_d33de69b6c6a55::t_7eb8ecc5e56597 1-95
+server/src/hono/routes/user-mutations.spec.ts
+  s_d33de69b6c6a55::t_d1719c72c00132 1-67
+server/src/hono/routes/user-mutations.ts
+  s_d33de69b6c6a55::t_c6f79bd55f47f2 1,3-7,9-12,19,23-80,87-104
+server/src/hono/uploads.ts
+  s_d33de69b6c6a55::t_f91cc887673994 1-12
+server/src/hono/validation.ts
+  s_d33de69b6c6a55::t_661b67ec6e70d8 1-44
+server/src/repositories/config.repository.ts
+  s_d33de69b6c6a55::t_75b715c9feb8b0 3,54-58,71
+server/src/services/job.service.ts
+  s_d33de69b6c6a55::t_cae096c4a0e73f 1,5-6,27-28,57-59
+server/test/medium/specs/service/auth.service.spec.ts
+  s_d33de69b6c6a55::t_a4fede0c08022c 4,8,20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c8f175101dc776fc565113eebe1f44bf76459369",
+  "prompts": {},
+  "sessions": {
+    "s_d33de69b6c6a55": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f94d4ef3fffeiexP043QE08WrY",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
