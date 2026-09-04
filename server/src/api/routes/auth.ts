@@ -1,7 +1,7 @@
 import { createRoute, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
-import { jsonBodyMiddleware, parseRequest } from 'src/api/validation';
+import { jsonBodyMiddleware } from 'src/api/validation';
 import {
   ActivityEventsTicketSchema,
   CredentialsSchema,
@@ -27,6 +27,11 @@ export type AuthRouteService = Pick<
 >;
 
 const emptyResponses = (status: 200 | 201) => ({ [status]: { description: '' } });
+const credentialsInput = CredentialsSchema.openapi('CredentialsDto');
+const registrationCredentialsInput = RegistrationCredentialsSchema.openapi('RegistrationCredentialsDto');
+const setupCredentialsInput = SetupCredentialsSchema.openapi('SetupCredentialsDto');
+const setupTicketCredentialsInput = SetupTicketCredentialsSchema.openapi('SetupTicketCredentialsDto');
+const setupTokenCredentialsInput = SetupTokenCredentialsSchema.openapi('SetupTokenCredentialsDto');
 const capabilitiesRoute = createRoute({
   method: 'get',
   path: '/auth/capabilities',
@@ -49,6 +54,9 @@ const setupRoute = createRoute({
   operationId: 'AuthController_setup',
   middleware: [jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: setupCredentialsInput } } },
+  },
   responses: emptyResponses(201),
   tags: ['Auth'],
 });
@@ -58,6 +66,9 @@ const verifySetupRoute = createRoute({
   operationId: 'AuthController_verifySetupToken',
   middleware: [jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: setupTokenCredentialsInput } } },
+  },
   responses: emptyResponses(201),
   tags: ['Auth'],
 });
@@ -67,6 +78,9 @@ const validateSetupRoute = createRoute({
   operationId: 'AuthController_validateSetupTicket',
   middleware: [jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: setupTicketCredentialsInput } } },
+  },
   responses: emptyResponses(201),
   tags: ['Auth'],
 });
@@ -76,6 +90,9 @@ const loginRoute = createRoute({
   operationId: 'AuthController_login',
   middleware: [jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: credentialsInput } } },
+  },
   responses: emptyResponses(201),
   tags: ['Auth'],
 });
@@ -85,6 +102,9 @@ const registerRoute = createRoute({
   operationId: 'AuthController_register',
   middleware: [jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: registrationCredentialsInput } } },
+  },
   responses: emptyResponses(201),
   tags: ['Auth'],
 });
@@ -136,7 +156,7 @@ export const registerAuthRoutes = (
     return context.json({ ...status, registrationEnabled: config.registrationEnabled }, 200) as never;
   });
   app.openapi(setupRoute, async (context) => {
-    const value = parseRequest(SetupCredentialsSchema, await context.req.json());
+    const value = context.req.valid('json');
     const result = await service.setup(
       value.email,
       value.firstName ?? '',
@@ -147,21 +167,21 @@ export const registerAuthRoutes = (
     return context.json(result, 201) as never;
   });
   app.openapi(verifySetupRoute, async (context) => {
-    const value = parseRequest(SetupTokenCredentialsSchema, await context.req.json());
+    const value = context.req.valid('json');
     const forwardedFor = context.req.header('X-Forwarded-For');
     const clientId = forwardedFor?.split(',', 1)[0]?.trim() || context.env.incoming?.socket?.remoteAddress || 'unknown';
     return context.json(await service.verifySetupToken(value.setupToken, clientId), 201) as never;
   });
   app.openapi(validateSetupRoute, async (context) => {
-    const value = parseRequest(SetupTicketCredentialsSchema, await context.req.json());
+    const value = context.req.valid('json');
     return context.json(await service.validateSetupTicket(value.setupTicket), 201) as never;
   });
   app.openapi(loginRoute, async (context) => {
-    const value = parseRequest(CredentialsSchema, await context.req.json());
+    const value = context.req.valid('json');
     return context.json(await service.login(value.email, value.password), 201) as never;
   });
   app.openapi(registerRoute, async (context) => {
-    const value = parseRequest(RegistrationCredentialsSchema, await context.req.json());
+    const value = context.req.valid('json');
     return context.json(
       await service.register(value.email, value.firstName, value.lastName, value.password),
       201,

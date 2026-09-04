@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { open } from 'node:fs/promises';
+import { open, stat } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import { tmpdir } from 'node:os';
+import { Readable } from 'node:stream';
 
 import { createAdaptorServer } from '@hono/node-server';
 import type { Request, RequestHandler, Response } from 'express';
@@ -10,18 +11,30 @@ import multer, { diskStorage, memoryStorage } from 'multer';
 
 import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
+import type { FileRange } from 'src/api/file-response';
 import type { ImageUpload, UploadKind, UploadReader } from 'src/api/uploads';
 import type { ApplicationComposition } from 'src/composition';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
 import type { UploadedFileData } from 'src/types/uploads';
 
-const readNodeFile = async (path: string): Promise<ReadableStream> => {
-  const file = await open(path, 'r');
-  return file.readableWebStream({ autoClose: true }) as unknown as ReadableStream;
+const statNodeFile = async (path: string): Promise<{ lastModified: Date }> => {
+  const file = await stat(path);
+  return { lastModified: file.mtime };
 };
 
-export const nodeFileReader = { read: readNodeFile };
+const readNodeFile = async (path: string, range?: FileRange): Promise<ReadableStream> => {
+  const file = await open(path, 'r');
+  try {
+    const stream = file.createReadStream({ autoClose: true, ...(range && { start: range.start, end: range.end }) });
+    return Readable.toWeb(stream) as unknown as ReadableStream;
+  } catch (error) {
+    await file.close();
+    throw error;
+  }
+};
+
+export const nodeFileReader = { read: readNodeFile, stat: statNodeFile };
 
 const uploadStorage = diskStorage({
   destination: tmpdir(),

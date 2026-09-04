@@ -128,6 +128,7 @@ export const createApiApp = ({
   registerLiveWorkoutRoutes(app, liveWorkouts);
   registerUploadRoutes(app, uploadService, uploads);
   registerJobRoutes(app, jobs);
+  app.notFound((context) => context.json({ statusCode: 404, message: 'Not Found' }, 404));
   app.onError((error, context) => {
     if (error instanceof RequestValidationError) {
       return context.json({ statusCode: 400, message: error.message, errors: error.issues }, 400);

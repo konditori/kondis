@@ -72,4 +72,28 @@ describe('API social read routes', () => {
     expect(commentsResponse.status).toBe(200);
     expect(comments).toHaveBeenCalledWith(ACTIVITY_ID, TEST_API_USER.id, 'next', 6);
   });
+
+  it('preserves omitted limits and rejects malformed or out-of-range limits', async () => {
+    const notifications = vi.fn(() => Promise.resolve({ notifications: [], unreadCount: 0 }));
+    const comments = vi.fn(() => Promise.resolve({ comments: [], nextCursor: null }));
+    const app = createApiApp(
+      newApiDependencies({
+        social: { comments, notifications },
+        users: newApiUsers(),
+      }),
+    );
+    const request = (path: string) => app.request(path, { headers: apiAuthHeaders() });
+
+    expect((await request('/notifications')).status).toBe(200);
+    expect(notifications).toHaveBeenCalledWith(TEST_API_USER.id, undefined);
+    expect((await request(`/activities/${ACTIVITY_ID}/comments`)).status).toBe(200);
+    expect(comments).toHaveBeenCalledWith(ACTIVITY_ID, TEST_API_USER.id, undefined, undefined);
+
+    for (const limit of ['nope', '0', '-1', '1.5', '51']) {
+      expect((await request(`/notifications?limit=${limit}`)).status, limit).toBe(400);
+      expect((await request(`/activities/${ACTIVITY_ID}/comments?limit=${limit}`)).status, limit).toBe(400);
+    }
+    expect(notifications).toHaveBeenCalledTimes(1);
+    expect(comments).toHaveBeenCalledTimes(1);
+  });
 });

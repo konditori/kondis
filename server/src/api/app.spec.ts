@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
-import { newApiDependencies } from 'test/api';
+import { apiAuthHeaders, newApiDependencies, newApiUsers } from 'test/api';
 
 const findNoUser = (_id: string) => Promise.resolve(undefined);
 const listNoUsers = () => Promise.resolve([]);
@@ -38,6 +38,16 @@ describe('API application', () => {
     expect(await response.json()).toEqual({ statusCode: 500, message: 'Internal server error' });
     expect(consoleError).toHaveBeenCalledWith(error);
     consoleError.mockRestore();
+  });
+
+  it('returns the standard JSON error shape for an unknown route', async () => {
+    const response = await createApiApp(newApiDependencies({ users: newApiUsers() })).request('/missing', {
+      headers: apiAuthHeaders(),
+    });
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('Content-Type')).toContain('application/json');
+    expect(await response.json()).toEqual({ statusCode: 404, message: 'Not Found' });
   });
 
   it('preserves the ping operation contract', () => {

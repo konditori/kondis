@@ -30,7 +30,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 ## Planned features (subject to change)
 * MCP server
 * iOS and Apple Watch support
-* Listen address is hardcoded 0.0.0.0, make configurable
+* Scoped API keys
 * Demo site linked from github
 * Audio coach with TTS during activities
 * Audio coach with ETA if following known route
@@ -53,6 +53,3 @@ There is a separate [api reference site](https://developers.kondis.org/).
 
 ## License
 Kondis is licensed under AGPL-3.0-or-later; see [LICENSE](./LICENSE).
-
-Bundled third-party dependencies and their notices are listed in
-[THIRD-PARTY-LICENSES.md](./THIRD-PARTY-LICENSES.md).

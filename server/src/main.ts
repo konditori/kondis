@@ -36,6 +36,29 @@ const closeServer = (server: Server): Promise<void> =>
     server.close((error) => (error ? reject(error) : resolve()));
   });
 
+export const createApiRuntime = (application: ApplicationComposition, server: Server): ApiRuntime => {
+  let closePromise: Promise<void> | undefined;
+  return {
+    application,
+    server,
+    close: () => {
+      closePromise ??= (async () => {
+        const results = await Promise.allSettled([closeServer(server), application.close()]);
+        const errors = results
+          .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+          .map(({ reason }) => reason);
+        if (errors.length === 1) {
+          throw errors[0];
+        }
+        if (errors.length > 1) {
+          throw new AggregateError(errors, 'Failed to close API runtime');
+        }
+      })();
+      return closePromise;
+    },
+  };
+};
+
 const installApiShutdown = (runtime: ApiRuntime, logger: Logger): void => {
   const shutdown = (signal: NodeJS.Signals) => {
     logger.log(`Received ${signal}; shutting down`);
@@ -64,21 +87,7 @@ export async function bootstrapApi(): Promise<ApiRuntime> {
 
   const application = createApplicationComposition({ role: 'api', configRepository });
   const server = createNodeServer(createNodeApiApp(application));
-  let closePromise: Promise<void> | undefined;
-  const runtime: ApiRuntime = {
-    application,
-    server,
-    close: () => {
-      closePromise ??= (async () => {
-        try {
-          await closeServer(server);
-        } finally {
-          await application.close();
-        }
-      })();
-      return closePromise;
-    },
-  };
+  const runtime = createApiRuntime(application, server);
 
   try {
     await application.initialize();

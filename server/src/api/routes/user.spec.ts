@@ -38,6 +38,7 @@ describe('API user read routes', () => {
   });
 
   it('streams avatar bytes with the existing response headers', async () => {
+    const lastModified = new Date('2026-08-20T12:00:00Z');
     const avatarFile = vi.fn(() =>
       Promise.resolve({
         id: AVATAR_OWNER_ID,
@@ -47,6 +48,7 @@ describe('API user read routes', () => {
       }),
     );
     const avatarAbsolutePath = vi.fn(() => '/data/avatars/profile.webp');
+    const stat = vi.fn(() => Promise.resolve({ lastModified }));
     const read = vi.fn(() =>
       Promise.resolve(
         new ReadableStream({
@@ -59,7 +61,7 @@ describe('API user read routes', () => {
     );
     const app = createApiApp(
       newApiDependencies({
-        files: { read },
+        files: { read, stat },
         userService: { avatarAbsolutePath, avatarFile },
         users: newApiUsers(),
       }),
@@ -70,12 +72,16 @@ describe('API user read routes', () => {
     expect(await response.text()).toBe('avatar');
     expect(response.headers.get('Content-Type')).toBe('image/webp');
     expect(response.headers.get('Content-Length')).toBe('6');
+    expect(response.headers.get('Accept-Ranges')).toBe('bytes');
+    expect(response.headers.get('Last-Modified')).toBe(lastModified.toUTCString());
     expect(response.headers.get('Cache-Control')).toBe('private, max-age=3600');
     expect(avatarFile).toHaveBeenCalledWith(AVATAR_OWNER_ID, TEST_API_USER.id);
     expect(avatarAbsolutePath).toHaveBeenCalledWith('avatars/profile.webp');
+    expect(stat).toHaveBeenCalledWith('/data/avatars/profile.webp');
     expect(read).toHaveBeenCalledWith('/data/avatars/profile.webp');
 
     read.mockClear();
+    stat.mockClear();
     avatarAbsolutePath.mockClear();
     const headResponse = await app.request(`/users/${AVATAR_OWNER_ID}/avatar`, {
       method: 'HEAD',
@@ -84,6 +90,7 @@ describe('API user read routes', () => {
     expect(headResponse.status).toBe(200);
     expect(headResponse.headers.get('Content-Length')).toBe('6');
     expect(read).not.toHaveBeenCalled();
-    expect(avatarAbsolutePath).not.toHaveBeenCalled();
+    expect(avatarAbsolutePath).toHaveBeenCalledWith('avatars/profile.webp');
+    expect(stat).toHaveBeenCalledWith('/data/avatars/profile.webp');
   });
 });

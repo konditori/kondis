@@ -1,17 +1,16 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
+import { fileResponse, type FileReader } from 'src/api/file-response';
 import { ForbiddenException, NotFoundException } from 'src/errors';
 import type { UserService } from 'src/services/user.service';
+
+export type { FileReader } from 'src/api/file-response';
 
 export type UserReadRepository = ApiUserLookup & {
   all: () => Promise<Array<{ password_hash: string }>>;
 };
 export type UserAvatarService = Pick<UserService, 'avatarAbsolutePath' | 'avatarFile'>;
-export type FileReader = {
-  read: (path: string) => Promise<BodyInit>;
-};
-
 const avatarParams = z.object({ id: z.string() });
 
 const listUsersRoute = createRoute({
@@ -51,13 +50,11 @@ export const registerUserReadRoutes = (
     if (!avatar.avatar_path || !avatar.avatar_mime_type || avatar.avatar_size === null) {
       throw new NotFoundException('Profile picture does not exist');
     }
-    const body =
-      context.req.method === 'HEAD' ? null : await files.read(userService.avatarAbsolutePath(avatar.avatar_path));
-    return new Response(body, {
-      status: 200,
+    return fileResponse(context.req.raw, files, userService.avatarAbsolutePath(avatar.avatar_path), {
+      size: avatar.avatar_size,
+      missingMessage: 'Profile picture does not exist',
       headers: {
         'Content-Type': avatar.avatar_mime_type,
-        'Content-Length': String(avatar.avatar_size),
         'Content-Disposition': 'inline',
         'Cache-Control': 'private, max-age=3600',
         'X-Content-Type-Options': 'nosniff',

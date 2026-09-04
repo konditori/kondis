@@ -114,6 +114,7 @@ export class EventRepository implements RealtimePort {
     this.upgradeHandler = (request, socket, head) => {
       const path = new URL(request.url ?? '', 'http://localhost').pathname;
       if (!EVENT_PATHS.has(path)) {
+        socket.destroy();
         return;
       }
       this.socketServer?.handleUpgrade(request, socket, head, (client) => {

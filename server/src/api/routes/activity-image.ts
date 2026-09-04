@@ -1,7 +1,7 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
-import type { FileReader } from 'src/api/routes/user';
+import { fileResponse, type FileReader } from 'src/api/file-response';
 import type { ImageUpload, UploadReader } from 'src/api/uploads';
 import { jsonBodyMiddleware } from 'src/api/validation';
 import { ActivityImageListSchema, ActivityImageSchema, ActivityImageUpdateSchema } from 'src/dtos/activity-image.dto';
@@ -137,12 +137,11 @@ export const registerActivityImageRoutes = (
       throw new NotFoundException('Image variant does not exist');
     }
     const file = await images.getFile(imageId, variant as 'original' | 'thumbnail' | 'preview', context.get('user').id);
-    const body = context.req.method === 'HEAD' ? null : await files.read(file.absolutePath);
-    return new Response(body, {
-      status: 200,
+    return fileResponse(context.req.raw, files, file.absolutePath, {
+      size: file.byte_size,
+      missingMessage: 'Image variant does not exist',
       headers: {
         'Content-Type': file.mime_type,
-        'Content-Length': String(file.byte_size),
         'Content-Disposition': 'inline',
         'Cache-Control': 'private, max-age=31536000, immutable',
         'X-Content-Type-Options': 'nosniff',

@@ -201,7 +201,45 @@ describe(createNodeServer.name, () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toBe('image/jpeg');
+    expect(response.headers.get('Content-Length')).toBe('11');
+    expect(response.headers.get('Accept-Ranges')).toBe('bytes');
+    expect(response.headers.get('Last-Modified')).not.toBeNull();
     expect(await response.text()).toBe('image bytes');
     expect(getFile).toHaveBeenCalledWith('image-id', 'original', TEST_API_USER.id);
+
+    const rangeResponse = await fetch(`${baseUrl}${API_PREFIX}/activity-images/image-id/original`, {
+      headers: { ...apiAuthHeaders(), Range: 'bytes=6-' },
+    });
+    expect(rangeResponse.status).toBe(206);
+    expect(rangeResponse.headers.get('Content-Range')).toBe('bytes 6-10/11');
+    expect(rangeResponse.headers.get('Content-Length')).toBe('5');
+    expect(await rangeResponse.text()).toBe('bytes');
+
+    const conditionalResponse = await fetch(`${baseUrl}${API_PREFIX}/activity-images/image-id/original`, {
+      headers: { ...apiAuthHeaders(), 'If-Modified-Since': response.headers.get('Last-Modified')! },
+    });
+    expect(conditionalResponse.status).toBe(304);
+    expect(await conditionalResponse.text()).toBe('');
+
+    const headResponse = await fetch(`${baseUrl}${API_PREFIX}/activity-images/image-id/original`, {
+      method: 'HEAD',
+      headers: apiAuthHeaders(),
+    });
+    expect(headResponse.status).toBe(200);
+    expect(headResponse.headers.get('Content-Length')).toBe('11');
+    expect(await headResponse.text()).toBe('');
+
+    await rm(path);
+    const missingGet = await fetch(`${baseUrl}${API_PREFIX}/activity-images/image-id/original`, {
+      headers: apiAuthHeaders(),
+    });
+    const missingHead = await fetch(`${baseUrl}${API_PREFIX}/activity-images/image-id/original`, {
+      method: 'HEAD',
+      headers: apiAuthHeaders(),
+    });
+    expect(missingGet.status).toBe(404);
+    expect(await missingGet.json()).toMatchObject({ message: 'Image variant does not exist' });
+    expect(missingHead.status).toBe(404);
+    expect(await missingHead.text()).toBe('');
   });
 });

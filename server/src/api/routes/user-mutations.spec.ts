@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApiApp } from 'src/api/app';
+import { createApiApp, createOpenApiDocument } from 'src/api/app';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 describe('API user mutation routes', () => {
@@ -63,5 +63,18 @@ describe('API user mutation routes', () => {
 
     expect(response.status).toBe(403);
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('documents user mutation bodies as required application/json', () => {
+    const document = createOpenApiDocument(createApiApp(newApiDependencies()));
+
+    expect(document.paths['/users']?.post?.requestBody).toEqual({
+      required: true,
+      content: { 'application/json': { schema: { $ref: '#/components/schemas/UserCreateDto' } } },
+    });
+    expect(document.paths['/users/me']?.patch?.requestBody).toEqual({
+      required: true,
+      content: { 'application/json': { schema: { $ref: '#/components/schemas/UserUpdateDto' } } },
+    });
   });
 });

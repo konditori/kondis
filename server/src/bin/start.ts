@@ -2,6 +2,7 @@ import { fork, type ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
 import { WorkerType } from 'src/enum';
@@ -12,7 +13,7 @@ const workerEntry = resolve(import.meta.dirname, '..', 'workers', 'worker.js');
 type Runtime = ChildProcess | Worker;
 
 const children = new Map<Runtime, WorkerType>();
-const WORKER_SHUTDOWN_TIMEOUT_MS = 35_000;
+const SHUTDOWN_TIMEOUT_MS = 35_000;
 let stopping = false;
 
 const startRole = (role: WorkerType, environment: NodeJS.ProcessEnv = {}): Runtime => {
@@ -28,21 +29,31 @@ const startRole = (role: WorkerType, environment: NodeJS.ProcessEnv = {}): Runti
   return child;
 };
 
+export const stopRuntime = (child: Runtime, role: WorkerType, signal: NodeJS.Signals): void => {
+  if (role === WorkerType.API) {
+    (child as ChildProcess).kill(signal);
+  } else {
+    (child as Worker).postMessage({ type: 'shutdown' });
+  }
+
+  const timeout = setTimeout(() => {
+    if (role === WorkerType.API) {
+      (child as ChildProcess).kill('SIGKILL');
+    } else {
+      void (child as Worker).terminate();
+    }
+  }, SHUTDOWN_TIMEOUT_MS);
+  timeout.unref();
+  child.once('exit', () => clearTimeout(timeout));
+};
+
 const stopChildren = (signal: NodeJS.Signals = 'SIGTERM'): void => {
   if (stopping) {
     return;
   }
   stopping = true;
   for (const [child, role] of children) {
-    if (role === WorkerType.API) {
-      (child as ChildProcess).kill(signal);
-    } else {
-      const worker = child as Worker;
-      worker.postMessage({ type: 'shutdown' });
-      const timeout = setTimeout(() => void worker.terminate(), WORKER_SHUTDOWN_TIMEOUT_MS);
-      timeout.unref();
-      worker.once('exit', () => clearTimeout(timeout));
-    }
+    stopRuntime(child, role, signal);
   }
 };
 
@@ -91,8 +102,10 @@ const run = async (): Promise<void> => {
   await Promise.allSettled([apiExit, workerExit]);
 };
 
-run().catch((error: unknown) => {
-  console.error(error);
-  stopChildren();
-  process.exitCode = 1;
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  run().catch((error: unknown) => {
+    console.error(error);
+    stopChildren();
+    process.exitCode = 1;
+  });
+}

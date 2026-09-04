@@ -2,7 +2,7 @@ import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import { requireAdmin, type ApiEnv } from 'src/api/auth';
 import type { UploadReader } from 'src/api/uploads';
-import { jsonBodyMiddleware, parseRequest } from 'src/api/validation';
+import { jsonBodyMiddleware } from 'src/api/validation';
 import type { AuthService } from 'src/services/auth.service';
 import type { UserService } from 'src/services/user.service';
 
@@ -20,6 +20,8 @@ const updateNameInput = z.object({
   firstName: z.string().trim().min(1).max(80),
   lastName: z.string().trim().min(1).max(80),
 });
+const createUserRequest = createUserInput.openapi('UserCreateDto');
+const updateNameRequest = updateNameInput.openapi('UserUpdateDto');
 const multipartBody = {
   required: true,
   content: {
@@ -39,6 +41,9 @@ const createRouteConfig = createRoute({
   operationId: 'UserController_create',
   middleware: [requireAdmin, jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: createUserRequest } } },
+  },
   responses: { 201: { description: '' } },
   tags: ['User'],
 });
@@ -48,6 +53,9 @@ const updateRoute = createRoute({
   operationId: 'UserController_updateMe',
   middleware: [jsonBodyMiddleware] as const,
   parameters: [],
+  request: {
+    body: { required: true, content: { 'application/json': { schema: updateNameRequest } } },
+  },
   responses: { 200: { description: '' } },
   tags: ['User'],
 });
@@ -76,7 +84,7 @@ export const registerUserMutationRoutes = (
   uploads: UploadReader,
 ): void => {
   app.openapi(createRouteConfig, async (context) => {
-    const value = parseRequest(createUserInput, await context.req.json());
+    const value = context.req.valid('json');
     const { password_hash: _passwordHash, ...user } = await auth.create(
       value.email,
       value.firstName,
@@ -87,7 +95,7 @@ export const registerUserMutationRoutes = (
     return context.json(user, 201) as never;
   });
   app.openapi(updateRoute, async (context) => {
-    const value = parseRequest(updateNameInput, await context.req.json());
+    const value = context.req.valid('json');
     return context.json(
       await users.updateProfile(context.get('user').id, value.firstName, value.lastName),
       200,

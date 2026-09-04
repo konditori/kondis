@@ -138,17 +138,7 @@ const legacySchemaOrder = [
   'BestEffortType',
 ];
 
-const legacyRequiredQueryParameters = new Set([
-  'GET /people query',
-  'GET /notifications limit',
-  'GET /activities/{id}/comments cursor',
-  'GET /activities/{id}/comments limit',
-]);
-
-const normalizeSchema = (
-  schema: Record<string, unknown>,
-  options: { directRootProperty?: boolean; output: boolean },
-): void => {
+const normalizeSchema = (schema: Record<string, unknown>, options: { output: boolean }): void => {
   // Preserve the previous Zod-to-OpenAPI details until the published contract can be versioned.
   if (typeof schema.$ref === 'string') {
     const name = schema.$ref.replace('#/components/schemas/', '');
@@ -165,14 +155,6 @@ const normalizeSchema = (
   }
 
   if (schema.type === 'integer') {
-    if (schema.nullable === true && schema.exclusiveMinimum === true && typeof schema.minimum === 'number') {
-      schema.exclusiveMinimum = schema.minimum;
-      delete schema.minimum;
-    }
-    if (schema.nullable === true && schema.exclusiveMaximum === true && typeof schema.maximum === 'number') {
-      schema.exclusiveMaximum = schema.maximum;
-      delete schema.maximum;
-    }
     if (schema.minimum === undefined && schema.exclusiveMinimum === undefined) {
       schema.minimum = -Number.MAX_SAFE_INTEGER;
     }
@@ -181,47 +163,10 @@ const normalizeSchema = (
     }
   }
 
-  if (
-    schema.nullable === true &&
-    (schema.type === 'string' || schema.type === 'number') &&
-    schema.format === undefined &&
-    schema.minimum === undefined &&
-    schema.maximum === undefined &&
-    schema.exclusiveMinimum === undefined &&
-    schema.exclusiveMaximum === undefined &&
-    (!options.directRootProperty || options.output)
-  ) {
-    schema.type = [schema.type, 'null'];
-    delete schema.nullable;
-  }
-
-  if (
-    schema.nullable === true &&
-    schema.exclusiveMinimum === true &&
-    typeof schema.minimum === 'number' &&
-    schema.type === 'number'
-  ) {
-    schema.exclusiveMinimum = schema.minimum;
-    delete schema.minimum;
-  }
-
-  if (
-    schema.type === 'array' &&
-    isRecord(schema.items) &&
-    typeof schema.minItems === 'number' &&
-    schema.minItems === schema.maxItems
-  ) {
-    schema.prefixItems = Array.from({ length: schema.minItems }, () => structuredClone(schema.items));
-    schema.items = false;
-  }
-
   if (schema.type === 'object' && isRecord(schema.properties)) {
     for (const property of Object.values(schema.properties)) {
       if (isRecord(property)) {
-        normalizeSchema(property, {
-          directRootProperty: options.directRootProperty === undefined,
-          output: options.output,
-        });
+        normalizeSchema(property, options);
       }
     }
     if (options.output) {
@@ -229,21 +174,14 @@ const normalizeSchema = (
     }
   }
   if (schema.type === 'array' && isRecord(schema.items)) {
-    normalizeSchema(schema.items, { directRootProperty: false, output: options.output });
-  }
-  if (Array.isArray(schema.prefixItems)) {
-    for (const item of schema.prefixItems) {
-      if (isRecord(item)) {
-        normalizeSchema(item, { directRootProperty: false, output: options.output });
-      }
-    }
+    normalizeSchema(schema.items, options);
   }
   for (const keyword of ['allOf', 'anyOf', 'oneOf']) {
     const values = schema[keyword];
     if (Array.isArray(values)) {
       for (const value of values) {
         if (isRecord(value)) {
-          normalizeSchema(value, { directRootProperty: false, output: options.output });
+          normalizeSchema(value, options);
         }
       }
     }
@@ -358,10 +296,6 @@ const normalizeApiDocument = (document: ReturnType<typeof createOpenApiDocument>
           parameter.schema = { $ref: `#/components/schemas/${componentName}` };
         }
 
-        const routeParameter = `${method.toUpperCase()} ${path} ${String(parameter.name)}`;
-        if (legacyRequiredQueryParameters.has(routeParameter)) {
-          parameter.required = true;
-        }
       }
     }
   }
@@ -395,11 +329,6 @@ const orderSchema = (
   if (isRecord(schema.items)) {
     orderedValues.items = orderSchema(schema.items, { directRootProperty: false, output: options.output });
   }
-  if (Array.isArray(schema.prefixItems)) {
-    orderedValues.prefixItems = schema.prefixItems.map((item) =>
-      isRecord(item) ? orderSchema(item, { directRootProperty: false, output: options.output }) : item,
-    );
-  }
   for (const keyword of ['allOf', 'anyOf', 'oneOf']) {
     const values = schema[keyword];
     if (Array.isArray(values)) {
@@ -414,8 +343,6 @@ const orderSchema = (
     order = ['$ref', 'description', 'nullable'];
   } else if (schema.type === 'object') {
     order = ['type', 'properties', 'required', 'additionalProperties', 'description', 'nullable'];
-  } else if (Array.isArray(schema.prefixItems)) {
-    order = ['type', 'prefixItems', 'items', 'minItems', 'maxItems'];
   } else if (schema.type === 'array') {
     const descriptionFirst =
       typeof schema.description === 'string' &&
@@ -424,8 +351,6 @@ const orderSchema = (
     order = descriptionFirst
       ? ['description', 'minItems', 'maxItems', 'type', 'items', 'nullable']
       : ['minItems', 'maxItems', 'type', 'items', 'description', 'nullable'];
-  } else if (Array.isArray(schema.type)) {
-    order = ['description', 'type'];
   } else if (schema.type === 'integer' || schema.type === 'number') {
     order =
       schema.exclusiveMinimum === true && typeof schema.minimum === 'number'

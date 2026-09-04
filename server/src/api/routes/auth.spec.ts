@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApiApp } from 'src/api/app';
+import { createApiApp, createOpenApiDocument } from 'src/api/app';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 describe('API auth routes', () => {
@@ -61,7 +61,7 @@ describe('API auth routes', () => {
     expect(createJobEventsTicket).not.toHaveBeenCalled();
   });
 
-  it('uses the established validation error shape for manually parsed auth bodies', async () => {
+  it('uses the established validation error shape for invalid auth bodies', async () => {
     const app = createApiApp(newApiDependencies());
     const response = await app.request('/auth/login', {
       method: 'POST',
@@ -85,5 +85,23 @@ describe('API auth routes', () => {
       headers: { 'Content-Type': 'application/json' },
     });
     expect(oversized.status).toBe(413);
+  });
+
+  it('documents every auth request body as required application/json', () => {
+    const document = createOpenApiDocument(createApiApp(newApiDependencies()));
+    const requestSchemas = [
+      ['/auth/setup', 'SetupCredentialsDto'],
+      ['/auth/setup/verify', 'SetupTokenCredentialsDto'],
+      ['/auth/setup/validate', 'SetupTicketCredentialsDto'],
+      ['/auth/login', 'CredentialsDto'],
+      ['/auth/register', 'RegistrationCredentialsDto'],
+    ] as const;
+
+    for (const [path, schema] of requestSchemas) {
+      expect(document.paths[path]?.post?.requestBody).toEqual({
+        required: true,
+        content: { 'application/json': { schema: { $ref: `#/components/schemas/${schema}` } } },
+      });
+    }
   });
 });

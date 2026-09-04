@@ -22,8 +22,9 @@ export type SocialActivityReadService = Pick<ActivityService, 'feed' | 'profileA
 
 const idParams = z.object({ id: z.string() });
 const peopleQuery = z.object({ query: z.string().optional() });
-const notificationsQuery = z.object({ limit: z.string().optional() });
-const commentsQuery = z.object({ cursor: z.string().optional(), limit: z.string().optional() });
+const limitQuery = z.coerce.number().int().min(1).max(50).optional();
+const notificationsQuery = z.object({ limit: limitQuery });
+const commentsQuery = z.object({ cursor: z.string().optional(), limit: limitQuery });
 const peopleListResponse = PeopleListSchema.openapi('PeopleListDto_Output');
 const personResponse = PersonSchema.openapi('PersonDto_Output');
 const activityListResponse = ActivityListResponseSchema.openapi('ActivityListResponseDto_Output');
@@ -179,7 +180,7 @@ export const registerSocialReadRoutes = (
   });
   app.openapi(notificationsRoute, async (context) => {
     const { limit } = context.req.valid('query');
-    const result = await social.notifications(context.get('user').id, limit ? Number(limit) : undefined);
+    const result = await social.notifications(context.get('user').id, limit);
     return context.json(notificationListResponse.parse(result), 200);
   });
   app.openapi(commentsRoute, async (context) => {
@@ -188,7 +189,7 @@ export const registerSocialReadRoutes = (
       context.req.valid('param').id,
       context.get('user').id,
       cursor,
-      limit ? Number(limit) : undefined,
+      limit,
     );
     return context.json(commentListResponse.parse(result), 200);
   });
