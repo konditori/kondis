@@ -36,6 +36,15 @@ const closeServer = (server: Server): Promise<void> =>
     server.close((error) => (error ? reject(error) : resolve()));
   });
 
+const settleClose = async (operation: () => Promise<void>): Promise<PromiseSettledResult<void>> => {
+  try {
+    await operation();
+    return { status: 'fulfilled', value: undefined };
+  } catch (error) {
+    return { status: 'rejected', reason: error };
+  }
+};
+
 export const createApiRuntime = (application: ApplicationComposition, server: Server): ApiRuntime => {
   let closePromise: Promise<void> | undefined;
   return {
@@ -43,7 +52,12 @@ export const createApiRuntime = (application: ApplicationComposition, server: Se
     server,
     close: () => {
       closePromise ??= (async () => {
-        const results = await Promise.allSettled([closeServer(server), application.close()]);
+        const serverClosing = settleClose(() => closeServer(server));
+        const eventStopping = settleClose(() => application.eventRepository.stop());
+        const serverResult = await serverClosing;
+        const eventResult = await eventStopping;
+        const applicationResult = await settleClose(() => application.close());
+        const results = [serverResult, eventResult, applicationResult];
         const errors = results
           .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
           .map(({ reason }) => reason);

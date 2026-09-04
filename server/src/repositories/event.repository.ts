@@ -2,6 +2,7 @@ import { sql } from 'kysely';
 import type { Server } from 'node:http';
 import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
+import { z } from 'zod';
 
 import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
@@ -22,6 +23,16 @@ export type { ActivityCommentEvent } from 'src/ports/realtime.port';
 const EVENT_CHANNEL = 'kondis_realtime';
 const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
 const JOB_UPDATE_INTERVAL_MS = 250;
+const MAX_WEBSOCKET_PAYLOAD_BYTES = 1024;
+const MAX_ACTIVITY_SUBSCRIPTIONS_PER_SOCKET = 100;
+const MAX_ACTIVITY_AUTHORIZATION_ATTEMPTS_PER_SOCKET = 100;
+const MAX_CONCURRENT_ACTIVITY_AUTHORIZATIONS = 8;
+const ActivityIdSchema = z.string().uuid();
+
+type ActivityAuthorizationWaiter = {
+  socket: WebSocket;
+  resolve: (release: (() => void) | undefined) => void;
+};
 
 type WebsocketEvent =
   | { type: 'job.updated' }
@@ -71,6 +82,10 @@ export class EventRepository implements RealtimePort {
   private upgradeHandler?: Parameters<Server['on']>[1];
   private readonly socketUsers = new Map<WebSocket, string>();
   private readonly socketActivities = new Map<WebSocket, Set<string>>();
+  private readonly pendingActivitySubscriptions = new Set<WebSocket>();
+  private readonly activityAuthorizationAttempts = new Map<WebSocket, number>();
+  private readonly activityAuthorizationQueue: ActivityAuthorizationWaiter[] = [];
+  private activeActivityAuthorizations = 0;
   private readonly jobDashboardSockets = new Set<WebSocket>();
   private stopped = false;
   private stopPromise?: Promise<void>;
@@ -109,7 +124,7 @@ export class EventRepository implements RealtimePort {
   }
 
   async attach(server: Server): Promise<void> {
-    this.socketServer = new WebSocketServer({ noServer: true });
+    this.socketServer = new WebSocketServer({ noServer: true, maxPayload: MAX_WEBSOCKET_PAYLOAD_BYTES });
     this.httpServer = server;
     this.upgradeHandler = (request, socket, head) => {
       const path = new URL(request.url ?? '', 'http://localhost').pathname;
@@ -123,6 +138,9 @@ export class EventRepository implements RealtimePort {
     };
     server.on('upgrade', this.upgradeHandler);
     this.socketServer.on('connection', (socket, request) => {
+      socket.on('error', () => {
+        // ws completes protocol errors, including oversized payloads, with a close frame.
+      });
       const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
       const userId = verifyActivityEventsTicket(ticket, AUTH_SECRET);
       const isJobDashboard = !userId && Boolean(verifyJobEventsTicket(ticket, AUTH_SECRET));
@@ -138,11 +156,15 @@ export class EventRepository implements RealtimePort {
       }
       this.socketActivities.set(socket, new Set());
       if (userId) {
+        this.activityAuthorizationAttempts.set(socket, 0);
         socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
       }
       socket.once('close', () => {
         this.socketUsers.delete(socket);
         this.socketActivities.delete(socket);
+        this.pendingActivitySubscriptions.delete(socket);
+        this.activityAuthorizationAttempts.delete(socket);
+        this.cancelQueuedActivityAuthorizations(socket);
         this.jobDashboardSockets.delete(socket);
       });
       socket.send(JSON.stringify({ type: 'connected' }));
@@ -175,6 +197,12 @@ export class EventRepository implements RealtimePort {
     }
     this.socketUsers.clear();
     this.socketActivities.clear();
+    this.pendingActivitySubscriptions.clear();
+    this.activityAuthorizationAttempts.clear();
+    for (const { resolve } of this.activityAuthorizationQueue.splice(0)) {
+      resolve(undefined);
+    }
+    this.activeActivityAuthorizations = 0;
     this.jobDashboardSockets.clear();
     await this.listener?.end();
     this.listener = undefined;
@@ -299,20 +327,110 @@ export class EventRepository implements RealtimePort {
   }
 
   private async subscribeToActivity(socket: WebSocket, userId: string, message: string): Promise<void> {
+    if (this.pendingActivitySubscriptions.has(socket)) {
+      return;
+    }
+
+    let activityId: string;
     try {
       const subscription = JSON.parse(message) as {
         type?: string;
-        activityId?: string;
+        activityId?: unknown;
       };
-      if (subscription.type !== 'activity.subscribe' || !subscription.activityId) {
+      const parsedActivityId = ActivityIdSchema.safeParse(subscription.activityId);
+      if (subscription.type !== 'activity.subscribe' || !parsedActivityId.success) {
         return;
       }
-      if (!(await this.social.canViewActivity(subscription.activityId, userId))) {
-        return;
-      }
-      this.socketActivities.get(socket)?.add(subscription.activityId);
+      activityId = parsedActivityId.data;
     } catch {
       // Ignore malformed client messages.
+      return;
+    }
+
+    const subscriptions = this.socketActivities.get(socket);
+    if (
+      !subscriptions ||
+      subscriptions.has(activityId) ||
+      subscriptions.size >= MAX_ACTIVITY_SUBSCRIPTIONS_PER_SOCKET ||
+      (this.activityAuthorizationAttempts.get(socket) ?? 0) >= MAX_ACTIVITY_AUTHORIZATION_ATTEMPTS_PER_SOCKET
+    ) {
+      return;
+    }
+
+    this.activityAuthorizationAttempts.set(socket, (this.activityAuthorizationAttempts.get(socket) ?? 0) + 1);
+    this.pendingActivitySubscriptions.add(socket);
+    let releaseAuthorization: (() => void) | undefined;
+    try {
+      const authorizationPermit = this.acquireActivityAuthorization(socket);
+      releaseAuthorization = authorizationPermit instanceof Promise ? await authorizationPermit : authorizationPermit;
+      if (!releaseAuthorization || this.stopped || !this.socketActivities.has(socket)) {
+        return;
+      }
+      if (!(await this.social.canViewActivity(activityId, userId))) {
+        return;
+      }
+      const currentSubscriptions = this.socketActivities.get(socket);
+      if (currentSubscriptions && currentSubscriptions.size < MAX_ACTIVITY_SUBSCRIPTIONS_PER_SOCKET) {
+        currentSubscriptions.add(activityId);
+      }
+    } catch {
+      // Ignore failed authorization checks without affecting the socket.
+    } finally {
+      releaseAuthorization?.();
+      this.pendingActivitySubscriptions.delete(socket);
+    }
+  }
+
+  private acquireActivityAuthorization(
+    socket: WebSocket,
+  ): (() => void) | Promise<(() => void) | undefined> | undefined {
+    if (this.stopped || !this.socketActivities.has(socket)) {
+      return undefined;
+    }
+    if (this.activeActivityAuthorizations < MAX_CONCURRENT_ACTIVITY_AUTHORIZATIONS) {
+      this.activeActivityAuthorizations += 1;
+      return this.createActivityAuthorizationRelease();
+    }
+    return new Promise((resolve) => {
+      this.activityAuthorizationQueue.push({ socket, resolve });
+    });
+  }
+
+  private createActivityAuthorizationRelease(): () => void {
+    let released = false;
+    return () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      if (this.stopped) {
+        return;
+      }
+      this.activeActivityAuthorizations -= 1;
+      this.startQueuedActivityAuthorizations();
+    };
+  }
+
+  private startQueuedActivityAuthorizations(): void {
+    while (this.activeActivityAuthorizations < MAX_CONCURRENT_ACTIVITY_AUTHORIZATIONS) {
+      const waiter = this.activityAuthorizationQueue.shift();
+      if (!waiter) {
+        return;
+      }
+      if (!this.socketActivities.has(waiter.socket) || !this.pendingActivitySubscriptions.has(waiter.socket)) {
+        waiter.resolve(undefined);
+        continue;
+      }
+      this.activeActivityAuthorizations += 1;
+      waiter.resolve(this.createActivityAuthorizationRelease());
+    }
+  }
+
+  private cancelQueuedActivityAuthorizations(socket: WebSocket): void {
+    for (let index = this.activityAuthorizationQueue.length - 1; index >= 0; index -= 1) {
+      if (this.activityAuthorizationQueue[index]?.socket === socket) {
+        this.activityAuthorizationQueue.splice(index, 1)[0]?.resolve(undefined);
+      }
     }
   }
 

@@ -17,6 +17,23 @@ const image = {
   original: `/api/v1/activity-images/${IMAGE_ID}/original`,
 };
 
+const newFileReader = (content: string, lastModified: Date) => {
+  const bytes = Buffer.from(content);
+  const closes: Array<ReturnType<typeof vi.fn>> = [];
+  const streams: Array<ReturnType<typeof vi.fn>> = [];
+  const open = vi.fn(() => {
+    const close = vi.fn(() => Promise.resolve());
+    const stream = vi.fn(
+      (range?: { start: number; end: number }, _signal?: AbortSignal) =>
+        new Uint8Array(range ? bytes.subarray(range.start, range.end + 1) : bytes),
+    );
+    closes.push(close);
+    streams.push(stream);
+    return Promise.resolve({ size: bytes.length, lastModified, close, stream });
+  });
+  return { closes, files: { open }, open, streams };
+};
+
 describe('API activity image routes', () => {
   it('delegates authenticated image upload, list, update, and delete requests', async () => {
     const file = { originalname: 'finish.jpg', size: 3, buffer: Buffer.from('img') };
@@ -74,20 +91,19 @@ describe('API activity image routes', () => {
     expect(await response.json()).toMatchObject({ message: 'Image does not exist' });
   });
 
-  it('streams image files with native headers and does not open them for HEAD', async () => {
+  it('streams image files with handle metadata and closes the handle for HEAD', async () => {
     const lastModified = new Date('2026-08-20T12:00:00Z');
     const getFile = vi.fn(
       () =>
         Promise.resolve({
           absolutePath: '/images/finish.jpg',
           mime_type: 'image/jpeg',
-          byte_size: 3,
+          byte_size: 300,
         }) as never,
     );
-    const stat = vi.fn(() => Promise.resolve({ lastModified }));
-    const read = vi.fn(() => Promise.resolve(new Uint8Array(Buffer.from('img'))));
+    const files = newFileReader('img', lastModified);
     const app = createApiApp(
-      newApiDependencies({ activityImages: { getFile }, files: { read, stat }, users: newApiUsers() }),
+      newApiDependencies({ activityImages: { getFile }, files: files.files, users: newApiUsers() }),
     );
     const path = `/activity-images/${IMAGE_ID}/original`;
 
@@ -102,29 +118,25 @@ describe('API activity image routes', () => {
     expect(response.headers.get('Accept-Ranges')).toBe('bytes');
     expect(response.headers.get('Last-Modified')).toBe(lastModified.toUTCString());
     expect(getFile).toHaveBeenCalledWith(IMAGE_ID, 'original', TEST_API_USER.id);
-    expect(stat).toHaveBeenCalledWith('/images/finish.jpg');
-    expect(read).toHaveBeenCalledWith('/images/finish.jpg');
+    expect(files.open).toHaveBeenCalledWith('/images/finish.jpg');
+    expect(files.streams[0]).toHaveBeenCalledWith(undefined, expect.any(AbortSignal));
+    expect(files.closes[0]).not.toHaveBeenCalled();
 
-    read.mockClear();
-    stat.mockClear();
     const head = await app.request(path, { method: 'HEAD', headers: apiAuthHeaders() });
     expect(head.status).toBe(200);
     expect(head.headers.get('Content-Length')).toBe('3');
-    expect(stat).toHaveBeenCalledWith('/images/finish.jpg');
-    expect(read).not.toHaveBeenCalled();
+    expect(files.open).toHaveBeenCalledTimes(2);
+    expect(files.streams[1]).not.toHaveBeenCalled();
+    expect(files.closes[1]).toHaveBeenCalledOnce();
   });
 
   it('serves single byte ranges and rejects unsatisfiable ranges', async () => {
     const getFile = vi.fn(() =>
       Promise.resolve({ absolutePath: '/images/finish.jpg', mime_type: 'image/jpeg', byte_size: 3 } as never),
     );
-    const stat = vi.fn(() => Promise.resolve({ lastModified: new Date('2026-08-20T12:00:00Z') }));
-    const bytes = Buffer.from('img');
-    const read = vi.fn((_path: string, range?: { start: number; end: number }) =>
-      Promise.resolve(new Uint8Array(range ? bytes.subarray(range.start, range.end + 1) : bytes)),
-    );
+    const files = newFileReader('img', new Date('2026-08-20T12:00:00Z'));
     const app = createApiApp(
-      newApiDependencies({ activityImages: { getFile }, files: { read, stat }, users: newApiUsers() }),
+      newApiDependencies({ activityImages: { getFile }, files: files.files, users: newApiUsers() }),
     );
     const path = `/activity-images/${IMAGE_ID}/original`;
 
@@ -134,32 +146,101 @@ describe('API activity image routes', () => {
     expect(range.headers.get('Content-Range')).toBe('bytes 1-2/3');
     expect(range.headers.get('Content-Length')).toBe('2');
     expect(range.headers.get('Accept-Ranges')).toBe('bytes');
-    expect(read).toHaveBeenCalledWith('/images/finish.jpg', { start: 1, end: 2 });
+    expect(files.streams[0]).toHaveBeenCalledWith({ start: 1, end: 2 }, expect.any(AbortSignal));
 
-    read.mockClear();
     const suffix = await app.request(path, { headers: { ...apiAuthHeaders(), Range: 'bytes=-1' } });
     expect(suffix.status).toBe(206);
     expect(await suffix.text()).toBe('g');
     expect(suffix.headers.get('Content-Range')).toBe('bytes 2-2/3');
-    expect(read).toHaveBeenCalledWith('/images/finish.jpg', { start: 2, end: 2 });
+    expect(files.streams[1]).toHaveBeenCalledWith({ start: 2, end: 2 }, expect.any(AbortSignal));
 
-    read.mockClear();
     const unsatisfiable = await app.request(path, { headers: { ...apiAuthHeaders(), Range: 'bytes=3-' } });
     expect(unsatisfiable.status).toBe(416);
     expect(unsatisfiable.headers.get('Content-Range')).toBe('bytes */3');
     expect(await unsatisfiable.text()).toBe('');
-    expect(read).not.toHaveBeenCalled();
+    expect(files.streams[2]).not.toHaveBeenCalled();
+    expect(files.closes[2]).toHaveBeenCalledOnce();
   });
 
-  it('returns 304 for conditional GET and HEAD requests without opening the file', async () => {
+  it('honors current If-Range dates and ignores stale or non-date validators', async () => {
+    const lastModified = new Date('2026-08-20T12:00:00Z');
+    const getFile = vi.fn(() =>
+      Promise.resolve({ absolutePath: '/images/finish.jpg', mime_type: 'image/jpeg', byte_size: 30 } as never),
+    );
+    const files = newFileReader('img', lastModified);
+    const app = createApiApp(
+      newApiDependencies({ activityImages: { getFile }, files: files.files, users: newApiUsers() }),
+    );
+    const path = `/activity-images/${IMAGE_ID}/original`;
+
+    const current = await app.request(path, {
+      headers: { ...apiAuthHeaders(), Range: 'bytes=1-', 'If-Range': lastModified.toUTCString() },
+    });
+    expect(current.status).toBe(206);
+    expect(await current.text()).toBe('mg');
+    expect(files.streams[0]).toHaveBeenCalledWith({ start: 1, end: 2 }, expect.any(AbortSignal));
+
+    for (const [index, validator] of ['Wed, 19 Aug 2026 12:00:00 GMT', 'not-a-date', '"image-etag"'].entries()) {
+      const response = await app.request(path, {
+        headers: { ...apiAuthHeaders(), Range: 'bytes=1-', 'If-Range': validator },
+      });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe('img');
+      expect(response.headers.get('Content-Range')).toBeNull();
+      expect(files.streams[index + 1]).toHaveBeenCalledWith(undefined, expect.any(AbortSignal));
+    }
+  });
+
+  it('does not open an already-aborted request and closes a file opened while aborting', async () => {
+    const getFile = vi.fn(() =>
+      Promise.resolve({ absolutePath: '/images/finish.jpg', mime_type: 'image/jpeg', byte_size: 3 } as never),
+    );
+    const alreadyAborted = new AbortController();
+    alreadyAborted.abort();
+    const open = vi.fn();
+    const app = createApiApp(
+      newApiDependencies({ activityImages: { getFile }, files: { open }, users: newApiUsers() }),
+    );
+    const path = `/activity-images/${IMAGE_ID}/original`;
+
+    const error = vi.spyOn(console, 'error').mockImplementation(() => null);
+    const alreadyAbortedResponse = await app.request(path, {
+      headers: apiAuthHeaders(),
+      signal: alreadyAborted.signal,
+    });
+    expect(alreadyAbortedResponse.status).toBe(500);
+    expect(open).not.toHaveBeenCalled();
+
+    const close = vi.fn(() => Promise.resolve());
+    const stream = vi.fn();
+    const { promise: opened, resolve: resolveOpen } = Promise.withResolvers<{
+      size: number;
+      lastModified: Date;
+      close: typeof close;
+      stream: typeof stream;
+    }>();
+    open.mockImplementationOnce(() => opened);
+    const aborting = new AbortController();
+    const response = app.request(path, { headers: apiAuthHeaders(), signal: aborting.signal });
+    await vi.waitFor(() => expect(open).toHaveBeenCalledOnce());
+    aborting.abort();
+    resolveOpen({ size: 3, lastModified: new Date('2026-08-20T12:00:00Z'), close, stream });
+
+    const abortedResponse = await response;
+    expect(abortedResponse.status).toBe(500);
+    expect(stream).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
+    error.mockRestore();
+  });
+
+  it('returns 304 for conditional GET and HEAD requests and closes each handle', async () => {
     const lastModified = new Date('2026-08-20T12:00:00.500Z');
     const getFile = vi.fn(() =>
       Promise.resolve({ absolutePath: '/images/finish.jpg', mime_type: 'image/jpeg', byte_size: 3 } as never),
     );
-    const stat = vi.fn(() => Promise.resolve({ lastModified }));
-    const read = vi.fn();
+    const files = newFileReader('img', lastModified);
     const app = createApiApp(
-      newApiDependencies({ activityImages: { getFile }, files: { read, stat }, users: newApiUsers() }),
+      newApiDependencies({ activityImages: { getFile }, files: files.files, users: newApiUsers() }),
     );
     const path = `/activity-images/${IMAGE_ID}/original`;
     const headers = { ...apiAuthHeaders(), 'If-Modified-Since': lastModified.toUTCString() };
@@ -167,13 +248,15 @@ describe('API activity image routes', () => {
     const get = await app.request(path, { headers });
     expect(get.status).toBe(304);
     expect(get.headers.get('Last-Modified')).toBe(lastModified.toUTCString());
-    expect(read).not.toHaveBeenCalled();
+    expect(files.streams[0]).not.toHaveBeenCalled();
+    expect(files.closes[0]).toHaveBeenCalledOnce();
 
     const head = await app.request(path, { method: 'HEAD', headers });
     expect(head.status).toBe(304);
     expect(await head.text()).toBe('');
-    expect(stat).toHaveBeenCalledTimes(2);
-    expect(read).not.toHaveBeenCalled();
+    expect(files.open).toHaveBeenCalledTimes(2);
+    expect(files.streams[1]).not.toHaveBeenCalled();
+    expect(files.closes[1]).toHaveBeenCalledOnce();
   });
 
   it('returns 404 for an invalid variant without delegating to the service', async () => {
@@ -219,6 +302,19 @@ describe('API activity image routes', () => {
     });
     expect(document.paths['/activity-images/{imageId}/{variant}']?.get).toMatchObject({
       operationId: 'ActivityImageController_file',
+      responses: {
+        200: {
+          description: 'Image variant',
+          content: { 'image/*': { schema: { type: 'string', format: 'binary' } } },
+        },
+        206: {
+          description: 'Requested image byte range',
+          content: { 'image/*': { schema: { type: 'string', format: 'binary' } } },
+        },
+        304: { description: 'Image variant was not modified' },
+        404: { description: 'Image variant does not exist' },
+        416: { description: 'Requested byte range is not satisfiable' },
+      },
       summary: 'Read an image variant',
     });
   });

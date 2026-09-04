@@ -1,13 +1,17 @@
 import { NotFoundException } from 'src/errors';
 
 export type FileRange = { start: number; end: number };
+export type OpenFile = {
+  size: number;
+  lastModified: Date;
+  stream: (range?: FileRange, signal?: AbortSignal) => BodyInit;
+  close: () => Promise<void>;
+};
 export type FileReader = {
-  stat: (path: string) => Promise<{ lastModified: Date }>;
-  read: (path: string, range?: FileRange) => Promise<BodyInit>;
+  open: (path: string) => Promise<OpenFile>;
 };
 
 type FileResponseOptions = {
-  size: number;
   headers: HeadersInit;
   missingMessage: string;
 };
@@ -36,7 +40,10 @@ const parseRange = (value: string | null, size: number): FileRange | 'unsatisfia
     if (suffixLength === 0) {
       return 'unsatisfiable';
     }
-    return { start: Number.isSafeInteger(suffixLength) && suffixLength < size ? size - suffixLength : 0, end: size - 1 };
+    return {
+      start: Number.isSafeInteger(suffixLength) && suffixLength < size ? size - suffixLength : 0,
+      end: size - 1,
+    };
   }
 
   const start = Number(match[1]);
@@ -63,15 +70,26 @@ const notModified = (request: Request, lastModified: Date): boolean => {
   return !Number.isNaN(since) && Math.floor(lastModified.getTime() / 1000) <= Math.floor(since / 1000);
 };
 
+const ifRangeMatches = (request: Request, lastModified: Date): boolean => {
+  const value = request.headers.get('If-Range');
+  if (!value) {
+    return true;
+  }
+  const date = Date.parse(value);
+  return !Number.isNaN(date) && Math.floor(lastModified.getTime() / 1000) <= Math.floor(date / 1000);
+};
+
 export const fileResponse = async (
   request: Request,
   files: FileReader,
   path: string,
   options: FileResponseOptions,
 ): Promise<Response> => {
-  let lastModified: Date;
+  request.signal.throwIfAborted();
+
+  let file: OpenFile;
   try {
-    ({ lastModified } = await files.stat(path));
+    file = await files.open(path);
   } catch (error) {
     if (isMissingFileError(error)) {
       throw new NotFoundException(options.missingMessage);
@@ -79,39 +97,50 @@ export const fileResponse = async (
     throw error;
   }
 
-  const headers = new Headers(options.headers);
-  headers.set('Accept-Ranges', 'bytes');
-  headers.set('Last-Modified', lastModified.toUTCString());
-  if (notModified(request, lastModified)) {
-    return new Response(null, { status: 304, headers });
-  }
-
-  const range = request.method === 'GET' ? parseRange(request.headers.get('Range'), options.size) : undefined;
-  if (range === 'unsatisfiable') {
-    headers.set('Content-Range', `bytes */${options.size}`);
-    headers.set('Content-Length', '0');
-    return new Response(null, { status: 416, headers });
-  }
-
-  const status = range ? 206 : 200;
-  if (range) {
-    headers.set('Content-Range', `bytes ${range.start}-${range.end}/${options.size}`);
-    headers.set('Content-Length', String(range.end - range.start + 1));
-  } else {
-    headers.set('Content-Length', String(options.size));
-  }
-  if (request.method === 'HEAD') {
-    return new Response(null, { status, headers });
-  }
-
-  let body: BodyInit;
+  let closeFile = true;
   try {
-    body = await files.read(path, range);
+    request.signal.throwIfAborted();
+
+    const headers = new Headers(options.headers);
+    headers.set('Accept-Ranges', 'bytes');
+    headers.set('Last-Modified', file.lastModified.toUTCString());
+    if (notModified(request, file.lastModified)) {
+      return new Response(null, { status: 304, headers });
+    }
+
+    const range =
+      request.method === 'GET' && ifRangeMatches(request, file.lastModified)
+        ? parseRange(request.headers.get('Range'), file.size)
+        : undefined;
+    if (range === 'unsatisfiable') {
+      headers.set('Content-Range', `bytes */${file.size}`);
+      headers.set('Content-Length', '0');
+      return new Response(null, { status: 416, headers });
+    }
+
+    const status = range ? 206 : 200;
+    if (range) {
+      headers.set('Content-Range', `bytes ${range.start}-${range.end}/${file.size}`);
+      headers.set('Content-Length', String(range.end - range.start + 1));
+    } else {
+      headers.set('Content-Length', String(file.size));
+    }
+    if (request.method !== 'GET' || file.size === 0) {
+      return new Response(null, { status, headers });
+    }
+
+    const body = file.stream(range, request.signal);
+    const response = new Response(body, { status, headers });
+    closeFile = false;
+    return response;
   } catch (error) {
     if (isMissingFileError(error)) {
       throw new NotFoundException(options.missingMessage);
     }
     throw error;
+  } finally {
+    if (closeFile) {
+      await file.close();
+    }
   }
-  return new Response(body, { status, headers });
 };

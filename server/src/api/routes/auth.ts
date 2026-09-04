@@ -4,11 +4,17 @@ import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
 import { jsonBodyMiddleware } from 'src/api/validation';
 import {
   ActivityEventsTicketSchema,
+  AuthCapabilitiesSchema,
+  AuthSessionSchema,
+  AuthUserSchema,
   CredentialsSchema,
   RegistrationCredentialsSchema,
   SetupCredentialsSchema,
+  SetupStatusSchema,
   SetupTicketCredentialsSchema,
+  SetupTicketSchema,
   SetupTokenCredentialsSchema,
+  SetupValidationSchema,
 } from 'src/dtos/auth.dto';
 import { ForbiddenException, UnauthorizedException } from 'src/errors';
 import type { ConfigPort } from 'src/ports/config.port';
@@ -26,18 +32,28 @@ export type AuthRouteService = Pick<
   | 'verifySetupToken'
 >;
 
-const emptyResponses = (status: 200 | 201) => ({ [status]: { description: '' } });
 const credentialsInput = CredentialsSchema.openapi('CredentialsDto');
 const registrationCredentialsInput = RegistrationCredentialsSchema.openapi('RegistrationCredentialsDto');
 const setupCredentialsInput = SetupCredentialsSchema.openapi('SetupCredentialsDto');
 const setupTicketCredentialsInput = SetupTicketCredentialsSchema.openapi('SetupTicketCredentialsDto');
 const setupTokenCredentialsInput = SetupTokenCredentialsSchema.openapi('SetupTokenCredentialsDto');
+const capabilitiesResponse = AuthCapabilitiesSchema.openapi('AuthCapabilitiesDto_Output');
+const setupStatusResponse = SetupStatusSchema.openapi('SetupStatusDto_Output');
+const setupTicketResponse = SetupTicketSchema.openapi('SetupTicketDto_Output');
+const setupValidationResponse = SetupValidationSchema.openapi('SetupValidationDto_Output');
+const authSessionResponse = AuthSessionSchema.openapi('AuthSessionDto_Output');
+const authUserResponse = AuthUserSchema.openapi('AuthUserDto_Output');
 const capabilitiesRoute = createRoute({
   method: 'get',
   path: '/auth/capabilities',
   operationId: 'AuthController_capabilities',
   parameters: [],
-  responses: emptyResponses(200),
+  responses: {
+    200: {
+      description: 'Authentication capabilities supported by the server',
+      content: { 'application/json': { schema: capabilitiesResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const setupStatusRoute = createRoute({
@@ -45,7 +61,12 @@ const setupStatusRoute = createRoute({
   path: '/auth/setup',
   operationId: 'AuthController_setupStatus',
   parameters: [],
-  responses: emptyResponses(200),
+  responses: {
+    200: {
+      description: 'Initial setup and registration status',
+      content: { 'application/json': { schema: setupStatusResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const setupRoute = createRoute({
@@ -57,7 +78,12 @@ const setupRoute = createRoute({
   request: {
     body: { required: true, content: { 'application/json': { schema: setupCredentialsInput } } },
   },
-  responses: emptyResponses(201),
+  responses: {
+    201: {
+      description: 'Administrator session created during initial setup',
+      content: { 'application/json': { schema: authSessionResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const verifySetupRoute = createRoute({
@@ -69,7 +95,12 @@ const verifySetupRoute = createRoute({
   request: {
     body: { required: true, content: { 'application/json': { schema: setupTokenCredentialsInput } } },
   },
-  responses: emptyResponses(201),
+  responses: {
+    201: {
+      description: 'Short-lived initial setup ticket',
+      content: { 'application/json': { schema: setupTicketResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const validateSetupRoute = createRoute({
@@ -81,7 +112,12 @@ const validateSetupRoute = createRoute({
   request: {
     body: { required: true, content: { 'application/json': { schema: setupTicketCredentialsInput } } },
   },
-  responses: emptyResponses(201),
+  responses: {
+    201: {
+      description: 'Setup ticket validation result',
+      content: { 'application/json': { schema: setupValidationResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const loginRoute = createRoute({
@@ -93,7 +129,12 @@ const loginRoute = createRoute({
   request: {
     body: { required: true, content: { 'application/json': { schema: credentialsInput } } },
   },
-  responses: emptyResponses(201),
+  responses: {
+    201: {
+      description: 'Authenticated session',
+      content: { 'application/json': { schema: authSessionResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const registerRoute = createRoute({
@@ -105,7 +146,12 @@ const registerRoute = createRoute({
   request: {
     body: { required: true, content: { 'application/json': { schema: registrationCredentialsInput } } },
   },
-  responses: emptyResponses(201),
+  responses: {
+    201: {
+      description: 'Registered user session',
+      content: { 'application/json': { schema: authSessionResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const meRoute = createRoute({
@@ -113,7 +159,12 @@ const meRoute = createRoute({
   path: '/auth/me',
   operationId: 'AuthController_me',
   parameters: [],
-  responses: emptyResponses(200),
+  responses: {
+    200: {
+      description: 'Current authenticated account',
+      content: { 'application/json': { schema: authUserResponse } },
+    },
+  },
   tags: ['Auth'],
 });
 const ticketResponse = ActivityEventsTicketSchema.openapi('ActivityEventsTicketDto_Output');

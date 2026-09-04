@@ -12,7 +12,7 @@ const UUID_PATTERN =
   '^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$';
 const DATETIME_PATTERN = String.raw`^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z))$`;
 
-// Nest's output DTO generation suffixed registered schemas and retained input variants only when both were used.
+// Preserve established output suffixes and retain input variants only when both forms are used.
 const outputOnlySchemaNames = new Map([
   ['ActivityMetricDto', 'ActivityMetricDto_Output'],
   ['ActivityTypeSettings', 'ActivityTypeSettings_Output'],
@@ -121,6 +121,12 @@ const legacySchemaOrder = [
   'ActivityImageDto_Output',
   'ActivityImageListDto_Output',
   'ActivityImageUpdateDto',
+  'AuthCapabilitiesDto_Output',
+  'SetupStatusDto_Output',
+  'SetupTicketDto_Output',
+  'SetupValidationDto_Output',
+  'AuthSessionDto_Output',
+  'AuthUserDto_Output',
   'ActivityEventsTicketDto_Output',
   'PeopleListDto_Output',
   'PersonDto_Output',
@@ -295,7 +301,6 @@ const normalizeApiDocument = (document: ReturnType<typeof createOpenApiDocument>
           const componentName = parameter.name === 'sport' ? 'BestEffortSport' : 'BestEffortType';
           parameter.schema = { $ref: `#/components/schemas/${componentName}` };
         }
-
       }
     }
   }
@@ -338,53 +343,61 @@ const orderSchema = (
     }
   }
 
-  let order: string[];
+  let order = ['type', 'format', 'pattern', 'minLength', 'maxLength', 'enum', 'description', 'nullable'];
+  switch (schema.type) {
+    case 'object': {
+      order = ['type', 'properties', 'required', 'additionalProperties', 'description', 'nullable'];
+      break;
+    }
+    case 'array': {
+      const descriptionFirst =
+        typeof schema.description === 'string' &&
+        isRecord(schema.items) &&
+        (schema.items.type === 'string' || schema.items.$ref === '#/components/schemas/ActivityTag');
+      order = descriptionFirst
+        ? ['description', 'minItems', 'maxItems', 'type', 'items', 'nullable']
+        : ['minItems', 'maxItems', 'type', 'items', 'description', 'nullable'];
+      break;
+    }
+    case 'integer':
+    case 'number': {
+      order =
+        schema.exclusiveMinimum === true && typeof schema.minimum === 'number'
+          ? ['type', 'exclusiveMinimum', 'maximum', 'description', 'nullable', 'minimum']
+          : ['type', 'exclusiveMinimum', 'minimum', 'maximum', 'description', 'nullable'];
+      break;
+    }
+    case 'boolean': {
+      if (Array.isArray(schema.enum)) {
+        order = ['type', 'description', 'enum'];
+      } else if (options.directRootProperty && !options.output && typeof schema.description === 'string') {
+        order = ['description', 'type'];
+      }
+      break;
+    }
+    case 'string': {
+      if (
+        typeof schema.description === 'string' &&
+        !options.directRootProperty &&
+        schema.format === undefined &&
+        schema.enum === undefined &&
+        schema.minLength === undefined &&
+        schema.maxLength === undefined
+      ) {
+        order = ['description', 'type', 'nullable'];
+      } else if (
+        options.directRootProperty &&
+        !options.output &&
+        schema.format === 'date-time' &&
+        typeof schema.description === 'string'
+      ) {
+        order = ['description', 'type', 'format', 'pattern', 'nullable'];
+      }
+      break;
+    }
+  }
   if (typeof schema.$ref === 'string') {
     order = ['$ref', 'description', 'nullable'];
-  } else if (schema.type === 'object') {
-    order = ['type', 'properties', 'required', 'additionalProperties', 'description', 'nullable'];
-  } else if (schema.type === 'array') {
-    const descriptionFirst =
-      typeof schema.description === 'string' &&
-      isRecord(schema.items) &&
-      (schema.items.type === 'string' || schema.items.$ref === '#/components/schemas/ActivityTag');
-    order = descriptionFirst
-      ? ['description', 'minItems', 'maxItems', 'type', 'items', 'nullable']
-      : ['minItems', 'maxItems', 'type', 'items', 'description', 'nullable'];
-  } else if (schema.type === 'integer' || schema.type === 'number') {
-    order =
-      schema.exclusiveMinimum === true && typeof schema.minimum === 'number'
-        ? ['type', 'exclusiveMinimum', 'maximum', 'description', 'nullable', 'minimum']
-        : ['type', 'exclusiveMinimum', 'minimum', 'maximum', 'description', 'nullable'];
-  } else if (schema.type === 'boolean' && Array.isArray(schema.enum)) {
-    order = ['type', 'description', 'enum'];
-  } else if (
-    schema.type === 'boolean' &&
-    options.directRootProperty &&
-    !options.output &&
-    typeof schema.description === 'string'
-  ) {
-    order = ['description', 'type'];
-  } else if (
-    schema.type === 'string' &&
-    typeof schema.description === 'string' &&
-    !options.directRootProperty &&
-    schema.format === undefined &&
-    schema.enum === undefined &&
-    schema.minLength === undefined &&
-    schema.maxLength === undefined
-  ) {
-    order = ['description', 'type', 'nullable'];
-  } else if (
-    schema.type === 'string' &&
-    options.directRootProperty &&
-    !options.output &&
-    schema.format === 'date-time' &&
-    typeof schema.description === 'string'
-  ) {
-    order = ['description', 'type', 'format', 'pattern', 'nullable'];
-  } else {
-    order = ['type', 'format', 'pattern', 'minLength', 'maxLength', 'enum', 'description', 'nullable'];
   }
   if (schema.allOf !== undefined) {
     order = ['allOf', 'nullable', 'description'];

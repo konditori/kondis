@@ -29,7 +29,7 @@ const setup = async () => {
     setupToken ??= output.match(
       /You will need the following setup token:[\s\S]*?\b([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i,
     )?.[1];
-    if (input.includes('Nest application successfully started')) {
+    if (input.includes('Kondis api listening on')) {
       serverReady = true;
     }
     if (serverReady && setupToken) {

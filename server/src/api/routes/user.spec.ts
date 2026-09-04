@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApiApp } from 'src/api/app';
+import { createApiApp, createOpenApiDocument } from 'src/api/app';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const AVATAR_OWNER_ID = '00000000-0000-4000-8000-000000000002';
@@ -44,24 +44,16 @@ describe('API user read routes', () => {
         id: AVATAR_OWNER_ID,
         avatar_path: 'avatars/profile.webp',
         avatar_mime_type: 'image/webp',
-        avatar_size: 6,
+        avatar_size: 600,
       }),
     );
     const avatarAbsolutePath = vi.fn(() => '/data/avatars/profile.webp');
-    const stat = vi.fn(() => Promise.resolve({ lastModified }));
-    const read = vi.fn(() =>
-      Promise.resolve(
-        new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode('avatar'));
-            controller.close();
-          },
-        }),
-      ),
-    );
+    const close = vi.fn(() => Promise.resolve());
+    const stream = vi.fn(() => new Uint8Array(Buffer.from('avatar')));
+    const open = vi.fn(() => Promise.resolve({ size: 6, lastModified, close, stream }));
     const app = createApiApp(
       newApiDependencies({
-        files: { read, stat },
+        files: { open },
         userService: { avatarAbsolutePath, avatarFile },
         users: newApiUsers(),
       }),
@@ -77,11 +69,12 @@ describe('API user read routes', () => {
     expect(response.headers.get('Cache-Control')).toBe('private, max-age=3600');
     expect(avatarFile).toHaveBeenCalledWith(AVATAR_OWNER_ID, TEST_API_USER.id);
     expect(avatarAbsolutePath).toHaveBeenCalledWith('avatars/profile.webp');
-    expect(stat).toHaveBeenCalledWith('/data/avatars/profile.webp');
-    expect(read).toHaveBeenCalledWith('/data/avatars/profile.webp');
+    expect(open).toHaveBeenCalledWith('/data/avatars/profile.webp');
+    expect(stream).toHaveBeenCalledWith(undefined, expect.any(AbortSignal));
+    expect(close).not.toHaveBeenCalled();
 
-    read.mockClear();
-    stat.mockClear();
+    stream.mockClear();
+    open.mockClear();
     avatarAbsolutePath.mockClear();
     const headResponse = await app.request(`/users/${AVATAR_OWNER_ID}/avatar`, {
       method: 'HEAD',
@@ -89,8 +82,25 @@ describe('API user read routes', () => {
     });
     expect(headResponse.status).toBe(200);
     expect(headResponse.headers.get('Content-Length')).toBe('6');
-    expect(read).not.toHaveBeenCalled();
+    expect(stream).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
     expect(avatarAbsolutePath).toHaveBeenCalledWith('avatars/profile.webp');
-    expect(stat).toHaveBeenCalledWith('/data/avatars/profile.webp');
+    expect(open).toHaveBeenCalledWith('/data/avatars/profile.webp');
+  });
+
+  it('documents avatar files as full or partial binary responses', () => {
+    const document = createOpenApiDocument(createApiApp(newApiDependencies()));
+    const responses = document.paths['/users/{id}/avatar']?.get?.responses;
+    const binaryContent = {
+      'image/*': { schema: { type: 'string', format: 'binary' } },
+    };
+
+    expect(responses).toEqual({
+      200: { description: 'Profile picture', content: binaryContent },
+      206: { description: 'Requested profile picture byte range', content: binaryContent },
+      304: { description: 'Profile picture was not modified' },
+      404: { description: 'Profile picture does not exist' },
+      416: { description: 'Requested byte range is not satisfiable' },
+    });
   });
 });

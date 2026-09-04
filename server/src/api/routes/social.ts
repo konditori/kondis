@@ -185,12 +185,7 @@ export const registerSocialReadRoutes = (
   });
   app.openapi(commentsRoute, async (context) => {
     const { cursor, limit } = context.req.valid('query');
-    const result = await social.comments(
-      context.req.valid('param').id,
-      context.get('user').id,
-      cursor,
-      limit,
-    );
+    const result = await social.comments(context.req.valid('param').id, context.get('user').id, cursor, limit);
     return context.json(commentListResponse.parse(result), 200);
   });
 };

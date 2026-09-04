@@ -104,4 +104,27 @@ describe('API auth routes', () => {
       });
     }
   });
+
+  it('documents every auth JSON response schema', () => {
+    const document = createOpenApiDocument(createApiApp(newApiDependencies()));
+    const responseSchemas = [
+      ['/auth/capabilities', 'get', 200, 'AuthCapabilitiesDto_Output'],
+      ['/auth/setup', 'get', 200, 'SetupStatusDto_Output'],
+      ['/auth/setup', 'post', 201, 'AuthSessionDto_Output'],
+      ['/auth/setup/verify', 'post', 201, 'SetupTicketDto_Output'],
+      ['/auth/setup/validate', 'post', 201, 'SetupValidationDto_Output'],
+      ['/auth/login', 'post', 201, 'AuthSessionDto_Output'],
+      ['/auth/register', 'post', 201, 'AuthSessionDto_Output'],
+      ['/auth/me', 'get', 200, 'AuthUserDto_Output'],
+    ] as const;
+
+    for (const [path, method, status, schema] of responseSchemas) {
+      expect(document.paths[path]?.[method]?.responses?.[status]).toMatchObject({
+        content: { 'application/json': { schema: { $ref: `#/components/schemas/${schema}` } } },
+      });
+    }
+    expect(document.components?.schemas?.AuthUserDto_Output).toMatchObject({
+      properties: { avatarUrl: { type: 'string', nullable: true } },
+    });
+  });
 });

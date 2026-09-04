@@ -11,7 +11,7 @@ describe('HTTP exceptions', () => {
     expect(error.getResponse()).toBe('Try again later');
   });
 
-  it('creates Nest-compatible named exception responses', () => {
+  it('creates named exception responses with the established shape', () => {
     const error = new BadRequestException('Invalid request');
 
     expect(error).toBeInstanceOf(HttpException);

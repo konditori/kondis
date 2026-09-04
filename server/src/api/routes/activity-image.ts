@@ -1,4 +1,4 @@
-import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
 import { fileResponse, type FileReader } from 'src/api/file-response';
@@ -16,6 +16,9 @@ const fileParams = z.object({ imageId: z.string(), variant: z.string() });
 const activityImageResponse = ActivityImageSchema.openapi('ActivityImageDto_Output');
 const activityImageListResponse = ActivityImageListSchema.openapi('ActivityImageListDto_Output');
 const activityImageUpdateInput = ActivityImageUpdateSchema.openapi('ActivityImageUpdateDto');
+const binaryImageContent = {
+  'image/*': { schema: { type: 'string' as const, format: 'binary' as const } },
+};
 const multipartBody = {
   required: true,
   content: {
@@ -94,7 +97,13 @@ const fileRoute = createRoute({
   path: '/activity-images/{imageId}/{variant}',
   operationId: 'ActivityImageController_file',
   request: { params: fileParams },
-  responses: { 200: { description: '' } },
+  responses: {
+    200: { description: 'Image variant', content: binaryImageContent },
+    206: { description: 'Requested image byte range', content: binaryImageContent },
+    304: { description: 'Image variant was not modified' },
+    404: { description: 'Image variant does not exist' },
+    416: { description: 'Requested byte range is not satisfiable' },
+  },
   summary: 'Read an image variant',
   tags: ['activity-images'],
 });
@@ -138,7 +147,6 @@ export const registerActivityImageRoutes = (
     }
     const file = await images.getFile(imageId, variant as 'original' | 'thumbnail' | 'preview', context.get('user').id);
     return fileResponse(context.req.raw, files, file.absolutePath, {
-      size: file.byte_size,
       missingMessage: 'Image variant does not exist',
       headers: {
         'Content-Type': file.mime_type,

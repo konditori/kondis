@@ -116,7 +116,7 @@ export type LiveWorkoutListDtoOutput = {
   lastSequence: number;
   lastPointAt: string | null;
   lastReceivedAt: string | null;
-  route: never[][];
+  route: number[][];
 }[];
 export type LiveWorkoutCreateDto = {
   clientSessionId: string;
@@ -134,7 +134,7 @@ export type LiveWorkoutDtoOutput = {
   lastSequence: number;
   lastPointAt: string | null;
   lastReceivedAt: string | null;
-  route: never[][];
+  route: number[][];
 };
 export type LiveWorkoutStateDto = {
   status: Status4;
@@ -244,7 +244,7 @@ export type ActivityListResponseDtoOutput = {
     /** Simplified GPS route as GeoJSON */
     track: {
       type: Type;
-      coordinates: never[][];
+      coordinates: number[][];
     } | null;
     images: {
       id: string;
@@ -351,7 +351,7 @@ export type ActivityDetailDtoOutput = {
   /** GPS route as GeoJSON */
   track: {
     type: Type;
-    coordinates: never[][];
+    coordinates: number[][];
   } | null;
   /** Split, profile, and route data for activity analysis */
   analysis: {
@@ -380,7 +380,7 @@ export type ActivityDetailDtoOutput = {
     /** Downsampled route points aligned to elapsed time */
     route: {
       time: number;
-      coordinate: never[];
+      coordinate: number[];
     }[];
   } | null;
   bestEfforts:
@@ -531,9 +531,79 @@ export type ActivityImageUpdateDto = {
   caption?: string | null;
   sortOrder?: number;
 };
+export type AuthCapabilitiesDtoOutput = {
+  direct: true;
+};
+export type SetupStatusDtoOutput = {
+  setupRequired: boolean;
+  registrationEnabled: boolean;
+};
+export type SetupCredentialsDto = {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  password: string;
+  setupTicket: string;
+};
+export type AuthSessionDtoOutput = {
+  accessToken: string;
+  setup: boolean;
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: Role;
+    avatarUrl: string | null;
+  };
+};
+export type SetupTokenCredentialsDto = {
+  setupToken: string;
+};
+export type SetupTicketDtoOutput = {
+  token: string;
+  expiresAt: string;
+};
+export type SetupTicketCredentialsDto = {
+  setupTicket: string;
+};
+export type SetupValidationDtoOutput = {
+  valid: true;
+};
+export type CredentialsDto = {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  password: string;
+};
+export type RegistrationCredentialsDto = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+};
+export type AuthUserDtoOutput = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  avatarUrl: string | null;
+};
 export type ActivityEventsTicketDtoOutput = {
   token: string;
   expiresAt: string;
+};
+export type UserCreateDto = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  role?: Role2;
+};
+export type UserUpdateDto = {
+  firstName: string;
+  lastName: string;
 };
 export type PeopleListDtoOutput = {
   user: {
@@ -1260,68 +1330,165 @@ export function activityImageControllerFile(
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
-    oazapfts.fetchText(`/activity-images/${encodeURIComponent(imageId)}/${encodeURIComponent(variant)}`, {
+    oazapfts.fetchBlob<
+      | {
+          status: 200;
+          data: Blob;
+        }
+      | {
+          status: 206;
+          data: Blob;
+        }
+      | {
+          status: 304;
+        }
+      | {
+          status: 404;
+        }
+      | {
+          status: 416;
+        }
+    >(`/activity-images/${encodeURIComponent(imageId)}/${encodeURIComponent(variant)}`, {
       ...opts,
     }),
   );
 }
 export function authControllerCapabilities(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/capabilities', {
+    oazapfts.fetchJson<{
+      status: 200;
+      data: AuthCapabilitiesDtoOutput;
+    }>('/auth/capabilities', {
       ...opts,
     }),
   );
 }
 export function authControllerSetupStatus(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/setup', {
+    oazapfts.fetchJson<{
+      status: 200;
+      data: SetupStatusDtoOutput;
+    }>('/auth/setup', {
       ...opts,
     }),
   );
 }
-export function authControllerSetup(opts?: Oazapfts.RequestOpts) {
+export function authControllerSetup(
+  {
+    setupCredentialsDto,
+  }: {
+    setupCredentialsDto: SetupCredentialsDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/setup', {
-      ...opts,
-      method: 'POST',
-    }),
+    oazapfts.fetchJson<{
+      status: 201;
+      data: AuthSessionDtoOutput;
+    }>(
+      '/auth/setup',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: setupCredentialsDto,
+      }),
+    ),
   );
 }
-export function authControllerVerifySetupToken(opts?: Oazapfts.RequestOpts) {
+export function authControllerVerifySetupToken(
+  {
+    setupTokenCredentialsDto,
+  }: {
+    setupTokenCredentialsDto: SetupTokenCredentialsDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/setup/verify', {
-      ...opts,
-      method: 'POST',
-    }),
+    oazapfts.fetchJson<{
+      status: 201;
+      data: SetupTicketDtoOutput;
+    }>(
+      '/auth/setup/verify',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: setupTokenCredentialsDto,
+      }),
+    ),
   );
 }
-export function authControllerValidateSetupTicket(opts?: Oazapfts.RequestOpts) {
+export function authControllerValidateSetupTicket(
+  {
+    setupTicketCredentialsDto,
+  }: {
+    setupTicketCredentialsDto: SetupTicketCredentialsDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/setup/validate', {
-      ...opts,
-      method: 'POST',
-    }),
+    oazapfts.fetchJson<{
+      status: 201;
+      data: SetupValidationDtoOutput;
+    }>(
+      '/auth/setup/validate',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: setupTicketCredentialsDto,
+      }),
+    ),
   );
 }
-export function authControllerLogin(opts?: Oazapfts.RequestOpts) {
+export function authControllerLogin(
+  {
+    credentialsDto,
+  }: {
+    credentialsDto: CredentialsDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/login', {
-      ...opts,
-      method: 'POST',
-    }),
+    oazapfts.fetchJson<{
+      status: 201;
+      data: AuthSessionDtoOutput;
+    }>(
+      '/auth/login',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: credentialsDto,
+      }),
+    ),
   );
 }
-export function authControllerRegister(opts?: Oazapfts.RequestOpts) {
+export function authControllerRegister(
+  {
+    registrationCredentialsDto,
+  }: {
+    registrationCredentialsDto: RegistrationCredentialsDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/register', {
-      ...opts,
-      method: 'POST',
-    }),
+    oazapfts.fetchJson<{
+      status: 201;
+      data: AuthSessionDtoOutput;
+    }>(
+      '/auth/register',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: registrationCredentialsDto,
+      }),
+    ),
   );
 }
 export function authControllerMe(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
-    oazapfts.fetchText('/auth/me', {
+    oazapfts.fetchJson<{
+      status: 200;
+      data: AuthUserDtoOutput;
+    }>('/auth/me', {
       ...opts,
     }),
   );
@@ -1355,20 +1522,42 @@ export function userControllerList(opts?: Oazapfts.RequestOpts) {
     }),
   );
 }
-export function userControllerCreate(opts?: Oazapfts.RequestOpts) {
+export function userControllerCreate(
+  {
+    userCreateDto,
+  }: {
+    userCreateDto: UserCreateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/users', {
-      ...opts,
-      method: 'POST',
-    }),
+    oazapfts.fetchText(
+      '/users',
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body: userCreateDto,
+      }),
+    ),
   );
 }
-export function userControllerUpdateMe(opts?: Oazapfts.RequestOpts) {
+export function userControllerUpdateMe(
+  {
+    userUpdateDto,
+  }: {
+    userUpdateDto: UserUpdateDto;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
   return oazapfts.ok(
-    oazapfts.fetchText('/users/me', {
-      ...opts,
-      method: 'PATCH',
-    }),
+    oazapfts.fetchText(
+      '/users/me',
+      oazapfts.json({
+        ...opts,
+        method: 'PATCH',
+        body: userUpdateDto,
+      }),
+    ),
   );
 }
 export function userControllerUploadAvatar(
@@ -1409,7 +1598,25 @@ export function userControllerAvatarFile(
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
-    oazapfts.fetchText(`/users/${encodeURIComponent(id)}/avatar`, {
+    oazapfts.fetchBlob<
+      | {
+          status: 200;
+          data: Blob;
+        }
+      | {
+          status: 206;
+          data: Blob;
+        }
+      | {
+          status: 304;
+        }
+      | {
+          status: 404;
+        }
+      | {
+          status: 416;
+        }
+    >(`/users/${encodeURIComponent(id)}/avatar`, {
       ...opts,
     }),
   );
@@ -1418,7 +1625,7 @@ export function socialControllerPeople(
   {
     query,
   }: {
-    query: string;
+    query?: string;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -1715,7 +1922,7 @@ export function socialControllerNotifications(
   {
     limit,
   }: {
-    limit: string;
+    limit?: number;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -1753,8 +1960,8 @@ export function socialControllerComments(
     limit,
   }: {
     id: string;
-    cursor: string;
-    limit: string;
+    cursor?: string;
+    limit?: number;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
@@ -2144,6 +2351,14 @@ export enum ActivityTag {
   WithPet = 'with_pet',
   WithKid = 'with_kid',
   ForACause = 'for_a_cause',
+}
+export enum Role {
+  Admin = 'admin',
+  User = 'user',
+}
+export enum Role2 {
+  User = 'user',
+  Admin = 'admin',
 }
 export enum Type2 {
   ActivityLike = 'activity_like',

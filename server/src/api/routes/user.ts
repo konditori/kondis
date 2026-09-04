@@ -1,4 +1,4 @@
-import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
 import { fileResponse, type FileReader } from 'src/api/file-response';
@@ -12,6 +12,9 @@ export type UserReadRepository = ApiUserLookup & {
 };
 export type UserAvatarService = Pick<UserService, 'avatarAbsolutePath' | 'avatarFile'>;
 const avatarParams = z.object({ id: z.string() });
+const binaryImageContent = {
+  'image/*': { schema: { type: 'string' as const, format: 'binary' as const } },
+};
 
 const listUsersRoute = createRoute({
   method: 'get',
@@ -27,7 +30,13 @@ const avatarRoute = createRoute({
   path: '/users/{id}/avatar',
   operationId: 'UserController_avatarFile',
   request: { params: avatarParams },
-  responses: { 200: { description: '' } },
+  responses: {
+    200: { description: 'Profile picture', content: binaryImageContent },
+    206: { description: 'Requested profile picture byte range', content: binaryImageContent },
+    304: { description: 'Profile picture was not modified' },
+    404: { description: 'Profile picture does not exist' },
+    416: { description: 'Requested byte range is not satisfiable' },
+  },
   tags: ['User'],
 });
 
@@ -51,7 +60,6 @@ export const registerUserReadRoutes = (
       throw new NotFoundException('Profile picture does not exist');
     }
     return fileResponse(context.req.raw, files, userService.avatarAbsolutePath(avatar.avatar_path), {
-      size: avatar.avatar_size,
       missingMessage: 'Profile picture does not exist',
       headers: {
         'Content-Type': avatar.avatar_mime_type,

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { open, stat } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { Readable } from 'node:stream';
@@ -11,30 +11,37 @@ import multer, { diskStorage, memoryStorage } from 'multer';
 
 import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
-import type { FileRange } from 'src/api/file-response';
+import type { FileRange, OpenFile } from 'src/api/file-response';
 import type { ImageUpload, UploadKind, UploadReader } from 'src/api/uploads';
 import type { ApplicationComposition } from 'src/composition';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
 import type { UploadedFileData } from 'src/types/uploads';
 
-const statNodeFile = async (path: string): Promise<{ lastModified: Date }> => {
-  const file = await stat(path);
-  return { lastModified: file.mtime };
-};
-
-const readNodeFile = async (path: string, range?: FileRange): Promise<ReadableStream> => {
+const openNodeFile = async (path: string): Promise<OpenFile> => {
   const file = await open(path, 'r');
   try {
-    const stream = file.createReadStream({ autoClose: true, ...(range && { start: range.start, end: range.end }) });
-    return Readable.toWeb(stream) as unknown as ReadableStream;
+    const stats = await file.stat();
+    return {
+      size: stats.size,
+      lastModified: stats.mtime,
+      close: () => file.close(),
+      stream: (range?: FileRange, signal?: AbortSignal) => {
+        const stream = file.createReadStream({
+          autoClose: true,
+          signal,
+          ...(range && { start: range.start, end: range.end }),
+        });
+        return Readable.toWeb(stream) as unknown as ReadableStream;
+      },
+    };
   } catch (error) {
-    await file.close();
+    await file.close().catch(() => null);
     throw error;
   }
 };
 
-export const nodeFileReader = { read: readNodeFile, stat: statNodeFile };
+export const nodeFileReader = { open: openNodeFile };
 
 const uploadStorage = diskStorage({
   destination: tmpdir(),

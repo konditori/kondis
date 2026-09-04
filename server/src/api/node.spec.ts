@@ -1,4 +1,6 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { getEventListeners } from 'node:events';
+import type { ReadStream } from 'node:fs';
+import { mkdtemp, open, readFile, rm, writeFile, type FileHandle } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -185,7 +187,7 @@ describe(createNodeServer.name, () => {
     const path = join(directory, 'original.jpg');
     await writeFile(path, 'image bytes');
     const getFile = vi.fn(
-      () => Promise.resolve({ absolutePath: path, mime_type: 'image/jpeg', byte_size: 11 }) as never,
+      () => Promise.resolve({ absolutePath: path, mime_type: 'image/jpeg', byte_size: 1100 }) as never,
     );
     const baseUrl = await startApp(
       newApiDependencies({
@@ -241,5 +243,58 @@ describe(createNodeServer.name, () => {
     expect(await missingGet.json()).toMatchObject({ message: 'Image variant does not exist' });
     expect(missingHead.status).toBe(404);
     expect(await missingHead.text()).toBe('');
+  });
+
+  it('closes native file handles after metadata-only, completed, and aborted streams', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'kondis-node-file-close-'));
+    temporaryDirectories.push(directory);
+    const path = join(directory, 'file.txt');
+    await writeFile(path, Buffer.alloc(256 * 1024, 'a'));
+    const probe = await open(path, 'r');
+    const fileHandlePrototype = Object.getPrototypeOf(probe) as Pick<FileHandle, 'createReadStream'>;
+    await probe.close();
+    const originalCreateReadStream = fileHandlePrototype.createReadStream;
+    let streamCloseCount = 0;
+    const nativeStreams: ReadStream[] = [];
+    const createReadStream = vi.spyOn(fileHandlePrototype, 'createReadStream').mockImplementation(function (
+      this: FileHandle,
+      options,
+    ) {
+      const nativeClose = this.close;
+      this.close = () => {
+        streamCloseCount += 1;
+        return nativeClose();
+      };
+      const stream = originalCreateReadStream.call(this, options);
+      nativeStreams.push(stream);
+      return stream;
+    });
+
+    try {
+      const metadataOnly = await nodeFileReader.open(path);
+      const close = vi.spyOn(metadataOnly, 'close');
+      await metadataOnly.close();
+      expect(close).toHaveBeenCalledOnce();
+
+      const streamed = await nodeFileReader.open(path);
+      const completed = new AbortController();
+      const body = await new Response(streamed.stream(undefined, completed.signal)).arrayBuffer();
+      expect(body.byteLength).toBe(256 * 1024);
+      expect(streamCloseCount).toBe(1);
+      expect(getEventListeners(completed.signal, 'abort')).toHaveLength(0);
+
+      const aborting = new AbortController();
+      const aborted = await nodeFileReader.open(path);
+      const reader = (aborted.stream(undefined, aborting.signal) as ReadableStream<Uint8Array>).getReader();
+      const reading = reader.read();
+      aborting.abort();
+
+      await expect(reading).rejects.toMatchObject({ name: 'AbortError' });
+      await vi.waitFor(() => expect(nativeStreams[1]?.destroyed).toBe(true));
+      await vi.waitFor(() => expect(streamCloseCount).toBe(2));
+      expect(getEventListeners(aborting.signal, 'abort')).toHaveLength(0);
+    } finally {
+      createReadStream.mockRestore();
+    }
   });
 });

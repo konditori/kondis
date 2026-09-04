@@ -66,12 +66,15 @@ const exitResult = async (child: Runtime): Promise<number> => {
   return code ?? (signal ? 1 : 0);
 };
 
+export const getApiPingUrl = (listenAddress: string, port: number): string => {
+  const host = listenAddress === '0.0.0.0' ? '127.0.0.1' : listenAddress === '::' ? '::1' : listenAddress;
+  const urlHost = host.includes(':') ? `[${host}]` : host;
+  return `http://${urlHost}:${port}/api/v1/ping`;
+};
+
 const waitForApi = async (api: ChildProcess): Promise<void> => {
   const config = new ConfigRepository();
-  const port = config.port;
-  const address = config.listenAddress;
-  const host = address === '0.0.0.0' ? '127.0.0.1' : address;
-  const url = `http://${host}:${port}/api/v1/ping`;
+  const url = getApiPingUrl(config.listenAddress, config.port);
 
   while (!stopping && api.exitCode === null && api.signalCode === null) {
     try {

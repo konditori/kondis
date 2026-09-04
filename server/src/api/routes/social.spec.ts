@@ -84,14 +84,18 @@ describe('API social read routes', () => {
     );
     const request = (path: string) => app.request(path, { headers: apiAuthHeaders() });
 
-    expect((await request('/notifications')).status).toBe(200);
+    const notificationsResponse = await request('/notifications');
+    expect(notificationsResponse.status).toBe(200);
     expect(notifications).toHaveBeenCalledWith(TEST_API_USER.id, undefined);
-    expect((await request(`/activities/${ACTIVITY_ID}/comments`)).status).toBe(200);
+    const commentsResponse = await request(`/activities/${ACTIVITY_ID}/comments`);
+    expect(commentsResponse.status).toBe(200);
     expect(comments).toHaveBeenCalledWith(ACTIVITY_ID, TEST_API_USER.id, undefined, undefined);
 
     for (const limit of ['nope', '0', '-1', '1.5', '51']) {
-      expect((await request(`/notifications?limit=${limit}`)).status, limit).toBe(400);
-      expect((await request(`/activities/${ACTIVITY_ID}/comments?limit=${limit}`)).status, limit).toBe(400);
+      const invalidNotifications = await request(`/notifications?limit=${limit}`);
+      expect(invalidNotifications.status, limit).toBe(400);
+      const invalidComments = await request(`/activities/${ACTIVITY_ID}/comments?limit=${limit}`);
+      expect(invalidComments.status, limit).toBe(400);
     }
     expect(notifications).toHaveBeenCalledTimes(1);
     expect(comments).toHaveBeenCalledTimes(1);

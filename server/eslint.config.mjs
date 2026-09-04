@@ -97,7 +97,7 @@ export default typescriptEslint.config([
   },
   {
     files: ['src/services/**/*.ts'],
-    ignores: ['src/services/index.ts', 'src/services/**/*.spec.ts'],
+    ignores: ['src/services/**/*.spec.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [noRelativeImports, noServiceToServiceImports] }],
     },
