@@ -1,11 +1,18 @@
+import { ForbiddenException } from '@nestjs/common';
 import { createMiddleware } from 'hono/factory';
 
 import { AUTH_SECRET, type AuthenticatedUser, verifyAccessToken } from 'src/auth';
 
 export type HonoAuthEnv = {
+  Bindings: HonoBindings;
   Variables: {
     user: AuthenticatedUser;
   };
+};
+
+export type HonoBindings = {
+  incoming?: { socket?: { remoteAddress?: string } };
+  outgoing?: unknown;
 };
 
 type IsPublicRequest = (method: string, path: string) => boolean;
@@ -15,6 +22,7 @@ type StoredUser = {
   role: 'admin' | 'user';
   first_name: string;
   last_name: string;
+  avatar_path?: string | null;
 };
 export type HonoUserLookup = {
   findById: (id: string) => Promise<StoredUser | undefined>;
@@ -53,3 +61,10 @@ export const createHonoAuthMiddleware = (users: HonoUserLookup, isPublic: IsPubl
     });
     await next();
   });
+
+export const requireAdmin = createMiddleware<HonoAuthEnv>(async (context, next) => {
+  if (context.get('user').role !== 'admin') {
+    throw new ForbiddenException('Administrator access is required');
+  }
+  await next();
+});

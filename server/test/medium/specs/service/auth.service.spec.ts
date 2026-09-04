@@ -1,10 +1,11 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import type { KondisDatabase } from 'src/types';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
+import type { KondisDatabase } from 'src/types';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
@@ -16,7 +17,7 @@ describe(AuthService.name, () => {
   beforeAll(() => {
     db = createMediumTestDatabase();
     users = new UserRepository(db);
-    sut = new AuthService(users, {} as never, new RateLimitingRepository());
+    sut = new AuthService(users, {} as never, new RateLimitingRepository(), new CryptoRepository());
   });
 
   beforeEach(() => resetMediumTestDatabase(db));

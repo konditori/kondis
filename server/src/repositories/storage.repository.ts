@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { copyFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { copyFile, mkdir, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 
 @Injectable()
-export class StorageRepository {
+export class StorageRepository implements StoragePort {
   constructor(
     private readonly config: ConfigRepository,
     private readonly crypto: CryptoRepository,
@@ -65,12 +67,64 @@ export class StorageRepository {
     }
   }
 
+  async copy(sourcePath: string, targetPath: string): Promise<void> {
+    const target = this.absolutePath(targetPath);
+    await mkdir(dirname(target), { recursive: true });
+    const temporary = `${target}.${this.crypto.uuid()}.tmp`;
+    try {
+      await copyFile(this.absolutePath(sourcePath), temporary);
+      await rename(temporary, target);
+    } catch (error) {
+      await rm(temporary, { force: true });
+      throw error;
+    }
+  }
+
   read(relativePath: string): Promise<Buffer> {
     return readFile(this.absolutePath(relativePath));
   }
 
+  async readLimited(relativePath: string, maximumBytes: number): Promise<Buffer> {
+    const file = await open(this.absolutePath(relativePath), 'r');
+    try {
+      const metadata = await file.stat();
+      if (metadata.size > maximumBytes) {
+        throw new FileSizeLimitError(`File exceeds ${maximumBytes} bytes`);
+      }
+
+      const contents = Buffer.allocUnsafe(metadata.size + 1);
+      let offset = 0;
+      while (offset < contents.length) {
+        const { bytesRead } = await file.read(contents, offset, contents.length - offset, offset);
+        if (bytesRead === 0) {
+          break;
+        }
+        offset += bytesRead;
+      }
+      if (offset > maximumBytes) {
+        throw new FileSizeLimitError(`File exceeds ${maximumBytes} bytes`);
+      }
+      return contents.subarray(0, offset);
+    } finally {
+      await file.close();
+    }
+  }
+
+  readStream(relativePath: string): AsyncIterable<Uint8Array> {
+    return createReadStream(this.absolutePath(relativePath));
+  }
+
+  async size(relativePath: string): Promise<number> {
+    const metadata = await stat(this.absolutePath(relativePath));
+    return metadata.size;
+  }
+
   async delete(relativePath: string): Promise<void> {
     await rm(this.absolutePath(relativePath), { force: true });
+  }
+
+  async deleteExternal(path: string): Promise<void> {
+    await rm(path, { force: true });
   }
 
   async deleteTemporaryFilesOlderThan(

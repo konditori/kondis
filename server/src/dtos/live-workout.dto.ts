@@ -1,5 +1,5 @@
+import { z } from '@hono/zod-openapi';
 import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
 
 import { ActivityTypeSchema } from 'src/dtos/activity.dto';
 

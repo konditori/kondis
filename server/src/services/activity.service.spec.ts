@@ -30,7 +30,7 @@ describe('ActivityService', () => {
   const deleteUpload = vi.fn(async () => {});
   const getIdsToParse = vi.fn<(options: { force: boolean; after?: string; limit: number }) => Promise<string[]>>();
 
-  const read = vi.fn<(relativePath: string) => Promise<Buffer>>();
+  const readLimited = vi.fn<(relativePath: string, maximumBytes: number) => Promise<Buffer>>();
 
   const getActivityById = vi.fn();
   const getByUploadId = vi.fn();
@@ -61,7 +61,7 @@ describe('ActivityService', () => {
     getIdsToParse,
   } as unknown as UploadRepository;
 
-  const storageRepository = { read } as unknown as StorageRepository;
+  const storageRepository = { readLimited } as unknown as StorageRepository;
 
   const activityRepository = {
     getById: getActivityById,
@@ -147,7 +147,7 @@ describe('ActivityService', () => {
     recomputeRouteMatches.mockResolvedValue(true);
     getBestEfforts.mockResolvedValue([]);
     updateActivity.mockResolvedValue(undefined);
-    read.mockResolvedValue(Buffer.from('not actually a fit file'));
+    readLimited.mockResolvedValue(Buffer.from('not actually a fit file'));
     decodesTo();
     decodeGpx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
     decodeTcx.mockReturnValue({ recordMesgs: [{ timestamp: new Date('2024-03-01T06:00:00.000Z'), heartRate: 120 }] });
@@ -167,7 +167,7 @@ describe('ActivityService', () => {
       getUploadById.mockResolvedValue(undefined);
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Skipped);
-      expect(read).not.toHaveBeenCalled();
+      expect(readLimited).not.toHaveBeenCalled();
     });
 
     it('skips an upload that already produced an activity', async () => {
@@ -201,7 +201,7 @@ describe('ActivityService', () => {
         { name: JobName.ActivityMetricCompute, data: { id: ACTIVITY_ID } },
         { name: JobName.ActivityRouteMatchCompute, data: { id: ACTIVITY_ID } },
       ]);
-      expect(read).not.toHaveBeenCalled();
+      expect(readLimited).not.toHaveBeenCalled();
     });
 
     it('replaces the existing activity when forced', async () => {
@@ -214,11 +214,11 @@ describe('ActivityService', () => {
 
     it('reads, decodes and stores the activity, then marks the upload parsed', async () => {
       const contents = Buffer.from('fit bytes');
-      read.mockResolvedValue(contents);
+      readLimited.mockResolvedValue(contents);
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Success);
 
-      expect(read).toHaveBeenCalledWith('ab/cd/abcd.fit');
+      expect(readLimited).toHaveBeenCalledWith('ab/cd/abcd.fit', UPLOAD_LIMITS.activityFileBytes);
       expect(decode).toHaveBeenCalledWith(contents);
       expect(decodeTcx).not.toHaveBeenCalled();
       expect(createActivity).toHaveBeenCalledWith(
@@ -262,11 +262,11 @@ describe('ActivityService', () => {
     it('uses the TCX decoder for .tcx uploads', async () => {
       getUploadById.mockResolvedValue(anUpload({ storage_path: 'ab/cd/abcd.tcx' }));
       const contents = Buffer.from('<tcx />');
-      read.mockResolvedValue(contents);
+      readLimited.mockResolvedValue(contents);
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Success);
 
-      expect(read).toHaveBeenCalledWith('ab/cd/abcd.tcx');
+      expect(readLimited).toHaveBeenCalledWith('ab/cd/abcd.tcx', UPLOAD_LIMITS.activityFileBytes);
       expect(decode).not.toHaveBeenCalled();
       expect(decodeTcx).toHaveBeenCalledWith(contents);
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
@@ -275,11 +275,11 @@ describe('ActivityService', () => {
     it('uses the GPX decoder for .gpx uploads', async () => {
       getUploadById.mockResolvedValue(anUpload({ storage_path: 'ab/cd/abcd.gpx' }));
       const contents = Buffer.from('<gpx />');
-      read.mockResolvedValue(contents);
+      readLimited.mockResolvedValue(contents);
 
       await expect(makeService().handleActivityParse({ id: UPLOAD_ID })).resolves.toBe(JobStatus.Success);
 
-      expect(read).toHaveBeenCalledWith('ab/cd/abcd.gpx');
+      expect(readLimited).toHaveBeenCalledWith('ab/cd/abcd.gpx', UPLOAD_LIMITS.activityFileBytes);
       expect(decode).not.toHaveBeenCalled();
       expect(decodeGpx).toHaveBeenCalledWith(contents);
       expect(setStatus).toHaveBeenCalledWith(UPLOAD_ID, 'parsed');
@@ -373,7 +373,7 @@ describe('ActivityService', () => {
 
     it('skips an activity that no longer exists', async () => {
       await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Skipped);
-      expect(read).not.toHaveBeenCalled();
+      expect(readLimited).not.toHaveBeenCalled();
     });
   });
 

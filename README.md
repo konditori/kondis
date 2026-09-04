@@ -44,6 +44,7 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Auto-pause workouts
 * Power curves and other detailed stats
 * Warn user about bad GPS recordings i.e. large jumps in tracks etc.
+* Use weblate for translations (need to wait a few more weeks to be accepted)
 
 ## Development
 Please see the [developer documentation site](https://developers.kondis.org/).

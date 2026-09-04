@@ -1,4 +1,4 @@
-import { BadRequestException, ConsoleLogger, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
@@ -8,6 +8,9 @@ import { OnJob } from 'src/decorators';
 import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus, QueueName } from 'src/enum';
+import type { QueuePort } from 'src/ports/queue.port';
+import type { RealtimePort } from 'src/ports/realtime.port';
+import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -71,11 +74,11 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
 export class ActivityService {
   constructor(
     private readonly uploadRepository: UploadRepository,
-    private readonly storageRepository: StorageRepository,
+    @Inject(StorageRepository) private readonly storageRepository: StoragePort,
     private readonly activityRepository: ActivityRepository,
     private readonly databaseRepository: DatabaseRepository,
-    private readonly eventRepository: EventRepository,
-    private readonly jobRepository: JobRepository,
+    @Inject(EventRepository) private readonly eventRepository: RealtimePort,
+    @Inject(JobRepository) private readonly jobRepository: QueuePort,
     private readonly fitRepository: FitRepository,
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
@@ -134,10 +137,7 @@ export class ActivityService {
     }
 
     try {
-      const contents = await this.storageRepository.read(upload.storage_path);
-      if (contents.length > UPLOAD_LIMITS.activityFileBytes) {
-        throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
-      }
+      const contents = await this.readActivityFile(upload.storage_path);
       const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
         const createdId = await this.activityRepository.create(
@@ -312,10 +312,7 @@ export class ActivityService {
       return JobStatus.Skipped;
     }
 
-    const contents = await this.storageRepository.read(upload.storage_path);
-    if (contents.length > UPLOAD_LIMITS.activityFileBytes) {
-      throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
-    }
+    const contents = await this.readActivityFile(upload.storage_path);
     const parsed = this.computeActivityFile(upload.storage_path, contents);
     const found = await this.databaseRepository.withTransaction(async (trx) => {
       const activityFound = await this.activityRepository.setMetrics(id, this.toMetrics(parsed), trx);
@@ -360,6 +357,17 @@ export class ActivityService {
 
     this.assertActivityMessageLimits(messages);
     return messages;
+  }
+
+  private async readActivityFile(path: string): Promise<Buffer> {
+    try {
+      return await this.storageRepository.readLimited(path, UPLOAD_LIMITS.activityFileBytes);
+    } catch (error) {
+      if (error instanceof FileSizeLimitError) {
+        throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`, { cause: error });
+      }
+      throw error;
+    }
   }
 
   private parseActivityStructureFile(path: string, contents: Buffer): ParsedActivityStructure {

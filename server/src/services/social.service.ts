@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'kysely';
 import { KYSELY } from 'src/db/database';
-import type { ActivityCommentEvent } from 'src/repositories/event.repository';
+import type { ActivityCommentEvent, RealtimePort } from 'src/ports/realtime.port';
 import { EventRepository } from 'src/repositories/event.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
@@ -11,7 +11,7 @@ export class SocialService {
   constructor(
     private readonly social: SocialRepository,
     @Inject(KYSELY) private readonly db: KondisDatabase,
-    private readonly eventRepository: EventRepository,
+    @Inject(EventRepository) private readonly eventRepository: RealtimePort,
   ) {}
 
   async people(viewerId: string, query?: string) {

@@ -16,17 +16,42 @@ import {
   BestEffortListResponseDto,
   MatchedRouteListResponseDto,
 } from 'src/dtos/activity.dto';
+import { ActivityEventsTicketDto } from 'src/dtos/auth.dto';
+import {
+  AllJobStatusResponseDto,
+  JobCreateDto,
+  JobHistoryResponseDto,
+  QueueCommandDto,
+  QueueNameParamDto,
+  QueueStatusReportDto,
+} from 'src/dtos/job.dto';
+import {
+  LiveWorkoutAckDto,
+  LiveWorkoutCreateDto,
+  LiveWorkoutDto,
+  LiveWorkoutListDto,
+  LiveWorkoutPointsDto,
+  LiveWorkoutShareDto,
+  LiveWorkoutStateDto,
+} from 'src/dtos/live-workout.dto';
 import { PingResponseDto } from 'src/dtos/ping.dto';
 import {
+  CommentCreateDto,
+  CommentDto,
   CommentListDto,
+  CommentUpdateDto,
+  LikeStateDto,
   LikerListDto,
   NotificationListDto,
+  NotificationsReadDto,
   PeopleListDto,
   PersonDto,
   RequestListDto,
 } from 'src/dtos/social.dto';
+import { FitUploadResponseDto, LagomTakeoutUploadResponseDto, TakeoutImportStatusDto } from 'src/dtos/upload.dto';
 import { API_PREFIX, createHonoOpenApiDocument } from 'src/hono/app';
 import { createNodeHonoApp } from 'src/hono/node';
+import { ConfigRepository } from 'src/repositories/config.repository';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -64,6 +89,14 @@ const normalizeHonoDocument = (document: ReturnType<typeof createHonoOpenApiDocu
         }
         if (schema.format === 'uuid') {
           schema.pattern = UUID_PATTERN;
+        }
+
+        if (method === 'get' && path === '/jobs/history' && parameter.name === 'offset') {
+          schema.maximum = Number.MAX_SAFE_INTEGER;
+          delete schema.nullable;
+        }
+        if (method === 'put' && path === '/jobs/{name}' && parameter.name === 'name') {
+          delete parameter.description;
         }
 
         const routeParameter = `${method.toUpperCase()} ${path} ${String(parameter.name)}`;
@@ -153,15 +186,37 @@ async function run(): Promise<void> {
       SwaggerModule.createDocument(app, config, {
         ignoreGlobalPrefix: true,
         extraModels: [
+          ActivityEventsTicketDto.Output,
           ActivityDetailDto.Output,
           ActivityListResponseDto.Output,
           ActivityTagListResponseDto.Output,
           ActivityTypeListResponseDto.Output,
           BestEffortListResponseDto.Output,
+          AllJobStatusResponseDto.Output,
+          JobCreateDto,
+          JobHistoryResponseDto.Output,
+          QueueCommandDto,
+          QueueNameParamDto,
+          QueueStatusReportDto.Output,
+          LiveWorkoutAckDto.Output,
+          LiveWorkoutCreateDto,
+          LiveWorkoutDto.Output,
+          LiveWorkoutListDto.Output,
+          LiveWorkoutPointsDto,
+          LiveWorkoutShareDto.Output,
+          LiveWorkoutStateDto,
+          FitUploadResponseDto.Output,
+          LagomTakeoutUploadResponseDto.Output,
+          TakeoutImportStatusDto.Output,
+          CommentCreateDto,
+          CommentDto.Output,
           CommentListDto.Output,
+          CommentUpdateDto,
+          LikeStateDto.Output,
           LikerListDto.Output,
           MatchedRouteListResponseDto.Output,
           NotificationListDto.Output,
+          NotificationsReadDto.Output,
           PeopleListDto.Output,
           PersonDto.Output,
           PingResponseDto.Output,
@@ -169,11 +224,14 @@ async function run(): Promise<void> {
         ],
       }),
     );
-    const honoDocument = normalizeHonoDocument(createHonoOpenApiDocument(createNodeHonoApp(app)));
+    const honoDocument = normalizeHonoDocument(
+      createHonoOpenApiDocument(createNodeHonoApp(app, app.get(ConfigRepository).getEnv())),
+    );
     const schemas: Record<string, unknown> = { ...nestDocument.components?.schemas };
     for (const [name, schema] of Object.entries(honoDocument.schemas)) {
       schemas[name] ??= schema;
     }
+    delete schemas.QueueNameParamDto;
     const document = {
       ...nestDocument,
       paths: mergePaths(nestDocument.paths, honoDocument.paths),

@@ -1,9 +1,11 @@
+import { readFile, rm } from 'node:fs/promises';
+
 import { Controller, Get, Module, Put } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX, createHonoApp } from 'src/hono/app';
-import { mountHonoApp } from 'src/hono/node';
+import { mountHonoApp, nodeUploadReader } from 'src/hono/node';
 import { honoAuthHeaders, newHonoDependencies, newHonoUsers, TEST_HONO_USER } from 'test/hono';
 
 const findNoUser = (_id: string) => Promise.resolve(undefined);
@@ -90,5 +92,70 @@ describe(mountHonoApp.name, () => {
 
     const writeResponse = await fetch(`${baseUrl}${API_PREFIX}/activities/${activityId}`, { method: 'PUT' });
     expect(await writeResponse.json()).toEqual({ source: 'nest-write' });
+  });
+
+  it('streams Node multipart activity uploads to a temporary file', async () => {
+    const uploadActivity = vi.fn(async (file: { originalname: string; path: string; size: number } | undefined) => {
+      expect(file).toMatchObject({ originalname: 'run.fit', size: 9 });
+      expect(await readFile(file!.path, 'utf8')).toBe('fit bytes');
+      await rm(file!.path, { force: true });
+      return { byteSize: file!.size, queued: true as const };
+    });
+    const nestApp = await NestFactory.create(TestModule, { logger: false });
+    applications.push(nestApp);
+    mountHonoApp(
+      nestApp,
+      createHonoApp(
+        newHonoDependencies({
+          uploads: nodeUploadReader,
+          uploadService: { uploadActivity },
+          users: newHonoUsers(),
+        }),
+      ),
+    );
+    nestApp.setGlobalPrefix(API_PREFIX.slice(1));
+    await nestApp.listen(0, '127.0.0.1');
+    const form = new FormData();
+    form.append('file', new Blob(['fit bytes']), 'run.fit');
+
+    const response = await fetch(`${await nestApp.getUrl()}${API_PREFIX}/upload/activity`, {
+      method: 'POST',
+      headers: honoAuthHeaders(),
+      body: form,
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toEqual({ byteSize: 9, queued: true });
+    expect(uploadActivity).toHaveBeenCalledOnce();
+  });
+
+  it('rejects extra avatar form fields before buffering the file', async () => {
+    const uploadAvatar = vi.fn();
+    const nestApp = await NestFactory.create(TestModule, { logger: false });
+    applications.push(nestApp);
+    mountHonoApp(
+      nestApp,
+      createHonoApp(
+        newHonoDependencies({
+          uploads: nodeUploadReader,
+          userService: { uploadAvatar },
+          users: newHonoUsers(),
+        }),
+      ),
+    );
+    nestApp.setGlobalPrefix(API_PREFIX.slice(1));
+    await nestApp.listen(0, '127.0.0.1');
+    const form = new FormData();
+    form.append('metadata', 'unexpected');
+    form.append('file', new Blob(['avatar']), 'avatar.png');
+
+    const response = await fetch(`${await nestApp.getUrl()}${API_PREFIX}/users/me/avatar`, {
+      method: 'POST',
+      headers: honoAuthHeaders(),
+      body: form,
+    });
+
+    expect(response.status).toBe(400);
+    expect(uploadAvatar).not.toHaveBeenCalled();
   });
 });

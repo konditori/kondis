@@ -5,58 +5,24 @@ import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 
 import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
-import { ConfigRepository } from 'src/repositories/config.repository';
 import { KYSELY } from 'src/db/database';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
+import type {
+  ActivityCommentEvent,
+  ArgsOf,
+  EmitEvent,
+  NotificationCreatedEvent,
+  RealtimePort,
+} from 'src/ports/realtime.port';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
+
+export type { ActivityCommentEvent } from 'src/ports/realtime.port';
 
 const EVENT_CHANNEL = 'kondis_realtime';
 const EVENT_PATHS = new Set(['/events', '/api/v1/events']);
 const JOB_UPDATE_INTERVAL_MS = 250;
-
-type EventMap = {
-  JobUpdated: [];
-  ActivityCreate: [activity: ActivityDto];
-  ActivityUploadSkipped: [activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>, uploadFileName: string];
-  ActivityUpdate: [activity: ActivityDto];
-  ActivityCommentCreated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
-  ActivityCommentUpdated: [activity: Pick<ActivityDto, 'id'>, comment: ActivityCommentEvent];
-  ActivityCommentDeleted: [activity: Pick<ActivityDto, 'id'>, commentId: string];
-  ActivityLikeUpdated: [activity: { id: string; likeCount: number }];
-  ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
-  NotificationCreated: [notification: NotificationCreatedEvent];
-  NotificationsRead: [notification: NotificationsReadEvent];
-};
-
-type NotificationCreatedEvent = {
-  recipientId: string;
-  id: string;
-  type: 'activity_like' | 'activity_comment' | 'follow_request';
-  createdAt: string;
-  activityId: string | null;
-};
-
-type NotificationsReadEvent = {
-  userId: string;
-  readAt: string;
-};
-
-export type ActivityCommentEvent = {
-  id: string;
-  body: string;
-  createdAt: string;
-  updatedAt: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl: string | null;
-  };
-};
-
-export type EmitEvent = keyof EventMap;
-export type ArgsOf<T extends EmitEvent> = EventMap[T];
 
 type WebsocketEvent =
   | { type: 'job.updated' }
@@ -97,7 +63,7 @@ const eventSerializers: EventSerializers = {
 };
 
 @Injectable()
-export class EventRepository implements OnApplicationShutdown {
+export class EventRepository implements OnApplicationShutdown, RealtimePort {
   private readonly logger = new Logger(EventRepository.name);
   private listener?: pg.Client;
   private reconnectTimer?: NodeJS.Timeout;

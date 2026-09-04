@@ -19,7 +19,7 @@ export async function bootstrapApi(): Promise<void> {
   await migrateDatabase(config.database);
 
   const app = await NestFactory.create(AppModule, { cors: false });
-  mountHonoApp(app, createNodeHonoApp(app));
+  mountHonoApp(app, createNodeHonoApp(app, config.getEnv()));
   app.setGlobalPrefix(API_PREFIX.slice(1));
   app.enableShutdownHooks();
   await app.init();

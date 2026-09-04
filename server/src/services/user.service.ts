@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
 import sharp from 'sharp';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { OnJob } from 'src/decorators';
 import { JobName, JobStatus, QueueName } from 'src/enum';
+import type { StoragePort } from 'src/ports/storage.port';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -18,8 +19,24 @@ export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
-    private readonly storage: StorageRepository,
+    @Inject(StorageRepository) private readonly storage: StoragePort,
   ) {}
+
+  async updateProfile(userId: string, firstName: string, lastName: string) {
+    await this.users.setNameParts(userId, firstName, lastName);
+    const updated = await this.users.findById(userId);
+    if (!updated) {
+      throw new NotFoundException('User does not exist');
+    }
+    return {
+      id: updated.id,
+      email: updated.email,
+      firstName: updated.first_name,
+      lastName: updated.last_name,
+      role: updated.role,
+      avatarUrl: updated.avatar_path ? `/api/v1/users/${updated.id}/avatar` : null,
+    };
+  }
 
   async uploadAvatar(userId: string, file: BufferedUploadedFileData | undefined) {
     if (!file) {

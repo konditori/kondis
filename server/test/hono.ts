@@ -36,9 +36,15 @@ export const newHonoUsers = (user: AuthenticatedUser = TEST_HONO_USER): HonoDepe
 export const newHonoDependencies = (overrides: HonoDependencyOverrides = {}): HonoDependencies =>
   ({
     activities: { ...overrides.activities },
+    auth: { ...overrides.auth },
+    config: { registrationEnabled: false, ...overrides.config },
     files: { ...overrides.files },
+    jobs: { ...overrides.jobs },
+    liveWorkouts: { ...overrides.liveWorkouts },
     server: { ...overrides.server },
     social: { ...overrides.social },
+    uploads: { ...overrides.uploads },
+    uploadService: { ...overrides.uploadService },
     userService: { ...overrides.userService },
     users: { ...overrides.users },
   }) as HonoDependencies;

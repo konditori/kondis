@@ -1,5 +1,5 @@
+import { z } from '@hono/zod-openapi';
 import { createZodDto } from 'nestjs-zod';
-import z from 'zod';
 
 export const FitUploadResponseSchema = z.object({
   byteSize: z.number().int().nonnegative().describe('Uploaded activity file size in bytes'),

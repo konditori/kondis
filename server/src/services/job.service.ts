@@ -1,7 +1,9 @@
-import { BadRequestException, ConsoleLogger, Injectable } from '@nestjs/common';
+import { BadRequestException, ConsoleLogger, Inject, Injectable } from '@nestjs/common';
 import { isMainThread } from 'node:worker_threads';
 
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
+import type { QueuePort } from 'src/ports/queue.port';
+import type { RealtimePort } from 'src/ports/realtime.port';
 import { EventRepository } from 'src/repositories/event.repository';
 import { JobRepository } from 'src/repositories/job.repository';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
@@ -22,8 +24,8 @@ const asJobItem = (name: ManualJobName): JobItem => {
 @Injectable()
 export class JobService {
   constructor(
-    private readonly jobRepository: JobRepository,
-    private readonly events: EventRepository,
+    @Inject(JobRepository) private readonly jobRepository: QueuePort,
+    @Inject(EventRepository) private readonly events: RealtimePort,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(JobService.name);
@@ -52,7 +54,9 @@ export class JobService {
     const queues = Object.values(QueueName);
     const counts = this.jobRepository.getAllJobCounts
       ? await this.jobRepository.getAllJobCounts()
-      : Object.fromEntries(await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])));
+      : Object.fromEntries(
+          await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])),
+        );
 
     return Object.fromEntries(
       queues.map((queue) => [

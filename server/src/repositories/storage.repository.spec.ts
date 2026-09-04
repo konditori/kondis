@@ -52,4 +52,12 @@ describe('StorageRepository', () => {
   it('does nothing when the temporary directory does not exist', async () => {
     await expect(repository.deleteTemporaryFilesOlderThan(new Date())).resolves.toEqual([]);
   });
+
+  it('rejects oversized files without reading them into an unbounded buffer', async () => {
+    const path = repository.buildTemporaryPath('.fit');
+    await repository.write(path, Buffer.from('too large'));
+
+    await expect(repository.readLimited(path, 4)).rejects.toThrow('File exceeds 4 bytes');
+    await expect(repository.readLimited(path, 9)).resolves.toEqual(Buffer.from('too large'));
+  });
 });

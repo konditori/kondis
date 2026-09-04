@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, randomBytes } from 'node:crypto';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
+import type { CryptoPort } from 'src/ports/crypto.port';
+import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import type { ActivityType } from 'src/types';
@@ -17,7 +18,10 @@ const SHARE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class LiveWorkoutService {
-  constructor(private readonly repository: LiveWorkoutRepository) {}
+  constructor(
+    private readonly repository: LiveWorkoutRepository,
+    @Inject(CryptoRepository) private readonly crypto: CryptoPort,
+  ) {}
 
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {
     const existing = await this.repository.getByClientSessionId(userId, input.clientSessionId);
@@ -104,7 +108,7 @@ export class LiveWorkoutService {
     if (!workout) {
       throw new NotFoundException('Live workout not found');
     }
-    const token = randomBytes(24).toString('base64url');
+    const token = this.crypto.randomToken(24);
     const expiresAt = new Date(Date.now() + SHARE_LIFETIME_MS);
     await this.repository.setShareToken(id, this.hashToken(token), expiresAt);
     return { token, expiresAt: expiresAt.toISOString() };
@@ -148,6 +152,6 @@ export class LiveWorkoutService {
   }
 
   private hashToken(token: string) {
-    return createHash('sha256').update(token).digest('base64url');
+    return this.crypto.sha256(token);
   }
 }
