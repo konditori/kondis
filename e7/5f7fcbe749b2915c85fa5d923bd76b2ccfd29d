@@ -1,0 +1,71 @@
+server/src/repositories/storage.repository.ts
+  s_e2065b1a21f832::t_e1da13bb3ca61b 5,40-43,89-103
+server/scripts/generate-cloudflare-config.cjs
+  s_053ebf3a18624c::t_dd82b09c8eba4d 42-46
+server/src/adapters/cloudflare/storage.adapter.spec.ts
+  s_053ebf3a18624c::t_1ec41340fe124f 1-77
+server/src/adapters/cloudflare/storage.adapter.ts
+  s_053ebf3a18624c::t_74a1ed546a79d5 1-142
+server/src/adapters/cloudflare/upload.adapter.ts
+  s_053ebf3a18624c::t_d8a54e34a1b77f 1-46
+server/src/api/file-response.ts
+  s_053ebf3a18624c::t_9acb8b2eaa97ef 2,5-6,126
+server/src/api/route-groups.ts
+  s_053ebf3a18624c::t_2a0aa4f08f6cc5 9-14,35,44,81-88,107-131
+server/src/api/routes/activity-image.ts
+  s_053ebf3a18624c::t_33eede7f0e6f3f 111,115-141,165-174
+server/src/api/routes/user-mutations.ts
+  s_053ebf3a18624c::t_9cf0e10b161f33 97-104
+server/src/api/routes/user.ts
+  s_053ebf3a18624c::t_faf5ee60160708 50-57
+server/src/cloudflare/entrypoint.ts
+  s_053ebf3a18624c::t_4560ce5778f52b 9-10,12-17,32-33,66,68,71-88,138-140,198-227
+server/src/cloudflare/realtime-durable-object.spec.ts
+  s_053ebf3a18624c::t_ca803da689cd93 1-35
+server/src/cloudflare/realtime-durable-object.ts
+  s_053ebf3a18624c::t_d75e5809192ad7 1-218
+server/src/composition.worker.ts
+  s_053ebf3a18624c::t_31026f4bda5732 4,6-10,13,29-32,43-44,57-58,68-70,98-115,132-133,135-138
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_053ebf3a18624c::t_ef941869b2ac03 17-19,54-58
+server/src/ports/storage.port.ts
+  s_053ebf3a18624c::t_cd1572d886b6aa 3-10,15,18-21,24
+server/src/services/activity-image.service.ts
+  s_053ebf3a18624c::t_8f3140a1a54e05 17,31,203,286
+server/src/services/storage.service.ts
+  s_053ebf3a18624c::t_cb96acc61e24ac 4,11
+server/src/services/upload.service.ts
+  s_053ebf3a18624c::t_7d8b163c31c3bc 222,324-326,331-335,337
+server/src/services/user.service.ts
+  s_053ebf3a18624c::t_067a456011d341 101
+server/src/services/worker-upload.service.ts
+  s_053ebf3a18624c::t_8e4842bcc51898 1-101
+server/src/services/worker-user.service.ts
+  s_053ebf3a18624c::t_ef32e2a3e4e2e5 1-75
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_053ebf3a18624c::t_acbb0154157ce5 7,41-46,91-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e75f7fcbe749b2915c85fa5d923bd76b2ccfd29d",
+  "prompts": {},
+  "sessions": {
+    "s_053ebf3a18624c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0732a-172b-7fe1-b9ab-67302f61d6fb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e2065b1a21f832": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1c6b39e3-042f-4749-9675-d34f3b790c00",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
