@@ -1,0 +1,21 @@
+server/scripts/generate-cloudflare-config.cjs
+  s_164ae82cbeaf2a::t_8397469a1c3544 16
+server/src/cloudflare/entrypoint.ts
+  s_164ae82cbeaf2a::t_ed54e8a6b95f43 150,152-153,156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c028545d3a31b0133b9236232103a1ddef25e0da",
+  "prompts": {},
+  "sessions": {
+    "s_164ae82cbeaf2a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f8d1aed9dffeIHnLMLjb3moPtJ",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
