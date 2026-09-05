@@ -1,19 +1,19 @@
 import { z } from '@hono/zod-openapi';
 
 export const CredentialsSchema = z.object({
-  email: z.string(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  password: z.string(),
+  email: z.string().max(254),
+  firstName: z.string().max(200).optional(),
+  lastName: z.string().max(200).optional(),
+  password: z.string().max(1024),
 });
-export const SetupCredentialsSchema = CredentialsSchema.extend({ setupTicket: z.string().min(1) });
-export const SetupTokenCredentialsSchema = z.object({ setupToken: z.string().min(1) });
-export const SetupTicketCredentialsSchema = z.object({ setupTicket: z.string().min(1) });
+export const SetupCredentialsSchema = CredentialsSchema.extend({ setupTicket: z.string().min(1).max(512) });
+export const SetupTokenCredentialsSchema = z.object({ setupToken: z.string().min(1).max(512) });
+export const SetupTicketCredentialsSchema = z.object({ setupTicket: z.string().min(1).max(512) });
 export const RegistrationCredentialsSchema = z.object({
-  email: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  password: z.string(),
+  email: z.string().max(254),
+  firstName: z.string().max(200),
+  lastName: z.string().max(200),
+  password: z.string().max(1024),
 });
 
 export const AuthCapabilitiesSchema = z.object({ direct: z.literal(true) });

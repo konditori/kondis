@@ -10,8 +10,14 @@ import { RateLimitingRepository } from 'src/repositories/rate-limiting.repositor
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisExecutor } from 'src/types';
 const BCRYPT_WORK_FACTOR = 12;
+// Keep unknown-account logins on the same expensive comparison path so the
+// response time does not reveal whether an email address is registered.
+const UNKNOWN_ACCOUNT_PASSWORD_HASH = '$2b$12$q5KRFbq3UirFSlEhM7Xa.uoi96PRJvpMz4b6UPvN4clsmqB0VxfGW';
 const SETUP_TOKEN_RATE_LIMIT = { label: 'Setup token', maxAttempts: 5, windowMs: 60_000 } as const;
 const EVENT_TICKET_RATE_LIMIT = { label: 'Event ticket', maxAttempts: 10, windowMs: 60_000 } as const;
+const LOGIN_CLIENT_RATE_LIMIT = { label: 'Login', maxAttempts: 20, windowMs: 60_000 } as const;
+const LOGIN_ACCOUNT_RATE_LIMIT = { label: 'Login account', maxAttempts: 10, windowMs: 5 * 60_000 } as const;
+const REGISTRATION_CLIENT_RATE_LIMIT = { label: 'Registration', maxAttempts: 5, windowMs: 60_000 } as const;
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
@@ -55,11 +61,11 @@ Do not share this secret token with anyone.
     }
   }
   async verifySetupToken(setupToken: string, clientId = 'unknown') {
-    await this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
     const status = await this.setupStatus();
     if (!status.setupRequired) {
       throw new ConflictException('Initial setup is already complete');
     }
+    await this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
     if (!(await this.credentials.verifySetupToken(setupToken))) {
       this.logger.warn('Invalid setup token supplied during initial setup verification');
       throw new UnauthorizedException('Invalid setup token');
@@ -110,18 +116,22 @@ Do not share this secret token with anyone.
       throw error;
     }
   }
-  async login(email: string, password: string) {
-    const user = await this.users.findByEmail(email.toLowerCase());
-    const isValid = user ? await this.crypto.comparePassword(password, user.password_hash) : false;
+  async login(email: string, password: string, clientId = 'unknown') {
+    const normalizedEmail = email.toLowerCase();
+    await this.rateLimitingRepository.consume(clientId, LOGIN_CLIENT_RATE_LIMIT);
+    await this.rateLimitingRepository.consume(normalizedEmail, LOGIN_ACCOUNT_RATE_LIMIT);
+    const user = await this.users.findByEmail(normalizedEmail);
+    const isValid = await this.crypto.comparePassword(password, user?.password_hash ?? UNKNOWN_ACCOUNT_PASSWORD_HASH);
     if (!user || !isValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
     return this.issue(user, false);
   }
-  async register(email: string, firstName: string, lastName: string, password: string) {
+  async register(email: string, firstName: string, lastName: string, password: string, clientId = 'unknown') {
     if (!this.config.registrationEnabled) {
       throw new ForbiddenException('Public registration is disabled');
     }
+    await this.rateLimitingRepository.consume(clientId, REGISTRATION_CLIENT_RATE_LIMIT);
     this.logger.log(`Creating public user account for ${email}`);
     try {
       const account = this.normalizeAccount(email, firstName, lastName, password);

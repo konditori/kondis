@@ -5,7 +5,6 @@ import { BadRequestException, ConflictException, ForbiddenException, Unauthorize
 import { Logger } from 'src/logger';
 import type { TransactionPort } from 'src/ports/transaction.port';
 import type { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
-import type { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
@@ -36,7 +35,8 @@ describe(AuthService.name, () => {
   const users = { findByEmail, count, create, createInitialAdmin } as unknown as UserRepository;
   const config = {
     registrationEnabled: false,
-  } as ConfigRepository;
+    setupToken: undefined,
+  };
   const credentials = {
     createSession,
     createTicket,
@@ -60,6 +60,7 @@ describe(AuthService.name, () => {
     });
   beforeEach(() => {
     vi.clearAllMocks();
+    config.registrationEnabled = false;
     count.mockResolvedValue({ count: 0 });
     findByEmail.mockResolvedValue(undefined);
     createSession.mockResolvedValue('a'.repeat(64));
@@ -206,5 +207,17 @@ describe(AuthService.name, () => {
       ForbiddenException,
     );
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('rate limits public registration before hashing a password', async () => {
+    const { sut } = setup();
+    config.registrationEnabled = true;
+
+    await sut.register('user@example.com', 'User', 'Test', 'long enough password', '198.51.100.1');
+
+    expect(consumeRateLimit).toHaveBeenCalledWith(
+      '198.51.100.1',
+      expect.objectContaining({ label: 'Registration', maxAttempts: 5 }),
+    );
   });
 });

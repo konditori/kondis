@@ -75,11 +75,12 @@ describe(AuthCredentialRepository.name, () => {
   });
 
   it('stores only the bootstrap token hash and accepts an injected seed', async () => {
-    const first = await credentials.getOrCreateSetupToken('injected-setup-token');
-    const second = await new AuthCredentialRepository(db).getOrCreateSetupToken('injected-setup-token');
+    const injectedToken = 'a'.repeat(64);
+    const first = await credentials.getOrCreateSetupToken(injectedToken);
+    const second = await new AuthCredentialRepository(db).getOrCreateSetupToken(injectedToken);
     const stored = await db.selectFrom('auth_bootstrap').select('token_hash').executeTakeFirstOrThrow();
 
-    expect(first).toBe('injected-setup-token');
+    expect(first).toBe(injectedToken);
     expect(second).toBe(first);
     expect(stored.token_hash).not.toBe(first);
     await expect(credentials.verifySetupToken(first!)).resolves.toBe(true);

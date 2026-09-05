@@ -66,8 +66,6 @@ export async function runHyperdriveSpike(connectionString: string): Promise<Hype
     try {
       const transaction = await client.query<{ value: number }>('SELECT $1::integer AS value', [1]);
       await client.query('SELECT $1::integer AS value', [2]);
-      await client.query('COMMIT');
-
       const rowLock = await client.query(
         `SELECT id
          FROM auth_session
@@ -77,6 +75,7 @@ export async function runHyperdriveSpike(connectionString: string): Promise<Hype
          FOR UPDATE SKIP LOCKED`,
         [new Date()],
       );
+      await client.query('COMMIT');
 
       return {
         serverVersion: serverVersion.rows[0]?.server_version ?? 'unknown',

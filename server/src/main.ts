@@ -1,7 +1,7 @@
 import type { Server } from 'node:http';
 
 import { createNodeApiApp, createNodeServer } from 'src/api/node';
-import { createApplicationComposition, type ApplicationComposition } from 'src/composition';
+import { createApplicationComposition, type ApplicationComposition } from 'src/composition.node';
 import { Logger } from 'src/logger';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';

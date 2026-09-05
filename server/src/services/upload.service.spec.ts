@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { ConsoleLogger } from 'src/logger';
+import type { JobProducerPort } from 'src/ports/queue.port';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import type { DatabaseRepository } from 'src/repositories/database.repository';
-import type { JobRepository } from 'src/repositories/job.repository';
 import type { StorageRepository } from 'src/repositories/storage.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
 import { UploadService } from 'src/services/upload.service';
@@ -25,7 +25,7 @@ describe(UploadService.name, () => {
     storageRepository: { write, importFile, buildTemporaryPath } as unknown as StorageRepository,
     cryptoRepository: { xxHash } as unknown as CryptoRepository,
     databaseRepository: {} as DatabaseRepository,
-    jobRepository: { queue } as unknown as JobRepository,
+    jobRepository: { queue } as unknown as JobProducerPort,
     logger: new ConsoleLogger({ logLevels: [] }),
     lagomTakeoutParser: new LagomTakeoutParser(),
     importProgressStore: {

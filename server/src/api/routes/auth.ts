@@ -33,6 +33,18 @@ export type AuthRouteService = Pick<
   | 'verifySetupToken'
 >;
 
+const requestClientId = (
+  context: { env?: ApiEnv['Bindings']; req: { header: (name: string) => string | undefined } },
+  trustProxyHeaders: boolean,
+): string => {
+  const socketAddress = context.env?.incoming?.socket?.remoteAddress;
+  const forwardedFor = context.req.header('X-Forwarded-For')?.split(',', 1)[0]?.trim();
+  const candidate = trustProxyHeaders
+    ? context.req.header('CF-Connecting-IP') || forwardedFor || socketAddress
+    : socketAddress;
+  return candidate && candidate.length <= 64 && /^[\da-f.:]+$/i.test(candidate) ? candidate : 'unknown';
+};
+
 const credentialsInput = CredentialsSchema.openapi('CredentialsDto');
 const registrationCredentialsInput = RegistrationCredentialsSchema.openapi('RegistrationCredentialsDto');
 const setupCredentialsInput = SetupCredentialsSchema.openapi('SetupCredentialsDto');
@@ -228,12 +240,10 @@ export const registerAuthRoutes = (
   });
   app.openapi(verifySetupRoute, async (context) => {
     const value = context.req.valid('json');
-    const socketAddress = context.env?.incoming?.socket?.remoteAddress;
-    const forwardedFor = context.req.header('X-Forwarded-For')?.split(',', 1)[0]?.trim();
-    const clientId = config.trustProxyHeaders
-      ? context.req.header('CF-Connecting-IP') || forwardedFor || socketAddress || 'unknown'
-      : socketAddress || 'unknown';
-    return context.json(await service.verifySetupToken(value.setupToken, clientId), 201) as never;
+    return context.json(
+      await service.verifySetupToken(value.setupToken, requestClientId(context, config.trustProxyHeaders)),
+      201,
+    ) as never;
   });
   app.openapi(validateSetupRoute, async (context) => {
     const value = context.req.valid('json');
@@ -241,12 +251,21 @@ export const registerAuthRoutes = (
   });
   app.openapi(loginRoute, async (context) => {
     const value = context.req.valid('json');
-    return context.json(await service.login(value.email, value.password), 201) as never;
+    return context.json(
+      await service.login(value.email, value.password, requestClientId(context, config.trustProxyHeaders)),
+      201,
+    ) as never;
   });
   app.openapi(registerRoute, async (context) => {
     const value = context.req.valid('json');
     return context.json(
-      await service.register(value.email, value.firstName, value.lastName, value.password),
+      await service.register(
+        value.email,
+        value.firstName,
+        value.lastName,
+        value.password,
+        requestClientId(context, config.trustProxyHeaders),
+      ),
       201,
     ) as never;
   });

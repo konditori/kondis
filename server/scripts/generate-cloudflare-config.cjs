@@ -2,9 +2,14 @@ const { resolve } = require('node:path');
 
 require('@swc-node/register');
 
-const { CRON_JOBS, JOB_CONCURRENCY, JOB_RETRY_DELAY_SECONDS, JOB_RETRY_LIMIT, QUEUE_POLICY } = require(
-  resolve(__dirname, '../src/jobs/job-semantics.ts'),
-);
+const {
+  CLOUD_JOB_CONSUMER,
+  CRON_JOBS,
+  JOB_CONCURRENCY,
+  JOB_RETRY_DELAY_SECONDS,
+  JOB_RETRY_LIMIT,
+  QUEUE_POLICY,
+} = require(resolve(__dirname, '../src/jobs/job-semantics.ts'));
 
 const queueBinding = (queue) => `${queue.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}_QUEUE`;
 
@@ -12,7 +17,7 @@ const queueName = (prefix, queue) => `${prefix}-${queue}`;
 
 const parseJsonc = (source) => JSON.parse(source.replace(/\/\/.*$/gm, '').replace(/,\s*([}\]])/g, '$1'));
 
-const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId }) => {
+const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeProcessorEnabled = false }) => {
   const prefix = `${baseConfig.name}-${environment}`;
   const queues = Object.entries(JOB_CONCURRENCY).map(([queue, concurrency]) => {
     const name = queueName(prefix, queue);
@@ -53,7 +58,12 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId }) => 
       ]),
     },
     triggers: {
-      crons: [...CRON_JOBS.map(({ cron }) => cron), '* * * * *'],
+      crons: [
+        ...CRON_JOBS.filter(({ item }) => nodeProcessorEnabled || CLOUD_JOB_CONSUMER[item.name] === 'worker').map(
+          ({ cron }) => cron,
+        ),
+        '* * * * *',
+      ],
     },
   };
 };

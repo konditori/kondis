@@ -1,8 +1,8 @@
 import { sql } from 'kysely';
+import type { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { JOB_SCHEMA } from 'src/constants';
 import { createDatabase } from 'src/db/database';
 import { QueueName } from 'src/enum';
-import type { JobRepository } from 'src/repositories/job.repository';
 import type { DatabaseConfig, KondisDatabase } from 'src/types';
 
 export const TEST_DB_URL_ENV = 'KONDIS_TEST_POSTGRES_URL';
@@ -54,7 +54,7 @@ export const truncateJobs = async (db: KondisDatabase): Promise<void> => {
   }
 };
 
-export const resetMediumTestDatabase = async (db: KondisDatabase, jobs?: JobRepository): Promise<void> => {
+export const resetMediumTestDatabase = async (db: KondisDatabase, jobs?: PgBossQueueAdapter): Promise<void> => {
   if (!jobs) {
     await truncateJobs(db);
     await truncateAllTables(db);

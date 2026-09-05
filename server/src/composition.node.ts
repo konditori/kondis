@@ -12,7 +12,6 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -41,6 +40,7 @@ export type CompositionOptions = {
   logLevels?: LogLevel[];
 };
 
+// Node composition intentionally owns every native and self-hosted adapter.
 export const createApplicationComposition = ({
   role,
   configRepository = new ConfigRepository(),
@@ -65,7 +65,7 @@ export const createApplicationComposition = ({
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
   const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
-  const jobRepository = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
+  const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
 
   const importProgressStore = new ImportProgressStore(database);
   const lagomTakeoutParser = new LagomTakeoutParser();
@@ -76,7 +76,7 @@ export const createApplicationComposition = ({
     activityRepository,
     databaseRepository,
     eventRepository,
-    jobRepository,
+    queueAdapter,
     fitRepository,
     gpxRepository,
     tcxRepository,
@@ -91,7 +91,7 @@ export const createApplicationComposition = ({
     storageRepository,
     cryptoRepository,
     databaseRepository,
-    jobRepository,
+    queueAdapter,
     newLogger(),
     socialRepository,
   );
@@ -104,17 +104,21 @@ export const createApplicationComposition = ({
     eventRepository,
     databaseRepository,
   );
-  const jobService = new JobService(jobRepository, eventRepository, newLogger());
+  const jobService = new JobService(
+    { admin: queueAdapter, consumer: queueAdapter, producer: queueAdapter },
+    eventRepository,
+    newLogger(),
+  );
   const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository);
   const serverService = new ServerService();
   const socialService = new SocialService(socialRepository, database, eventRepository);
-  const storageService = new StorageService(storageRepository, jobRepository, newLogger());
+  const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
   const uploadService = new UploadService(
     uploadRepository,
     storageRepository,
     cryptoRepository,
     databaseRepository,
-    jobRepository,
+    queueAdapter,
     newLogger(),
     lagomTakeoutParser,
     importProgressStore,
@@ -124,7 +128,7 @@ export const createApplicationComposition = ({
   );
   const userService = new UserService(userRepository, socialRepository, storageRepository);
 
-  jobRepository.setup(
+  queueAdapter.setup(
     createJobHandlerRegistry({
       activityService,
       activityImageService,
@@ -148,7 +152,7 @@ export const createApplicationComposition = ({
     eventRepository,
     fitRepository,
     gpxRepository,
-    jobRepository,
+    queueAdapter,
     liveWorkoutRepository,
     rateLimitingRepository,
     socialRepository,
@@ -179,8 +183,7 @@ export const createApplicationComposition = ({
     [EventRepository, eventRepository],
     [FitRepository, fitRepository],
     [GpxRepository, gpxRepository],
-    [PgBossQueueAdapter, jobRepository],
-    [JobRepository, jobRepository],
+    [PgBossQueueAdapter, queueAdapter],
     [LiveWorkoutRepository, liveWorkoutRepository],
     [RateLimitingRepository, rateLimitingRepository],
     [SocialRepository, socialRepository],
@@ -221,7 +224,7 @@ export const createApplicationComposition = ({
     close(): Promise<void> {
       shutdown ??= (async () => {
         try {
-          await jobRepository.stop();
+          await queueAdapter.stop();
         } finally {
           try {
             await eventRepository.stop();

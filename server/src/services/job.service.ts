@@ -1,7 +1,7 @@
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { BadRequestException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
-import type { QueuePort } from 'src/ports/queue.port';
+import type { JobAdminPort, JobConsumerPort, JobProducerPort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
@@ -18,9 +18,15 @@ const asJobItem = (name: ManualJobName): JobItem => {
   }
 };
 
+export type JobQueuePorts = {
+  admin: JobAdminPort;
+  consumer?: JobConsumerPort;
+  producer: JobProducerPort;
+};
+
 export class JobService {
   constructor(
-    private readonly jobRepository: QueuePort,
+    private readonly queues: JobQueuePorts,
     private readonly events: RealtimePort,
     private readonly logger: ConsoleLogger,
   ) {
@@ -32,32 +38,31 @@ export class JobService {
       this.logger.log("Role 'worker' is disabled; not consuming jobs in this process");
       return;
     }
+    if (!this.queues.consumer) {
+      throw new Error('This composition has no job consumer');
+    }
 
-    await this.jobRepository.startWorkers((item) => this.onJobRun(item));
+    await this.queues.consumer.startWorkers((item) => this.onJobRun(item));
     this.logger.log(`Consuming queues: ${Object.values(QueueName).join(', ')}`);
   }
 
   async create(name: ManualJobName): Promise<void> {
-    await this.jobRepository.queue(asJobItem(name));
+    await this.queues.producer.queue(asJobItem(name));
     await this.events.emit('JobUpdated');
   }
 
   async getJobHistory(limit: number, offset = 0) {
-    return this.jobRepository.getJobHistory(limit, offset);
+    return this.queues.admin.getJobHistory(limit, offset);
   }
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
     const queues = Object.values(QueueName);
-    const counts = this.jobRepository.getAllJobCounts
-      ? await this.jobRepository.getAllJobCounts()
-      : Object.fromEntries(
-          await Promise.all(queues.map(async (queue) => [queue, await this.jobRepository.getJobCounts(queue)])),
-        );
+    const counts = await this.queues.admin.getAllJobCounts();
 
     return Object.fromEntries(
       queues.map((queue) => [
         queue,
-        { jobCounts: counts[queue], queueStatus: { paused: this.jobRepository.isPaused(queue) } },
+        { jobCounts: counts[queue], queueStatus: { paused: this.queues.admin.isPaused(queue) } },
       ]),
     ) as AllJobStatusResponse;
   }
@@ -65,22 +70,22 @@ export class JobService {
   async handleCommand(queue: QueueName, command: QueueCommand): Promise<QueueStatusReport> {
     switch (command) {
       case QueueCommand.Pause: {
-        await this.jobRepository.pause(queue);
+        await this.queues.admin.pause(queue);
         break;
       }
 
       case QueueCommand.Resume: {
-        await this.jobRepository.resume(queue);
+        await this.queues.admin.resume(queue);
         break;
       }
 
       case QueueCommand.Empty: {
-        await this.jobRepository.empty(queue);
+        await this.queues.admin.empty(queue);
         break;
       }
 
       case QueueCommand.ClearFailed: {
-        await this.jobRepository.clearFailed(queue);
+        await this.queues.admin.clearFailed(queue);
         break;
       }
 
@@ -96,8 +101,8 @@ export class JobService {
 
   private async getJobStatus(queue: QueueName): Promise<QueueStatusReport> {
     return {
-      jobCounts: await this.jobRepository.getJobCounts(queue),
-      queueStatus: { paused: this.jobRepository.isPaused(queue) },
+      jobCounts: await this.queues.admin.getJobCounts(queue),
+      queueStatus: { paused: this.queues.admin.isPaused(queue) },
     };
   }
 
@@ -107,7 +112,10 @@ export class JobService {
 
     let status: JobStatus;
     try {
-      status = await this.jobRepository.run(item);
+      if (!this.queues.consumer) {
+        throw new Error('This composition has no job consumer');
+      }
+      status = await this.queues.consumer.run(item);
     } catch (error) {
       this.logger.error(`Job ${item.name} threw after ${Date.now() - startedAt}ms: ${asErrorMessage(error)}`);
       throw error;

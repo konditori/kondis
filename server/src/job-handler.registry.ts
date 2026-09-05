@@ -1,5 +1,5 @@
 import { JobName, QueueName } from 'src/enum';
-import type { JobHandlerDescriptor } from 'src/repositories/job.repository';
+import type { JobHandlerDescriptor } from 'src/jobs/job-handler';
 import type { ActivityImageService } from 'src/services/activity-image.service';
 import type { ActivityService } from 'src/services/activity.service';
 import type { AuthService } from 'src/services/auth.service';

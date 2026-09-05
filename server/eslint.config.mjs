@@ -21,6 +21,27 @@ const noServiceToServiceImports = {
   message: 'Services must not import other services. Depend on a repository or a lower-level module instead.',
 };
 
+const noWorkerRuntimeImports = {
+  group: [
+    '@node-rs/xxhash',
+    'bcrypt',
+    'csv-parse',
+    'fast-xml-parser',
+    'fit-file-parser',
+    'multer',
+    'node:*',
+    'sharp',
+    'src/adapters/node/*',
+    'src/api/node',
+    'src/composition.node',
+    'src/imports/*',
+    'src/workers/*',
+    'unzipper',
+    'ws',
+  ],
+  message: 'Cloudflare Worker code must remain free of Node-only and native runtime dependencies.',
+};
+
 export default typescriptEslint.config([
   eslintPluginUnicorn.configs.recommended,
   eslintPluginPrettierRecommended,
@@ -100,6 +121,13 @@ export default typescriptEslint.config([
     ignores: ['src/services/**/*.spec.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [noRelativeImports, noServiceToServiceImports] }],
+    },
+  },
+  {
+    files: ['src/adapters/cloudflare/**/*.ts', 'src/cloudflare/**/*.ts', 'src/composition.worker.ts'],
+    ignores: ['src/**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [noRelativeImports, noWorkerRuntimeImports] }],
     },
   },
 ]);

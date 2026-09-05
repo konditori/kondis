@@ -15,7 +15,9 @@ export class RateLimitingRepository {
   constructor(private readonly db: KondisDatabase) {}
 
   async consume(clientId: string, options: RateLimitOptions, now = Date.now()): Promise<void> {
-    const key = `${options.label}:${clientId}`;
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clientId));
+    const identifierHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    const key = `${options.label}:${identifierHash}`;
     const windowStartedAt = new Date(now);
     const resetBefore = new Date(now - options.windowMs);
     const result = await sql<{ attempts: number; window_started_at: Date }>`
@@ -42,7 +44,7 @@ export class RateLimitingRepository {
       Math.ceil((options.windowMs - (now - new Date(attempt.window_started_at).getTime())) / 1000),
     );
     this.logger.warn(
-      `${options.label} rate limit exceeded for client ${clientId}; retry allowed in ${retryAfterSeconds} seconds`,
+      `${options.label} rate limit exceeded for client ${identifierHash.slice(0, 12)}; retry allowed in ${retryAfterSeconds} seconds`,
     );
     throw new HttpException(
       `Too many ${options.label.toLowerCase()} attempts. Try again in ${retryAfterSeconds} seconds.`,

@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
+import { CLOUD_JOB_CONSUMER, JOB_QUEUE } from 'src/jobs/job-semantics';
+import { createPollingJobHandlers } from 'src/jobs/polling-job.consumer';
 import type { ActivityImageService } from 'src/services/activity-image.service';
 import type { ActivityService } from 'src/services/activity.service';
 import type { AuthService } from 'src/services/auth.service';
@@ -58,6 +60,10 @@ describe('createJobHandlerRegistry', () => {
     const queues = Object.fromEntries(handlers.map(({ jobName, queueName }) => [jobName, queueName]));
 
     expect(handlers.map(({ jobName }) => jobName).sort()).toEqual(Object.values(JobName).sort());
+    for (const handler of handlers) {
+      expect(handler.queueName).toBe(JOB_QUEUE[handler.jobName]);
+      expect(handler.cloudConsumer ?? 'node').toBe(CLOUD_JOB_CONSUMER[handler.jobName]);
+    }
     expect(queues).toEqual({
       [JobName.AuthCredentialCleanup]: QueueName.BackgroundTask,
       [JobName.ActivityUpload]: QueueName.BackgroundTask,
@@ -88,5 +94,17 @@ describe('createJobHandlerRegistry', () => {
     await descriptor.handler(data as never);
 
     expect(uploadService.handleActivityUpload).toHaveBeenCalledWith(data);
+  });
+
+  it('builds a Node cloud registry without Worker-owned handlers', () => {
+    const { handlers } = setup();
+    const pollingHandlers = createPollingJobHandlers(handlers);
+
+    expect(pollingHandlers[JobName.AuthCredentialCleanup]).toBeUndefined();
+    expect(Object.keys(pollingHandlers).sort()).toEqual(
+      Object.values(JobName)
+        .filter((jobName) => CLOUD_JOB_CONSUMER[jobName] === 'node')
+        .sort(),
+    );
   });
 });

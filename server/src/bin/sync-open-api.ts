@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 
 import { createOpenApiDocument } from 'src/api/app';
 import { createNodeApiApp } from 'src/api/node';
-import { createApplicationComposition } from 'src/composition';
+import { createApplicationComposition } from 'src/composition.node';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

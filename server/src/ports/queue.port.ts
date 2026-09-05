@@ -13,7 +13,7 @@ export type JobProducerPort = {
 export type JobAdminPort = {
   clearFailed: (queue: QueueName) => Promise<void>;
   empty: (queue: QueueName) => Promise<void>;
-  getAllJobCounts?: () => Promise<Record<QueueName, JobCounts>>;
+  getAllJobCounts: () => Promise<Record<QueueName, JobCounts>>;
   getJobCounts: (queue: QueueName) => Promise<JobCounts>;
   getJobHistory: (limit: number, offset?: number) => Promise<{ jobs: JobHistoryEntry[]; total: number }>;
   getReferencedTemporaryPaths: () => Promise<Set<string>>;
@@ -27,5 +27,3 @@ export type JobConsumerPort = {
   startWorkers: (onJobRun: (item: JobItem) => Promise<JobStatus>) => Promise<void>;
   stop: () => Promise<void>;
 };
-
-export type QueuePort = JobProducerPort & JobAdminPort & JobConsumerPort;

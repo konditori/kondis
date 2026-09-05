@@ -20,6 +20,7 @@
     "check:worker": "tsc -p tsconfig.worker.json",
     "cloudflare:deploy": "node scripts/deploy-cloudflare-worker.mjs",
     "test": "vitest run",
+    "test:worker": "vitest run -c vitest.config.worker.ts",
     "test:medium": "vitest run -c test/vitest.config.medium.mjs",
     "test:watch": "vitest",
     "migrations": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/migrations.ts",
@@ -48,6 +49,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.1.4",
     "@eslint/js": "^10.0.1",
     "@swc-node/register": "^1.12.1",
     "@swc/core": "^1.16.1",
@@ -74,6 +76,6 @@
     "typescript-eslint": "^8.68.0",
     "unplugin-swc": "^1.5.11",
     "vitest": "^4.1.11",
-    "wrangler": "^4.127.1"
+    "wrangler": "^4.129.0"
   }
 }

@@ -1,27 +1,25 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import type { ExecutionContext } from 'hono';
 
-import type { CloudflareQueueBinding } from 'src/cloudflare/background-job';
-import { dispatchUnpublishedJobs, reclaimStaleJobs, runScheduledCron } from 'src/cloudflare/dispatcher';
-import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import {
-  createPortableWorkerHandlers,
-  handleDeadLetterBatch,
-  handleQueueBatch,
+  CloudflareQueueTransportAdapter,
   type CloudflareQueueBatch,
-} from 'src/cloudflare/queue-handler';
-import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+  type CloudflareQueueBinding,
+} from 'src/adapters/cloudflare/queue-transport.adapter';
+import {
+  drainUnpublishedJobs,
+  purgeExpiredJobs,
+  reclaimStaleJobs,
+  recoverOrphanedPublishedJobs,
+  runScheduledCron,
+} from 'src/cloudflare/dispatcher';
+import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
+import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
+import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
 
-export type WorkerEnv = {
-  HYPERDRIVE: { connectionString: string };
-  HYPERDRIVE_SPIKE_TOKEN?: string;
-  ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
-  BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
-  IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
-  STORAGE_QUEUE?: CloudflareQueueBinding;
-};
+export type WorkerEnv = WorkerBindings;
 
 type ScheduledEvent = { cron: string };
 type WorkerQueueBatch = CloudflareQueueBatch & { queue: string };
@@ -93,15 +91,25 @@ export default {
     if (!env.HYPERDRIVE) {
       throw new Error('HYPERDRIVE is required for queue processing');
     }
-    const { db, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+    const composition = createWorkerInvocationComposition(env);
     try {
-      if (batch.queue.endsWith('-dlq')) {
-        await handleDeadLetterBatch(batch, db);
+      const transport = new CloudflareQueueTransportAdapter();
+      const queue = parseQueueBindingName(batch.queue);
+      if (!queue) {
+        throw new Error(`Unexpected Cloudflare Queue consumer binding: ${batch.queue}`);
+      }
+      if (queue.deadLetter) {
+        await handleDeadLetterBatch(transport.toDeliveryBatch(batch), composition.database, queue.name);
       } else {
-        await handleQueueBatch(batch, db, createPortableWorkerHandlers(db));
+        await handleQueueBatch(
+          transport.toDeliveryBatch(batch),
+          composition.database,
+          composition.jobHandlers,
+          queue.name,
+        );
       }
     } finally {
-      await close();
+      await composition.close();
     }
   },
 
@@ -109,21 +117,25 @@ export default {
     if (!env.HYPERDRIVE) {
       throw new Error('HYPERDRIVE is required for scheduled jobs');
     }
-    const { db, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+    const composition = createWorkerInvocationComposition(env);
+    const db = composition.database;
     try {
       if (event.cron === '* * * * *') {
         await reclaimStaleJobs(db);
-        await dispatchUnpublishedJobs(db, {
+        await recoverOrphanedPublishedJobs(db);
+        await purgeExpiredJobs(db);
+        const transport = new CloudflareQueueTransportAdapter({
           [QueueName.ActivityParsing]: requiredQueue(env.ACTIVITY_PARSING_QUEUE, QueueName.ActivityParsing),
           [QueueName.BackgroundTask]: requiredQueue(env.BACKGROUND_TASK_QUEUE, QueueName.BackgroundTask),
           [QueueName.ImageProcessing]: requiredQueue(env.IMAGE_PROCESSING_QUEUE, QueueName.ImageProcessing),
           [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),
         });
+        await drainUnpublishedJobs(db, transport);
       } else {
         await runScheduledCron(db, event.cron);
       }
     } finally {
-      await close();
+      await composition.close();
     }
   },
 };
@@ -133,4 +145,16 @@ const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueNam
     throw new Error(`Missing Cloudflare Queue binding for ${name}`);
   }
   return queue;
+};
+
+const parseQueueBindingName = (bindingName: string): { deadLetter: boolean; name: QueueName } | undefined => {
+  for (const name of Object.values(QueueName)) {
+    if (bindingName === `${name}-dlq` || bindingName.endsWith(`-${name}-dlq`)) {
+      return { deadLetter: true, name };
+    }
+    if (bindingName === name || bindingName.endsWith(`-${name}`)) {
+      return { deadLetter: false, name };
+    }
+  }
+  return undefined;
 };

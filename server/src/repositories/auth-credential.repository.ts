@@ -60,6 +60,9 @@ export class AuthCredentialRepository {
   }
 
   async getOrCreateSetupToken(preferredToken?: string): Promise<string | undefined> {
+    if (preferredToken && (preferredToken.length < 32 || preferredToken.length > 512)) {
+      throw new Error('KONDIS_SETUP_TOKEN must contain between 32 and 512 characters');
+    }
     const token = preferredToken || createToken();
     const tokenHash = await hashToken(token);
     let insert = this.db.insertInto('auth_bootstrap').values({ token_hash: tokenHash });

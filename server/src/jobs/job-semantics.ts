@@ -1,7 +1,33 @@
-import type { QueuePolicy } from 'pg-boss';
-
 import { JobName, QueueName } from 'src/enum';
 import type { JobItem } from 'src/types/jobs';
+
+export type CloudJobConsumer = 'node' | 'worker';
+export type QueuePolicy = 'exclusive' | 'standard';
+
+/**
+ * The runtime which owns a cloud job. Self-hosted installations ignore this
+ * map and continue to execute every job through pg-boss.
+ */
+export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
+  [JobName.AuthCredentialCleanup]: 'worker',
+  [JobName.ActivityUpload]: 'node',
+  [JobName.ActivityMetricCompute]: 'node',
+  [JobName.ActivityBestEffortCompute]: 'node',
+  [JobName.ActivityBestEffortRank]: 'node',
+  [JobName.ActivityRouteMatchCompute]: 'node',
+  [JobName.ActivityParse]: 'node',
+  [JobName.ActivityManualCreate]: 'node',
+  [JobName.ActivityParseQueueAll]: 'node',
+  [JobName.ActivityDelete]: 'node',
+  [JobName.ActivityImageIngest]: 'node',
+  [JobName.ActivityImageAttach]: 'node',
+  [JobName.ActivityImageGenerateThumbnails]: 'node',
+  [JobName.ActivityImageGenerateQueueAll]: 'node',
+  [JobName.LagomTakeoutImport]: 'node',
+  [JobName.UserAvatarUpload]: 'node',
+  [JobName.FileDelete]: 'node',
+  [JobName.TemporaryFileCleanup]: 'node',
+};
 
 export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.AuthCredentialCleanup]: QueueName.BackgroundTask,
@@ -125,3 +151,19 @@ export const JOB_RETRY_DELAY_SECONDS = 5;
 export const JOB_EXPIRE_SECONDS = 900;
 export const JOB_RETENTION_SECONDS = 7 * 24 * 60 * 60;
 export const JOB_CRON = true;
+
+export type JobFailureTransition = {
+  delaySeconds: number;
+  exhausted: boolean;
+  retryCount: number;
+};
+
+// retryLimit is the number of retries after the initial attempt.
+export const getJobFailureTransition = (retryCount: number, retryLimit: number): JobFailureTransition => {
+  const nextRetryCount = retryCount + 1;
+  return {
+    delaySeconds: JOB_RETRY_DELAY_SECONDS * 2 ** retryCount,
+    exhausted: nextRetryCount > retryLimit,
+    retryCount: nextRetryCount,
+  };
+};

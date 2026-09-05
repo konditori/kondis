@@ -38,7 +38,7 @@ describe('API auth routes', () => {
       headers: { 'Content-Type': 'application/json' },
     });
     expect(loginResponse.status).toBe(201);
-    expect(login).toHaveBeenCalledWith('user@example.com', 'long enough password');
+    expect(login).toHaveBeenCalledWith('user@example.com', 'long enough password', 'unknown');
     expect(findById).not.toHaveBeenCalled();
   });
 

@@ -4,15 +4,16 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     CREATE TABLE auth_bootstrap (
       id boolean PRIMARY KEY DEFAULT true CHECK (id),
-      token_hash text NOT NULL,
+      token_hash text NOT NULL CHECK (token_hash ~ '^[0-9a-f]{64}$'),
       created_at timestamptz NOT NULL DEFAULT now()
     )
   `.execute(db);
   await sql`
     CREATE TABLE auth_rate_limit (
       key text PRIMARY KEY,
-      attempts integer NOT NULL,
-      window_started_at timestamptz NOT NULL
+      attempts integer NOT NULL CHECK (attempts > 0),
+      window_started_at timestamptz NOT NULL,
+      CHECK (length(key) BETWEEN 1 AND 256)
     )
   `.execute(db);
   await sql`CREATE INDEX auth_rate_limit_window_started_at_idx ON auth_rate_limit (window_started_at)`.execute(db);
@@ -21,7 +22,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     CREATE TABLE auth_session (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
-      token_hash text NOT NULL UNIQUE,
+      token_hash text NOT NULL UNIQUE CHECK (token_hash ~ '^[0-9a-f]{64}$'),
       created_at timestamptz NOT NULL DEFAULT now(),
       last_seen_at timestamptz NOT NULL DEFAULT now(),
       expires_at timestamptz NOT NULL
@@ -32,7 +33,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 
   await sql`
     CREATE TABLE auth_ticket (
-      token_hash text PRIMARY KEY,
+      token_hash text PRIMARY KEY CHECK (token_hash ~ '^[0-9a-f]{64}$'),
       user_id uuid REFERENCES "user" (id) ON DELETE CASCADE,
       session_id uuid REFERENCES auth_session (id) ON DELETE CASCADE,
       scope text NOT NULL CHECK (scope IN ('initial-setup', 'activity-events', 'job-events')),

@@ -4,18 +4,18 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { JobService } from 'src/services/job.service';
 import { UploadService } from 'src/services/upload.service';
 import type { KondisDatabase } from 'src/types';
-import { type JobItem } from 'src/types/jobs';
+import type { JobItem } from 'src/types/jobs';
 
 import { createMediumFactory, makeUploadedFile } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -26,11 +26,11 @@ import { createTestZip } from 'test/utils/zip';
 const MISSING_UUID = 'ba5eba11-0000-4000-a000-000000000000';
 const SAMPLE_GPX = Buffer.from('<gpx/>');
 
-describe('JobRepository', () => {
+describe(PgBossQueueAdapter.name, () => {
   let testApp: TestApp;
   let db: KondisDatabase;
 
-  let jobs: JobRepository;
+  let jobs: PgBossQueueAdapter;
   let jobService: JobService;
   let uploads: UploadService;
   let activities: ActivityService;
@@ -44,7 +44,7 @@ describe('JobRepository', () => {
     db = createMediumTestDatabase();
     testApp = await createTestApp();
 
-    jobs = testApp.get(JobRepository);
+    jobs = testApp.get(PgBossQueueAdapter);
     jobService = testApp.get(JobService);
     uploads = testApp.get(UploadService);
     activities = testApp.get(ActivityService);

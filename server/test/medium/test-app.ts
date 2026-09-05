@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createApplicationComposition, type ApplicationComposition } from 'src/composition';
+import { createApplicationComposition, type ApplicationComposition } from 'src/composition.node';
 
 import { getTestDatabaseConfig } from 'test/medium/test-db';
 

@@ -81,6 +81,10 @@ PostgreSQL version, auth-session lookup, permission query, PostGIS matching,
 VectorChord nearest-neighbor search, a transaction, and `FOR UPDATE`. Supply
 the endpoint's bearer token through the `HYPERDRIVE_SPIKE_TOKEN` Worker secret;
 without both the binding and token it returns 404.
+Remove the `HYPERDRIVE_SPIKE_TOKEN` secret after the compatibility check; this
+disables the diagnostic route again. Use a least-privileged runtime database
+role for Hyperdrive and keep schema/DDL permissions on the separate direct
+migration credential.
 
 #### Cloud job queues
 
@@ -90,7 +94,20 @@ dead-letter queues, retry/concurrency settings, and Cron Triggers from
 edited. Cloud API writes insert into `background_job` in the same transaction
 as the domain mutation; the one-minute dispatcher publishes unpublished rows.
 
+Until the cloud Node processor and its R2-backed handlers are deployed, only
+Worker-owned schedules are enabled. Set
+`KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=true` during deployment only after that
+processor is live; enabling it earlier would intentionally create Node-owned
+jobs which no process can complete.
+
 The Worker currently consumes the portable credential-cleanup job. Heavy jobs
 remain for the Node polling processor, which claims rows with
 `FOR UPDATE SKIP LOCKED`. Keep migrations on the direct PostgreSQL connection;
 Hyperdrive is only used by runtime queries.
+
+Queue delivery and lease recovery are intentionally at-least-once. Job
+handlers must therefore remain idempotent: a handler can finish its external
+side effect and lose its lease before recording completion. Application
+failures are persisted back to the transactional outbox and retried by the
+dispatcher; Cloudflare Queue retries are reserved for transport/runtime
+failures so the two retry systems cannot race each other.
