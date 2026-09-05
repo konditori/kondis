@@ -70,4 +70,16 @@ Until the cloud Node processor and its R2-backed handlers are deployed, only Wor
 
 The Worker currently consumes the portable credential-cleanup job. Heavy jobs remain on the Node.js polling processor, which claims rows with `FOR UPDATE SKIP LOCKED`. Hyperdrive is only used for runtime queries; migrations continue to use the direct PostgreSQL connection.
 
+The cloud Node processor is a separate long-running Node.js deployment. Build the server image or distribution, provide the same direct PostgreSQL environment used by the existing Node runtime, and start it with:
+
+```sh
+export KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=true
+pnpm build
+pnpm start:cloud-node-processor
+```
+
+Keep that process healthy before deploying a Worker configuration with `KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=true`. The Worker then exposes the admin `POST /api/v1/jobs` enqueue operation and enables the Node-owned schedules. Queue commands remain unavailable on the Worker because Cloudflare Queue administration is managed by deployment configuration.
+
+For a guarded smoke check of the Worker-owned cleanup job, set `KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN` as a Worker secret and call `POST /api/v1/_internal/auth-credential-cleanup` with its bearer token. Without the secret the endpoint is disabled and returns `404`.
+
 Queue delivery and lease recovery are intentionally at-least-once. Job handlers must remain idempotent because a handler can finish an external side effect and lose its lease before recording completion. Application failures are persisted back to the transactional outbox and retried by the dispatcher. Cloudflare Queue retries are reserved for transport and runtime failures so the two retry systems cannot race each other.

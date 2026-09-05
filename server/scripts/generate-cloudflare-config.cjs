@@ -35,6 +35,10 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
   return {
     ...baseConfig,
     name: prefix,
+    vars: {
+      ...(baseConfig.vars || {}),
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: nodeProcessorEnabled ? 'true' : 'false',
+    },
     hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
     queues: {
       producers: queues.map(({ binding, name }) => ({ binding, queue: name })),

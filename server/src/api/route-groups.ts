@@ -8,7 +8,12 @@ import {
 } from 'src/api/routes/activity';
 import { registerActivityImageRoutes, type ActivityImageRouteService } from 'src/api/routes/activity-image';
 import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
-import { registerJobReadRoutes, registerJobRoutes, type JobRouteService } from 'src/api/routes/job';
+import {
+  registerJobCreateRoute,
+  registerJobReadRoutes,
+  registerJobRoutes,
+  type JobRouteService,
+} from 'src/api/routes/job';
 import {
   registerLiveWorkoutReadRoutes,
   registerLiveWorkoutRoutes,
@@ -62,6 +67,10 @@ export type WorkerPortableRouteDependencies = {
   users: UserReadRepository;
 };
 
+export type WorkerQueueMutationDependencies = {
+  jobs: Pick<JobRouteService, 'create'>;
+};
+
 export const registerWorkerPortableRouteGroups = (
   app: OpenAPIHono<ApiEnv>,
   dependencies: WorkerPortableRouteDependencies,
@@ -71,6 +80,13 @@ export const registerWorkerPortableRouteGroups = (
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
   registerJobReadRoutes(app, dependencies.jobs);
   registerLiveWorkoutReadRoutes(app, dependencies.liveWorkouts);
+};
+
+export const registerWorkerQueueMutationRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  dependencies: WorkerQueueMutationDependencies,
+): void => {
+  registerJobCreateRoute(app, dependencies.jobs);
 };
 
 export const registerPortableRouteGroups: ApiRouteGroup = (app, dependencies) => {

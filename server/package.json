@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "start": "node dist/bin/start.js",
+    "start:cloud-node-processor": "node dist/bin/cloud-node-processor.js",
     "start:dev": "node scripts/start-dev-watch.mjs",
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "format": "prettier --cache --check .",

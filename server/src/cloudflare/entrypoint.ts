@@ -7,7 +7,7 @@ import {
   type CloudflareQueueBinding,
 } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { createApiShell } from 'src/api/app';
-import { registerWorkerPortableRouteGroups } from 'src/api/route-groups';
+import { registerWorkerPortableRouteGroups, registerWorkerQueueMutationRoutes } from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
 import {
   drainUnpublishedJobs,
@@ -20,7 +20,7 @@ import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
-import { QueueName } from 'src/enum';
+import { JobName, QueueName } from 'src/enum';
 
 export type WorkerEnv = WorkerBindings;
 
@@ -55,6 +55,20 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
   });
   registerAuthRoutes(requestApp, composition.authService, composition.userRepository, composition.config, {
     includeEventTickets: false,
+  });
+  if (composition.cloudNodeProcessorEnabled) {
+    registerWorkerQueueMutationRoutes(requestApp, { jobs: composition.jobService });
+  }
+  requestApp.post('/api/v1/_internal/auth-credential-cleanup', async (context) => {
+    const token = composition.authCredentialCleanupToken;
+    if (!token) {
+      return context.json({ statusCode: 404, message: 'Not Found' }, 404);
+    }
+    if (context.req.header('Authorization') !== `Bearer ${token}`) {
+      return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);
+    }
+    await composition.jobProducer.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    return context.body(null, 202);
   });
   requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
     const env = context.env as WorkerEnv;

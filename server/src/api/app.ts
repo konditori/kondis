@@ -43,6 +43,7 @@ const publicRoutes = new Set([
   'POST /auth/setup/validate',
   'POST /auth/login',
   'POST /auth/register',
+  'POST /_internal/auth-credential-cleanup',
 ]);
 
 export const createApiShell = (sessions: ApiDependencies['sessions']) => {

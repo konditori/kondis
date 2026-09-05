@@ -28,6 +28,8 @@ export type WorkerBindings = {
   HYPERDRIVE_SPIKE_TOKEN?: string;
   KONDIS_SETUP_TOKEN?: string;
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
+  KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
+  KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
   BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
   IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
@@ -51,6 +53,8 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     setupToken: env.KONDIS_SETUP_TOKEN,
     trustProxyHeaders: true,
   };
+  const cloudNodeProcessorEnabled =
+    env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === true || env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === 'true';
   const rateLimitingRepository = new RateLimitingRepository(database);
   const authService = new AuthService(
     userRepository,
@@ -93,6 +97,8 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     jobService,
     userRepository,
     config,
+    cloudNodeProcessorEnabled,
+    authCredentialCleanupToken: env.KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN,
     jobAdmin: queueAdapter,
     jobHandlers: createPortableWorkerHandlers(database),
     jobProducer: queueAdapter,

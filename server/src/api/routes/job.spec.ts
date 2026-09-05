@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createApiApp } from 'src/api/app';
+import { createApiApp, createApiShell } from 'src/api/app';
+import { registerWorkerQueueMutationRoutes } from 'src/api/route-groups';
 import { QueueName } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
@@ -58,5 +59,27 @@ describe('API job routes', () => {
     });
     expect(command.status).toBe(200);
     expect(handleCommand).toHaveBeenCalledWith(QueueName.ActivityParsing, 'pause');
+  });
+
+  it('lets the Worker expose enqueueing without exposing queue administration', async () => {
+    const create = vi.fn(() => Promise.resolve());
+    const app = createApiShell(newApiDependencies({ users: newApiUsers(ADMIN) }).sessions);
+    registerWorkerQueueMutationRoutes(app, { jobs: { create } });
+    const headers = { ...apiAuthHeaders(ADMIN), 'Content-Type': 'application/json' };
+
+    const createResponse = await app.request('/jobs', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ name: 'reparse-failed-uploads' }),
+    });
+    expect(createResponse.status).toBe(204);
+    expect(create).toHaveBeenCalledWith('reparse-failed-uploads');
+
+    const commandResponse = await app.request(`/jobs/${QueueName.ActivityParsing}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ command: 'pause' }),
+    });
+    expect(commandResponse.status).toBe(404);
   });
 });

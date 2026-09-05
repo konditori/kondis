@@ -13,6 +13,7 @@ import {
 
 type GeneratedConfig = {
   name: string;
+  vars: { KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: string };
   hyperdrive: { binding: string; id: string }[];
   queues: {
     producers: { binding: string; queue: string }[];
@@ -46,6 +47,7 @@ describe('generateCloudflareConfig', () => {
     });
 
     expect(config.name).toBe('kondis-api-staging');
+    expect(config.vars).toEqual({ KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false' });
     expect(config.hyperdrive).toEqual([{ binding: 'HYPERDRIVE', id: 'a'.repeat(32) }]);
     expect(config.queues.producers).toHaveLength(Object.values(QueueName).length);
     expect(config.queues.consumers).toHaveLength(Object.values(QueueName).length * 2);
@@ -82,6 +84,7 @@ describe('generateCloudflareConfig', () => {
       nodeProcessorEnabled: true,
     });
 
+    expect(config.vars).toEqual({ KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'true' });
     expect(config.triggers.crons).toEqual([...CRON_JOBS.map(({ cron }) => cron), '* * * * *']);
   });
 });

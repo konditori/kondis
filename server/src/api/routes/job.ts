@@ -98,12 +98,16 @@ export const registerJobReadRoutes = (
   });
 };
 
-export const registerJobRoutes = (app: OpenAPIHono<ApiEnv>, service: JobRouteService): void => {
-  registerJobReadRoutes(app, service);
+export const registerJobCreateRoute = (app: OpenAPIHono<ApiEnv>, service: Pick<JobRouteService, 'create'>): void => {
   app.openapi(createJobRoute, async (context) => {
     await service.create(context.req.valid('json').name);
     return context.body(null, 204);
   });
+};
+
+export const registerJobRoutes = (app: OpenAPIHono<ApiEnv>, service: JobRouteService): void => {
+  registerJobReadRoutes(app, service);
+  registerJobCreateRoute(app, service);
   app.openapi(commandRoute, async (context) => {
     return context.json(
       queueStatusResponse.parse(
