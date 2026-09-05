@@ -7,7 +7,7 @@ import {
   type ActivityReadService,
 } from 'src/api/routes/activity';
 import { registerActivityImageRoutes, type ActivityImageRouteService } from 'src/api/routes/activity-image';
-import { registerAuthRoutes, registerAuthSessionRoutes, type AuthRouteService } from 'src/api/routes/auth';
+import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
 import { registerJobReadRoutes, registerJobRoutes, type JobRouteService } from 'src/api/routes/job';
 import {
   registerLiveWorkoutReadRoutes,
@@ -56,7 +56,6 @@ export type ApiRouteGroup = (app: OpenAPIHono<ApiEnv>, dependencies: ApiRouteGro
 
 export type WorkerPortableRouteDependencies = {
   activities: ActivityReadService & SocialActivityReadService;
-  auth: Pick<AuthRouteService, 'revokeSession'>;
   jobs: Pick<JobRouteService, 'getAllJobStatus' | 'getJobHistory'>;
   liveWorkouts: Pick<LiveWorkoutRouteService, 'get' | 'getShared' | 'list'>;
   social: SocialReadService;
@@ -68,7 +67,6 @@ export const registerWorkerPortableRouteGroups = (
   dependencies: WorkerPortableRouteDependencies,
 ): void => {
   registerActivityReadOnlyRoutes(app, dependencies.activities);
-  registerAuthSessionRoutes(app, dependencies.auth, dependencies.users);
   registerUserListRoutes(app, dependencies.users);
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
   registerJobReadRoutes(app, dependencies.jobs);

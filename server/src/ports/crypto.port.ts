@@ -3,7 +3,6 @@ export type CryptoPort = {
   hashPassword: (password: string, workFactor: number) => Promise<string>;
   randomToken: (byteLength: number) => string;
   safeEqual: (left: string, right: string) => boolean;
-  sha256: (value: string) => Promise<string>;
+  sha256: (value: string | Uint8Array) => Promise<string>;
   uuid: () => string;
-  xxHash: (contents: Uint8Array) => string;
 };

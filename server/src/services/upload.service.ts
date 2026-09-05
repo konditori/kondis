@@ -80,7 +80,7 @@ export class UploadService {
 
     const buffer = await this.storageRepository.readLimited(storagePath, UPLOAD_LIMITS.activityFileBytes);
     const byteSize = buffer.length;
-    const checksum = this.cryptoRepository.xxHash(buffer);
+    const checksum = await this.cryptoRepository.sha256(buffer);
     if (expectedChecksum && checksum !== expectedChecksum) {
       throw new Error(`Activity upload checksum mismatch: expected ${expectedChecksum}, got ${checksum}`);
     }
@@ -296,7 +296,7 @@ export class UploadService {
   ): Promise<void> {
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
     await this.stageUploadedFile(file, storagePath);
-    const checksum = file.buffer ? this.cryptoRepository.xxHash(file.buffer) : undefined;
+    const checksum = file.buffer ? await this.cryptoRepository.sha256(file.buffer) : undefined;
     const stagedImages = await this.stageImages(images);
 
     await this.jobRepository.queue({
@@ -346,7 +346,7 @@ export class UploadService {
       staged.push({
         originalName: image.file.originalname,
         storagePath,
-        checksum: this.cryptoRepository.xxHash(image.file.buffer),
+        checksum: await this.cryptoRepository.sha256(image.file.buffer),
         ...(image.caption && { caption: image.caption }),
         sortOrder: image.sortOrder,
       });

@@ -8,6 +8,7 @@ import {
 } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { createApiShell } from 'src/api/app';
 import { registerWorkerPortableRouteGroups } from 'src/api/route-groups';
+import { registerAuthRoutes } from 'src/api/routes/auth';
 import {
   drainUnpublishedJobs,
   purgeExpiredJobs,
@@ -47,11 +48,13 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
   requestApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
   registerWorkerPortableRouteGroups(requestApp, {
     activities: composition.activityService,
-    auth: composition.authCredentialRepository,
     jobs: composition.jobService,
     liveWorkouts: composition.liveWorkoutService,
     social: composition.socialService,
     users: composition.userRepository,
+  });
+  registerAuthRoutes(requestApp, composition.authService, composition.userRepository, composition.config, {
+    includeEventTickets: false,
   });
   requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
     const env = context.env as WorkerEnv;

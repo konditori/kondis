@@ -23,7 +23,6 @@ const noServiceToServiceImports = {
 
 const noWorkerRuntimeImports = {
   group: [
-    '@node-rs/xxhash',
     'bcrypt',
     'csv-parse',
     'fast-xml-parser',

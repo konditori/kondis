@@ -250,6 +250,7 @@ export const registerAuthRoutes = (
   service: AuthRouteService,
   users: ApiUserLookup,
   config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
+  options: { includeEventTickets?: boolean } = {},
 ): void => {
   registerAuthSessionRoutes(app, service, users);
   app.openapi(setupStatusRoute, async (context) => {
@@ -298,19 +299,23 @@ export const registerAuthRoutes = (
       201,
     ) as never;
   });
-  app.openapi(activityTicketRoute, async (context) =>
-    context.json(
-      ticketResponse.parse(await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId'))),
-      201,
-    ),
-  );
-  app.openapi(jobTicketRoute, async (context) => {
-    if (context.get('user').role !== 'admin') {
-      throw new ForbiddenException('Administrator access is required');
-    }
-    return context.json(
-      ticketResponse.parse(await service.createJobEventsTicket(context.get('user').id, context.get('sessionId'))),
-      201,
+  if (options.includeEventTickets !== false) {
+    app.openapi(activityTicketRoute, async (context) =>
+      context.json(
+        ticketResponse.parse(
+          await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId')),
+        ),
+        201,
+      ),
     );
-  });
+    app.openapi(jobTicketRoute, async (context) => {
+      if (context.get('user').role !== 'admin') {
+        throw new ForbiddenException('Administrator access is required');
+      }
+      return context.json(
+        ticketResponse.parse(await service.createJobEventsTicket(context.get('user').id, context.get('sessionId'))),
+        201,
+      );
+    });
+  }
 };

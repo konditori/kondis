@@ -55,7 +55,7 @@ export class ActivityImageService {
     if (!activity) {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
-    const checksum = this.crypto.xxHash(file.buffer);
+    const checksum = await this.crypto.sha256(file.buffer);
     const existing = await this.images.getByUploadChecksum(activity.upload_id, checksum);
     if (existing) {
       return this.toDto(existing, await this.images.getFiles(existing.id));
@@ -215,7 +215,7 @@ export class ActivityImageService {
     }
     try {
       const buffer = await this.storage.read(storagePath);
-      if (this.crypto.xxHash(buffer) !== checksum) {
+      if ((await this.crypto.sha256(buffer)) !== checksum) {
         throw new Error('Image upload checksum mismatch');
       }
       const metadata = await sharp(buffer, { limitInputPixels: UPLOAD_LIMITS.imagePixels }).metadata();

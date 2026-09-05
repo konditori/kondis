@@ -1,4 +1,3 @@
-import { xxh3 } from '@node-rs/xxhash';
 import { compare, hash } from 'bcrypt';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 
@@ -23,12 +22,8 @@ export class CryptoRepository implements CryptoPort {
     return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
   }
 
-  sha256(value: string): Promise<string> {
-    return Promise.resolve(createHash('sha256').update(value).digest('base64url'));
-  }
-
-  xxHash(contents: Uint8Array): string {
-    return xxh3.xxh128(contents).toString(16).padStart(32, '0');
+  sha256(value: string | Uint8Array): Promise<string> {
+    return Promise.resolve(createHash('sha256').update(value).digest('hex'));
   }
 
   uuid(): string {

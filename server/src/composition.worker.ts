@@ -1,3 +1,4 @@
+import { createCloudflareCryptoAdapter } from 'src/adapters/cloudflare/crypto.adapter';
 import type { CloudflareQueueBinding } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
 import { createPortableWorkerHandlers } from 'src/cloudflare/queue-handler';
@@ -8,42 +9,25 @@ import { AuthCredentialRepository } from 'src/repositories/auth-credential.repos
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityService } from 'src/services/activity.service';
+import { AuthService } from 'src/services/auth.service';
 import { JobService } from 'src/services/job.service';
 import { LiveWorkoutService } from 'src/services/live-workout.service';
 import { SocialService } from 'src/services/social.service';
 
 const workerEvents = { emit: async () => {} };
-const workerCrypto = {
-  comparePassword: () => Promise.reject(new Error('Password authentication is not available in this Worker phase')),
-  hashPassword: () => Promise.reject(new Error('Password authentication is not available in this Worker phase')),
-  randomToken: (byteLength: number) => {
-    const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
-    return btoa(String.fromCodePoint(...bytes))
-      .replaceAll('+', '-')
-      .replaceAll('/', '_')
-      .replaceAll('=', '');
-  },
-  safeEqual: (left: string, right: string) => left === right,
-  sha256: async (value: string) => {
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-    const bytes = new Uint8Array(digest);
-    return btoa(String.fromCodePoint(...bytes))
-      .replaceAll('+', '-')
-      .replaceAll('/', '_')
-      .replaceAll('=', '');
-  },
-  uuid: () => crypto.randomUUID(),
-  xxHash: (contents: Uint8Array) => Array.from(contents, (byte) => byte.toString(16).padStart(2, '0')).join(''),
-};
+const workerCrypto = createCloudflareCryptoAdapter();
 
 export type WorkerBindings = {
   HYPERDRIVE: { connectionString: string };
   HYPERDRIVE_SPIKE_TOKEN?: string;
+  KONDIS_SETUP_TOKEN?: string;
+  KONDIS_REGISTRATION_ENABLED?: boolean | string;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
   BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
   IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
@@ -62,6 +46,21 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const queueAdapter = new CloudflareQueueAdapter(database);
   const authCredentialRepository = new AuthCredentialRepository(database);
   const userRepository = new UserRepository(database);
+  const config = {
+    registrationEnabled: env.KONDIS_REGISTRATION_ENABLED === true || env.KONDIS_REGISTRATION_ENABLED === 'true',
+    setupToken: env.KONDIS_SETUP_TOKEN,
+    trustProxyHeaders: true,
+  };
+  const rateLimitingRepository = new RateLimitingRepository(database);
+  const authService = new AuthService(
+    userRepository,
+    config,
+    rateLimitingRepository,
+    workerCrypto,
+    authCredentialRepository,
+    workerEvents,
+    { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+  );
   const activityRepository = new ActivityRepository(database);
   const socialRepository = new SocialRepository(database);
   const activityService = new ActivityService(
@@ -87,12 +86,13 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     close,
     database,
     authCredentialRepository,
+    authService,
     activityService,
     socialService,
     liveWorkoutService,
     jobService,
     userRepository,
-    config: { registrationEnabled: false, trustProxyHeaders: true },
+    config,
     jobAdmin: queueAdapter,
     jobHandlers: createPortableWorkerHandlers(database),
     jobProducer: queueAdapter,
