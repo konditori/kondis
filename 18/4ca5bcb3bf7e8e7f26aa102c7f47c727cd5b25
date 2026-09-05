@@ -1,0 +1,21 @@
+server/src/cloudflare/entrypoint.ts
+  s_053ebf3a18624c::t_26e53325c1bae8 1,19,42,44-47,62,64,66,71,76-78
+server/src/composition.worker.ts
+  s_053ebf3a18624c::t_c7608e80eff285 5-6,27-28,33-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "184ca5bcb3bf7e8e7f26aa102c7f47c727cd5b25",
+  "prompts": {},
+  "sessions": {
+    "s_053ebf3a18624c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0732a-172b-7fe1-b9ab-67302f61d6fb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
