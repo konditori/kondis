@@ -33,13 +33,6 @@ export type CloudNodeProcessorOptions = {
   logLevels?: LogLevel[];
 };
 
-/**
- * Composition for the separate Node process which consumes cloud-owned jobs.
- *
- * It uses the same background_job outbox as the Worker, but deliberately uses
- * the polling consumer instead of pg-boss. That keeps cloud jobs visible to
- * the Worker dispatcher and lets both consumers share the database leases.
- */
 export const createCloudNodeProcessorComposition = ({
   configRepository = new ConfigRepository(),
   logLevels,

@@ -9,9 +9,6 @@ export type HyperdriveDatabase = {
   close: () => Promise<void>;
 };
 
-/**
- * Create a short-lived Kysely database for one Worker invocation.
- */
 export const createHyperdriveDatabase = (connectionString: string): HyperdriveDatabase => {
   const pool = new pg.Pool({ connectionString, max: 1 });
   const db = new Kysely<DB>({ dialect: new PostgresDialect({ pool }) });

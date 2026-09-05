@@ -4,7 +4,7 @@ title: Workers deployment
 
 # Deploying on Cloudflare Workers
 
-These instructions deploy the Kondis API to Cloudflare Workers. This deployment method is currently not finished and therefore only aimed at developers.
+These instructions deploy the portable Kondis API to Cloudflare Workers. Node-owned processing, R2, and Durable Objects are selected explicitly by the generated deployment configuration.
 
 Run the commands below from `server/` in the Kondis repository.
 
@@ -37,6 +37,12 @@ pnpm cloudflare:deploy
 ```
 
 The script generates an ignored `wrangler-generated-<environment>.json` file and deploys with it. The generated file contains the Hyperdrive, Queue, dead-letter Queue, consumer, concurrency, retry, and Cron Trigger configuration. It does not contain the database connection string and must not be edited manually.
+
+The generated configuration also expects an R2 bucket named `<worker-name>-<environment>-storage`; create it once before the first deploy:
+
+```sh
+pnpm exec wrangler r2 bucket create kondis-api-staging-storage
+```
 
 ## Local Worker execution
 
@@ -81,5 +87,9 @@ pnpm start:cloud-node-processor
 Keep that process healthy before deploying a Worker configuration with `KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=true`. The Worker then exposes the admin `POST /api/v1/jobs` enqueue operation and enables the Node-owned schedules. Queue commands remain unavailable on the Worker because Cloudflare Queue administration is managed by deployment configuration.
 
 For a guarded smoke check of the Worker-owned cleanup job, set `KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN` as a Worker secret and call `POST /api/v1/_internal/auth-credential-cleanup` with its bearer token. Without the secret the endpoint is disabled and returns `404`.
+
+When the `REALTIME` Durable Object binding is present, the Worker validates event tickets before forwarding `/events` WebSocket upgrades. The Durable Object owns connections and receives best-effort event publications from API and Queue invocations. Its migration is generated with the Worker config; do not mount event-ticket routes in a deployment that omits the binding.
+
+Multipart uploads are buffered by the Worker and checked against the application limits before staging their bytes in R2. Cloudflare request-size limits can be lower than the 256 MiB Strava takeout limit, depending on the plan. Large archives should use a direct or multipart R2 upload flow and then enqueue a processing job; increasing the multipart endpoint limit cannot bypass the platform request limit.
 
 Queue delivery and lease recovery are intentionally at-least-once. Job handlers must remain idempotent because a handler can finish an external side effect and lose its lease before recording completion. Application failures are persisted back to the transactional outbox and retried by the dispatcher. Cloudflare Queue retries are reserved for transport and runtime failures so the two retry systems cannot race each other.

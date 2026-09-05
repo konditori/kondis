@@ -11,9 +11,6 @@ const bytesToBase64Url = (bytes: Uint8Array): string =>
 const bytesToHex = (bytes: Uint8Array): string =>
   Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 
-/**
- * Crypto adapter for the Worker runtime.
- */
 export const createCloudflareCryptoAdapter = (): CryptoPort => ({
   comparePassword: compare,
   hashPassword: hash,

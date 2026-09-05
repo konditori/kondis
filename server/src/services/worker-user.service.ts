@@ -1,22 +1,18 @@
-import sharp from 'sharp';
-
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { JobName, JobStatus } from 'src/enum';
+import { JobName } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
+import type { JobProducerPort } from 'src/ports/queue.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UserRepository } from 'src/repositories/user.repository';
-import type { JobOf } from 'src/types/jobs';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
 
-const AVATAR_SIZE = 512;
-const AVATAR_MIME_TYPE = 'image/webp';
-
-export class UserService {
+export class WorkerUserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
     private readonly storage: StoragePort,
+    private readonly jobs: JobProducerPort,
   ) {}
 
   async updateProfile(userId: string, firstName: string, lastName: string) {
@@ -42,39 +38,15 @@ export class UserService {
     if (file.buffer.length > UPLOAD_LIMITS.avatarFileBytes) {
       throw new PayloadTooLargeException(`Profile picture exceeds ${UPLOAD_LIMITS.avatarFileBytes} bytes`);
     }
-
-    let image: Buffer;
+    const storagePath = this.storage.buildTemporaryPath('.jpg');
+    await this.storage.write(storagePath, file.buffer);
     try {
-      image = await sharp(file.buffer, { limitInputPixels: UPLOAD_LIMITS.imagePixels })
-        .rotate()
-        .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'cover' })
-        .webp({ quality: 86 })
-        .toBuffer();
-    } catch {
-      throw new BadRequestException('Profile picture is not a supported image');
+      await this.jobs.queue({ name: JobName.UserAvatarUpload, data: { userId, storagePath } });
+    } catch (error) {
+      await this.storage.delete(storagePath).catch(() => {});
+      throw error;
     }
-
-    const path = this.storage.buildUserAvatarPath(userId);
-    const previous = await this.users.getAvatar(userId);
-    await this.storage.write(path, image);
-    await this.users.setAvatar(userId, path, AVATAR_MIME_TYPE, image.length);
-    if (previous?.avatar_path && previous.avatar_path !== path) {
-      await this.storage.delete(previous.avatar_path);
-    }
-    return { avatarUrl: `/api/v1/users/${userId}/avatar` };
-  }
-
-  async handleAvatarUpload({ userId, storagePath }: JobOf<JobName.UserAvatarUpload>): Promise<JobStatus> {
-    if (!(await this.users.findById(userId))) {
-      return JobStatus.Skipped;
-    }
-    try {
-      const buffer = await this.storage.read(storagePath);
-      await this.uploadAvatar(userId, { originalname: 'profile.jpg', buffer, size: buffer.length });
-      return JobStatus.Success;
-    } finally {
-      await this.storage.delete(storagePath);
-    }
+    return { avatarUrl: `/api/v1/users/${userId}/avatar`, queued: true };
   }
 
   async clearAvatar(userId: string): Promise<void> {

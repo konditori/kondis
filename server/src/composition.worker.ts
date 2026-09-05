@@ -1,9 +1,16 @@
 import { createCloudflareCryptoAdapter } from 'src/adapters/cloudflare/crypto.adapter';
 import type { CloudflareQueueBinding } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
+import { R2StorageAdapter, type R2BucketBinding } from 'src/adapters/cloudflare/storage.adapter';
 import { createPortableWorkerHandlers } from 'src/cloudflare/queue-handler';
+import {
+  DurableObjectRealtimeAdapter,
+  noopRealtime,
+  type DurableObjectNamespaceBinding,
+} from 'src/cloudflare/realtime-durable-object';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import { ConsoleLogger } from 'src/logger';
+import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
@@ -19,8 +26,11 @@ import { AuthService } from 'src/services/auth.service';
 import { JobService } from 'src/services/job.service';
 import { LiveWorkoutService } from 'src/services/live-workout.service';
 import { SocialService } from 'src/services/social.service';
+import { WorkerActivityImageService } from 'src/services/worker-activity-image.service';
+import { WorkerUploadService } from 'src/services/worker-upload.service';
+import { WorkerUserService } from 'src/services/worker-user.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 
-const workerEvents = { emit: async () => {} };
 const workerCrypto = createCloudflareCryptoAdapter();
 
 export type WorkerBindings = {
@@ -30,22 +40,22 @@ export type WorkerBindings = {
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
+  STORAGE_BUCKET?: R2BucketBinding;
+  REALTIME?: DurableObjectNamespaceBinding;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
   BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
   IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
   STORAGE_QUEUE?: CloudflareQueueBinding;
 };
 
-/**
- * Worker invocations must not retain database clients across requests. This
- * composition owns exactly one invocation-scoped client and its adapters.
- */
 export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   if (!env.HYPERDRIVE?.connectionString) {
     throw new Error('HYPERDRIVE is required for this Worker invocation');
   }
   const { db: database, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
   const queueAdapter = new CloudflareQueueAdapter(database);
+  const storage = env.STORAGE_BUCKET ? new R2StorageAdapter(env.STORAGE_BUCKET) : undefined;
+  const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
   const authCredentialRepository = new AuthCredentialRepository(database);
   const userRepository = new UserRepository(database);
   const config = {
@@ -55,6 +65,9 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   };
   const cloudNodeProcessorEnabled =
     env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === true || env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === 'true';
+  const queueBindingsConfigured = Boolean(
+    env.ACTIVITY_PARSING_QUEUE && env.BACKGROUND_TASK_QUEUE && env.IMAGE_PROCESSING_QUEUE && env.STORAGE_QUEUE,
+  );
   const rateLimitingRepository = new RateLimitingRepository(database);
   const authService = new AuthService(
     userRepository,
@@ -82,6 +95,24 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     undefined,
     socialRepository,
   );
+  const workerActivityImageService = storage
+    ? new WorkerActivityImageService(
+        new ActivityImageRepository(database),
+        activityRepository,
+        storage,
+        workerCrypto,
+        { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+        queueAdapter,
+        socialRepository,
+      )
+    : undefined;
+  const importProgressStore = storage ? new ImportProgressStore(database) : undefined;
+  const workerUploadService = storage
+    ? new WorkerUploadService(storage, workerCrypto, queueAdapter, importProgressStore!)
+    : undefined;
+  const workerUserService = storage
+    ? new WorkerUserService(userRepository, socialRepository, storage, queueAdapter)
+    : undefined;
   const socialService = new SocialService(socialRepository, database, workerEvents);
   const liveWorkoutService = new LiveWorkoutService(new LiveWorkoutRepository(database), workerCrypto);
   const jobService = new JobService({ admin: queueAdapter, producer: queueAdapter }, workerEvents, new ConsoleLogger());
@@ -98,7 +129,13 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     userRepository,
     config,
     cloudNodeProcessorEnabled,
+    queueBindingsConfigured,
+    realtimeEnabled: Boolean(env.REALTIME),
     authCredentialCleanupToken: env.KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN,
+    storage,
+    workerActivityImageService,
+    workerUploadService,
+    workerUserService,
     jobAdmin: queueAdapter,
     jobHandlers: createPortableWorkerHandlers(database),
     jobProducer: queueAdapter,

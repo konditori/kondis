@@ -45,11 +45,6 @@ export const reclaimStaleJobs = async (db: KondisDatabase): Promise<number> => {
   return result.rows.length;
 };
 
-/**
- * A confirmed Queue write should arrive quickly. Resetting an old publication
- * marker is the final crash-window backstop for a lost or misrouted message;
- * duplicate deliveries remain safe because claiming is conditional.
- */
 export const recoverOrphanedPublishedJobs = async (db: KondisDatabase): Promise<number> => {
   const result = await sql<{ id: string }>`
     UPDATE background_job

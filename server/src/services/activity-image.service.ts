@@ -14,12 +14,12 @@ import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
+import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
 import type { KondisTransaction } from 'src/types';
 import { JobOf } from 'src/types/jobs';
 import { BufferedUploadedFileData } from 'src/types/uploads';
@@ -28,7 +28,7 @@ export class ActivityImageService {
   constructor(
     private readonly images: ActivityImageRepository,
     private readonly activities: ActivityRepository,
-    private readonly storage: StorageRepository,
+    private readonly storage: StoragePort,
     private readonly crypto: CryptoRepository,
     private readonly database: DatabaseRepository,
     private readonly jobs: JobProducerPort,
@@ -200,7 +200,7 @@ export class ActivityImageService {
     if (!file) {
       throw new NotFoundException(`Image ${imageId} variant ${variant} is not ready`);
     }
-    return { ...file, absolutePath: this.storage.absolutePath(file.storage_path) };
+    return { ...file, absolutePath: this.storage.reference(file.storage_path) };
   }
 
   async handleIngest({
@@ -283,7 +283,7 @@ export class ActivityImageService {
       return JobStatus.Skipped;
     }
     try {
-      const input = this.storage.absolutePath(original.storage_path);
+      const input = await this.storage.read(original.storage_path);
       const preview = await sharp(input)
         .rotate()
         .resize(IMAGE_PREVIEW_SIZE, IMAGE_PREVIEW_SIZE, { fit: 'inside', withoutEnlargement: true })

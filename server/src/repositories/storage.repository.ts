@@ -2,7 +2,7 @@ import { createReadStream } from 'node:fs';
 import { copyFile, mkdir, open, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
+import { FileSizeLimitError, type StorageFile, type StoragePort } from 'src/ports/storage.port';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 
@@ -35,6 +35,10 @@ export class StorageRepository implements StoragePort {
 
   absolutePath(relativePath: string): string {
     return resolve(this.config.storageDir, relativePath);
+  }
+
+  reference(relativePath: string): string {
+    return this.absolutePath(relativePath);
   }
 
   async write(relativePath: string, contents: Buffer): Promise<void> {
@@ -82,6 +86,21 @@ export class StorageRepository implements StoragePort {
     return readFile(this.absolutePath(relativePath));
   }
 
+  async open(relativePath: string): Promise<StorageFile> {
+    const absolutePath = this.absolutePath(relativePath);
+    const metadata = await stat(absolutePath);
+    return {
+      size: metadata.size,
+      lastModified: metadata.mtime,
+      stream: (range, signal) =>
+        createReadStream(absolutePath, {
+          signal,
+          ...(range && { start: range.start, end: range.end }),
+        }) as unknown as BodyInit,
+      close: async () => {},
+    };
+  }
+
   async readLimited(relativePath: string, maximumBytes: number): Promise<Buffer> {
     const file = await open(this.absolutePath(relativePath), 'r');
     try {
@@ -106,15 +125,6 @@ export class StorageRepository implements StoragePort {
     } finally {
       await file.close();
     }
-  }
-
-  readStream(relativePath: string): AsyncIterable<Uint8Array> {
-    return createReadStream(this.absolutePath(relativePath));
-  }
-
-  async size(relativePath: string): Promise<number> {
-    const metadata = await stat(this.absolutePath(relativePath));
-    return metadata.size;
   }
 
   async delete(relativePath: string): Promise<void> {

@@ -219,7 +219,7 @@ export class UploadService {
     let takeout: LagomTakeoutContents;
     try {
       takeout = await this.lagomTakeoutParser.extractLagomTakeout(
-        this.storageRepository.absolutePath(storagePath),
+        await this.storageRepository.read(storagePath),
         async (activity) => {
           if (activity.manual) {
             await this.jobRepository.queue({
@@ -321,13 +321,20 @@ export class UploadService {
       await this.storageRepository.write(storagePath, file.buffer);
       return;
     }
+    if (!this.storageRepository.importFile) {
+      throw new Error('The configured storage does not support importing local files');
+    }
     await this.storageRepository.importFile(file.path, storagePath);
   }
 
   private async discardUploadedFile(file: UploadedFileData): Promise<void> {
-    if ('path' in file && file.path) {
-      await this.storageRepository.deleteExternal(file.path);
+    if (!('path' in file) || !file.path) {
+      return;
     }
+    if (!this.storageRepository.deleteExternal) {
+      throw new Error('The configured storage does not support deleting local files');
+    }
+    await this.storageRepository.deleteExternal(file.path);
   }
 
   private async stageImages(images: { file: BufferedUploadedFileData; caption: string | null; sortOrder: number }[]) {

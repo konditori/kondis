@@ -6,8 +6,15 @@ import {
   type CloudflareQueueBatch,
   type CloudflareQueueBinding,
 } from 'src/adapters/cloudflare/queue-transport.adapter';
+import { createWorkerFileReader } from 'src/adapters/cloudflare/storage.adapter';
+import { workerUploadReader } from 'src/adapters/cloudflare/upload.adapter';
 import { createApiShell } from 'src/api/app';
-import { registerWorkerPortableRouteGroups, registerWorkerQueueMutationRoutes } from 'src/api/route-groups';
+import {
+  registerWorkerPortableRouteGroups,
+  registerWorkerQueueMutationRoutes,
+  registerWorkerStorageMutationRouteGroups,
+  registerWorkerStorageReadRouteGroups,
+} from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
 import {
   drainUnpublishedJobs,
@@ -21,6 +28,8 @@ import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-ha
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
+
+export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
 
 export type WorkerEnv = WorkerBindings;
 
@@ -54,10 +63,28 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
     users: composition.userRepository,
   });
   registerAuthRoutes(requestApp, composition.authService, composition.userRepository, composition.config, {
-    includeEventTickets: false,
+    includeEventTickets: composition.realtimeEnabled,
   });
-  if (composition.cloudNodeProcessorEnabled) {
+  if (composition.cloudNodeProcessorEnabled && composition.queueBindingsConfigured) {
     registerWorkerQueueMutationRoutes(requestApp, { jobs: composition.jobService });
+  }
+  if (
+    composition.storage &&
+    composition.workerActivityImageService &&
+    composition.workerUploadService &&
+    composition.workerUserService
+  ) {
+    const storageRoutes = {
+      activityImages: composition.workerActivityImageService,
+      files: createWorkerFileReader(composition.storage),
+      uploads: workerUploadReader,
+      uploadService: composition.workerUploadService,
+      userService: composition.workerUserService,
+    };
+    registerWorkerStorageReadRouteGroups(requestApp, storageRoutes);
+    if (composition.cloudNodeProcessorEnabled && composition.queueBindingsConfigured) {
+      registerWorkerStorageMutationRouteGroups(requestApp, storageRoutes);
+    }
   }
   requestApp.post('/api/v1/_internal/auth-credential-cleanup', async (context) => {
     const token = composition.authCredentialCleanupToken;
@@ -108,6 +135,9 @@ export default {
       return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
     }
     const composition = createWorkerInvocationComposition(env);
+    if (isRealtimeUpgrade(request)) {
+      return Promise.resolve(handleRealtimeUpgrade(request, composition, env)).finally(() => composition.close());
+    }
     const requestApp = createRequestApp(composition);
     return Promise.resolve(requestApp.fetch(request, env, _ctx)).finally(() => composition.close());
   },
@@ -163,6 +193,36 @@ export default {
       await composition.close();
     }
   },
+};
+
+const isRealtimeUpgrade = (request: Request): boolean =>
+  (new URL(request.url).pathname === '/events' || new URL(request.url).pathname === '/api/v1/events') &&
+  request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
+
+const handleRealtimeUpgrade = async (
+  request: Request,
+  composition: ReturnType<typeof createWorkerInvocationComposition>,
+  env: WorkerEnv,
+): Promise<Response> => {
+  if (!env.REALTIME) {
+    return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
+  }
+  const ticket = new URL(request.url).searchParams.get('ticket');
+  const verified = await composition.authCredentialRepository.findEventTicket(ticket);
+  if (!verified || (verified.scope === 'activity-events' && !verified.userId)) {
+    return Response.json({ statusCode: 401, message: 'Unauthorized' }, { status: 401 });
+  }
+  const id = env.REALTIME.idFromName('global');
+  const target = env.REALTIME.get(id);
+  const url = new URL('https://realtime.internal/connect');
+  url.searchParams.set('scope', verified.scope);
+  url.searchParams.set('sessionId', verified.sessionId);
+  if (verified.userId) {
+    url.searchParams.set('userId', verified.userId);
+  }
+  const headers = new Headers(request.headers);
+  headers.set('Upgrade', 'websocket');
+  return target.fetch(new Request(url, { headers }));
 };
 
 const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueName): CloudflareQueueBinding => {

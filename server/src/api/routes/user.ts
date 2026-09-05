@@ -47,6 +47,14 @@ export const registerUserReadRoutes = (
   files: FileReader,
 ): void => {
   registerUserListRoutes(app, users);
+  registerUserAvatarRoute(app, userService, files);
+};
+
+export const registerUserAvatarRoute = (
+  app: OpenAPIHono<ApiEnv>,
+  userService: UserAvatarService,
+  files: FileReader,
+): void => {
   app.openapi(avatarRoute, async (context) => {
     const avatar = await userService.avatarFile(context.req.valid('param').id, context.get('user').id);
     if (!avatar.avatar_path || !avatar.avatar_mime_type || avatar.avatar_size === null) {
