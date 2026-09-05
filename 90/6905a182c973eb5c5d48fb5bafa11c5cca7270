@@ -1,0 +1,39 @@
+pnpm-lock.yaml
+  s_e30b5a37009b82::t_ae1445afb8b934 92-94,4427-4430,14242-14243
+server/package.json
+  s_e30b5a37009b82::t_59b8ce0da27656 37
+server/src/adapters/cloudflare/crypto.adapter.spec.ts
+  s_053ebf3a18624c::t_e72667408170d9 1-23
+server/src/api/route-groups.ts
+  s_053ebf3a18624c::t_cdb24df8634b1c 10
+server/src/api/routes/auth.ts
+  s_053ebf3a18624c::t_60f0e466b88048 253,302-309,311-320
+server/src/cloudflare/entrypoint.ts
+  s_053ebf3a18624c::t_06db4394bedf36 11,56-58
+server/src/composition.worker.ts
+  s_053ebf3a18624c::t_e434f9d3188b68 1,12,18,24,29-30,49-63,89,95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "906905a182c973eb5c5d48fb5bafa11c5cca7270",
+  "prompts": {},
+  "sessions": {
+    "s_053ebf3a18624c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0732a-172b-7fe1-b9ab-67302f61d6fb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e30b5a37009b82": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f8caf11baffe2QyTZ0l312X20Z",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
