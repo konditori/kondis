@@ -20,6 +20,15 @@ This will start the main docker compose stack.
 
 The web app will be accessible `http://localhost:3000`.
 
+### Limiting container CPU usage
+
+To limit CPU usage for all development containers, add `KONDIS_DEV_CPUS` to
+`docker/.env`. It supports fractional CPUs, for example:
+
+```dotenv
+KONDIS_DEV_CPUS=0.5
+```
+
 ## Resetting development data
 
 To clear activities, uploads, images, live workouts, social data, notifications, and queued jobs without redoing setup, run:
