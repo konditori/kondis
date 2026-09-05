@@ -505,17 +505,6 @@ export type MatchedRouteListResponseDtoOutput = {
       }[]
     | null;
 };
-export type ActivityImageDtoOutput = {
-  id: string;
-  caption: string | null;
-  sortOrder: number;
-  width: number | null;
-  height: number | null;
-  status: Status5;
-  thumbnail: string | null;
-  preview: string | null;
-  original: string | null;
-};
 export type ActivityImageListDtoOutput = {
   id: string;
   caption: string | null;
@@ -527,6 +516,17 @@ export type ActivityImageListDtoOutput = {
   preview: string | null;
   original: string | null;
 }[];
+export type ActivityImageDtoOutput = {
+  id: string;
+  caption: string | null;
+  sortOrder: number;
+  width: number | null;
+  height: number | null;
+  status: Status5;
+  thumbnail: string | null;
+  preview: string | null;
+  original: string | null;
+};
 export type ActivityImageUpdateDto = {
   caption?: string | null;
   sortOrder?: number;
@@ -1224,6 +1224,26 @@ export function activityControllerListMatchedRoutes(
   );
 }
 /**
+ * List ready images attached to an activity
+ */
+export function activityImageControllerList(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: ActivityImageListDtoOutput;
+    }>(`/activities/${encodeURIComponent(id)}/images`, {
+      ...opts,
+    }),
+  );
+}
+/**
  * Upload an image to an activity
  */
 export function activityImageControllerUpload(
@@ -1251,26 +1271,6 @@ export function activityImageControllerUpload(
         body,
       }),
     ),
-  );
-}
-/**
- * List ready images attached to an activity
- */
-export function activityImageControllerList(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityImageListDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}/images`, {
-      ...opts,
-    }),
   );
 }
 export function activityImageControllerUpdate(
