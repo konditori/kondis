@@ -5482,20 +5482,25 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 254
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 1024
           },
           "setupTicket": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           }
         },
         "required": [
@@ -5509,7 +5514,8 @@
         "properties": {
           "setupToken": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           }
         },
         "required": [
@@ -5521,7 +5527,8 @@
         "properties": {
           "setupTicket": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           }
         },
         "required": [
@@ -5532,16 +5539,20 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 254
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 1024
           }
         },
         "required": [
@@ -5553,16 +5564,20 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 254
           },
           "firstName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "lastName": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 1024
           }
         },
         "required": [
