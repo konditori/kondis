@@ -7,6 +7,7 @@ import {
   type CloudflareQueueBinding,
 } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { createApiShell } from 'src/api/app';
+import { registerWorkerPortableRouteGroups } from 'src/api/route-groups';
 import {
   drainUnpublishedJobs,
   purgeExpiredJobs,
@@ -44,6 +45,14 @@ type WorkerApp = ReturnType<typeof createApiShell>;
 const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationComposition>): WorkerApp => {
   const requestApp = createApiShell(composition.authCredentialRepository);
   requestApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
+  registerWorkerPortableRouteGroups(requestApp, {
+    activities: composition.activityService,
+    auth: composition.authCredentialRepository,
+    jobs: composition.jobService,
+    liveWorkouts: composition.liveWorkoutService,
+    social: composition.socialService,
+    users: composition.userRepository,
+  });
   requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
     const env = context.env as WorkerEnv;
     if (!env.HYPERDRIVE || !env.HYPERDRIVE_SPIKE_TOKEN) {

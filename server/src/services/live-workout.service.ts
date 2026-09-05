@@ -47,7 +47,7 @@ export class LiveWorkoutService {
   }
 
   async getShared(token: string) {
-    const workout = await this.repository.getByShareTokenHash(this.hashToken(token));
+    const workout = await this.repository.getByShareTokenHash(await this.hashToken(token));
     if (!workout) {
       throw new NotFoundException('This live tracking link has expired or was revoked');
     }
@@ -107,7 +107,7 @@ export class LiveWorkoutService {
     }
     const token = this.crypto.randomToken(24);
     const expiresAt = new Date(Date.now() + SHARE_LIFETIME_MS);
-    await this.repository.setShareToken(id, this.hashToken(token), expiresAt);
+    await this.repository.setShareToken(id, await this.hashToken(token), expiresAt);
     return { token, expiresAt: expiresAt.toISOString() };
   }
 

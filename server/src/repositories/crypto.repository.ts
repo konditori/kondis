@@ -23,8 +23,8 @@ export class CryptoRepository implements CryptoPort {
     return leftBytes.length === rightBytes.length && timingSafeEqual(leftBytes, rightBytes);
   }
 
-  sha256(value: string): string {
-    return createHash('sha256').update(value).digest('base64url');
+  sha256(value: string): Promise<string> {
+    return Promise.resolve(createHash('sha256').update(value).digest('base64url'));
   }
 
   xxHash(contents: Uint8Array): string {

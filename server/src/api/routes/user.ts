@@ -46,14 +46,7 @@ export const registerUserReadRoutes = (
   userService: UserAvatarService,
   files: FileReader,
 ): void => {
-  app.openapi(listUsersRoute, async (context) => {
-    if (context.get('user').role !== 'admin') {
-      throw new ForbiddenException('Administrator access is required');
-    }
-    const allUsers = await users.all();
-    const result = allUsers.map(({ password_hash: _passwordHash, ...user }) => user);
-    return context.json(result, 200) as never;
-  });
+  registerUserListRoutes(app, users);
   app.openapi(avatarRoute, async (context) => {
     const avatar = await userService.avatarFile(context.req.valid('param').id, context.get('user').id);
     if (!avatar.avatar_path || !avatar.avatar_mime_type || avatar.avatar_size === null) {
@@ -68,5 +61,16 @@ export const registerUserReadRoutes = (
         'X-Content-Type-Options': 'nosniff',
       },
     }) as never;
+  });
+};
+
+export const registerUserListRoutes = (app: OpenAPIHono<ApiEnv>, users: UserReadRepository): void => {
+  app.openapi(listUsersRoute, async (context) => {
+    if (context.get('user').role !== 'admin') {
+      throw new ForbiddenException('Administrator access is required');
+    }
+    const allUsers = await users.all();
+    const result = allUsers.map(({ password_hash: _passwordHash, ...user }) => user);
+    return context.json(result, 200) as never;
   });
 };

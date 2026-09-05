@@ -152,7 +152,7 @@ const listMatchedRoutesRoute = createRoute({
   tags: ['activities'],
 });
 
-export const registerActivityReadRoutes = (app: OpenAPIHono<ApiEnv>, activities: ActivityReadService): void => {
+export const registerActivityReadOnlyRoutes = (app: OpenAPIHono<ApiEnv>, activities: ActivityReadService): void => {
   app.openapi(listRecentRoute, async (context) => {
     const result = await activities.listRecent(context.req.valid('query'), context.get('user').id);
     return context.json(activityListResponse.parse(result), 200);
@@ -178,6 +178,18 @@ export const registerActivityReadRoutes = (app: OpenAPIHono<ApiEnv>, activities:
     }
     return context.json(activityDetailResponse.parse(result), 200);
   });
+  app.openapi(listMatchedRoutesRoute, async (context) => {
+    const { id } = context.req.valid('param');
+    const result = await activities.listMatchedRoutes(id, context.get('user').id);
+    if (!result) {
+      throw new NotFoundException(`Activity ${id} does not exist`);
+    }
+    return context.json(matchedRouteListResponse.parse(result), 200);
+  });
+};
+
+export const registerActivityReadRoutes = (app: OpenAPIHono<ApiEnv>, activities: ActivityReadService): void => {
+  registerActivityReadOnlyRoutes(app, activities);
   app.openapi(updateByIdRoute, async (context) => {
     const { id } = context.req.valid('param');
     const payload = context.req.valid('json');
@@ -198,13 +210,5 @@ export const registerActivityReadRoutes = (app: OpenAPIHono<ApiEnv>, activities:
       throw new NotFoundException(`Activity ${id} does not exist`);
     }
     return context.body(null, 204);
-  });
-  app.openapi(listMatchedRoutesRoute, async (context) => {
-    const { id } = context.req.valid('param');
-    const result = await activities.listMatchedRoutes(id, context.get('user').id);
-    if (!result) {
-      throw new NotFoundException(`Activity ${id} does not exist`);
-    }
-    return context.json(matchedRouteListResponse.parse(result), 200);
   });
 };

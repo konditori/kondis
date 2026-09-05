@@ -1,5 +1,3 @@
-import { extname } from 'node:path';
-
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
@@ -40,6 +38,10 @@ import { buildActivityAnalysis } from 'src/utils/activity-details';
 import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
+const extname = (path: string): string => path.slice(path.lastIndexOf('.'));
+const encodeCursor = (value: string): string =>
+  btoa(value).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+const decodeCursor = (value: string): string => atob(value.replaceAll('-', '+').replaceAll('_', '/'));
 export type BestEffortSport = 'run' | 'ride';
 
 const BEST_EFFORT_SPORTS = {
@@ -983,12 +985,12 @@ export class ActivityService {
   }
 
   private encodeActivityCursor(startedAt: Timestamp, id: string): string {
-    return Buffer.from(JSON.stringify([this.toIsoString(startedAt), id])).toString('base64url');
+    return encodeCursor(JSON.stringify([this.toIsoString(startedAt), id]));
   }
 
   private decodeActivityCursor(cursor: string): { startedAt: Date; id: string } {
     try {
-      const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+      const value: unknown = JSON.parse(decodeCursor(cursor));
       if (!Array.isArray(value) || value.length !== 2 || typeof value[0] !== 'string' || typeof value[1] !== 'string') {
         throw new Error('Unexpected cursor value');
       }

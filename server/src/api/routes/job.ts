@@ -85,17 +85,24 @@ const commandRoute = createRoute({
   tags: ['jobs'],
 });
 
-export const registerJobRoutes = (app: OpenAPIHono<ApiEnv>, service: JobRouteService): void => {
+export const registerJobReadRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  service: Pick<JobRouteService, 'getAllJobStatus' | 'getJobHistory'>,
+): void => {
   app.openapi(statusRoute, async (context) => {
     return context.json(allStatusResponse.parse(await service.getAllJobStatus()), 200);
-  });
-  app.openapi(createJobRoute, async (context) => {
-    await service.create(context.req.valid('json').name);
-    return context.body(null, 204);
   });
   app.openapi(historyRoute, async (context) => {
     const { limit, offset } = context.req.valid('query');
     return context.json(historyResponse.parse(await service.getJobHistory(limit, offset)), 200);
+  });
+};
+
+export const registerJobRoutes = (app: OpenAPIHono<ApiEnv>, service: JobRouteService): void => {
+  registerJobReadRoutes(app, service);
+  app.openapi(createJobRoute, async (context) => {
+    await service.create(context.req.valid('json').name);
+    return context.body(null, 204);
   });
   app.openapi(commandRoute, async (context) => {
     return context.json(

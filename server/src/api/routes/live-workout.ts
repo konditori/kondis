@@ -148,18 +148,25 @@ const revokeShareRoute = createRoute({
   tags: ['live workouts'],
 });
 
-export const registerLiveWorkoutRoutes = (app: OpenAPIHono<ApiEnv>, service: LiveWorkoutRouteService): void => {
+export const registerLiveWorkoutReadRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  service: Pick<LiveWorkoutRouteService, 'get' | 'getShared' | 'list'>,
+): void => {
   app.openapi(listRoute, async (context) =>
     context.json(workoutListResponse.parse(await service.list(context.get('user').id)), 200),
-  );
-  app.openapi(createWorkoutRoute, async (context) =>
-    context.json(workoutResponse.parse(await service.create(context.get('user').id, context.req.valid('json'))), 201),
   );
   app.openapi(sharedRoute, async (context) =>
     context.json(workoutResponse.parse(await service.getShared(context.req.valid('param').token)), 200),
   );
   app.openapi(getRoute, async (context) =>
     context.json(workoutResponse.parse(await service.get(context.req.valid('param').id, context.get('user').id)), 200),
+  );
+};
+
+export const registerLiveWorkoutRoutes = (app: OpenAPIHono<ApiEnv>, service: LiveWorkoutRouteService): void => {
+  registerLiveWorkoutReadRoutes(app, service);
+  app.openapi(createWorkoutRoute, async (context) =>
+    context.json(workoutResponse.parse(await service.create(context.get('user').id, context.req.valid('json'))), 201),
   );
   app.openapi(updateRoute, async (context) =>
     context.json(
