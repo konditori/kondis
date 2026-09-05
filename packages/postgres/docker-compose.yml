@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: ./Dockerfile
       args:
-        PG_MAJOR: 16
-        VECTORCHORD_TAG: 0.3.0
+        PG_MAJOR: 17
+        VECTORCHORD_TAG: 1.1.1
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/kondis_db_password
       KONDIS_DB_USERNAME_FILE: /run/secrets/kondis_db_user

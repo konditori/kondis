@@ -27,6 +27,7 @@ export type NotificationsReadEvent = {
 };
 
 export type EventMap = {
+  SessionRevoked: [sessionId: string];
   JobUpdated: [];
   ActivityCreate: [activity: ActivityDto];
   ActivityUploadSkipped: [activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>, uploadFileName: string];

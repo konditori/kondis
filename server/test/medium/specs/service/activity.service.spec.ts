@@ -1,13 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import type { AuthenticatedUser } from 'src/auth';
-import type { KondisDatabase } from 'src/types';
 import { JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
-import type { ActivityStreamInput } from 'src/types';
+import type { ActivityStreamInput, KondisDatabase } from 'src/types';
 
 import { createMediumFactory } from 'test/medium.factory';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -21,7 +20,7 @@ describe(ActivityService.name, () => {
   let activities: ActivityRepository;
   let uploads: UploadRepository;
   let sut: ActivityService;
-  let jobs: JobRepository;
+  let jobs: PgBossQueueAdapter;
   let factory: ReturnType<typeof createMediumFactory>;
   let testUser: AuthenticatedUser;
 
@@ -32,7 +31,7 @@ describe(ActivityService.name, () => {
     activities = testApp.get(ActivityRepository);
     uploads = testApp.get(UploadRepository);
     sut = testApp.get(ActivityService);
-    jobs = testApp.get(JobRepository);
+    jobs = testApp.get(PgBossQueueAdapter);
     factory = createMediumFactory(db);
   });
 
@@ -199,9 +198,9 @@ describe(ActivityService.name, () => {
     it('rejects unknown tags and malformed cursors', async () => {
       await expect(serviceApi.listRecent({ tags: 'race,unknown' })).rejects.toMatchObject({ status: 400 });
       await expect(serviceApi.listRecent({ cursor: 'not-json' })).rejects.toThrow('Invalid activity cursor');
-      await expect(serviceApi.listRecent({ cursor: Buffer.from(JSON.stringify(['not-a-date', 'id'])).toString('base64url') })).rejects.toThrow(
-        'Invalid activity cursor',
-      );
+      await expect(
+        serviceApi.listRecent({ cursor: Buffer.from(JSON.stringify(['not-a-date', 'id'])).toString('base64url') }),
+      ).rejects.toThrow('Invalid activity cursor');
     });
 
     it('normalizes tags and removes duplicate tags before querying', async () => {
@@ -657,9 +656,9 @@ describe(ActivityService.name, () => {
     it('rejects unknown tags before changing the activity', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'tagged run');
 
-      await expect(
-        sut.updateById(activityId, testUser.id, { tags: ['not-a-tag' as 'race'] }),
-      ).rejects.toThrow('Unknown activity tag');
+      await expect(sut.updateById(activityId, testUser.id, { tags: ['not-a-tag' as 'race'] })).rejects.toThrow(
+        'Unknown activity tag',
+      );
       await expect(activities.getById(activityId)).resolves.toMatchObject({ tags: [] });
     });
   });
@@ -737,7 +736,11 @@ describe(ActivityService.name, () => {
       const activity = await activities.getById(activityId);
       expect(activity).toBeDefined();
       await expect(
-        db.selectFrom('activity_metric').select('avg_speed').where('activity_id', '=', activityId).executeTakeFirstOrThrow(),
+        db
+          .selectFrom('activity_metric')
+          .select('avg_speed')
+          .where('activity_id', '=', activityId)
+          .executeTakeFirstOrThrow(),
       ).resolves.toMatchObject({ avg_speed: null });
     });
   });

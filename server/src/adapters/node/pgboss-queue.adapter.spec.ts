@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { JobName, JobStatus, QueueName } from 'src/enum';
+import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
+import { JobName, JobStatus } from 'src/enum';
+import type { AnyJobHandlerDescriptor } from 'src/jobs/job-handler';
+import { CLOUD_JOB_CONSUMER, JOB_QUEUE } from 'src/jobs/job-semantics';
 import { ConfigRepository } from 'src/repositories/config.repository';
-import { AnyJobHandlerDescriptor, JobRepository } from 'src/repositories/job.repository';
 import type { JobItem } from 'src/types/jobs';
 
 type JobOptionsAccessor = {
@@ -10,7 +12,7 @@ type JobOptionsAccessor = {
 };
 
 const getJobOptions = (item: JobItem) => {
-  const repository = new JobRepository({} as ConfigRepository, false);
+  const repository = new PgBossQueueAdapter({} as ConfigRepository, false);
 
   return (repository as unknown as JobOptionsAccessor).getJobOptions(item);
 };
@@ -18,14 +20,15 @@ const getJobOptions = (item: JobItem) => {
 const makeHandlers = (): AnyJobHandlerDescriptor[] =>
   Object.values(JobName).map((jobName) => ({
     jobName,
-    queueName: QueueName.BackgroundTask,
+    queueName: JOB_QUEUE[jobName],
     handler: vi.fn(() => Promise.resolve(JobStatus.Success)),
     label: `TestService.${jobName}`,
+    cloudConsumer: CLOUD_JOB_CONSUMER[jobName],
   })) as AnyJobHandlerDescriptor[];
 
-describe('JobRepository handler registration', () => {
+describe(`${PgBossQueueAdapter.name} handler registration`, () => {
   it('rejects duplicate handlers with useful labels', () => {
-    const repository = new JobRepository({} as ConfigRepository, false);
+    const repository = new PgBossQueueAdapter({} as ConfigRepository, false);
     const handlers = makeHandlers();
     repository.setup(handlers);
 
@@ -35,7 +38,7 @@ describe('JobRepository handler registration', () => {
   });
 
   it('requires a handler for every JobName', () => {
-    const repository = new JobRepository({} as ConfigRepository, false);
+    const repository = new PgBossQueueAdapter({} as ConfigRepository, false);
     const handlers = makeHandlers();
 
     expect(() => repository.setup(handlers.slice(1))).toThrow(
@@ -44,7 +47,7 @@ describe('JobRepository handler registration', () => {
   });
 });
 
-describe('JobRepository activity-upload deduplication', () => {
+describe(`${PgBossQueueAdapter.name} activity-upload deduplication`, () => {
   it('uses the staged path when a disk-backed upload has no checksum', () => {
     const first = getJobOptions({
       name: JobName.ActivityUpload,

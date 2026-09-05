@@ -1,31 +1,35 @@
-import {
-  AUTH_SECRET,
-  createAccessToken,
-  createActivityEventsTicket,
-  createJobEventsTicket,
-  createSetupTicket,
-  verifySetupTicket,
-} from 'src/auth';
+import { JobStatus } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { CryptoPort } from 'src/ports/crypto.port';
+import type { RealtimePort } from 'src/ports/realtime.port';
+import type { TransactionPort } from 'src/ports/transaction.port';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
+import type { KondisExecutor } from 'src/types';
 const BCRYPT_WORK_FACTOR = 12;
+// Keep unknown-account logins on the same expensive comparison path so the
+// response time does not reveal whether an email address is registered.
+const UNKNOWN_ACCOUNT_PASSWORD_HASH = '$2b$12$q5KRFbq3UirFSlEhM7Xa.uoi96PRJvpMz4b6UPvN4clsmqB0VxfGW';
 const SETUP_TOKEN_RATE_LIMIT = { label: 'Setup token', maxAttempts: 5, windowMs: 60_000 } as const;
+const EVENT_TICKET_RATE_LIMIT = { label: 'Event ticket', maxAttempts: 10, windowMs: 60_000 } as const;
+const LOGIN_CLIENT_RATE_LIMIT = { label: 'Login', maxAttempts: 20, windowMs: 60_000 } as const;
+const LOGIN_ACCOUNT_RATE_LIMIT = { label: 'Login account', maxAttempts: 10, windowMs: 5 * 60_000 } as const;
+const REGISTRATION_CLIENT_RATE_LIMIT = { label: 'Registration', maxAttempts: 5, windowMs: 60_000 } as const;
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly setupToken: string;
 
   constructor(
     private readonly users: UserRepository,
-    private readonly config: Pick<ConfigPort, 'registrationEnabled'>,
+    private readonly config: Pick<ConfigPort, 'registrationEnabled' | 'setupToken'>,
     private readonly rateLimitingRepository: RateLimitingRepository,
     private readonly crypto: CryptoPort,
-  ) {
-    this.setupToken = this.crypto.uuid();
-  }
+    private readonly credentials: AuthCredentialRepository,
+    private readonly events: RealtimePort,
+    private readonly database: TransactionPort,
+  ) {}
   get registrationEnabled() {
     return this.config.registrationEnabled;
   }
@@ -36,6 +40,10 @@ export class AuthService {
   async logSetupTokenIfRequired() {
     const status = await this.setupStatus();
     if (status.setupRequired) {
+      const setupToken = await this.credentials.getOrCreateSetupToken(this.config.setupToken);
+      if (!setupToken) {
+        return;
+      }
       this.logger.log(`
 ================================================================================
 Welcome to Kondis!
@@ -44,7 +52,7 @@ For initial setup, go to the app in a web browser (not mobile app)
 
 You will need the following setup token:
 
-  ${this.setupToken}
+  ${setupToken}
 
 Do not share this secret token with anyone.
 
@@ -53,20 +61,20 @@ Do not share this secret token with anyone.
     }
   }
   async verifySetupToken(setupToken: string, clientId = 'unknown') {
-    this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
     const status = await this.setupStatus();
     if (!status.setupRequired) {
       throw new ConflictException('Initial setup is already complete');
     }
-    if (!this.matchesSetupToken(setupToken)) {
+    await this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
+    if (!(await this.credentials.verifySetupToken(setupToken))) {
       this.logger.warn('Invalid setup token supplied during initial setup verification');
       throw new UnauthorizedException('Invalid setup token');
     }
-    return createSetupTicket(AUTH_SECRET);
+    return this.credentials.createTicket('initial-setup');
   }
   async validateSetupTicket(setupTicket: string) {
     const status = await this.setupStatus();
-    if (!status.setupRequired || !verifySetupTicket(setupTicket, AUTH_SECRET)) {
+    if (!status.setupRequired || !(await this.credentials.findTicket(setupTicket, 'initial-setup'))) {
       throw new UnauthorizedException('Setup verification is no longer valid');
     }
     return { valid: true };
@@ -74,20 +82,33 @@ Do not share this secret token with anyone.
   async setup(email: string, firstName: string, lastName: string, password: string, setupTicket: string) {
     this.logger.log(`Initial account setup attempt for ${email || '<missing email>'}`);
     try {
-      if (!verifySetupTicket(setupTicket, AUTH_SECRET)) {
+      if (!(await this.credentials.findTicket(setupTicket, 'initial-setup'))) {
         throw new UnauthorizedException('Verify the setup token before creating the administrator account');
       }
       const account = this.normalizeAccount(email, firstName, lastName, password);
-      const user = await this.users.createInitialAdmin({
-        ...account,
-        password_hash: await this.crypto.hashPassword(password, BCRYPT_WORK_FACTOR),
-        role: 'admin',
+      const passwordHash = await this.crypto.hashPassword(password, BCRYPT_WORK_FACTOR);
+      return await this.database.withTransaction(async (transaction) => {
+        if (!(await this.credentials.consumeSetupBootstrap(transaction))) {
+          throw new ConflictException('Initial setup is already complete');
+        }
+        if (!(await this.credentials.consumeTicket(setupTicket, 'initial-setup', transaction))) {
+          throw new UnauthorizedException('Verify the setup token before creating the administrator account');
+        }
+        await this.credentials.clearSetupTickets(transaction);
+        const user = await this.users.createInitialAdmin(
+          {
+            ...account,
+            password_hash: passwordHash,
+            role: 'admin',
+          },
+          transaction,
+        );
+        if (!user) {
+          throw new ConflictException('Initial admin already exists');
+        }
+        this.logger.log(`Initial administrator account created for ${user.email}`);
+        return this.issue(user, true, transaction);
       });
-      if (!user) {
-        throw new ConflictException('Initial admin already exists');
-      }
-      this.logger.log(`Initial administrator account created for ${user.email}`);
-      return this.issue(user, true);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const stack = error instanceof Error ? error.stack : undefined;
@@ -95,34 +116,61 @@ Do not share this secret token with anyone.
       throw error;
     }
   }
-  async login(email: string, password: string) {
-    const user = await this.users.findByEmail(email.toLowerCase());
-    const isValid = user ? await this.crypto.comparePassword(password, user.password_hash) : false;
+  async login(email: string, password: string, clientId = 'unknown') {
+    const normalizedEmail = email.toLowerCase();
+    await this.rateLimitingRepository.consume(clientId, LOGIN_CLIENT_RATE_LIMIT);
+    await this.rateLimitingRepository.consume(normalizedEmail, LOGIN_ACCOUNT_RATE_LIMIT);
+    const user = await this.users.findByEmail(normalizedEmail);
+    const isValid = await this.crypto.comparePassword(password, user?.password_hash ?? UNKNOWN_ACCOUNT_PASSWORD_HASH);
     if (!user || !isValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
     return this.issue(user, false);
   }
-  async register(email: string, firstName: string, lastName: string, password: string) {
+  async register(email: string, firstName: string, lastName: string, password: string, clientId = 'unknown') {
     if (!this.config.registrationEnabled) {
       throw new ForbiddenException('Public registration is disabled');
     }
+    await this.rateLimitingRepository.consume(clientId, REGISTRATION_CLIENT_RATE_LIMIT);
     this.logger.log(`Creating public user account for ${email}`);
     try {
-      const user = await this.create(email, firstName, lastName, password, 'user');
-      this.logger.log(`Public user account created for ${user.email} (${user.id})`);
-      return this.issue(user, false);
+      const account = this.normalizeAccount(email, firstName, lastName, password);
+      const passwordHash = await this.crypto.hashPassword(password, BCRYPT_WORK_FACTOR);
+      return await this.database.withTransaction(async (transaction) => {
+        if (await this.users.findByEmail(account.email, transaction)) {
+          throw new ConflictException('Email is already in use');
+        }
+        const user = await this.users.create({ ...account, password_hash: passwordHash, role: 'user' }, transaction);
+        this.logger.log(`Public user account created for ${user.email} (${user.id})`);
+        return this.issue(user, false, transaction);
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Public user account creation failed for ${email}: ${message}`);
       throw error;
     }
   }
-  createActivityEventsTicket(userId: string) {
-    return createActivityEventsTicket(userId, AUTH_SECRET);
+  async createActivityEventsTicket(userId: string, sessionId: string) {
+    await this.rateLimitingRepository.consume(`activity:${sessionId}`, EVENT_TICKET_RATE_LIMIT);
+    return this.credentials.createTicket('activity-events', userId, sessionId);
   }
-  createJobEventsTicket(userId: string) {
-    return createJobEventsTicket(userId, AUTH_SECRET);
+  async createJobEventsTicket(userId: string, sessionId: string) {
+    await this.rateLimitingRepository.consume(`job:${sessionId}`, EVENT_TICKET_RATE_LIMIT);
+    return this.credentials.createTicket('job-events', userId, sessionId);
+  }
+  async revokeSession(sessionId: string) {
+    await this.credentials.revokeSession(sessionId);
+    try {
+      await this.events.emit('SessionRevoked', sessionId);
+    } catch (error) {
+      this.logger.warn(
+        `Session ${sessionId} was revoked but realtime clients could not be notified: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  async handleCredentialCleanup(): Promise<JobStatus> {
+    await this.credentials.deleteExpired();
+    return JobStatus.Success;
   }
   async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
     const account = this.normalizeAccount(email, firstName, lastName, password);
@@ -144,24 +192,13 @@ Do not share this secret token with anyone.
     return { email: email.toLowerCase(), first_name: firstName.trim(), last_name: lastName.trim() };
   }
 
-  private matchesSetupToken(candidate: string): boolean {
-    return this.crypto.safeEqual(this.setupToken, candidate);
-  }
-  private issue(
+  private async issue(
     user: { id: string; role: 'admin' | 'user'; email: string; first_name: string; last_name: string },
     setup: boolean,
+    executor?: KondisExecutor,
   ) {
     return {
-      accessToken: createAccessToken(
-        {
-          id: user.id,
-          role: user.role,
-          email: user.email,
-          firstName: user.first_name,
-          lastName: user.last_name,
-        },
-        AUTH_SECRET,
-      ),
+      accessToken: await this.credentials.createSession(user.id, executor),
       setup,
       user: {
         id: user.id,

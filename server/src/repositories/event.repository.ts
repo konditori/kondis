@@ -1,12 +1,13 @@
 import { sql } from 'kysely';
-import type { Server } from 'node:http';
+import type { IncomingMessage, Server } from 'node:http';
+import type { Duplex } from 'node:stream';
 import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 import { z } from 'zod';
 
-import { AUTH_SECRET, verifyActivityEventsTicket, verifyJobEventsTicket } from 'src/auth';
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import { Logger } from 'src/logger';
+import type { ConfigPort } from 'src/ports/config.port';
 import type {
   ActivityCommentEvent,
   ArgsOf,
@@ -14,7 +15,7 @@ import type {
   NotificationCreatedEvent,
   RealtimePort,
 } from 'src/ports/realtime.port';
-import { ConfigRepository } from 'src/repositories/config.repository';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
@@ -27,14 +28,19 @@ const MAX_WEBSOCKET_PAYLOAD_BYTES = 1024;
 const MAX_ACTIVITY_SUBSCRIPTIONS_PER_SOCKET = 100;
 const MAX_ACTIVITY_AUTHORIZATION_ATTEMPTS_PER_SOCKET = 100;
 const MAX_CONCURRENT_ACTIVITY_AUTHORIZATIONS = 8;
+const MAX_PENDING_WEBSOCKET_AUTHORIZATIONS = 100;
+const WEBSOCKET_AUTHORIZATION_TIMEOUT_MS = 5000;
+const SESSION_VALIDATION_INTERVAL_MS = 60_000;
 const ActivityIdSchema = z.string().uuid();
 
 type ActivityAuthorizationWaiter = {
   socket: WebSocket;
   resolve: (release: (() => void) | undefined) => void;
 };
+type EventSocketAuth = { jobDashboard: boolean; sessionId: string; userId?: string };
 
 type WebsocketEvent =
+  | { type: 'session.revoked'; sessionId: string }
   | { type: 'job.updated' }
   | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
   | {
@@ -55,6 +61,7 @@ type EventSerializers = {
 };
 
 const eventSerializers: EventSerializers = {
+  SessionRevoked: (sessionId) => ({ type: 'session.revoked', sessionId }),
   JobUpdated: () => ({ type: 'job.updated' }),
   ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
   ActivityUploadSkipped: (activity, uploadFileName) => ({
@@ -77,23 +84,28 @@ export class EventRepository implements RealtimePort {
   private listener?: pg.Client;
   private reconnectTimer?: NodeJS.Timeout;
   private jobUpdateTimer?: NodeJS.Timeout;
+  private sessionValidationTimer?: NodeJS.Timeout;
   private socketServer?: WebSocketServer;
   private httpServer?: Server;
-  private upgradeHandler?: Parameters<Server['on']>[1];
+  private upgradeHandler?: (request: IncomingMessage, socket: Duplex, head: Buffer) => void;
   private readonly socketUsers = new Map<WebSocket, string>();
+  private readonly socketSessions = new Map<WebSocket, string>();
   private readonly socketActivities = new Map<WebSocket, Set<string>>();
   private readonly pendingActivitySubscriptions = new Set<WebSocket>();
   private readonly activityAuthorizationAttempts = new Map<WebSocket, number>();
   private readonly activityAuthorizationQueue: ActivityAuthorizationWaiter[] = [];
   private activeActivityAuthorizations = 0;
+  private pendingWebSocketAuthorizations = 0;
+  private validatingSocketSessions = false;
   private readonly jobDashboardSockets = new Set<WebSocket>();
   private stopped = false;
   private stopPromise?: Promise<void>;
 
   constructor(
     private readonly db: KondisDatabase,
-    private readonly config: ConfigRepository,
+    private readonly config: Pick<ConfigPort, 'database'>,
     private readonly social: SocialRepository,
+    private readonly credentials: AuthCredentialRepository,
   ) {}
 
   async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
@@ -132,46 +144,95 @@ export class EventRepository implements RealtimePort {
         socket.destroy();
         return;
       }
-      this.socketServer?.handleUpgrade(request, socket, head, (client) => {
-        this.socketServer?.emit('connection', client, request);
-      });
+      void this.handleUpgrade(request, socket, head);
     };
     server.on('upgrade', this.upgradeHandler);
-    this.socketServer.on('connection', (socket, request) => {
-      socket.on('error', () => {
-        // ws completes protocol errors, including oversized payloads, with a close frame.
-      });
-      const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
-      const userId = verifyActivityEventsTicket(ticket, AUTH_SECRET);
-      const isJobDashboard = !userId && Boolean(verifyJobEventsTicket(ticket, AUTH_SECRET));
-      if (!userId && !isJobDashboard) {
-        socket.close(1008, 'Authentication required');
-        return;
-      }
-      if (userId) {
-        this.socketUsers.set(socket, userId);
-      }
-      if (isJobDashboard) {
-        this.jobDashboardSockets.add(socket);
-      }
-      this.socketActivities.set(socket, new Set());
-      if (userId) {
-        this.activityAuthorizationAttempts.set(socket, 0);
-        socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
-      }
-      socket.once('close', () => {
-        this.socketUsers.delete(socket);
-        this.socketActivities.delete(socket);
-        this.pendingActivitySubscriptions.delete(socket);
-        this.activityAuthorizationAttempts.delete(socket);
-        this.cancelQueuedActivityAuthorizations(socket);
-        this.jobDashboardSockets.delete(socket);
-      });
-      socket.send(JSON.stringify({ type: 'connected' }));
-    });
 
     await this.connectListener();
+    this.sessionValidationTimer = setInterval(() => void this.validateSocketSessions(), SESSION_VALIDATION_INTERVAL_MS);
+    this.sessionValidationTimer.unref();
     this.logger.log('Activity events available at /events and /api/v1/events');
+  }
+
+  private async handleUpgrade(request: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
+    if (this.pendingWebSocketAuthorizations >= MAX_PENDING_WEBSOCKET_AUTHORIZATIONS) {
+      socket.write('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    this.pendingWebSocketAuthorizations += 1;
+    try {
+      const ticket = new URL(request.url ?? '', 'http://localhost').searchParams.get('ticket');
+      const authorization = this.credentials
+        .findEventTicket(ticket)
+        .then((verified) => ({ status: 'verified' as const, verified }))
+        .catch((error: unknown) => ({ status: 'error' as const, error }));
+      let timeout: NodeJS.Timeout | undefined;
+      const outcome = await Promise.race([
+        authorization,
+        new Promise<{ status: 'timeout' }>((resolve) => {
+          timeout = setTimeout(() => resolve({ status: 'timeout' }), WEBSOCKET_AUTHORIZATION_TIMEOUT_MS);
+        }),
+      ]);
+      clearTimeout(timeout);
+      if (outcome.status === 'timeout') {
+        socket.write('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n');
+        socket.destroy();
+        await authorization;
+        return;
+      }
+      if (outcome.status === 'error') {
+        throw outcome.error;
+      }
+      const { verified } = outcome;
+      if (!verified || (verified.scope === 'activity-events' && !verified.userId)) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+      this.socketServer?.handleUpgrade(request, socket, head, (client) => {
+        this.handleConnection(client, {
+          jobDashboard: verified.scope === 'job-events',
+          sessionId: verified.sessionId,
+          userId: verified.userId ?? undefined,
+        });
+      });
+    } catch (error) {
+      this.logger.warn(`WebSocket authentication failed: ${error instanceof Error ? error.message : String(error)}`);
+      socket.destroy();
+    } finally {
+      this.pendingWebSocketAuthorizations -= 1;
+    }
+  }
+
+  private handleConnection(socket: WebSocket, auth: EventSocketAuth): void {
+    socket.on('error', () => {
+      // ws completes protocol errors, including oversized payloads, with a close frame.
+    });
+    this.socketSessions.set(socket, auth.sessionId);
+    if (auth.userId) {
+      this.socketUsers.set(socket, auth.userId);
+    }
+    if (auth.jobDashboard) {
+      this.jobDashboardSockets.add(socket);
+    }
+    this.socketActivities.set(socket, new Set());
+    void this.validateSocketSession(socket, auth.sessionId);
+    if (auth.userId) {
+      const userId = auth.userId;
+      this.activityAuthorizationAttempts.set(socket, 0);
+      socket.on('message', (message) => void this.subscribeToActivity(socket, userId, String(message)));
+    }
+    socket.once('close', () => {
+      this.socketUsers.delete(socket);
+      this.socketSessions.delete(socket);
+      this.socketActivities.delete(socket);
+      this.pendingActivitySubscriptions.delete(socket);
+      this.activityAuthorizationAttempts.delete(socket);
+      this.cancelQueuedActivityAuthorizations(socket);
+      this.jobDashboardSockets.delete(socket);
+    });
+    socket.send(JSON.stringify({ type: 'connected' }));
   }
 
   stop(): Promise<void> {
@@ -183,6 +244,7 @@ export class EventRepository implements RealtimePort {
     this.stopped = true;
     clearTimeout(this.reconnectTimer);
     clearTimeout(this.jobUpdateTimer);
+    clearInterval(this.sessionValidationTimer);
     if (this.httpServer && this.upgradeHandler) {
       this.httpServer.off('upgrade', this.upgradeHandler);
     }
@@ -196,6 +258,7 @@ export class EventRepository implements RealtimePort {
       });
     }
     this.socketUsers.clear();
+    this.socketSessions.clear();
     this.socketActivities.clear();
     this.pendingActivitySubscriptions.clear();
     this.activityAuthorizationAttempts.clear();
@@ -209,6 +272,44 @@ export class EventRepository implements RealtimePort {
     this.socketServer = undefined;
     this.httpServer = undefined;
     this.upgradeHandler = undefined;
+  }
+
+  private async validateSocketSession(socket: WebSocket, sessionId: string): Promise<void> {
+    try {
+      const active = await this.credentials.findActiveSessionIds([sessionId]);
+      if (this.socketSessions.get(socket) === sessionId && !active.has(sessionId)) {
+        socket.close(1008, 'Session expired');
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not validate WebSocket session: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  private async validateSocketSessions(): Promise<void> {
+    if (this.validatingSocketSessions) {
+      return;
+    }
+    const sessionIds = [...new Set(this.socketSessions.values())];
+    if (sessionIds.length === 0) {
+      return;
+    }
+    this.validatingSocketSessions = true;
+    try {
+      const active = await this.credentials.findActiveSessionIds(sessionIds);
+      for (const [socket, sessionId] of this.socketSessions) {
+        if (!active.has(sessionId)) {
+          socket.close(1008, 'Session expired');
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not validate WebSocket sessions: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      this.validatingSocketSessions = false;
+    }
   }
 
   private async connectListener(): Promise<void> {
@@ -246,6 +347,15 @@ export class EventRepository implements RealtimePort {
   }
 
   private async broadcast(payload: string): Promise<void> {
+    const revokedSessionId = this.revokedSessionId(payload);
+    if (revokedSessionId) {
+      for (const [socket, sessionId] of this.socketSessions) {
+        if (sessionId === revokedSessionId) {
+          socket.close(1008, 'Session revoked');
+        }
+      }
+      return;
+    }
     if (this.isJobUpdate(payload)) {
       for (const client of this.jobDashboardSockets) {
         if (client.readyState === WebSocket.OPEN) {
@@ -282,6 +392,15 @@ export class EventRepository implements RealtimePort {
       return (JSON.parse(payload) as { type?: string }).type === 'job.updated';
     } catch {
       return false;
+    }
+  }
+
+  private revokedSessionId(payload: string): string | undefined {
+    try {
+      const event = JSON.parse(payload) as { type?: string; sessionId?: string };
+      return event.type === 'session.revoked' ? event.sessionId : undefined;
+    } catch {
+      return undefined;
     }
   }
 

@@ -2,22 +2,31 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { QueueCommand, QueueName } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
-import type { JobRepository } from 'src/repositories/job.repository';
+import type { JobAdminPort, JobConsumerPort, JobProducerPort } from 'src/ports/queue.port';
 import { JobService } from 'src/services/job.service';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
+const emptyCounts = () => ({ queued: 0, ready: 0, deferred: 0, active: 0, failed: 0, total: 0 });
+
 const makeJobService = () => {
   const paused = new Set<QueueName>();
   const jobs = {
-    getJobCounts: () => ({ queued: 0, active: 0, completed: 0, failed: 0, total: 0 }),
+    getAllJobCounts: () =>
+      Promise.resolve(
+        Object.fromEntries(Object.values(QueueName).map((queue) => [queue, emptyCounts()])) as Record<
+          QueueName,
+          ReturnType<typeof emptyCounts>
+        >,
+      ),
+    getJobCounts: () => Promise.resolve(emptyCounts()),
     isPaused: (queue: QueueName) => paused.has(queue),
     pause: (queue: QueueName) => void paused.add(queue),
     resume: (queue: QueueName) => void paused.delete(queue),
-  } as unknown as JobRepository;
+  } as unknown as JobProducerPort & JobAdminPort & JobConsumerPort;
   const events = { emit: () => {} } as never;
   return {
-    sut: new JobService(jobs, events, new ConsoleLogger()),
+    sut: new JobService({ admin: jobs, consumer: jobs, producer: jobs }, events, new ConsoleLogger()),
   };
 };
 

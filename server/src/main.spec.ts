@@ -2,7 +2,7 @@ import type { Server } from 'node:http';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ApplicationComposition } from 'src/composition';
+import type { ApplicationComposition } from 'src/composition.node';
 import { createApiRuntime } from 'src/main';
 
 describe(createApiRuntime.name, () => {

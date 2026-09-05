@@ -405,6 +405,10 @@ class ActivityRepository
             api().activities(limit = 1)
         }
 
+        suspend fun logout() {
+            api().logout()
+        }
+
         private suspend fun account(): AccountScope = accountOrNull() ?: error("Sign in before accessing account data")
 
         private suspend fun accountOrNull(): AccountScope? {

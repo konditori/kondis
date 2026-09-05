@@ -6,6 +6,7 @@ export enum HttpStatus {
   CONFLICT = 409,
   PAYLOAD_TOO_LARGE = 413,
   TOO_MANY_REQUESTS = 429,
+  NOT_IMPLEMENTED = 501,
   INTERNAL_SERVER_ERROR = 500,
 }
 
@@ -100,5 +101,11 @@ export class PayloadTooLargeException extends HttpException {
   constructor(response?: string | Record<string, unknown>, descriptionOrOptions?: DescriptionOrOptions) {
     const { description, options } = descriptionAndOptions(descriptionOrOptions, 'Payload Too Large');
     super(namedResponse(response, HttpStatus.PAYLOAD_TOO_LARGE, description), HttpStatus.PAYLOAD_TOO_LARGE, options);
+  }
+}
+
+export class UnsupportedOperationError extends HttpException {
+  constructor(response = 'This operation is not supported by the current backend') {
+    super(namedResponse(response, HttpStatus.NOT_IMPLEMENTED, 'Not Implemented'), HttpStatus.NOT_IMPLEMENTED);
   }
 }

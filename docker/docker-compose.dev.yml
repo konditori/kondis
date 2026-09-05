@@ -134,7 +134,7 @@ services:
       context: ../packages/postgres
       dockerfile: Dockerfile
       args:
-        PG_MAJOR: 18
+        PG_MAJOR: 17
         VECTORCHORD_TAG: 1.1.1
     env_file:
       - .env
@@ -146,7 +146,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     ports:
-      - 5432:5432
+      - 127.0.0.1:5432:5432
     shm_size: 128mb
     healthcheck:
       disable: false

@@ -30,18 +30,18 @@ export const jsonBodyMiddleware = createMiddleware<ApiEnv>(async (context, next)
     throw new PayloadTooLargeException();
   }
 
-  // Read a clone to enforce the limit without reconstructing the Request. The latter
-  // is incompatible with Node 24's native Request private state in Hono's bodyLimit.
   if (contentLength === undefined) {
     const reader = context.req.raw.clone().body?.getReader();
     if (reader) {
       let size = 0;
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          break;
+        }
         size += value.byteLength;
         if (size > JSON_BODY_LIMIT_BYTES) {
-          await reader.cancel();
+          void reader.cancel();
           throw new PayloadTooLargeException();
         }
       }

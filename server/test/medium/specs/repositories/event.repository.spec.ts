@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import type { KondisDatabase } from 'src/types';
 import type { ActivityDto } from 'src/dtos/activity.dto';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
+import type { KondisDatabase } from 'src/types';
 
 import { createMediumTestDatabase, getTestDatabaseConfig, resetMediumTestDatabase } from 'test/medium/test-db';
 
@@ -19,7 +20,12 @@ describe(EventRepository.name, () => {
   });
 
   const setup = () => ({
-    sut: new EventRepository(db, { database: getTestDatabaseConfig() } as never, new SocialRepository(db)),
+    sut: new EventRepository(
+      db,
+      { database: getTestDatabaseConfig() } as never,
+      new SocialRepository(db),
+      new AuthCredentialRepository(db),
+    ),
   });
 
   it('publishes activity events through PostgreSQL notifications', async () => {

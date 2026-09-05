@@ -2,9 +2,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { JobStatus } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
+import type { JobAdminPort } from 'src/ports/queue.port';
 import type { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
-import type { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { StorageService } from 'src/services/storage.service';
 
@@ -30,7 +30,7 @@ describe(StorageService.name, () => {
 
   const setup = () => {
     const repository = new StorageRepository({ storageDir } as ConfigRepository, new CryptoRepository());
-    const jobs = { getReferencedTemporaryPaths: () => new Set<string>() } as unknown as JobRepository;
+    const jobs = { getReferencedTemporaryPaths: () => new Set<string>() } as unknown as JobAdminPort;
     return { sut: new StorageService(repository, jobs, new ConsoleLogger()), repository };
   };
 

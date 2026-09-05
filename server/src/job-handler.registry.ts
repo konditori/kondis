@@ -1,7 +1,8 @@
 import { JobName, QueueName } from 'src/enum';
-import type { JobHandlerDescriptor } from 'src/repositories/job.repository';
+import type { JobHandlerDescriptor } from 'src/jobs/job-handler';
 import type { ActivityImageService } from 'src/services/activity-image.service';
 import type { ActivityService } from 'src/services/activity.service';
+import type { AuthService } from 'src/services/auth.service';
 import type { StorageService } from 'src/services/storage.service';
 import type { UploadService } from 'src/services/upload.service';
 import type { UserService } from 'src/services/user.service';
@@ -9,6 +10,7 @@ import type { UserService } from 'src/services/user.service';
 type JobHandlerRegistryServices = {
   activityService: ActivityService;
   activityImageService: ActivityImageService;
+  authService: AuthService;
   storageService: StorageService;
   uploadService: UploadService;
   userService: UserService;
@@ -17,11 +19,19 @@ type JobHandlerRegistryServices = {
 export const createJobHandlerRegistry = ({
   activityService,
   activityImageService,
+  authService,
   storageService,
   uploadService,
   userService,
 }: JobHandlerRegistryServices) => {
   const handlers: { [T in JobName]: JobHandlerDescriptor<T> } = {
+    [JobName.AuthCredentialCleanup]: {
+      jobName: JobName.AuthCredentialCleanup,
+      queueName: QueueName.BackgroundTask,
+      handler: authService.handleCredentialCleanup.bind(authService),
+      label: 'AuthService.handleCredentialCleanup',
+      cloudConsumer: 'worker',
+    },
     [JobName.ActivityUpload]: {
       jobName: JobName.ActivityUpload,
       queueName: QueueName.BackgroundTask,

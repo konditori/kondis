@@ -13,7 +13,7 @@ import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
 import type { FileRange, OpenFile } from 'src/api/file-response';
 import type { ImageUpload, UploadKind, UploadReader } from 'src/api/uploads';
-import type { ApplicationComposition } from 'src/composition';
+import type { ApplicationComposition } from 'src/composition.node';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
 import type { UploadedFileData } from 'src/types/uploads';
@@ -125,6 +125,7 @@ type NodeApiDependencies = Pick<
   | 'activityService'
   | 'activityImageService'
   | 'authService'
+  | 'authCredentialRepository'
   | 'configRepository'
   | 'jobService'
   | 'liveWorkoutService'
@@ -145,6 +146,7 @@ export const createNodeApiApp = (dependencies: NodeApiDependencies): KondisApiAp
     jobs: dependencies.jobService,
     liveWorkouts: dependencies.liveWorkoutService,
     server: dependencies.serverService,
+    sessions: dependencies.authCredentialRepository,
     social: dependencies.socialService,
     uploads: nodeUploadReader,
     uploadService: dependencies.uploadService,

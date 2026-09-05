@@ -25,3 +25,7 @@ kondis_server    | =============================================================
 ```
 
 Do not share this setup token with anyone but you only need to enter it once to prove you control the server. After entering the correct token you will be able to create the admin account.
+
+For automated provisioning, set `KONDIS_SETUP_TOKEN` to a secret containing
+32-512 characters before the first startup. Generate one with
+`openssl rand -hex 32`; do not commit it or pass it as a command-line argument.

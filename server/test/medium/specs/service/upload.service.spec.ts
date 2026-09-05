@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { JobName, QueueName } from 'src/enum';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { ConsoleLogger } from 'src/logger';
@@ -11,7 +12,6 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { type ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -29,7 +29,7 @@ describe(UploadService.name, () => {
   const logger = new ConsoleLogger();
   const crypto = new CryptoRepository();
   const queue = vi.fn(async () => {});
-  const jobs = { queue } as unknown as JobRepository;
+  const jobs = { queue } as unknown as PgBossQueueAdapter;
 
   let storageDir = '';
   let db: KondisDatabase;
@@ -38,7 +38,7 @@ describe(UploadService.name, () => {
   let storageRepository: StorageRepository;
   let testApp: TestApp;
   let queuedSut: UploadService;
-  let jobsRepository: JobRepository;
+  let jobsRepository: PgBossQueueAdapter;
   let queuedUploadRepository: UploadRepository;
   let queuedStorageRepository: StorageRepository;
   let activityRepository: ActivityRepository;
@@ -66,7 +66,7 @@ describe(UploadService.name, () => {
 
     testApp = await createTestApp();
     queuedSut = testApp.get(UploadService);
-    jobsRepository = testApp.get(JobRepository);
+    jobsRepository = testApp.get(PgBossQueueAdapter);
     queuedUploadRepository = testApp.get(UploadRepository);
     queuedStorageRepository = testApp.get(StorageRepository);
     activityRepository = testApp.get(ActivityRepository);

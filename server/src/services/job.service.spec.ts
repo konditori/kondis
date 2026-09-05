@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
+import type { JobAdminPort, JobConsumerPort, JobProducerPort } from 'src/ports/queue.port';
 import { type EventRepository } from 'src/repositories/event.repository';
-import { type JobRepository } from 'src/repositories/job.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
 import { newTestService } from 'test/utils';
@@ -47,14 +47,14 @@ describe('JobService', () => {
     empty,
     clearFailed,
     getJobHistory,
-  } as unknown as JobRepository;
+  } as unknown as JobProducerPort & JobAdminPort & JobConsumerPort;
+  const queues = { admin: jobRepository, consumer: jobRepository, producer: jobRepository };
 
   const setup = () =>
-    newTestService(
-      JobService,
-      [jobRepository, { emit } as unknown as EventRepository, new ConsoleLogger({ logLevels: [] })],
-      { jobRepository },
-    );
+    newTestService(JobService, [queues, { emit } as unknown as EventRepository, new ConsoleLogger({ logLevels: [] })], {
+      jobRepository,
+      queues,
+    });
 
   const makeService = () => setup().sut;
 

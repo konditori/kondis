@@ -11,6 +11,7 @@ export enum QueueName {
 }
 
 export enum JobName {
+  AuthCredentialCleanup = 'AuthCredentialCleanup',
   ActivityUpload = 'ActivityUpload',
   ActivityMetricCompute = 'ActivityMetricCompute',
   ActivityBestEffortCompute = 'ActivityBestEffortCompute',

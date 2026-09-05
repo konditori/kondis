@@ -1,18 +1,23 @@
-import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Job, JobInsert, JobResult, QueuePolicy, SendOptions } from 'pg-boss';
+import type { Job, JobInsert, JobResult } from 'pg-boss';
 import { PgBoss, fromKysely } from 'pg-boss';
 
+import { JOB_SCHEMA } from 'src/constants';
+import { JobName, JobStatus, QueueName } from 'src/enum';
+import type { AnyJobHandlerDescriptor, JobHandlerDescriptor } from 'src/jobs/job-handler';
 import {
+  CLOUD_JOB_CONSUMER,
+  CRON_JOBS,
   JOB_CONCURRENCY,
   JOB_CRON,
   JOB_EXPIRE_SECONDS,
+  JOB_QUEUE,
   JOB_RETENTION_SECONDS,
   JOB_RETRY_DELAY_SECONDS,
   JOB_RETRY_LIMIT,
-  JOB_SCHEMA,
-} from 'src/constants';
-import { JobName, JobStatus, QueueName } from 'src/enum';
+  QUEUE_POLICY,
+  getJobOptions as getSharedJobOptions,
+} from 'src/jobs/job-semantics';
 import { Logger } from 'src/logger';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import type { KondisTransaction } from 'src/types';
@@ -20,17 +25,6 @@ import { JobCounts, JobHistoryEntry, JobHistoryStatus, JobItem, JobOf } from 'sr
 import { KondisStartupError, asErrorMessage } from 'src/utils/misc';
 
 type StoredJob = { name: JobName; data?: object };
-
-export type JobHandlerDescriptor<T extends JobName = JobName> = {
-  jobName: T;
-  queueName: QueueName;
-  handler: (data: JobOf<T>) => Promise<JobStatus>;
-  label: string;
-};
-
-export type AnyJobHandlerDescriptor = {
-  [T in JobName]: JobHandlerDescriptor<T>;
-}[JobName];
 
 type RegisteredJobHandler = Omit<JobHandlerDescriptor, 'handler'> & {
   handler: (data: never) => Promise<JobStatus>;
@@ -57,34 +51,12 @@ type StoredJobRow = {
 type RawJobCounts = Omit<JobCounts, 'ready'>;
 type StoredJobCounts = RawJobCounts & { name: string };
 
-const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
-  [QueueName.ActivityParsing]: 'exclusive',
-  [QueueName.BackgroundTask]: 'exclusive',
-  [QueueName.ImageProcessing]: 'standard',
-  [QueueName.Storage]: 'standard',
-};
-
-const CRON_JOBS: { item: JobItem; cron: string }[] = [
-  {
-    item: { name: JobName.ActivityParseQueueAll, data: { force: false } },
-    cron: '30 3 * * *',
-  },
-  {
-    item: { name: JobName.TemporaryFileCleanup, data: {} },
-    cron: '0 4 * * *',
-  },
-  {
-    item: { name: JobName.ActivityImageGenerateQueueAll, data: { force: false } },
-    cron: '30 4 * * *',
-  },
-];
-
 const COMPLETION_POLL_MS = 100;
 const WORKER_BATCH_SIZE = 25;
 
 const deadLetterName = (queue: QueueName): string => `${queue}.deadLetter`;
 
-export class JobRepository {
+export class PgBossQueueAdapter {
   private readonly handlers = new Map<JobName, RegisteredJobHandler>();
   private readonly pausedQueues = new Set<QueueName>();
 
@@ -95,7 +67,7 @@ export class JobRepository {
   constructor(
     private readonly config: ConfigRepository,
     private readonly consumeJobs: boolean,
-    private readonly logger: Pick<Logger, 'error' | 'log' | 'verbose' | 'warn'> = new Logger(JobRepository.name),
+    private readonly logger: Pick<Logger, 'error' | 'log' | 'verbose' | 'warn'> = new Logger(PgBossQueueAdapter.name),
   ) {}
 
   setup(descriptors: readonly AnyJobHandlerDescriptor[]): void {
@@ -109,6 +81,18 @@ export class JobRepository {
         );
       }
 
+      if (descriptor.queueName !== JOB_QUEUE[jobName]) {
+        throw new KondisStartupError(
+          `Job handler ${label} routes ${jobName} to ${descriptor.queueName}; shared semantics require ${JOB_QUEUE[jobName]}.`,
+        );
+      }
+      const cloudConsumer = descriptor.cloudConsumer ?? 'node';
+      if (cloudConsumer !== CLOUD_JOB_CONSUMER[jobName]) {
+        throw new KondisStartupError(
+          `Job handler ${label} assigns ${jobName} to the ${cloudConsumer} cloud consumer; shared semantics require ${CLOUD_JOB_CONSUMER[jobName]}.`,
+        );
+      }
+
       this.handlers.set(jobName, descriptor as RegisteredJobHandler);
       this.logger.verbose(`Added job handler: ${jobName} => ${label}`);
     }
@@ -117,7 +101,7 @@ export class JobRepository {
       if (!this.handlers.has(jobName)) {
         throw new KondisStartupError(
           `Failed to find a job handler for JobName.${jobKey} ("${jobName}"). ` +
-            `Register an explicit JobName.${jobKey} handler descriptor before calling JobRepository.setup.`,
+            `Register an explicit JobName.${jobKey} handler descriptor before calling PgBossQueueAdapter.setup.`,
         );
       }
     }
@@ -222,7 +206,14 @@ export class JobRepository {
     );
     const rows = rowGroups.flat();
     const countsByName = new Map(rows.map(({ name, ...counts }) => [name, this.withReadyCount(counts)]));
-    const empty = (): JobCounts => ({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 });
+    const empty = (): JobCounts => ({
+      active: 0,
+      queued: 0,
+      deferred: 0,
+      ready: 0,
+      failed: 0,
+      total: 0,
+    });
 
     return Object.fromEntries(
       queues.map((queue) => {
@@ -407,7 +398,14 @@ export class JobRepository {
   }
 
   private async countJobs(boss: PgBoss, name: string): Promise<JobCounts> {
-    const empty: JobCounts = { active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 };
+    const empty: JobCounts = {
+      active: 0,
+      queued: 0,
+      deferred: 0,
+      ready: 0,
+      failed: 0,
+      total: 0,
+    };
 
     const queue = await boss.getQueue(name);
     if (!queue) {
@@ -442,84 +440,17 @@ export class JobRepository {
   private getQueueName(name: JobName): QueueName {
     const item = this.handlers.get(name);
     if (!item) {
-      throw new Error(`No handler registered for job "${name}"; was JobRepository.setup called?`);
+      throw new Error(`No handler registered for job "${name}"; was PgBossQueueAdapter.setup called?`);
     }
 
     return item.queueName;
   }
 
-  private getJobOptions(item: JobItem): Pick<SendOptions, 'singletonKey' | 'priority'> {
-    switch (item.name) {
-      case JobName.ActivityUpload: {
-        // Disk-backed HTTP uploads do not have a checksum until the worker reads
-        // the staged file. Use the unique temporary path in that case so a batch
-        // of uploads is not collapsed into the singleton key "undefined".
-        return {
-          singletonKey: `${item.name}:${item.data.checksum ?? item.data.storagePath}`,
-        };
-      }
-
-      case JobName.ActivityMetricCompute:
-      case JobName.ActivityBestEffortCompute:
-      case JobName.ActivityRouteMatchCompute:
-      case JobName.ActivityParse: {
-        return {
-          singletonKey: `${item.name}:${item.data.id}`,
-        };
-      }
-
-      case JobName.ActivityManualCreate: {
-        return { singletonKey: `${item.name}:${item.data.id}` };
-      }
-
-      case JobName.ActivityBestEffortRank: {
-        // The queue itself is exclusive, so an empty singleton key silently drops a later
-        // refresh while another is queued or active. Give every request a key; the handler
-        // removes redundant queued refreshes immediately before calculating the rankings.
-        return { singletonKey: `${item.name}:${randomUUID()}`, priority: -1 };
-      }
-
-      case JobName.ActivityDelete: {
-        return { singletonKey: `${item.name}:${item.data.id}` };
-      }
-
-      case JobName.ActivityImageIngest: {
-        return { singletonKey: `${item.name}:${item.data.imageId}` };
-      }
-
-      case JobName.ActivityImageAttach: {
-        return { singletonKey: `${item.name}:${item.data.uploadId}` };
-      }
-
-      case JobName.ActivityImageGenerateThumbnails: {
-        return { singletonKey: `${item.name}:${item.data.id}` };
-      }
-
-      case JobName.ActivityImageGenerateQueueAll: {
-        return { singletonKey: item.name };
-      }
-
-      case JobName.LagomTakeoutImport: {
-        return {};
-      }
-
-      case JobName.UserAvatarUpload: {
-        return {};
-      }
-
-      case JobName.ActivityParseQueueAll: {
-        // A constant key: one full scan at a time, however many times it is requested.
-        return { singletonKey: item.name };
-      }
-
-      case JobName.FileDelete: {
-        return {};
-      }
-
-      case JobName.TemporaryFileCleanup: {
-        return { singletonKey: item.name };
-      }
-    }
+  // Kept as a small compatibility seam for callers that previously inspected
+  // the repository's singleton policy; the implementation is shared by both
+  // queue adapters.
+  private getJobOptions(item: JobItem): ReturnType<typeof getSharedJobOptions> {
+    return getSharedJobOptions(item);
   }
 
   private getBoss(): Promise<PgBoss> {
@@ -581,7 +512,10 @@ export class JobRepository {
         notify: true,
       };
 
-      await boss.createQueue(queue, { ...options, policy: QUEUE_POLICY[queue] });
+      await boss.createQueue(queue, {
+        ...options,
+        policy: QUEUE_POLICY[queue],
+      });
       await boss.updateQueue(queue, options);
     }
   }
@@ -621,7 +555,11 @@ export class JobRepository {
 
     const rankingRefresh = rankingRefreshes.pop();
     for (const duplicate of rankingRefreshes) {
-      results.push({ id: duplicate.id, status: 'completed', output: { status: JobStatus.Skipped } });
+      results.push({
+        id: duplicate.id,
+        status: 'completed',
+        output: { status: JobStatus.Skipped },
+      });
     }
     if (rankingRefresh) {
       results.push(await this.dispatchResult(rankingRefresh));
@@ -635,7 +573,10 @@ export class JobRepository {
       throw new Error('Received a job before workers were started');
     }
 
-    return this.onJobRun({ name: job.data.name, data: job.data.data } as JobItem);
+    return this.onJobRun({
+      name: job.data.name,
+      data: job.data.data,
+    } as JobItem);
   }
 
   private async dispatchResult(job: Job<StoredJob>): Promise<JobResult> {
@@ -643,7 +584,11 @@ export class JobRepository {
       const status = await this.dispatch(job);
       return { id: job.id, status: 'completed', output: { status } };
     } catch (error) {
-      return { id: job.id, status: 'failed', output: { message: asErrorMessage(error) } };
+      return {
+        id: job.id,
+        status: 'failed',
+        output: { message: asErrorMessage(error) },
+      };
     }
   }
 

@@ -61,6 +61,10 @@ describe('ConfigRepository', () => {
   });
 
   describe('server defaults', () => {
+    it('does not trust client-controlled proxy headers by default', () => {
+      expect(new ConfigRepository().trustProxyHeaders).toBe(false);
+    });
+
     it('listens on all interfaces by default', () => {
       expect(new ConfigRepository().getEnv().listenAddress).toBe('0.0.0.0');
     });

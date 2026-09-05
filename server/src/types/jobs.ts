@@ -87,6 +87,7 @@ export interface IUserAvatarUploadJob {
 }
 
 export type JobItem =
+  | { name: JobName.AuthCredentialCleanup; data: Record<string, never> }
   | { name: JobName.ActivityUpload; data: IActivityUploadJob }
   | { name: JobName.ActivityMetricCompute; data: IEntityJob }
   | { name: JobName.ActivityBestEffortCompute; data: IEntityJob }

@@ -1,16 +1,17 @@
+import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
-import { JobRepository } from 'src/repositories/job.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -39,6 +40,7 @@ export type CompositionOptions = {
   logLevels?: LogLevel[];
 };
 
+// Node composition intentionally owns every native and self-hosted adapter.
 export const createApplicationComposition = ({
   role,
   configRepository = new ConfigRepository(),
@@ -50,19 +52,20 @@ export const createApplicationComposition = ({
 
   const activityRepository = new ActivityRepository(database);
   const activityImageRepository = new ActivityImageRepository(database);
+  const authCredentialRepository = new AuthCredentialRepository(database);
   const cryptoRepository = new CryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
   const gpxRepository = new GpxRepository(newLogger());
   const liveWorkoutRepository = new LiveWorkoutRepository(database);
-  const rateLimitingRepository = new RateLimitingRepository();
+  const rateLimitingRepository = new RateLimitingRepository(database);
   const socialRepository = new SocialRepository(database);
   const storageRepository = new StorageRepository(configRepository, cryptoRepository);
   const tcxRepository = new TcxRepository(newLogger());
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
-  const eventRepository = new EventRepository(database, configRepository, socialRepository);
-  const jobRepository = new JobRepository(configRepository, consumeJobs, newLogger());
+  const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
+  const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
 
   const importProgressStore = new ImportProgressStore(database);
   const lagomTakeoutParser = new LagomTakeoutParser();
@@ -73,7 +76,7 @@ export const createApplicationComposition = ({
     activityRepository,
     databaseRepository,
     eventRepository,
-    jobRepository,
+    queueAdapter,
     fitRepository,
     gpxRepository,
     tcxRepository,
@@ -88,22 +91,34 @@ export const createApplicationComposition = ({
     storageRepository,
     cryptoRepository,
     databaseRepository,
-    jobRepository,
+    queueAdapter,
     newLogger(),
     socialRepository,
   );
-  const authService = new AuthService(userRepository, configRepository, rateLimitingRepository, cryptoRepository);
-  const jobService = new JobService(jobRepository, eventRepository, newLogger());
+  const authService = new AuthService(
+    userRepository,
+    configRepository,
+    rateLimitingRepository,
+    cryptoRepository,
+    authCredentialRepository,
+    eventRepository,
+    databaseRepository,
+  );
+  const jobService = new JobService(
+    { admin: queueAdapter, consumer: queueAdapter, producer: queueAdapter },
+    eventRepository,
+    newLogger(),
+  );
   const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository);
   const serverService = new ServerService();
   const socialService = new SocialService(socialRepository, database, eventRepository);
-  const storageService = new StorageService(storageRepository, jobRepository, newLogger());
+  const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
   const uploadService = new UploadService(
     uploadRepository,
     storageRepository,
     cryptoRepository,
     databaseRepository,
-    jobRepository,
+    queueAdapter,
     newLogger(),
     lagomTakeoutParser,
     importProgressStore,
@@ -113,10 +128,11 @@ export const createApplicationComposition = ({
   );
   const userService = new UserService(userRepository, socialRepository, storageRepository);
 
-  jobRepository.setup(
+  queueAdapter.setup(
     createJobHandlerRegistry({
       activityService,
       activityImageService,
+      authService,
       storageService,
       uploadService,
       userService,
@@ -130,12 +146,13 @@ export const createApplicationComposition = ({
     configRepository,
     activityRepository,
     activityImageRepository,
+    authCredentialRepository,
     cryptoRepository,
     databaseRepository,
     eventRepository,
     fitRepository,
     gpxRepository,
-    jobRepository,
+    queueAdapter,
     liveWorkoutRepository,
     rateLimitingRepository,
     socialRepository,
@@ -160,12 +177,13 @@ export const createApplicationComposition = ({
     [ConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
     [ActivityImageRepository, activityImageRepository],
+    [AuthCredentialRepository, authCredentialRepository],
     [CryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],
     [EventRepository, eventRepository],
     [FitRepository, fitRepository],
     [GpxRepository, gpxRepository],
-    [JobRepository, jobRepository],
+    [PgBossQueueAdapter, queueAdapter],
     [LiveWorkoutRepository, liveWorkoutRepository],
     [RateLimitingRepository, rateLimitingRepository],
     [SocialRepository, socialRepository],
@@ -206,7 +224,7 @@ export const createApplicationComposition = ({
     close(): Promise<void> {
       shutdown ??= (async () => {
         try {
-          await jobRepository.stop();
+          await queueAdapter.stop();
         } finally {
           try {
             await eventRepository.stop();

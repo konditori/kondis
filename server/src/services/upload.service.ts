@@ -7,7 +7,7 @@ import { BadRequestException, NotFoundException, PayloadTooLargeException } from
 import { LagomTakeoutParser, type LagomTakeoutContents } from 'src/imports/lagom-takeout.parser';
 import { ConsoleLogger } from 'src/logger';
 import type { CryptoPort } from 'src/ports/crypto.port';
-import type { QueuePort } from 'src/ports/queue.port';
+import type { JobProducerPort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
@@ -27,7 +27,7 @@ export class UploadService {
     private readonly storageRepository: StoragePort,
     private readonly cryptoRepository: CryptoPort,
     private readonly databaseRepository: DatabaseRepository,
-    private readonly jobRepository: QueuePort,
+    private readonly jobRepository: JobProducerPort,
     private readonly logger: ConsoleLogger,
     private readonly lagomTakeoutParser: LagomTakeoutParser,
     private readonly importProgressStore: ImportProgressStore,

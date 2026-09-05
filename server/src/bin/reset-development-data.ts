@@ -2,8 +2,8 @@ import { rm } from 'node:fs/promises';
 
 import { sql } from 'kysely';
 import { JOB_SCHEMA } from 'src/constants';
-import { ConfigRepository } from 'src/repositories/config.repository';
 import { createDatabase } from 'src/db/database';
+import { ConfigRepository } from 'src/repositories/config.repository';
 
 const CONFIRMATION_FLAG = '--confirm';
 
@@ -30,6 +30,10 @@ async function resetDevelopmentData(): Promise<void> {
       // while removing data that is created while using the app.
       await sql`
         TRUNCATE TABLE
+          auth_ticket,
+          auth_session,
+          auth_rate_limit,
+          auth_bootstrap,
           notification,
           follow_request,
           user_follow,
@@ -47,7 +51,6 @@ async function resetDevelopmentData(): Promise<void> {
       }
     });
 
-    // These directories only hold resettable data. Avatars deliberately live outside them.
     await Promise.all(
       ['activities', 'images', 'temporary'].map((directory) =>
         rm(config.storageDir + `/${directory}`, { force: true, recursive: true }),

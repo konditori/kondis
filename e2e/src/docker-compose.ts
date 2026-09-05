@@ -26,9 +26,11 @@ const setup = async () => {
     const input = data.toString();
     output += input;
     console.log(input);
-    setupToken ??= output.match(
-      /You will need the following setup token:[\s\S]*?\b([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i,
-    )?.[1];
+    const setupOutput = output.split('You will need the following setup token:', 2)[1];
+    setupToken ??= setupOutput
+      ?.split('\n')
+      .map((line) => line.replace(/^.*?\|/, '').trim())
+      .find(Boolean);
     if (input.includes('Kondis api listening on')) {
       serverReady = true;
     }

@@ -58,6 +58,8 @@ const getEnv = (): EnvData => {
   };
 
   return {
+    setupToken: readEnv('KONDIS_SETUP_TOKEN'),
+    trustProxyHeaders: readBoolean('KONDIS_TRUST_PROXY_HEADERS', false),
     port: readPositiveInteger('KONDIS_PORT', 2293),
     listenAddress: readEnv('KONDIS_LISTEN_ADDRESS', '0.0.0.0'),
     storageDir: readEnv('KONDIS_STORAGE_DIR', '/data'),
@@ -77,6 +79,14 @@ export class ConfigRepository implements ConfigPort {
 
   get port(): number {
     return this.getEnv().port;
+  }
+
+  get setupToken(): string | undefined {
+    return this.getEnv().setupToken;
+  }
+
+  get trustProxyHeaders(): boolean {
+    return this.getEnv().trustProxyHeaders;
   }
 
   get listenAddress(): string {

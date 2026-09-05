@@ -1,11 +1,13 @@
 import { createMiddleware } from 'hono/factory';
 
-import { AUTH_SECRET, type AuthenticatedUser, verifyAccessToken } from 'src/auth';
+import { getAccessToken, type AuthenticatedUser } from 'src/auth';
 import { ForbiddenException } from 'src/errors';
+import type { AuthenticatedSession } from 'src/repositories/auth-credential.repository';
 
 export type ApiEnv = {
   Bindings: ApiBindings;
   Variables: {
+    sessionId: string;
     user: AuthenticatedUser;
   };
 };
@@ -27,8 +29,11 @@ type StoredUser = {
 export type ApiUserLookup = {
   findById: (id: string) => Promise<StoredUser | undefined>;
 };
+export type ApiSessionLookup = {
+  findSession: (token: string) => Promise<AuthenticatedSession | undefined>;
+};
 
-export const createApiAuthMiddleware = (users: ApiUserLookup, isPublic: IsPublicRequest) =>
+export const createApiAuthMiddleware = (sessions: ApiSessionLookup, isPublic: IsPublicRequest) =>
   createMiddleware<ApiEnv>(async (context, next) => {
     if (context.req.matchedRoutes.every(({ method }) => method === 'ALL')) {
       await next();
@@ -39,30 +44,22 @@ export const createApiAuthMiddleware = (users: ApiUserLookup, isPublic: IsPublic
       return;
     }
 
-    const verification = verifyAccessToken(
-      {
-        authorization: context.req.header('Authorization'),
-        cookie: context.req.header('Cookie'),
-        kondisAuthorization: context.req.header('X-Kondis-Authorization'),
-      },
-      AUTH_SECRET,
-    );
-    if (!verification.authenticated) {
-      return context.json({ message: verification.message, error: 'Unauthorized', statusCode: 401 }, 401);
-    }
-
-    const stored = await users.findById(verification.user.id);
-    if (!stored) {
-      return context.json({ message: 'Account no longer exists', error: 'Unauthorized', statusCode: 401 }, 401);
-    }
-
-    context.set('user', {
-      id: stored.id,
-      email: stored.email,
-      role: stored.role,
-      firstName: stored.first_name,
-      lastName: stored.last_name,
+    const token = getAccessToken({
+      authorization: context.req.header('Authorization'),
+      cookie: context.req.header('Cookie'),
+      kondisAuthorization: context.req.header('X-Kondis-Authorization'),
     });
+    if (!token) {
+      return context.json({ message: 'Sign in is required', error: 'Unauthorized', statusCode: 401 }, 401);
+    }
+
+    const session = await sessions.findSession(token);
+    if (!session) {
+      return context.json({ message: 'Invalid or expired access token', error: 'Unauthorized', statusCode: 401 }, 401);
+    }
+
+    context.set('user', session.user);
+    context.set('sessionId', session.id);
     await next();
   });
 
