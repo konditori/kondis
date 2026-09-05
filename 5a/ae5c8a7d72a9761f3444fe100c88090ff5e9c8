@@ -1,0 +1,39 @@
+server/src/composition.worker.ts
+  s_afaf5d260e9975::t_5e76e4d6ba595a 5-6,8-13,15-42,65-84,90-93
+server/src/repositories/crypto.repository.ts
+  s_afaf5d260e9975::t_1364beb97e8a31 26-27
+server/src/api/routes/activity.ts
+  s_053ebf3a18624c::t_eb726829a96ea9 155,181-192
+server/src/api/routes/auth.ts
+  s_053ebf3a18624c::t_2e4305db5a6ca0 219-247,254
+server/src/api/routes/live-workout.ts
+  s_053ebf3a18624c::t_2d35643a0539ca 151-154,164-170
+server/src/api/routes/user.ts
+  s_053ebf3a18624c::t_816bad4c7f268d 49,66-76
+server/src/services/activity.service.ts
+  s_053ebf3a18624c::t_bb4193c001d8e3 41-44,988,993
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5aae5c8a7d72a9761f3444fe100c88090ff5e9c8",
+  "prompts": {},
+  "sessions": {
+    "s_053ebf3a18624c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0732a-172b-7fe1-b9ab-67302f61d6fb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_afaf5d260e9975": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5ca10ba3-b918-4e39-bb5d-035461b8d73e",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
