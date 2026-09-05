@@ -1,0 +1,41 @@
+server/package.json
+  s_053ebf3a18624c::t_370706a528cefc 13
+server/scripts/generate-cloudflare-config.cjs
+  s_053ebf3a18624c::t_36e7ce3e008b0f 38-41
+server/src/api/app.ts
+  s_053ebf3a18624c::t_1639b44d2746ce 46
+server/src/api/route-groups.ts
+  s_053ebf3a18624c::t_517a43e42e1328 11-16,70-73,85-91
+server/src/api/routes/job.spec.ts
+  s_053ebf3a18624c::t_9518219e4fa039 3-4,63-84
+server/src/api/routes/job.ts
+  s_053ebf3a18624c::t_3abe660380e8dd 101,106-110
+server/src/bin/cloud-node-processor.ts
+  s_053ebf3a18624c::t_f1e08cba166a5f 1-37
+server/src/cloudflare/entrypoint.ts
+  s_053ebf3a18624c::t_cd79426979bd07 10,23,59-72
+server/src/composition.cloud-node.ts
+  s_053ebf3a18624c::t_08370515a8197e 1-155
+server/src/composition.worker.ts
+  s_053ebf3a18624c::t_a639d1b459b499 31-32,56-57,100-101
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_053ebf3a18624c::t_fd7c9b224f6fa1 16,50,87
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_053ebf3a18624c::t_a036ae581fce1c 73-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b8d854d06b0bb0120041a30e3ca377ef584b911e",
+  "prompts": {},
+  "sessions": {
+    "s_053ebf3a18624c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0732a-172b-7fe1-b9ab-67302f61d6fb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
