@@ -2,6 +2,8 @@ import type { CloudflareQueueBinding } from 'src/adapters/cloudflare/queue-trans
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
 import { createPortableWorkerHandlers } from 'src/cloudflare/queue-handler';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 
 export type WorkerBindings = {
   HYPERDRIVE: { connectionString: string };
@@ -22,10 +24,15 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   }
   const { db: database, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
   const queueAdapter = new CloudflareQueueAdapter(database);
+  const authCredentialRepository = new AuthCredentialRepository(database);
+  const userRepository = new UserRepository(database);
 
   return {
     close,
     database,
+    authCredentialRepository,
+    userRepository,
+    config: { registrationEnabled: false, trustProxyHeaders: true },
     jobAdmin: queueAdapter,
     jobHandlers: createPortableWorkerHandlers(database),
     jobProducer: queueAdapter,

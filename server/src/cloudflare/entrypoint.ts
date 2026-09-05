@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { createRoute } from '@hono/zod-openapi';
 import type { ExecutionContext } from 'hono';
 
 import {
@@ -16,6 +16,7 @@ import {
 import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
+import { createApiShell } from 'src/api/app';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
 
@@ -38,17 +39,12 @@ const pingRoute = createRoute({
   tags: ['server'],
 });
 
-type WorkerApp = OpenAPIHono<{ Bindings: WorkerEnv }>;
-let app: WorkerApp | undefined;
+type WorkerApp = ReturnType<typeof createApiShell>;
 
-const getApp = (): WorkerApp => {
-  if (app) {
-    return app;
-  }
-
-  const nextApp = new OpenAPIHono<{ Bindings: WorkerEnv }>();
-  nextApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
-  nextApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
+const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationComposition>): WorkerApp => {
+  const requestApp = createApiShell(composition.authCredentialRepository);
+  requestApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
+  requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
     const env = context.env;
     if (!env.HYPERDRIVE || !env.HYPERDRIVE_SPIKE_TOKEN) {
       return context.json({ statusCode: 404, message: 'Not Found' }, 404);
@@ -56,7 +52,6 @@ const getApp = (): WorkerApp => {
     if (context.req.header('Authorization') !== `Bearer ${env.HYPERDRIVE_SPIKE_TOKEN}`) {
       return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);
     }
-
     try {
       return context.json(await runHyperdriveSpike(env.HYPERDRIVE.connectionString), 200);
     } catch (error) {
@@ -64,27 +59,23 @@ const getApp = (): WorkerApp => {
       return context.json({ statusCode: 502, message: 'Hyperdrive spike failed' }, 502);
     }
   });
-  nextApp.get('/api/v1/openapi.json', (context) =>
+  requestApp.get('/api/v1/openapi.json', (context) =>
     context.json(
-      nextApp.getOpenAPIDocument({
+      requestApp.getOpenAPIDocument({
         openapi: '3.0.0',
-        info: {
-          title: 'Kondis API',
-          description: 'Cloudflare Worker API boundary',
-          version: '0.0.0',
-        },
+        info: { title: 'Kondis API', description: 'Cloudflare Worker API boundary', version: '0.0.0' },
         servers: [{ url: '/api/v1' }],
       }),
     ),
   );
-
-  app = nextApp;
-  return nextApp;
+  return requestApp;
 };
 
 export default {
   fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Response | Promise<Response> {
-    return getApp().fetch(request, env, _ctx);
+    const composition = createWorkerInvocationComposition(env);
+    const requestApp = createRequestApp(composition);
+    return Promise.resolve(requestApp.fetch(request, env, _ctx)).finally(() => composition.close());
   },
 
   async queue(batch: WorkerQueueBatch, env: WorkerEnv): Promise<void> {
