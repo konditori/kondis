@@ -1,0 +1,21 @@
+server/src/api/app.ts
+  s_053ebf3a18624c::t_afa27cfb271ae6 4-5,14,49,71-76,91-125
+server/src/api/route-groups.ts
+  s_053ebf3a18624c::t_4ce82711456a4a 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "509b43c6bc24fa282d3972d50eca05385877ae65",
+  "prompts": {},
+  "sessions": {
+    "s_053ebf3a18624c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0732a-172b-7fe1-b9ab-67302f61d6fb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
