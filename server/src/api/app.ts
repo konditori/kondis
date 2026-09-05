@@ -6,7 +6,6 @@ import { registerAllRouteGroups, type ApiRouteGroups } from 'src/api/route-group
 import { RequestValidationError } from 'src/api/validation';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { HttpException } from 'src/errors';
-import type { ConfigPort } from 'src/ports/config.port';
 import { ServerService } from 'src/services/server.service';
 
 export const API_PREFIX = '/api/v1';

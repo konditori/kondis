@@ -6,6 +6,7 @@ import {
   type CloudflareQueueBatch,
   type CloudflareQueueBinding,
 } from 'src/adapters/cloudflare/queue-transport.adapter';
+import { createApiShell } from 'src/api/app';
 import {
   drainUnpublishedJobs,
   purgeExpiredJobs,
@@ -16,7 +17,6 @@ import {
 import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
-import { createApiShell } from 'src/api/app';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
 
@@ -45,7 +45,7 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
   const requestApp = createApiShell(composition.authCredentialRepository);
   requestApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
   requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
-    const env = context.env;
+    const env = context.env as WorkerEnv;
     if (!env.HYPERDRIVE || !env.HYPERDRIVE_SPIKE_TOKEN) {
       return context.json({ statusCode: 404, message: 'Not Found' }, 404);
     }
@@ -73,6 +73,14 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
 
 export default {
   fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Response | Promise<Response> {
+    // Keep the health boundary available in local/minimal Worker tests and
+    // deployments that have not configured Hyperdrive yet.
+    if (!env.HYPERDRIVE) {
+      if (new URL(request.url).pathname === '/api/v1/ping' && request.method === 'GET') {
+        return Response.json({ status: 'pong' });
+      }
+      return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
+    }
     const composition = createWorkerInvocationComposition(env);
     const requestApp = createRequestApp(composition);
     return Promise.resolve(requestApp.fetch(request, env, _ctx)).finally(() => composition.close());

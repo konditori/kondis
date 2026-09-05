@@ -6,11 +6,24 @@ import { registerActivityImageRoutes, type ActivityImageRouteService } from 'src
 import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
 import { registerJobRoutes, type JobRouteService } from 'src/api/routes/job';
 import { registerLiveWorkoutRoutes, type LiveWorkoutRouteService } from 'src/api/routes/live-workout';
-import { registerSocialReadRoutes, type SocialActivityReadService, type SocialReadService } from 'src/api/routes/social';
+import {
+  registerSocialReadRoutes,
+  type SocialActivityReadService,
+  type SocialReadService,
+} from 'src/api/routes/social';
 import { registerSocialMutationRoutes, type SocialMutationService } from 'src/api/routes/social-mutations';
 import { registerUploadRoutes, type UploadRouteService } from 'src/api/routes/upload';
-import { registerUserReadRoutes, type FileReader, type UserAvatarService, type UserReadRepository } from 'src/api/routes/user';
-import { registerUserMutationRoutes, type UserCreationService, type UserMutationService } from 'src/api/routes/user-mutations';
+import {
+  registerUserReadRoutes,
+  type FileReader,
+  type UserAvatarService,
+  type UserReadRepository,
+} from 'src/api/routes/user';
+import {
+  registerUserMutationRoutes,
+  type UserCreationService,
+  type UserMutationService,
+} from 'src/api/routes/user-mutations';
 import type { UploadReader } from 'src/api/uploads';
 import type { ConfigPort } from 'src/ports/config.port';
 
