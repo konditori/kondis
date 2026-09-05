@@ -147,12 +147,13 @@ const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueNam
   return queue;
 };
 
-const parseQueueBindingName = (bindingName: string): { deadLetter: boolean; name: QueueName } | undefined => {
+export const parseQueueBindingName = (bindingName: string): { deadLetter: boolean; name: QueueName } | undefined => {
   for (const name of Object.values(QueueName)) {
-    if (bindingName === `${name}-dlq` || bindingName.endsWith(`-${name}-dlq`)) {
+    const resourceName = name.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    if (bindingName === `${resourceName}-dlq` || bindingName.endsWith(`-${resourceName}-dlq`)) {
       return { deadLetter: true, name };
     }
-    if (bindingName === name || bindingName.endsWith(`-${name}`)) {
+    if (bindingName === resourceName || bindingName.endsWith(`-${resourceName}`)) {
       return { deadLetter: false, name };
     }
   }

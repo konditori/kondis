@@ -11,6 +11,7 @@ docker/data
 coverage
 server/.wrangler/
 server/wrangler.*.generated.json
+server/wrangler-generated-*.json
 
 vite.config.js.timestamp-*
 .pnpm-store

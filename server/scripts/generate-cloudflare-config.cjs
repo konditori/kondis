@@ -13,7 +13,7 @@ const {
 
 const queueBinding = (queue) => `${queue.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}_QUEUE`;
 
-const queueName = (prefix, queue) => `${prefix}-${queue}`;
+const queueName = (prefix, queue) => `${prefix}-${queue.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 
 const parseJsonc = (source) => JSON.parse(source.replace(/\/\/.*$/gm, '').replace(/,\s*([}\]])/g, '$1'));
 

@@ -51,7 +51,8 @@ describe('generateCloudflareConfig', () => {
     expect(config.queues.consumers).toHaveLength(Object.values(QueueName).length * 2);
 
     for (const queue of Object.values(QueueName)) {
-      const name = `kondis-api-staging-${queue}`;
+      const resourceName = queue.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+      const name = `kondis-api-staging-${resourceName}`;
       expect(config.queues.producers).toContainEqual(expect.objectContaining({ queue: name }));
       expect(config.queues.consumers).toContainEqual(
         expect.objectContaining({

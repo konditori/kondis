@@ -30,13 +30,15 @@ const environmentConfig = generateCloudflareConfig({
   hyperdriveId,
   nodeProcessorEnabled: nodeProcessorSetting === 'true',
 });
-const outputPath = resolve(serverDir, `wrangler.${environment}.generated.json`);
+const outputPath = resolve(serverDir, `wrangler-generated-${environment}.json`);
 await writeFile(outputPath, `${JSON.stringify(environmentConfig, null, 2)}\n`);
 
 const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const childEnvironment = { ...process.env };
+delete childEnvironment.CLOUDFLARE_ENV;
 const child = spawn(command, ['exec', 'wrangler', 'deploy', '--config', outputPath], {
   cwd: serverDir,
-  env: process.env,
+  env: childEnvironment,
   stdio: 'inherit',
 });
 child.on('exit', (code, signal) => {

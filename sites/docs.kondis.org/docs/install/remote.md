@@ -73,7 +73,7 @@ Wrangler's supported local binding variable:
 
 ```sh
 export CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE="$KONDIS_CLOUD_DATABASE_URL"
-pnpm exec wrangler dev --config wrangler.staging.generated.json
+pnpm exec wrangler dev --config wrangler-generated-staging.json
 ```
 
 The guarded `GET /api/v1/_internal/hyperdrive-spike` endpoint verifies the
