@@ -10,6 +10,7 @@ import {
 } from 'src/cloudflare/realtime-durable-object';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import { ConsoleLogger } from 'src/logger';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
@@ -54,6 +55,9 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     throw new Error('HYPERDRIVE is required for this Worker invocation');
   }
   const { db: database, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+  const transactions: TransactionPort = {
+    withTransaction: (fn) => database.transaction().execute(fn),
+  };
   const queueAdapter = new CloudflareQueueAdapter(database);
   const storage = env.STORAGE_BUCKET ? new R2StorageAdapter(env.STORAGE_BUCKET) : undefined;
   const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
@@ -77,22 +81,24 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     workerCrypto,
     authCredentialRepository,
     workerEvents,
-    { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+    transactions,
   );
   const activityRepository = new ActivityRepository(database);
+  const uploadRepository = new UploadRepository(database);
   const socialRepository = new SocialRepository(database);
+  const importProgressStore = new ImportProgressStore(database);
   const activityService = new ActivityService(
-    new UploadRepository(database),
-    {} as never,
+    uploadRepository,
+    storage ?? ({} as never),
     activityRepository,
-    { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+    transactions,
     workerEvents,
     queueAdapter,
     new FitRepository(new ConsoleLogger()),
     new GpxRepository(new ConsoleLogger()),
     new TcxRepository(new ConsoleLogger()),
     new ConsoleLogger(),
-    undefined,
+    importProgressStore,
     undefined,
     socialRepository,
   );
@@ -102,14 +108,22 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
         activityRepository,
         storage,
         workerCrypto,
-        { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+        transactions,
         queueAdapter,
         socialRepository,
       )
     : undefined;
-  const importProgressStore = storage ? new ImportProgressStore(database) : undefined;
   const workerUploadService = storage
-    ? new WorkerUploadService(storage, workerCrypto, queueAdapter, importProgressStore!)
+    ? new WorkerUploadService(
+        storage,
+        workerCrypto,
+        queueAdapter,
+        importProgressStore,
+        uploadRepository,
+        activityRepository,
+        transactions,
+        workerEvents,
+      )
     : undefined;
   const workerUserService = storage
     ? new WorkerUserService(userRepository, socialRepository, storage, queueAdapter)
@@ -139,7 +153,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     workerUploadService,
     workerUserService,
     jobAdmin: queueAdapter,
-    jobHandlers: createPortableWorkerHandlers(database),
+    jobHandlers: createPortableWorkerHandlers(database, { activityService, uploadService: workerUploadService }),
     jobProducer: queueAdapter,
   };
 };

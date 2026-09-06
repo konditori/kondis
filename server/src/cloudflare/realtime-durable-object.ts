@@ -20,7 +20,7 @@ export type DurableObjectNamespaceBinding = {
 type DurableObjectStateLike = {
   acceptWebSocket: (socket: HibernatableWebSocket) => void;
   getWebSockets: () => HibernatableWebSocket[];
-  setAlarm: (scheduledTime: number | Date) => Promise<void>;
+  storage: { setAlarm: (scheduledTime: number | Date) => Promise<void> };
 };
 type HibernatableWebSocket = WebSocket & {
   serializeAttachment: (attachment: SocketAttachment) => void;
@@ -274,7 +274,7 @@ export class RealtimeDurableObject {
       .map((socket) => this.attachment(socket)?.sessionExpiresAt)
       .filter((value): value is number => value !== undefined);
     if (expiries.length > 0) {
-      await this.state.setAlarm(Math.min(...expiries));
+      await this.state.storage.setAlarm(Math.min(...expiries));
     }
   }
 }

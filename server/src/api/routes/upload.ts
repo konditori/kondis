@@ -10,7 +10,9 @@ import {
 import type { UploadService } from 'src/services/upload.service';
 import type { UploadedFileData } from 'src/types/uploads';
 
-export type UploadRouteService = Pick<UploadService, 'getLagomTakeoutStatus' | 'uploadActivity' | 'uploadLagomTakeout'>;
+export type ActivityUploadRouteService = Pick<UploadService, 'uploadActivity'>;
+export type TakeoutUploadRouteService = Pick<UploadService, 'getLagomTakeoutStatus' | 'uploadLagomTakeout'>;
+export type UploadRouteService = ActivityUploadRouteService & TakeoutUploadRouteService;
 
 const uploadBody = (description: string) => ({
   required: true as const,
@@ -74,15 +76,22 @@ const statusRoute = createRoute({
   tags: ['uploads'],
 });
 
-export const registerUploadRoutes = (
+export const registerActivityUploadRoute = (
   app: OpenAPIHono<ApiEnv>,
-  service: UploadRouteService,
+  service: ActivityUploadRouteService,
   uploads: UploadReader,
 ): void => {
   app.openapi(activityRoute, async (context) => {
     const file = (await uploads.read(context.req.raw, context.env, 'activity')) as UploadedFileData | undefined;
     return context.json(activityResponse.parse(await service.uploadActivity(file, context.get('user').id)), 201);
   });
+};
+
+export const registerTakeoutUploadRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  service: TakeoutUploadRouteService,
+  uploads: UploadReader,
+): void => {
   app.openapi(takeoutRoute, async (context) => {
     const file = (await uploads.read(context.req.raw, context.env, 'takeout')) as UploadedFileData | undefined;
     return context.json(takeoutResponse.parse(await service.uploadLagomTakeout(file, context.get('user').id)), 201);
@@ -93,4 +102,13 @@ export const registerUploadRoutes = (
       200,
     ),
   );
+};
+
+export const registerUploadRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  service: UploadRouteService,
+  uploads: UploadReader,
+): void => {
+  registerActivityUploadRoute(app, service, uploads);
+  registerTakeoutUploadRoutes(app, service, uploads);
 };

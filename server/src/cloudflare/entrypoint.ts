@@ -10,9 +10,10 @@ import { createWorkerFileReader } from 'src/adapters/cloudflare/storage.adapter'
 import { workerUploadReader } from 'src/adapters/cloudflare/upload.adapter';
 import { createApiShell } from 'src/api/app';
 import {
+  registerWorkerActivityUploadRoute,
+  registerWorkerNodeStorageMutationRouteGroups,
   registerWorkerPortableRouteGroups,
   registerWorkerQueueMutationRoutes,
-  registerWorkerStorageMutationRouteGroups,
   registerWorkerStorageReadRouteGroups,
 } from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
@@ -27,6 +28,7 @@ import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
+import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
@@ -84,8 +86,11 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
       userService: composition.workerUserService,
     };
     registerWorkerStorageReadRouteGroups(requestApp, storageRoutes);
+    if (composition.queueBindingsConfigured) {
+      registerWorkerActivityUploadRoute(requestApp, storageRoutes);
+    }
     if (composition.cloudNodeProcessorEnabled && composition.queueBindingsConfigured) {
-      registerWorkerStorageMutationRouteGroups(requestApp, storageRoutes);
+      registerWorkerNodeStorageMutationRouteGroups(requestApp, storageRoutes);
     }
   }
   requestApp.post('/api/v1/_internal/auth-credential-cleanup', async (context) => {
@@ -166,7 +171,19 @@ export default {
       return Promise.resolve(handleRealtimeUpgrade(request, composition, env)).finally(() => composition.close());
     }
     const requestApp = createRequestApp(composition);
-    return Promise.resolve(requestApp.fetch(request, env, _ctx)).finally(() => composition.close());
+    return Promise.resolve(requestApp.fetch(request, env, _ctx))
+      .then((response) => {
+        if (
+          response.ok &&
+          request.method === 'POST' &&
+          new URL(request.url).pathname.endsWith('/upload/activity') &&
+          composition.queueBindingsConfigured
+        ) {
+          _ctx.waitUntil(dispatchWorkerJobs(env));
+        }
+        return response;
+      })
+      .finally(() => composition.close());
   },
 
   async queue(batch: WorkerQueueBatch, env: WorkerEnv): Promise<void> {
@@ -175,7 +192,7 @@ export default {
     }
     const composition = createWorkerInvocationComposition(env);
     try {
-      const transport = new CloudflareQueueTransportAdapter();
+      const transport = createQueueTransport(env);
       const queue = parseQueueBindingName(batch.queue);
       if (!queue) {
         throw new Error(`Unexpected Cloudflare Queue consumer binding: ${batch.queue}`);
@@ -196,6 +213,7 @@ export default {
           composition.realtime,
         );
       }
+      await drainUnpublishedJobs(composition.database, transport);
     } finally {
       await composition.close();
     }
@@ -212,12 +230,7 @@ export default {
         const reclaimed = await reclaimStaleJobs(db);
         await recoverOrphanedPublishedJobs(db);
         await purgeExpiredJobs(db);
-        const transport = new CloudflareQueueTransportAdapter({
-          [QueueName.ActivityParsing]: requiredQueue(env.ACTIVITY_PARSING_QUEUE, QueueName.ActivityParsing),
-          [QueueName.BackgroundTask]: requiredQueue(env.BACKGROUND_TASK_QUEUE, QueueName.BackgroundTask),
-          [QueueName.ImageProcessing]: requiredQueue(env.IMAGE_PROCESSING_QUEUE, QueueName.ImageProcessing),
-          [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),
-        });
+        const transport = createQueueTransport(env);
         await drainUnpublishedJobs(db, transport);
         if (reclaimed > 0) {
           await composition.realtime.emit('JobUpdated');
@@ -267,6 +280,23 @@ const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueNam
     throw new Error(`Missing Cloudflare Queue binding for ${name}`);
   }
   return queue;
+};
+
+const createQueueTransport = (env: WorkerEnv): CloudflareQueueTransportAdapter =>
+  new CloudflareQueueTransportAdapter({
+    [QueueName.ActivityParsing]: requiredQueue(env.ACTIVITY_PARSING_QUEUE, QueueName.ActivityParsing),
+    [QueueName.BackgroundTask]: requiredQueue(env.BACKGROUND_TASK_QUEUE, QueueName.BackgroundTask),
+    [QueueName.ImageProcessing]: requiredQueue(env.IMAGE_PROCESSING_QUEUE, QueueName.ImageProcessing),
+    [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),
+  });
+
+const dispatchWorkerJobs = async (env: WorkerEnv): Promise<void> => {
+  const { db, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+  try {
+    await drainUnpublishedJobs(db, createQueueTransport(env));
+  } finally {
+    await close();
+  }
 };
 
 export const parseQueueBindingName = (bindingName: string): { deadLetter: boolean; name: QueueName } | undefined => {

@@ -12,6 +12,15 @@ import type { UploadService } from 'src/services/upload.service';
 import type { UserService } from 'src/services/user.service';
 
 const success = () => vi.fn(() => Promise.resolve(JobStatus.Success));
+const WORKER_JOB_NAMES = [
+  JobName.AuthCredentialCleanup,
+  JobName.ActivityUpload,
+  JobName.ActivityParse,
+  JobName.ActivityMetricCompute,
+  JobName.ActivityBestEffortCompute,
+  JobName.ActivityBestEffortRank,
+  JobName.ActivityRouteMatchCompute,
+];
 
 const setup = () => {
   const activityService = {
@@ -64,6 +73,9 @@ describe('createJobHandlerRegistry', () => {
       expect(handler.queueName).toBe(JOB_QUEUE[handler.jobName]);
       expect(handler.cloudConsumer ?? 'node').toBe(CLOUD_JOB_CONSUMER[handler.jobName]);
     }
+    for (const jobName of WORKER_JOB_NAMES) {
+      expect(handlers.find((handler) => handler.jobName === jobName)?.cloudConsumer).toBe('worker');
+    }
     expect(queues).toEqual({
       [JobName.AuthCredentialCleanup]: QueueName.BackgroundTask,
       [JobName.ActivityUpload]: QueueName.BackgroundTask,
@@ -100,7 +112,9 @@ describe('createJobHandlerRegistry', () => {
     const { handlers } = setup();
     const pollingHandlers = createPollingJobHandlers(handlers);
 
-    expect(pollingHandlers[JobName.AuthCredentialCleanup]).toBeUndefined();
+    for (const jobName of WORKER_JOB_NAMES) {
+      expect(pollingHandlers[jobName]).toBeUndefined();
+    }
     expect(Object.keys(pollingHandlers).sort()).toEqual(
       Object.values(JobName)
         .filter((jobName) => CLOUD_JOB_CONSUMER[jobName] === 'node')

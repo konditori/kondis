@@ -62,7 +62,7 @@ describe(RealtimeDurableObject.name, () => {
     const state = {
       acceptWebSocket: vi.fn(),
       getWebSockets: () => [admin, user],
-      setAlarm: vi.fn(),
+      storage: { setAlarm: vi.fn() },
     };
     const hub = new RealtimeDurableObject(state as never, {});
 

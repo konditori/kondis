@@ -10,12 +10,15 @@ import {
 } from 'src/ports/job-transport.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import type { ActivityService } from 'src/services/activity.service';
+import type { WorkerUploadService } from 'src/services/worker-upload.service';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
 
 const UUID_PATTERN = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i;
 const MAX_STORED_ERROR_LENGTH = 4096;
+const unavailableWorkerStorage = () => Promise.reject(new Error('STORAGE_BUCKET is required for activity processing'));
 
 export type CloudJobHandler = (data: never) => Promise<JobStatus>;
 export type CloudJobHandlers = Partial<Record<JobName, CloudJobHandler>>;
@@ -226,13 +229,42 @@ export const handleDeadLetterBatch = async (
   }
 };
 
-export const createPortableWorkerHandlers = (db: KondisDatabase): CloudJobHandlers => {
+type PortableWorkerServices = {
+  activityService?: Pick<
+    ActivityService,
+    | 'handleActivityBestEffortCompute'
+    | 'handleActivityBestEffortRank'
+    | 'handleActivityMetricCompute'
+    | 'handleActivityParse'
+    | 'handleActivityRouteMatchCompute'
+  >;
+  uploadService?: Pick<WorkerUploadService, 'handleActivityUpload'>;
+};
+
+export const createPortableWorkerHandlers = (
+  db: KondisDatabase,
+  services: PortableWorkerServices = {},
+): CloudJobHandlers => {
   const credentials = new AuthCredentialRepository(db);
   const handlers: CloudJobHandlers = {
     [JobName.AuthCredentialCleanup]: async () => {
       await credentials.deleteExpired();
       return JobStatus.Success;
     },
+    [JobName.ActivityUpload]:
+      services.uploadService?.handleActivityUpload.bind(services.uploadService) ?? unavailableWorkerStorage,
+    [JobName.ActivityParse]:
+      services.activityService?.handleActivityParse.bind(services.activityService) ?? unavailableWorkerStorage,
+    [JobName.ActivityMetricCompute]:
+      services.activityService?.handleActivityMetricCompute.bind(services.activityService) ?? unavailableWorkerStorage,
+    [JobName.ActivityBestEffortCompute]:
+      services.activityService?.handleActivityBestEffortCompute.bind(services.activityService) ??
+      unavailableWorkerStorage,
+    [JobName.ActivityBestEffortRank]:
+      services.activityService?.handleActivityBestEffortRank.bind(services.activityService) ?? unavailableWorkerStorage,
+    [JobName.ActivityRouteMatchCompute]:
+      services.activityService?.handleActivityRouteMatchCompute.bind(services.activityService) ??
+      unavailableWorkerStorage,
   };
 
   for (const jobName of Object.values(JobName)) {

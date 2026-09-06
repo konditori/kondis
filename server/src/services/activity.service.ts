@@ -9,9 +9,9 @@ import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { DatabaseRepository } from 'src/repositories/database.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -74,7 +74,7 @@ export class ActivityService {
     private readonly uploadRepository: UploadRepository,
     private readonly storageRepository: StoragePort,
     private readonly activityRepository: ActivityRepository,
-    private readonly databaseRepository: DatabaseRepository,
+    private readonly databaseRepository: TransactionPort,
     private readonly eventRepository: RealtimePort,
     private readonly jobRepository: JobProducerPort,
     private readonly fitRepository: FitRepository,

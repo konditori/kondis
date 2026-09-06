@@ -7,9 +7,9 @@ import { BadRequestException, NotFoundException, PayloadTooLargeException } from
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import type { StoragePort } from 'src/ports/storage.port';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import type { DatabaseRepository } from 'src/repositories/database.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisTransaction } from 'src/types';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
@@ -25,7 +25,7 @@ export class WorkerActivityImageService {
     private readonly activities: ActivityRepository,
     private readonly storage: StoragePort,
     private readonly crypto: CryptoPort,
-    private readonly database: DatabaseRepository,
+    private readonly database: TransactionPort,
     private readonly jobs: JobProducerPort,
     private readonly social: SocialRepository,
   ) {}

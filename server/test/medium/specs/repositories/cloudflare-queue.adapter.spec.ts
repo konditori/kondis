@@ -17,6 +17,10 @@ const upload = (storagePath = 'temporary/activity.gpx'): JobItem => ({
   name: JobName.ActivityUpload,
   data: { originalName: 'activity.gpx', storagePath },
 });
+const nodeJob: JobItem = {
+  name: JobName.ActivityDelete,
+  data: { id: '00000000-0000-4000-8000-000000000001' },
+};
 
 describe(CloudflareQueueAdapter.name, () => {
   let db: KondisDatabase;
@@ -62,18 +66,19 @@ describe(CloudflareQueueAdapter.name, () => {
     );
   });
 
-  it('persists the cloud consumer so Node jobs never reach Worker queues', async () => {
-    await jobs.queueAll([upload(), { name: JobName.AuthCredentialCleanup, data: {} }]);
+  it('persists the configured cloud consumer for each job', async () => {
+    await jobs.queueAll([upload(), nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
 
     const rows = await db.selectFrom('background_job').select(['name', 'consumer']).orderBy('name').execute();
     expect(rows).toEqual([
-      { name: JobName.ActivityUpload, consumer: 'node' },
+      { name: JobName.ActivityDelete, consumer: 'node' },
+      { name: JobName.ActivityUpload, consumer: 'worker' },
       { name: JobName.AuthCredentialCleanup, consumer: 'worker' },
     ]);
   });
 
   it('dispatches Worker jobs in a batch and leaves Node jobs for the polling processor', async () => {
-    await jobs.queueAll([upload(), { name: JobName.AuthCredentialCleanup, data: {} }]);
+    await jobs.queueAll([nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
     const sent: JobDeliveryEnvelope[] = [];
     const transport = new CloudflareQueueTransportAdapter({
       [QueueName.BackgroundTask]: {
@@ -137,10 +142,10 @@ describe(CloudflareQueueAdapter.name, () => {
   });
 
   it('lets the polling processor claim only Node-owned jobs', async () => {
-    await jobs.queueAll([upload(), { name: JobName.AuthCredentialCleanup, data: {} }]);
+    await jobs.queueAll([nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
 
     await expect(claimNextPollingJob(db, QueueName.BackgroundTask)).resolves.toMatchObject({
-      name: JobName.ActivityUpload,
+      name: JobName.ActivityDelete,
       queue: QueueName.BackgroundTask,
       lease_id: expect.any(String),
     });

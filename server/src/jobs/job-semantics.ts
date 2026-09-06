@@ -6,12 +6,12 @@ export type QueuePolicy = 'exclusive' | 'standard';
 
 export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
   [JobName.AuthCredentialCleanup]: 'worker',
-  [JobName.ActivityUpload]: 'node',
-  [JobName.ActivityMetricCompute]: 'node',
-  [JobName.ActivityBestEffortCompute]: 'node',
-  [JobName.ActivityBestEffortRank]: 'node',
-  [JobName.ActivityRouteMatchCompute]: 'node',
-  [JobName.ActivityParse]: 'node',
+  [JobName.ActivityUpload]: 'worker',
+  [JobName.ActivityMetricCompute]: 'worker',
+  [JobName.ActivityBestEffortCompute]: 'worker',
+  [JobName.ActivityBestEffortRank]: 'worker',
+  [JobName.ActivityRouteMatchCompute]: 'worker',
+  [JobName.ActivityParse]: 'worker',
   [JobName.ActivityManualCreate]: 'node',
   [JobName.ActivityParseQueueAll]: 'node',
   [JobName.ActivityDelete]: 'node',
