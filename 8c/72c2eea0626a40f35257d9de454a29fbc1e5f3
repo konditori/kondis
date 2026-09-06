@@ -1,0 +1,35 @@
+server/src/cloudflare/entrypoint.ts
+  s_54a528b40e9542::t_7f7b4a5200cfd1 13-14,31,89-91,93,174-186,195,216,233,285-301
+server/src/cloudflare/queue-handler.ts
+  s_54a528b40e9542::t_dc10ce85d28400 13-14,21,232-247,254-267
+server/src/job-handler.registry.spec.ts
+  s_cf1be3ed1e09c7::t_cfd37dec504da8 15-23,76-78,115-117
+server/src/job-handler.registry.ts
+  s_cf1be3ed1e09c7::t_b6d42894806142 40,47,54,61,68,75
+server/src/schema/migrations/1788558664155-MoveFitJobsToWorker.ts
+  s_cf1be3ed1e09c7::t_d0630192e6b312 1-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8c72c2eea0626a40f35257d9de454a29fbc1e5f3",
+  "prompts": {},
+  "sessions": {
+    "s_54a528b40e9542": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f89b19d1affepF3C5328T7nrDf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_cf1be3ed1e09c7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f8787e439ffePm1X3JsqMN0Nuh",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
