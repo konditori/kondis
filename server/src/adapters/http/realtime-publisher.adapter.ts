@@ -18,7 +18,9 @@ export class HttpRealtimePublisherAdapter implements RealtimePort {
         headers: { Authorization: `Bearer ${this.token}`, 'content-type': 'application/json' },
         body: JSON.stringify(serializeRealtimeEvent(event, ...args)),
       });
-      if (!response.ok) {throw new Error(`Realtime publisher returned ${response.status}`);}
+      if (!response.ok) {
+        throw new Error(`Realtime publisher returned ${response.status}`);
+      }
     } catch (error) {
       console.warn(`Realtime event ${event} was not delivered`, error);
     }

@@ -186,7 +186,9 @@ export const handleQueueBatch = async (
     delivery.acknowledge();
   }
   // One update per Queue batch prevents state-change storms in admin dashboards.
-  if (changed) {await realtime?.emit('JobUpdated');}
+  if (changed) {
+    await realtime?.emit('JobUpdated');
+  }
 };
 
 export const handleDeadLetterBatch = async (
@@ -219,7 +221,9 @@ export const handleDeadLetterBatch = async (
     changed = true;
     delivery.acknowledge();
   }
-  if (changed) {await realtime?.emit('JobUpdated');}
+  if (changed) {
+    await realtime?.emit('JobUpdated');
+  }
 };
 
 export const createPortableWorkerHandlers = (db: KondisDatabase): CloudJobHandlers => {

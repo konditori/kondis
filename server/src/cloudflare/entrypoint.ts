@@ -101,17 +101,21 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
   });
   requestApp.post('/api/v1/_internal/realtime-publish', async (context) => {
     const env = context.env as WorkerEnv;
-    if (!env.REALTIME || !env.KONDIS_REALTIME_PUBLISH_TOKEN)
-      {return context.json({ statusCode: 404, message: 'Not Found' }, 404);}
-    if (context.req.header('Authorization') !== `Bearer ${env.KONDIS_REALTIME_PUBLISH_TOKEN}`)
-      {return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);}
+    if (!env.REALTIME || !env.KONDIS_REALTIME_PUBLISH_TOKEN) {
+      return context.json({ statusCode: 404, message: 'Not Found' }, 404);
+    }
+    if (context.req.header('Authorization') !== `Bearer ${env.KONDIS_REALTIME_PUBLISH_TOKEN}`) {
+      return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);
+    }
     let event: unknown;
     try {
       event = await context.req.json();
     } catch {
       return context.json({ statusCode: 400, message: 'Bad Request' }, 400);
     }
-    if (!isWebsocketEvent(event)) {return context.json({ statusCode: 400, message: 'Bad Request' }, 400);}
+    if (!isWebsocketEvent(event)) {
+      return context.json({ statusCode: 400, message: 'Bad Request' }, 400);
+    }
     const target = env.REALTIME.get(env.REALTIME.idFromName(REALTIME_DURABLE_OBJECT_NAME));
     const response = await target.fetch('https://realtime.internal/publish', {
       method: 'POST',
@@ -215,7 +219,9 @@ export default {
           [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),
         });
         await drainUnpublishedJobs(db, transport);
-        if (reclaimed > 0) {await composition.realtime.emit('JobUpdated');}
+        if (reclaimed > 0) {
+          await composition.realtime.emit('JobUpdated');
+        }
       } else {
         await runScheduledCron(db, event.cron);
       }
