@@ -5,16 +5,10 @@ import pg from 'pg';
 import { WebSocket, WebSocketServer } from 'ws';
 import { z } from 'zod';
 
-import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
-import type {
-  ActivityCommentEvent,
-  ArgsOf,
-  EmitEvent,
-  NotificationCreatedEvent,
-  RealtimePort,
-} from 'src/ports/realtime.port';
+import type { ArgsOf, EmitEvent, RealtimePort } from 'src/ports/realtime.port';
+import { eventSerializers, type WebsocketEvent } from 'src/realtime/protocol';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
@@ -38,46 +32,6 @@ type ActivityAuthorizationWaiter = {
   resolve: (release: (() => void) | undefined) => void;
 };
 type EventSocketAuth = { jobDashboard: boolean; sessionId: string; userId?: string };
-
-type WebsocketEvent =
-  | { type: 'session.revoked'; sessionId: string }
-  | { type: 'job.updated' }
-  | { type: 'activity.created' | 'activity.updated'; activity: ActivityDto }
-  | {
-      type: 'activity.upload.skipped';
-      activity: Pick<ActivityDto, 'id' | 'name' | 'sport'>;
-      uploadFileName: string;
-    }
-  | { type: 'activity.comment.created'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
-  | { type: 'activity.comment.updated'; activity: Pick<ActivityDto, 'id'>; comment: ActivityCommentEvent }
-  | { type: 'activity.comment.deleted'; activity: Pick<ActivityDto, 'id'>; commentId: string }
-  | { type: 'activity.like.updated'; activity: { id: string; likeCount: number } }
-  | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> }
-  | { type: 'notification.created'; notification: NotificationCreatedEvent }
-  | { type: 'notifications.read'; userId: string; readAt: string };
-
-type EventSerializers = {
-  [T in EmitEvent]: (...args: ArgsOf<T>) => WebsocketEvent;
-};
-
-const eventSerializers: EventSerializers = {
-  SessionRevoked: (sessionId) => ({ type: 'session.revoked', sessionId }),
-  JobUpdated: () => ({ type: 'job.updated' }),
-  ActivityCreate: (activity) => ({ type: 'activity.created', activity }),
-  ActivityUploadSkipped: (activity, uploadFileName) => ({
-    type: 'activity.upload.skipped',
-    activity,
-    uploadFileName,
-  }),
-  ActivityUpdate: (activity) => ({ type: 'activity.updated', activity }),
-  ActivityCommentCreated: (activity, comment) => ({ type: 'activity.comment.created', activity, comment }),
-  ActivityCommentUpdated: (activity, comment) => ({ type: 'activity.comment.updated', activity, comment }),
-  ActivityCommentDeleted: (activity, commentId) => ({ type: 'activity.comment.deleted', activity, commentId }),
-  ActivityLikeUpdated: (activity) => ({ type: 'activity.like.updated', activity }),
-  ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
-  NotificationCreated: (notification) => ({ type: 'notification.created', notification }),
-  NotificationsRead: (notification) => ({ type: 'notifications.read', ...notification }),
-};
 
 export class EventRepository implements RealtimePort {
   private readonly logger = new Logger(EventRepository.name);

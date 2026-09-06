@@ -64,10 +64,11 @@ describe(AuthCredentialRepository.name, () => {
     const setupTicket = await credentials.createTicket('initial-setup');
 
     await expect(credentials.findTicket(eventTicket.token, 'activity-events')).resolves.toEqual({ userId: user.id });
-    await expect(credentials.findEventTicket(eventTicket.token)).resolves.toEqual({
+    await expect(credentials.findEventTicket(eventTicket.token)).resolves.toMatchObject({
       scope: 'activity-events',
       sessionId: session!.id,
       userId: user.id,
+      sessionExpiresAt: expect.any(Date),
     });
     await expect(credentials.findTicket(eventTicket.token, 'job-events')).resolves.toBeUndefined();
     await expect(credentials.consumeTicket(setupTicket.token, 'initial-setup')).resolves.toEqual({ userId: null });

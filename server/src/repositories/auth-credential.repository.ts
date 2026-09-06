@@ -198,14 +198,17 @@ export class AuthCredentialRepository {
 
   async findEventTicket(
     token: string | null,
-  ): Promise<{ scope: 'activity-events' | 'job-events'; sessionId: string; userId: string | null } | undefined> {
+  ): Promise<
+    | { scope: 'activity-events' | 'job-events'; sessionId: string; userId: string | null; sessionExpiresAt: Date }
+    | undefined
+  > {
     if (!token || !TOKEN_PATTERN.test(token)) {
       return undefined;
     }
     const ticket = await this.db
       .selectFrom('auth_ticket')
       .innerJoin('auth_session', 'auth_session.id', 'auth_ticket.session_id')
-      .select(['auth_ticket.scope', 'auth_ticket.session_id'])
+      .select(['auth_ticket.scope', 'auth_ticket.session_id', 'auth_session.expires_at as session_expires_at'])
       .select('auth_ticket.user_id')
       .where('auth_ticket.token_hash', '=', await hashToken(token))
       .where('auth_ticket.scope', 'in', ['activity-events', 'job-events'])
@@ -213,7 +216,12 @@ export class AuthCredentialRepository {
       .where('auth_session.expires_at', '>', new Date())
       .executeTakeFirst();
     return ticket && ticket.scope !== 'initial-setup' && ticket.session_id
-      ? { scope: ticket.scope, sessionId: ticket.session_id, userId: ticket.user_id }
+      ? {
+          scope: ticket.scope,
+          sessionId: ticket.session_id,
+          userId: ticket.user_id,
+          sessionExpiresAt: new Date(ticket.session_expires_at),
+        }
       : undefined;
   }
 

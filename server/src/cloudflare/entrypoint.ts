@@ -25,9 +25,11 @@ import {
 } from 'src/cloudflare/dispatcher';
 import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
+import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
+import { isWebsocketEvent } from 'src/realtime/protocol';
 
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
 
@@ -97,6 +99,27 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
     await composition.jobProducer.queue({ name: JobName.AuthCredentialCleanup, data: {} });
     return context.body(null, 202);
   });
+  requestApp.post('/api/v1/_internal/realtime-publish', async (context) => {
+    const env = context.env as WorkerEnv;
+    if (!env.REALTIME || !env.KONDIS_REALTIME_PUBLISH_TOKEN)
+      {return context.json({ statusCode: 404, message: 'Not Found' }, 404);}
+    if (context.req.header('Authorization') !== `Bearer ${env.KONDIS_REALTIME_PUBLISH_TOKEN}`)
+      {return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);}
+    let event: unknown;
+    try {
+      event = await context.req.json();
+    } catch {
+      return context.json({ statusCode: 400, message: 'Bad Request' }, 400);
+    }
+    if (!isWebsocketEvent(event)) {return context.json({ statusCode: 400, message: 'Bad Request' }, 400);}
+    const target = env.REALTIME.get(env.REALTIME.idFromName(REALTIME_DURABLE_OBJECT_NAME));
+    const response = await target.fetch('https://realtime.internal/publish', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(event),
+    });
+    return context.body(null, response.ok ? 204 : 502);
+  });
   requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
     const env = context.env as WorkerEnv;
     if (!env.HYPERDRIVE || !env.HYPERDRIVE_SPIKE_TOKEN) {
@@ -154,13 +177,19 @@ export default {
         throw new Error(`Unexpected Cloudflare Queue consumer binding: ${batch.queue}`);
       }
       if (queue.deadLetter) {
-        await handleDeadLetterBatch(transport.toDeliveryBatch(batch), composition.database, queue.name);
+        await handleDeadLetterBatch(
+          transport.toDeliveryBatch(batch),
+          composition.database,
+          queue.name,
+          composition.realtime,
+        );
       } else {
         await handleQueueBatch(
           transport.toDeliveryBatch(batch),
           composition.database,
           composition.jobHandlers,
           queue.name,
+          composition.realtime,
         );
       }
     } finally {
@@ -176,7 +205,7 @@ export default {
     const db = composition.database;
     try {
       if (event.cron === '* * * * *') {
-        await reclaimStaleJobs(db);
+        const reclaimed = await reclaimStaleJobs(db);
         await recoverOrphanedPublishedJobs(db);
         await purgeExpiredJobs(db);
         const transport = new CloudflareQueueTransportAdapter({
@@ -186,6 +215,7 @@ export default {
           [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),
         });
         await drainUnpublishedJobs(db, transport);
+        if (reclaimed > 0) {await composition.realtime.emit('JobUpdated');}
       } else {
         await runScheduledCron(db, event.cron);
       }
@@ -212,11 +242,12 @@ const handleRealtimeUpgrade = async (
   if (!verified || (verified.scope === 'activity-events' && !verified.userId)) {
     return Response.json({ statusCode: 401, message: 'Unauthorized' }, { status: 401 });
   }
-  const id = env.REALTIME.idFromName('global');
+  const id = env.REALTIME.idFromName(REALTIME_DURABLE_OBJECT_NAME);
   const target = env.REALTIME.get(id);
   const url = new URL('https://realtime.internal/connect');
   url.searchParams.set('scope', verified.scope);
   url.searchParams.set('sessionId', verified.sessionId);
+  url.searchParams.set('sessionExpiresAt', String(verified.sessionExpiresAt.getTime()));
   if (verified.userId) {
     url.searchParams.set('userId', verified.userId);
   }

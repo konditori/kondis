@@ -1,6 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { DurableObjectRealtimeAdapter } from 'src/cloudflare/realtime-durable-object';
+import { DurableObjectRealtimeAdapter, RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
+
+const attachment = (kind: 'user' | 'admin', sessionId = 'session-id') => ({
+  kind,
+  sessionId,
+  userId: kind === 'user' ? 'user-id' : null,
+  sessionExpiresAt: Date.now() + 60_000,
+  activityIds: [],
+  authorizationAttempts: 0,
+});
+
+const socket = (value: ReturnType<typeof attachment>) => {
+  let current = value;
+  return {
+    close: vi.fn(),
+    deserializeAttachment: () => current,
+    send: vi.fn(),
+    serializeAttachment: (next: typeof current) => {
+      current = next;
+    },
+  } as unknown as WebSocket & { deserializeAttachment: () => typeof current };
+};
 
 describe('DurableObjectRealtimeAdapter', () => {
   it('publishes events through the namespace', async () => {
@@ -19,7 +40,7 @@ describe('DurableObjectRealtimeAdapter', () => {
 
     expect(namespace.idFromName).toHaveBeenCalledWith('global');
     expect(fetch).toHaveBeenCalledOnce();
-    await expect(published?.json()).resolves.toEqual({ event: 'JobUpdated', args: [] });
+    await expect(published?.json()).resolves.toEqual({ type: 'job.updated' });
   });
 
   it('swallows delivery failures so database mutations remain successful', async () => {
@@ -31,5 +52,33 @@ describe('DurableObjectRealtimeAdapter', () => {
 
     await expect(new DurableObjectRealtimeAdapter(namespace).emit('JobUpdated')).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalledOnce();
+  });
+});
+
+describe(RealtimeDurableObject.name, () => {
+  it('routes job events only to admin sockets and rejects malformed publications', async () => {
+    const admin = socket(attachment('admin'));
+    const user = socket(attachment('user'));
+    const state = {
+      acceptWebSocket: vi.fn(),
+      getWebSockets: () => [admin, user],
+      setAlarm: vi.fn(),
+    };
+    const hub = new RealtimeDurableObject(state as never, {});
+
+    await expect(
+      hub.fetch(
+        new Request('https://realtime.internal/publish', {
+          method: 'POST',
+          body: JSON.stringify({ type: 'job.updated' }),
+        }),
+      ),
+    ).resolves.toMatchObject({ status: 204 });
+    expect(admin.send).toHaveBeenCalledWith(JSON.stringify({ type: 'job.updated' }));
+    expect(user.send).not.toHaveBeenCalled();
+
+    await expect(
+      hub.fetch(new Request('https://realtime.internal/publish', { method: 'POST', body: '{}' })),
+    ).resolves.toMatchObject({ status: 400 });
   });
 });

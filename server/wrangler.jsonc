@@ -4,4 +4,8 @@
   "main": "src/cloudflare/entrypoint.ts",
   "compatibility_date": "2026-09-04",
   "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [{ "name": "REALTIME", "class_name": "RealtimeDurableObject" }],
+  },
+  "migrations": [{ "tag": "realtime-v1", "new_sqlite_classes": ["RealtimeDurableObject"] }],
 }

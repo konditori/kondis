@@ -1,9 +1,11 @@
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
+import { HttpRealtimePublisherAdapter } from 'src/adapters/http/realtime-publisher.adapter';
 import { createDatabase } from 'src/db/database';
 import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { createPollingJobHandlers, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
+import type { RealtimePort } from 'src/ports/realtime.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
@@ -31,11 +33,13 @@ import { ImportProgressStore } from 'src/state/import-progress.store';
 export type CloudNodeProcessorOptions = {
   configRepository?: ConfigRepository;
   logLevels?: LogLevel[];
+  realtime?: RealtimePort;
 };
 
 export const createCloudNodeProcessorComposition = ({
   configRepository = new ConfigRepository(),
   logLevels,
+  realtime,
 }: CloudNodeProcessorOptions = {}) => {
   const logger = new ConsoleLogger({ logLevels });
   const database = createDatabase(configRepository.database);
@@ -53,7 +57,9 @@ export const createCloudNodeProcessorComposition = ({
   const tcxRepository = new TcxRepository(logger);
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
-  const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
+  const eventRepository =
+    realtime ??
+    createCloudNodeRealtimePublisher(database, configRepository, socialRepository, authCredentialRepository);
   const importProgressStore = new ImportProgressStore(database);
   const lagomTakeoutParser = new LagomTakeoutParser();
 
@@ -127,6 +133,7 @@ export const createCloudNodeProcessorComposition = ({
   return {
     database,
     jobService,
+    realtime: eventRepository,
     initialize: () => jobService.init(true),
     close: () => {
       closePromise ??= (async () => {
@@ -134,7 +141,7 @@ export const createCloudNodeProcessorComposition = ({
           await pollingConsumer.stop();
         } finally {
           try {
-            await eventRepository.stop();
+            await (eventRepository instanceof EventRepository ? eventRepository.stop() : undefined);
           } finally {
             await database.destroy();
           }
@@ -143,6 +150,19 @@ export const createCloudNodeProcessorComposition = ({
       return closePromise;
     },
   };
+};
+
+const createCloudNodeRealtimePublisher = (
+  database: ReturnType<typeof createDatabase>,
+  config: ConfigRepository,
+  social: SocialRepository,
+  credentials: AuthCredentialRepository,
+): RealtimePort => {
+  const url = process.env.KONDIS_REALTIME_PUBLISH_URL;
+  const token = process.env.KONDIS_REALTIME_PUBLISH_TOKEN;
+  return url && token
+    ? new HttpRealtimePublisherAdapter(url, token)
+    : new EventRepository(database, config, social, credentials);
 };
 
 export type CloudNodeProcessorComposition = ReturnType<typeof createCloudNodeProcessorComposition>;

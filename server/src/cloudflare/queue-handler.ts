@@ -8,6 +8,7 @@ import {
   type JobDeliveryBatch,
   type JobDeliveryEnvelope,
 } from 'src/ports/job-transport.port';
+import type { RealtimePort } from 'src/ports/realtime.port';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
@@ -135,7 +136,9 @@ export const handleQueueBatch = async (
   db: KondisDatabase,
   handlers: CloudJobHandlers,
   expectedQueue: QueueName,
+  realtime?: RealtimePort,
 ): Promise<void> => {
+  let changed = false;
   for (const delivery of batch.deliveries) {
     const body = parseMessage(delivery.payload);
     if (!body) {
@@ -158,6 +161,7 @@ export const handleQueueBatch = async (
       delivery.acknowledge();
       continue;
     }
+    changed = true;
 
     const handler = handlers[row.name as JobName];
     if (!handler) {
@@ -181,13 +185,17 @@ export const handleQueueBatch = async (
     await completeJob(db, row, status);
     delivery.acknowledge();
   }
+  // One update per Queue batch prevents state-change storms in admin dashboards.
+  if (changed) {await realtime?.emit('JobUpdated');}
 };
 
 export const handleDeadLetterBatch = async (
   batch: JobDeliveryBatch,
   db: KondisDatabase,
   expectedQueue: QueueName,
+  realtime?: RealtimePort,
 ): Promise<void> => {
+  let changed = false;
   for (const delivery of batch.deliveries) {
     const body = parseMessage(delivery.payload);
     if (!body || body.queue !== expectedQueue) {
@@ -208,8 +216,10 @@ export const handleDeadLetterBatch = async (
         AND consumer = 'worker'
         AND state IN ('created', 'active', 'retry')
     `.execute(db);
+    changed = true;
     delivery.acknowledge();
   }
+  if (changed) {await realtime?.emit('JobUpdated');}
 };
 
 export const createPortableWorkerHandlers = (db: KondisDatabase): CloudJobHandlers => {

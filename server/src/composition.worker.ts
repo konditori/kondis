@@ -40,6 +40,7 @@ export type WorkerBindings = {
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
+  KONDIS_REALTIME_PUBLISH_TOKEN?: string;
   STORAGE_BUCKET?: R2BucketBinding;
   REALTIME?: DurableObjectNamespaceBinding;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
@@ -131,6 +132,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     cloudNodeProcessorEnabled,
     queueBindingsConfigured,
     realtimeEnabled: Boolean(env.REALTIME),
+    realtime: workerEvents,
     authCredentialCleanupToken: env.KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN,
     storage,
     workerActivityImageService,
