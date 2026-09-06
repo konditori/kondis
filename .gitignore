@@ -12,6 +12,7 @@ coverage
 server/.wrangler/
 server/wrangler.*.generated.json
 server/wrangler-generated-*.json
+web/wrangler-generated-*.json
 
 vite.config.js.timestamp-*
 .pnpm-store

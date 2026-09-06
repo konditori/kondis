@@ -66,6 +66,9 @@ Do not share this secret token with anyone.
       throw new ConflictException('Initial setup is already complete');
     }
     await this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
+    if (this.config.setupToken) {
+      await this.credentials.getOrCreateSetupToken(this.config.setupToken);
+    }
     if (!(await this.credentials.verifySetupToken(setupToken))) {
       this.logger.warn('Invalid setup token supplied during initial setup verification');
       throw new UnauthorizedException('Invalid setup token');

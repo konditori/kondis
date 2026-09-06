@@ -35,7 +35,7 @@ describe(AuthService.name, () => {
   const users = { findByEmail, count, create, createInitialAdmin } as unknown as UserRepository;
   const config = {
     registrationEnabled: false,
-    setupToken: undefined,
+    setupToken: undefined as string | undefined,
   };
   const credentials = {
     createSession,
@@ -61,6 +61,7 @@ describe(AuthService.name, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     config.registrationEnabled = false;
+    config.setupToken = undefined;
     count.mockResolvedValue({ count: 0 });
     findByEmail.mockResolvedValue(undefined);
     createSession.mockResolvedValue('a'.repeat(64));
@@ -154,6 +155,15 @@ describe(AuthService.name, () => {
     await expect(
       sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', nextToken),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('persists a configured setup token before verifying it', async () => {
+    const { sut } = setup();
+    config.setupToken = SETUP_TOKEN;
+
+    await sut.verifySetupToken(SETUP_TOKEN);
+
+    expect(getOrCreateSetupToken).toHaveBeenCalledWith(SETUP_TOKEN);
   });
 
   it('rejects an invalid setup ticket before starting a transaction', async () => {
