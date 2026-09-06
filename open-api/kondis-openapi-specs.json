@@ -830,6 +830,35 @@
       }
     },
     "/activities/{id}/images": {
+      "get": {
+        "operationId": "ActivityImageController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity images",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityImageListDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List ready images attached to an activity",
+        "tags": [
+          "activity-images"
+        ]
+      },
       "post": {
         "operationId": "ActivityImageController_upload",
         "parameters": [
@@ -877,35 +906,6 @@
           }
         },
         "summary": "Upload an image to an activity",
-        "tags": [
-          "activity-images"
-        ]
-      },
-      "get": {
-        "operationId": "ActivityImageController_list",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Activity images",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActivityImageListDto_Output"
-                }
-              }
-            }
-          }
-        },
-        "summary": "List ready images attached to an activity",
         "tags": [
           "activity-images"
         ]

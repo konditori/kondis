@@ -4,10 +4,6 @@ import type { JobItem } from 'src/types/jobs';
 export type CloudJobConsumer = 'node' | 'worker';
 export type QueuePolicy = 'exclusive' | 'standard';
 
-/**
- * The runtime which owns a cloud job. Self-hosted installations ignore this
- * map and continue to execute every job through pg-boss.
- */
 export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
   [JobName.AuthCredentialCleanup]: 'worker',
   [JobName.ActivityUpload]: 'node',

@@ -22,7 +22,7 @@ describe(UploadRepository.name, () => {
     const { sut, factory } = setup();
     const user = await factory.newUser();
     const upload = await sut.create({
-      checksum: 'a'.repeat(32),
+      checksum: 'a'.repeat(64),
       original_name: 'run.fit',
       byte_size: 42,
       storage_path: 'aa/aa/run.fit',
@@ -39,14 +39,14 @@ describe(UploadRepository.name, () => {
     const { sut, factory } = setup();
     const user = await factory.newUser();
     const first = await sut.create({
-      checksum: '1'.repeat(32),
+      checksum: '1'.repeat(64),
       original_name: '1.fit',
       byte_size: 1,
       storage_path: '1/1.fit',
       user_id: user.id,
     });
     const second = await sut.create({
-      checksum: '2'.repeat(32),
+      checksum: '2'.repeat(64),
       original_name: '2.fit',
       byte_size: 1,
       storage_path: '2/2.fit',

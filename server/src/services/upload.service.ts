@@ -80,7 +80,7 @@ export class UploadService {
 
     const buffer = await this.storageRepository.readLimited(storagePath, UPLOAD_LIMITS.activityFileBytes);
     const byteSize = buffer.length;
-    const checksum = this.cryptoRepository.xxHash(buffer);
+    const checksum = await this.cryptoRepository.sha256(buffer);
     if (expectedChecksum && checksum !== expectedChecksum) {
       throw new Error(`Activity upload checksum mismatch: expected ${expectedChecksum}, got ${checksum}`);
     }
@@ -219,7 +219,7 @@ export class UploadService {
     let takeout: LagomTakeoutContents;
     try {
       takeout = await this.lagomTakeoutParser.extractLagomTakeout(
-        this.storageRepository.absolutePath(storagePath),
+        await this.storageRepository.read(storagePath),
         async (activity) => {
           if (activity.manual) {
             await this.jobRepository.queue({
@@ -296,7 +296,7 @@ export class UploadService {
   ): Promise<void> {
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
     await this.stageUploadedFile(file, storagePath);
-    const checksum = file.buffer ? this.cryptoRepository.xxHash(file.buffer) : undefined;
+    const checksum = file.buffer ? await this.cryptoRepository.sha256(file.buffer) : undefined;
     const stagedImages = await this.stageImages(images);
 
     await this.jobRepository.queue({
@@ -321,13 +321,20 @@ export class UploadService {
       await this.storageRepository.write(storagePath, file.buffer);
       return;
     }
+    if (!this.storageRepository.importFile) {
+      throw new Error('The configured storage does not support importing local files');
+    }
     await this.storageRepository.importFile(file.path, storagePath);
   }
 
   private async discardUploadedFile(file: UploadedFileData): Promise<void> {
-    if ('path' in file && file.path) {
-      await this.storageRepository.deleteExternal(file.path);
+    if (!('path' in file) || !file.path) {
+      return;
     }
+    if (!this.storageRepository.deleteExternal) {
+      throw new Error('The configured storage does not support deleting local files');
+    }
+    await this.storageRepository.deleteExternal(file.path);
   }
 
   private async stageImages(images: { file: BufferedUploadedFileData; caption: string | null; sortOrder: number }[]) {
@@ -346,7 +353,7 @@ export class UploadService {
       staged.push({
         originalName: image.file.originalname,
         storagePath,
-        checksum: this.cryptoRepository.xxHash(image.file.buffer),
+        checksum: await this.cryptoRepository.sha256(image.file.buffer),
         ...(image.caption && { caption: image.caption }),
         sortOrder: image.sortOrder,
       });

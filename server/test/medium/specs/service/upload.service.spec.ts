@@ -106,7 +106,7 @@ describe(UploadService.name, () => {
       data: {
         originalName: 'ride.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
-        checksum: crypto.xxHash(buffer),
+        checksum: await crypto.sha256(buffer),
         userId: ownerId,
       },
     });
@@ -121,12 +121,12 @@ describe(UploadService.name, () => {
     const data = {
       originalName: 'ride.fit',
       storagePath,
-      checksum: crypto.xxHash(buffer),
+      checksum: await crypto.sha256(buffer),
       userId: ownerId,
     };
 
     await expect(sut.handleActivityUpload(data)).resolves.toBe('success');
-    const stored = await uploadRepository.getByChecksum(crypto.xxHash(buffer));
+    const stored = await uploadRepository.getByChecksum(await crypto.sha256(buffer));
     expect(stored).toBeDefined();
     expect(queue).toHaveBeenCalledTimes(1);
     const [item, options] = queue.mock.calls[0] as unknown as [unknown, { transaction?: unknown }];
@@ -157,13 +157,13 @@ describe(UploadService.name, () => {
       sut.handleActivityUpload({
         originalName: file.originalname,
         storagePath,
-        checksum: crypto.xxHash(file.buffer),
+        checksum: await crypto.sha256(file.buffer),
         userId: ownerId,
       }),
     ).resolves.toBe('success');
 
-    const stored = await uploadRepository.getByChecksum(crypto.xxHash(file.buffer));
-    expect(stored?.checksum).toMatch(/^[0-9a-f]{32}$/);
+    const stored = await uploadRepository.getByChecksum(await crypto.sha256(file.buffer));
+    expect(stored?.checksum).toMatch(/^[0-9a-f]{64}$/);
     expect(stored?.byte_size).toBe(file.buffer.length);
   });
 
@@ -175,7 +175,7 @@ describe(UploadService.name, () => {
       sut.handleActivityUpload({
         originalName: 'ride.fit',
         storagePath,
-        checksum: crypto.xxHash(Buffer.from('original')),
+        checksum: await crypto.sha256(Buffer.from('original')),
         userId: ownerId,
       }),
     ).rejects.toThrow('Activity upload checksum mismatch');
@@ -260,7 +260,7 @@ describe(UploadService.name, () => {
         userId: ownerId,
         originalName: 'run.fit',
         storagePath: expect.stringMatching(/^temporary\/.+\.fit$/),
-        checksum: crypto.xxHash(fit),
+        checksum: await crypto.sha256(fit),
         activityName: 'Run',
         activityDescription: 'Forest loop',
         activitySport: 'roller_ski',
@@ -273,7 +273,7 @@ describe(UploadService.name, () => {
         userId: ownerId,
         originalName: 'ride.gpx',
         storagePath: expect.stringMatching(/^temporary\/.+\.gpx$/),
-        checksum: crypto.xxHash(gpx),
+        checksum: await crypto.sha256(gpx),
         activityName: 'Ride',
         activitySport: 'ride',
         takeoutImportId: item.data.takeoutImportId,
@@ -331,7 +331,7 @@ describe(UploadService.name, () => {
 
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      const upload = await queuedUploadRepository.getByChecksum(crypto.xxHash(contents));
+      const upload = await queuedUploadRepository.getByChecksum(await crypto.sha256(contents));
       expect(upload?.status).toBe('parsed');
 
       const activity = await activityRepository.getByUploadId(upload!.id);
@@ -354,7 +354,7 @@ describe(UploadService.name, () => {
 
       await jobsRepository.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      const imported = await queuedUploadRepository.getByChecksum(crypto.xxHash(fit));
+      const imported = await queuedUploadRepository.getByChecksum(await crypto.sha256(fit));
       expect(imported?.status).toBe('parsed');
       expect(await activityRepository.getByUploadId(imported!.id)).toMatchObject({
         name: 'Forest walk',

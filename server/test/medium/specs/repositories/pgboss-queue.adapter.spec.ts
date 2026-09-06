@@ -68,7 +68,7 @@ describe(PgBossQueueAdapter.name, () => {
   describe('handler discovery', () => {
     // This fixture builder is scoped with the related tests for readability.
     // eslint-disable-next-line unicorn/consistent-function-scoping
-    const buildSamples = (ownerId: string): Record<JobName, JobItem> => ({
+    const buildSamples = async (ownerId: string): Promise<Record<JobName, JobItem>> => ({
       [JobName.AuthCredentialCleanup]: { name: JobName.AuthCredentialCleanup, data: {} },
       [JobName.ActivityUpload]: {
         name: JobName.ActivityUpload,
@@ -76,7 +76,7 @@ describe(PgBossQueueAdapter.name, () => {
           userId: ownerId,
           originalName: 'sample.gpx',
           storagePath: 'temporary/sample.gpx',
-          checksum: new CryptoRepository().xxHash(SAMPLE_GPX),
+          checksum: await new CryptoRepository().sha256(SAMPLE_GPX),
         },
       },
       [JobName.ActivityMetricCompute]: {
@@ -147,7 +147,7 @@ describe(PgBossQueueAdapter.name, () => {
         createTestZip({ 'activities.csv': Buffer.from('Activity ID,Filename\n') }),
       );
 
-      for (const item of Object.values(buildSamples(ownerId))) {
+      for (const item of Object.values(await buildSamples(ownerId))) {
         await expect(jobs.run(item)).resolves.toSatisfy((status) =>
           Object.values(JobStatus).includes(status as JobStatus),
         );
@@ -160,7 +160,7 @@ describe(PgBossQueueAdapter.name, () => {
 
       try {
         await Promise.all(Object.values(QueueName).map((queue) => jobs.empty(queue)));
-        await jobs.queueAll(Object.values(buildSamples(ownerId)));
+        await jobs.queueAll(Object.values(await buildSamples(ownerId)));
 
         const counts = await Promise.all(Object.values(QueueName).map((queue) => jobs.getJobCounts(queue)));
         const queued = counts.reduce((sum, { queued: value }) => sum + value, 0);
@@ -232,7 +232,7 @@ describe(PgBossQueueAdapter.name, () => {
       await uploads.uploadActivity(makeUploadedFile(fixture.filename, contents), ownerId);
       await jobs.waitForQueueCompletion(QueueName.BackgroundTask, QueueName.ActivityParsing);
 
-      const uploaded = await uploadRepository.getByChecksum(new CryptoRepository().xxHash(contents));
+      const uploaded = await uploadRepository.getByChecksum(await new CryptoRepository().sha256(contents));
       const uploadId = uploaded!.id;
 
       const activity = await activityRepository.getByUploadId(uploadId);
@@ -296,7 +296,7 @@ describe(PgBossQueueAdapter.name, () => {
             data: {
               originalName: 'run.fit',
               storagePath: 'temporary/run.fit',
-              checksum: 'a'.repeat(32),
+              checksum: 'a'.repeat(64),
             },
           },
           {
@@ -344,7 +344,7 @@ describe(PgBossQueueAdapter.name, () => {
 
       try {
         const upload = await uploadRepository.create({
-          checksum: 'deadbeef'.repeat(4),
+          checksum: 'deadbeef'.repeat(8),
           original_name: 'x.fit',
           byte_size: 1,
           storage_path: 'de/ad/deadbeef.fit',
@@ -398,7 +398,7 @@ describe(PgBossQueueAdapter.name, () => {
       try {
         for (let index = 0; index < 3; index++) {
           await uploadRepository.create({
-            checksum: String(index).repeat(32),
+            checksum: String(index).repeat(64),
             original_name: `${index}.fit`,
             byte_size: 1,
             storage_path: `${index}/${index}.fit`,
@@ -433,7 +433,7 @@ describe(PgBossQueueAdapter.name, () => {
       expect(paused.queueStatus.paused).toBe(true);
 
       const upload = await uploadRepository.create({
-        checksum: 'a'.repeat(32),
+        checksum: 'a'.repeat(64),
         original_name: 'a.fit',
         byte_size: 1,
         storage_path: 'a/a.fit',

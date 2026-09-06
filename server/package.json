@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "start": "node dist/bin/start.js",
+    "start:cloud-node-processor": "node dist/bin/cloud-node-processor.js",
     "start:dev": "node scripts/start-dev-watch.mjs",
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "format": "prettier --cache --check .",
@@ -32,9 +33,9 @@
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@hono/zod-openapi": "^1.6.2",
-    "@node-rs/xxhash": "^1.7.7",
     "@oazapfts/runtime": "^1.2.0",
     "bcrypt": "^6.0.0",
+    "bcrypt-ts": "^8.0.1",
     "csv-parse": "^7.0.2",
     "fast-xml-parser": "^5.11.1",
     "fit-file-parser": "^5.0.2",

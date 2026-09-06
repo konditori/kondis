@@ -94,6 +94,14 @@ export const registerUserMutationRoutes = (
     );
     return context.json(user, 201) as never;
   });
+  registerUserProfileMutationRoutes(app, users, uploads);
+};
+
+export const registerUserProfileMutationRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  users: UserMutationService,
+  uploads: UploadReader,
+): void => {
   app.openapi(updateRoute, async (context) => {
     const value = context.req.valid('json');
     return context.json(

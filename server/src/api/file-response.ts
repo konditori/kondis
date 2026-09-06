@@ -1,15 +1,9 @@
 import { NotFoundException } from 'src/errors';
+import type { StorageFile } from 'src/ports/storage.port';
 
 export type FileRange = { start: number; end: number };
-export type OpenFile = {
-  size: number;
-  lastModified: Date;
-  stream: (range?: FileRange, signal?: AbortSignal) => BodyInit;
-  close: () => Promise<void>;
-};
-export type FileReader = {
-  open: (path: string) => Promise<OpenFile>;
-};
+export type OpenFile = StorageFile;
+export type FileReader = { open: (path: string) => Promise<OpenFile> };
 
 type FileResponseOptions = {
   headers: HeadersInit;
@@ -129,7 +123,7 @@ export const fileResponse = async (
       return new Response(null, { status, headers });
     }
 
-    const body = file.stream(range, request.signal);
+    const body = file.streamAsync ? await file.streamAsync(range, request.signal) : file.stream(range, request.signal);
     const response = new Response(body, { status, headers });
     closeFile = false;
     return response;

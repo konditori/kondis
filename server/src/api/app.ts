@@ -1,54 +1,17 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
-import { createApiAuthMiddleware, type ApiEnv, type ApiSessionLookup, type ApiUserLookup } from 'src/api/auth';
-import { registerActivityReadRoutes, type ActivityReadService } from 'src/api/routes/activity';
-import { registerActivityImageRoutes, type ActivityImageRouteService } from 'src/api/routes/activity-image';
-import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
-import { registerJobRoutes, type JobRouteService } from 'src/api/routes/job';
-import { registerLiveWorkoutRoutes, type LiveWorkoutRouteService } from 'src/api/routes/live-workout';
-import {
-  registerSocialReadRoutes,
-  type SocialActivityReadService,
-  type SocialReadService,
-} from 'src/api/routes/social';
-import { registerSocialMutationRoutes, type SocialMutationService } from 'src/api/routes/social-mutations';
-import { registerUploadRoutes, type UploadRouteService } from 'src/api/routes/upload';
-import {
-  registerUserReadRoutes,
-  type FileReader,
-  type UserAvatarService,
-  type UserReadRepository,
-} from 'src/api/routes/user';
-import {
-  registerUserMutationRoutes,
-  type UserCreationService,
-  type UserMutationService,
-} from 'src/api/routes/user-mutations';
-import type { UploadReader } from 'src/api/uploads';
+import { createApiAuthMiddleware, type ApiEnv } from 'src/api/auth';
+import { registerAllRouteGroups, type ApiRouteGroups } from 'src/api/route-groups';
 import { RequestValidationError } from 'src/api/validation';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { HttpException } from 'src/errors';
-import type { ConfigPort } from 'src/ports/config.port';
 import { ServerService } from 'src/services/server.service';
 
 export const API_PREFIX = '/api/v1';
 
-export type ApiDependencies = {
-  activities: ActivityReadService & SocialActivityReadService;
-  activityImages: ActivityImageRouteService;
-  auth: AuthRouteService & UserCreationService;
-  config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>;
-  files: FileReader;
-  jobs: JobRouteService;
-  liveWorkouts: LiveWorkoutRouteService;
+export type ApiDependencies = ApiRouteGroups & {
   server: Pick<ServerService, 'ping'>;
-  sessions: ApiSessionLookup;
-  social: SocialReadService & SocialMutationService;
-  uploads: UploadReader;
-  uploadService: UploadRouteService;
-  userService: UserAvatarService & UserMutationService;
-  users: ApiUserLookup & UserReadRepository;
 };
 
 const pingRoute = createRoute({
@@ -80,24 +43,10 @@ const publicRoutes = new Set([
   'POST /auth/setup/validate',
   'POST /auth/login',
   'POST /auth/register',
+  'POST /_internal/auth-credential-cleanup',
 ]);
 
-export const createApiApp = ({
-  activities,
-  activityImages,
-  auth,
-  config,
-  files,
-  jobs,
-  liveWorkouts,
-  server,
-  sessions,
-  social,
-  uploads,
-  uploadService,
-  userService,
-  users,
-}: ApiDependencies) => {
+export const createApiShell = (sessions: ApiDependencies['sessions']) => {
   const app = new OpenAPIHono<ApiEnv>({
     strict: false,
     defaultHook: (result, context) => {
@@ -119,17 +68,12 @@ export const createApiApp = ({
       );
     }),
   );
-  app.openapi(pingRoute, (context) => context.json(server.ping(), 200));
-  registerActivityReadRoutes(app, activities);
-  registerActivityImageRoutes(app, activityImages, uploads, files);
-  registerUserReadRoutes(app, users, userService, files);
-  registerSocialReadRoutes(app, social, activities);
-  registerAuthRoutes(app, auth, users, config);
-  registerUserMutationRoutes(app, auth, userService, uploads);
-  registerSocialMutationRoutes(app, social);
-  registerLiveWorkoutRoutes(app, liveWorkouts);
-  registerUploadRoutes(app, uploadService, uploads);
-  registerJobRoutes(app, jobs);
+
+  registerApiErrorHandlers(app);
+  return app;
+};
+
+export const registerApiErrorHandlers = (app: OpenAPIHono<ApiEnv>) => {
   app.notFound((context) => context.json({ statusCode: 404, message: 'Not Found' }, 404));
   app.onError((error, context) => {
     if (error instanceof RequestValidationError) {
@@ -143,6 +87,41 @@ export const createApiApp = ({
     }
     console.error(error);
     return context.json({ statusCode: 500, message: 'Internal server error' }, 500);
+  });
+};
+
+export const createApiApp = ({
+  activities,
+  activityImages,
+  auth,
+  config,
+  files,
+  jobs,
+  liveWorkouts,
+  server,
+  sessions,
+  social,
+  uploads,
+  uploadService,
+  userService,
+  users,
+}: ApiDependencies) => {
+  const app = createApiShell(sessions);
+  app.openapi(pingRoute, (context) => context.json(server.ping(), 200));
+  registerAllRouteGroups(app, {
+    activities,
+    activityImages,
+    auth,
+    config,
+    files,
+    jobs,
+    liveWorkouts,
+    sessions,
+    social,
+    uploads,
+    uploadService,
+    userService,
+    users,
   });
 
   return app;

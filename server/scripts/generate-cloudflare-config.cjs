@@ -35,6 +35,15 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
   return {
     ...baseConfig,
     name: prefix,
+    vars: {
+      ...(baseConfig.vars || {}),
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: nodeProcessorEnabled ? 'true' : 'false',
+    },
+    r2_buckets: [{ binding: 'STORAGE_BUCKET', bucket_name: `${prefix}-storage` }],
+    durable_objects: {
+      bindings: [{ name: 'REALTIME', class_name: 'RealtimeDurableObject' }],
+    },
+    migrations: [{ tag: 'realtime-v1', new_sqlite_classes: ['RealtimeDurableObject'] }],
     hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
     queues: {
       producers: queues.map(({ binding, name }) => ({ binding, queue: name })),

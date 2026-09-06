@@ -83,15 +83,15 @@ importers:
       '@hono/zod-openapi':
         specifier: ^1.6.2
         version: 1.6.2(hono@4.13.5)(zod@4.5.4)
-      '@node-rs/xxhash':
-        specifier: ^1.7.7
-        version: 1.7.7
       '@oazapfts/runtime':
         specifier: ^1.2.0
         version: 1.2.0
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
+      bcrypt-ts:
+        specifier: ^8.0.1
+        version: 8.0.1
       csv-parse:
         specifier: ^7.0.2
         version: 7.0.2
@@ -4423,6 +4423,10 @@ packages:
 
   bcrypt-pbkdf@1.0.2:
     resolution: {integrity: sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==}
+
+  bcrypt-ts@8.0.1:
+    resolution: {integrity: sha512-ILrO7U7YieyG+71KVIVVuPCmjN8N9DY3gYs4OiEoJvW8A5HOe4eerRhLD0Rgo2CAyANRKssFGXmLF74zJz094g==}
+    engines: {node: '>=20'}
 
   bcrypt@6.0.0:
     resolution: {integrity: sha512-cU8v/EGSrnH+HnxV2z0J7/blxH8gq7Xh2JFT6Aroax7UohdmiJJlxApMxtKfuI7z68NvvVcmR78k2LbT6efhRg==}
@@ -14234,6 +14238,8 @@ snapshots:
   bcrypt-pbkdf@1.0.2:
     dependencies:
       tweetnacl: 0.14.5
+
+  bcrypt-ts@8.0.1: {}
 
   bcrypt@6.0.0:
     dependencies:

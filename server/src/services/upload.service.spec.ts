@@ -19,11 +19,11 @@ describe(UploadService.name, () => {
   const write = vi.fn(async () => {});
   const importFile = vi.fn(async () => {});
   const buildTemporaryPath = vi.fn((extension: string) => `temporary/file${extension}`);
-  const xxHash = vi.fn(() => 'a'.repeat(32));
+  const sha256 = vi.fn(() => Promise.resolve('a'.repeat(64)));
   const mocks = {
     uploadRepository: {} as UploadRepository,
     storageRepository: { write, importFile, buildTemporaryPath } as unknown as StorageRepository,
-    cryptoRepository: { xxHash } as unknown as CryptoRepository,
+    cryptoRepository: { sha256 } as unknown as CryptoRepository,
     databaseRepository: {} as DatabaseRepository,
     jobRepository: { queue } as unknown as JobProducerPort,
     logger: new ConsoleLogger({ logLevels: [] }),
@@ -50,7 +50,7 @@ describe(UploadService.name, () => {
     expect(write).toHaveBeenCalledWith('temporary/file.fit', file.buffer);
     expect(queue).toHaveBeenCalledWith({
       name: JobName.ActivityUpload,
-      data: expect.objectContaining({ originalName: 'run.fit', checksum: 'a'.repeat(32) }),
+      data: expect.objectContaining({ originalName: 'run.fit', checksum: 'a'.repeat(64) }),
     });
   });
 

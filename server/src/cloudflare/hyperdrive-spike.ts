@@ -12,11 +12,6 @@ export type HyperdriveSpikeResult = {
 
 const ZERO_VECTOR = `[${Array.from({ length: 32 }, () => 0).join(',')}]`;
 
-/**
- * Runs the Phase 2 compatibility probes using one Worker-created client.
- * Hyperdrive owns the underlying connection pool; the client is intentionally
- * short-lived and must be closed after the invocation.
- */
 export async function runHyperdriveSpike(connectionString: string): Promise<HyperdriveSpikeResult> {
   const client = new Client({ connectionString });
   await client.connect();

@@ -13,6 +13,10 @@ import {
 
 type GeneratedConfig = {
   name: string;
+  vars: { KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: string };
+  r2_buckets: { binding: string; bucket_name: string }[];
+  durable_objects: { bindings: { name: string; class_name: string }[] };
+  migrations: { tag: string; new_sqlite_classes: string[] }[];
   hyperdrive: { binding: string; id: string }[];
   queues: {
     producers: { binding: string; queue: string }[];
@@ -46,6 +50,12 @@ describe('generateCloudflareConfig', () => {
     });
 
     expect(config.name).toBe('kondis-api-staging');
+    expect(config.vars).toEqual({ KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false' });
+    expect(config.r2_buckets).toEqual([{ binding: 'STORAGE_BUCKET', bucket_name: 'kondis-api-staging-storage' }]);
+    expect(config.durable_objects).toEqual({
+      bindings: [{ name: 'REALTIME', class_name: 'RealtimeDurableObject' }],
+    });
+    expect(config.migrations).toEqual([{ tag: 'realtime-v1', new_sqlite_classes: ['RealtimeDurableObject'] }]);
     expect(config.hyperdrive).toEqual([{ binding: 'HYPERDRIVE', id: 'a'.repeat(32) }]);
     expect(config.queues.producers).toHaveLength(Object.values(QueueName).length);
     expect(config.queues.consumers).toHaveLength(Object.values(QueueName).length * 2);
@@ -82,6 +92,7 @@ describe('generateCloudflareConfig', () => {
       nodeProcessorEnabled: true,
     });
 
+    expect(config.vars).toEqual({ KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'true' });
     expect(config.triggers.crons).toEqual([...CRON_JOBS.map(({ cron }) => cron), '* * * * *']);
   });
 });

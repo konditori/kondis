@@ -32,11 +32,6 @@ export type PollingJobConsumerOptions = {
 const sleep = (milliseconds: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const storedError = (error: unknown): string => asErrorMessage(error).slice(0, MAX_STORED_ERROR_LENGTH);
 
-/**
- * Builds the heavy-job registry for the cloud Node processor. The checks make
- * queue ownership an executable contract instead of relying on composition
- * code to remember which handlers are Worker-safe.
- */
 export const createPollingJobHandlers = (descriptors: readonly AnyJobHandlerDescriptor[]): PollingJobHandlers => {
   const handlers: PollingJobHandlers = {};
   const seen = new Map<JobName, string>();

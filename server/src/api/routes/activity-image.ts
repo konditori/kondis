@@ -108,37 +108,14 @@ const fileRoute = createRoute({
   tags: ['activity-images'],
 });
 
-export const registerActivityImageRoutes = (
+export const registerActivityImageReadRoutes = (
   app: OpenAPIHono<ApiEnv>,
   images: ActivityImageRouteService,
-  uploads: UploadReader,
   files: FileReader,
 ): void => {
-  app.openapi(uploadRoute, async (context) => {
-    const upload = (await uploads.read(context.req.raw, context.env, 'image')) as ImageUpload | undefined;
-    const result = await images.upload(
-      context.req.valid('param').id,
-      upload?.file,
-      upload?.caption,
-      context.get('user').id,
-    );
-    return context.json(activityImageResponse.parse(result), 201);
-  });
   app.openapi(listRoute, async (context) => {
     const result = await images.list(context.req.valid('param').id, context.get('user').id);
     return context.json(activityImageListResponse.parse(result), 200);
-  });
-  app.openapi(updateRoute, async (context) => {
-    const { activityId, imageId } = context.req.valid('param');
-    const result = await images.update(activityId, imageId, context.req.valid('json'), context.get('user').id);
-    return context.json(activityImageResponse.parse(result), 200);
-  });
-  app.openapi(deleteRoute, async (context) => {
-    const { activityId, imageId } = context.req.valid('param');
-    if (!(await images.delete(activityId, imageId, context.get('user').id))) {
-      throw new NotFoundException('Image does not exist');
-    }
-    return context.body(null, 204);
   });
   app.openapi(fileRoute, async (context) => {
     const { imageId, variant } = context.req.valid('param');
@@ -156,4 +133,43 @@ export const registerActivityImageRoutes = (
       },
     }) as never;
   });
+};
+
+export const registerActivityImageMutationRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  images: ActivityImageRouteService,
+  uploads: UploadReader,
+): void => {
+  app.openapi(uploadRoute, async (context) => {
+    const upload = (await uploads.read(context.req.raw, context.env, 'image')) as ImageUpload | undefined;
+    const result = await images.upload(
+      context.req.valid('param').id,
+      upload?.file,
+      upload?.caption,
+      context.get('user').id,
+    );
+    return context.json(activityImageResponse.parse(result), 201);
+  });
+  app.openapi(updateRoute, async (context) => {
+    const { activityId, imageId } = context.req.valid('param');
+    const result = await images.update(activityId, imageId, context.req.valid('json'), context.get('user').id);
+    return context.json(activityImageResponse.parse(result), 200);
+  });
+  app.openapi(deleteRoute, async (context) => {
+    const { activityId, imageId } = context.req.valid('param');
+    if (!(await images.delete(activityId, imageId, context.get('user').id))) {
+      throw new NotFoundException('Image does not exist');
+    }
+    return context.body(null, 204);
+  });
+};
+
+export const registerActivityImageRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  images: ActivityImageRouteService,
+  uploads: UploadReader,
+  files: FileReader,
+): void => {
+  registerActivityImageReadRoutes(app, images, files);
+  registerActivityImageMutationRoutes(app, images, uploads);
 };

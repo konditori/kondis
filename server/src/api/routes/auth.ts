@@ -216,13 +216,43 @@ const jobTicketRoute = createRoute({
   tags: ['Auth'],
 });
 
+export const registerAuthSessionRoutes = (
+  app: OpenAPIHono<ApiEnv>,
+  service: Pick<AuthRouteService, 'revokeSession'>,
+  users: ApiUserLookup,
+): void => {
+  app.openapi(capabilitiesRoute, (context) => context.json({ direct: true }, 200) as never);
+  app.openapi(meRoute, async (context) => {
+    const storedUser = await users.findById(context.get('user').id);
+    if (!storedUser) {
+      throw new UnauthorizedException('Account no longer exists');
+    }
+    return context.json(
+      {
+        id: storedUser.id,
+        email: storedUser.email,
+        firstName: storedUser.first_name,
+        lastName: storedUser.last_name,
+        role: storedUser.role,
+        avatarUrl: storedUser.avatar_path ? `/api/v1/users/${storedUser.id}/avatar` : null,
+      },
+      200,
+    ) as never;
+  });
+  app.openapi(logoutRoute, async (context) => {
+    await service.revokeSession(context.get('sessionId'));
+    return context.body(null, 204);
+  });
+};
+
 export const registerAuthRoutes = (
   app: OpenAPIHono<ApiEnv>,
   service: AuthRouteService,
   users: ApiUserLookup,
   config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
+  options: { includeEventTickets?: boolean } = {},
 ): void => {
-  app.openapi(capabilitiesRoute, (context) => context.json({ direct: true }, 200) as never);
+  registerAuthSessionRoutes(app, service, users);
   app.openapi(setupStatusRoute, async (context) => {
     const status = await service.setupStatus();
     return context.json({ ...status, registrationEnabled: config.registrationEnabled }, 200) as never;
@@ -269,40 +299,23 @@ export const registerAuthRoutes = (
       201,
     ) as never;
   });
-  app.openapi(meRoute, async (context) => {
-    const storedUser = await users.findById(context.get('user').id);
-    if (!storedUser) {
-      throw new UnauthorizedException('Account no longer exists');
-    }
-    return context.json(
-      {
-        id: storedUser.id,
-        email: storedUser.email,
-        firstName: storedUser.first_name,
-        lastName: storedUser.last_name,
-        role: storedUser.role,
-        avatarUrl: storedUser.avatar_path ? `/api/v1/users/${storedUser.id}/avatar` : null,
-      },
-      200,
-    ) as never;
-  });
-  app.openapi(logoutRoute, async (context) => {
-    await service.revokeSession(context.get('sessionId'));
-    return context.body(null, 204);
-  });
-  app.openapi(activityTicketRoute, async (context) =>
-    context.json(
-      ticketResponse.parse(await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId'))),
-      201,
-    ),
-  );
-  app.openapi(jobTicketRoute, async (context) => {
-    if (context.get('user').role !== 'admin') {
-      throw new ForbiddenException('Administrator access is required');
-    }
-    return context.json(
-      ticketResponse.parse(await service.createJobEventsTicket(context.get('user').id, context.get('sessionId'))),
-      201,
+  if (options.includeEventTickets !== false) {
+    app.openapi(activityTicketRoute, async (context) =>
+      context.json(
+        ticketResponse.parse(
+          await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId')),
+        ),
+        201,
+      ),
     );
-  });
+    app.openapi(jobTicketRoute, async (context) => {
+      if (context.get('user').role !== 'admin') {
+        throw new ForbiddenException('Administrator access is required');
+      }
+      return context.json(
+        ticketResponse.parse(await service.createJobEventsTicket(context.get('user').id, context.get('sessionId'))),
+        201,
+      );
+    });
+  }
 };
