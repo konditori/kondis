@@ -1,0 +1,43 @@
+scripts/deploy-public-demo.mjs
+  s_56e5f741c00f84::t_4565c75ff6a24b 1-41
+server/src/adapters/cloudflare/upload.adapter.ts
+  s_ae599251f2e0fc::t_c6bf56698a0d33 1,25,32,34-36,41,48
+server/src/api/node.ts
+  s_ae599251f2e0fc::t_46cf30ba642296 15,53,94,107,109,117-123
+server/src/api/routes/upload.spec.ts
+  s_ae599251f2e0fc::t_f19dd14581e575 21-30,65-73,76-77,84
+server/src/api/uploads.ts
+  s_ae599251f2e0fc::t_3b5dc87ebacf81 9-12,19
+server/src/cloudflare/entrypoint.ts
+  s_ae599251f2e0fc::t_622188da9c31b8 12,18,66-70,99,171,176,181-189,193-209,266-292
+server/src/schema/migrations/1789000000001-UpgradeTakeoutImportProgress.ts
+  s_ae599251f2e0fc::t_d09b2fbd7d8db4 1-43
+server/src/state/import-progress.store.ts
+  s_ae599251f2e0fc::t_62914d6d00a7a9 75-87
+web/src/lib/workers/strava-takeout.worker.ts
+  s_ae599251f2e0fc::t_d570d373072267 211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ae8d63e7b4a92734b513e710a495a5f8fc8ff59f",
+  "prompts": {},
+  "sessions": {
+    "s_56e5f741c00f84": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f8520444bffeBxs74qXB6GZoVz",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_ae599251f2e0fc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1aa2478a-e0ba-466b-86ec-53ec312fe31a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
