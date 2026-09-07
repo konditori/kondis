@@ -165,34 +165,34 @@ describe(PgBossQueueAdapter.name, () => {
     });
 
     it('accepts every ranking refresh request and coalesces queued duplicates', async () => {
-      await jobs.pause(QueueName.ActivityParsing);
+      await jobs.pause(QueueName.ActivityEnrichment);
 
       try {
-        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.empty(QueueName.ActivityEnrichment);
         await jobs.queueAll([
           { name: JobName.ActivityBestEffortRank, data: {} },
           { name: JobName.ActivityBestEffortRank, data: {} },
           { name: JobName.ActivityBestEffortRank, data: {} },
         ]);
 
-        const initialCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
+        const initialCounts = await jobs.getJobCounts(QueueName.ActivityEnrichment);
         expect(initialCounts.queued).toBe(3);
 
         await jobs.discardQueuedDuplicates(JobName.ActivityBestEffortRank);
-        const finalCounts = await jobs.getJobCounts(QueueName.ActivityParsing);
+        const finalCounts = await jobs.getJobCounts(QueueName.ActivityEnrichment);
         expect(finalCounts.queued).toBe(0);
       } finally {
-        await jobs.empty(QueueName.ActivityParsing);
-        await jobs.resume(QueueName.ActivityParsing);
+        await jobs.empty(QueueName.ActivityEnrichment);
+        await jobs.resume(QueueName.ActivityEnrichment);
       }
     });
 
     it('runs one ranking refresh when a bulk operation queues more than one worker batch', async () => {
-      await jobs.pause(QueueName.ActivityParsing);
+      await jobs.pause(QueueName.ActivityEnrichment);
       const refresh = vi.spyOn(activityRepository, 'refreshBestEffortRankings');
 
       try {
-        await jobs.empty(QueueName.ActivityParsing);
+        await jobs.empty(QueueName.ActivityEnrichment);
         await jobs.queueAll(
           Array.from({ length: 50 }, () => ({
             name: JobName.ActivityBestEffortRank,
@@ -200,19 +200,19 @@ describe(PgBossQueueAdapter.name, () => {
           })),
         );
 
-        await jobs.resume(QueueName.ActivityParsing);
-        await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+        await jobs.resume(QueueName.ActivityEnrichment);
+        await jobs.waitForQueueCompletion(QueueName.ActivityEnrichment);
 
         expect(refresh).toHaveBeenCalledTimes(1);
-        await expect(jobs.getJobCounts(QueueName.ActivityParsing)).resolves.toMatchObject({
+        await expect(jobs.getJobCounts(QueueName.ActivityEnrichment)).resolves.toMatchObject({
           active: 0,
           queued: 0,
           failed: 0,
         });
       } finally {
         refresh.mockRestore();
-        await jobs.empty(QueueName.ActivityParsing);
-        await jobs.resume(QueueName.ActivityParsing);
+        await jobs.empty(QueueName.ActivityEnrichment);
+        await jobs.resume(QueueName.ActivityEnrichment);
       }
     });
   });

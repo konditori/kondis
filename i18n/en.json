@@ -431,6 +431,8 @@
   "job_queue_status": "Job queue status",
   "activity_processing": "Activity processing",
   "activity_processing_description": "Parse workouts, calculate metrics, best efforts, and route matches.",
+  "activity_enrichment": "Activity enrichment",
+  "activity_enrichment_description": "Calculate metrics, best efforts, rankings, and route matches after parsing.",
   "imports_and_tasks": "Imports and background tasks",
   "imports_and_tasks_description": "Stage uploads, expand takeouts, and coordinate follow-up work.",
   "image_processing": "Image processing",

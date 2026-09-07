@@ -141,6 +141,65 @@ describe(CloudflareQueueAdapter.name, () => {
     ]);
   });
 
+  it('does not publish the same outbox row from concurrent dispatchers', async () => {
+    await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    let release!: () => void;
+    const publishing = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const started = Promise.withResolvers<void>();
+    const publishBatch = vi.fn(async () => {
+      started.resolve();
+      await publishing;
+    });
+
+    const first = dispatchUnpublishedJobs(db, { publishBatch });
+    await started.promise;
+    const second = await dispatchUnpublishedJobs(db, { publishBatch });
+    release();
+
+    await expect(first).resolves.toBe(1);
+    expect(second).toBe(0);
+    expect(publishBatch).toHaveBeenCalledOnce();
+  });
+
+  it('claims duplicate Queue deliveries only once', async () => {
+    await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    const row = await db.selectFrom('background_job').select('id').executeTakeFirstOrThrow();
+    const ack = vi.fn();
+    const handler = vi.fn(() => Promise.resolve(JobStatus.Success));
+    const delivery = {
+      payload: { jobId: row.id, queue: QueueName.BackgroundTask, version: JOB_DELIVERY_MESSAGE_VERSION },
+      acknowledge: ack,
+      retry: vi.fn(),
+    };
+
+    await handleQueueBatch({ deliveries: [delivery, delivery] }, db, {
+      [JobName.AuthCredentialCleanup]: handler,
+    }, QueueName.BackgroundTask);
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(ack).toHaveBeenCalledTimes(2);
+  });
+
+  it('allows simultaneous polling claims for distinct jobs in one queue', async () => {
+    await jobs.queueAll([
+      nodeJob,
+      { name: JobName.ActivityDelete, data: { id: '00000000-0000-4000-8000-000000000002' } },
+    ]);
+
+    const claimed = await Promise.all([
+      claimNextPollingJob(db, QueueName.BackgroundTask),
+      claimNextPollingJob(db, QueueName.BackgroundTask),
+    ]);
+
+    expect(claimed.map((job) => job?.id)).toEqual([
+      expect.any(String),
+      expect.any(String),
+    ]);
+    expect(new Set(claimed.map((job) => job?.id)).size).toBe(2);
+  });
+
   it('lets the polling processor claim only Node-owned jobs', async () => {
     await jobs.queueAll([nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
 

@@ -287,6 +287,7 @@ const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueNam
 const createQueueTransport = (env: WorkerEnv): CloudflareQueueTransportAdapter =>
   new CloudflareQueueTransportAdapter({
     [QueueName.ActivityParsing]: requiredQueue(env.ACTIVITY_PARSING_QUEUE, QueueName.ActivityParsing),
+    [QueueName.ActivityEnrichment]: requiredQueue(env.ACTIVITY_ENRICHMENT_QUEUE, QueueName.ActivityEnrichment),
     [QueueName.BackgroundTask]: requiredQueue(env.BACKGROUND_TASK_QUEUE, QueueName.BackgroundTask),
     [QueueName.ImageProcessing]: requiredQueue(env.IMAGE_PROCESSING_QUEUE, QueueName.ImageProcessing),
     [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),

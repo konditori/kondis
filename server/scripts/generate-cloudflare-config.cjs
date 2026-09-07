@@ -50,7 +50,7 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
       consumers: queues.flatMap(({ name, deadLetterQueue, concurrency }) => [
         {
           queue: name,
-          max_batch_size: 10,
+          max_batch_size: 1,
           max_batch_timeout: 5,
           max_retries: JOB_RETRY_LIMIT,
           retry_delay: JOB_RETRY_DELAY_SECONDS,
@@ -59,7 +59,7 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
         },
         {
           queue: deadLetterQueue,
-          max_batch_size: 10,
+          max_batch_size: 1,
           max_batch_timeout: 5,
           max_retries: 0,
           max_concurrency: 1,

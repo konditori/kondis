@@ -85,6 +85,12 @@
       icon: FileChartColumnIncreasing,
     },
     {
+      key: JobQueueName.ActivityEnrichment,
+      label: t("activity_enrichment"),
+      description: t("activity_enrichment_description"),
+      icon: Database,
+    },
+    {
       key: JobQueueName.BackgroundTask,
       label: t("imports_and_tasks"),
       description: t("imports_and_tasks_description"),

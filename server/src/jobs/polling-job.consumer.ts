@@ -80,14 +80,6 @@ export const claimNextPollingJob = async (db: KondisDatabase, queue: QueueName):
           AND job.queue = ${queue}
           AND job.state IN ('created', 'retry')
           AND job.start_after <= now()
-          AND (
-            job.queue NOT IN (${QueueName.ActivityParsing}, ${QueueName.BackgroundTask})
-            OR NOT EXISTS (
-              SELECT 1
-              FROM background_job AS active_job
-              WHERE active_job.queue = job.queue AND active_job.state = 'active'
-            )
-          )
         ORDER BY job.priority DESC, job.created_on
         LIMIT 1
         FOR UPDATE SKIP LOCKED
@@ -190,8 +182,9 @@ export class PollingJobConsumer {
             completed_on = now(),
             output = ${JSON.stringify({ status })}::jsonb,
             delete_after = now() + (${JOB_RETENTION_SECONDS} * interval '1 second'),
-            lease_id = NULL,
-            lease_expires_at = NULL
+          lease_id = NULL,
+          lease_expires_at = NULL,
+          dispatch_token = NULL
         WHERE id = ${job.id}::uuid AND state = 'active' AND lease_id = ${job.lease_id}::uuid
         RETURNING id::text
       `.execute(this.db);
@@ -216,6 +209,7 @@ export class PollingJobConsumer {
           },
           lease_id = NULL,
           lease_expires_at = NULL,
+          dispatch_token = NULL,
           output = ${JSON.stringify({ status: JobStatus.Failed, message: storedError(error) })}::jsonb
       WHERE id = ${job.id}::uuid AND state = 'active' AND lease_id = ${job.lease_id}::uuid
       RETURNING id::text

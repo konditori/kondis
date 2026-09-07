@@ -5,6 +5,7 @@ export enum WorkerType {
 
 export enum QueueName {
   ActivityParsing = 'activityParsing',
+  ActivityEnrichment = 'activityEnrichment',
   BackgroundTask = 'backgroundTask',
   ImageProcessing = 'imageProcessing',
   Storage = 'storage',

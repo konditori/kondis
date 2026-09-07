@@ -235,7 +235,9 @@ export class WorkerUploadService {
     }
 
     const permanentStoragePath = this.storage.buildPath(userId, checksum, extension);
-    await this.storage.copy(storagePath, permanentStoragePath);
+    // The staged bytes are already in memory. Writing them directly avoids a
+    // second complete R2 read just to copy the temporary object.
+    await this.storage.write(permanentStoragePath, buffer);
 
     try {
       await this.database.withTransaction(async (transaction) => {

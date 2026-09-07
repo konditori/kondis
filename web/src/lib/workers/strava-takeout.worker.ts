@@ -191,16 +191,10 @@ async function extract({
       (item): item is ActivityItem =>
         item.kind === "activity" && pending.has(item.itemKey),
     );
-    const concurrency = activities.every((item) => {
+    await runWeightedPool(activities, 3, (item) => {
       const entry = entryByName.get(item.entryName);
-      return (
-        !item.gzip &&
-        (entry?.uncompressedSize ?? LIMITS.activityBytes) <= 24 * 1024 * 1024
-      );
-    })
-      ? 3
-      : 1;
-    await runPool(activities, concurrency, async (item) => {
+      return item.gzip || (entry?.uncompressedSize ?? LIMITS.activityBytes) > 24 * 1024 * 1024 ? 3 : 1;
+    }, async (item) => {
       try {
         const entry = entryByName.get(item.entryName);
         if (!entry)
@@ -549,22 +543,42 @@ async function request<T = unknown>(
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
-async function runPool<T>(
+async function runWeightedPool<T>(
   items: T[],
-  concurrency: number,
+  capacity: number,
+  weight: (item: T) => number,
   work: (item: T) => Promise<void>,
 ): Promise<void> {
   let next = 0;
-  const worker = async () => {
-    for (;;) {
-      const index = next++;
-      if (index >= items.length) return;
-      await work(items[index]);
-    }
-  };
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, items.length) }, worker),
-  );
+  let runningWeight = 0;
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const schedule = () => {
+      if (settled) return;
+      while (next < items.length) {
+        const item = items[next];
+        const itemWeight = Math.min(capacity, Math.max(1, weight(item)));
+        if (runningWeight > 0 && runningWeight + itemWeight > capacity) return;
+        next += 1;
+        runningWeight += itemWeight;
+        void work(item)
+          .catch((error: unknown) => {
+            settled = true;
+            reject(error);
+          })
+          .finally(() => {
+            runningWeight -= itemWeight;
+            if (next >= items.length && runningWeight === 0 && !settled) {
+              resolve();
+              return;
+            }
+            schedule();
+          });
+      }
+      if (next >= items.length && runningWeight === 0) resolve();
+    };
+    schedule();
+  });
 }
 
 async function reportItemFailure(

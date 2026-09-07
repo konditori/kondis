@@ -12,6 +12,7 @@ import type { RealtimePort } from 'src/ports/realtime.port';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import type { ActivityService } from 'src/services/activity.service';
 import type { WorkerUploadService } from 'src/services/worker-upload.service';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
@@ -60,14 +61,6 @@ const claimJob = async (
       AND job.consumer = 'worker'
       AND job.state IN ('created', 'retry')
       AND job.start_after <= now()
-      AND (
-        job.queue NOT IN (${QueueName.ActivityParsing}, ${QueueName.BackgroundTask})
-        OR NOT EXISTS (
-          SELECT 1
-          FROM background_job AS active_job
-          WHERE active_job.queue = job.queue AND active_job.state = 'active'
-        )
-      )
     RETURNING id::text, queue, name, payload, state, retry_count, retry_limit, consumer, lease_id::text
   `.execute(db);
   return result.rows[0];
@@ -76,7 +69,7 @@ const claimJob = async (
 const releaseUnclaimedMessage = async (db: KondisDatabase, jobId: string, queue: QueueName): Promise<void> => {
   await sql`
     UPDATE background_job
-    SET published_on = NULL
+    SET published_on = NULL, dispatch_token = NULL
     WHERE id = ${jobId}::uuid
       AND queue = ${queue}
       AND consumer = 'worker'
@@ -92,7 +85,8 @@ const completeJob = async (db: KondisDatabase, row: BackgroundJobRecord, status:
         output = ${JSON.stringify({ status })}::jsonb,
         delete_after = now() + (${JOB_RETENTION_SECONDS} * interval '1 second'),
         lease_id = NULL,
-        lease_expires_at = NULL
+        lease_expires_at = NULL,
+        dispatch_token = NULL
     WHERE id = ${row.id}::uuid AND state = 'active' AND lease_id = ${row.lease_id}::uuid
     RETURNING id::text
   `.execute(db);
@@ -114,10 +108,14 @@ const failJob = async (db: KondisDatabase, row: BackgroundJobRecord, error: unkn
         },
         lease_id = NULL,
         lease_expires_at = NULL,
+        dispatch_token = NULL,
         output = ${JSON.stringify({ status: JobStatus.Failed, message: storedError(error) })}::jsonb
     WHERE id = ${row.id}::uuid AND state = 'active' AND lease_id = ${row.lease_id}::uuid
     RETURNING id::text
   `.execute(db);
+  if (result.rows.length === 1 && transition.exhausted) {
+    await failImportItemForExhaustedJob(db, row, error);
+  }
   return result.rows.length === 1;
 };
 
@@ -129,9 +127,31 @@ const failPermanently = async (db: KondisDatabase, row: BackgroundJobRecord, err
         delete_after = now() + (${JOB_RETENTION_SECONDS} * interval '1 second'),
         lease_id = NULL,
         lease_expires_at = NULL,
+        dispatch_token = NULL,
         output = ${JSON.stringify({ status: JobStatus.Failed, message: storedError(error) })}::jsonb
     WHERE id = ${row.id}::uuid AND state = 'active' AND lease_id = ${row.lease_id}::uuid
   `.execute(db);
+  await failImportItemForExhaustedJob(db, row, error);
+};
+
+const failImportItemForExhaustedJob = async (
+  db: KondisDatabase,
+  row: BackgroundJobRecord,
+  error: unknown,
+): Promise<void> => {
+  await failImportItemForPayload(db, row.payload, storedError(error));
+};
+
+const failImportItemForPayload = async (
+  db: KondisDatabase,
+  payload: { data?: object } | undefined,
+  error: string,
+): Promise<void> => {
+  const data = payload?.data as { takeoutImportId?: unknown; takeoutItemKey?: unknown } | undefined;
+  if (typeof data?.takeoutImportId !== 'string' || typeof data.takeoutItemKey !== 'string') {
+    return;
+  }
+  await new ImportProgressStore(db).failJobItem(data.takeoutImportId, data.takeoutItemKey, error);
 };
 
 export const handleQueueBatch = async (
@@ -157,9 +177,8 @@ export const handleQueueBatch = async (
 
     const row = await claimJob(db, body.jobId, expectedQueue);
     if (!row) {
-      // A duplicate delivery is safe to discard. If another job currently
-      // owns an exclusive queue, clearing the outbox marker lets the dispatcher
-      // try this still-pending job again instead of stranding it.
+      // A duplicate or early delivery is safe to discard. Clearing the outbox
+      // marker lets the dispatcher publish the still-pending job again.
       await releaseUnclaimedMessage(db, body.jobId, expectedQueue);
       delivery.acknowledge();
       continue;
@@ -208,19 +227,24 @@ export const handleDeadLetterBatch = async (
       delivery.acknowledge();
       continue;
     }
-    await sql`
+    const result = await sql<{ payload: { data?: object } }>`
       UPDATE background_job
       SET state = 'dead',
           completed_on = COALESCE(completed_on, now()),
           delete_after = now() + (${JOB_RETENTION_SECONDS} * interval '1 second'),
           lease_id = NULL,
           lease_expires_at = NULL,
+          dispatch_token = NULL,
           output = COALESCE(output, ${JSON.stringify({ message: 'Queue delivery exhausted' })}::jsonb)
       WHERE id = ${body.jobId}::uuid
         AND queue = ${expectedQueue}
         AND consumer = 'worker'
         AND state IN ('created', 'active', 'retry')
+      RETURNING payload
     `.execute(db);
+    for (const row of result.rows) {
+      await failImportItemForPayload(db, row.payload, 'Queue delivery exhausted');
+    }
     changed = true;
     delivery.acknowledge();
   }

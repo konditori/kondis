@@ -431,6 +431,8 @@
   "job_queue_status": "Status för jobbköer",
   "activity_processing": "Aktivitetsbearbetning",
   "activity_processing_description": "Tolka träningspass och beräkna mätvärden, bästa resultat och ruttmatchningar.",
+  "activity_enrichment": "Aktivitetsberikning",
+  "activity_enrichment_description": "Beräkna mätvärden, bästa resultat, rankningar och ruttmatchningar efter tolkning.",
   "imports_and_tasks": "Importer och bakgrundsuppgifter",
   "imports_and_tasks_description": "Förbered uppladdningar, packa upp exporter och samordna följduppgifter.",
   "image_processing": "Bildbearbetning",

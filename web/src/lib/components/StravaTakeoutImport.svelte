@@ -50,11 +50,13 @@
   let total = $state<number | null>(null);
   let duplicates = $state(0);
   let worker: Worker | undefined;
-  let progressTimer: ReturnType<typeof setInterval> | undefined;
+  let progressTimer: ReturnType<typeof setTimeout> | undefined;
+  let pollInFlight = false;
+  let pollDelay = 1_000;
 
   onDestroy(() => {
     worker?.terminate();
-    clearInterval(progressTimer);
+    clearTimeout(progressTimer);
   });
 
   const importKey = (selected: File) =>
@@ -72,42 +74,67 @@
     return (response.status === 204 ? undefined : await response.json()) as T;
   }
 
-  async function pollImport(id: string) {
-    const status = await api<ImportStatus>(`/upload/strava/imports/${id}`);
-    processed = status.processed;
-    uploaded = status.uploaded;
-    total = status.total;
-    duplicates = status.duplicates;
-    if (status.status === "completed") {
-      clearInterval(progressTimer);
-      phase = "done";
-      if (file) localStorage.removeItem(importKey(file));
-      const imported = processed - status.duplicates - status.failed;
-      const parts =
-        imported > 0
-          ? [t("strava_imported_activities", { count: imported })]
-          : [];
-      if (status.duplicates > 0)
-        parts.push(
-          t("strava_duplicate_activities", { count: status.duplicates }),
-        );
-      if (status.failed > 0)
-        parts.push(t("strava_failed_activities", { count: status.failed }));
-      message = `${parts.join("; ")}.`;
-      await invalidateAll();
-    } else if (status.status === "failed" || status.status === "cancelled") {
-      clearInterval(progressTimer);
-      phase = status.status === "cancelled" ? "cancelled" : "error";
-      message = status.error ?? t("strava_import_failed");
-    } else if (status.status === "processing") {
-      phase = "processing";
+  async function pollImport(id: string): Promise<boolean> {
+    if (pollInFlight) return phase === "processing";
+    pollInFlight = true;
+    try {
+      const status = await api<ImportStatus>(`/upload/strava/imports/${id}`);
+      processed = status.processed;
+      uploaded = status.uploaded;
+      total = status.total;
+      duplicates = status.duplicates;
+      if (status.status === "completed") {
+        clearTimeout(progressTimer);
+        phase = "done";
+        if (file) localStorage.removeItem(importKey(file));
+        const imported = processed - status.duplicates - status.failed;
+        const parts =
+          imported > 0
+            ? [t("strava_imported_activities", { count: imported })]
+            : [];
+        if (status.duplicates > 0)
+          parts.push(
+            t("strava_duplicate_activities", { count: status.duplicates }),
+          );
+        if (status.failed > 0)
+          parts.push(t("strava_failed_activities", { count: status.failed }));
+        message = `${parts.join("; ")}.`;
+        await invalidateAll();
+        return false;
+      } else if (status.status === "failed" || status.status === "cancelled") {
+        clearTimeout(progressTimer);
+        phase = status.status === "cancelled" ? "cancelled" : "error";
+        message = status.error ?? t("strava_import_failed");
+      } else if (status.status === "processing") {
+        phase = "processing";
+      }
+      return phase === "processing";
+    } finally {
+      pollInFlight = false;
     }
+  }
+
+  function schedulePoll(id: string) {
+    clearTimeout(progressTimer);
+    progressTimer = setTimeout(() => {
+      void pollImport(id)
+        .then((keepPolling) => {
+          if (keepPolling && phase === "processing") {
+            pollDelay = Math.min(5_000, pollDelay + 500);
+            schedulePoll(id);
+          }
+        })
+        .catch((error) => {
+          phase = "error";
+          message = error instanceof Error ? error.message : String(error);
+        });
+    }, pollDelay);
   }
 
   function selectFile(selected?: File) {
     if (!selected) return;
     worker?.terminate();
-    clearInterval(progressTimer);
+    clearTimeout(progressTimer);
     if (!selected.name.toLowerCase().endsWith(".zip")) {
       file = undefined;
       phase = "error";
@@ -186,8 +213,10 @@
     if (event.type === "complete" && importId) {
       phase = "processing";
       await pollImport(importId);
-      if (phase === "processing")
-        progressTimer = setInterval(() => void pollImport(importId!), 1_000);
+      if (phase === "processing") {
+        pollDelay = 1_000;
+        schedulePoll(importId);
+      }
       return;
     }
     if (event.type === "error") {
@@ -200,7 +229,7 @@
     worker?.postMessage({ type: "cancel" });
     worker?.terminate();
     worker = undefined;
-    clearInterval(progressTimer);
+    clearTimeout(progressTimer);
     if (importId)
       await api(`/upload/strava/imports/${importId}/cancel`, {
         method: "POST",

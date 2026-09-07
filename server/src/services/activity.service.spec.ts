@@ -220,13 +220,15 @@ describe('ActivityService', () => {
 
       expect(readLimited).toHaveBeenCalledWith('ab/cd/abcd.fit', UPLOAD_LIMITS.activityFileBytes);
       expect(decode).toHaveBeenCalledWith(contents);
+      expect(decode).toHaveBeenCalledTimes(1);
+      expect(setMetrics).toHaveBeenCalledWith(ACTIVITY_ID, expect.anything(), 'trx');
       expect(decodeTcx).not.toHaveBeenCalled();
       expect(createActivity).toHaveBeenCalledWith(
         expect.objectContaining({ activity: expect.objectContaining({ upload_id: UPLOAD_ID }) }),
         'trx',
       );
       expect(queue).toHaveBeenCalledWith(
-        { name: JobName.ActivityMetricCompute, data: { id: ACTIVITY_ID } },
+        { name: JobName.ActivityBestEffortCompute, data: { id: ACTIVITY_ID } },
         { transaction: 'trx' },
       );
       expect(queue).toHaveBeenCalledWith(

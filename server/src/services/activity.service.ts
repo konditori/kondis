@@ -30,7 +30,6 @@ import {
   BestEffortType,
   CreateActivityInput,
   ParsedActivity,
-  ParsedActivityStructure,
   UpdateActivityInput,
 } from 'src/types';
 import { JobItem, JobOf } from 'src/types/jobs';
@@ -136,7 +135,9 @@ export class ActivityService {
 
     try {
       const contents = await this.readActivityFile(upload.storage_path);
-      const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
+      const messages = this.decodeActivityFile(upload.storage_path, contents);
+      const parsed = parseFitStructure(messages);
+      const metrics = parseFitMessages(messages);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
         const createdId = await this.activityRepository.create(
           this.toCreateInput(
@@ -150,9 +151,10 @@ export class ActivityService {
           ),
           trx,
         );
+        await this.activityRepository.setMetrics(createdId, this.toMetrics(metrics), trx);
         await Promise.all([
           this.jobRepository.queue(
-            { name: JobName.ActivityMetricCompute, data: { id: createdId } },
+            { name: JobName.ActivityBestEffortCompute, data: { id: createdId } },
             { transaction: trx },
           ),
           this.jobRepository.queue(
@@ -364,10 +366,6 @@ export class ActivityService {
       }
       throw error;
     }
-  }
-
-  private parseActivityStructureFile(path: string, contents: Buffer): ParsedActivityStructure {
-    return parseFitStructure(this.decodeActivityFile(path, contents));
   }
 
   private computeActivityFile(path: string, contents: Buffer): ParsedActivity {

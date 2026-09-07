@@ -28,7 +28,7 @@ describe(WorkerUploadService.name, () => {
 
   const readLimited = vi.fn(() => Promise.resolve(contents));
   const buildPath = vi.fn(() => '00/00/permanent.fit');
-  const copy = vi.fn(() => Promise.resolve());
+  const write = vi.fn(() => Promise.resolve());
   const deleteFile = vi.fn(() => Promise.resolve());
   const sha256 = vi.fn(() => Promise.resolve(checksum));
   const queue = vi.fn(() => Promise.resolve());
@@ -41,7 +41,7 @@ describe(WorkerUploadService.name, () => {
 
   const setup = () =>
     new WorkerUploadService(
-      { readLimited, buildPath, copy, delete: deleteFile } as unknown as StoragePort,
+      { readLimited, buildPath, write, delete: deleteFile } as unknown as StoragePort,
       { sha256 } as unknown as CryptoPort,
       { queue } as unknown as JobProducerPort,
       { completeItem } as unknown as ImportProgressStore,
@@ -85,10 +85,10 @@ describe(WorkerUploadService.name, () => {
     );
     expect(readLimited).toHaveBeenCalledWith(baseJob.storagePath, UPLOAD_LIMITS.activityFileBytes);
     expect(getByChecksum).toHaveBeenCalledWith('b'.repeat(64), userId);
-    expect(copy).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
   });
 
-  it('copies the object and transactionally creates and queues an upload with activity metadata', async () => {
+  it('writes the already-read object and transactionally creates and queues an upload with activity metadata', async () => {
     const service = setup();
     const images = [
       {
@@ -114,7 +114,7 @@ describe(WorkerUploadService.name, () => {
 
     expect(getByChecksum).toHaveBeenCalledWith(checksum, userId);
     expect(buildPath).toHaveBeenCalledWith(userId, checksum, '.fit');
-    expect(copy).toHaveBeenCalledWith(baseJob.storagePath, '00/00/permanent.fit');
+    expect(write).toHaveBeenCalledWith('00/00/permanent.fit', contents);
     expect(withTransaction).toHaveBeenCalledOnce();
     expect(create).toHaveBeenCalledWith(
       {
@@ -184,7 +184,7 @@ describe(WorkerUploadService.name, () => {
       },
     });
     expect(completeItem).toHaveBeenCalledWith('import-id', 'activity:morning-run.fit', 'duplicate');
-    expect(copy).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
     expect(withTransaction).not.toHaveBeenCalled();
     expect(deleteFile).toHaveBeenCalledWith(baseJob.storagePath);
   });

@@ -27,10 +27,10 @@ export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
 export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.AuthCredentialCleanup]: QueueName.BackgroundTask,
   [JobName.ActivityUpload]: QueueName.BackgroundTask,
-  [JobName.ActivityMetricCompute]: QueueName.ActivityParsing,
-  [JobName.ActivityBestEffortCompute]: QueueName.ActivityParsing,
-  [JobName.ActivityBestEffortRank]: QueueName.ActivityParsing,
-  [JobName.ActivityRouteMatchCompute]: QueueName.ActivityParsing,
+  [JobName.ActivityMetricCompute]: QueueName.ActivityEnrichment,
+  [JobName.ActivityBestEffortCompute]: QueueName.ActivityEnrichment,
+  [JobName.ActivityBestEffortRank]: QueueName.ActivityEnrichment,
+  [JobName.ActivityRouteMatchCompute]: QueueName.ActivityEnrichment,
   [JobName.ActivityParse]: QueueName.ActivityParsing,
   [JobName.ActivityManualCreate]: QueueName.ActivityParsing,
   [JobName.ActivityParseQueueAll]: QueueName.BackgroundTask,
@@ -106,8 +106,9 @@ export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?
 };
 
 export const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
-  [QueueName.ActivityParsing]: 'exclusive',
-  [QueueName.BackgroundTask]: 'exclusive',
+  [QueueName.ActivityParsing]: 'standard',
+  [QueueName.ActivityEnrichment]: 'standard',
+  [QueueName.BackgroundTask]: 'standard',
   [QueueName.ImageProcessing]: 'standard',
   [QueueName.Storage]: 'standard',
 };
@@ -132,8 +133,9 @@ export const CRON_JOBS: { item: JobItem; cron: string }[] = [
 ];
 
 export const JOB_CONCURRENCY = {
-  [QueueName.ActivityParsing]: 1,
-  [QueueName.BackgroundTask]: 1,
+  [QueueName.ActivityParsing]: 3,
+  [QueueName.ActivityEnrichment]: 3,
+  [QueueName.BackgroundTask]: 3,
   [QueueName.ImageProcessing]: 2,
   [QueueName.Storage]: 2,
 } satisfies Record<QueueName, number>;

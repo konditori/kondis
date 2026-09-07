@@ -45,6 +45,7 @@ export type WorkerBindings = {
   STORAGE_BUCKET?: R2BucketBinding;
   REALTIME?: DurableObjectNamespaceBinding;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
+  ACTIVITY_ENRICHMENT_QUEUE?: CloudflareQueueBinding;
   BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
   IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
   STORAGE_QUEUE?: CloudflareQueueBinding;
@@ -71,7 +72,11 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const cloudNodeProcessorEnabled =
     env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === true || env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === 'true';
   const queueBindingsConfigured = Boolean(
-    env.ACTIVITY_PARSING_QUEUE && env.BACKGROUND_TASK_QUEUE && env.IMAGE_PROCESSING_QUEUE && env.STORAGE_QUEUE,
+    env.ACTIVITY_PARSING_QUEUE &&
+    env.ACTIVITY_ENRICHMENT_QUEUE &&
+    env.BACKGROUND_TASK_QUEUE &&
+    env.IMAGE_PROCESSING_QUEUE &&
+    env.STORAGE_QUEUE,
   );
   const rateLimitingRepository = new RateLimitingRepository(database);
   const authService = new AuthService(

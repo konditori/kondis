@@ -23,6 +23,7 @@ type GeneratedConfig = {
     consumers: {
       queue: string;
       max_retries: number;
+      max_batch_size: number;
       retry_delay?: number;
       max_concurrency: number;
       dead_letter_queue?: string;
@@ -68,6 +69,7 @@ describe('generateCloudflareConfig', () => {
         expect.objectContaining({
           queue: name,
           max_retries: JOB_RETRY_LIMIT,
+          max_batch_size: 1,
           retry_delay: JOB_RETRY_DELAY_SECONDS,
           max_concurrency: JOB_CONCURRENCY[queue],
           dead_letter_queue: `${name}-dlq`,
