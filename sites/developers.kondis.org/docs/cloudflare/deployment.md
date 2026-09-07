@@ -16,6 +16,8 @@ Kondis uses one cache-disabled Hyperdrive configuration per deployment environme
 
 Create the Hyperdrive configuration once per environment using a TLS connection to the PostgreSQL 17 origin. Prefer Terraform when the environment is managed there. For a one-off Wrangler setup:
 
+Hyperdrive requires TLS even when the origin is reached through Cloudflare Tunnel. The repository's local PostgreSQL image enables SSL and generates a development certificate on startup; rebuild the database container with `mise dev-update` after changing the image. A production or separately managed origin must provide its own TLS certificate.
+
 ```sh
 mise exec -- pnpm --dir server exec wrangler hyperdrive create kondis-worker-test-postgres \
   --connection-string="$KONDIS_CLOUD_DATABASE_URL" \
@@ -43,8 +45,9 @@ provisioned database user and caches successful API and rendered-page reads for
 one day. It does not put a credential in the browser. `KONDIS_DEMO_MODE=true` is
 read by the server config repository and makes the API reject every non-read
 request. Demo config generation omits R2, Queues, queue executors, and Durable
-Objects because the demo does not accept uploads or edits. Demo startup aborts if
-the database contains anything other than exactly one user.
+Objects because the demo does not accept uploads or edits. The first demo request
+provisions the demo user and its fictional FIT activity history automatically; it
+still aborts if the database contains more than one user.
 
 Provide the environment-specific Hyperdrive ID:
 

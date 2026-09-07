@@ -178,7 +178,10 @@ export type DatabaseConfig = {
   database: string;
 };
 
+export type DeployTarget = 'local' | 'cloudflare';
+
 export type EnvData = {
+  deployTarget: DeployTarget;
   setupToken?: string;
   trustProxyHeaders: boolean;
   port: number;

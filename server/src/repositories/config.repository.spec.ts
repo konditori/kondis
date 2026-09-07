@@ -61,6 +61,22 @@ describe('ConfigRepository', () => {
   });
 
   describe('server defaults', () => {
+    it('uses local deployment by default', () => {
+      expect(new ConfigRepository().deployTarget).toBe('local');
+    });
+
+    it('reads the configured deployment target', () => {
+      process.env.KONDIS_DEPLOY_TARGET = 'cloudflare';
+
+      expect(new ConfigRepository().deployTarget).toBe('cloudflare');
+    });
+
+    it('rejects an invalid deployment target', () => {
+      process.env.KONDIS_DEPLOY_TARGET = 'worker';
+
+      expect(() => new ConfigRepository().deployTarget).toThrow(/KONDIS_DEPLOY_TARGET must be local or cloudflare/);
+    });
+
     it('does not trust client-controlled proxy headers by default', () => {
       expect(new ConfigRepository().trustProxyHeaders).toBe(false);
     });

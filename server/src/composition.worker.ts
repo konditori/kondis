@@ -83,6 +83,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     env.STORAGE_QUEUE,
   );
   const rateLimitingRepository = new RateLimitingRepository(database);
+  const fitRepository = new FitRepository(new ConsoleLogger());
   const authService = new AuthService(
     userRepository,
     config,
@@ -103,7 +104,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     transactions,
     workerEvents,
     queueAdapter,
-    new FitRepository(new ConsoleLogger()),
+    fitRepository,
     new GpxRepository(new ConsoleLogger()),
     new TcxRepository(new ConsoleLogger()),
     new ConsoleLogger(),
@@ -147,6 +148,9 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     authCredentialRepository,
     authService,
     activityService,
+    activityRepository,
+    uploadRepository,
+    fitRepository,
     socialService,
     liveWorkoutService,
     jobService,

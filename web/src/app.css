@@ -3925,6 +3925,15 @@ button {
 }
 .auth-page section {
   width: min(100%, 28rem);
+  padding: clamp(1.5rem, 5vw, 2.25rem);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 1.5rem 4rem var(--shadow);
+}
+.auth-page h1 {
+  color: var(--text);
 }
 .auth-page form {
   display: grid;
@@ -3934,6 +3943,8 @@ button {
 .auth-page label {
   display: grid;
   gap: 0.4rem;
+  color: var(--text);
+  font-weight: 600;
 }
 .auth-page input,
 .auth-page button {
@@ -3942,10 +3953,31 @@ button {
 }
 .auth-page input {
   width: 100%;
+  min-height: 3rem;
   color: var(--text);
+  -webkit-text-fill-color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 0.6rem;
+  caret-color: var(--focus);
+}
+.auth-page input:-webkit-autofill,
+.auth-page input:-webkit-autofill:hover,
+.auth-page input:-webkit-autofill:focus {
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  caret-color: var(--focus);
+}
+:root:not([data-theme="light"]) .auth-page input {
+  color: #edf3ff;
+  -webkit-text-fill-color: #edf3ff;
+  background-color: #151f31;
+}
+:root[data-theme="light"] .auth-page input {
+  color: #18243a;
+  -webkit-text-fill-color: #18243a;
+  background-color: #ffffff;
 }
 .auth-page input::placeholder {
   color: var(--muted);
@@ -3959,10 +3991,15 @@ button {
   cursor: pointer;
 }
 .auth-page form button[type="submit"] {
+  min-height: 3rem;
   color: #07101d;
   background: var(--green);
   border: 1px solid var(--green);
   border-radius: 0.6rem;
+  font-weight: 700;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
 }
 .auth-page form button[type="submit"]:hover,
 .auth-page form button[type="submit"]:focus-visible {

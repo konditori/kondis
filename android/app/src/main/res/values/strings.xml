@@ -113,7 +113,7 @@
     <string name="i18n_strava_importing">Importing&amp;#8230;</string>
     <string name="i18n_strava_import_takeout">Import takeout</string>
     <string name="i18n_server_unavailable">Server unavailable</string>
-    <string name="i18n_start_api_to_load_activities">Start the Kondis API to load your activities.</string>
+    <string name="i18n_start_api_to_load_activities">Not able to reach Kondis</string>
     <string name="i18n_live_activities">Live activities</string>
     <string name="i18n_live_recording">Live recording</string>
     <string name="i18n_paused">Paused</string>

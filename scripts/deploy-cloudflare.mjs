@@ -22,13 +22,11 @@ Examples:
   pnpm deploy:cloudflare worker-name --dry-run
 `;
 
-const run = (cwd, args, { capture = false } = {}) =>
+const run = (cwd, args, { capture = false, env = process.env } = {}) =>
   new Promise((resolvePromise, reject) => {
     const child = spawn(pnpmCommand, args, {
       cwd,
-      // The environment is encoded into the generated config. Do not let
-      // Wrangler interpret CLOUDFLARE_ENV as a separate Wrangler environment.
-      env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'CLOUDFLARE_ENV')),
+      env: Object.fromEntries(Object.entries(env).filter(([key]) => key !== 'CLOUDFLARE_ENV')),
       stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
     });
 
@@ -248,7 +246,9 @@ const main = async () => {
   await run(rootDir, ['--filter', '@kondis/sdk', 'run', 'build']);
 
   console.log(`Building web Worker: ${webConfig.name}`);
-  await run(webDir, ['run', 'build']);
+  await run(webDir, ['run', 'build'], {
+    env: { ...process.env, KONDIS_DEPLOY_TARGET: 'cloudflare' },
+  });
 
   console.log(`Deploying web Worker: ${webConfig.name}`);
   await run(webDir, ['exec', 'wrangler', 'deploy', '--config', webConfigPath]);

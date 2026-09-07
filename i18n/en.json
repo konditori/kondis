@@ -116,7 +116,7 @@
   "strava_activities_processed": "{processed} of {total} activities processed",
   "strava_import_takeout": "Import takeout",
   "server_unavailable": "Server unavailable",
-  "start_api_to_load_activities": "Start the Kondis API to load your activities.",
+  "start_api_to_load_activities": "Not able to reach Kondis",
   "live_activities": "Live activities",
   "live_recording": "Live recording",
   "paused": "Paused",

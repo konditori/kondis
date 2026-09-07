@@ -1,6 +1,6 @@
 import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
-import type { DatabaseConfig, EnvData } from 'src/types';
+import type { DatabaseConfig, DeployTarget, EnvData } from 'src/types';
 
 export type ConfigEnvironment = Readonly<Record<string, string | undefined>>;
 
@@ -36,6 +36,15 @@ const readBoolean = (environment: ConfigEnvironment, name: string, fallback: boo
   throw new Error(`${name} must be true or false, got: ${value}`);
 };
 
+const readDeployTarget = (environment: ConfigEnvironment): DeployTarget => {
+  const value = readEnv(environment, 'KONDIS_DEPLOY_TARGET', 'local');
+  if (value === 'local' || value === 'cloudflare') {
+    return value;
+  }
+
+  throw new Error(`KONDIS_DEPLOY_TARGET must be local or cloudflare, got: ${value}`);
+};
+
 const readPositiveInteger = (environment: ConfigEnvironment, name: string, fallback: number): number => {
   const raw = readEnv(environment, name);
   if (raw === undefined || raw.trim().length === 0) {
@@ -60,6 +69,7 @@ const getEnv = (environment: ConfigEnvironment): EnvData => {
   };
 
   return {
+    deployTarget: readDeployTarget(environment),
     setupToken: readEnv(environment, 'KONDIS_SETUP_TOKEN'),
     trustProxyHeaders: readBoolean(environment, 'KONDIS_TRUST_PROXY_HEADERS', false),
     port: readPositiveInteger(environment, 'KONDIS_PORT', 2293),
@@ -87,6 +97,10 @@ export class ConfigRepository implements ConfigPort {
 
   get port(): number {
     return this.getEnv().port;
+  }
+
+  get deployTarget(): DeployTarget {
+    return this.getEnv().deployTarget;
   }
 
   get setupToken(): string | undefined {

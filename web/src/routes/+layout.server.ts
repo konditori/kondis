@@ -15,6 +15,7 @@ import { redirect } from "@sveltejs/kit";
 export const load: LayoutServerLoad = async ({
   cookies,
   locals,
+  platform,
   request,
   url,
 }) => {
@@ -34,10 +35,14 @@ export const load: LayoutServerLoad = async ({
     url?.pathname === "/setup" ||
     url?.pathname.startsWith("/setup/") ||
     url?.pathname === "/register";
+  const demoMode = platform?.env.KONDIS_DEMO_MODE === "true";
+  if (demoMode && publicAuthPage) {
+    throw redirect(303, "/");
+  }
   const activityTypesPromise = activityControllerListTypes(
     getServerSdkRequestOptions(locals.kondisFetch),
   );
-  if (url && !publicAuthPage && !publicLiveView) {
+  if (url && !demoMode && !publicAuthPage && !publicLiveView) {
     const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));
     if (!me.ok) {
       const setup = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));

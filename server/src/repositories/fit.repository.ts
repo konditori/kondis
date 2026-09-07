@@ -33,12 +33,14 @@ export class FitRepository {
     this.logger.setContext(FitRepository.name);
   }
 
-  decode(contents: Buffer): FitMessages {
+  decode(contents: Uint8Array): FitMessages {
     let decoded: ParsedFit | undefined;
     let failure: string | undefined;
 
     try {
-      this.fitParser.parse(contents as Buffer<ArrayBuffer>, (error, data) => {
+      const input = new Uint8Array(contents.byteLength);
+      input.set(contents);
+      this.fitParser.parse(input.buffer as ArrayBuffer, (error, data) => {
         failure = error;
         decoded = data;
       });

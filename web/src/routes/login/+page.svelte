@@ -24,11 +24,15 @@
   }
 
   onMount(() => {
-    const savedTheme = localStorage.getItem("kondis-theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      setTheme(savedTheme, false);
-    } else if (document.documentElement.dataset.theme === "light") {
-      theme = "light";
+    try {
+      const savedTheme = localStorage.getItem("kondis-theme");
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setTheme(savedTheme, false);
+      } else if (document.documentElement.dataset.theme === "light") {
+        theme = "light";
+      }
+    } catch {
+      // The login page still works when storage is unavailable.
     }
   });
 </script>
@@ -44,6 +48,7 @@
     title={theme === "dark"
       ? t("switch_to_light_mode")
       : t("switch_to_dark_mode")}
+    aria-pressed={theme === "light"}
     onclick={toggleTheme}
   >
     {#if theme === "dark"}
@@ -71,7 +76,7 @@
           autocomplete="current-password"
         /></label
       >{#if form?.error}<p class="error">{form.error}</p>{/if}<button
-        >{t("auth_sign_in")}</button
+        type="submit">{t("auth_sign_in")}</button
       >
     </form>
     {#if data.registrationEnabled}

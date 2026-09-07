@@ -36,6 +36,7 @@ import { handleDeadLetterBatch } from 'src/cloudflare/queue-handler';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+import { provisionDemoData } from 'src/demo/provisioner';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
@@ -180,7 +181,14 @@ export default {
     const composition = createWorkerInvocationComposition(env);
     try {
       const demoMode = composition.config.demoMode;
-      const demoUser = demoMode ? await findDemoUser(composition) : undefined;
+      const demoUser = demoMode
+        ? await provisionDemoData({
+            database: composition.database,
+            activities: composition.activityRepository,
+            uploads: composition.uploadRepository,
+            fit: composition.fitRepository,
+          })
+        : undefined;
       if (demoMode && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
         return Response.json(
           { statusCode: 405, message: 'This demo is read-only' },
@@ -260,23 +268,6 @@ export default {
       await composition.close();
     }
   },
-};
-
-const findDemoUser = async (
-  composition: ReturnType<typeof createWorkerInvocationComposition>,
-): Promise<AuthenticatedUser> => {
-  const users = await composition.userRepository.all();
-  if (users.length !== 1) {
-    throw new Error(`Demo mode requires exactly one provisioned user; found ${users.length}`);
-  }
-  const [user] = users;
-  return {
-    id: user.id,
-    role: user.role,
-    email: user.email,
-    firstName: user.first_name,
-    lastName: user.last_name,
-  };
 };
 
 const isDemoCacheable = (request: Request, response: Response): boolean => {
