@@ -185,7 +185,7 @@ const main = async () => {
   const apiWorkerName = apiConfig.name;
   const webConfig = {
     ...webBaseConfig,
-    name: `${webBaseConfig.name}-${environment}`,
+    name: demoMode ? webBaseConfig.name : `${webBaseConfig.name}-${environment}`,
     vars: {
       ...(webBaseConfig.vars || {}),
       ...(demoMode ? { KONDIS_DEMO_MODE: 'true' } : {}),
@@ -193,9 +193,6 @@ const main = async () => {
     services: (webBaseConfig.services || []).map((service) =>
       service.binding === 'KONDIS_API' ? { ...service, service: apiWorkerName } : service,
     ),
-    ...(demoMode && environment === 'production'
-      ? { routes: [{ pattern: 'demo.kondis.org', custom_domain: true }] }
-      : {}),
   };
 
   const configOutputDir = configDir || serverDir;

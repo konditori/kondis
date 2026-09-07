@@ -6,12 +6,10 @@ import { fileURLToPath } from "node:url";
 const argumentsList = process.argv.slice(2);
 const dryRun = argumentsList.includes("--dry-run");
 const positional = argumentsList.filter((argument) => argument !== "--dry-run");
-const environment = positional[0] ?? "production";
+const environment = "demo";
 
-if (!["production", "preview"].includes(environment) || positional.length > 1) {
-  throw new Error(
-    "Usage: pnpm run deploy:demo [production|preview] [--dry-run]",
-  );
+if (positional.length > 0) {
+  throw new Error("Usage: pnpm run deploy:demo [--dry-run]");
 }
 if (!process.env.KONDIS_HYPERDRIVE_ID) {
   throw new Error("KONDIS_HYPERDRIVE_ID is required");

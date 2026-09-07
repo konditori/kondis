@@ -49,18 +49,11 @@ Objects because the demo does not accept uploads or edits. The first demo reques
 provisions the demo user and its fictional FIT activity history automatically; it
 still aborts if the database contains more than one user.
 
-Provide the environment-specific Hyperdrive ID:
+Provide the Hyperdrive ID for the database being deployed:
 
 ```sh
-KONDIS_HYPERDRIVE_ID="$KONDIS_PRODUCTION_HYPERDRIVE_ID" \
-mise run deploy:demo production
-```
-
-Use `preview` with the preview database for preview traffic:
-
-```sh
-KONDIS_HYPERDRIVE_ID="$KONDIS_PREVIEW_HYPERDRIVE_ID" \
-mise run deploy:demo preview
+KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" \
+mise run deploy:demo
 ```
 
 Use `--dry-run` to inspect the generated configs. In GitHub Actions, store the
@@ -71,11 +64,9 @@ you.
 The demo's source and generated Wrangler configurations live under
 `deployment/demo/`; no demo configuration is written into `server/` or `web/`.
 
-For `production`, the command deploys `kondis-public-demo-api-production` and
-`kondis-public-demo-web-production`, attaching the web Worker to the public
-custom domain `demo.kondis.org`. The `preview` command creates matching,
-isolated `-preview` Workers without claiming the production domain. Both API
-Workers use only Hyperdrive for persistence.
+The command deploys `kondis-demo-api` and `kondis-demo-web`, attaching the web
+Worker to the public custom domain `demo.kondis.org`. The API and web Workers
+use only Hyperdrive for persistence.
 
 ### General Worker deployment
 

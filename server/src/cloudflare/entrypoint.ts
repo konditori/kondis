@@ -170,8 +170,6 @@ const createRequestApp = (
 
 export default {
   async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
-    // Keep the health boundary available in local/minimal Worker tests and
-    // deployments that have not configured Hyperdrive yet.
     if (!env.HYPERDRIVE) {
       if (new URL(request.url).pathname === '/api/v1/ping' && request.method === 'GET') {
         return Response.json({ status: 'pong' });
@@ -218,7 +216,7 @@ export default {
 
   async queue(batch: WorkerQueueBatch, env: WorkerEnv): Promise<void> {
     if (!env.HYPERDRIVE) {
-      throw new Error('HYPERDRIVE is required for queue processing');
+      throw new Error('Hyperdrive is required for queue processing');
     }
     const queue = parseQueueBindingName(batch.queue);
     if (!queue) {
@@ -247,7 +245,7 @@ export default {
 
   async scheduled(event: ScheduledEvent, env: WorkerEnv): Promise<void> {
     if (!env.HYPERDRIVE) {
-      throw new Error('HYPERDRIVE is required for scheduled jobs');
+      throw new Error('Hyperdrive is required for scheduled jobs');
     }
     const composition = createWorkerInvocationComposition(env);
     const db = composition.database;

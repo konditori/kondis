@@ -10,6 +10,27 @@ import { parseFitMessages } from 'src/utils/fit';
 export const DEMO_USER_EMAIL = 'demo@kondis.org';
 const DEMO_PASSWORD_HASH = '$2b$12$q5KRFbq3UirFSlEhM7Xa.uoi96PRJvpMz4b6UPvN4clsmqB0VxfGW';
 
+const DEMO_USER_CONFIGS = [
+  {
+    email: DEMO_USER_EMAIL,
+    role: 'admin',
+    first_name: 'John',
+    last_name: 'Doe',
+  },
+  {
+    email: 'sofia@kondis.org',
+    role: 'user',
+    first_name: 'Sofia',
+    last_name: 'Berg',
+  },
+  {
+    email: 'marcus@kondis.org',
+    role: 'user',
+    first_name: 'Marcus',
+    last_name: 'Lee',
+  },
+] as const;
+
 export type DemoProvisioningDependencies = {
   database: KondisDatabase;
   activities: ActivityRepository;
@@ -23,6 +44,12 @@ type DemoUser = {
   role: 'admin' | 'user';
   first_name: string;
   last_name: string;
+};
+
+type DemoActivity = {
+  id: string;
+  owner: DemoUser;
+  spec: (typeof DEMO_FIT_SPECS)[number];
 };
 
 const toLapInput = (lap: ReturnType<typeof parseFitMessages>['laps'][number]) => ({
@@ -61,7 +88,6 @@ const seedActivity = async (
       activity: {
         upload_id: upload.id,
         user_id: user.id,
-        // FIT has no gravel-specific sport enum; retain the curated subtype after parsing the FIT payload.
         sport: spec.activitySport,
         name: spec.title,
         description: spec.description,
@@ -106,51 +132,125 @@ const asAuthenticatedUser = (user: DemoUser) => ({
   lastName: user.last_name,
 });
 
-export const provisionDemoData = async (dependencies: DemoProvisioningDependencies) => {
+const createDemoUsers = async (executor: KondisExecutor): Promise<DemoUser[]> => {
+  const existingUsers = await executor
+    .selectFrom('user')
+    .select(['id', 'email', 'role', 'first_name', 'last_name'])
+    .where(
+      'email',
+      'in',
+      DEMO_USER_CONFIGS.map(({ email }) => email),
+    )
+    .execute();
+  const usersByEmail = new Map(existingUsers.map((user) => [user.email, user]));
+
+  for (const config of DEMO_USER_CONFIGS) {
+    if (usersByEmail.has(config.email)) {
+      continue;
+    }
+    const user = await executor
+      .insertInto('user')
+      .values({ ...config, password_hash: DEMO_PASSWORD_HASH })
+      .returning(['id', 'email', 'role', 'first_name', 'last_name'])
+      .executeTakeFirstOrThrow();
+    usersByEmail.set(user.email, user);
+  }
+
+  return DEMO_USER_CONFIGS.map(({ email }) => usersByEmail.get(email)!);
+};
+
+const seedActivityForUser = async (
+  executor: KondisExecutor,
+  dependencies: DemoProvisioningDependencies,
+  owner: DemoUser,
+  spec: (typeof DEMO_FIT_SPECS)[number],
+): Promise<string> => seedActivity(executor, dependencies, owner, spec);
+
+const seedSocialData = async (
+  executor: KondisExecutor,
+  users: readonly DemoUser[],
+  activities: readonly DemoActivity[],
+) => {
+  for (const follower of users) {
+    for (const followee of users) {
+      if (follower.id === followee.id) {
+        continue;
+      }
+      await executor
+        .insertInto('user_follow')
+        .values({ follower_id: follower.id, followee_id: followee.id })
+        .onConflict((conflict) => conflict.doNothing())
+        .execute();
+    }
+  }
+
+  for (const activity of activities) {
+    const ownerIndex = users.findIndex((user) => user.id === activity.owner.id);
+    for (let offset = 1; offset < users.length; offset++) {
+      const actor = users[(ownerIndex + offset) % users.length];
+      await executor.insertInto('activity_like').values({ activity_id: activity.id, user_id: actor.id }).execute();
+      await executor
+        .insertInto('notification')
+        .values({ user_id: activity.owner.id, actor_id: actor.id, type: 'activity_like', activity_id: activity.id })
+        .execute();
+
+      const body = `${actor.first_name} loved your ${activity.spec.title.toLowerCase()} — great work!`;
+      await executor
+        .insertInto('activity_comment')
+        .values({ activity_id: activity.id, user_id: actor.id, body })
+        .executeTakeFirstOrThrow();
+      await executor
+        .insertInto('notification')
+        .values({
+          user_id: activity.owner.id,
+          actor_id: actor.id,
+          type: 'activity_comment',
+          activity_id: activity.id,
+        })
+        .execute();
+    }
+  }
+};
+
+const provisionDemoDataOnce = async (dependencies: DemoProvisioningDependencies) => {
   const provisioning = await dependencies.database.transaction().execute(async (transaction) => {
     await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:demo-provisioning'))`.execute(transaction);
-    const users = await transaction.selectFrom('user').selectAll().forUpdate().execute();
-    if (users.length > 1) {
-      throw new Error(`Demo mode requires exactly one provisioned user; found ${users.length}`);
-    }
-
-    const user =
-      users[0] ??
-      (await transaction
-        .insertInto('user')
-        .values({
-          email: DEMO_USER_EMAIL,
-          first_name: 'Demo',
-          last_name: 'Athlete',
-          password_hash: DEMO_PASSWORD_HASH,
-          role: 'admin',
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow());
-
-    const existingActivities = await transaction
-      .selectFrom('activity')
+    const users = await createDemoUsers(transaction);
+    const existingUploads = await transaction
+      .selectFrom('upload')
       .select('id')
-      .where('user_id', '=', user.id)
+      .where('checksum', 'like', 'demo-fit-v1:%')
       .execute();
-    if (existingActivities.length > 0) {
+    const existingActivities = existingUploads.length
+      ? await transaction
+          .selectFrom('activity')
+          .select('id')
+          .where(
+            'upload_id',
+            'in',
+            existingUploads.map(({ id }) => id),
+          )
+          .execute()
+      : [];
+    if (existingActivities.length === DEMO_FIT_SPECS.length) {
       return {
-        user: asAuthenticatedUser(user),
+        user: asAuthenticatedUser(users[0]),
         activityIds: existingActivities.map(({ id }) => id),
-        seeded: false,
       };
     }
 
-    const activityIds = [];
-    for (const spec of DEMO_FIT_SPECS) {
-      activityIds.push(await seedActivity(transaction, dependencies, user, spec));
+    const activities: DemoActivity[] = [];
+    for (const [index, spec] of DEMO_FIT_SPECS.entries()) {
+      const owner = users[index % users.length];
+      activities.push({ id: await seedActivityForUser(transaction, dependencies, owner, spec), owner, spec });
     }
-    return { user: asAuthenticatedUser(user), activityIds, seeded: true };
+    await seedSocialData(transaction, users, activities);
+    return {
+      user: asAuthenticatedUser(users[0]),
+      activityIds: activities.map(({ id }) => id),
+    };
   });
 
-  // Best-effort and route matching use their own transactions. They run after the seed transaction has committed,
-  // and the lock above makes the first-request path safe when multiple isolates initialize the demo concurrently.
-  let rankingsNeedRefresh = provisioning.seeded;
   for (const activityId of provisioning.activityIds) {
     const activity = await dependencies.activities.getById(activityId);
     if (!activity) {
@@ -158,14 +258,13 @@ export const provisionDemoData = async (dependencies: DemoProvisioningDependenci
     }
     if (activity.best_efforts_computed_at === null) {
       await dependencies.activities.recomputeBestEfforts(activityId);
-      rankingsNeedRefresh = true;
     }
     if (activity.route_matches_computed_at === null) {
       await dependencies.activities.recomputeRouteMatches(activityId);
     }
   }
-  if (rankingsNeedRefresh) {
-    await dependencies.activities.refreshBestEffortRankings();
-  }
+  await dependencies.activities.refreshBestEffortRankings();
   return provisioning.user;
 };
+
+export const provisionDemoData = provisionDemoDataOnce;

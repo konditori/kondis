@@ -17,4 +17,17 @@ describe('demo FIT fixtures', () => {
     expect(parsed.streams.some(({ type }) => type === 'latitude')).toBe(true);
     expect(parsed.streams.some(({ type }) => type === 'longitude')).toBe(true);
   });
+
+  it('provides a dense set of workouts across multiple cities', () => {
+    expect(DEMO_FIT_SPECS).toHaveLength(12);
+    expect(new Set(DEMO_FIT_SPECS.map(({ slug }) => slug)).size).toBe(DEMO_FIT_SPECS.length);
+
+    for (const spec of DEMO_FIT_SPECS) {
+      const messages = new FitRepository(new ConsoleLogger()).decode(createDemoFitFile(spec));
+
+      expect(messages.recordMesgs?.length).toBeGreaterThanOrEqual(Math.floor(spec.elapsedTimeS / 5) + 1);
+      expect(messages.recordMesgs?.at(-1)?.timestamp).toBeDefined();
+      expect(spec.route.length).toBeGreaterThanOrEqual(14);
+    }
+  });
 });

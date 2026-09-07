@@ -114,7 +114,7 @@ const generateCloudflareConfig = ({
   nodeProcessorEnabled = false,
   demoMode = false,
 }) => {
-  const prefix = `${baseConfig.name}-${environment}`;
+  const prefix = demoMode ? baseConfig.name : `${baseConfig.name}-${environment}`;
   const demoBaseConfig = (() => {
     const {
       r2_buckets: _r2Buckets,

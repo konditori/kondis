@@ -106,15 +106,15 @@ describe('generateCloudflareConfig', () => {
   it('enables anonymous read-only demo access in demo mode', () => {
     const config = generateCloudflareConfig({
       baseConfig: {
-        name: 'kondis-public-demo-api',
+        name: 'kondis-demo-api',
         main: 'src/cloudflare/entrypoint.ts',
       },
-      environment: 'preview',
+      environment: 'demo',
       hyperdriveId: 'd'.repeat(32),
       demoMode: true,
     });
 
-    expect(config.name).toBe('kondis-public-demo-api-preview');
+    expect(config.name).toBe('kondis-demo-api');
     expect(config.vars).toEqual({
       KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false',
       KONDIS_DEMO_MODE: 'true',
