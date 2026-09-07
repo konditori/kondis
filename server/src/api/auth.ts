@@ -33,13 +33,24 @@ export type ApiSessionLookup = {
   findSession: (token: string) => Promise<AuthenticatedSession | undefined>;
 };
 
-export const createApiAuthMiddleware = (sessions: ApiSessionLookup, isPublic: IsPublicRequest) =>
+export const createApiAuthMiddleware = (
+  sessions: ApiSessionLookup,
+  isPublic: IsPublicRequest,
+  demoUser?: AuthenticatedUser,
+) =>
   createMiddleware<ApiEnv>(async (context, next) => {
     if (context.req.matchedRoutes.every(({ method }) => method === 'ALL')) {
       await next();
       return;
     }
     if (isPublic(context.req.method, context.req.path)) {
+      await next();
+      return;
+    }
+
+    if (demoUser) {
+      context.set('user', demoUser);
+      context.set('sessionId', `demo:${demoUser.id}`);
       await next();
       return;
     }

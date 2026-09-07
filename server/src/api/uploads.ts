@@ -6,11 +6,15 @@ export type ImageUpload = {
   file: BufferedUploadedFileData | undefined;
   caption: string | undefined;
 };
+export type TakeoutActivityUpload = {
+  file: UploadedFileData | undefined;
+  metadata: string | undefined;
+};
 
 export type UploadReader = {
   read: (
     request: Request,
     platform: ApiBindings | undefined,
     kind: UploadKind,
-  ) => Promise<ImageUpload | UploadedFileData | undefined>;
+  ) => Promise<ImageUpload | TakeoutActivityUpload | UploadedFileData | undefined>;
 };

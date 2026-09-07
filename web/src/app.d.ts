@@ -2,6 +2,7 @@ declare global {
   namespace App {
     interface Platform {
       env: {
+        KONDIS_DEMO_MODE?: string;
         KONDIS_API: {
           fetch(
             input: RequestInfo | URL,

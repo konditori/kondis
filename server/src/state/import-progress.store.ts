@@ -72,6 +72,19 @@ export class ImportProgressStore {
         return [];
       }
 
+      await sql`
+        WITH recovered AS (
+          UPDATE takeout_import_item
+          SET status = 'pending', error = NULL
+          WHERE import_id = ${importId}
+            AND status = 'uploading'
+          RETURNING 1
+        )
+        UPDATE takeout_import
+        SET uploaded = GREATEST(0, uploaded - (SELECT count(*) FROM recovered))
+        WHERE id = ${importId}
+      `.execute(trx);
+
       const inserted =
         items.length === 0
           ? []

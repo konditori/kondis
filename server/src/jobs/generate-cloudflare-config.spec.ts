@@ -98,6 +98,20 @@ describe('generateCloudflareConfig', () => {
     ]);
   });
 
+  it('enables anonymous read-only demo access only when a demo user is configured', () => {
+    const config = generateCloudflareConfig({
+      baseConfig: { name: 'public-demo-api', main: 'src/cloudflare/entrypoint.ts' },
+      environment: 'preview',
+      hyperdriveId: 'd'.repeat(32),
+      demoUserId: '33333333-3333-4333-8333-333333333333',
+    });
+
+    expect(config.vars).toEqual({
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false',
+      KONDIS_DEMO_USER_ID: '33333333-3333-4333-8333-333333333333',
+    });
+  });
+
   it('enables Node-owned schedules only when the cloud processor is ready', () => {
     const config = generateCloudflareConfig({
       baseConfig: { name: 'kondis-api', main: 'src/cloudflare/entrypoint.ts' },

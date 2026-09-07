@@ -1,7 +1,7 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
-import type { UploadReader } from 'src/api/uploads';
+import type { TakeoutActivityUpload, UploadReader } from 'src/api/uploads';
 import {
   FitUploadResponseSchema,
   TakeoutActivityMetadataSchema,
@@ -48,12 +48,6 @@ export type TakeoutImportRouteService = {
 export type UploadRouteService = ActivityUploadRouteService & TakeoutImportRouteService;
 
 const idParams = z.object({ id: z.string().uuid() });
-const metadataHeaders = z.object({
-  'x-kondis-takeout-metadata': z
-    .string()
-    .min(1)
-    .max(16 * 1024),
-});
 const activityResponse = FitUploadResponseSchema.openapi('FitUploadResponseDto_Output');
 const createResponse = TakeoutImportCreateResponseSchema.openapi('TakeoutImportCreateResponseDto_Output');
 const scanResponse = TakeoutImportScanResponseSchema.openapi('TakeoutImportScanResponseDto_Output');
@@ -119,8 +113,21 @@ const uploadTakeoutActivityRoute = createRoute({
   operationId: 'TakeoutImportController_uploadActivity',
   request: {
     params: idParams,
-    headers: metadataHeaders,
-    body: uploadBody('One extracted .fit, .tcx, or .gpx activity file'),
+    body: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            required: ['file', 'metadata'],
+            properties: {
+              file: { type: 'string', format: 'binary', description: 'One extracted .fit, .tcx, or .gpx activity file' },
+              metadata: { type: 'string', maxLength: 16 * 1024 },
+            },
+          },
+        },
+      },
+    },
   },
   responses: {
     202: { description: 'Extracted activity accepted', content: { 'application/json': { schema: itemResponse } } },
@@ -214,21 +221,21 @@ export const registerTakeoutImportRoutes = (
     ),
   );
   app.openapi(uploadTakeoutActivityRoute, async (context) => {
-    const rawMetadata = context.req.valid('header')['x-kondis-takeout-metadata'];
+    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutActivity')) as TakeoutActivityUpload | undefined;
+    const rawMetadata = upload?.metadata;
     let metadata: z.output<typeof TakeoutActivityMetadataSchema>;
     try {
-      metadata = TakeoutActivityMetadataSchema.parse(JSON.parse(rawMetadata));
+      metadata = TakeoutActivityMetadataSchema.parse(JSON.parse(rawMetadata ?? ''));
     } catch {
-      throw new BadRequestException('Invalid X-Kondis-Takeout-Metadata header');
+      throw new BadRequestException('Invalid takeout metadata field');
     }
-    const file = (await uploads.read(context.req.raw, context.env, 'takeoutActivity')) as UploadedFileData | undefined;
     return context.json(
       itemResponse.parse({
         accepted: await service.submitTakeoutActivity(
           context.req.valid('param').id,
           context.get('user').id,
           metadata,
-          file,
+          upload?.file,
         ),
       }),
       202,

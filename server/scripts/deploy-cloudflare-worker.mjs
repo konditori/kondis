@@ -21,6 +21,10 @@ const nodeProcessorSetting = process.env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED;
 if (nodeProcessorSetting && !['false', 'true'].includes(nodeProcessorSetting)) {
   throw new Error('KONDIS_CLOUD_NODE_PROCESSOR_ENABLED must be true or false when set');
 }
+const demoUserId = process.env.KONDIS_DEMO_USER_ID;
+if (demoUserId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(demoUserId)) {
+  throw new Error('KONDIS_DEMO_USER_ID must be a UUID when set');
+}
 
 const serverDir = resolve(import.meta.dirname, '..');
 const baseConfig = parseJsonc(await readFile(resolve(serverDir, 'wrangler.jsonc'), 'utf8'));
@@ -29,6 +33,7 @@ const environmentConfig = generateCloudflareConfig({
   environment,
   hyperdriveId,
   nodeProcessorEnabled: nodeProcessorSetting === 'true',
+  demoUserId,
 });
 const executorConfig = generateQueueExecutorConfig({ baseConfig, environment, hyperdriveId });
 const outputPath = resolve(serverDir, `wrangler-generated-${environment}.json`);

@@ -14,11 +14,12 @@ const hyperdrivePattern = /^[a-f0-9]{32}$/i;
 const usage = () => `Usage: pnpm deploy:cloudflare <environment> [--dry-run]
 
 Required environment:
-  KONDIS_HYPERDRIVE_ID  Hyperdrive ID created by Terraform
+ KONDIS_HYPERDRIVE_ID  Hyperdrive ID created by Terraform
+  KONDIS_DEMO_USER_ID   Optional UUID for anonymous read-only demo access
 
 Examples:
-  pnpm deploy:cloudflare pr44
-  pnpm deploy:cloudflare pr44 --dry-run
+  pnpm deploy:cloudflare worker-name
+  pnpm deploy:cloudflare worker-name --dry-run
 `;
 
 const run = (cwd, args, { capture = false } = {}) =>
@@ -105,7 +106,7 @@ const parseArguments = () => {
   const environment = positional[0] || process.env.CLOUDFLARE_ENV;
   if (!environment || !environmentPattern.test(environment)) {
     throw new Error(
-      `Invalid or missing environment. Use a lowercase name such as "pr44".\n\n${usage()}`,
+      `Invalid or missing environment. Use a lowercase name such as "worker-name".\n\n${usage()}`,
     );
   }
 
@@ -122,11 +123,15 @@ const parseArguments = () => {
     throw new Error('KONDIS_CLOUD_NODE_PROCESSOR_ENABLED must be either true or false.');
   }
 
-  return { environment, dryRun, hyperdriveId, nodeProcessorEnabled: nodeProcessorEnabled === 'true' };
+  const demoUserId = process.env.KONDIS_DEMO_USER_ID;
+  if (demoUserId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(demoUserId)) {
+    throw new Error('KONDIS_DEMO_USER_ID must be a UUID when set.');
+  }
+  return { environment, dryRun, hyperdriveId, nodeProcessorEnabled: nodeProcessorEnabled === 'true', demoUserId };
 };
 
 const main = async () => {
-  const { environment, dryRun, hyperdriveId, nodeProcessorEnabled } = parseArguments();
+  const { environment, dryRun, hyperdriveId, nodeProcessorEnabled, demoUserId } = parseArguments();
   const require = createRequire(resolve(serverDir, 'scripts/generate-cloudflare-config.cjs'));
   const {
     generateCloudflareConfig,
@@ -141,12 +146,17 @@ const main = async () => {
     environment,
     hyperdriveId,
     nodeProcessorEnabled,
+    demoUserId,
   });
   const executorConfig = generateQueueExecutorConfig({ baseConfig: apiBaseConfig, environment, hyperdriveId });
   const apiWorkerName = apiConfig.name;
   const webConfig = {
     ...webBaseConfig,
     name: `${webBaseConfig.name}-${environment}`,
+    vars: {
+      ...(webBaseConfig.vars || {}),
+      ...(demoUserId ? { KONDIS_DEMO_MODE: 'true' } : {}),
+    },
     services: (webBaseConfig.services || []).map((service) =>
       service.binding === 'KONDIS_API' ? { ...service, service: apiWorkerName } : service,
     ),

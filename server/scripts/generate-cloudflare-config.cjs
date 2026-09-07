@@ -107,7 +107,7 @@ const removeJsoncTrailingCommas = (source) => {
 
 const parseJsonc = (source) => JSON.parse(removeJsoncTrailingCommas(stripJsoncComments(source)));
 
-const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeProcessorEnabled = false }) => {
+const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeProcessorEnabled = false, demoUserId }) => {
   const prefix = `${baseConfig.name}-${environment}`;
   const queues = Object.entries(JOB_CONCURRENCY).map(([queue, concurrency]) => {
     const name = queueName(prefix, queue);
@@ -128,6 +128,7 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
     vars: {
       ...(baseConfig.vars || {}),
       KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: nodeProcessorEnabled ? 'true' : 'false',
+      ...(demoUserId ? { KONDIS_DEMO_USER_ID: demoUserId } : {}),
     },
     r2_buckets: [{ binding: 'STORAGE_BUCKET', bucket_name: `${prefix}-storage` }],
     durable_objects: {

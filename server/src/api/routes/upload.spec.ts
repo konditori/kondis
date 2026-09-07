@@ -18,7 +18,16 @@ const status = {
 describe('API browser takeout import routes', () => {
   it('checkpoints a manifest and accepts one extracted activity', async () => {
     const activityFile = { originalname: 'run.gpx', size: 9, path: '/tmp/activity' };
-    const read = vi.fn(() => Promise.resolve(activityFile));
+    const read = vi.fn(() => Promise.resolve({
+      file: activityFile,
+      metadata: JSON.stringify({
+        itemKey: 'activity:activities/run.gpx',
+        originalName: 'run.gpx',
+        name: 'Morning run 💨',
+        description: '走る',
+        tags: [],
+      }),
+    }));
     const createTakeoutImport = vi.fn(() => Promise.resolve({ importId, status: 'scanning' as const }));
     const scanTakeoutImport = vi.fn(() => Promise.resolve(['activity:activities/run.gpx']));
     const submitTakeoutActivity = vi.fn(() => Promise.resolve(true));
@@ -53,25 +62,26 @@ describe('API browser takeout import routes', () => {
     expect(scan.status).toBe(200);
     expect(await scan.json()).toEqual({ pendingItemKeys: ['activity:activities/run.gpx'] });
 
+    const body = new FormData();
+    body.append('metadata', JSON.stringify({
+      itemKey: 'activity:activities/run.gpx',
+      originalName: 'run.gpx',
+      name: 'Morning run 💨',
+      description: '走る',
+      tags: [],
+    }));
+    body.append('file', new File(['activity'], 'run.gpx'));
     const uploaded = await app.request(`/upload/strava/imports/${importId}/activities`, {
       method: 'POST',
-      headers: {
-        ...apiAuthHeaders(),
-        'x-kondis-takeout-metadata': JSON.stringify({
-          itemKey: 'activity:activities/run.gpx',
-          originalName: 'run.gpx',
-          name: 'Morning run',
-          description: null,
-          tags: [],
-        }),
-      },
+      headers: apiAuthHeaders(),
+      body,
     });
     expect(uploaded.status).toBe(202);
     expect(read).toHaveBeenLastCalledWith(expect.any(Request), undefined, 'takeoutActivity');
     expect(submitTakeoutActivity).toHaveBeenCalledWith(
       importId,
       TEST_API_USER.id,
-      expect.objectContaining({ itemKey: 'activity:activities/run.gpx', originalName: 'run.gpx' }),
+      expect.objectContaining({ itemKey: 'activity:activities/run.gpx', originalName: 'run.gpx', name: 'Morning run 💨', description: '走る' }),
       activityFile,
     );
   });

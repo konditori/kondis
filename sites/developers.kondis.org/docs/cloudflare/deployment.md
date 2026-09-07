@@ -17,7 +17,7 @@ Kondis uses one cache-disabled Hyperdrive configuration per deployment environme
 Create the Hyperdrive configuration once per environment using a TLS connection to the PostgreSQL 17 origin. Prefer Terraform when the environment is managed there. For a one-off Wrangler setup:
 
 ```sh
-mise exec -- pnpm --dir server exec wrangler hyperdrive create kondis-pr44-postgres \
+mise exec -- pnpm --dir server exec wrangler hyperdrive create kondis-worker-test-postgres \
   --connection-string="$KONDIS_CLOUD_DATABASE_URL" \
   --caching-disabled
 ```
@@ -36,11 +36,46 @@ For the queue split deployment, this applies `1789000000000-SplitActivityQueues`
 
 ## Deploy
 
+### Public demo
+
+The public demo is an anonymous, read-only deployment. It serves one configured
+database user and caches successful API and rendered-page reads for one day. It
+does not put a credential in the browser. The demo command only accepts the
+isolated `production` and `preview` environments and always disables background
+job processing.
+
+Provide an environment-specific Hyperdrive ID and the UUID of the demo user:
+
+```sh
+KONDIS_HYPERDRIVE_ID="$KONDIS_PRODUCTION_HYPERDRIVE_ID" \
+KONDIS_DEMO_USER_ID="$KONDIS_PRODUCTION_DEMO_USER_ID" \
+mise exec -- pnpm run deploy:demo production
+```
+
+Use `preview` with the preview database and demo user for preview traffic:
+
+```sh
+KONDIS_HYPERDRIVE_ID="$KONDIS_PREVIEW_HYPERDRIVE_ID" \
+KONDIS_DEMO_USER_ID="$KONDIS_PREVIEW_DEMO_USER_ID" \
+mise exec -- pnpm run deploy:demo preview
+```
+
+Use `--dry-run` to inspect the generated configs. In GitHub Actions, store the
+two values in the matching GitHub Environment's secrets and pass them as command
+environment variables. The user UUID is not secret, but storing it with the
+deployment configuration keeps the public-demo setup self-contained.
+
+For `production`, the command deploys `public-demo-api-production`,
+`public-demo-api-production-queue-executor`, and `public-demo-web-production`.
+The `preview` command creates matching, isolated `-preview` resources.
+
+### General Worker deployment
+
 Set the target environment and its Hyperdrive ID, then run the root deployment task:
 
 ```sh
-export KONDIS_HYPERDRIVE_ID="$KONDIS_HYPERDRIVE_ID_PR44"
-mise run deploy:cloudflare pr44
+export KONDIS_HYPERDRIVE_ID="$KONDIS_HYPERDRIVE_ID_WORKER_TEST"
+mise run deploy:cloudflare worker-test
 ```
 
 The deployment task performs these steps in order:
@@ -55,24 +90,24 @@ The deployment task performs these steps in order:
 
 The generated API config contains the Hyperdrive binding, R2 bucket, Queue producers and consumers, dead-letter Queues, concurrency, retry, and Cron Trigger configuration. It does not contain the database connection string and must not be edited manually.
 
-For example, environment `pr44` creates or reuses:
+For example, environment `worker-test` creates or reuses:
 
 ```sh
-kondis-api-pr44
-kondis-web-pr44
-kondis-api-pr44-storage
-kondis-api-pr44-activity-parsing
-kondis-api-pr44-activity-parsing-dlq
-kondis-api-pr44-activity-enrichment
-kondis-api-pr44-activity-enrichment-dlq
+kondis-api-worker-test
+kondis-web-worker-test
+kondis-api-worker-test-storage
+kondis-api-worker-test-activity-parsing
+kondis-api-worker-test-activity-parsing-dlq
+kondis-api-worker-test-activity-enrichment
+kondis-api-worker-test-activity-enrichment-dlq
 ```
 
-The remaining background, image-processing, and storage Queues follow the same `kondis-api-pr44-*` naming pattern.
+The remaining background, image-processing, and storage Queues follow the same `kondis-api-worker-test-*` naming pattern.
 
 Use a dry run to generate and inspect both configs without provisioning resources, building, or deploying:
 
 ```sh
-mise run deploy:cloudflare pr44 --dry-run
+mise run deploy:cloudflare worker-test --dry-run
 ```
 
 ## Local Worker execution

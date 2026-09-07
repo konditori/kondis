@@ -208,6 +208,7 @@ async function extract({
         if (activity.size > LIMITS.activityBytes)
           throw new Error("Activity exceeds the 64 MiB expanded size limit");
         const body = new FormData();
+        body.append("metadata", JSON.stringify(withoutEntryName(item)));
         body.append(
           "file",
           new File([activity], item.originalName, { type: activity.type }),
@@ -216,11 +217,6 @@ async function extract({
           `${apiBase}/upload/strava/imports/${importId}/activities`,
           {
             method: "POST",
-            headers: {
-              "x-kondis-takeout-metadata": JSON.stringify(
-                withoutEntryName(item),
-              ),
-            },
             body,
           },
         );

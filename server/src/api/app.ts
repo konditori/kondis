@@ -2,6 +2,7 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 import { createApiAuthMiddleware, type ApiEnv } from 'src/api/auth';
+import type { AuthenticatedUser } from 'src/auth';
 import { registerAllRouteGroups, type ApiRouteGroups } from 'src/api/route-groups';
 import { RequestValidationError } from 'src/api/validation';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
@@ -46,7 +47,7 @@ const publicRoutes = new Set([
   'POST /_internal/auth-credential-cleanup',
 ]);
 
-export const createApiShell = (sessions: ApiDependencies['sessions']) => {
+export const createApiShell = (sessions: ApiDependencies['sessions'], demoUser?: AuthenticatedUser) => {
   const app = new OpenAPIHono<ApiEnv>({
     strict: false,
     defaultHook: (result, context) => {
@@ -66,7 +67,7 @@ export const createApiShell = (sessions: ApiDependencies['sessions']) => {
         publicRoutes.has(`${normalizedMethod} ${normalizedPath}`) ||
         (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-workouts/shared/'))
       );
-    }),
+    }, demoUser),
   );
 
   registerApiErrorHandlers(app);

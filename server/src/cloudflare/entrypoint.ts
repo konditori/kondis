@@ -9,11 +9,13 @@ import {
 import { createWorkerFileReader } from 'src/adapters/cloudflare/storage.adapter';
 import { workerUploadReader } from 'src/adapters/cloudflare/upload.adapter';
 import { createApiShell } from 'src/api/app';
+import type { AuthenticatedUser } from 'src/auth';
 import {
   registerWorkerActivityUploadRoute,
   registerWorkerPortableRouteGroups,
   registerWorkerQueueMutationRoutes,
   registerWorkerStorageReadRouteGroups,
+  registerWorkerStorageMutationRouteGroups,
   registerWorkerTakeoutImportRoutes,
 } from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
@@ -61,8 +63,11 @@ const pingRoute = createRoute({
 
 type WorkerApp = ReturnType<typeof createApiShell>;
 
-const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationComposition>): WorkerApp => {
-  const requestApp = createApiShell(composition.authCredentialRepository);
+const createRequestApp = (
+  composition: ReturnType<typeof createWorkerInvocationComposition>,
+  demoUser?: AuthenticatedUser,
+): WorkerApp => {
+  const requestApp = createApiShell(composition.authCredentialRepository, demoUser);
   requestApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
   registerWorkerPortableRouteGroups(requestApp, {
     activities: composition.activityService,
@@ -91,6 +96,7 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
       userService: composition.workerUserService,
     };
     registerWorkerStorageReadRouteGroups(requestApp, storageRoutes);
+    registerWorkerStorageMutationRouteGroups(requestApp, storageRoutes);
     if (composition.queueBindingsConfigured) {
       registerWorkerActivityUploadRoute(requestApp, storageRoutes);
       // Browser extraction has no Node-only dependency, so this is available
@@ -162,35 +168,45 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
 };
 
 export default {
-  fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Response | Promise<Response> {
+  async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
     // Keep the health boundary available in local/minimal Worker tests and
     // deployments that have not configured Hyperdrive yet.
     if (!env.HYPERDRIVE) {
       if (new URL(request.url).pathname === '/api/v1/ping' && request.method === 'GET') {
-        return Response.json({ status: 'pong' });
+          return Response.json({ status: 'pong' });
       }
       return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
     }
     const composition = createWorkerInvocationComposition(env);
+    const demoUser = await findDemoUser(composition, env);
+    if (env.KONDIS_DEMO_USER_ID && !demoUser) {
+      await composition.close();
+      return Response.json({ statusCode: 503, message: 'Demo account is unavailable' }, { status: 503 });
+    }
+    if (demoUser && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+      await composition.close();
+      return Response.json({ statusCode: 405, message: 'This demo is read-only' }, { status: 405, headers: { Allow: 'GET, HEAD, OPTIONS' } });
+    }
     if (isRealtimeUpgrade(request)) {
       return Promise.resolve(handleRealtimeUpgrade(request, composition, env)).finally(() => composition.close());
     }
-    const requestApp = createRequestApp(composition);
-    return Promise.resolve(requestApp.fetch(request, env, _ctx))
-      .then((response) => {
-        if (
-          response.ok &&
-          request.method === 'POST' &&
-          (new URL(request.url).pathname.endsWith('/upload/activity') ||
-            new URL(request.url).pathname.endsWith('/activities') ||
-            new URL(request.url).pathname.endsWith('/manual-activities')) &&
-          composition.queueBindingsConfigured
-        ) {
-          _ctx.waitUntil(dispatchWorkerJobs(env));
-        }
-        return response;
-      })
-      .finally(() => composition.close());
+    const requestApp = createRequestApp(composition, demoUser);
+    try {
+      const response = await requestApp.fetch(request, env, _ctx);
+      if (
+        response.ok &&
+        request.method === 'POST' &&
+        (new URL(request.url).pathname.endsWith('/upload/activity') ||
+          new URL(request.url).pathname.endsWith('/activities') ||
+          new URL(request.url).pathname.endsWith('/manual-activities')) &&
+        composition.queueBindingsConfigured
+      ) {
+        _ctx.waitUntil(dispatchWorkerJobs(env));
+      }
+      return demoUser && isDemoCacheable(request, response) ? withDemoCacheHeaders(response) : response;
+    } finally {
+      await composition.close();
+    }
   },
 
   async queue(batch: WorkerQueueBatch, env: WorkerEnv): Promise<void> {
@@ -245,6 +261,33 @@ export default {
       await composition.close();
     }
   },
+};
+
+const findDemoUser = async (
+  composition: ReturnType<typeof createWorkerInvocationComposition>,
+  env: WorkerEnv,
+): Promise<AuthenticatedUser | undefined> => {
+  if (!env.KONDIS_DEMO_USER_ID) return undefined;
+  const user = await composition.userRepository.findById(env.KONDIS_DEMO_USER_ID);
+  if (!user) return undefined;
+  return {
+    id: user.id,
+    role: user.role,
+    email: user.email,
+    firstName: user.first_name,
+    lastName: user.last_name,
+  };
+};
+
+const isDemoCacheable = (request: Request, response: Response): boolean => {
+  const path = new URL(request.url).pathname;
+  return request.method === 'GET' && response.ok && !path.includes('/events') && !path.includes('/_internal/');
+};
+
+const withDemoCacheHeaders = (response: Response): Response => {
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 };
 
 const executeQueueBatch = async (env: WorkerEnv, queue: QueueName, batch: WorkerQueueBatch): Promise<void> => {

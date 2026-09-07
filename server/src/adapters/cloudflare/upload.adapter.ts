@@ -1,4 +1,4 @@
-import type { UploadReader } from 'src/api/uploads';
+import type { TakeoutActivityUpload, UploadReader } from 'src/api/uploads';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { BadRequestException, PayloadTooLargeException } from 'src/errors';
 import type { UploadedFileData } from 'src/types/uploads';
@@ -22,25 +22,29 @@ const requestLimitFor = (kind: Parameters<UploadReader['read']>[2]): number => {
 };
 
 export const workerUploadReader: UploadReader = {
-  async read(request, _platform, kind): Promise<UploadedFileData | undefined> {
+  async read(request, _platform, kind): Promise<UploadedFileData | TakeoutActivityUpload | undefined> {
     const contentLength = Number(request.headers.get('content-length'));
     if (Number.isSafeInteger(contentLength) && contentLength > requestLimitFor(kind) + MULTIPART_OVERHEAD_BYTES) {
       throw new PayloadTooLargeException('Multipart upload exceeds the configured Worker request limit');
     }
     const form = await request.formData();
     const value = form.get('file');
+    const metadata = form.get('metadata');
     if (value === null) {
-      return undefined;
+      return kind === 'takeoutActivity'
+        ? { file: undefined, metadata: metadata?.toString() } satisfies TakeoutActivityUpload
+        : undefined;
     }
     if (!(value instanceof File)) {
       throw new BadRequestException('The file form field must contain a file');
     }
-    return {
+    const file = {
       originalname: value.name || 'upload.bin',
       size: value.size,
       // Buffer is the historical service contract. Uint8Array is accepted by
       // R2 and remains free of Node runtime dependencies in the Worker.
       buffer: new Uint8Array(await value.arrayBuffer()) as unknown as Buffer,
     };
+    return kind === 'takeoutActivity' ? { file, metadata: metadata?.toString() } : file;
   },
 };

@@ -29,5 +29,14 @@ export const handle: Handle = async ({ event, resolve }) => {
     if (token) headers.set("authorization", `Bearer ${token}`);
     return upstreamFetch(new Request(new Request(url, request), { headers }));
   };
+  const isDemoPage =
+    event.platform?.env.KONDIS_DEMO_MODE === "true" &&
+    event.request.method === "GET" &&
+    !pathname.startsWith("/api/") &&
+    pathname !== "/events";
+  if (isDemoPage) {
+    // The demo has one immutable data set, so cache rendered pages at the edge.
+    event.setHeaders({ "cache-control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800" });
+  }
   return resolve(event);
 };
