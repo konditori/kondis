@@ -18,6 +18,7 @@ type GeneratedConfig = {
   durable_objects: { bindings: { name: string; class_name: string }[] };
   migrations: { tag: string; new_sqlite_classes: string[] }[];
   hyperdrive: { binding: string; id: string }[];
+  services: { binding: string; service: string }[];
   queues: {
     producers: { binding: string; queue: string }[];
     consumers: {
@@ -33,16 +34,26 @@ type GeneratedConfig = {
 };
 
 const require = createRequire(import.meta.url);
-const { generateCloudflareConfig } = require('../../scripts/generate-cloudflare-config.cjs') as {
+const { generateCloudflareConfig, generateQueueExecutorConfig, parseJsonc } = require('../../scripts/generate-cloudflare-config.cjs') as {
   generateCloudflareConfig(input: {
     baseConfig: Record<string, unknown>;
     environment: string;
     hyperdriveId: string;
     nodeProcessorEnabled?: boolean;
   }): GeneratedConfig;
+  generateQueueExecutorConfig(input: {
+    baseConfig: Record<string, unknown>;
+    environment: string;
+    hyperdriveId: string;
+  }): Record<string, unknown>;
+  parseJsonc(source: string): Record<string, unknown>;
 };
 
 describe('generateCloudflareConfig', () => {
+  it('parses JSONC URLs without treating the protocol as a comment', () => {
+    expect(parseJsonc('{ "url": "https://api.internal",\n }')).toEqual({ url: 'https://api.internal' });
+  });
+
   it('derives every queue and cron setting from shared job semantics', () => {
     const config = generateCloudflareConfig({
       baseConfig: { name: 'kondis-api', main: 'src/cloudflare/entrypoint.ts' },
@@ -58,6 +69,7 @@ describe('generateCloudflareConfig', () => {
     });
     expect(config.migrations).toEqual([{ tag: 'realtime-v1', new_sqlite_classes: ['RealtimeDurableObject'] }]);
     expect(config.hyperdrive).toEqual([{ binding: 'HYPERDRIVE', id: 'a'.repeat(32) }]);
+    expect(config.services).toEqual([{ binding: 'QUEUE_EXECUTOR', service: 'kondis-api-staging-queue-executor' }]);
     expect(config.queues.producers).toHaveLength(Object.values(QueueName).length);
     expect(config.queues.consumers).toHaveLength(Object.values(QueueName).length * 2);
 
@@ -96,5 +108,28 @@ describe('generateCloudflareConfig', () => {
 
     expect(config.vars).toEqual({ KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'true' });
     expect(config.triggers.crons).toEqual([...CRON_JOBS.map(({ cron }) => cron), '* * * * *']);
+  });
+
+  it('creates a private, Stockholm-placed executor using existing resources', () => {
+    const config = generateQueueExecutorConfig({
+      baseConfig: { name: 'kondis-api', main: 'src/cloudflare/entrypoint.ts' },
+      environment: 'staging',
+      hyperdriveId: 'c'.repeat(32),
+    });
+
+    expect(config).toMatchObject({
+      name: 'kondis-api-staging-queue-executor',
+      main: 'src/cloudflare/queue-executor.ts',
+      workers_dev: false,
+      preview_urls: false,
+      placement: { region: 'aws:eu-north-1' },
+      hyperdrive: [{ binding: 'HYPERDRIVE', id: 'c'.repeat(32) }],
+      durable_objects: {
+        bindings: [{ name: 'REALTIME', class_name: 'RealtimeDurableObject', script_name: 'kondis-api-staging' }],
+      },
+    });
+    expect(config).not.toHaveProperty('migrations');
+    expect(config).not.toHaveProperty('triggers');
+    expect((config.queues as { producers: unknown[] }).producers).toHaveLength(Object.values(QueueName).length);
   });
 });

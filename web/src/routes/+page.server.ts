@@ -12,7 +12,6 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
     url,
     request.headers.get("x-forwarded-proto"),
     request.headers.get("cf-visitor"),
-    request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
   );
   try {
     const [liveResponse, body] = await Promise.all([

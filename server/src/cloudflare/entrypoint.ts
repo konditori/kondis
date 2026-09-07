@@ -26,6 +26,11 @@ import {
 } from 'src/cloudflare/dispatcher';
 import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
+import {
+  isQueueExecutorResponse,
+  queueExecutorRequest,
+  QUEUE_EXECUTOR_PATH,
+} from 'src/cloudflare/queue-executor.protocol';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
@@ -192,25 +197,21 @@ export default {
     if (!env.HYPERDRIVE) {
       throw new Error('HYPERDRIVE is required for queue processing');
     }
+    const queue = parseQueueBindingName(batch.queue);
+    if (!queue) {
+      throw new Error(`Unexpected Cloudflare Queue consumer binding: ${batch.queue}`);
+    }
+    if (!queue.deadLetter) {
+      await executeQueueBatch(env, queue.name, batch);
+      return;
+    }
     const composition = createWorkerInvocationComposition(env);
     try {
       const transport = createQueueTransport(env);
-      const queue = parseQueueBindingName(batch.queue);
-      if (!queue) {
-        throw new Error(`Unexpected Cloudflare Queue consumer binding: ${batch.queue}`);
-      }
-      if (queue.deadLetter) {
+      {
         await handleDeadLetterBatch(
           transport.toDeliveryBatch(batch),
           composition.database,
-          queue.name,
-          composition.realtime,
-        );
-      } else {
-        await handleQueueBatch(
-          transport.toDeliveryBatch(batch),
-          composition.database,
-          composition.jobHandlers,
           queue.name,
           composition.realtime,
         );
@@ -246,6 +247,33 @@ export default {
   },
 };
 
+const executeQueueBatch = async (env: WorkerEnv, queue: QueueName, batch: WorkerQueueBatch): Promise<void> => {
+  if (!env.QUEUE_EXECUTOR) {
+    throw new Error('QUEUE_EXECUTOR is required for queue processing');
+  }
+  const response = await env.QUEUE_EXECUTOR.fetch(
+    new Request(`https://queue-executor.internal${QUEUE_EXECUTOR_PATH}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(queueExecutorRequest(queue, batch.messages.map((message) => message.body))),
+    }),
+  );
+  if (!response.ok) {
+    throw new Error(`Queue executor failed with HTTP ${response.status}`);
+  }
+  const result: unknown = await response.json();
+  if (!isQueueExecutorResponse(result, batch.messages.length)) {
+    throw new Error('Queue executor returned an invalid delivery result');
+  }
+  for (const [index, outcome] of result.outcomes.entries()) {
+    if (outcome === 'acknowledge') {
+      batch.messages[index].ack();
+    } else {
+      batch.messages[index].retry();
+    }
+  }
+};
+
 const isRealtimeUpgrade = (request: Request): boolean =>
   (new URL(request.url).pathname === '/events' || new URL(request.url).pathname === '/api/v1/events') &&
   request.headers.get('Upgrade')?.toLowerCase() === 'websocket';
@@ -261,6 +289,10 @@ const handleRealtimeUpgrade = async (
   const ticket = new URL(request.url).searchParams.get('ticket');
   const verified = await composition.authCredentialRepository.findEventTicket(ticket);
   if (!verified || (verified.scope === 'activity-events' && !verified.userId)) {
+    console.warn('Realtime WebSocket ticket rejected', {
+      hasTicket: Boolean(ticket),
+      path: new URL(request.url).pathname,
+    });
     return Response.json({ statusCode: 401, message: 'Unauthorized' }, { status: 401 });
   }
   const id = env.REALTIME.idFromName(REALTIME_DURABLE_OBJECT_NAME);
@@ -274,7 +306,20 @@ const handleRealtimeUpgrade = async (
   }
   const headers = new Headers(request.headers);
   headers.set('Upgrade', 'websocket');
-  return target.fetch(new Request(url, { headers }));
+  try {
+    const response = await target.fetch(new Request(url, { headers }));
+    console.log('Realtime Durable Object upgrade response', {
+      scope: verified.scope,
+      status: response.status,
+    });
+    return response;
+  } catch (error) {
+    console.error('Realtime Durable Object upgrade failed', {
+      error: error instanceof Error ? error.message : String(error),
+      scope: verified.scope,
+    });
+    return Response.json({ statusCode: 502, message: 'Realtime service unavailable' }, { status: 502 });
+  }
 };
 
 const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueName): CloudflareQueueBinding => {

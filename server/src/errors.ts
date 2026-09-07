@@ -12,11 +12,14 @@ export enum HttpStatus {
 
 export type HttpExceptionOptions = {
   cause?: unknown;
+  headers?: Record<string, string>;
 };
 
 export type HttpExceptionResponse = string | Record<string, unknown>;
 
 export class HttpException extends Error {
+  private readonly headers?: Record<string, string>;
+
   constructor(
     private readonly response: HttpExceptionResponse,
     private readonly status: number,
@@ -30,6 +33,7 @@ export class HttpException extends Error {
           : 'HTTP Exception';
     super(message, options?.cause === undefined ? undefined : { cause: options.cause });
     this.name = new.target.name;
+    this.headers = options?.headers;
   }
 
   getResponse(): HttpExceptionResponse {
@@ -38,6 +42,10 @@ export class HttpException extends Error {
 
   getStatus(): number {
     return this.status;
+  }
+
+  getHeaders(): Record<string, string> | undefined {
+    return this.headers;
   }
 }
 

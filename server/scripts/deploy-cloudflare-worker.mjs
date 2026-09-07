@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 
 const require = createRequire(import.meta.url);
-const { generateCloudflareConfig, parseJsonc } = require('./generate-cloudflare-config.cjs');
+const { generateCloudflareConfig, generateQueueExecutorConfig, parseJsonc } = require('./generate-cloudflare-config.cjs');
 
 const environment = process.env.CLOUDFLARE_ENV ?? 'staging';
 if (!/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(environment)) {
@@ -30,13 +30,16 @@ const environmentConfig = generateCloudflareConfig({
   hyperdriveId,
   nodeProcessorEnabled: nodeProcessorSetting === 'true',
 });
+const executorConfig = generateQueueExecutorConfig({ baseConfig, environment, hyperdriveId });
 const outputPath = resolve(serverDir, `wrangler-generated-${environment}.json`);
+const executorOutputPath = resolve(serverDir, `wrangler-generated-${environment}-queue-executor.json`);
 await writeFile(outputPath, `${JSON.stringify(environmentConfig, null, 2)}\n`);
+await writeFile(executorOutputPath, `${JSON.stringify(executorConfig, null, 2)}\n`);
 
 const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 const childEnvironment = { ...process.env };
 delete childEnvironment.CLOUDFLARE_ENV;
-const child = spawn(command, ['exec', 'wrangler', 'deploy', '--config', outputPath], {
+const child = spawn(command, ['exec', 'wrangler', 'deploy', '--config', executorOutputPath], {
   cwd: serverDir,
   env: childEnvironment,
   stdio: 'inherit',
@@ -45,5 +48,17 @@ child.on('exit', (code, signal) => {
   if (signal) {
     process.kill(process.pid, signal);
   }
-  process.exitCode = code ?? 1;
+  if (code !== 0) {
+    process.exitCode = code ?? 1;
+    return;
+  }
+  const api = spawn(command, ['exec', 'wrangler', 'deploy', '--config', outputPath], {
+    cwd: serverDir,
+    env: childEnvironment,
+    stdio: 'inherit',
+  });
+  api.on('exit', (apiCode, apiSignal) => {
+    if (apiSignal) process.kill(process.pid, apiSignal);
+    process.exitCode = apiCode ?? 1;
+  });
 });

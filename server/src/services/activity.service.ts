@@ -30,6 +30,7 @@ import {
   BestEffortType,
   CreateActivityInput,
   ParsedActivity,
+  ParsedActivityStructure,
   UpdateActivityInput,
 } from 'src/types';
 import { JobItem, JobOf } from 'src/types/jobs';

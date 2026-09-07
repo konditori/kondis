@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
+import { HttpException, HttpStatus } from 'src/errors';
 import { apiAuthHeaders, newApiDependencies, newApiUsers } from 'test/api';
 
 const findNoUser = (_id: string) => Promise.resolve(undefined);
@@ -125,6 +126,27 @@ describe('API application', () => {
     expect(response.status).toBe(404);
     expect(response.headers.get('Content-Type')).toContain('application/json');
     expect(await response.json()).toEqual({ statusCode: 404, message: 'Not Found' });
+  });
+
+  it('preserves Retry-After on rate-limited responses', async () => {
+    const response = await createApiApp(
+      newApiDependencies({
+        auth: {
+          createActivityEventsTicket: () =>
+            Promise.reject(
+              new HttpException('Too many event ticket attempts', HttpStatus.TOO_MANY_REQUESTS, {
+                headers: { 'Retry-After': '42' },
+              }),
+            ),
+        },
+      }),
+    ).request('/auth/activity-events-ticket', {
+      method: 'POST',
+      headers: apiAuthHeaders(),
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('42');
   });
 
   it('preserves the ping operation contract', () => {

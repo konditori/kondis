@@ -42,6 +42,8 @@ export type WorkerBindings = {
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
   KONDIS_REALTIME_PUBLISH_TOKEN?: string;
+  KONDIS_QUERY_TIMING_ENABLED?: string;
+  QUEUE_EXECUTOR?: { fetch: (request: Request) => Promise<Response> };
   STORAGE_BUCKET?: R2BucketBinding;
   REALTIME?: DurableObjectNamespaceBinding;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
@@ -55,7 +57,10 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   if (!env.HYPERDRIVE?.connectionString) {
     throw new Error('HYPERDRIVE is required for this Worker invocation');
   }
-  const { db: database, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+  const { db: database, close } = createHyperdriveDatabase(
+    env.HYPERDRIVE.connectionString,
+    env.KONDIS_QUERY_TIMING_ENABLED === 'true',
+  );
   const transactions: TransactionPort = {
     withTransaction: (fn) => database.transaction().execute(fn),
   };

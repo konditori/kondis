@@ -79,6 +79,12 @@ export class RealtimeDurableObject {
     const userId = url.searchParams.get('userId');
     const sessionExpiresAt = Number(url.searchParams.get('sessionExpiresAt'));
     if (!sessionId || !Number.isFinite(sessionExpiresAt) || (kind === 'user' && !userId)) {
+      console.warn('Realtime Durable Object rejected connection metadata', {
+        kind,
+        hasSessionId: Boolean(sessionId),
+        hasUserId: Boolean(userId),
+        hasSessionExpiry: Number.isFinite(sessionExpiresAt),
+      });
       return new Response('Unauthorized', { status: 401 });
     }
     const pair = new (
@@ -97,6 +103,7 @@ export class RealtimeDurableObject {
     this.state.acceptWebSocket(socket);
     await this.scheduleNextExpiry();
     this.send(socket, { type: 'connected' });
+    console.log('Realtime Durable Object accepted WebSocket', { kind });
     return new Response(null, { status: 101, webSocket: client } as ResponseInit & { webSocket: WebSocket });
   }
 

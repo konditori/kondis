@@ -314,16 +314,20 @@ const isSafePath = (value: string): boolean => {
   );
 };
 
+export function decodeCsvText(bytes: Uint8Array): string {
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+}
+
 async function readText(entry: FileEntry, maximum: number): Promise<string> {
   if (entry.uncompressedSize > maximum)
     throw new Error(`Manifest ${entry.filename} exceeds its size limit`);
-  const blob = await entry.getData(new BlobWriter("text/csv"), {
+  const blob = await entry.getData(new BlobWriter(), {
     checkCrc32: true,
     strictness: "strict",
   });
   if (blob.size > maximum)
     throw new Error(`Manifest ${entry.filename} exceeds its size limit`);
-  return blob.text();
+  return decodeCsvText(new Uint8Array(await blob.arrayBuffer()));
 }
 
 function scanActivities(

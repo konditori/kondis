@@ -69,7 +69,6 @@ export const load: LayoutServerLoad = async ({
       url,
       request.headers.get("x-forwarded-proto"),
       request.headers.get("cf-visitor"),
-      request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
     ),
   };
 };

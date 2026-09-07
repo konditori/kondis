@@ -4,44 +4,75 @@ title: Workers deployment
 
 # Deploying on Cloudflare Workers
 
-These instructions deploy the portable Kondis API to Cloudflare Workers. Node-owned processing, R2, and Durable Objects are selected explicitly by the generated deployment configuration.
+These instructions deploy the Kondis API and web Workers to Cloudflare. Node-owned processing, R2, Queues, and Durable Objects are selected explicitly by the generated deployment configuration.
 
-Run the commands below from `server/` in the Kondis repository.
+Run the commands below from the repository root. The deployment task is defined in the root `mise.toml` and uses the pinned Node.js and pnpm versions from mise.
 
 Before deploying, select an [authentication mode](./authentication). Local bcrypt authentication requires Workers Paid due to execution time; small Workers Free deployments can instead use Cloudflare Access as their authoritative identity provider.
 
 ## Hyperdrive
 
-Kondis uses one cache-disabled Hyperdrive configuration per deployment environment. The Hyperdrive ID is infrastructure state, not an application secret, and is supplied to the deploy script rather than committed to the repository.
+Kondis uses one cache-disabled Hyperdrive configuration per deployment environment. The Hyperdrive ID is infrastructure state, not an application secret, and is supplied to the deployment task rather than committed to the repository. Hyperdrive and Cloudflare Access are infrastructure concerns; the Worker deployment task does not create or modify them.
 
-Create the Hyperdrive configuration once using a TLS connection to the PostgreSQL 17 origin:
+Create the Hyperdrive configuration once per environment using a TLS connection to the PostgreSQL 17 origin. Prefer Terraform when the environment is managed there. For a one-off Wrangler setup:
 
 ```sh
-pnpm exec wrangler hyperdrive create kondis-staging \
+mise exec -- pnpm --dir server exec wrangler hyperdrive create kondis-pr44-postgres \
   --connection-string="$KONDIS_CLOUD_DATABASE_URL" \
   --caching-disabled
 ```
 
-Repeat this for production. Store the returned IDs in the CI environment as `KONDIS_HYPERDRIVE_ID_STAGING` and `KONDIS_HYPERDRIVE_ID_PRODUCTION`.
+Use a name matching the deployment environment, such as `kondis-staging-postgres` or `kondis-production-postgres`. Store the returned ID in the deployment environment as `KONDIS_HYPERDRIVE_ID`.
 
 Migrations must run from CI or a Node.js process using the direct database connection. Do not run migrations through Hyperdrive. Use a least-privileged runtime database role for Hyperdrive and keep schema and DDL permissions on the separate migration credential.
 
-## Deploy
-
-Set the target environment and its Hyperdrive ID, then run the deployment script:
+Run pending migrations before deploying Worker code. The migration command reads the direct PostgreSQL connection from `KONDIS_DB_HOSTNAME`, `KONDIS_DB_PORT`, `KONDIS_DB_USERNAME`, `KONDIS_DB_PASSWORD`, and `KONDIS_DB_DATABASE_NAME`:
 
 ```sh
-export CLOUDFLARE_ENV=staging
-export KONDIS_HYPERDRIVE_ID="$KONDIS_HYPERDRIVE_ID_STAGING"
-pnpm cloudflare:deploy
+mise //server:migrate
 ```
 
-The script generates an ignored `wrangler-generated-<environment>.json` file and deploys with it. The generated file contains the Hyperdrive, Queue, dead-letter Queue, consumer, concurrency, retry, and Cron Trigger configuration. It does not contain the database connection string and must not be edited manually.
+For the queue split deployment, this applies `1789000000000-SplitActivityQueues`, including the `background_job.dispatch_token` column required by the Worker dispatcher. A successful upload can still be followed by a dispatcher failure if this migration has not been applied.
 
-The generated configuration also expects an R2 bucket named `<worker-name>-<environment>-storage`; create it once before the first deploy:
+## Deploy
+
+Set the target environment and its Hyperdrive ID, then run the root deployment task:
 
 ```sh
-pnpm exec wrangler r2 bucket create kondis-api-staging-storage
+export KONDIS_HYPERDRIVE_ID="$KONDIS_HYPERDRIVE_ID_PR44"
+mise run deploy:cloudflare pr44
+```
+
+The deployment task performs these steps in order:
+
+1. Generates ignored API and web Wrangler configs:
+   `server/wrangler-generated-<environment>.json` and
+   `web/wrangler-generated-<environment>.json`.
+2. Names the Workers `kondis-api-<environment>` and `kondis-web-<environment>`, and binds the web Worker to the matching API Worker.
+3. Creates the environment's R2 bucket and Queues, including dead-letter Queues. Existing resources are accepted as successful, so the task is safe to rerun.
+4. Deploys the API Worker first.
+5. Builds and deploys the web Worker second.
+
+The generated API config contains the Hyperdrive binding, R2 bucket, Queue producers and consumers, dead-letter Queues, concurrency, retry, and Cron Trigger configuration. It does not contain the database connection string and must not be edited manually.
+
+For example, environment `pr44` creates or reuses:
+
+```sh
+kondis-api-pr44
+kondis-web-pr44
+kondis-api-pr44-storage
+kondis-api-pr44-activity-parsing
+kondis-api-pr44-activity-parsing-dlq
+kondis-api-pr44-activity-enrichment
+kondis-api-pr44-activity-enrichment-dlq
+```
+
+The remaining background, image-processing, and storage Queues follow the same `kondis-api-pr44-*` naming pattern.
+
+Use a dry run to generate and inspect both configs without provisioning resources, building, or deploying:
+
+```sh
+mise run deploy:cloudflare pr44 --dry-run
 ```
 
 ## Local Worker execution
@@ -50,10 +81,10 @@ For local Worker execution, provide a direct TLS connection string through Wrang
 
 ```sh
 export CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE="$KONDIS_CLOUD_DATABASE_URL"
-pnpm exec wrangler dev --config wrangler-generated-staging.json
+mise exec -- pnpm --dir server exec wrangler dev --config wrangler-generated-staging.json
 ```
 
-Generate the configuration with `pnpm cloudflare:deploy` before using it locally. That command also deploys the Worker, so do not run it against an environment unless you intend to deploy there.
+Generate the configuration with `mise run deploy:cloudflare staging --dry-run` before using it locally. The generated file is written under `server/`; the dry run does not deploy anything.
 
 ## Compatibility probe
 
@@ -62,7 +93,7 @@ The guarded `GET /api/v1/_internal/hyperdrive-spike` endpoint verifies the Postg
 For the one-time compatibility probe, add a bearer token to the generated environment's Worker:
 
 ```sh
-pnpm exec wrangler secret put HYPERDRIVE_SPIKE_TOKEN \
+mise exec -- pnpm --dir server exec wrangler secret put HYPERDRIVE_SPIKE_TOKEN \
   --name kondis-api-staging
 ```
 
@@ -80,8 +111,8 @@ The cloud Node processor is a separate long-running Node.js deployment. Build th
 
 ```sh
 export KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=true
-pnpm build
-pnpm start:cloud-node-processor
+mise exec -- pnpm --dir server run build
+mise exec -- pnpm --dir server run start:cloud-node-processor
 ```
 
 Keep that process healthy before deploying a Worker configuration with `KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=true`. The Worker then exposes the admin `POST /api/v1/jobs` enqueue operation and enables the Node-owned schedules. Queue commands remain unavailable on the Worker because Cloudflare Queue administration is managed by deployment configuration.

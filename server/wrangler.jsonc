@@ -4,6 +4,7 @@
   "main": "src/cloudflare/entrypoint.ts",
   "compatibility_date": "2026-09-04",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
   "durable_objects": {
     "bindings": [{ "name": "REALTIME", "class_name": "RealtimeDurableObject" }],
   },

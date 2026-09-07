@@ -18,4 +18,12 @@ describe('HTTP exceptions', () => {
     expect(error.getStatus()).toBe(400);
     expect(error.getResponse()).toEqual({ message: 'Invalid request', error: 'Bad Request', statusCode: 400 });
   });
+
+  it('preserves response headers for protocol-level retry instructions', () => {
+    const error = new HttpException('Try again later', HttpStatus.TOO_MANY_REQUESTS, {
+      headers: { 'Retry-After': '42' },
+    });
+
+    expect(error.getHeaders()).toEqual({ 'Retry-After': '42' });
+  });
 });

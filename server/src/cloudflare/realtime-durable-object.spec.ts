@@ -56,6 +56,45 @@ describe('DurableObjectRealtimeAdapter', () => {
 });
 
 describe(RealtimeDurableObject.name, () => {
+  it('accepts authenticated WebSocket upgrades through the Durable Object', async () => {
+    const serverSocket = socket(attachment('user'));
+    const clientSocket = {} as WebSocket;
+    const state = {
+      acceptWebSocket: vi.fn(),
+      getWebSockets: () => [],
+      storage: { setAlarm: vi.fn() },
+    };
+    vi.stubGlobal(
+      'WebSocketPair',
+      class {
+        0 = clientSocket;
+        1 = serverSocket;
+      },
+    );
+    vi.stubGlobal(
+      'Response',
+      class {
+        status: number;
+
+        constructor(_body: unknown, init?: { status?: number }) {
+          this.status = init?.status ?? 200;
+        }
+      },
+    );
+
+    const response = await new RealtimeDurableObject(state as never, {}).fetch(
+      new Request(
+        'https://realtime.internal/connect?scope=activity-events&sessionId=session-id&userId=user-id&sessionExpiresAt=4102444800000',
+        { headers: { Upgrade: 'websocket' } },
+      ),
+    );
+
+    expect(response.status).toBe(101);
+    expect(state.acceptWebSocket).toHaveBeenCalledWith(serverSocket);
+    expect(serverSocket.send).toHaveBeenCalledWith(JSON.stringify({ type: 'connected' }));
+    vi.unstubAllGlobals();
+  });
+
   it('routes job events only to admin sockets and rejects malformed publications', async () => {
     const admin = socket(attachment('admin'));
     const user = socket(attachment('user'));

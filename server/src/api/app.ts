@@ -83,7 +83,7 @@ export const registerApiErrorHandlers = (app: OpenAPIHono<ApiEnv>) => {
       const status = error.getStatus() as ContentfulStatusCode;
       const response = error.getResponse();
       const body = typeof response === 'string' ? { statusCode: status, message: response } : response;
-      return context.json(body, status);
+      return context.json(body, status, error.getHeaders());
     }
     console.error(error);
     return context.json({ statusCode: 500, message: 'Internal server error' }, 500);
