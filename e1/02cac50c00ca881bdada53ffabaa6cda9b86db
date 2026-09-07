@@ -1,0 +1,93 @@
+i18n/en.json
+  s_502c7fd2e1fdb9::t_cf34235036f5fb 107-111
+i18n/sv.json
+  s_502c7fd2e1fdb9::t_4cd0844b10256b 106-110
+open-api/kondis-openapi-specs.json
+  s_502c7fd2e1fdb9::t_c1b82fca0d7900 68,70-463,477,485-809,813,819-845,851,853,860-861,878,2991,2997-3003,3007-3035,3050-3051,3054-3055,3064-3068,3093
+packages/sdk/src/fetch-client.ts
+  s_502c7fd2e1fdb9::t_26bd7fb7ddee26 27,29-35,39,41,93,115,133,143,258,349,517,528,756-829,831,833-834,837-838,840,848-849,851,856-963,969-987,989,1001,2267-2347,2351,2363,2441,2506,2567
+pnpm-lock.yaml
+  s_502c7fd2e1fdb9::t_b3d208369692a4 357-359,4125-4128,13905-13906
+server/src/adapters/cloudflare/upload.adapter.ts
+  s_502c7fd2e1fdb9::t_7c56b31410bf94 12-14
+server/src/api/app.spec.ts
+  s_502c7fd2e1fdb9::t_60ae45fe640a59 12-19
+server/src/api/node.ts
+  s_502c7fd2e1fdb9::t_a0d7f69e51dcad 55-58
+server/src/api/route-groups.ts
+  s_502c7fd2e1fdb9::t_be7ede97fb3728 35,136,138,140
+server/src/api/routes/upload.spec.ts
+  s_502c7fd2e1fdb9::t_5f715622589aac 6-24,28,33-35,37-54,56-67,69-76,79-83,85-87
+server/src/api/routes/upload.ts
+  s_502c7fd2e1fdb9::t_0fc3e6a565437d 7-11,13-15,17,20-61,91-92,94-95,98-99,102-170,175-176,179,181,196,198,201-277,281,293
+server/src/api/uploads.ts
+  s_502c7fd2e1fdb9::t_40545d870564ae 4
+server/src/bin/sync-open-api.ts
+  s_502c7fd2e1fdb9::t_653e845b091b6e 34-41,94-96
+server/src/cloudflare/entrypoint.ts
+  s_502c7fd2e1fdb9::t_29c84ebd299656 17,91-93,179-181
+server/src/cloudflare/queue-handler.ts
+  s_502c7fd2e1fdb9::t_e8a59a5a5cfb74 238,269-270
+server/src/db/schema.ts
+  s_502c7fd2e1fdb9::t_6426495b5d5aa4 20,52
+server/src/dtos/upload.dto.ts
+  s_502c7fd2e1fdb9::t_e9a60b2f46ddd8 3-7,14-16,19-66,70,72
+server/src/job-handler.registry.spec.ts
+  s_502c7fd2e1fdb9::t_1777fee5b1a17d 19
+server/src/job-handler.registry.ts
+  s_502c7fd2e1fdb9::t_a1ec00472a6212 82
+server/src/jobs/job-semantics.spec.ts
+  s_502c7fd2e1fdb9::t_901518b0799048 15
+server/src/jobs/job-semantics.ts
+  s_502c7fd2e1fdb9::t_0dd244ad3973de 15
+server/src/schema/migrations/1788387583529-AddTakeoutImportProgress.ts
+  s_502c7fd2e1fdb9::t_a692e830dd7b6d 8-9,12,20
+server/src/schema/migrations/1788558664154-AddBackgroundJobs.ts
+  s_502c7fd2e1fdb9::t_cbd9c6b38a691f 65
+server/src/schema/migrations/1788558664155-MoveFitJobsToWorker.ts
+  s_502c7fd2e1fdb9::t_6fc9940ea5a058 43,60,73,96
+server/src/schema/migrations/1788558664156-AddBrowserTakeoutImport.ts
+  s_502c7fd2e1fdb9::t_b697e9c4e3537d 1-27
+server/src/schema/tables/takeout-import-item.table.ts
+  s_502c7fd2e1fdb9::t_ceb0a605263430 1-30
+server/src/schema/tables/takeout-import.table.ts
+  s_502c7fd2e1fdb9::t_5e7045e4fa6b4e 21-23
+server/src/services/activity.service.ts
+  s_502c7fd2e1fdb9::t_41126293c2f461 99,127-128,178-179,186-187,216-217,292-293
+server/src/services/upload.service.ts
+  s_502c7fd2e1fdb9::t_99540a7f422091 4-9,20,22,41-50,65,70-178,189,221,224-225,253,266-267,280-285,298-303,329-330
+server/src/services/worker-upload.service.spec.ts
+  s_502c7fd2e1fdb9::t_5c15600a94c4b0 40,47,166,178-184,186,198-204,206
+server/src/services/worker-upload.service.ts
+  s_502c7fd2e1fdb9::t_e180049420c8e8 2-7,17,39-48,71,81-189,200,217,233,259,272-273,289,305-306,312-313
+server/src/state/import-progress.store.ts
+  s_502c7fd2e1fdb9::t_ca5708fc875e29 5-7,14,21-31,35-36,42,54,62-85,88-175,177-178,180-193,196-206,210-215,220
+server/src/types/jobs.ts
+  s_502c7fd2e1fdb9::t_a20b3afb883769 22,40,63
+server/test/medium/specs/repositories/pgboss-queue.adapter.spec.ts
+  s_502c7fd2e1fdb9::t_6243d2a20f74c7 296
+web/package.json
+  s_502c7fd2e1fdb9::t_d26a375f9bb444 17
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_502c7fd2e1fdb9::t_572d0df741d616 7-33,37-46,49,52,55-58,60-76,78,83-84,98,100-103,109-110,113,118-119,122,127-134,136,138-140,142-143,145-154,156-163,165-219,238,267-268,270-271,276-281,285-287,294,296-297,300-305,308-319
+web/src/lib/workers/strava-takeout.worker.spec.ts
+  s_502c7fd2e1fdb9::t_3e1546af750909 1-8,10,12-38,40-44,46,48-57,60-64
+web/src/lib/workers/strava-takeout.worker.ts
+  s_502c7fd2e1fdb9::t_5876d6bab9f7ab 1-32,35-38,40-58,60-65,67,69,71-75,77-82,84-187,190-260,262-280,282-285,287,289-292,299,301,303-307,309-321,323-333,335-345,347-354,357-375,378-399,401-403,405-411,413-427,429-442,444-460,462-468,470-494,496-538,540-550,552-562,565-568,570-581,583-601,603-606,608-677
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e102cac50c00ca881bdada53ffabaa6cda9b86db",
+  "prompts": {},
+  "sessions": {
+    "s_502c7fd2e1fdb9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a078a8-c98e-7961-8c29-21461f047481",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
