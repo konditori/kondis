@@ -1,0 +1,83 @@
+server/package.json
+  s_c00c4ca6e84604::t_e78ca2b0843c21 30
+server/src/types.ts
+  s_32c6710e4645fe::t_4ff0b988d6ff03 181-182,184
+web/src/app.css
+  s_32c6710e4645fe::t_51b661f336063e 3928-3936,3946-3947,3956,3958,3962-3980,3994,3999-4002
+packages/postgres/postgresql.hdd.conf
+  s_b5691040c4acd1::t_f2527c899f584e 5-7
+scripts/deploy-cloudflare.mjs
+  s_32c6710e4645fe::t_aaae97a7b326e1 25,29,249-251
+server/src/repositories/config.repository.ts
+  s_32c6710e4645fe::t_04c6078c954f58 3,39-47,72,102-105
+packages/postgres/kondis-docker-entrypoint.sh
+  s_b5691040c4acd1::t_a4baf52845e28b 39-54
+packages/postgres/Dockerfile
+  s_b5691040c4acd1::t_f4372214f524ad 12
+web/package.json
+  s_32c6710e4645fe::t_bd2d57345aa042 23
+server/src/demo/fit.spec.ts
+  s_c00c4ca6e84604::t_6243ebd4e7a485 1-20
+server/src/cloudflare/entrypoint.ts
+  s_c00c4ca6e84604::t_161b64507d4537 39,184-191
+server/src/composition.worker.ts
+  s_c00c4ca6e84604::t_48968e28a8e29f 86,107,151-153
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_c00c4ca6e84604::t_fdc0ee75a5120a 19-20,48-50
+web/src/routes/+layout.server.ts
+  s_b5691040c4acd1::t_55f14d6a3d44ad 18,38-41,45
+web/svelte.config.js
+  s_32c6710e4645fe::t_fe1943e9f42e89 1-2,5-9
+server/src/repositories/fit.repository.ts
+  s_c00c4ca6e84604::t_eaf1c50b9157aa 36,41-43
+server/src/repositories/config.repository.spec.ts
+  s_32c6710e4645fe::t_ff61c5b078f5d1 64-79
+packages/postgres/postgresql.ssd.conf
+  s_b5691040c4acd1::t_8c6cc7233ec04b 5-7
+pnpm-lock.yaml
+  s_32c6710e4645fe::t_0c2d69d3b818fa 370-372,3033-3068,3361-3365,3750-3752,4732-4734,6071-6073,6114-6116,12605-12639,13097-13105,13525-13526,14552-14553,16080-16081,16104-16107
+web/src/routes/logout/+server.ts
+  s_32c6710e4645fe::t_7704c853f5ce03 5-8
+web/src/hooks.server.ts
+  s_b5691040c4acd1::t_44193f0d29dd08 5-7,27-28,35-41,48-59
+web/src/routes/login/+page.svelte
+  s_32c6710e4645fe::t_f52d1513563185 27-35,51,79
+server/src/bin/generate-demo-fit-files.ts
+  s_c00c4ca6e84604::t_c435b41307744b 1-19
+server/src/demo/fit.ts
+  s_c00c4ca6e84604::t_b3a8674e6d9a3a 1-302
+server/src/demo/provisioner.ts
+  s_c00c4ca6e84604::t_8d23e6c402d29c 1-171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9bfe9a9bccbaf96879c8a3622958cd8ac8f70533",
+  "prompts": {},
+  "sessions": {
+    "s_32c6710e4645fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07bb1-15cd-7cf3-a63e-83ec75aad500",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b5691040c4acd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07bd9-36e7-7063-a71f-c55ced37b3ee",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_c00c4ca6e84604": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07c0c-29dd-7f23-92f4-0ed764df6c53",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
