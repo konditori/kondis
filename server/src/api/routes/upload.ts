@@ -121,7 +121,11 @@ const uploadTakeoutActivityRoute = createRoute({
             type: 'object',
             required: ['file', 'metadata'],
             properties: {
-              file: { type: 'string', format: 'binary', description: 'One extracted .fit, .tcx, or .gpx activity file' },
+              file: {
+                type: 'string',
+                format: 'binary',
+                description: 'One extracted .fit, .tcx, or .gpx activity file',
+              },
               metadata: { type: 'string', maxLength: 16 * 1024 },
             },
           },
@@ -221,7 +225,8 @@ export const registerTakeoutImportRoutes = (
     ),
   );
   app.openapi(uploadTakeoutActivityRoute, async (context) => {
-    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutActivity')) as TakeoutActivityUpload | undefined;
+    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutActivity')) as
+      TakeoutActivityUpload | undefined;
     const rawMetadata = upload?.metadata;
     let metadata: z.output<typeof TakeoutActivityMetadataSchema>;
     try {

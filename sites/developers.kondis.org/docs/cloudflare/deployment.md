@@ -38,36 +38,41 @@ For the queue split deployment, this applies `1789000000000-SplitActivityQueues`
 
 ### Public demo
 
-The public demo is an anonymous, read-only deployment. It serves one configured
-database user and caches successful API and rendered-page reads for one day. It
-does not put a credential in the browser. The demo command only accepts the
-isolated `production` and `preview` environments and always disables background
-job processing.
+The public demo is an anonymous, read-only deployment. It serves the single
+provisioned database user and caches successful API and rendered-page reads for
+one day. It does not put a credential in the browser. `KONDIS_DEMO_MODE=true` is
+read by the server config repository and makes the API reject every non-read
+request. Demo config generation omits R2, Queues, queue executors, and Durable
+Objects because the demo does not accept uploads or edits. Demo startup aborts if
+the database contains anything other than exactly one user.
 
-Provide an environment-specific Hyperdrive ID and the UUID of the demo user:
+Provide the environment-specific Hyperdrive ID:
 
 ```sh
 KONDIS_HYPERDRIVE_ID="$KONDIS_PRODUCTION_HYPERDRIVE_ID" \
-KONDIS_DEMO_USER_ID="$KONDIS_PRODUCTION_DEMO_USER_ID" \
-mise exec -- pnpm run deploy:demo production
+mise run deploy:demo production
 ```
 
-Use `preview` with the preview database and demo user for preview traffic:
+Use `preview` with the preview database for preview traffic:
 
 ```sh
 KONDIS_HYPERDRIVE_ID="$KONDIS_PREVIEW_HYPERDRIVE_ID" \
-KONDIS_DEMO_USER_ID="$KONDIS_PREVIEW_DEMO_USER_ID" \
-mise exec -- pnpm run deploy:demo preview
+mise run deploy:demo preview
 ```
 
 Use `--dry-run` to inspect the generated configs. In GitHub Actions, store the
-two values in the matching GitHub Environment's secrets and pass them as command
-environment variables. The user UUID is not secret, but storing it with the
-deployment configuration keeps the public-demo setup self-contained.
+Hyperdrive ID in the matching GitHub Environment's secrets. The deployment script
+sets `KONDIS_DEMO_MODE=true` and `KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=false` for
+you.
 
-For `production`, the command deploys `public-demo-api-production`,
-`public-demo-api-production-queue-executor`, and `public-demo-web-production`.
-The `preview` command creates matching, isolated `-preview` resources.
+The demo's source and generated Wrangler configurations live under
+`deployment/demo/`; no demo configuration is written into `server/` or `web/`.
+
+For `production`, the command deploys `kondis-public-demo-api-production` and
+`kondis-public-demo-web-production`, attaching the web Worker to the public
+custom domain `demo.kondis.org`. The `preview` command creates matching,
+isolated `-preview` Workers without claiming the production domain. Both API
+Workers use only Hyperdrive for persistence.
 
 ### General Worker deployment
 

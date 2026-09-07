@@ -186,6 +186,7 @@ export type EnvData = {
   storageDir: string;
   database: DatabaseConfig;
   registrationEnabled: boolean;
+  demoMode: boolean;
 };
 
 export enum AverageMetric {

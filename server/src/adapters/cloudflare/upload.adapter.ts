@@ -32,7 +32,7 @@ export const workerUploadReader: UploadReader = {
     const metadata = form.get('metadata');
     if (value === null) {
       return kind === 'takeoutActivity'
-        ? { file: undefined, metadata: metadata?.toString() } satisfies TakeoutActivityUpload
+        ? ({ file: undefined, metadata: metadata?.toString() } satisfies TakeoutActivityUpload)
         : undefined;
     }
     if (!(value instanceof File)) {

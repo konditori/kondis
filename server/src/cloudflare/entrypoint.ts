@@ -9,16 +9,16 @@ import {
 import { createWorkerFileReader } from 'src/adapters/cloudflare/storage.adapter';
 import { workerUploadReader } from 'src/adapters/cloudflare/upload.adapter';
 import { createApiShell } from 'src/api/app';
-import type { AuthenticatedUser } from 'src/auth';
 import {
   registerWorkerActivityUploadRoute,
   registerWorkerPortableRouteGroups,
   registerWorkerQueueMutationRoutes,
-  registerWorkerStorageReadRouteGroups,
   registerWorkerStorageMutationRouteGroups,
+  registerWorkerStorageReadRouteGroups,
   registerWorkerTakeoutImportRoutes,
 } from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
+import type { AuthenticatedUser } from 'src/auth';
 import {
   drainUnpublishedJobs,
   purgeExpiredJobs,
@@ -27,12 +27,12 @@ import {
   runScheduledCron,
 } from 'src/cloudflare/dispatcher';
 import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
-import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import {
   isQueueExecutorResponse,
-  queueExecutorRequest,
   QUEUE_EXECUTOR_PATH,
+  queueExecutorRequest,
 } from 'src/cloudflare/queue-executor.protocol';
+import { handleDeadLetterBatch } from 'src/cloudflare/queue-handler';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
@@ -173,25 +173,24 @@ export default {
     // deployments that have not configured Hyperdrive yet.
     if (!env.HYPERDRIVE) {
       if (new URL(request.url).pathname === '/api/v1/ping' && request.method === 'GET') {
-          return Response.json({ status: 'pong' });
+        return Response.json({ status: 'pong' });
       }
       return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
     }
     const composition = createWorkerInvocationComposition(env);
-    const demoUser = await findDemoUser(composition, env);
-    if (env.KONDIS_DEMO_USER_ID && !demoUser) {
-      await composition.close();
-      return Response.json({ statusCode: 503, message: 'Demo account is unavailable' }, { status: 503 });
-    }
-    if (demoUser && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
-      await composition.close();
-      return Response.json({ statusCode: 405, message: 'This demo is read-only' }, { status: 405, headers: { Allow: 'GET, HEAD, OPTIONS' } });
-    }
-    if (isRealtimeUpgrade(request)) {
-      return Promise.resolve(handleRealtimeUpgrade(request, composition, env)).finally(() => composition.close());
-    }
-    const requestApp = createRequestApp(composition, demoUser);
     try {
+      const demoMode = composition.config.demoMode;
+      const demoUser = demoMode ? await findDemoUser(composition) : undefined;
+      if (demoMode && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+        return Response.json(
+          { statusCode: 405, message: 'This demo is read-only' },
+          { status: 405, headers: { Allow: 'GET, HEAD, OPTIONS' } },
+        );
+      }
+      if (isRealtimeUpgrade(request)) {
+        return handleRealtimeUpgrade(request, composition, env);
+      }
+      const requestApp = createRequestApp(composition, demoUser);
       const response = await requestApp.fetch(request, env, _ctx);
       if (
         response.ok &&
@@ -203,7 +202,7 @@ export default {
       ) {
         _ctx.waitUntil(dispatchWorkerJobs(env));
       }
-      return demoUser && isDemoCacheable(request, response) ? withDemoCacheHeaders(response) : response;
+      return demoMode && isDemoCacheable(request, response) ? withDemoCacheHeaders(response) : response;
     } finally {
       await composition.close();
     }
@@ -265,11 +264,12 @@ export default {
 
 const findDemoUser = async (
   composition: ReturnType<typeof createWorkerInvocationComposition>,
-  env: WorkerEnv,
-): Promise<AuthenticatedUser | undefined> => {
-  if (!env.KONDIS_DEMO_USER_ID) return undefined;
-  const user = await composition.userRepository.findById(env.KONDIS_DEMO_USER_ID);
-  if (!user) return undefined;
+): Promise<AuthenticatedUser> => {
+  const users = await composition.userRepository.all();
+  if (users.length !== 1) {
+    throw new Error(`Demo mode requires exactly one provisioned user; found ${users.length}`);
+  }
+  const [user] = users;
   return {
     id: user.id,
     role: user.role,
@@ -298,7 +298,12 @@ const executeQueueBatch = async (env: WorkerEnv, queue: QueueName, batch: Worker
     new Request(`https://queue-executor.internal${QUEUE_EXECUTOR_PATH}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(queueExecutorRequest(queue, batch.messages.map((message) => message.body))),
+      body: JSON.stringify(
+        queueExecutorRequest(
+          queue,
+          batch.messages.map((message) => message.body),
+        ),
+      ),
     }),
   );
   if (!response.ok) {

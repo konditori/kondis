@@ -1,0 +1,19 @@
+{
+  "$schema": "../../web/node_modules/wrangler/config-schema.json",
+  "name": "kondis-public-demo-web",
+  "main": "../../web/.svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-09-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "cache": { "enabled": true },
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "../../web/.svelte-kit/cloudflare",
+  },
+  "services": [
+    { "binding": "KONDIS_API", "service": "kondis-public-demo-api" },
+  ],
+  "vars": {
+    "KONDIS_API_URL": "https://api.internal",
+  },
+}

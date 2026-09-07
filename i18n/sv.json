@@ -53,6 +53,8 @@
   "medals_count": "{count} medaljer",
   "map_attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>",
   "auth_sign_in": "Logga in",
+  "switch_to_light_mode": "Byt till ljust läge",
+  "switch_to_dark_mode": "Byt till mörkt läge",
   "auth_sign_out": "Logga ut",
   "auth_create_account": "Skapa konto",
   "email": "E-post",

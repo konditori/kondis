@@ -3940,8 +3940,55 @@ button {
   font: inherit;
   padding: 0.7rem;
 }
+.auth-page input {
+  width: 100%;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+}
+.auth-page input::placeholder {
+  color: var(--muted);
+}
+.auth-page input:focus {
+  border-color: var(--focus);
+  outline: 2px solid color-mix(in srgb, var(--focus) 25%, transparent);
+  outline-offset: 1px;
+}
 .auth-page button {
   cursor: pointer;
+}
+.auth-page form button[type="submit"] {
+  color: #07101d;
+  background: var(--green);
+  border: 1px solid var(--green);
+  border-radius: 0.6rem;
+}
+.auth-page form button[type="submit"]:hover,
+.auth-page form button[type="submit"]:focus-visible {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+}
+.auth-theme-toggle {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0 !important;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.auth-theme-toggle:hover,
+.auth-theme-toggle:focus-visible {
+  color: var(--green-dark);
+  border-color: var(--focus);
+  outline: 2px solid color-mix(in srgb, var(--focus) 25%, transparent);
+  outline-offset: 2px;
 }
 .auth-switch {
   margin-top: 1.25rem;
@@ -3953,7 +4000,7 @@ button {
   font-weight: 700;
 }
 .error {
-  color: #b42318;
+  color: #ff9b9b;
 }
 
 .activity-image-carousel {
@@ -4158,6 +4205,10 @@ body,
 .auth-page {
   color: var(--text);
   background: var(--page);
+}
+
+:root[data-theme="light"] .error {
+  color: #b42318;
 }
 
 .sidebar {

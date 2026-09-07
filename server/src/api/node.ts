@@ -106,7 +106,13 @@ function readNodeUpload(
       const caption = typeof incoming.body?.caption === 'string' ? incoming.body.caption : undefined;
       const metadata = typeof incoming.body?.metadata === 'string' ? incoming.body.metadata : undefined;
       if (!incoming.file) {
-        resolve(kind === 'image' ? { file: undefined, caption } : kind === 'takeoutActivity' ? { file: undefined, metadata } : undefined);
+        resolve(
+          kind === 'image'
+            ? { file: undefined, caption }
+            : kind === 'takeoutActivity'
+              ? { file: undefined, metadata }
+              : undefined,
+        );
         return;
       }
       const { buffer, originalname, path, size } = incoming.file;

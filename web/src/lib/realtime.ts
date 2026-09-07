@@ -102,7 +102,9 @@ const retryAfterMs = (response: Response): number | undefined => {
   const seconds = Number(value);
   if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
   const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? Math.max(0, timestamp - Date.now()) : undefined;
+  return Number.isFinite(timestamp)
+    ? Math.max(0, timestamp - Date.now())
+    : undefined;
 };
 
 const sendActivitySubscription = (
@@ -118,37 +120,52 @@ const sendActivitySubscription = (
   }
 };
 
-const scheduleActivityRetry = (connection: ActivityEventConnection, serverDelayMs?: number) => {
+const scheduleActivityRetry = (
+  connection: ActivityEventConnection,
+  serverDelayMs?: number,
+) => {
   if (connection.stopped || connection.retryTimer) return;
   const delay = Math.max(connection.retryMs, serverDelayMs ?? 0);
   connection.retryTimer = setTimeout(() => {
     connection.retryTimer = undefined;
     void connectActivityConnection(connection);
   }, delay);
-  connection.retryMs = serverDelayMs === undefined ? Math.min(delay * 2, 10_000) : delay;
+  connection.retryMs =
+    serverDelayMs === undefined ? Math.min(delay * 2, 10_000) : delay;
 };
 
-const connectActivityConnection = (connection: ActivityEventConnection): Promise<void> => {
+const connectActivityConnection = (
+  connection: ActivityEventConnection,
+): Promise<void> => {
   if (connection.stopped || connection.socket || connection.connecting) {
     return connection.connecting ?? Promise.resolve();
   }
 
   const attempt = (async () => {
     try {
-      const ticketResponse = await fetch("/api/v1/auth/activity-events-ticket", {
-        method: "POST",
-      });
+      const ticketResponse = await fetch(
+        "/api/v1/auth/activity-events-ticket",
+        {
+          method: "POST",
+        },
+      );
       if (!ticketResponse.ok) {
-        const error = new Error("Unable to authenticate activity events") as RetryableRealtimeError;
+        const error = new Error(
+          "Unable to authenticate activity events",
+        ) as RetryableRealtimeError;
         error.retryAfterMs = retryAfterMs(ticketResponse);
         throw error;
       }
       const { token } = (await ticketResponse.json()) as { token?: string };
       if (!token) throw new Error("Activity event ticket was missing");
       const socketUrl = new URL(connection.url, window.location.href);
-      if (window.location.protocol === "https:" && socketUrl.protocol === "ws:") {
+      if (
+        window.location.protocol === "https:" &&
+        socketUrl.protocol === "ws:"
+      ) {
         socketUrl.protocol = "wss:";
-        if (socketUrl.hostname === window.location.hostname) socketUrl.port = "";
+        if (socketUrl.hostname === window.location.hostname)
+          socketUrl.port = "";
       }
       socketUrl.searchParams.set("ticket", token);
       if (connection.stopped) return;
@@ -157,14 +174,19 @@ const connectActivityConnection = (connection: ActivityEventConnection): Promise
       socket.onopen = () => {
         connection.retryMs = 500;
         for (const activityId of connection.activitySubscriptions.keys()) {
-          sendActivitySubscription(connection, "activity.subscribe", activityId);
+          sendActivitySubscription(
+            connection,
+            "activity.subscribe",
+            activityId,
+          );
         }
         for (const listener of connection.listeners) listener.onConnected();
       };
       socket.onmessage = ({ data }) => {
         const notificationEvent = parseNotificationEvent(String(data));
         if (notificationEvent) {
-          for (const listener of connection.listeners) listener.onNotification?.(notificationEvent);
+          for (const listener of connection.listeners)
+            listener.onNotification?.(notificationEvent);
           return;
         }
         try {
@@ -183,7 +205,8 @@ const connectActivityConnection = (connection: ActivityEventConnection): Promise
               event.type === "activity.best-efforts.available") &&
             event.activity?.id
           ) {
-            for (const listener of connection.listeners) listener.onActivity(event as ActivityEvent);
+            for (const listener of connection.listeners)
+              listener.onActivity(event as ActivityEvent);
           }
         } catch {
           // Ignore malformed or forward-incompatible events.
@@ -194,7 +217,10 @@ const connectActivityConnection = (connection: ActivityEventConnection): Promise
         scheduleActivityRetry(connection);
       };
     } catch (error) {
-      scheduleActivityRetry(connection, (error as RetryableRealtimeError).retryAfterMs);
+      scheduleActivityRetry(
+        connection,
+        (error as RetryableRealtimeError).retryAfterMs,
+      );
     }
   })();
 
@@ -222,22 +248,37 @@ export function subscribeToActivityEvents(
     };
     activityConnections.set(url, connection);
   }
-  const listener: ActivityEventListener = { onActivity, onConnected, ...options };
+  const listener: ActivityEventListener = {
+    onActivity,
+    onConnected,
+    ...options,
+  };
   connection.listeners.add(listener);
   if (listener.activityId) {
-    const count = connection.activitySubscriptions.get(listener.activityId) ?? 0;
+    const count =
+      connection.activitySubscriptions.get(listener.activityId) ?? 0;
     connection.activitySubscriptions.set(listener.activityId, count + 1);
-    if (count === 0) sendActivitySubscription(connection, "activity.subscribe", listener.activityId);
+    if (count === 0)
+      sendActivitySubscription(
+        connection,
+        "activity.subscribe",
+        listener.activityId,
+      );
   }
   void connectActivityConnection(connection);
 
   return () => {
     if (!connection?.listeners.delete(listener)) return;
     if (listener.activityId) {
-      const count = connection.activitySubscriptions.get(listener.activityId) ?? 0;
+      const count =
+        connection.activitySubscriptions.get(listener.activityId) ?? 0;
       if (count <= 1) {
         connection.activitySubscriptions.delete(listener.activityId);
-        sendActivitySubscription(connection, "activity.unsubscribe", listener.activityId);
+        sendActivitySubscription(
+          connection,
+          "activity.unsubscribe",
+          listener.activityId,
+        );
       } else {
         connection.activitySubscriptions.set(listener.activityId, count - 1);
       }
@@ -246,7 +287,8 @@ export function subscribeToActivityEvents(
     connection.stopped = true;
     clearTimeout(connection.retryTimer);
     connection.socket?.close();
-    if (activityConnections.get(url) === connection) activityConnections.delete(url);
+    if (activityConnections.get(url) === connection)
+      activityConnections.delete(url);
   };
 }
 

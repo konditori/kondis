@@ -1,10 +1,57 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { Moon, Sun } from "@lucide/svelte";
   import { t } from "$lib/i18n";
   let { data, form } = $props();
+  let theme = $state<"dark" | "light">("dark");
+
+  function setTheme(nextTheme: "dark" | "light", persist = true) {
+    theme = nextTheme;
+    document.documentElement.dataset.theme = nextTheme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", nextTheme === "dark" ? "#08111f" : "#f4f7fb");
+    if (!persist) return;
+    try {
+      localStorage.setItem("kondis-theme", nextTheme);
+    } catch {
+      // The interface still works when storage is unavailable.
+    }
+  }
+
+  function toggleTheme() {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }
+
+  onMount(() => {
+    const savedTheme = localStorage.getItem("kondis-theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      setTheme(savedTheme, false);
+    } else if (document.documentElement.dataset.theme === "light") {
+      theme = "light";
+    }
+  });
 </script>
 
 <svelte:head><title>{t("auth_sign_in")} · Kondis</title></svelte:head>
 <main class="auth-page">
+  <button
+    class="auth-theme-toggle"
+    type="button"
+    aria-label={theme === "dark"
+      ? t("switch_to_light_mode")
+      : t("switch_to_dark_mode")}
+    title={theme === "dark"
+      ? t("switch_to_light_mode")
+      : t("switch_to_dark_mode")}
+    onclick={toggleTheme}
+  >
+    {#if theme === "dark"}
+      <Sun size={20} />
+    {:else}
+      <Moon size={20} />
+    {/if}
+  </button>
   <section>
     <h1>Kondis {t("auth_sign_in")} 😰</h1>
     <form method="POST" action="?/login">

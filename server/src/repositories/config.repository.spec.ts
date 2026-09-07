@@ -74,5 +74,22 @@ describe('ConfigRepository', () => {
 
       expect(new ConfigRepository().getEnv().listenAddress).toBe('127.0.0.1');
     });
+
+    it('disables demo mode by default', () => {
+      expect(new ConfigRepository().demoMode).toBe(false);
+    });
+
+    it('reads demo mode from the environment', () => {
+      process.env.KONDIS_DEMO_MODE = 'true';
+
+      expect(new ConfigRepository().demoMode).toBe(true);
+      expect(new ConfigRepository().getEnv().demoMode).toBe(true);
+    });
+
+    it('rejects an invalid demo mode value', () => {
+      process.env.KONDIS_DEMO_MODE = 'yes';
+
+      expect(() => new ConfigRepository().demoMode).toThrow(/KONDIS_DEMO_MODE must be true or false/);
+    });
   });
 });

@@ -189,7 +189,9 @@ export class ImportProgressStore {
 
   /** Marks a queued job's item failed when the job has exhausted its retries. */
   async failJobItem(importId: string, itemKey: string, error: string): Promise<boolean> {
-    return this.db.transaction().execute((trx) => this.transitionItemWithExecutor(trx, importId, itemKey, 'failed', error));
+    return this.db
+      .transaction()
+      .execute((trx) => this.transitionItemWithExecutor(trx, importId, itemKey, 'failed', error));
   }
 
   async finalize(importId: string, userId: string, extractionErrors = 0): Promise<ImportProgress | undefined> {

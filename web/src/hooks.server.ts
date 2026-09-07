@@ -13,7 +13,10 @@ export const handle: Handle = async ({ event, resolve }) => {
       pathname,
     });
     const response = await service.fetch(event.request);
-    console.log("API Worker realtime response", { pathname, status: response.status });
+    console.log("API Worker realtime response", {
+      pathname,
+      status: response.status,
+    });
     return response;
   }
   const upstreamFetch: typeof fetch = service
@@ -36,7 +39,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     pathname !== "/events";
   if (isDemoPage) {
     // The demo has one immutable data set, so cache rendered pages at the edge.
-    event.setHeaders({ "cache-control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800" });
+    event.setHeaders({
+      "cache-control":
+        "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
+    });
   }
   return resolve(event);
 };

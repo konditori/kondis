@@ -191,48 +191,56 @@ async function extract({
       (item): item is ActivityItem =>
         item.kind === "activity" && pending.has(item.itemKey),
     );
-    await runWeightedPool(activities, 3, (item) => {
-      const entry = entryByName.get(item.entryName);
-      return item.gzip || (entry?.uncompressedSize ?? LIMITS.activityBytes) > 24 * 1024 * 1024 ? 3 : 1;
-    }, async (item) => {
-      try {
+    await runWeightedPool(
+      activities,
+      3,
+      (item) => {
         const entry = entryByName.get(item.entryName);
-        if (!entry)
-          throw new Error("Activity file is missing from the ZIP archive");
-        const activity = item.gzip
-          ? await gunzipEntry(entry)
-          : await entry.getData(new BlobWriter(), {
-              checkCrc32: true,
-              strictness: "strict",
-            });
-        if (activity.size > LIMITS.activityBytes)
-          throw new Error("Activity exceeds the 64 MiB expanded size limit");
-        const body = new FormData();
-        body.append("metadata", JSON.stringify(withoutEntryName(item)));
-        body.append(
-          "file",
-          new File([activity], item.originalName, { type: activity.type }),
-        );
-        await request(
-          `${apiBase}/upload/strava/imports/${importId}/activities`,
-          {
-            method: "POST",
-            body,
-          },
-        );
-        uploaded += 1;
-        post("uploaded", { uploaded, total: pending.size });
-      } catch (error) {
-        failures += 1;
-        await reportItemFailure(
-          apiBase,
-          importId,
-          item.itemKey,
-          message(error),
-        );
-      }
-      assertNotCancelled();
-    });
+        return item.gzip ||
+          (entry?.uncompressedSize ?? LIMITS.activityBytes) > 24 * 1024 * 1024
+          ? 3
+          : 1;
+      },
+      async (item) => {
+        try {
+          const entry = entryByName.get(item.entryName);
+          if (!entry)
+            throw new Error("Activity file is missing from the ZIP archive");
+          const activity = item.gzip
+            ? await gunzipEntry(entry)
+            : await entry.getData(new BlobWriter(), {
+                checkCrc32: true,
+                strictness: "strict",
+              });
+          if (activity.size > LIMITS.activityBytes)
+            throw new Error("Activity exceeds the 64 MiB expanded size limit");
+          const body = new FormData();
+          body.append("metadata", JSON.stringify(withoutEntryName(item)));
+          body.append(
+            "file",
+            new File([activity], item.originalName, { type: activity.type }),
+          );
+          await request(
+            `${apiBase}/upload/strava/imports/${importId}/activities`,
+            {
+              method: "POST",
+              body,
+            },
+          );
+          uploaded += 1;
+          post("uploaded", { uploaded, total: pending.size });
+        } catch (error) {
+          failures += 1;
+          await reportItemFailure(
+            apiBase,
+            importId,
+            item.itemKey,
+            message(error),
+          );
+        }
+        assertNotCancelled();
+      },
+    );
 
     const final = await request(
       `${apiBase}/upload/strava/imports/${importId}/finalize`,

@@ -89,7 +89,9 @@ describe("subscribeToActivityEvents", () => {
   it("shares one ticket and WebSocket between subscribers for the same URL", async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve(
-        new Response(JSON.stringify({ token: "a".repeat(64) }), { status: 201 }),
+        new Response(JSON.stringify({ token: "a".repeat(64) }), {
+          status: 201,
+        }),
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -111,7 +113,10 @@ describe("subscribeToActivityEvents", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
     TestWebSocket.sockets[0]!.open();
     TestWebSocket.sockets[0]!.message(
-      JSON.stringify({ type: "activity.updated", activity: { id: "activity-id" } }),
+      JSON.stringify({
+        type: "activity.updated",
+        activity: { id: "activity-id" },
+      }),
     );
     expect(onFirstActivity).toHaveBeenCalledOnce();
     expect(onSecondActivity).toHaveBeenCalledOnce();
@@ -125,8 +130,14 @@ describe("subscribeToActivityEvents", () => {
     vi.useFakeTimers();
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 429, headers: { "Retry-After": "7" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ token: "b".repeat(64) }), { status: 201 }));
+      .mockResolvedValueOnce(
+        new Response(null, { status: 429, headers: { "Retry-After": "7" } }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ token: "b".repeat(64) }), {
+          status: 201,
+        }),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
     const unsubscribe = subscribeToActivityEvents(

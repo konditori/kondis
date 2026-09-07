@@ -11,11 +11,11 @@ const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 const environmentPattern = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 const hyperdrivePattern = /^[a-f0-9]{32}$/i;
 
-const usage = () => `Usage: pnpm deploy:cloudflare <environment> [--dry-run]
+const usage = () => `Usage: pnpm deploy:cloudflare <environment> [--dry-run] [--config-dir <path>]
 
 Required environment:
  KONDIS_HYPERDRIVE_ID  Hyperdrive ID created by Terraform
-  KONDIS_DEMO_USER_ID   Optional UUID for anonymous read-only demo access
+ KONDIS_DEMO_MODE     Set to true for the immutable public demo deployment
 
 Examples:
   pnpm deploy:cloudflare worker-name
@@ -95,13 +95,32 @@ const readJsonc = async (path, parseJsonc) => parseJsonc(await readFile(path, 'u
 const parseArguments = () => {
   const argumentsList = process.argv.slice(2);
   const dryRun = argumentsList.includes('--dry-run');
-  const positional = argumentsList.filter((argument) => argument !== '--dry-run');
+  const positional = [];
+  let configDirArgument;
+
+  for (let index = 0; index < argumentsList.length; index += 1) {
+    const argument = argumentsList[index];
+    if (argument === '--dry-run') continue;
+    if (argument === '--config-dir') {
+      const nextArgument = argumentsList[index + 1];
+      if (!nextArgument || nextArgument.startsWith('--')) {
+        throw new Error(`--config-dir requires a path.\n\n${usage()}`);
+      }
+      configDirArgument = nextArgument;
+      index += 1;
+      continue;
+    }
+    positional.push(argument);
+  }
 
   if (positional.includes('--help') || positional.includes('-h')) {
     console.log(usage());
     process.exit(0);
   }
   if (positional.length > 1) throw new Error(`Expected one environment name.\n\n${usage()}`);
+  if (!configDirArgument && argumentsList.includes('--config-dir')) {
+    throw new Error(`--config-dir requires a path.\n\n${usage()}`);
+  }
 
   const environment = positional[0] || process.env.CLOUDFLARE_ENV;
   if (!environment || !environmentPattern.test(environment)) {
@@ -123,15 +142,23 @@ const parseArguments = () => {
     throw new Error('KONDIS_CLOUD_NODE_PROCESSOR_ENABLED must be either true or false.');
   }
 
-  const demoUserId = process.env.KONDIS_DEMO_USER_ID;
-  if (demoUserId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(demoUserId)) {
-    throw new Error('KONDIS_DEMO_USER_ID must be a UUID when set.');
+  const demoModeSetting = process.env.KONDIS_DEMO_MODE || 'false';
+  if (!['true', 'false'].includes(demoModeSetting)) {
+    throw new Error('KONDIS_DEMO_MODE must be either true or false.');
   }
-  return { environment, dryRun, hyperdriveId, nodeProcessorEnabled: nodeProcessorEnabled === 'true', demoUserId };
+  const demoMode = demoModeSetting === 'true';
+  return {
+    environment,
+    dryRun,
+    hyperdriveId,
+    nodeProcessorEnabled: nodeProcessorEnabled === 'true',
+    demoMode,
+    configDir: configDirArgument ? resolve(rootDir, configDirArgument) : undefined,
+  };
 };
 
 const main = async () => {
-  const { environment, dryRun, hyperdriveId, nodeProcessorEnabled, demoUserId } = parseArguments();
+  const { environment, dryRun, hyperdriveId, nodeProcessorEnabled, demoMode, configDir } = parseArguments();
   const require = createRequire(resolve(serverDir, 'scripts/generate-cloudflare-config.cjs'));
   const {
     generateCloudflareConfig,
@@ -139,34 +166,52 @@ const main = async () => {
     parseJsonc,
   } = require(resolve(serverDir, 'scripts/generate-cloudflare-config.cjs'));
 
-  const apiBaseConfig = await readJsonc(resolve(serverDir, 'wrangler.jsonc'), parseJsonc);
-  const webBaseConfig = await readJsonc(resolve(webDir, 'wrangler.jsonc'), parseJsonc);
+  const apiBaseConfig = await readJsonc(
+    configDir ? resolve(configDir, 'wrangler-api.jsonc') : resolve(serverDir, 'wrangler.jsonc'),
+    parseJsonc,
+  );
+  const webBaseConfig = await readJsonc(
+    configDir ? resolve(configDir, 'wrangler-web.jsonc') : resolve(webDir, 'wrangler.jsonc'),
+    parseJsonc,
+  );
   const apiConfig = generateCloudflareConfig({
     baseConfig: apiBaseConfig,
     environment,
     hyperdriveId,
     nodeProcessorEnabled,
-    demoUserId,
+    demoMode,
   });
-  const executorConfig = generateQueueExecutorConfig({ baseConfig: apiBaseConfig, environment, hyperdriveId });
+  const executorConfig = demoMode
+    ? undefined
+    : generateQueueExecutorConfig({ baseConfig: apiBaseConfig, environment, hyperdriveId });
   const apiWorkerName = apiConfig.name;
   const webConfig = {
     ...webBaseConfig,
     name: `${webBaseConfig.name}-${environment}`,
     vars: {
       ...(webBaseConfig.vars || {}),
-      ...(demoUserId ? { KONDIS_DEMO_MODE: 'true' } : {}),
+      ...(demoMode ? { KONDIS_DEMO_MODE: 'true' } : {}),
     },
     services: (webBaseConfig.services || []).map((service) =>
       service.binding === 'KONDIS_API' ? { ...service, service: apiWorkerName } : service,
     ),
+    ...(demoMode && environment === 'production'
+      ? { routes: [{ pattern: 'demo.kondis.org', custom_domain: true }] }
+      : {}),
   };
 
-  const apiConfigPath = resolve(serverDir, `wrangler-generated-${environment}.json`);
-  const executorConfigPath = resolve(serverDir, `wrangler-generated-${environment}-queue-executor.json`);
-  const webConfigPath = resolve(webDir, `wrangler-generated-${environment}.json`);
+  const configOutputDir = configDir || serverDir;
+  const apiConfigPath = configDir
+    ? resolve(configOutputDir, `wrangler-generated-${environment}-api.json`)
+    : resolve(serverDir, `wrangler-generated-${environment}.json`);
+  const executorConfigPath = resolve(configOutputDir, `wrangler-generated-${environment}-queue-executor.json`);
+  const webConfigPath = configDir
+    ? resolve(configOutputDir, `wrangler-generated-${environment}-web.json`)
+    : resolve(webDir, `wrangler-generated-${environment}.json`);
   await writeFile(apiConfigPath, `${JSON.stringify(apiConfig, null, 2)}\n`);
-  await writeFile(executorConfigPath, `${JSON.stringify(executorConfig, null, 2)}\n`);
+  if (executorConfig) {
+    await writeFile(executorConfigPath, `${JSON.stringify(executorConfig, null, 2)}\n`);
+  }
   await writeFile(webConfigPath, `${JSON.stringify(webConfig, null, 2)}\n`);
 
   const bucketNames = (apiConfig.r2_buckets || []).map(({ bucket_name }) => bucket_name).filter(Boolean);
@@ -174,13 +219,13 @@ const main = async () => {
 
   console.log(`Cloudflare environment: ${environment}`);
   console.log(`API Worker: ${apiWorkerName}`);
-  console.log(`Queue executor: ${executorConfig.name}`);
+  console.log(`Queue executor: ${executorConfig?.name || 'not deployed (demo mode)'}`);
   console.log(`Web Worker: ${webConfig.name}`);
   console.log(`Hyperdrive: configured from Terraform (${hyperdriveId.slice(0, 6)}…${hyperdriveId.slice(-4)})`);
   console.log(`R2 buckets: ${bucketNames.join(', ') || 'none'}`);
   console.log(`Queues: ${queueNames.join(', ') || 'none'}`);
   console.log(`Generated API config: ${apiConfigPath}`);
-  console.log(`Generated queue executor config: ${executorConfigPath}`);
+  if (executorConfig) console.log(`Generated queue executor config: ${executorConfigPath}`);
   console.log(`Generated web config: ${webConfigPath}`);
 
   if (dryRun) {
@@ -191,8 +236,10 @@ const main = async () => {
   for (const bucketName of bucketNames) await createR2Bucket(bucketName);
   for (const queueName of queueNames) await createQueue(queueName);
 
-  console.log(`Deploying queue executor first: ${executorConfig.name}`);
-  await runWrangler(['deploy', '--config', executorConfigPath]);
+  if (executorConfig) {
+    console.log(`Deploying queue executor first: ${executorConfig.name}`);
+    await runWrangler(['deploy', '--config', executorConfigPath]);
+  }
 
   console.log(`Deploying API Worker: ${apiWorkerName}`);
   await runWrangler(['deploy', '--config', apiConfigPath]);

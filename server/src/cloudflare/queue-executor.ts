@@ -1,6 +1,10 @@
 import { CloudflareQueueTransportAdapter } from 'src/adapters/cloudflare/queue-transport.adapter';
-import { queueExecutorResponse, QUEUE_EXECUTOR_PATH, isQueueExecutorRequest } from 'src/cloudflare/queue-executor.protocol';
 import { drainUnpublishedJobs } from 'src/cloudflare/dispatcher';
+import {
+  QUEUE_EXECUTOR_PATH,
+  isQueueExecutorRequest,
+  queueExecutorResponse,
+} from 'src/cloudflare/queue-executor.protocol';
 import { handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 

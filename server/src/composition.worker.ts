@@ -14,6 +14,7 @@ import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
@@ -40,9 +41,9 @@ export type WorkerBindings = {
   KONDIS_SETUP_TOKEN?: string;
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
+  KONDIS_DEMO_MODE?: boolean | string;
   KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
   KONDIS_REALTIME_PUBLISH_TOKEN?: string;
-  KONDIS_DEMO_USER_ID?: string;
   QUEUE_EXECUTOR?: { fetch: (request: Request) => Promise<Response> };
   STORAGE_BUCKET?: R2BucketBinding;
   REALTIME?: DurableObjectNamespaceBinding;
@@ -66,11 +67,12 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
   const authCredentialRepository = new AuthCredentialRepository(database);
   const userRepository = new UserRepository(database);
-  const config = {
-    registrationEnabled: env.KONDIS_REGISTRATION_ENABLED === true || env.KONDIS_REGISTRATION_ENABLED === 'true',
-    setupToken: env.KONDIS_SETUP_TOKEN,
-    trustProxyHeaders: true,
-  };
+  const config = new ConfigRepository({
+    KONDIS_DEMO_MODE: toConfigValue(env.KONDIS_DEMO_MODE),
+    KONDIS_REGISTRATION_ENABLED: toConfigValue(env.KONDIS_REGISTRATION_ENABLED),
+    KONDIS_SETUP_TOKEN: env.KONDIS_SETUP_TOKEN,
+    KONDIS_TRUST_PROXY_HEADERS: 'true',
+  });
   const cloudNodeProcessorEnabled =
     env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === true || env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === 'true';
   const queueBindingsConfigured = Boolean(
@@ -164,5 +166,8 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     jobProducer: queueAdapter,
   };
 };
+
+const toConfigValue = (value: boolean | string | undefined): string | undefined =>
+  typeof value === 'boolean' ? String(value) : value;
 
 export type WorkerInvocationComposition = ReturnType<typeof createWorkerInvocationComposition>;

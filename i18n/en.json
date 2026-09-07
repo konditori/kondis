@@ -53,6 +53,8 @@
   "medals_count": "{count} medals",
   "map_attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>",
   "auth_sign_in": "Sign in",
+  "switch_to_light_mode": "Switch to light mode",
+  "switch_to_dark_mode": "Switch to dark mode",
   "auth_sign_out": "Sign out",
   "auth_create_account": "Create account",
   "email": "Email",

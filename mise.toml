@@ -202,5 +202,9 @@ depends = ["i18n:check"]
 run = "node ./scripts/generate-android-i18n.mjs"
 
 [tasks."deploy:cloudflare"]
-description = "Provision Cloudflare resources and deploy the API and web Workers"
+description = "Deploy your own Kondis instance to Cloudflare"
 run = "node ./scripts/deploy-cloudflare.mjs"
+
+[tasks."deploy:demo"]
+description = "Deploy the Kondis demo site to Cloudflare (only available to Kondis dev team)"
+run = "pnpm run deploy:demo"

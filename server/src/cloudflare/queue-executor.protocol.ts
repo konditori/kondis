@@ -27,10 +27,7 @@ export const isQueueExecutorRequest = (value: unknown): value is QueueExecutorRe
   );
 };
 
-export const isQueueExecutorResponse = (
-  value: unknown,
-  deliveryCount: number,
-): value is QueueExecutorResponse => {
+export const isQueueExecutorResponse = (value: unknown, deliveryCount: number): value is QueueExecutorResponse => {
   if (!value || typeof value !== 'object') {
     return false;
   }

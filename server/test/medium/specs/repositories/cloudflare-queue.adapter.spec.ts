@@ -174,9 +174,14 @@ describe(CloudflareQueueAdapter.name, () => {
       retry: vi.fn(),
     };
 
-    await handleQueueBatch({ deliveries: [delivery, delivery] }, db, {
-      [JobName.AuthCredentialCleanup]: handler,
-    }, QueueName.BackgroundTask);
+    await handleQueueBatch(
+      { deliveries: [delivery, delivery] },
+      db,
+      {
+        [JobName.AuthCredentialCleanup]: handler,
+      },
+      QueueName.BackgroundTask,
+    );
 
     expect(handler).toHaveBeenCalledOnce();
     expect(ack).toHaveBeenCalledTimes(2);
@@ -193,10 +198,7 @@ describe(CloudflareQueueAdapter.name, () => {
       claimNextPollingJob(db, QueueName.BackgroundTask),
     ]);
 
-    expect(claimed.map((job) => job?.id)).toEqual([
-      expect.any(String),
-      expect.any(String),
-    ]);
+    expect(claimed.map((job) => job?.id)).toEqual([expect.any(String), expect.any(String)]);
     expect(new Set(claimed.map((job) => job?.id)).size).toBe(2);
   });
 

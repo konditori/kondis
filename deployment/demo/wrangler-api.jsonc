@@ -1,0 +1,9 @@
+{
+  "$schema": "../../server/node_modules/wrangler/config-schema.json",
+  "name": "kondis-public-demo-api",
+  "main": "../../server/src/cloudflare/entrypoint.ts",
+  "compatibility_date": "2026-09-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "cache": { "enabled": true },
+}

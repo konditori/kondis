@@ -8,9 +8,9 @@ import {
   type JobDeliveryEnvelope,
   type JobPublisherPort,
 } from 'src/ports/job-transport.port';
+import { ImportProgressStore } from 'src/state/import-progress.store';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 
 const MAX_DISPATCH_BATCH_SIZE = 100;
 const MAX_DISPATCH_BATCHES_PER_INVOCATION = 10;

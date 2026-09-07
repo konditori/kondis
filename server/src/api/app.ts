@@ -2,9 +2,9 @@ import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 import { createApiAuthMiddleware, type ApiEnv } from 'src/api/auth';
-import type { AuthenticatedUser } from 'src/auth';
 import { registerAllRouteGroups, type ApiRouteGroups } from 'src/api/route-groups';
 import { RequestValidationError } from 'src/api/validation';
+import type { AuthenticatedUser } from 'src/auth';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { HttpException } from 'src/errors';
 import { ServerService } from 'src/services/server.service';
@@ -59,15 +59,19 @@ export const createApiShell = (sessions: ApiDependencies['sessions'], demoUser?:
 
   app.use(
     '*',
-    createApiAuthMiddleware(sessions, (method, path) => {
-      const normalizedMethod = method === 'HEAD' ? 'GET' : method;
-      const runtimePath = path.startsWith(`${API_PREFIX}/`) ? path.slice(API_PREFIX.length) : path;
-      const normalizedPath = runtimePath.length > 1 ? runtimePath.replace(/\/+$/, '') : runtimePath;
-      return (
-        publicRoutes.has(`${normalizedMethod} ${normalizedPath}`) ||
-        (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-workouts/shared/'))
-      );
-    }, demoUser),
+    createApiAuthMiddleware(
+      sessions,
+      (method, path) => {
+        const normalizedMethod = method === 'HEAD' ? 'GET' : method;
+        const runtimePath = path.startsWith(`${API_PREFIX}/`) ? path.slice(API_PREFIX.length) : path;
+        const normalizedPath = runtimePath.length > 1 ? runtimePath.replace(/\/+$/, '') : runtimePath;
+        return (
+          publicRoutes.has(`${normalizedMethod} ${normalizedPath}`) ||
+          (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-workouts/shared/'))
+        );
+      },
+      demoUser,
+    ),
   );
 
   registerApiErrorHandlers(app);

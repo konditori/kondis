@@ -107,8 +107,41 @@ const removeJsoncTrailingCommas = (source) => {
 
 const parseJsonc = (source) => JSON.parse(removeJsoncTrailingCommas(stripJsoncComments(source)));
 
-const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeProcessorEnabled = false, demoUserId }) => {
+const generateCloudflareConfig = ({
+  baseConfig,
+  environment,
+  hyperdriveId,
+  nodeProcessorEnabled = false,
+  demoMode = false,
+}) => {
   const prefix = `${baseConfig.name}-${environment}`;
+  const demoBaseConfig = (() => {
+    const {
+      r2_buckets: _r2Buckets,
+      durable_objects: _durableObjects,
+      migrations: _migrations,
+      services: _services,
+      queues: _queues,
+      triggers: _triggers,
+      ...config
+    } = baseConfig;
+    return config;
+  })();
+  const commonConfig = {
+    ...(demoMode ? demoBaseConfig : baseConfig),
+    name: prefix,
+    vars: {
+      ...((demoMode ? demoBaseConfig : baseConfig).vars || {}),
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: nodeProcessorEnabled ? 'true' : 'false',
+      ...(demoMode ? { KONDIS_DEMO_MODE: 'true' } : {}),
+    },
+    hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
+  };
+
+  if (demoMode) {
+    return commonConfig;
+  }
+
   const queues = Object.entries(JOB_CONCURRENCY).map(([queue, concurrency]) => {
     const name = queueName(prefix, queue);
     const deadLetterQueue = `${name}-dlq`;
@@ -123,23 +156,13 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
   });
 
   return {
-    ...baseConfig,
-    name: prefix,
-    vars: {
-      ...(baseConfig.vars || {}),
-      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: nodeProcessorEnabled ? 'true' : 'false',
-      ...(demoUserId ? { KONDIS_DEMO_USER_ID: demoUserId } : {}),
-    },
+    ...commonConfig,
     r2_buckets: [{ binding: 'STORAGE_BUCKET', bucket_name: `${prefix}-storage` }],
     durable_objects: {
       bindings: [{ name: 'REALTIME', class_name: 'RealtimeDurableObject' }],
     },
     migrations: [{ tag: 'realtime-v1', new_sqlite_classes: ['RealtimeDurableObject'] }],
-    hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
-    services: [
-      ...(baseConfig.services || []),
-      { binding: 'QUEUE_EXECUTOR', service: `${prefix}-queue-executor` },
-    ],
+    services: [...(baseConfig.services || []), { binding: 'QUEUE_EXECUTOR', service: `${prefix}-queue-executor` }],
     queues: {
       producers: queues.map(({ binding, name }) => ({ binding, queue: name })),
       consumers: queues.flatMap(({ name, deadLetterQueue, concurrency }) => [
@@ -175,7 +198,13 @@ const generateCloudflareConfig = ({ baseConfig, environment, hyperdriveId, nodeP
 const generateQueueExecutorConfig = ({ baseConfig, environment, hyperdriveId }) => {
   const prefix = `${baseConfig.name}-${environment}`;
   const queues = Object.keys(JOB_CONCURRENCY);
-  const { durable_objects: _durableObjects, migrations: _migrations, queues: _queues, triggers: _triggers, ...config } = baseConfig;
+  const {
+    durable_objects: _durableObjects,
+    migrations: _migrations,
+    queues: _queues,
+    triggers: _triggers,
+    ...config
+  } = baseConfig;
   return {
     ...config,
     name: `${prefix}-queue-executor`,
