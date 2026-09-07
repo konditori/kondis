@@ -1,0 +1,81 @@
+open-api/kondis-openapi-specs.json
+  s_6e374bd12f5f31::t_5e0b530371f50b 3183-3198,3250,3261,6210
+packages/sdk/src/fetch-client.ts
+  s_6e374bd12f5f31::t_a00d6e60398fe4 70-73,2363,2377
+server/src/services/activity.service.spec.ts
+  s_6e374bd12f5f31::t_48d0a8efb00f4b 223-224,231
+server/src/state/import-progress.store.ts
+  s_6e374bd12f5f31::t_3a48a2c8c3278b 3,28-42,46-49,65,69-100,102-110,114-143,162-164,168-179,184-195,211-218,220,222-258,262,270-303
+server/test/medium/specs/repositories/cloudflare-queue.adapter.spec.ts
+  s_6e374bd12f5f31::t_08dfe22d60e394 144-202
+server/test/medium/specs/repositories/pgboss-queue.adapter.spec.ts
+  s_6e374bd12f5f31::t_23cb2b1a0a53ce 168,171,178,182,185-186,191,195,203-204,207,214-215
+server/test/medium/specs/service/activity.service.spec.ts
+  s_6e374bd12f5f31::t_cf62b45bf384a8 264,537,552,557,582,596,619,778
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_6e374bd12f5f31::t_0d26c32298811a 53-55,59,77-113,117-133,137,216-219,232
+web/src/lib/workers/strava-takeout.worker.ts
+  s_6e374bd12f5f31::t_a841f126fe48d3 194,196-197,546,548-549,553-581
+i18n/en.json
+  s_6060367ea63ad4::t_1fc90032d89236 434-435
+i18n/sv.json
+  s_6060367ea63ad4::t_83751edb1aacfb 434-435
+server/scripts/generate-cloudflare-config.cjs
+  s_6060367ea63ad4::t_371d68725a2079 53,62
+server/src/cloudflare/dispatcher.ts
+  s_6060367ea63ad4::t_6d2ac795d2ced8 13,20-21,24,31,47,49-56,63,88-104,107,121-134
+server/src/cloudflare/entrypoint.ts
+  s_6060367ea63ad4::t_953e4dbe6c363e 290
+server/src/cloudflare/queue-handler.ts
+  s_6060367ea63ad4::t_3176dda2d768bc 15,72,88-89,111,116-118,130,134-154,180-181,230,237,243,245-247
+server/src/composition.worker.ts
+  s_6060367ea63ad4::t_c57ff7ee0660a6 48,75-79
+server/src/enum.ts
+  s_6060367ea63ad4::t_b7f918d48ef452 8
+server/src/job-handler.registry.spec.ts
+  s_6060367ea63ad4::t_20d2c8e96c1d0f 82-85
+server/src/job-handler.registry.ts
+  s_6060367ea63ad4::t_47c3191a3ade51 44,51,58,65
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_6060367ea63ad4::t_11cecc365acd71 26,72
+server/src/jobs/job-semantics.ts
+  s_6060367ea63ad4::t_7d46ec8c92dc11 30-33,109-111,136-138
+server/src/jobs/polling-job.consumer.ts
+  s_6060367ea63ad4::t_730b99e8d4aba0 185-187,212
+server/src/schema/migrations/1789000000000-SplitActivityQueues.ts
+  s_6060367ea63ad4::t_2c6c97b1b0f7f7 1-146
+server/src/schema/tables/background-job.table.ts
+  s_6060367ea63ad4::t_c71f06a55242f3 24
+server/src/services/activity.service.ts
+  s_6060367ea63ad4::t_68cf76e5ecba2d 138-140,154,157
+server/src/services/worker-upload.service.spec.ts
+  s_6060367ea63ad4::t_68b7a7fe7da642 31,44,88,91,117,187
+server/src/services/worker-upload.service.ts
+  s_6060367ea63ad4::t_fd0ba25787c359 238-240
+web/src/routes/admin/jobs/+page.svelte
+  s_6060367ea63ad4::t_5d568f111035b0 87-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e93f242c739c4e2a6d1c22f63bdd586e35568e29",
+  "prompts": {},
+  "sessions": {
+    "s_6060367ea63ad4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07a74-9582-7252-904b-7f9eecfab8e7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_6e374bd12f5f31": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f85829706ffePeQqnAf15erfDp",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
