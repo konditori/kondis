@@ -1,0 +1,49 @@
+mise.toml
+  s_6060367ea63ad4::t_7fd4fccd5f200e 47-51,203-206
+server/src/api/app.spec.ts
+  s_6060367ea63ad4::t_7ccdeb66675cc9 4,131-151
+server/src/api/app.ts
+  s_6060367ea63ad4::t_2fbe4a864d2990 86
+server/src/cloudflare/realtime-durable-object.spec.ts
+  s_6060367ea63ad4::t_aa090917fc12be 59-97
+server/src/cloudflare/realtime-durable-object.ts
+  s_6060367ea63ad4::t_7823b0e0c70e3f 82-87,106
+server/src/errors.spec.ts
+  s_6060367ea63ad4::t_2bc87fb464c0ae 21-28
+server/src/errors.ts
+  s_6060367ea63ad4::t_f4a5c3df1be550 15,21-22,36,46-49
+server/src/repositories/rate-limiting.repository.ts
+  s_6060367ea63ad4::t_a15d67438ca335 52
+server/wrangler.jsonc
+  s_6060367ea63ad4::t_d761eb8bf67a4b 7
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_6060367ea63ad4::t_a18d686985b573 7,9,15,17,20,25,29-36,39-58,61-67,70,72,75,84,87,96,114-115
+web/src/hooks.server.ts
+  s_6060367ea63ad4::t_f691561f72a495 6-18
+web/src/lib/realtime.spec.ts
+  s_6060367ea63ad4::t_7b901d73b618c7 1-52,87-146
+web/src/lib/realtime.ts
+  s_6060367ea63ad4::t_926bab13b550ae 76-81,83-92,94-136,138-145,148-149,151,154-160,162-221,223-232,235-249
+web/src/lib/workers/strava-takeout.worker.spec.ts
+  s_6060367ea63ad4::t_7f0c36add2e481 10,41-50
+web/src/lib/workers/strava-takeout.worker.ts
+  s_6060367ea63ad4::t_8de679aa6a1781 317-320,324,330
+web/wrangler.jsonc
+  s_6060367ea63ad4::t_5bf43dd17d2806 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f24c0ebdd5e6088e670215971271ba60f5a2b44f",
+  "prompts": {},
+  "sessions": {
+    "s_6060367ea63ad4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07a74-9582-7252-904b-7f9eecfab8e7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
