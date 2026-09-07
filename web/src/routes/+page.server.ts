@@ -7,7 +7,12 @@ import {
 import type { ActivityPage, LiveWorkout } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals, request, url }) => {
+export const load: PageServerLoad = async ({
+  locals,
+  request,
+  setHeaders,
+  url,
+}) => {
   const eventsUrl = activityEventsUrl(
     url,
     request.headers.get("x-forwarded-proto"),
@@ -26,6 +31,8 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
       : [];
     return { ...body, unavailable: false, eventsUrl, liveWorkouts };
   } catch {
+    // Don't cache this error page, next reload should come from origin
+    setHeaders({ "x-kondis-cache-bypass": "1" });
     return {
       activities: [],
       nextCursor: null,

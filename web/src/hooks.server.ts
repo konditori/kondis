@@ -51,17 +51,32 @@ export const handle: Handle = async ({ event, resolve }) => {
     pathname === "/register" ||
     pathname.startsWith("/register/");
   if (isAuthenticationPage) {
-    // Authentication pages can vary by deployment state and must never remain
-    // in the edge cache after a new demo version is published.
+    // Let's not cache auth pages
     event.setHeaders({
       "cache-control": "no-store, no-cache, max-age=0, must-revalidate",
     });
   } else if (isDemoPage) {
-    // The demo has one immutable data set, so cache rendered pages at the edge.
+    // The demo site is heavily cached, so we want different rules than the default
     event.setHeaders({
-      "cache-control":
-        "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
+      "cache-control": "no-cache",
+      "cloudflare-cdn-cache-control":
+        "public, max-age=86400, stale-while-revalidate=604800",
     });
   }
-  return resolve(event);
+  const response = await resolve(event);
+  if (response.headers.get("x-kondis-cache-bypass") !== "1") {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  headers.delete("x-kondis-cache-bypass");
+  headers.delete("cloudflare-cdn-cache-control");
+  headers.set(
+    "cache-control",
+    "no-store, no-cache, max-age=0, must-revalidate",
+  );
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 };
