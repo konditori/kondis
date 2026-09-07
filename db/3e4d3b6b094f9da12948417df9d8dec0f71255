@@ -1,0 +1,47 @@
+.gitignore
+  s_26af4d39ce95a5::t_426ec58ac0c90e 16
+deployment/demo/wrangler-api.jsonc
+  s_26af4d39ce95a5::t_fc10477d332809 1-9
+package.json
+  s_26af4d39ce95a5::t_4808fb7dbcfe00 9
+scripts/deploy-cloudflare.mjs
+  s_26af4d39ce95a5::t_98cb8221513f1d 14,18,98-114,121-123,145-147,149-157,161,169-176,182,184-186,193,198-200,203-210,212-214,222,228,239-242
+server/scripts/generate-cloudflare-config.cjs
+  s_26af4d39ce95a5::t_8e5e662420d03c 110-116,118-144,159,165,201-207
+server/src/cloudflare/entrypoint.ts
+  s_26af4d39ce95a5::t_4f889f58a320ae 17,21,33,35,176,182-193,205,267-272,301-306
+server/src/composition.worker.ts
+  s_26af4d39ce95a5::t_3389b9f7b0d1d2 17,44,70-75,170-172
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_26af4d39ce95a5::t_34998d6ed58533 17-19,21-22,33,37-52,61-64,78-79,84-85,95,100,106,108-111,114,117,120,122-126,138
+server/src/repositories/config.repository.spec.ts
+  s_26af4d39ce95a5::t_29826beca651e2 77-93
+server/src/repositories/config.repository.ts
+  s_26af4d39ce95a5::t_927e83a47a9f16 5-10,14-15,22-23,39-40,53,55-59,63-69,76,79-82,84,93,97,113-117
+server/src/types.ts
+  s_26af4d39ce95a5::t_0911cc2a0354a0 189
+server/wrangler.jsonc
+  s_26af4d39ce95a5::t_15fd55bbe897be 3
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_26af4d39ce95a5::t_d4f35fc1f807f9 41-47,49,53,56,60,64-75
+web/src/hooks.server.ts
+  s_26af4d39ce95a5::t_87b08583620bf7 16-19,42-45
+web/wrangler.jsonc
+  s_26af4d39ce95a5::t_3df21230359160 3,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "db3e4d3b6b094f9da12948417df9d8dec0f71255",
+  "prompts": {},
+  "sessions": {
+    "s_26af4d39ce95a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07b74-c541-7670-9d02-665e15695f95",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
