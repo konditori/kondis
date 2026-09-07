@@ -1,0 +1,59 @@
+server/src/demo/fit.spec.ts
+  s_a6e0e4158e9a4a::t_6b719eb5c85091 20-32
+deployment/demo/deploy.mjs
+  s_b7c7a35ef9eab7::t_e2d49c1562ce3d 9,11-12
+deployment/demo/wrangler-api.jsonc
+  s_ae599251f2e0fc::t_c6f6b62672f3b3 3,9
+deployment/demo/wrangler-web.jsonc
+  s_b7c7a35ef9eab7::t_b9f949512f2deb 3,9-15,21
+scripts/deploy-cloudflare.mjs
+  s_b7c7a35ef9eab7::t_e0be9935c8b953 188
+server/scripts/generate-cloudflare-config.cjs
+  s_b7c7a35ef9eab7::t_161a5c09a99e7f 117
+server/src/demo/fit.ts
+  s_cae9f863078a63::t_b36937c9a0858e 8,11-18,74-83,85-111,117-118,120-122,130,132-133,177,188-241,244-247,249-250,252-253,255,257-258,263-265,267-268,270-271,273-275,278-460,589-714
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_b7c7a35ef9eab7::t_3885d64af5e7ae 109,112,117
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_b7c7a35ef9eab7::t_779dbfc656299c 52,55-56,67-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cbc8aab8c91bde9c046a35217babc988006a6def",
+  "prompts": {},
+  "sessions": {
+    "s_a6e0e4158e9a4a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f8253e14cffeTKZdeOzFRDHEbJ",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_ae599251f2e0fc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1aa2478a-e0ba-466b-86ec-53ec312fe31a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b7c7a35ef9eab7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07cf8-f74c-7432-b044-81ad0670d771",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_cae9f863078a63": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07dc2-4d79-7dd0-959b-4b72c1355fd9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
