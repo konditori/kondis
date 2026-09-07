@@ -1,0 +1,21 @@
+web/src/hooks.server.ts
+  s_6acea6bec2eaaa::t_2abcba1df7a78b 54,59,61-63,66-81
+web/src/routes/+page.server.ts
+  s_6acea6bec2eaaa::t_a501fd9ec44821 10-15,34-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f1bd1233774d7e624b555d37a30ece09ec58df45",
+  "prompts": {},
+  "sessions": {
+    "s_6acea6bec2eaaa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07ca7-6981-77f0-abdf-04d9c27f22ca",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
