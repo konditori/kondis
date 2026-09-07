@@ -52,6 +52,10 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
     storage: uploadStorage,
     limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0, parts: 2 },
   }).single('file'),
+  takeoutActivity: multer({
+    storage: uploadStorage,
+    limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0, parts: 2 },
+  }).single('file'),
   avatar: multer({
     storage: memoryStorage(),
     limits: { fileSize: UPLOAD_LIMITS.avatarFileBytes, files: 1, fields: 0, parts: 2 },
@@ -59,10 +63,6 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
   image: multer({
     storage: memoryStorage(),
     limits: { fileSize: UPLOAD_LIMITS.imageFileBytes, files: 1, fields: 1 },
-  }).single('file'),
-  takeout: multer({
-    storage: uploadStorage,
-    limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0, parts: 2 },
   }).single('file'),
 };
 

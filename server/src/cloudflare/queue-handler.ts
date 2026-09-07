@@ -235,6 +235,7 @@ type PortableWorkerServices = {
     | 'handleActivityBestEffortCompute'
     | 'handleActivityBestEffortRank'
     | 'handleActivityMetricCompute'
+    | 'handleActivityManualCreate'
     | 'handleActivityParse'
     | 'handleActivityRouteMatchCompute'
   >;
@@ -265,6 +266,8 @@ export const createPortableWorkerHandlers = (
     [JobName.ActivityRouteMatchCompute]:
       services.activityService?.handleActivityRouteMatchCompute.bind(services.activityService) ??
       unavailableWorkerStorage,
+    [JobName.ActivityManualCreate]:
+      services.activityService?.handleActivityManualCreate.bind(services.activityService) ?? unavailableWorkerStorage,
   };
 
   for (const jobName of Object.values(JobName)) {

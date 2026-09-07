@@ -11,10 +11,10 @@ import { workerUploadReader } from 'src/adapters/cloudflare/upload.adapter';
 import { createApiShell } from 'src/api/app';
 import {
   registerWorkerActivityUploadRoute,
-  registerWorkerNodeStorageMutationRouteGroups,
   registerWorkerPortableRouteGroups,
   registerWorkerQueueMutationRoutes,
   registerWorkerStorageReadRouteGroups,
+  registerWorkerTakeoutImportRoutes,
 } from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
 import {
@@ -88,9 +88,9 @@ const createRequestApp = (composition: ReturnType<typeof createWorkerInvocationC
     registerWorkerStorageReadRouteGroups(requestApp, storageRoutes);
     if (composition.queueBindingsConfigured) {
       registerWorkerActivityUploadRoute(requestApp, storageRoutes);
-    }
-    if (composition.cloudNodeProcessorEnabled && composition.queueBindingsConfigured) {
-      registerWorkerNodeStorageMutationRouteGroups(requestApp, storageRoutes);
+      // Browser extraction has no Node-only dependency, so this is available
+      // whenever the Worker can accept and queue normal activity files.
+      registerWorkerTakeoutImportRoutes(requestApp, storageRoutes);
     }
   }
   requestApp.post('/api/v1/_internal/auth-credential-cleanup', async (context) => {
@@ -176,7 +176,9 @@ export default {
         if (
           response.ok &&
           request.method === 'POST' &&
-          new URL(request.url).pathname.endsWith('/upload/activity') &&
+          (new URL(request.url).pathname.endsWith('/upload/activity') ||
+            new URL(request.url).pathname.endsWith('/activities') ||
+            new URL(request.url).pathname.endsWith('/manual-activities')) &&
           composition.queueBindingsConfigured
         ) {
           _ctx.waitUntil(dispatchWorkerJobs(env));

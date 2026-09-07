@@ -1,5 +1,10 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
+import {
+  FitUploadResponseDto,
+  TakeoutActivityMetadataDto,
+  TakeoutImportScanDto,
+  TakeoutManualItemDto,
+} from 'src/dtos/upload.dto';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
@@ -9,7 +14,7 @@ import type { StoragePort } from 'src/ports/storage.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
 import type { ActivityRepository } from 'src/repositories/activity.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
-import { ImportProgressStore } from 'src/state/import-progress.store';
+import { ImportProgressStore, type TakeoutImportItem } from 'src/state/import-progress.store';
 import type { JobOf } from 'src/types/jobs';
 import type { UploadedFileData } from 'src/types/uploads';
 
@@ -31,7 +36,16 @@ export class WorkerUploadService {
     private readonly realtime: RealtimePort,
   ) {}
 
-  async uploadActivity(file: UploadedFileData | undefined, userId: string): Promise<FitUploadResponseDto> {
+  async uploadActivity(
+    file: UploadedFileData | undefined,
+    userId: string,
+    options: Partial<
+      Pick<
+        JobOf<JobName.ActivityUpload>,
+        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+      >
+    > = {},
+  ): Promise<FitUploadResponseDto> {
     if (!file || !('buffer' in file) || !file.buffer) {
       throw new BadRequestException('Missing file upload');
     }
@@ -54,6 +68,7 @@ export class WorkerUploadService {
           originalName: file.originalname,
           storagePath,
           checksum: await this.crypto.sha256(buffer),
+          ...options,
         },
       });
     } catch (error) {
@@ -61,6 +76,115 @@ export class WorkerUploadService {
       throw error;
     }
     return { byteSize: file.size, queued: true };
+  }
+
+  async createTakeoutImport(userId: string) {
+    const importId = crypto.randomUUID();
+    await this.progress.create(importId, userId);
+    return { importId, status: 'scanning' as const };
+  }
+
+  scanTakeoutImport(importId: string, userId: string, scan: TakeoutImportScanDto): Promise<string[]> {
+    return this.progress.registerItems(
+      importId,
+      userId,
+      scan.items.map(
+        (item) => ({ itemKey: item.itemKey, kind: item.kind, metadata: item }) satisfies TakeoutImportItem,
+      ),
+    );
+  }
+
+  async submitTakeoutActivity(
+    importId: string,
+    userId: string,
+    metadata: TakeoutActivityMetadataDto,
+    file: UploadedFileData | undefined,
+  ): Promise<boolean> {
+    if (!(await this.progress.beginItem(importId, userId, metadata.itemKey, 'activity'))) {
+      return false;
+    }
+    try {
+      await this.uploadActivity(file, userId, {
+        activityName: metadata.name ?? undefined,
+        activityDescription: metadata.description ?? undefined,
+        activitySport: metadata.sport ?? undefined,
+        activityTags: metadata.tags,
+        takeoutImportId: importId,
+        takeoutItemKey: metadata.itemKey,
+      });
+      await this.progress.markQueued(importId, metadata.itemKey);
+      return true;
+    } catch (error) {
+      await this.progress.completeItem(importId, metadata.itemKey, 'failed', errorMessage(error));
+      throw error;
+    }
+  }
+
+  async submitTakeoutManual(importId: string, userId: string, item: TakeoutManualItemDto): Promise<boolean> {
+    if (!(await this.progress.beginItem(importId, userId, item.itemKey, 'manual'))) {
+      return false;
+    }
+    try {
+      await this.jobs.queue({
+        name: JobName.ActivityManualCreate,
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          sourceId: item.sourceId,
+          activityName: item.name ?? undefined,
+          activityDescription: item.description ?? undefined,
+          activitySport: item.sport,
+          activityTags: item.tags,
+          startedAt: item.startedAt,
+          elapsedTime: item.elapsedTime,
+          movingTime: item.movingTime,
+          distance: item.distance,
+          elevationGain: item.elevationGain,
+          elevationLoss: item.elevationLoss,
+          avgSpeed: item.avgSpeed,
+          maxSpeed: item.maxSpeed,
+          avgHr: item.avgHr,
+          maxHr: item.maxHr,
+          calories: item.calories,
+          takeoutImportId: importId,
+          takeoutItemKey: item.itemKey,
+        },
+      });
+      await this.progress.markQueued(importId, item.itemKey);
+      return true;
+    } catch (error) {
+      await this.progress.completeItem(importId, item.itemKey, 'failed', errorMessage(error));
+      throw error;
+    }
+  }
+
+  async finalizeTakeoutImport(importId: string, userId: string, extractionErrors: number) {
+    return this.progress.finalize(importId, userId, extractionErrors);
+  }
+
+  cancelTakeoutImport(importId: string, userId: string): Promise<boolean> {
+    return this.progress.cancel(importId, userId);
+  }
+
+  failTakeoutItem(importId: string, userId: string, itemKey: string, error: string): Promise<boolean> {
+    return this.progress.failItem(importId, userId, itemKey, error);
+  }
+
+  async getTakeoutImportStatus(id: string, userId: string) {
+    const record = await this.progress.get(id, userId);
+    if (!record) {
+      throw new NotFoundException('Takeout import not found');
+    }
+    return {
+      importId: record.importId,
+      status: record.status,
+      total: record.total,
+      uploaded: record.uploaded,
+      processed: record.processed,
+      failed: record.failed,
+      duplicates: record.duplicates,
+      error: record.error,
+    };
   }
 
   async handleActivityUpload({
@@ -73,6 +197,7 @@ export class WorkerUploadService {
     activityTags,
     userId,
     takeoutImportId,
+    takeoutItemKey,
     images,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     if (!userId) {
@@ -89,6 +214,7 @@ export class WorkerUploadService {
           activityTags,
           images,
           takeoutImportId,
+          takeoutItemKey,
         });
       }
     }
@@ -104,6 +230,7 @@ export class WorkerUploadService {
         activityTags,
         images,
         takeoutImportId,
+        takeoutItemKey,
       });
     }
 
@@ -129,6 +256,7 @@ export class WorkerUploadService {
               id: created.id,
               ...(images?.length && { images }),
               ...(takeoutImportId && { takeoutImportId }),
+              ...(takeoutItemKey && { takeoutItemKey }),
               ...(activityName && { activityName }),
               ...(activityDescription && { activityDescription }),
               ...(activitySport && { activitySport }),
@@ -141,8 +269,8 @@ export class WorkerUploadService {
     } catch (error) {
       const raced = await this.uploads.getByChecksum(checksum, userId);
       if (raced) {
-        if (takeoutImportId) {
-          await this.progress.increment(takeoutImportId, false, true);
+        if (takeoutImportId && takeoutItemKey) {
+          await this.progress.completeItem(takeoutImportId, takeoutItemKey, 'duplicate');
         }
         await this.storage.delete(storagePath);
         return JobStatus.Skipped;
@@ -158,7 +286,7 @@ export class WorkerUploadService {
     uploadId: string,
     originalName: string,
     storagePath: string,
-    options: Pick<JobOf<JobName.ActivityUpload>, 'activityTags' | 'images' | 'takeoutImportId'>,
+    options: Pick<JobOf<JobName.ActivityUpload>, 'activityTags' | 'images' | 'takeoutImportId' | 'takeoutItemKey'>,
   ): Promise<JobStatus> {
     const activity = await this.activities.getByUploadId(uploadId);
     if (activity) {
@@ -174,55 +302,12 @@ export class WorkerUploadService {
         data: { id: uploadId, ...options },
       });
     }
-    if (options.takeoutImportId) {
-      await this.progress.increment(options.takeoutImportId, false, true);
+    if (options.takeoutImportId && options.takeoutItemKey) {
+      await this.progress.completeItem(options.takeoutImportId, options.takeoutItemKey, 'duplicate');
     }
     await this.storage.delete(storagePath);
     return JobStatus.Skipped;
   }
-
-  async uploadLagomTakeout(file: UploadedFileData | undefined, userId: string): Promise<LagomTakeoutUploadResponseDto> {
-    if (!file || !('buffer' in file) || !file.buffer) {
-      throw new BadRequestException('Missing file upload');
-    }
-    const buffer = file.buffer;
-    if (extensionOf(file.originalname) !== '.zip') {
-      throw new BadRequestException('Only a Strava takeout .zip file is accepted');
-    }
-    if (file.size > UPLOAD_LIMITS.takeoutFileBytes) {
-      throw new PayloadTooLargeException(`Takeout file exceeds ${UPLOAD_LIMITS.takeoutFileBytes} bytes`);
-    }
-
-    const storagePath = this.storage.buildTemporaryPath('.zip');
-    const importId = crypto.randomUUID();
-    await this.storage.write(storagePath, buffer);
-    try {
-      await this.progress.create(importId, userId);
-      await this.jobs.queue({
-        name: JobName.LagomTakeoutImport,
-        data: { originalName: file.originalname, storagePath, takeoutImportId: importId, userId },
-      });
-    } catch (error) {
-      await this.progress.fail(importId, error instanceof Error ? error.message : String(error)).catch(() => {});
-      await this.storage.delete(storagePath).catch(() => {});
-      throw error;
-    }
-    return { byteSize: file.size, queued: true, importId };
-  }
-
-  async getLagomTakeoutStatus(id: string, userId: string) {
-    const record = await this.progress.get(id, userId);
-    if (!record) {
-      throw new NotFoundException('Lagom import not found');
-    }
-    return {
-      importId: record.importId,
-      status: record.status,
-      total: record.total,
-      processed: record.processed,
-      failed: record.failed,
-      duplicates: record.duplicates,
-      error: record.error,
-    };
-  }
 }
+
+const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));

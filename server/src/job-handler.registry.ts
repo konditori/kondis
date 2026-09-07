@@ -79,6 +79,7 @@ export const createJobHandlerRegistry = ({
       queueName: QueueName.ActivityParsing,
       handler: activityService.handleActivityManualCreate.bind(activityService),
       label: 'ActivityService.handleActivityManualCreate',
+      cloudConsumer: 'worker',
     },
     [JobName.ActivityParseQueueAll]: {
       jobName: JobName.ActivityParseQueueAll,
@@ -115,12 +116,6 @@ export const createJobHandlerRegistry = ({
       queueName: QueueName.BackgroundTask,
       handler: activityImageService.handleQueueAll.bind(activityImageService),
       label: 'ActivityImageService.handleQueueAll',
-    },
-    [JobName.LagomTakeoutImport]: {
-      jobName: JobName.LagomTakeoutImport,
-      queueName: QueueName.BackgroundTask,
-      handler: uploadService.handleLagomTakeout.bind(uploadService),
-      label: 'UploadService.handleLagomTakeout',
     },
     [JobName.UserAvatarUpload]: {
       jobName: JobName.UserAvatarUpload,

@@ -1,7 +1,6 @@
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
 import { HttpRealtimePublisherAdapter } from 'src/adapters/http/realtime-publisher.adapter';
 import { createDatabase } from 'src/db/database';
-import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { createPollingJobHandlers, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
@@ -61,7 +60,6 @@ export const createCloudNodeProcessorComposition = ({
     realtime ??
     createCloudNodeRealtimePublisher(database, configRepository, socialRepository, authCredentialRepository);
   const importProgressStore = new ImportProgressStore(database);
-  const lagomTakeoutParser = new LagomTakeoutParser();
 
   const activityService = new ActivityService(
     uploadRepository,
@@ -105,9 +103,7 @@ export const createCloudNodeProcessorComposition = ({
     databaseRepository,
     queueAdapter,
     logger,
-    lagomTakeoutParser,
     importProgressStore,
-    userRepository,
     activityRepository,
     eventRepository,
   );

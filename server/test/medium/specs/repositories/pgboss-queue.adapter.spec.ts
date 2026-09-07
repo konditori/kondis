@@ -114,14 +114,6 @@ describe(PgBossQueueAdapter.name, () => {
         data: { id: MISSING_UUID },
       },
       [JobName.ActivityImageGenerateQueueAll]: { name: JobName.ActivityImageGenerateQueueAll, data: { force: false } },
-      [JobName.LagomTakeoutImport]: {
-        name: JobName.LagomTakeoutImport,
-        data: {
-          userId: ownerId,
-          originalName: 'empty.zip',
-          storagePath: 'temporary/empty.zip',
-        },
-      },
       [JobName.UserAvatarUpload]: {
         name: JobName.UserAvatarUpload,
         data: { userId: MISSING_UUID, storagePath: 'temporary/missing.jpg' },
@@ -299,15 +291,9 @@ describe(PgBossQueueAdapter.name, () => {
               checksum: 'a'.repeat(64),
             },
           },
-          {
-            name: JobName.LagomTakeoutImport,
-            data: { originalName: 'takeout.zip', storagePath: 'temporary/takeout.zip' },
-          },
         ]);
 
-        await expect(jobs.getReferencedTemporaryPaths()).resolves.toEqual(
-          new Set(['temporary/run.fit', 'temporary/takeout.zip']),
-        );
+        await expect(jobs.getReferencedTemporaryPaths()).resolves.toEqual(new Set(['temporary/run.fit']));
       } finally {
         await jobs.empty(QueueName.BackgroundTask);
         await jobs.resume(QueueName.BackgroundTask);

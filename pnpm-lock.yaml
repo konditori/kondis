@@ -92,9 +92,6 @@ importers:
       bcrypt-ts:
         specifier: ^8.0.1
         version: 8.0.1
-      csv-parse:
-        specifier: ^7.0.2
-        version: 7.0.2
       fast-xml-parser:
         specifier: ^5.11.1
         version: 5.11.1
@@ -119,9 +116,6 @@ importers:
       sharp:
         specifier: ^0.35.4
         version: 0.35.4(@types/node@26.4.0)
-      unzipper:
-        specifier: ^0.12.5
-        version: 0.12.5
       ws:
         specifier: ^8.21.3
         version: 8.21.3
@@ -156,9 +150,6 @@ importers:
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
-      '@types/unzipper':
-        specifier: ^0.10.11
-        version: 0.10.11
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
@@ -363,6 +354,9 @@ importers:
       '@lucide/svelte':
         specifier: ^1.38.0
         version: 1.38.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))
+      '@zip.js/zip.js':
+        specifier: ^2.11.1
+        version: 2.11.1
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -4127,6 +4121,10 @@ packages:
 
   '@xtuc/long@4.2.2':
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
+
+  '@zip.js/zip.js@2.11.1':
+    resolution: {integrity: sha512-x86tIhuszaDZ9ek8Tp9AkcSvyWffiTH8SiDNhsmtW+DoSKkTDnLkX3lHGG39whb6gMWo6q+cU6DYTF/2htjwuQ==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=18.0.0'}
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -13903,6 +13901,8 @@ snapshots:
   '@xtuc/ieee754@1.2.0': {}
 
   '@xtuc/long@4.2.2': {}
+
+  '@zip.js/zip.js@2.11.1': {}
 
   abort-controller@3.0.0:
     dependencies:

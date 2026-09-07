@@ -2,7 +2,6 @@ const MEBIBYTE = 1024 * 1024;
 
 export const UPLOAD_LIMITS = {
   activityFileBytes: 64 * MEBIBYTE,
-  takeoutFileBytes: 256 * MEBIBYTE,
   zipEntries: 20_000,
   zipEntryBytes: 64 * MEBIBYTE,
   zipExpandedBytes: 512 * MEBIBYTE,

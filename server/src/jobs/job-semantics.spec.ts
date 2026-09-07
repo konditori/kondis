@@ -12,6 +12,7 @@ const WORKER_JOB_NAMES = new Set([
   JobName.AuthCredentialCleanup,
   JobName.ActivityUpload,
   JobName.ActivityParse,
+  JobName.ActivityManualCreate,
   JobName.ActivityMetricCompute,
   JobName.ActivityBestEffortCompute,
   JobName.ActivityBestEffortRank,

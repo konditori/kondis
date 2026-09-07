@@ -16,6 +16,7 @@ const WORKER_JOB_NAMES = [
   JobName.AuthCredentialCleanup,
   JobName.ActivityUpload,
   JobName.ActivityParse,
+  JobName.ActivityManualCreate,
   JobName.ActivityMetricCompute,
   JobName.ActivityBestEffortCompute,
   JobName.ActivityBestEffortRank,
@@ -46,7 +47,6 @@ const setup = () => {
   } as unknown as StorageService;
   const uploadService = {
     handleActivityUpload: success(),
-    handleLagomTakeout: success(),
   } as unknown as UploadService;
   const userService = { handleAvatarUpload: success() } as unknown as UserService;
 
@@ -91,7 +91,6 @@ describe('createJobHandlerRegistry', () => {
       [JobName.ActivityImageAttach]: QueueName.ImageProcessing,
       [JobName.ActivityImageGenerateThumbnails]: QueueName.ImageProcessing,
       [JobName.ActivityImageGenerateQueueAll]: QueueName.BackgroundTask,
-      [JobName.LagomTakeoutImport]: QueueName.BackgroundTask,
       [JobName.UserAvatarUpload]: QueueName.ImageProcessing,
       [JobName.FileDelete]: QueueName.Storage,
       [JobName.TemporaryFileCleanup]: QueueName.Storage,

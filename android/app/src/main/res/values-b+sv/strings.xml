@@ -421,7 +421,6 @@
     <string name="i18n_job_name_activity_image_attach">Kopplade aktivitetsbilder</string>
     <string name="i18n_job_name_activity_image_generate_thumbnails">Skapade miniatyrbilder för aktivitetsbilder</string>
     <string name="i18n_job_name_activity_image_generate_queue_all">Köade alla aktivitetsbilder för bearbetning</string>
-    <string name="i18n_job_name_lagom_takeout_import">Importerade Lagom-export</string>
     <string name="i18n_job_name_user_avatar_upload">Laddade upp användaravatar</string>
     <string name="i18n_job_name_file_delete">Tog bort fil</string>
     <string name="i18n_job_name_temporary_file_cleanup">Rensade tillfälliga filer</string>

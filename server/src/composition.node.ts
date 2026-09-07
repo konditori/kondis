@@ -1,6 +1,5 @@
 import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
-import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
@@ -68,7 +67,6 @@ export const createApplicationComposition = ({
   const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
 
   const importProgressStore = new ImportProgressStore(database);
-  const lagomTakeoutParser = new LagomTakeoutParser();
 
   const activityService = new ActivityService(
     uploadRepository,
@@ -120,9 +118,7 @@ export const createApplicationComposition = ({
     databaseRepository,
     queueAdapter,
     newLogger(),
-    lagomTakeoutParser,
     importProgressStore,
-    userRepository,
     activityRepository,
     eventRepository,
   );
@@ -161,7 +157,6 @@ export const createApplicationComposition = ({
     uploadRepository,
     userRepository,
     importProgressStore,
-    lagomTakeoutParser,
     activityService,
     activityImageService,
     authService,
@@ -192,7 +187,6 @@ export const createApplicationComposition = ({
     [UploadRepository, uploadRepository],
     [UserRepository, userRepository],
     [ImportProgressStore, importProgressStore],
-    [LagomTakeoutParser, lagomTakeoutParser],
     [ActivityService, activityService],
     [ActivityImageService, activityImageService],
     [AuthService, authService],

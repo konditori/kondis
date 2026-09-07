@@ -24,7 +24,6 @@ const noServiceToServiceImports = {
 const noWorkerRuntimeImports = {
   group: [
     'bcrypt',
-    'csv-parse',
     'fast-xml-parser',
     'fit-file-parser',
     'multer',
@@ -35,7 +34,6 @@ const noWorkerRuntimeImports = {
     'src/composition.node',
     'src/imports/*',
     'src/workers/*',
-    'unzipper',
     'ws',
   ],
   message: 'Cloudflare Worker code must remain free of Node-only and native runtime dependencies.',

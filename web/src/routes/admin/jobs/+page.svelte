@@ -119,7 +119,6 @@
     ActivityImageGenerateThumbnails:
       "job_name_activity_image_generate_thumbnails",
     ActivityImageGenerateQueueAll: "job_name_activity_image_generate_queue_all",
-    LagomTakeoutImport: "job_name_lagom_takeout_import",
     UserAvatarUpload: "job_name_user_avatar_upload",
     FileDelete: "job_name_file_delete",
     TemporaryFileCleanup: "job_name_temporary_file_cleanup",

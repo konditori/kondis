@@ -17,6 +17,7 @@ import { LapTable } from 'src/schema/tables/lap.table';
 import { LiveWorkoutPointTable } from 'src/schema/tables/live-workout-point.table';
 import { LiveWorkoutTable } from 'src/schema/tables/live-workout.table';
 import { NotificationTable } from 'src/schema/tables/notification.table';
+import { TakeoutImportItemTable } from 'src/schema/tables/takeout-import-item.table';
 import { TakeoutImportTable } from 'src/schema/tables/takeout-import.table';
 import { UploadTable } from 'src/schema/tables/upload.table';
 import { UserBlockTable } from 'src/schema/tables/user-block.table';
@@ -48,6 +49,7 @@ export interface DB {
   activity_comment: ActivityCommentTable;
   notification: NotificationTable;
   takeout_import: TakeoutImportTable;
+  takeout_import_item: TakeoutImportItemTable;
 }
 
 export interface ActivityRouteMatchTable {

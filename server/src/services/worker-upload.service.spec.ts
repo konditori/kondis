@@ -37,14 +37,14 @@ describe(WorkerUploadService.name, () => {
   const getByUploadId = vi.fn();
   const withTransaction = vi.fn(async (fn: (trx: KondisTransaction) => Promise<unknown>) => fn(transaction));
   const emit = vi.fn(() => Promise.resolve());
-  const increment = vi.fn(() => Promise.resolve());
+  const completeItem = vi.fn(() => Promise.resolve());
 
   const setup = () =>
     new WorkerUploadService(
       { readLimited, buildPath, copy, delete: deleteFile } as unknown as StoragePort,
       { sha256 } as unknown as CryptoPort,
       { queue } as unknown as JobProducerPort,
-      { increment } as unknown as ImportProgressStore,
+      { completeItem } as unknown as ImportProgressStore,
       { getByChecksum, create } as unknown as UploadRepository,
       { getByUploadId } as unknown as ActivityRepository,
       { withTransaction } as TransactionPort,
@@ -163,6 +163,7 @@ describe(WorkerUploadService.name, () => {
         activityTags: ['commute'],
         images,
         takeoutImportId: 'import-id',
+        takeoutItemKey: 'activity:morning-run.fit',
       }),
     ).resolves.toBe(JobStatus.Skipped);
 
@@ -174,9 +175,15 @@ describe(WorkerUploadService.name, () => {
     );
     expect(queue).toHaveBeenCalledWith({
       name: JobName.ActivityParse,
-      data: { id: 'existing-upload', images, takeoutImportId: 'import-id', activityTags: ['commute'] },
+      data: {
+        id: 'existing-upload',
+        images,
+        takeoutImportId: 'import-id',
+        takeoutItemKey: 'activity:morning-run.fit',
+        activityTags: ['commute'],
+      },
     });
-    expect(increment).toHaveBeenCalledWith('import-id', false, true);
+    expect(completeItem).toHaveBeenCalledWith('import-id', 'activity:morning-run.fit', 'duplicate');
     expect(copy).not.toHaveBeenCalled();
     expect(withTransaction).not.toHaveBeenCalled();
     expect(deleteFile).toHaveBeenCalledWith(baseJob.storagePath);
@@ -188,11 +195,15 @@ describe(WorkerUploadService.name, () => {
     getByChecksum.mockResolvedValueOnce(undefined).mockResolvedValueOnce({ id: 'raced-upload' });
     withTransaction.mockRejectedValueOnce(insertError);
 
-    await expect(service.handleActivityUpload({ ...baseJob, takeoutImportId: 'import-id' })).resolves.toBe(
-      JobStatus.Skipped,
-    );
+    await expect(
+      service.handleActivityUpload({
+        ...baseJob,
+        takeoutImportId: 'import-id',
+        takeoutItemKey: 'activity:morning-run.fit',
+      }),
+    ).resolves.toBe(JobStatus.Skipped);
     expect(getByChecksum).toHaveBeenCalledTimes(2);
-    expect(increment).toHaveBeenCalledWith('import-id', false, true);
+    expect(completeItem).toHaveBeenCalledWith('import-id', 'activity:morning-run.fit', 'duplicate');
     expect(deleteFile).toHaveBeenCalledWith(baseJob.storagePath);
   });
 });

@@ -25,7 +25,6 @@ export enum JobName {
   ActivityImageAttach = 'ActivityImageAttach',
   ActivityImageGenerateThumbnails = 'ActivityImageGenerateThumbnails',
   ActivityImageGenerateQueueAll = 'ActivityImageGenerateQueueAll',
-  LagomTakeoutImport = 'LagomTakeoutImport',
   UserAvatarUpload = 'UserAvatarUpload',
   FileDelete = 'FileDelete',
   TemporaryFileCleanup = 'TemporaryFileCleanup',

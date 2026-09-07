@@ -19,6 +19,7 @@ export interface IActivityUploadJob {
   activitySport?: ActivityType;
   activityTags?: ActivityTag[];
   takeoutImportId?: string;
+  takeoutItemKey?: string;
   images?: IActivityImageStage[];
 }
 
@@ -36,6 +37,7 @@ export interface IActivityParseJob extends IEntityJob {
   activitySport?: ActivityType;
   activityTags?: ActivityTag[];
   takeoutImportId?: string;
+  takeoutItemKey?: string;
   images?: IActivityImageStage[];
 }
 
@@ -58,14 +60,8 @@ export interface IManualActivityJob extends IEntityJob {
   maxHr?: number | null;
   calories?: number | null;
   takeoutImportId?: string;
+  takeoutItemKey?: string;
   images?: IActivityImageStage[];
-}
-
-export interface ILagomTakeoutImportJob {
-  userId?: string;
-  originalName: string;
-  storagePath: string;
-  takeoutImportId?: string;
 }
 
 export interface IActivityImageIngestJob {
@@ -101,7 +97,6 @@ export type JobItem =
   | { name: JobName.ActivityImageAttach; data: IActivityImageAttachJob }
   | { name: JobName.ActivityImageGenerateThumbnails; data: IEntityJob }
   | { name: JobName.ActivityImageGenerateQueueAll; data: IBaseJob }
-  | { name: JobName.LagomTakeoutImport; data: ILagomTakeoutImportJob }
   | { name: JobName.UserAvatarUpload; data: IUserAvatarUploadJob }
   | { name: JobName.FileDelete; data: { paths: string[] } }
   | { name: JobName.TemporaryFileCleanup; data: Record<string, never> };

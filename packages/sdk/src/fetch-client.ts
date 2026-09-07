@@ -24,18 +24,21 @@ export type FitUploadResponseDtoOutput = {
   /** True when activity processing was submitted to the queue */
   queued: true;
 };
-export type LagomTakeoutUploadResponseDtoOutput = {
-  /** Uploaded takeout size in bytes */
-  byteSize: number;
-  /** True when the takeout import was submitted to the queue */
-  queued: true;
-  /** Identifier used to poll import progress */
+export type TakeoutImportCreateResponseDtoOutput = {
   importId: string;
+  status: Status;
+};
+export type TakeoutImportScanResponseDtoOutput = {
+  pendingItemKeys: string[];
+};
+export type TakeoutItemSubmissionResponseDtoOutput = {
+  accepted: boolean;
 };
 export type TakeoutImportStatusDtoOutput = {
   importId: string;
-  status: Status;
+  status: Status2;
   total: number | null;
+  uploaded: number;
   processed: number;
   failed: number;
   duplicates: number;
@@ -87,7 +90,7 @@ export type JobHistoryResponseDtoOutput = {
     name: string;
     activityId: string | null;
     queue: QueueName_Output;
-    status: Status2;
+    status: Status3;
     createdAt: string;
     startedAt: string | null;
     finishedAt: string | null;
@@ -109,7 +112,7 @@ export type LiveWorkoutListDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
-  status: Status3;
+  status: Status4;
   canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
@@ -127,7 +130,7 @@ export type LiveWorkoutDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
-  status: Status3;
+  status: Status4;
   canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
@@ -137,7 +140,7 @@ export type LiveWorkoutDtoOutput = {
   route: number[][];
 };
 export type LiveWorkoutStateDto = {
-  status: Status4;
+  status: Status5;
   elapsedSeconds: number;
   distanceMeters: number;
 };
@@ -252,7 +255,7 @@ export type ActivityListResponseDtoOutput = {
       sortOrder: number;
       width: number | null;
       height: number | null;
-      status: Status5;
+      status: Status6;
       thumbnail: string | null;
       preview: string | null;
       original: string | null;
@@ -343,7 +346,7 @@ export type ActivityDetailDtoOutput = {
     sortOrder: number;
     width: number | null;
     height: number | null;
-    status: Status5;
+    status: Status6;
     thumbnail: string | null;
     preview: string | null;
     original: string | null;
@@ -511,7 +514,7 @@ export type ActivityImageListDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status5;
+  status: Status6;
   thumbnail: string | null;
   preview: string | null;
   original: string | null;
@@ -522,7 +525,7 @@ export type ActivityImageDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status5;
+  status: Status6;
   thumbnail: string | null;
   preview: string | null;
   original: string | null;
@@ -750,26 +753,71 @@ export function uploadControllerUploadActivity(
   );
 }
 /**
- * Import activities from a Strava takeout ZIP archive
+ * Create a browser-extracted Strava takeout import
  */
-export function uploadControllerUploadStravaTakeout(
+export function takeoutImportControllerCreate(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 201;
+      data: TakeoutImportCreateResponseDtoOutput;
+    }>('/upload/strava/imports', {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+/**
+ * Record validated takeout manifest rows
+ */
+export function takeoutImportControllerScan(
   {
+    id,
     body,
   }: {
-    body: {
-      /** Strava takeout .zip file */
-      file: Blob;
+    id: string;
+    body?: {
+      items: (
+        | {
+            itemKey: string;
+            originalName: string;
+            name: string | null;
+            description: string | null;
+            sport?: Sport;
+            tags: Tags[];
+            kind: Kind;
+          }
+        | {
+            itemKey: string;
+            kind: Kind2;
+            sourceId: string;
+            name: string | null;
+            description: string | null;
+            sport: Sport;
+            tags: Tags[];
+            startedAt: string;
+            elapsedTime: number;
+            movingTime: number | null;
+            distance: number | null;
+            elevationGain: number | null;
+            elevationLoss: number | null;
+            avgSpeed: number | null;
+            maxSpeed: number | null;
+            avgHr: number | null;
+            maxHr: number | null;
+            calories: number | null;
+          }
+      )[];
     };
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
-      status: 201;
-      data: LagomTakeoutUploadResponseDtoOutput;
+      status: 200;
+      data: TakeoutImportScanResponseDtoOutput;
     }>(
-      '/upload/strava',
-      oazapfts.multipart({
+      `/upload/strava/imports/${encodeURIComponent(id)}/scan`,
+      oazapfts.json({
         ...opts,
         method: 'POST',
         body,
@@ -778,9 +826,167 @@ export function uploadControllerUploadStravaTakeout(
   );
 }
 /**
- * Get Strava takeout import progress
+ * Upload one extracted Strava activity
  */
-export function uploadControllerGetStravaTakeoutStatus(
+export function takeoutImportControllerUploadActivity(
+  {
+    id,
+    xKondisTakeoutMetadata,
+    body,
+  }: {
+    id: string;
+    xKondisTakeoutMetadata: string;
+    body: {
+      /** One extracted .fit, .tcx, or .gpx activity file */
+      file: Blob;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 202;
+      data: TakeoutItemSubmissionResponseDtoOutput;
+    }>(
+      `/upload/strava/imports/${encodeURIComponent(id)}/activities`,
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+        headers: oazapfts.mergeHeaders(opts?.headers, {
+          'x-kondis-takeout-metadata': xKondisTakeoutMetadata,
+        }),
+      }),
+    ),
+  );
+}
+/**
+ * Submit one manual Strava activity
+ */
+export function takeoutImportControllerSubmitManual(
+  {
+    id,
+    body,
+  }: {
+    id: string;
+    body?: {
+      itemKey: string;
+      kind: Kind2;
+      sourceId: string;
+      name: string | null;
+      description: string | null;
+      sport: Sport;
+      tags: Tags[];
+      startedAt: string;
+      elapsedTime: number;
+      movingTime: number | null;
+      distance: number | null;
+      elevationGain: number | null;
+      elevationLoss: number | null;
+      avgSpeed: number | null;
+      maxSpeed: number | null;
+      avgHr: number | null;
+      maxHr: number | null;
+      calories: number | null;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 202;
+      data: TakeoutItemSubmissionResponseDtoOutput;
+    }>(
+      `/upload/strava/imports/${encodeURIComponent(id)}/manual-activities`,
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+/**
+ * Record an extraction failure for one takeout item
+ */
+export function takeoutImportControllerFailItem(
+  {
+    id,
+    body,
+  }: {
+    id: string;
+    body?: {
+      itemKey: string;
+      error: string;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 202;
+      data: TakeoutItemSubmissionResponseDtoOutput;
+    }>(
+      `/upload/strava/imports/${encodeURIComponent(id)}/items/fail`,
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+/**
+ * Mark browser extraction complete
+ */
+export function takeoutImportControllerFinalize(
+  {
+    id,
+    body,
+  }: {
+    id: string;
+    body?: {
+      extractionErrors?: number;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: TakeoutImportStatusDtoOutput;
+    }>(
+      `/upload/strava/imports/${encodeURIComponent(id)}/finalize`,
+      oazapfts.json({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
+/**
+ * Cancel a takeout import
+ */
+export function takeoutImportControllerCancel(
+  {
+    id,
+  }: {
+    id: string;
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchText(`/upload/strava/imports/${encodeURIComponent(id)}/cancel`, {
+      ...opts,
+      method: 'POST',
+    }),
+  );
+}
+/**
+ * Get browser takeout import progress
+ */
+export function takeoutImportControllerGetStatus(
   {
     id,
   }: {
@@ -792,7 +998,7 @@ export function uploadControllerGetStravaTakeoutStatus(
     oazapfts.fetchJson<{
       status: 200;
       data: TakeoutImportStatusDtoOutput;
-    }>(`/upload/strava/${encodeURIComponent(id)}`, {
+    }>(`/upload/strava/imports/${encodeURIComponent(id)}`, {
       ...opts,
     }),
   );
@@ -2058,10 +2264,91 @@ export function socialControllerDeleteComment(
   );
 }
 export enum Status {
-  Queued = 'queued',
+  Scanning = 'scanning',
+}
+export enum Sport {
+  AlpineSki = 'alpine_ski',
+  BackcountrySki = 'backcountry_ski',
+  Badminton = 'badminton',
+  Basketball = 'basketball',
+  Canoeing = 'canoeing',
+  Cricket = 'cricket',
+  CrossCountrySki = 'cross_country_ski',
+  Crossfit = 'crossfit',
+  Dance = 'dance',
+  EBikeRide = 'e_bike_ride',
+  Elliptical = 'elliptical',
+  EMountainBikeRide = 'e_mountain_bike_ride',
+  Golf = 'golf',
+  GravelRide = 'gravel_ride',
+  Handcycle = 'handcycle',
+  HighIntensityIntervalTraining = 'high_intensity_interval_training',
+  Hike = 'hike',
+  IceSkate = 'ice_skate',
+  InlineSkate = 'inline_skate',
+  Kayaking = 'kayaking',
+  Kitesurf = 'kitesurf',
+  MountainBikeRide = 'mountain_bike_ride',
+  Padel = 'padel',
+  PhysicalTherapy = 'physical_therapy',
+  Pickleball = 'pickleball',
+  Pilates = 'pilates',
+  Racquetball = 'racquetball',
+  Ride = 'ride',
+  RockClimbing = 'rock_climbing',
+  RollerSki = 'roller_ski',
+  Rowing = 'rowing',
+  Run = 'run',
+  Sail = 'sail',
+  Skateboard = 'skateboard',
+  Snowboard = 'snowboard',
+  Snowshoe = 'snowshoe',
+  Soccer = 'soccer',
+  Squash = 'squash',
+  StairStepper = 'stair_stepper',
+  StandUpPaddling = 'stand_up_paddling',
+  Surfing = 'surfing',
+  Swim = 'swim',
+  TableTennis = 'table_tennis',
+  Tennis = 'tennis',
+  TrailRun = 'trail_run',
+  Velomobile = 'velomobile',
+  VirtualRide = 'virtual_ride',
+  VirtualRow = 'virtual_row',
+  VirtualRun = 'virtual_run',
+  Volleyball = 'volleyball',
+  Walk = 'walk',
+  WeightTraining = 'weight_training',
+  Wheelchair = 'wheelchair',
+  Windsurf = 'windsurf',
+  Workout = 'workout',
+  Yoga = 'yoga',
+  Other = 'other',
+}
+export enum Tags {
+  Race = 'race',
+  LongRun = 'long_run',
+  Commute = 'commute',
+  Workout = 'workout',
+  Competition = 'competition',
+  Recovery = 'recovery',
+  WithPet = 'with_pet',
+  WithKid = 'with_kid',
+  ForACause = 'for_a_cause',
+}
+export enum Kind {
+  Activity = 'activity',
+}
+export enum Kind2 {
+  Manual = 'manual',
+}
+export enum Status2 {
+  Scanning = 'scanning',
+  Uploading = 'uploading',
   Processing = 'processing',
   Completed = 'completed',
   Failed = 'failed',
+  Cancelled = 'cancelled',
 }
 export enum Name {
   ReparseFailedUploads = 'reparse-failed-uploads',
@@ -2073,7 +2360,7 @@ export enum QueueName_Output {
   ImageProcessing = 'imageProcessing',
   Storage = 'storage',
 }
-export enum Status2 {
+export enum Status3 {
   Queued = 'queued',
   Running = 'running',
   Succeeded = 'succeeded',
@@ -2151,7 +2438,7 @@ export enum ActivityType_Output {
   Yoga = 'yoga',
   Other = 'other',
 }
-export enum Status3 {
+export enum Status4 {
   Recording = 'recording',
   Paused = 'paused',
   Ended = 'ended',
@@ -2216,7 +2503,7 @@ export enum ActivityType {
   Yoga = 'yoga',
   Other = 'other',
 }
-export enum Status4 {
+export enum Status5 {
   Recording = 'recording',
   Paused = 'paused',
   Ended = 'ended',
@@ -2277,7 +2564,7 @@ export enum BestEffortType_Output {
 export enum Type {
   LineString = 'LineString',
 }
-export enum Status5 {
+export enum Status6 {
   Pending = 'pending',
   Ready = 'ready',
   Failed = 'failed',

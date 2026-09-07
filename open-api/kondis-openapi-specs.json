@@ -65,10 +65,402 @@
         ]
       }
     },
-    "/upload/strava": {
+    "/upload/strava/imports": {
       "post": {
-        "operationId": "UploadController_uploadStravaTakeout",
-        "parameters": [],
+        "operationId": "TakeoutImportController_create",
+        "responses": {
+          "201": {
+            "description": "Browser extraction import created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeoutImportCreateResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a browser-extracted Strava takeout import",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/upload/strava/imports/{id}/scan": {
+      "post": {
+        "operationId": "TakeoutImportController_scan",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "itemKey": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            },
+                            "originalName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 512
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 200
+                            },
+                            "description": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 10000
+                            },
+                            "sport": {
+                              "type": "string",
+                              "enum": [
+                                "alpine_ski",
+                                "backcountry_ski",
+                                "badminton",
+                                "basketball",
+                                "canoeing",
+                                "cricket",
+                                "cross_country_ski",
+                                "crossfit",
+                                "dance",
+                                "e_bike_ride",
+                                "elliptical",
+                                "e_mountain_bike_ride",
+                                "golf",
+                                "gravel_ride",
+                                "handcycle",
+                                "high_intensity_interval_training",
+                                "hike",
+                                "ice_skate",
+                                "inline_skate",
+                                "kayaking",
+                                "kitesurf",
+                                "mountain_bike_ride",
+                                "padel",
+                                "physical_therapy",
+                                "pickleball",
+                                "pilates",
+                                "racquetball",
+                                "ride",
+                                "rock_climbing",
+                                "roller_ski",
+                                "rowing",
+                                "run",
+                                "sail",
+                                "skateboard",
+                                "snowboard",
+                                "snowshoe",
+                                "soccer",
+                                "squash",
+                                "stair_stepper",
+                                "stand_up_paddling",
+                                "surfing",
+                                "swim",
+                                "table_tennis",
+                                "tennis",
+                                "trail_run",
+                                "velomobile",
+                                "virtual_ride",
+                                "virtual_row",
+                                "virtual_run",
+                                "volleyball",
+                                "walk",
+                                "weight_training",
+                                "wheelchair",
+                                "windsurf",
+                                "workout",
+                                "yoga",
+                                "other"
+                              ]
+                            },
+                            "tags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "race",
+                                  "long_run",
+                                  "commute",
+                                  "workout",
+                                  "competition",
+                                  "recovery",
+                                  "with_pet",
+                                  "with_kid",
+                                  "for_a_cause"
+                                ]
+                              },
+                              "maxItems": 20
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "activity"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "itemKey",
+                            "originalName",
+                            "name",
+                            "description",
+                            "tags",
+                            "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "itemKey": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "manual"
+                              ]
+                            },
+                            "sourceId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 512
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 200
+                            },
+                            "description": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 10000
+                            },
+                            "sport": {
+                              "type": "string",
+                              "enum": [
+                                "alpine_ski",
+                                "backcountry_ski",
+                                "badminton",
+                                "basketball",
+                                "canoeing",
+                                "cricket",
+                                "cross_country_ski",
+                                "crossfit",
+                                "dance",
+                                "e_bike_ride",
+                                "elliptical",
+                                "e_mountain_bike_ride",
+                                "golf",
+                                "gravel_ride",
+                                "handcycle",
+                                "high_intensity_interval_training",
+                                "hike",
+                                "ice_skate",
+                                "inline_skate",
+                                "kayaking",
+                                "kitesurf",
+                                "mountain_bike_ride",
+                                "padel",
+                                "physical_therapy",
+                                "pickleball",
+                                "pilates",
+                                "racquetball",
+                                "ride",
+                                "rock_climbing",
+                                "roller_ski",
+                                "rowing",
+                                "run",
+                                "sail",
+                                "skateboard",
+                                "snowboard",
+                                "snowshoe",
+                                "soccer",
+                                "squash",
+                                "stair_stepper",
+                                "stand_up_paddling",
+                                "surfing",
+                                "swim",
+                                "table_tennis",
+                                "tennis",
+                                "trail_run",
+                                "velomobile",
+                                "virtual_ride",
+                                "virtual_row",
+                                "virtual_run",
+                                "volleyball",
+                                "walk",
+                                "weight_training",
+                                "wheelchair",
+                                "windsurf",
+                                "workout",
+                                "yoga",
+                                "other"
+                              ]
+                            },
+                            "tags": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "race",
+                                  "long_run",
+                                  "commute",
+                                  "workout",
+                                  "competition",
+                                  "recovery",
+                                  "with_pet",
+                                  "with_kid",
+                                  "for_a_cause"
+                                ]
+                              },
+                              "maxItems": 20
+                            },
+                            "startedAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "elapsedTime": {
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "movingTime": {
+                              "type": "integer",
+                              "nullable": true,
+                              "minimum": 0
+                            },
+                            "distance": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "elevationGain": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "elevationLoss": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "avgSpeed": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "maxSpeed": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "avgHr": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "maxHr": {
+                              "type": "number",
+                              "nullable": true
+                            },
+                            "calories": {
+                              "type": "number",
+                              "nullable": true
+                            }
+                          },
+                          "required": [
+                            "itemKey",
+                            "kind",
+                            "sourceId",
+                            "name",
+                            "description",
+                            "sport",
+                            "tags",
+                            "startedAt",
+                            "elapsedTime",
+                            "movingTime",
+                            "distance",
+                            "elevationGain",
+                            "elevationLoss",
+                            "avgSpeed",
+                            "maxSpeed",
+                            "avgHr",
+                            "maxHr",
+                            "calories"
+                          ]
+                        }
+                      ]
+                    },
+                    "maxItems": 100000
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Manifest checkpoints recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeoutImportScanResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Record validated takeout manifest rows",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/upload/strava/imports/{id}/activities": {
+      "post": {
+        "operationId": "TakeoutImportController_uploadActivity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-kondis-takeout-metadata",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 16384,
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -82,7 +474,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Strava takeout .zip file"
+                    "description": "One extracted .fit, .tcx, or .gpx activity file"
                   }
                 }
               }
@@ -90,32 +482,383 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Takeout importing and activity parsing are queued and happen asynchronously",
+          "202": {
+            "description": "Extracted activity accepted",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LagomTakeoutUploadResponseDto_Output"
+                  "$ref": "#/components/schemas/TakeoutItemSubmissionResponseDto_Output"
                 }
               }
             }
           }
         },
-        "summary": "Import activities from a Strava takeout ZIP archive",
+        "summary": "Upload one extracted Strava activity",
         "tags": [
           "uploads"
         ]
       }
     },
-    "/upload/strava/{id}": {
-      "get": {
-        "operationId": "UploadController_getStravaTakeoutStatus",
+    "/upload/strava/imports/{id}/manual-activities": {
+      "post": {
+        "operationId": "TakeoutImportController_submitManual",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "itemKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "manual"
+                    ]
+                  },
+                  "sourceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 10000
+                  },
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "alpine_ski",
+                      "backcountry_ski",
+                      "badminton",
+                      "basketball",
+                      "canoeing",
+                      "cricket",
+                      "cross_country_ski",
+                      "crossfit",
+                      "dance",
+                      "e_bike_ride",
+                      "elliptical",
+                      "e_mountain_bike_ride",
+                      "golf",
+                      "gravel_ride",
+                      "handcycle",
+                      "high_intensity_interval_training",
+                      "hike",
+                      "ice_skate",
+                      "inline_skate",
+                      "kayaking",
+                      "kitesurf",
+                      "mountain_bike_ride",
+                      "padel",
+                      "physical_therapy",
+                      "pickleball",
+                      "pilates",
+                      "racquetball",
+                      "ride",
+                      "rock_climbing",
+                      "roller_ski",
+                      "rowing",
+                      "run",
+                      "sail",
+                      "skateboard",
+                      "snowboard",
+                      "snowshoe",
+                      "soccer",
+                      "squash",
+                      "stair_stepper",
+                      "stand_up_paddling",
+                      "surfing",
+                      "swim",
+                      "table_tennis",
+                      "tennis",
+                      "trail_run",
+                      "velomobile",
+                      "virtual_ride",
+                      "virtual_row",
+                      "virtual_run",
+                      "volleyball",
+                      "walk",
+                      "weight_training",
+                      "wheelchair",
+                      "windsurf",
+                      "workout",
+                      "yoga",
+                      "other"
+                    ]
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "race",
+                        "long_run",
+                        "commute",
+                        "workout",
+                        "competition",
+                        "recovery",
+                        "with_pet",
+                        "with_kid",
+                        "for_a_cause"
+                      ]
+                    },
+                    "maxItems": 20
+                  },
+                  "startedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "elapsedTime": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "movingTime": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "distance": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "elevationGain": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "elevationLoss": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "avgSpeed": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "maxSpeed": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "avgHr": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "maxHr": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "calories": {
+                    "type": "number",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "itemKey",
+                  "kind",
+                  "sourceId",
+                  "name",
+                  "description",
+                  "sport",
+                  "tags",
+                  "startedAt",
+                  "elapsedTime",
+                  "movingTime",
+                  "distance",
+                  "elevationGain",
+                  "elevationLoss",
+                  "avgSpeed",
+                  "maxSpeed",
+                  "avgHr",
+                  "maxHr",
+                  "calories"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Manual activity accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeoutItemSubmissionResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Submit one manual Strava activity",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/upload/strava/imports/{id}/items/fail": {
+      "post": {
+        "operationId": "TakeoutImportController_failItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "itemKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "error": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "itemKey",
+                  "error"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Extraction failure checkpointed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeoutItemSubmissionResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Record an extraction failure for one takeout item",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/upload/strava/imports/{id}/finalize": {
+      "post": {
+        "operationId": "TakeoutImportController_finalize",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "extractionErrors": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000,
+                    "default": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Extraction is complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeoutImportStatusDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mark browser extraction complete",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/upload/strava/imports/{id}/cancel": {
+      "post": {
+        "operationId": "TakeoutImportController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Import cancelled"
+          }
+        },
+        "summary": "Cancel a takeout import",
+        "tags": [
+          "uploads"
+        ]
+      }
+    },
+    "/upload/strava/imports/{id}": {
+      "get": {
+        "operationId": "TakeoutImportController_getStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
               "type": "string"
             }
           }
@@ -132,7 +875,7 @@
             }
           }
         },
-        "summary": "Get Strava takeout import progress",
+        "summary": "Get browser takeout import progress",
         "tags": [
           "uploads"
         ]
@@ -2245,33 +2988,51 @@
         ],
         "additionalProperties": false
       },
-      "LagomTakeoutUploadResponseDto_Output": {
+      "TakeoutImportCreateResponseDto_Output": {
         "type": "object",
         "properties": {
-          "byteSize": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "description": "Uploaded takeout size in bytes"
-          },
-          "queued": {
-            "type": "boolean",
-            "description": "True when the takeout import was submitted to the queue",
-            "enum": [
-              true
-            ]
-          },
           "importId": {
             "type": "string",
             "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-            "description": "Identifier used to poll import progress"
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scanning"
+            ]
           }
         },
         "required": [
-          "byteSize",
-          "queued",
-          "importId"
+          "importId",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "TakeoutImportScanResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "pendingItemKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "pendingItemKeys"
+        ],
+        "additionalProperties": false
+      },
+      "TakeoutItemSubmissionResponseDto_Output": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted"
         ],
         "additionalProperties": false
       },
@@ -2286,10 +3047,12 @@
           "status": {
             "type": "string",
             "enum": [
-              "queued",
+              "scanning",
+              "uploading",
               "processing",
               "completed",
-              "failed"
+              "failed",
+              "cancelled"
             ]
           },
           "total": {
@@ -2297,6 +3060,11 @@
             "minimum": 0,
             "maximum": 9007199254740991,
             "nullable": true
+          },
+          "uploaded": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           },
           "processed": {
             "type": "integer",
@@ -2322,6 +3090,7 @@
           "importId",
           "status",
           "total",
+          "uploaded",
           "processed",
           "failed",
           "duplicates",

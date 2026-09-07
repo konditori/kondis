@@ -421,7 +421,6 @@
     <string name="i18n_job_name_activity_image_attach">Attached activity images</string>
     <string name="i18n_job_name_activity_image_generate_thumbnails">Generated thumbnails for activity images</string>
     <string name="i18n_job_name_activity_image_generate_queue_all">Queued all activity images for processing</string>
-    <string name="i18n_job_name_lagom_takeout_import">Imported Lagom takeout</string>
     <string name="i18n_job_name_user_avatar_upload">Uploaded user avatar</string>
     <string name="i18n_job_name_file_delete">Deleted file</string>
     <string name="i18n_job_name_temporary_file_cleanup">Cleaned up temporary files</string>

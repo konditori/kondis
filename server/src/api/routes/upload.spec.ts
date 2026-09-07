@@ -3,66 +3,87 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApiApp } from 'src/api/app';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
-describe('API upload routes', () => {
-  it('delegates disk-backed activity/takeout uploads and progress reads', async () => {
-    const activityFile = { originalname: 'run.fit', size: 9, path: '/tmp/activity' };
-    const takeoutFile = { originalname: 'export.zip', size: 20, path: '/tmp/takeout' };
-    const read = vi.fn((_request: Request, _platform: object | undefined, kind: string) =>
-      Promise.resolve(kind === 'activity' ? activityFile : takeoutFile),
-    );
-    const uploadActivity = vi.fn(() => Promise.resolve({ byteSize: 9, queued: true as const }));
-    const uploadLagomTakeout = vi.fn(() =>
-      Promise.resolve({
-        byteSize: 20,
-        queued: true as const,
-        importId: '00000000-0000-4000-8000-000000000002',
-      }),
-    );
-    const getLagomTakeoutStatus = vi.fn(() =>
-      Promise.resolve({
-        importId: '00000000-0000-4000-8000-000000000002',
-        status: 'queued' as const,
-        total: null,
-        processed: 0,
-        failed: 0,
-        duplicates: 0,
-        error: null,
-      }),
-    );
+const importId = '00000000-0000-4000-8000-000000000002';
+const status = {
+  importId,
+  status: 'uploading' as const,
+  total: 1,
+  uploaded: 0,
+  processed: 0,
+  failed: 0,
+  duplicates: 0,
+  error: null,
+};
+
+describe('API browser takeout import routes', () => {
+  it('checkpoints a manifest and accepts one extracted activity', async () => {
+    const activityFile = { originalname: 'run.gpx', size: 9, path: '/tmp/activity' };
+    const read = vi.fn(() => Promise.resolve(activityFile));
+    const createTakeoutImport = vi.fn(() => Promise.resolve({ importId, status: 'scanning' as const }));
+    const scanTakeoutImport = vi.fn(() => Promise.resolve(['activity:activities/run.gpx']));
+    const submitTakeoutActivity = vi.fn(() => Promise.resolve(true));
     const app = createApiApp(
       newApiDependencies({
         uploads: { read },
-        uploadService: { getLagomTakeoutStatus, uploadActivity, uploadLagomTakeout },
+        uploadService: { createTakeoutImport, scanTakeoutImport, submitTakeoutActivity },
         users: newApiUsers(),
       }),
     );
 
-    const activity = await app.request('/upload/activity', { method: 'POST', headers: apiAuthHeaders() });
-    expect(activity.status).toBe(201);
-    expect(uploadActivity).toHaveBeenCalledWith(activityFile, TEST_API_USER.id);
+    const created = await app.request('/upload/strava/imports', { method: 'POST', headers: apiAuthHeaders() });
+    expect(created.status).toBe(201);
+    expect(createTakeoutImport).toHaveBeenCalledWith(TEST_API_USER.id);
 
-    const takeout = await app.request('/upload/strava', { method: 'POST', headers: apiAuthHeaders() });
-    expect(takeout.status).toBe(201);
-    expect(uploadLagomTakeout).toHaveBeenCalledWith(takeoutFile, TEST_API_USER.id);
-
-    const status = await app.request('/upload/strava/00000000-0000-4000-8000-000000000002', {
-      headers: apiAuthHeaders(),
+    const scan = await app.request(`/upload/strava/imports/${importId}/scan`, {
+      method: 'POST',
+      headers: { ...apiAuthHeaders(), 'content-type': 'application/json' },
+      body: JSON.stringify({
+        items: [
+          {
+            itemKey: 'activity:activities/run.gpx',
+            kind: 'activity',
+            originalName: 'run.gpx',
+            name: 'Morning run',
+            description: null,
+            tags: [],
+          },
+        ],
+      }),
     });
-    expect(status.status).toBe(200);
-    expect(getLagomTakeoutStatus).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000002', TEST_API_USER.id);
+    expect(scan.status).toBe(200);
+    expect(await scan.json()).toEqual({ pendingItemKeys: ['activity:activities/run.gpx'] });
+
+    const uploaded = await app.request(`/upload/strava/imports/${importId}/activities`, {
+      method: 'POST',
+      headers: {
+        ...apiAuthHeaders(),
+        'x-kondis-takeout-metadata': JSON.stringify({
+          itemKey: 'activity:activities/run.gpx',
+          originalName: 'run.gpx',
+          name: 'Morning run',
+          description: null,
+          tags: [],
+        }),
+      },
+    });
+    expect(uploaded.status).toBe(202);
+    expect(read).toHaveBeenLastCalledWith(expect.any(Request), undefined, 'takeoutActivity');
+    expect(submitTakeoutActivity).toHaveBeenCalledWith(
+      importId,
+      TEST_API_USER.id,
+      expect.objectContaining({ itemKey: 'activity:activities/run.gpx', originalName: 'run.gpx' }),
+      activityFile,
+    );
   });
 
-  it('treats invalid service output as an internal error rather than request validation', async () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const response = await createApiApp(
-      newApiDependencies({
-        uploads: { read: () => Promise.resolve({ originalname: 'run.fit', size: 1, path: '/tmp/run.fit' }) },
-        uploadService: { uploadActivity: () => Promise.resolve({ byteSize: -1, queued: true }) as never },
-        users: newApiUsers(),
-      }),
-    ).request('/upload/activity', { method: 'POST', headers: apiAuthHeaders() });
+  it('reports processing progress through the new status route', async () => {
+    const getTakeoutImportStatus = vi.fn(() => Promise.resolve(status));
+    const app = createApiApp(newApiDependencies({ uploadService: { getTakeoutImportStatus }, users: newApiUsers() }));
 
-    expect(response.status).toBe(500);
-    consoleError.mockRestore();
+    const response = await app.request(`/upload/strava/imports/${importId}`, { headers: apiAuthHeaders() });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(status);
+    expect(getTakeoutImportStatus).toHaveBeenCalledWith(importId, TEST_API_USER.id);
   });
 });

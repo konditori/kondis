@@ -2,36 +2,86 @@
   import { goto, invalidateAll } from "$app/navigation";
   import { onDestroy } from "svelte";
   import { Archive, ArrowLeft, Check, LoaderCircle } from "@lucide/svelte";
-  import {
-    getSdkRequestOptions,
-    uploadControllerUploadStravaTakeout,
-    uploadControllerGetStravaTakeoutStatus,
-  } from "$lib/api";
   import { t } from "$lib/i18n";
 
+  type ImportStatus = {
+    importId: string;
+    status:
+      | "scanning"
+      | "uploading"
+      | "processing"
+      | "completed"
+      | "failed"
+      | "cancelled";
+    total: number | null;
+    uploaded: number;
+    processed: number;
+    failed: number;
+    duplicates: number;
+    error: string | null;
+  };
+  type WorkerEvent = {
+    type: "phase" | "scanned" | "uploaded" | "complete" | "error";
+    phase?: "scanning" | "uploading" | "processing";
+    total?: number;
+    uploaded?: number;
+    extractionErrors?: number;
+    skipped?: { photos: number; videos: number; profileImages: number };
+    message?: string;
+  };
+
+  const apiBase = "/api/v1";
   let input = $state<HTMLInputElement>();
   let file = $state<File>();
   let dragging = $state(false);
-  let uploadState = $state<"idle" | "uploading" | "done" | "error">("idle");
+  let importId = $state<string>();
+  let phase = $state<
+    | "idle"
+    | "scanning"
+    | "uploading"
+    | "processing"
+    | "done"
+    | "error"
+    | "cancelled"
+  >("idle");
   let message = $state("");
   let processed = $state(0);
+  let uploaded = $state(0);
   let total = $state<number | null>(null);
   let duplicates = $state(0);
+  let worker: Worker | undefined;
   let progressTimer: ReturnType<typeof setInterval> | undefined;
 
-  onDestroy(() => clearInterval(progressTimer));
+  onDestroy(() => {
+    worker?.terminate();
+    clearInterval(progressTimer);
+  });
 
-  async function pollImport(importId: string) {
-    const status = await uploadControllerGetStravaTakeoutStatus(
-      { id: importId },
-      getSdkRequestOptions(),
-    );
+  const importKey = (selected: File) =>
+    `kondis:strava-import:${selected.name}:${selected.size}:${selected.lastModified}`;
+
+  async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const response = await fetch(`${apiBase}${path}`, {
+      ...init,
+      credentials: "same-origin",
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(body || `Request failed (${response.status})`);
+    }
+    return (response.status === 204 ? undefined : await response.json()) as T;
+  }
+
+  async function pollImport(id: string) {
+    const status = await api<ImportStatus>(`/upload/strava/imports/${id}`);
     processed = status.processed;
+    uploaded = status.uploaded;
     total = status.total;
     duplicates = status.duplicates;
     if (status.status === "completed") {
       clearInterval(progressTimer);
-      uploadState = "done";
+      phase = "done";
+      if (file) localStorage.removeItem(importKey(file));
       const imported = processed - status.duplicates - status.failed;
       const parts =
         imported > 0
@@ -45,54 +95,128 @@
         parts.push(t("strava_failed_activities", { count: status.failed }));
       message = `${parts.join("; ")}.`;
       await invalidateAll();
-    } else if (status.status === "failed") {
+    } else if (status.status === "failed" || status.status === "cancelled") {
       clearInterval(progressTimer);
-      uploadState = "error";
-      message = Array.isArray(status.error)
-        ? status.error.join("; ")
-        : (status.error ?? t("strava_import_failed"));
+      phase = status.status === "cancelled" ? "cancelled" : "error";
+      message = status.error ?? t("strava_import_failed");
+    } else if (status.status === "processing") {
+      phase = "processing";
     }
   }
 
   function selectFile(selected?: File) {
     if (!selected) return;
+    worker?.terminate();
+    clearInterval(progressTimer);
     if (!selected.name.toLowerCase().endsWith(".zip")) {
       file = undefined;
-      uploadState = "error";
+      phase = "error";
       message = t("strava_choose_zip");
       return;
     }
     file = selected;
-    uploadState = "idle";
+    importId = undefined;
+    phase = "idle";
     message = "";
     processed = 0;
+    uploaded = 0;
     total = null;
     duplicates = 0;
   }
 
-  async function upload() {
-    if (!file || uploadState === "uploading") return;
-    uploadState = "uploading";
+  async function start() {
+    if (
+      !file ||
+      phase === "scanning" ||
+      phase === "uploading" ||
+      phase === "processing"
+    )
+      return;
     message = "";
+    const saved = localStorage.getItem(importKey(file));
     try {
-      const response = await uploadControllerUploadStravaTakeout(
-        { body: { file } },
-        getSdkRequestOptions(),
-      );
-      message = t("strava_takeout_uploaded");
-      await pollImport(response.importId);
-      if (uploadState === "uploading") {
-        progressTimer = setInterval(
-          () => void pollImport(response.importId),
-          1000,
+      if (saved) {
+        const status = await api<ImportStatus>(
+          `/upload/strava/imports/${saved}`,
         );
+        if (status.status !== "completed" && status.status !== "cancelled")
+          importId = saved;
       }
-    } catch (error) {
-      uploadState = "error";
-      message =
-        error instanceof Error ? error.message : t("strava_import_failed");
+    } catch {
+      localStorage.removeItem(importKey(file));
+    }
+    if (!importId) {
+      const created = await api<{ importId: string }>(
+        "/upload/strava/imports",
+        { method: "POST" },
+      );
+      importId = created.importId;
+      localStorage.setItem(importKey(file), importId);
+    }
+    phase = "scanning";
+    worker = new Worker(
+      new URL("../workers/strava-takeout.worker.ts", import.meta.url),
+      { type: "module" },
+    );
+    worker.onmessage = (event: MessageEvent<WorkerEvent>) =>
+      void handleWorkerEvent(event.data);
+    worker.postMessage({ type: "start", file, importId, apiBase });
+  }
+
+  async function handleWorkerEvent(event: WorkerEvent) {
+    if (event.type === "phase" && event.phase) {
+      phase = event.phase;
+      return;
+    }
+    if (event.type === "scanned") {
+      total = event.total ?? null;
+      if (event.skipped) {
+        message = t("strava_skipped_media", {
+          photos: event.skipped.photos,
+          videos: event.skipped.videos,
+          profiles: event.skipped.profileImages,
+        });
+      }
+      return;
+    }
+    if (event.type === "uploaded") {
+      uploaded = event.uploaded ?? uploaded;
+      return;
+    }
+    if (event.type === "complete" && importId) {
+      phase = "processing";
+      await pollImport(importId);
+      if (phase === "processing")
+        progressTimer = setInterval(() => void pollImport(importId!), 1_000);
+      return;
+    }
+    if (event.type === "error") {
+      phase = "error";
+      message = event.message ?? t("strava_import_failed");
     }
   }
+
+  async function cancel() {
+    worker?.postMessage({ type: "cancel" });
+    worker?.terminate();
+    worker = undefined;
+    clearInterval(progressTimer);
+    if (importId)
+      await api(`/upload/strava/imports/${importId}/cancel`, {
+        method: "POST",
+      });
+    if (file) localStorage.removeItem(importKey(file));
+    phase = "cancelled";
+  }
+
+  const busy = () =>
+    phase === "scanning" || phase === "uploading" || phase === "processing";
+  const phaseText = () => {
+    if (phase === "scanning") return t("strava_scanning");
+    if (phase === "uploading") return t("strava_uploading");
+    if (phase === "processing") return t("strava_server_processing");
+    return "";
+  };
 </script>
 
 <div class="upload-panel">
@@ -111,6 +235,7 @@
     class:dragging
     class="drop-zone"
     type="button"
+    disabled={busy()}
     onclick={() => input?.click()}
     ondragover={(event) => {
       event.preventDefault();
@@ -139,46 +264,57 @@
   {#if file}
     <div class="upload-row">
       <span class="file-name"
-        >{file.name}<small>{(file.size / 1024).toFixed(0)} KB</small></span
+        >{file.name}<small>{(file.size / 1024 / 1024).toFixed(1)} MB</small
+        ></span
       >
-      {#if uploadState === "uploading"}<LoaderCircle
-          class="spin"
-          size={19}
-        />{/if}
-      {#if uploadState === "done"}<span class="processing"
+      {#if busy()}<LoaderCircle class="spin" size={19} />{/if}
+      {#if phase === "done"}<span class="processing"
           ><Check class="success" size={16} /> {t("done")}</span
         >{/if}
     </div>
   {/if}
-  {#if message}<p
-      class:error={uploadState === "error"}
-      class:upload-success={uploadState === "done"}
+  {#if busy()}
+    <p class="upload-message">{phaseText()}</p>
+  {:else if message}
+    <p
+      class:error={phase === "error"}
+      class:upload-success={phase === "done"}
       class="upload-message"
     >
       {message}
-    </p>{/if}
-  {#if uploadState === "uploading" && total !== null}
+    </p>
+  {/if}
+  {#if busy() && total !== null}
     <div class="upload-progress" aria-live="polite">
       <div
         class="upload-progress-track"
         role="progressbar"
         aria-valuemin="0"
         aria-valuemax={total}
-        aria-valuenow={processed}
+        aria-valuenow={phase === "processing" ? processed : uploaded}
       >
-        <span style={`width: ${total === 0 ? 100 : (processed / total) * 100}%`}
+        <span
+          style={`width: ${total === 0 ? 100 : ((phase === "processing" ? processed : uploaded) / total) * 100}%`}
         ></span>
       </div>
-      <small>{t("strava_activities_processed", { processed, total })}</small>
+      <small
+        >{t("strava_activities_processed", {
+          processed: phase === "processing" ? processed : uploaded,
+          total,
+        })}</small
+      >
     </div>
   {/if}
-  <button
-    class="upload-submit"
-    type="button"
-    disabled={!file || uploadState === "uploading"}
-    onclick={() => void upload()}
-  >
-    {#if uploadState === "uploading"}<LoaderCircle class="spin" size={17} />
-      {t("strava_importing")}{:else}{t("strava_import_takeout")}{/if}
-  </button>
+  {#if busy()}
+    <button class="upload-submit" type="button" onclick={() => void cancel()}
+      >{t("strava_cancel")}</button
+    >
+  {:else}
+    <button
+      class="upload-submit"
+      type="button"
+      disabled={!file}
+      onclick={() => void start()}>{t("strava_import_takeout")}</button
+    >
+  {/if}
 </div>

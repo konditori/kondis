@@ -12,14 +12,13 @@ export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
   [JobName.ActivityBestEffortRank]: 'worker',
   [JobName.ActivityRouteMatchCompute]: 'worker',
   [JobName.ActivityParse]: 'worker',
-  [JobName.ActivityManualCreate]: 'node',
+  [JobName.ActivityManualCreate]: 'worker',
   [JobName.ActivityParseQueueAll]: 'node',
   [JobName.ActivityDelete]: 'node',
   [JobName.ActivityImageIngest]: 'node',
   [JobName.ActivityImageAttach]: 'node',
   [JobName.ActivityImageGenerateThumbnails]: 'node',
   [JobName.ActivityImageGenerateQueueAll]: 'node',
-  [JobName.LagomTakeoutImport]: 'node',
   [JobName.UserAvatarUpload]: 'node',
   [JobName.FileDelete]: 'node',
   [JobName.TemporaryFileCleanup]: 'node',
@@ -40,7 +39,6 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.ActivityImageAttach]: QueueName.ImageProcessing,
   [JobName.ActivityImageGenerateThumbnails]: QueueName.ImageProcessing,
   [JobName.ActivityImageGenerateQueueAll]: QueueName.BackgroundTask,
-  [JobName.LagomTakeoutImport]: QueueName.BackgroundTask,
   [JobName.UserAvatarUpload]: QueueName.ImageProcessing,
   [JobName.FileDelete]: QueueName.Storage,
   [JobName.TemporaryFileCleanup]: QueueName.Storage,
@@ -97,9 +95,6 @@ export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?
     }
     case JobName.TemporaryFileCleanup: {
       return { singletonKey: item.name };
-    }
-    case JobName.LagomTakeoutImport: {
-      return {};
     }
     case JobName.UserAvatarUpload: {
       return {};

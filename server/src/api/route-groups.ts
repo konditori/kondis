@@ -32,7 +32,7 @@ import {
 import { registerSocialMutationRoutes, type SocialMutationService } from 'src/api/routes/social-mutations';
 import {
   registerActivityUploadRoute,
-  registerTakeoutUploadRoutes,
+  registerTakeoutImportRoutes,
   registerUploadRoutes,
   type UploadRouteService,
 } from 'src/api/routes/upload';
@@ -133,13 +133,11 @@ export const registerWorkerActivityUploadRoute = (
   registerActivityUploadRoute(app, dependencies.uploadService, dependencies.uploads);
 };
 
-export const registerWorkerNodeStorageMutationRouteGroups = (
+export const registerWorkerTakeoutImportRoutes = (
   app: OpenAPIHono<ApiEnv>,
-  dependencies: WorkerStorageRouteDependencies,
+  dependencies: Pick<WorkerStorageRouteDependencies, 'uploads' | 'uploadService'>,
 ): void => {
-  registerTakeoutUploadRoutes(app, dependencies.uploadService, dependencies.uploads);
-  registerActivityImageMutationRoutes(app, dependencies.activityImages, dependencies.uploads);
-  registerUserProfileMutationRoutes(app, dependencies.userService, dependencies.uploads);
+  registerTakeoutImportRoutes(app, dependencies.uploadService, dependencies.uploads);
 };
 
 export const registerWorkerStorageRouteGroups = (

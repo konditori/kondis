@@ -40,6 +40,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     WHERE name IN (
       'ActivityUpload',
       'ActivityParse',
+      'ActivityManualCreate',
       'ActivityMetricCompute',
       'ActivityBestEffortCompute',
       'ActivityBestEffortRank',
@@ -56,6 +57,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           'AuthCredentialCleanup',
           'ActivityUpload',
           'ActivityParse',
+          'ActivityManualCreate',
           'ActivityMetricCompute',
           'ActivityBestEffortCompute',
           'ActivityBestEffortRank',
@@ -68,6 +70,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           'AuthCredentialCleanup',
           'ActivityUpload',
           'ActivityParse',
+          'ActivityManualCreate',
           'ActivityMetricCompute',
           'ActivityBestEffortCompute',
           'ActivityBestEffortRank',
@@ -90,6 +93,7 @@ export async function down(db: Kysely<unknown>): Promise<void> {
     WHERE name IN (
       'ActivityUpload',
       'ActivityParse',
+      'ActivityManualCreate',
       'ActivityMetricCompute',
       'ActivityBestEffortCompute',
       'ActivityBestEffortRank',

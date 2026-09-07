@@ -14,6 +14,7 @@
   "dependencies": {
     "@kondis/sdk": "workspace:*",
     "@lucide/svelte": "^1.38.0",
+    "@zip.js/zip.js": "^2.11.1",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {

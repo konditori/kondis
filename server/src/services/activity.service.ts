@@ -96,6 +96,7 @@ export class ActivityService {
     activitySport,
     activityTags,
     takeoutImportId,
+    takeoutItemKey,
     images,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
@@ -123,8 +124,8 @@ export class ActivityService {
         if (images?.length) {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
-        if (takeoutImportId) {
-          await this.importProgressStore?.increment(takeoutImportId);
+        if (takeoutImportId && takeoutItemKey) {
+          await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
         }
         return JobStatus.Skipped;
       }
@@ -174,16 +175,16 @@ export class ActivityService {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
-      if (takeoutImportId) {
-        await this.importProgressStore?.increment(takeoutImportId);
+      if (takeoutImportId && takeoutItemKey) {
+        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
       await this.uploadRepository.setStatus(id, 'failed', message);
-      if (takeoutImportId) {
-        await this.importProgressStore?.increment(takeoutImportId, true);
+      if (takeoutImportId && takeoutItemKey) {
+        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'failed', message);
       }
       throw error;
     }
@@ -212,8 +213,8 @@ export class ActivityService {
           data: { uploadId: existing.id, images: job.images },
         });
       }
-      if (job.takeoutImportId) {
-        await this.importProgressStore?.increment(job.takeoutImportId, false, true);
+      if (job.takeoutImportId && job.takeoutItemKey) {
+        await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'duplicate');
       }
       return JobStatus.Skipped;
     }
@@ -288,8 +289,8 @@ export class ActivityService {
     if (activity) {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
-    if (job.takeoutImportId) {
-      await this.importProgressStore?.increment(job.takeoutImportId);
+    if (job.takeoutImportId && job.takeoutItemKey) {
+      await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'completed');
     }
     return JobStatus.Success;
   }

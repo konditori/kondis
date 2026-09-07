@@ -9,14 +9,14 @@ const requestLimitFor = (kind: Parameters<UploadReader['read']>[2]): number => {
     case 'activity': {
       return UPLOAD_LIMITS.activityFileBytes;
     }
+    case 'takeoutActivity': {
+      return UPLOAD_LIMITS.activityFileBytes;
+    }
     case 'avatar': {
       return UPLOAD_LIMITS.avatarFileBytes;
     }
     case 'image': {
       return UPLOAD_LIMITS.imageFileBytes;
-    }
-    case 'takeout': {
-      return UPLOAD_LIMITS.takeoutFileBytes;
     }
   }
 };

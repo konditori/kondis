@@ -1,10 +1,14 @@
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { FitUploadResponseDto, LagomTakeoutUploadResponseDto } from 'src/dtos/upload.dto';
+import {
+  FitUploadResponseDto,
+  TakeoutActivityMetadataDto,
+  TakeoutImportScanDto,
+  TakeoutManualItemDto,
+} from 'src/dtos/upload.dto';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import { LagomTakeoutParser, type LagomTakeoutContents } from 'src/imports/lagom-takeout.parser';
 import { ConsoleLogger } from 'src/logger';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { JobProducerPort } from 'src/ports/queue.port';
@@ -13,11 +17,9 @@ import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { UserRepository } from 'src/repositories/user.repository';
-import { ImportProgressStore } from 'src/state/import-progress.store';
+import { ImportProgressStore, type TakeoutImportItem } from 'src/state/import-progress.store';
 import { JobOf } from 'src/types/jobs';
-import { BufferedUploadedFileData, UploadedFileData } from 'src/types/uploads';
-import { asErrorMessage } from 'src/utils/misc';
+import { UploadedFileData } from 'src/types/uploads';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -29,16 +31,23 @@ export class UploadService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobProducerPort,
     private readonly logger: ConsoleLogger,
-    private readonly lagomTakeoutParser: LagomTakeoutParser,
     private readonly importProgressStore: ImportProgressStore,
-    private readonly userRepository?: UserRepository,
     private readonly activityRepository?: ActivityRepository,
     private readonly eventRepository?: RealtimePort,
   ) {
     this.logger.setContext(UploadService.name);
   }
 
-  async uploadActivity(file: UploadedFileData | undefined, userId: string): Promise<FitUploadResponseDto> {
+  async uploadActivity(
+    file: UploadedFileData | undefined,
+    userId: string,
+    options: Partial<
+      Pick<
+        JobOf<JobName.ActivityUpload>,
+        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+      >
+    > = {},
+  ): Promise<FitUploadResponseDto> {
     if (!file) {
       throw new BadRequestException('Missing file upload');
     }
@@ -53,9 +62,118 @@ export class UploadService {
       throw new PayloadTooLargeException(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`);
     }
 
-    await this.queueActivityUpload(file, userId);
+    await this.queueActivityUpload(file, userId, options);
 
     return { byteSize: file.size, queued: true };
+  }
+
+  async createTakeoutImport(userId: string) {
+    const importId = crypto.randomUUID();
+    await this.importProgressStore.create(importId, userId);
+    return { importId, status: 'scanning' as const };
+  }
+
+  scanTakeoutImport(importId: string, userId: string, scan: TakeoutImportScanDto): Promise<string[]> {
+    return this.importProgressStore.registerItems(
+      importId,
+      userId,
+      scan.items.map(
+        (item) => ({ itemKey: item.itemKey, kind: item.kind, metadata: item }) satisfies TakeoutImportItem,
+      ),
+    );
+  }
+
+  async submitTakeoutActivity(
+    importId: string,
+    userId: string,
+    metadata: TakeoutActivityMetadataDto,
+    file: UploadedFileData | undefined,
+  ): Promise<boolean> {
+    if (!(await this.importProgressStore.beginItem(importId, userId, metadata.itemKey, 'activity'))) {
+      return false;
+    }
+    try {
+      await this.uploadActivity(file, userId, {
+        activityName: metadata.name ?? undefined,
+        activityDescription: metadata.description ?? undefined,
+        activitySport: metadata.sport ?? undefined,
+        activityTags: metadata.tags,
+        takeoutImportId: importId,
+        takeoutItemKey: metadata.itemKey,
+      });
+      await this.importProgressStore.markQueued(importId, metadata.itemKey);
+      return true;
+    } catch (error) {
+      await this.importProgressStore.completeItem(importId, metadata.itemKey, 'failed', errorMessage(error));
+      throw error;
+    }
+  }
+
+  async submitTakeoutManual(importId: string, userId: string, item: TakeoutManualItemDto): Promise<boolean> {
+    if (!(await this.importProgressStore.beginItem(importId, userId, item.itemKey, 'manual'))) {
+      return false;
+    }
+    try {
+      await this.jobRepository.queue({
+        name: JobName.ActivityManualCreate,
+        data: {
+          id: crypto.randomUUID(),
+          userId,
+          sourceId: item.sourceId,
+          activityName: item.name ?? undefined,
+          activityDescription: item.description ?? undefined,
+          activitySport: item.sport,
+          activityTags: item.tags,
+          startedAt: item.startedAt,
+          elapsedTime: item.elapsedTime,
+          movingTime: item.movingTime,
+          distance: item.distance,
+          elevationGain: item.elevationGain,
+          elevationLoss: item.elevationLoss,
+          avgSpeed: item.avgSpeed,
+          maxSpeed: item.maxSpeed,
+          avgHr: item.avgHr,
+          maxHr: item.maxHr,
+          calories: item.calories,
+          takeoutImportId: importId,
+          takeoutItemKey: item.itemKey,
+        },
+      });
+      await this.importProgressStore.markQueued(importId, item.itemKey);
+      return true;
+    } catch (error) {
+      await this.importProgressStore.completeItem(importId, item.itemKey, 'failed', errorMessage(error));
+      throw error;
+    }
+  }
+
+  finalizeTakeoutImport(importId: string, userId: string, extractionErrors: number) {
+    return this.importProgressStore.finalize(importId, userId, extractionErrors);
+  }
+
+  cancelTakeoutImport(importId: string, userId: string): Promise<boolean> {
+    return this.importProgressStore.cancel(importId, userId);
+  }
+
+  failTakeoutItem(importId: string, userId: string, itemKey: string, error: string): Promise<boolean> {
+    return this.importProgressStore.failItem(importId, userId, itemKey, error);
+  }
+
+  async getTakeoutImportStatus(id: string, userId: string) {
+    const record = await this.importProgressStore.get(id, userId);
+    if (!record) {
+      throw new NotFoundException('Takeout import not found');
+    }
+    return {
+      importId: record.importId,
+      status: record.status,
+      total: record.total,
+      uploaded: record.uploaded,
+      processed: record.processed,
+      failed: record.failed,
+      duplicates: record.duplicates,
+      error: record.error,
+    };
   }
 
   async handleActivityUpload({
@@ -68,6 +186,7 @@ export class UploadService {
     activityTags,
     userId,
     takeoutImportId,
+    takeoutItemKey,
     images,
   }: JobOf<JobName.ActivityUpload>): Promise<JobStatus> {
     if (!userId) {
@@ -99,11 +218,11 @@ export class UploadService {
       if (images?.length) {
         await this.jobRepository.queue({
           name: JobName.ActivityParse,
-          data: { id: existing.id, images, takeoutImportId, activityTags },
+          data: { id: existing.id, images, takeoutImportId, takeoutItemKey, activityTags },
         });
       }
-      if (takeoutImportId) {
-        await this.importProgressStore.increment(takeoutImportId, false, true);
+      if (takeoutImportId && takeoutItemKey) {
+        await this.importProgressStore.completeItem(takeoutImportId, takeoutItemKey, 'duplicate');
       }
       return JobStatus.Skipped;
     }
@@ -131,6 +250,7 @@ export class UploadService {
               id: created.id,
               ...(images?.length && { images }),
               ...(takeoutImportId && { takeoutImportId }),
+              ...(takeoutItemKey && { takeoutItemKey }),
               ...(activityName && { activityName }),
               ...(activityDescription && { activityDescription }),
               ...(activitySport && { activitySport }),
@@ -143,8 +263,8 @@ export class UploadService {
     } catch (error) {
       const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
-        if (takeoutImportId) {
-          await this.importProgressStore.increment(takeoutImportId, false, true);
+        if (takeoutImportId && takeoutItemKey) {
+          await this.importProgressStore.completeItem(takeoutImportId, takeoutItemKey, 'duplicate');
         }
         return JobStatus.Skipped;
       }
@@ -154,150 +274,19 @@ export class UploadService {
     return JobStatus.Success;
   }
 
-  async uploadLagomTakeout(file: UploadedFileData | undefined, userId: string): Promise<LagomTakeoutUploadResponseDto> {
-    if (!file) {
-      throw new BadRequestException('Missing file upload');
-    }
-    if (extname(file.originalname).toLowerCase() !== '.zip') {
-      await this.discardUploadedFile(file);
-      throw new BadRequestException('Only a Strava takeout .zip file is accepted');
-    }
-    if (file.size > UPLOAD_LIMITS.takeoutFileBytes) {
-      await this.discardUploadedFile(file);
-      throw new PayloadTooLargeException(`Takeout file exceeds ${UPLOAD_LIMITS.takeoutFileBytes} bytes`);
-    }
-
-    const storagePath = this.storageRepository.buildTemporaryPath('.zip');
-    await this.stageUploadedFile(file, storagePath);
-
-    const importId = crypto.randomUUID();
-    await this.importProgressStore.create(importId, userId);
-    try {
-      await this.jobRepository.queue({
-        name: JobName.LagomTakeoutImport,
-        data: {
-          originalName: file.originalname,
-          storagePath,
-          takeoutImportId: importId,
-          userId,
-        },
-      });
-    } catch (error) {
-      await this.importProgressStore.fail(importId, asErrorMessage(error));
-      throw error;
-    }
-
-    return { byteSize: file.size, queued: true, importId };
-  }
-
-  async getLagomTakeoutStatus(id: string, userId: string) {
-    const importRecord = await this.importProgressStore.get(id, userId);
-    if (!importRecord) {
-      throw new NotFoundException('Lagom import not found');
-    }
-    return {
-      importId: importRecord.importId,
-      status: importRecord.status,
-      total: importRecord.total,
-      processed: importRecord.processed,
-      failed: importRecord.failed,
-      duplicates: importRecord.duplicates,
-      error: importRecord.error,
-    };
-  }
-
-  async handleLagomTakeout({
-    originalName,
-    storagePath,
-    userId,
-    takeoutImportId,
-  }: JobOf<JobName.LagomTakeoutImport>): Promise<JobStatus> {
-    if (!userId) {
-      throw new Error('Takeout import job has no owner');
-    }
-    let queued = 0;
-    let takeout: LagomTakeoutContents;
-    try {
-      takeout = await this.lagomTakeoutParser.extractLagomTakeout(
-        await this.storageRepository.read(storagePath),
-        async (activity) => {
-          if (activity.manual) {
-            await this.jobRepository.queue({
-              name: JobName.ActivityManualCreate,
-              data: {
-                id: crypto.randomUUID(),
-                userId,
-                takeoutImportId,
-                activityName: activity.name ?? undefined,
-                activityDescription: activity.description ?? undefined,
-                activitySport: activity.sport ?? 'other',
-                activityTags: activity.tags,
-                ...activity.manual,
-                images: await this.stageImages(activity.images),
-              },
-            });
-            queued += 1;
-            return;
-          }
-          await this.queueActivityUpload(
-            activity.file!,
-            userId,
-            activity.name ?? undefined,
-            activity.description ?? undefined,
-            activity.sport ?? undefined,
-            takeoutImportId,
-            activity.images,
-            activity.tags,
-          );
-          queued += 1;
-        },
-      );
-    } catch (error) {
-      if (takeoutImportId) {
-        await this.importProgressStore.fail(takeoutImportId, asErrorMessage(error));
-      }
-      throw error;
-    }
-
-    if (takeout.profile) {
-      if (takeout.profile.firstName && takeout.profile.lastName && this.userRepository) {
-        await this.userRepository.setNameParts(userId, takeout.profile.firstName, takeout.profile.lastName);
-      }
-      if (takeout.profile.avatar) {
-        const avatarPath = this.storageRepository.buildTemporaryPath('.jpg');
-        await this.storageRepository.write(avatarPath, takeout.profile.avatar.buffer);
-        await this.jobRepository.queue({ name: JobName.UserAvatarUpload, data: { userId, storagePath: avatarPath } });
-      }
-    }
-
-    if (takeoutImportId) {
-      await this.importProgressStore.setProcessing(takeoutImportId, queued);
-    }
-    if (takeoutImportId && takeout.errors.length > 0) {
-      await this.importProgressStore.fail(takeoutImportId, `${takeout.errors.length} activities could not be imported`);
-    }
-
-    this.logger.log(
-      `Processed Strava takeout ${originalName}: ${queued} queued, ${takeout.skipped} skipped, ${takeout.errors.length} failed`,
-    );
-
-    return JobStatus.Success;
-  }
-
   private async queueActivityUpload(
     file: UploadedFileData,
     userId: string,
-    activityName?: string,
-    activityDescription?: string,
-    activitySport?: JobOf<JobName.ActivityUpload>['activitySport'],
-    takeoutImportId?: string,
-    images: { file: BufferedUploadedFileData; caption: string | null; sortOrder: number }[] = [],
-    activityTags: JobOf<JobName.ActivityUpload>['activityTags'] = [],
+    options: Partial<
+      Pick<
+        JobOf<JobName.ActivityUpload>,
+        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+      >
+    > = {},
   ): Promise<void> {
     const storagePath = this.storageRepository.buildTemporaryPath(extname(file.originalname).toLowerCase());
     await this.stageUploadedFile(file, storagePath);
     const checksum = file.buffer ? await this.cryptoRepository.sha256(file.buffer) : undefined;
-    const stagedImages = await this.stageImages(images);
 
     await this.jobRepository.queue({
       name: JobName.ActivityUpload,
@@ -306,12 +295,12 @@ export class UploadService {
         originalName: file.originalname,
         storagePath,
         ...(checksum && { checksum }),
-        ...(activityName && { activityName }),
-        ...(activityDescription && { activityDescription }),
-        ...(activitySport && { activitySport }),
-        ...(activityTags?.length && { activityTags }),
-        ...(takeoutImportId && { takeoutImportId }),
-        ...(stagedImages.length > 0 && { images: stagedImages }),
+        ...(options.activityName && { activityName: options.activityName }),
+        ...(options.activityDescription && { activityDescription: options.activityDescription }),
+        ...(options.activitySport && { activitySport: options.activitySport }),
+        ...(options.activityTags?.length && { activityTags: options.activityTags }),
+        ...(options.takeoutImportId && { takeoutImportId: options.takeoutImportId }),
+        ...(options.takeoutItemKey && { takeoutItemKey: options.takeoutItemKey }),
       },
     });
   }
@@ -336,28 +325,6 @@ export class UploadService {
     }
     await this.storageRepository.deleteExternal(file.path);
   }
-
-  private async stageImages(images: { file: BufferedUploadedFileData; caption: string | null; sortOrder: number }[]) {
-    const staged: {
-      originalName: string;
-      storagePath: string;
-      checksum: string;
-      caption?: string;
-      sortOrder: number;
-    }[] = [];
-    for (const image of images) {
-      const storagePath = this.storageRepository.buildTemporaryPath(
-        extname(image.file.originalname).toLowerCase() || '.bin',
-      );
-      await this.storageRepository.write(storagePath, image.file.buffer);
-      staged.push({
-        originalName: image.file.originalname,
-        storagePath,
-        checksum: await this.cryptoRepository.sha256(image.file.buffer),
-        ...(image.caption && { caption: image.caption }),
-        sortOrder: image.sortOrder,
-      });
-    }
-    return staged;
-  }
 }
+
+const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
