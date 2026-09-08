@@ -1,0 +1,45 @@
+server/scripts/generate-cloudflare-config.cjs
+  s_af1eadbc7c59cd::t_78dee29d6ed6d7 119
+server/src/cloudflare/demo-live-entrypoint.spec.ts
+  s_af1eadbc7c59cd::t_605da61e9532e9 1-107
+server/src/cloudflare/demo-live-tracker.spec.ts
+  s_af1eadbc7c59cd::t_a7f8f28b91f840 1-109
+server/src/cloudflare/demo-live-tracker.ts
+  s_af1eadbc7c59cd::t_0bc633089d0b58 1-208
+server/src/cloudflare/realtime-durable-object.spec.ts
+  s_af1eadbc7c59cd::t_5be71f383df02d 123-158
+server/src/cloudflare/realtime-durable-object.ts
+  s_af1eadbc7c59cd::t_29deefb4c6582b 224-226
+server/src/composition.node.ts
+  s_af1eadbc7c59cd::t_a2c37f13010466 110
+server/src/composition.worker.ts
+  s_af1eadbc7c59cd::t_0e7a630200dd29 5,52-53,149
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_af1eadbc7c59cd::t_5639d4545fbd28 111-122,136-147
+server/src/ports/realtime.port.ts
+  s_af1eadbc7c59cd::t_edfaa77812aaa3 3-12,52
+server/src/realtime/protocol.spec.ts
+  s_af1eadbc7c59cd::t_68de4e90af1814 10-23
+server/src/realtime/protocol.ts
+  s_af1eadbc7c59cd::t_8366d9a55ef427 2-8,24-25,42,65-72
+server/src/services/live-workout.service.spec.ts
+  s_af1eadbc7c59cd::t_5661295b2afa24 39,50-51,93-101
+server/src/services/live-workout.service.ts
+  s_af1eadbc7c59cd::t_ebb01642a486b8 3,22,86-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a22077af435ab47166b4a5d41889addc56673fc3",
+  "prompts": {},
+  "sessions": {
+    "s_af1eadbc7c59cd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0810d-1abf-79a0-a740-6518793fc8b9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
