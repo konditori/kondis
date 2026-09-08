@@ -1,0 +1,89 @@
+server/src/bin/provision-demo.ts
+  s_21dc406fc704d0::t_57c4ae8caf2814 15,70
+server/src/composition.node.ts
+  s_44fcd22279064e::t_249ad0c4fc522b 112
+server/src/composition.worker.ts
+  s_44fcd22279064e::t_2a2fdd42ad8eb1 5,148
+server/src/demo/fit.ts
+  s_21dc406fc704d0::t_14ffb041300f36 3-8,127-128
+server/src/demo/provisioner.ts
+  s_21dc406fc704d0::t_41879db3dbe361 7,29,161,384,419-420,426-428,474
+server/src/repositories/fit.repository.spec.ts
+  s_21dc406fc704d0::t_c59fb68a28db51 5,36-37
+server/src/repositories/social.repository.ts
+  s_44fcd22279064e::t_f3c3f44f527bfe 3,13-178
+server/src/services/social.service.spec.ts
+  s_44fcd22279064e::t_1a5eac6826ae41 10,30-42,45
+server/src/services/upload.service.ts
+  s_44fcd22279064e::t_4ccdeaad55a266 10,214
+server/src/services/worker-upload.service.ts
+  s_44fcd22279064e::t_cf1b08575008a5 8,297
+server/src/utils/geo.ts
+  s_21dc406fc704d0::t_8c5a2f90ed571e 1
+server/src/cloudflare/entrypoint.ts
+  s_4bfddbee412c63::t_e7680d50611b57 39-44,50,212,301
+server/src/demo/demo-live-entrypoint.spec.ts
+  s_44fcd22279064e::t_1bcdb0faf81ee2 3
+server/src/demo/demo-live-tracker.ts
+  s_44fcd22279064e::t_e3d8b0b9e881b5 1-2,6,8-364,376-377,416,428-429,474,480-481,519-534
+server/src/demo/live-workout.ts
+  s_44fcd22279064e::t_e37bfa0454c9da 1-76
+server/src/dtos/activity.dto.ts
+  s_44fcd22279064e::t_69b55af61ab299 3,6,10
+server/src/dtos/upload.dto.ts
+  s_44fcd22279064e::t_da393a34f11489 3-4,6
+server/src/enum.ts
+  s_44fcd22279064e::t_ecf837df82b4fa 1-60
+server/src/types.ts
+  s_44fcd22279064e::t_96266fd402d184 1-2,226
+web/src/app.css
+  s_4bfddbee412c63::t_2d5f2a448e850e 1038-1050,1067-1072
+web/src/lib/components/ActivityDetailPage.svelte
+  s_4bfddbee412c63::t_1e5cbd39d77cda 1-1174
+web/src/lib/components/LiveWorkoutView.svelte
+  s_4bfddbee412c63::t_1cfc2c36c0abec 93
+web/src/routes/+layout.server.ts
+  s_4bfddbee412c63::t_f377291123f98b 32
+web/src/routes/+page.svelte
+  s_4bfddbee412c63::t_0bff0b6a4e9c2f 8,44,78-82,201,364-369,375,378,393-397,425
+web/src/routes/activities/[id]/+page.server.ts
+  s_4bfddbee412c63::t_32700940152ba4 3-4,16-24
+web/src/routes/activities/[id]/+page.svelte
+  s_4bfddbee412c63::t_781634e7054629 2-4,7-8,12-25
+web/src/routes/activity/[id]/+page.server.ts
+  s_4bfddbee412c63::t_5967c7b61ab6f8 2-4,7-26
+web/src/routes/activity/[id]/+page.svelte
+  s_4bfddbee412c63::t_f601a16e2a9b7b 2,4-5,7-9,12,14-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "070ac876d5bd7030ad41ebffd8cfe29c98284e74",
+  "prompts": {},
+  "sessions": {
+    "s_21dc406fc704d0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "569d0b50-0406-4959-b88f-5e5b31593ad6",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_44fcd22279064e": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "aa595280-9d2c-4866-a63e-16e7594cc211",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_4bfddbee412c63": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a082ac-d0e0-7070-846a-d857f181e612",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
