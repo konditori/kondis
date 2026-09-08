@@ -20,6 +20,11 @@ import {
 import { registerAuthRoutes } from 'src/api/routes/auth';
 import type { AuthenticatedUser } from 'src/auth';
 import {
+  DEMO_LIVE_INGESTION_HOST,
+  DEMO_LIVE_INGESTION_PATH,
+  DEMO_LIVE_TRACKER_NAME,
+} from 'src/cloudflare/demo-live-tracker';
+import {
   drainUnpublishedJobs,
   purgeExpiredJobs,
   reclaimStaleJobs,
@@ -37,10 +42,12 @@ import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-ob
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import { getDemoUser } from 'src/demo/provisioner';
+import { LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 
+export { DemoLiveTracker } from 'src/cloudflare/demo-live-tracker';
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
 
 export type WorkerEnv = WorkerBindings;
@@ -171,6 +178,12 @@ const createRequestApp = (
 
 export default {
   async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
+    if (isDemoLiveWorkoutRequest(request, env)) {
+      const activationFailure = await activateDemoLiveTracker(env);
+      if (activationFailure) {
+        return activationFailure;
+      }
+    }
     if (!env.HYPERDRIVE) {
       if (new URL(request.url).pathname === '/api/v1/ping' && request.method === 'GET') {
         return Response.json({ status: 'pong' });
@@ -178,17 +191,31 @@ export default {
       return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
     }
     const composition = createWorkerInvocationComposition(env);
+    let compositionReleased = false;
     try {
+      if (isRealtimeUpgrade(request)) {
+        return handleRealtimeUpgrade(request, composition, env);
+      }
       const demoMode = composition.config.demoMode;
       const demoUser = demoMode ? await getDemoUser(composition.database) : undefined;
-      if (demoMode && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+      if (isDemoLiveTrackerIngestionRequest(request, env)) {
+        const ingestion = ingestDemoLiveTrackerPoint(request, composition, demoUser)
+          .catch((error) => {
+            console.error('Demo live tracker API ingestion failed', {
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            });
+          })
+          .finally(() => composition.close());
+        _ctx.waitUntil(ingestion);
+        compositionReleased = true;
+        return Response.json({ status: 'accepted' }, { status: 202 });
+      }
+      if (demoMode && !isDemoReadRequest(request) && !isDemoAllowedWriteRequest(request)) {
         return Response.json(
           { statusCode: 405, message: 'This demo is read-only' },
           { status: 405, headers: { Allow: 'GET, HEAD, OPTIONS' } },
         );
-      }
-      if (isRealtimeUpgrade(request)) {
-        return handleRealtimeUpgrade(request, composition, env);
       }
       const requestApp = createRequestApp(composition, demoUser);
       const response = await requestApp.fetch(request, env, _ctx);
@@ -204,7 +231,9 @@ export default {
       }
       return demoMode && isDemoCacheable(request, response) ? withDemoCacheHeaders(response) : response;
     } finally {
-      await composition.close();
+      if (!compositionReleased) {
+        await composition.close();
+      }
     }
   },
 
@@ -238,6 +267,13 @@ export default {
   },
 
   async scheduled(event: ScheduledEvent, env: WorkerEnv): Promise<void> {
+    if (isEnabled(env.KONDIS_DEMO_MODE)) {
+      const activationFailure = await activateDemoLiveTracker(env);
+      if (activationFailure) {
+        console.error('Demo live tracker scheduled activation failed', { status: activationFailure.status });
+      }
+      return;
+    }
     if (!env.HYPERDRIVE) {
       throw new Error('Hyperdrive is required for scheduled jobs');
     }
@@ -262,9 +298,90 @@ export default {
   },
 };
 
+const isEnabled = (value: boolean | string | undefined): boolean => value === true || value === 'true';
+
+const isDemoReadRequest = (request: Request): boolean => ['GET', 'HEAD', 'OPTIONS'].includes(request.method);
+
+// The only write the anonymous demo permits: issuing the short-lived,
+// rate-limited ticket that authenticates the realtime event socket.
+const isDemoAllowedWriteRequest = (request: Request): boolean => {
+  if (request.method !== 'POST') {
+    return false;
+  }
+  const path = new URL(request.url).pathname;
+  const apiPath = path.startsWith('/api/v1/') ? path.slice('/api/v1'.length) : path;
+  return apiPath === '/auth/activity-events-ticket';
+};
+
+const isDemoLiveWorkoutRequest = (request: Request, env: WorkerEnv): boolean => {
+  if (!isEnabled(env.KONDIS_DEMO_MODE) || request.method !== 'GET') {
+    return false;
+  }
+  const path = new URL(request.url).pathname;
+  const apiPath = path.startsWith('/api/v1/') ? path.slice('/api/v1'.length) : path;
+  return apiPath === '/live-workouts' || /^\/live-workouts\/[^/]+$/.test(apiPath);
+};
+
+const activateDemoLiveTracker = async (env: WorkerEnv): Promise<Response | undefined> => {
+  if (!env.DEMO_LIVE_TRACKER) {
+    return Response.json({ statusCode: 503, message: 'Demo live tracker unavailable' }, { status: 503 });
+  }
+  try {
+    const tracker = env.DEMO_LIVE_TRACKER.get(env.DEMO_LIVE_TRACKER.idFromName(DEMO_LIVE_TRACKER_NAME));
+    const response = await tracker.fetch('https://demo-live-tracker.internal/activate', { method: 'POST' });
+    if (!response.ok) {
+      console.error('Demo live tracker activation failed', { status: response.status });
+      return Response.json({ statusCode: 502, message: 'Demo live tracker unavailable' }, { status: 502 });
+    }
+  } catch (error) {
+    console.error('Demo live tracker activation failed', error);
+    return Response.json({ statusCode: 502, message: 'Demo live tracker unavailable' }, { status: 502 });
+  }
+};
+
+const isDemoLiveTrackerIngestionRequest = (request: Request, env: WorkerEnv): boolean => {
+  const url = new URL(request.url);
+  return (
+    isEnabled(env.KONDIS_DEMO_MODE) &&
+    request.method === 'POST' &&
+    url.hostname === DEMO_LIVE_INGESTION_HOST &&
+    url.pathname === DEMO_LIVE_INGESTION_PATH
+  );
+};
+
+const ingestDemoLiveTrackerPoint = async (
+  request: Request,
+  composition: ReturnType<typeof createWorkerInvocationComposition>,
+  demoUser: AuthenticatedUser | undefined,
+): Promise<Response> => {
+  if (!demoUser) {
+    return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
+  }
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
+  }
+  const session = LiveWorkoutCreateSchema.safeParse(body);
+  const points = LiveWorkoutPointsSchema.safeParse(body);
+  if (!session.success || !points.success) {
+    return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
+  }
+  const workout = await composition.liveWorkoutService.create(demoUser.id, session.data);
+  const acknowledgement = await composition.liveWorkoutService.appendPoints(workout.id, demoUser.id, points.data);
+  return Response.json(acknowledgement, { status: 201 });
+};
+
 const isDemoCacheable = (request: Request, response: Response): boolean => {
   const path = new URL(request.url).pathname;
-  return request.method === 'GET' && response.ok && !path.includes('/events') && !path.includes('/_internal/');
+  return (
+    request.method === 'GET' &&
+    response.ok &&
+    !path.includes('/events') &&
+    !path.includes('/live-workouts') &&
+    !path.includes('/_internal/')
+  );
 };
 
 const withDemoCacheHeaders = (response: Response): Response => {

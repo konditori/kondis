@@ -47,10 +47,25 @@ export type NotificationEvent =
     }
   | { type: "notifications.read"; readAt: string };
 
+export type LiveWorkoutEvent = {
+  type: "live-workout.updated";
+  userId: string;
+  workout: {
+    id: string;
+    status: "recording" | "paused" | "ended";
+    elapsedSeconds: number;
+    distanceMeters: number;
+    lastSequence: number;
+    recordedAt: string;
+    position: [longitude: number, latitude: number];
+  };
+};
+
 export type ActivityEventType = ActivityEvent["type"];
 
 type ActivityEventSubscriptionOptions = {
   onNotification?: (event: NotificationEvent) => void;
+  onLiveWorkout?: (event: LiveWorkoutEvent) => void;
   activityId?: string;
 };
 
@@ -73,10 +88,31 @@ export function parseNotificationEvent(data: string): NotificationEvent | null {
   return null;
 }
 
+export function parseLiveWorkoutEvent(data: string): LiveWorkoutEvent | null {
+  try {
+    const event = JSON.parse(data) as {
+      type?: string;
+      userId?: string;
+      workout?: { id?: string };
+    };
+    if (
+      event.type === "live-workout.updated" &&
+      typeof event.userId === "string" &&
+      typeof event.workout?.id === "string"
+    ) {
+      return event as LiveWorkoutEvent;
+    }
+  } catch {
+    // Ignore malformed and forward-incompatible messages.
+  }
+  return null;
+}
+
 type ActivityEventListener = {
   onActivity: (event: ActivityEvent) => void;
   onConnected: () => void;
   onNotification?: (event: NotificationEvent) => void;
+  onLiveWorkout?: (event: LiveWorkoutEvent) => void;
   activityId?: string;
 };
 
@@ -187,6 +223,12 @@ const connectActivityConnection = (
         if (notificationEvent) {
           for (const listener of connection.listeners)
             listener.onNotification?.(notificationEvent);
+          return;
+        }
+        const liveWorkoutEvent = parseLiveWorkoutEvent(String(data));
+        if (liveWorkoutEvent) {
+          for (const listener of connection.listeners)
+            listener.onLiveWorkout?.(liveWorkoutEvent);
           return;
         }
         try {

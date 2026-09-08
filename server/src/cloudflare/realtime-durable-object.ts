@@ -222,6 +222,9 @@ export class RealtimeDurableObject {
     if (event.type === 'notifications.read') {
       return event.userId === connection.userId;
     }
+    if (event.type === 'live-workout.updated') {
+      return event.userId === connection.userId;
+    }
     const id = activityId(event);
     return Boolean(id && (connection.activityIds.includes(id) || recipients.has(connection.userId)));
   }

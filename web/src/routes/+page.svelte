@@ -12,7 +12,7 @@
   import RouteMap from "$lib/components/RouteMap.svelte";
   import { socialControllerFeed, getSdkRequestOptions } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
-  import type { Activity, ActivityPage } from "$lib/types";
+  import type { Activity, ActivityPage, LiveWorkout } from "$lib/types";
   import { activityTypeLabel, sportIcon } from "$lib/activity-types";
   import {
     distance,
@@ -38,6 +38,10 @@
   let searchGeneration = 0;
   let loading = $state(false);
   let loadError = $state(false);
+  // The server-rendered list is only a snapshot: the page HTML may come from
+  // the CDN cache, so the client reconciles live workouts itself.
+  let liveWorkoutsOverride = $state<LiveWorkout[] | null>(null);
+  const liveWorkouts = $derived(liveWorkoutsOverride ?? data.liveWorkouts);
   const activities = $derived.by(() => {
     const byUpload = new Map(
       data.activities.map((activity) => [activity.uploadId, activity]),
@@ -131,8 +135,9 @@
     return () => clearTimeout(timer);
   });
 
-  $effect(() =>
-    subscribeToActivityEvents(
+  $effect(() => {
+    void refreshLiveWorkouts();
+    return subscribeToActivityEvents(
       data.eventsUrl,
       (event) => {
         if (
@@ -170,9 +175,30 @@
         ];
         void refreshRecent();
       },
-      () => {},
-    ),
-  );
+      () => void refreshLiveWorkouts(),
+      {
+        onLiveWorkout: (event) => {
+          const current = liveWorkoutsOverride ?? data.liveWorkouts;
+          const known = current.some(({ id }) => id === event.workout.id);
+          if (!known || event.workout.status === "ended") {
+            void refreshLiveWorkouts();
+            return;
+          }
+          liveWorkoutsOverride = current.map((workout) =>
+            workout.id === event.workout.id
+              ? {
+                  ...workout,
+                  status: event.workout.status,
+                  elapsedSeconds: event.workout.elapsedSeconds,
+                  distanceMeters: event.workout.distanceMeters,
+                  lastSequence: event.workout.lastSequence,
+                }
+              : workout,
+          );
+        },
+      },
+    );
+  });
 
   $effect(() => {
     const handleClearSearch = () => clearSearch();
@@ -186,6 +212,18 @@
       window.removeEventListener("kondis:search", handleSearch);
     };
   });
+
+  async function refreshLiveWorkouts() {
+    try {
+      const response = await fetch("/api/v1/live-workouts", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      liveWorkoutsOverride = (await response.json()) as LiveWorkout[];
+    } catch {
+      // The socket will retry and reconcile again after reconnecting.
+    }
+  }
 
   async function refreshRecent() {
     try {
@@ -312,9 +350,9 @@
     </div>
   {/if}
 
-  {#if data.liveWorkouts.length}
+  {#if liveWorkouts.length}
     <section class="live-workout-list" aria-label={t("live_activities")}>
-      {#each data.liveWorkouts as workout (workout.id)}
+      {#each liveWorkouts as workout (workout.id)}
         {@const Icon = sportIcon(workout.sport)}
         {@const averageSpeed =
           workout.elapsedSeconds > 0

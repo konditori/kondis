@@ -120,4 +120,40 @@ describe(RealtimeDurableObject.name, () => {
       hub.fetch(new Request('https://realtime.internal/publish', { method: 'POST', body: '{}' })),
     ).resolves.toMatchObject({ status: 400 });
   });
+
+  it('routes live workout updates only to the workout owner', async () => {
+    const owner = socket(attachment('user'));
+    const otherUser = socket({ ...attachment('user'), userId: 'other-user-id' });
+    const state = {
+      acceptWebSocket: vi.fn(),
+      getWebSockets: () => [owner, otherUser],
+      storage: { setAlarm: vi.fn() },
+    };
+    const hub = new RealtimeDurableObject(state as never, {});
+    const event = {
+      type: 'live-workout.updated',
+      userId: 'user-id',
+      workout: {
+        id: 'workout-id',
+        status: 'recording',
+        elapsedSeconds: 1,
+        distanceMeters: 4.7,
+        lastSequence: 1,
+        recordedAt: '2026-09-08T12:00:01.000Z',
+        position: [18.07, 59.33],
+      },
+    };
+
+    await expect(
+      hub.fetch(
+        new Request('https://realtime.internal/publish', {
+          method: 'POST',
+          body: JSON.stringify(event),
+        }),
+      ),
+    ).resolves.toMatchObject({ status: 204 });
+
+    expect(owner.send).toHaveBeenCalledWith(JSON.stringify(event));
+    expect(otherUser.send).not.toHaveBeenCalled();
+  });
 });

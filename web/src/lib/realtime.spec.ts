@@ -1,5 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {
+  parseLiveWorkoutEvent,
   parseNotificationEvent,
   subscribeToActivityEvents,
 } from "$lib/realtime";
@@ -85,6 +86,41 @@ describe("parseNotificationEvent", () => {
   });
 });
 
+describe("parseLiveWorkoutEvent", () => {
+  it("recognizes a live workout updated event", () => {
+    expect(
+      parseLiveWorkoutEvent(
+        JSON.stringify({
+          type: "live-workout.updated",
+          userId: "user-id",
+          workout: {
+            id: "workout-id",
+            status: "recording",
+            elapsedSeconds: 120,
+            distanceMeters: 500,
+            lastSequence: 12,
+            recordedAt: "2026-09-08T12:00:00.000Z",
+            position: [18.06, 59.33],
+          },
+        }),
+      ),
+    ).toMatchObject({
+      type: "live-workout.updated",
+      userId: "user-id",
+      workout: { id: "workout-id", distanceMeters: 500 },
+    });
+  });
+
+  it("ignores malformed live workout messages", () => {
+    expect(parseLiveWorkoutEvent("not json")).toBeNull();
+    expect(
+      parseLiveWorkoutEvent(
+        JSON.stringify({ type: "live-workout.updated", workout: {} }),
+      ),
+    ).toBeNull();
+  });
+});
+
 describe("subscribeToActivityEvents", () => {
   it("shares one ticket and WebSocket between subscribers for the same URL", async () => {
     const fetchMock = vi.fn(() =>
@@ -124,6 +160,38 @@ describe("subscribeToActivityEvents", () => {
     unsubscribeFirst();
     unsubscribeSecond();
     expect(TestWebSocket.sockets[0]!.readyState).toBe(3);
+  });
+
+  it("forwards live workout events to the onLiveWorkout listener", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ token: "c".repeat(64) }), {
+          status: 201,
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const onLiveWorkout = vi.fn();
+
+    const unsubscribe = subscribeToActivityEvents(
+      "wss://example.test/events",
+      vi.fn(),
+      vi.fn(),
+      { onLiveWorkout },
+    );
+
+    await vi.waitFor(() => expect(TestWebSocket.sockets).toHaveLength(1));
+    TestWebSocket.sockets[0]!.open();
+    TestWebSocket.sockets[0]!.message(
+      JSON.stringify({
+        type: "live-workout.updated",
+        userId: "user-id",
+        workout: { id: "workout-id" },
+      }),
+    );
+    expect(onLiveWorkout).toHaveBeenCalledOnce();
+
+    unsubscribe();
   });
 
   it("honors Retry-After when ticket issuance is rate limited", async () => {

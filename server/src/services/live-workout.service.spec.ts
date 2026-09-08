@@ -36,6 +36,7 @@ describe(LiveWorkoutService.name, () => {
   const updateProgress = vi.fn();
   const setShareToken = vi.fn(() => Promise.resolve());
   const listPoints = vi.fn(() => Promise.resolve([]));
+  const emit = vi.fn(() => Promise.resolve());
 
   const repository = {
     getById,
@@ -46,7 +47,8 @@ describe(LiveWorkoutService.name, () => {
     setShareToken,
     listPoints,
   } as unknown as LiveWorkoutRepository;
-  const setup = () => newTestService(LiveWorkoutService, [repository, new CryptoRepository()], { repository });
+  const setup = () =>
+    newTestService(LiveWorkoutService, [repository, new CryptoRepository(), { emit }], { repository, emit });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -88,6 +90,15 @@ describe(LiveWorkoutService.name, () => {
     ).resolves.toEqual({ id: WORKOUT_ID, lastSequence: 3 });
     expect(appendPoints).toHaveBeenCalledOnce();
     expect(listPoints).not.toHaveBeenCalled();
+    expect(emit).toHaveBeenCalledWith(
+      'LiveWorkoutUpdated',
+      USER_ID,
+      expect.objectContaining({
+        id: WORKOUT_ID,
+        lastSequence: 3,
+        position: [11.9, 57.7],
+      }),
+    );
   });
 
   it('does not mint a public link for a workout outside the caller account', async () => {

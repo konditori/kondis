@@ -1,5 +1,11 @@
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
-import type { ActivityCommentEvent, ArgsOf, EmitEvent, NotificationCreatedEvent } from 'src/ports/realtime.port';
+import type {
+  ActivityCommentEvent,
+  ArgsOf,
+  EmitEvent,
+  LiveWorkoutProgressEvent,
+  NotificationCreatedEvent,
+} from 'src/ports/realtime.port';
 
 export type WebsocketEvent =
   | { type: 'session.revoked'; sessionId: string }
@@ -15,7 +21,8 @@ export type WebsocketEvent =
   | { type: 'activity.like.updated'; activity: { id: string; likeCount: number } }
   | { type: 'activity.best-efforts.available'; activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'> }
   | { type: 'notification.created'; notification: NotificationCreatedEvent }
-  | { type: 'notifications.read'; userId: string; readAt: string };
+  | { type: 'notifications.read'; userId: string; readAt: string }
+  | { type: 'live-workout.updated'; userId: string; workout: LiveWorkoutProgressEvent };
 
 type EventSerializers = { [T in EmitEvent]: (...args: ArgsOf<T>) => WebsocketEvent };
 
@@ -32,6 +39,7 @@ export const eventSerializers: EventSerializers = {
   ActivityBestEffortsAvailable: (activity) => ({ type: 'activity.best-efforts.available', activity }),
   NotificationCreated: (notification) => ({ type: 'notification.created', notification }),
   NotificationsRead: (notification) => ({ type: 'notifications.read', ...notification }),
+  LiveWorkoutUpdated: (userId, workout) => ({ type: 'live-workout.updated', userId, workout }),
 };
 
 export const serializeRealtimeEvent = <T extends EmitEvent>(event: T, ...args: ArgsOf<T>): WebsocketEvent =>
@@ -53,6 +61,14 @@ export const isWebsocketEvent = (value: unknown): value is WebsocketEvent => {
   }
   if (event.type === 'notifications.read') {
     return typeof event.userId === 'string' && typeof event.readAt === 'string';
+  }
+  if (event.type === 'live-workout.updated') {
+    return (
+      typeof event.userId === 'string' &&
+      typeof event.workout === 'object' &&
+      event.workout !== null &&
+      typeof (event.workout as { id?: unknown }).id === 'string'
+    );
   }
   if (
     ![

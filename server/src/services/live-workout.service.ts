@@ -1,5 +1,6 @@
 import { NotFoundException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
+import type { RealtimePort } from 'src/ports/realtime.port';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 import type { ActivityType } from 'src/types';
@@ -18,6 +19,7 @@ export class LiveWorkoutService {
   constructor(
     private readonly repository: LiveWorkoutRepository,
     private readonly crypto: CryptoPort,
+    private readonly realtime: RealtimePort,
   ) {}
 
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {
@@ -81,6 +83,23 @@ export class LiveWorkoutService {
       input.distanceMeters,
     );
     const acknowledged = updated ?? workout;
+    let latestPoint = input.points[0]!;
+    for (const point of input.points.slice(1)) {
+      if (point.sequence > latestPoint.sequence) {
+        latestPoint = point;
+      }
+    }
+    if (acknowledged.status !== 'discarded') {
+      await this.realtime.emit('LiveWorkoutUpdated', userId, {
+        id: acknowledged.id,
+        status: acknowledged.status,
+        elapsedSeconds: acknowledged.elapsed_seconds,
+        distanceMeters: acknowledged.distance_meters,
+        lastSequence: acknowledged.last_sequence,
+        recordedAt: latestPoint.recordedAt,
+        position: [latestPoint.longitude, latestPoint.latitude],
+      });
+    }
     return { id: acknowledged.id, lastSequence: acknowledged.last_sequence };
   }
 

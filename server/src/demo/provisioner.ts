@@ -25,6 +25,11 @@ export type DemoImageMetadata = {
 const demoFixtureId = (kind: number, index: number): string =>
   `00000000-0000-4000-8000-${String(kind * 100 + index + 1).padStart(12, '0')}`;
 
+// A stable, far-future session lets the read-only demo issue realtime event
+// tickets without granting write access to anything else.
+export const DEMO_SESSION_ID = demoFixtureId(9, 0);
+const DEMO_SESSION_TOKEN_HASH = '9b95c4cbc655cd99db0b02ec50991d59c06c6c3c19aaaea7618ddef8e9b5e73a';
+
 const DEMO_USER_CONFIGS = [
   {
     id: demoFixtureId(1, 0),
@@ -295,6 +300,26 @@ const createDemoUsers = async (executor: KondisExecutor): Promise<DemoUser[]> =>
   return DEMO_USER_CONFIGS.map(({ email }) => usersByEmail.get(email)!);
 };
 
+const seedDemoSession = async (executor: KondisExecutor, userId: string): Promise<void> => {
+  const existing = await executor
+    .selectFrom('auth_session')
+    .select('id')
+    .where('id', '=', DEMO_SESSION_ID)
+    .executeTakeFirst();
+  if (existing) {
+    return;
+  }
+  await executor
+    .insertInto('auth_session')
+    .values({
+      id: DEMO_SESSION_ID,
+      user_id: userId,
+      token_hash: DEMO_SESSION_TOKEN_HASH,
+      expires_at: new Date('2099-01-01T00:00:00.000Z'),
+    })
+    .execute();
+};
+
 const seedDemoImages = async (
   executor: KondisExecutor,
   dependencies: DemoProvisioningDependencies,
@@ -408,6 +433,7 @@ const provisionDemoDataOnce = async (dependencies: DemoProvisioningDependencies)
     await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:demo-provisioning'))`.execute(transaction);
     await transaction.deleteFrom('notification').execute();
     const users = await createDemoUsers(transaction);
+    await seedDemoSession(transaction, users[0].id);
     const existingUploads = await transaction
       .selectFrom('upload')
       .select('id')

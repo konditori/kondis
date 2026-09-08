@@ -46,12 +46,25 @@ stack below; it does not start the normal Kondis API or web services.
 
 The public demo is an anonymous, read-only deployment. It serves the single
 provisioned database user and caches successful API and rendered-page reads for
-one day. It does not put a credential in the browser. `KONDIS_DEMO_MODE=true` is
+one day at the Cloudflare zone CDN. The per-Worker cache (`cache.enabled` in the
+Wrangler configs) stays disabled: it also caches service-binding `fetch()` calls,
+which froze live-workout reads and the realtime session page. It does not put a
+credential in the browser. `KONDIS_DEMO_MODE=true` is
 read by the server config repository and makes the API reject every non-read
-request. Demo config generation omits R2, Queues, queue executors, and Durable
-Objects because the demo does not accept uploads or edits. The first demo request
-expects the demo database to already contain the demo user and its fictional FIT
-activity history; it fails clearly if the database has not been seeded.
+request except `POST /auth/activity-events-ticket`, the short-lived and
+rate-limited ticket that authenticates the realtime event socket. Demo config
+generation omits R2, Queues, and queue executors because the demo does not
+accept uploads or edits. It includes a simulator Durable Object
+and the regular realtime Durable Object. The simulator wakes every second, plays
+a predetermined trail as an Android GPS device, and sends each point through a
+private service binding to the API. The API uses the normal live-workout service
+to persist the point in PostgreSQL and then publishes a `live-workout.updated`
+event to the realtime socket hub. A one-minute Cron activates the simulator after
+deployments or transient failures. The seeder also creates a long-lived demo
+auth session so event tickets validate like normal sessions. The first demo
+request expects the demo
+database to already contain the demo user and its fictional FIT activity history;
+it fails clearly if the database has not been seeded.
 
 The demo PostgreSQL origin is `db.demo.kondis.org:5432`, and the demo API Worker
 uses that endpoint as its placement hint so Cloudflare can run the Worker near
@@ -143,7 +156,8 @@ The demo's source and generated Wrangler configurations live under
 
 The command deploys `kondis-demo-api` and `kondis-demo-web`, attaching the web
 Worker to the public custom domain `demo.kondis.org`. The API and web Workers
-use only Hyperdrive for persistence.
+use Hyperdrive for application persistence; the simulator and realtime socket
+hub use Durable Object storage for their own coordination state.
 
 ### General Worker deployment
 

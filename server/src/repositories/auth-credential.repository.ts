@@ -205,12 +205,13 @@ export class AuthCredentialRepository {
     if (!token || !TOKEN_PATTERN.test(token)) {
       return undefined;
     }
+    const tokenHash = await hashToken(token);
     const ticket = await this.db
       .selectFrom('auth_ticket')
       .innerJoin('auth_session', 'auth_session.id', 'auth_ticket.session_id')
       .select(['auth_ticket.scope', 'auth_ticket.session_id', 'auth_session.expires_at as session_expires_at'])
       .select('auth_ticket.user_id')
-      .where('auth_ticket.token_hash', '=', await hashToken(token))
+      .where('auth_ticket.token_hash', '=', tokenHash)
       .where('auth_ticket.scope', 'in', ['activity-events', 'job-events'])
       .where('auth_ticket.expires_at', '>', new Date())
       .where('auth_session.expires_at', '>', new Date())

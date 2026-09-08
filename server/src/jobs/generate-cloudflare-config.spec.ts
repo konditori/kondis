@@ -108,6 +108,18 @@ describe('generateCloudflareConfig', () => {
       baseConfig: {
         name: 'kondis-demo-api',
         main: 'src/cloudflare/entrypoint.ts',
+        durable_objects: {
+          bindings: [
+            { name: 'DEMO_LIVE_TRACKER', class_name: 'DemoLiveTracker' },
+            { name: 'REALTIME', class_name: 'RealtimeDurableObject' },
+          ],
+        },
+        migrations: [
+          { tag: 'demo-live-tracker-v1', new_sqlite_classes: ['DemoLiveTracker'] },
+          { tag: 'demo-live-tracker-v2', new_sqlite_classes: ['RealtimeDurableObject'] },
+        ],
+        services: [{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }],
+        triggers: { crons: ['* * * * *'] },
       },
       environment: 'demo',
       hyperdriveId: 'd'.repeat(32),
@@ -121,9 +133,18 @@ describe('generateCloudflareConfig', () => {
     });
     expect(config).not.toHaveProperty('r2_buckets');
     expect(config).not.toHaveProperty('queues');
-    expect(config).not.toHaveProperty('triggers');
-    expect(config).not.toHaveProperty('durable_objects');
-    expect(config).not.toHaveProperty('services');
+    expect(config.triggers).toEqual({ crons: ['* * * * *'] });
+    expect(config.services).toEqual([{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }]);
+    expect(config.durable_objects).toEqual({
+      bindings: [
+        { name: 'DEMO_LIVE_TRACKER', class_name: 'DemoLiveTracker' },
+        { name: 'REALTIME', class_name: 'RealtimeDurableObject' },
+      ],
+    });
+    expect(config.migrations).toEqual([
+      { tag: 'demo-live-tracker-v1', new_sqlite_classes: ['DemoLiveTracker'] },
+      { tag: 'demo-live-tracker-v2', new_sqlite_classes: ['RealtimeDurableObject'] },
+    ]);
   });
 
   it('enables Node-owned schedules only when the cloud processor is ready', () => {

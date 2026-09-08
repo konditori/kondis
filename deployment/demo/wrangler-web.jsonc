@@ -5,7 +5,7 @@
   "compatibility_date": "2026-09-04",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
-  "cache": { "enabled": true },
+  "cache": { "enabled": false },
   "preview_urls": true,
   "routes": [
     {

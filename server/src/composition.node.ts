@@ -107,7 +107,7 @@ export const createApplicationComposition = ({
     eventRepository,
     newLogger(),
   );
-  const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository);
+  const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository, eventRepository);
   const serverService = new ServerService();
   const socialService = new SocialService(socialRepository, database, eventRepository);
   const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
