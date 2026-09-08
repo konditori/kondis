@@ -67,7 +67,7 @@ description = "Deploy the demo Workers, then drop, recreate, migrate, and reseed
 dir = "deployment/demo"
 run = '''
 set -euo pipefail
-mise run deploy:demo
+mise run //:deploy:demo
 echo "Demo Workers deployed. Rebuilding the demo database now."
 docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
 docker compose --env-file .env -f ./docker-compose.yml exec -T database /bin/bash -ec "

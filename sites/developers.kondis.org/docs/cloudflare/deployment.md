@@ -68,35 +68,70 @@ bucket is needed for demo media. Initialize the submodule before deploying:
 git submodule update --init --recursive
 ```
 
-On the database host, copy the demo environment template, configure the
-certificate and secret paths, then start PostgreSQL and run the one-shot seeder:
+### Demo lifecycle
+
+The demo has two independently managed parts: the Cloudflare API and web
+Workers, and the self-hosted PostgreSQL origin. The database host keeps the
+PostgreSQL data directory outside the repository. The Workers contain the
+static demo media; the database stores only the predictable media metadata and
+paths.
+
+#### Initial provisioning and restart
+
+On the database host, copy the demo environment template and configure the
+persistent data and secret paths:
 
 ```sh
 cp deployment/demo/.env.example deployment/demo/.env
 mise run demo-db
 ```
 
-The demo compose file persists PostgreSQL data, enables TLS, runs all schema
-migrations, and seeds the demo content before the Worker is deployed. Keep the
-database and seeder credentials outside the repository.
+`mise run demo-db` builds or starts the demo PostgreSQL container, waits for it
+to become healthy, and runs the one-shot seeder. It does not drop the database
+or delete the configured `DEMO_DB_DATA_DIR`, so it is safe to use after a host
+or container restart. The seeder applies migrations and creates the demo
+fixtures. Keep the database and seeder credentials outside the repository.
 
-The normal start task is non-destructive. To deploy the new demo Workers first,
-then drop and recreate the demo database and reseed it from scratch, run:
+To inspect, stop, or restart the database without changing its data:
+
+```sh
+cd deployment/demo
+docker compose --env-file .env -f ./docker-compose.yml ps
+docker compose --env-file .env -f ./docker-compose.yml stop database
+docker compose --env-file .env -f ./docker-compose.yml start database
+```
+
+#### Routine Worker deployment
+
+Deploy Worker changes without rebuilding the demo database with:
+
+```sh
+KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" mise run deploy:demo
+```
+
+This deploys the API Worker and then the web Worker. It does not modify the
+PostgreSQL data directory or reseed the demo fixtures. Use this for normal code
+and frontend updates.
+
+#### Rebuild the demo from scratch
+
+To deploy the new Workers first, then drop and recreate the demo database and
+reseed it from scratch, run:
 
 ```sh
 KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" mise run deploy:demo-rebuild
 ```
 
-The Worker deployment completes before the database reset begins. During the
-reset and seed interval, the new demo deployment can report that the database
-has not been seeded yet; once seeding completes, it is ready to use again.
+The task stops before the database reset if the Worker deployment fails. After a
+successful Worker deployment, it terminates active database connections, drops
+and recreates only `DEMO_DB_DATABASE_NAME`, then runs migrations and the demo
+seeder. It does not remove the PostgreSQL container, image, or
+`DEMO_DB_DATA_DIR`. This is still destructive to the logical demo database and
+should only be used for the disposable demo environment.
 
-Provide the Hyperdrive ID for the database being deployed:
-
-```sh
-KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" \
-mise run deploy:demo
-```
+There is an intentional transition while the database is empty and being
+seeded. The newly deployed Workers can report that the demo database has not
+been seeded yet. Once the seeder exits successfully, the demo is ready again.
 
 Use `--dry-run` to inspect the generated configs. In GitHub Actions, store the
 Hyperdrive ID in the matching GitHub Environment's secrets. The deployment script

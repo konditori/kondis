@@ -16,6 +16,7 @@ server/.wrangler/
 server/wrangler.*.generated.json
 server/wrangler-generated-*.json
 web/wrangler-generated-*.json
+web/static/demo-media/
 deployment/demo/wrangler-generated-*.json
 
 vite.config.js.timestamp-*

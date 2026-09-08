@@ -31,6 +31,9 @@ services:
       KONDIS_DB_HOSTNAME: database
       KONDIS_DB_PORT: 5432
       KONDIS_DB_DATABASE_NAME: ${DEMO_DB_DATABASE_NAME:-kondis_demo}
+      KONDIS_DEMO_MEDIA_DIR: /usr/src/app/demo-media
+    volumes:
+      - ../../test/test-assets/demo/v1:/usr/src/app/demo-media:ro
     secrets:
       - demo_db_username
       - demo_db_password
