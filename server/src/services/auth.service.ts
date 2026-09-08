@@ -1,3 +1,4 @@
+import { publicMediaUrl } from 'src/demo/media';
 import { JobStatus } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
@@ -29,6 +30,7 @@ export class AuthService {
     private readonly credentials: AuthCredentialRepository,
     private readonly events: RealtimePort,
     private readonly database: TransactionPort,
+    private readonly mediaBaseUrl?: string,
   ) {}
   get registrationEnabled() {
     return this.config.registrationEnabled;
@@ -209,7 +211,10 @@ Do not share this secret token with anyone.
         firstName: user.first_name,
         lastName: user.last_name,
         role: user.role,
-        avatarUrl: 'avatar_path' in user && user.avatar_path ? `/api/v1/users/${user.id}/avatar` : null,
+        avatarUrl:
+          'avatar_path' in user && typeof user.avatar_path === 'string'
+            ? publicMediaUrl(this.mediaBaseUrl, user.avatar_path, `/api/v1/users/${user.id}/avatar`)
+            : null,
       },
     };
   }

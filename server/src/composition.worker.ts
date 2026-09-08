@@ -42,6 +42,7 @@ export type WorkerBindings = {
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_DEMO_MODE?: boolean | string;
+  KONDIS_DEMO_MEDIA_BASE_URL?: string;
   KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
   KONDIS_REALTIME_PUBLISH_TOKEN?: string;
   QUEUE_EXECUTOR?: { fetch: (request: Request) => Promise<Response> };
@@ -64,6 +65,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   };
   const queueAdapter = new CloudflareQueueAdapter(database);
   const storage = env.STORAGE_BUCKET ? new R2StorageAdapter(env.STORAGE_BUCKET) : undefined;
+  const activityImageRepository = new ActivityImageRepository(database);
   const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
   const authCredentialRepository = new AuthCredentialRepository(database);
   const userRepository = new UserRepository(database);
@@ -92,10 +94,11 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     authCredentialRepository,
     workerEvents,
     transactions,
+    env.KONDIS_DEMO_MEDIA_BASE_URL,
   );
   const activityRepository = new ActivityRepository(database);
   const uploadRepository = new UploadRepository(database);
-  const socialRepository = new SocialRepository(database);
+  const socialRepository = new SocialRepository(database, env.KONDIS_DEMO_MEDIA_BASE_URL);
   const importProgressStore = new ImportProgressStore(database);
   const activityService = new ActivityService(
     uploadRepository,
@@ -109,12 +112,13 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     new TcxRepository(new ConsoleLogger()),
     new ConsoleLogger(),
     importProgressStore,
-    undefined,
+    activityImageRepository,
     socialRepository,
+    env.KONDIS_DEMO_MEDIA_BASE_URL,
   );
   const workerActivityImageService = storage
     ? new WorkerActivityImageService(
-        new ActivityImageRepository(database),
+        activityImageRepository,
         activityRepository,
         storage,
         workerCrypto,
@@ -138,7 +142,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const workerUserService = storage
     ? new WorkerUserService(userRepository, socialRepository, storage, queueAdapter)
     : undefined;
-  const socialService = new SocialService(socialRepository, database, workerEvents);
+  const socialService = new SocialService(socialRepository, database, workerEvents, env.KONDIS_DEMO_MEDIA_BASE_URL);
   const liveWorkoutService = new LiveWorkoutService(new LiveWorkoutRepository(database), workerCrypto);
   const jobService = new JobService({ admin: queueAdapter, producer: queueAdapter }, workerEvents, new ConsoleLogger());
 
@@ -165,6 +169,8 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     workerActivityImageService,
     workerUploadService,
     workerUserService,
+    activityImageRepository,
+    demoMediaBaseUrl: env.KONDIS_DEMO_MEDIA_BASE_URL,
     jobAdmin: queueAdapter,
     jobHandlers: createPortableWorkerHandlers(database, { activityService, uploadService: workerUploadService }),
     jobProducer: queueAdapter,

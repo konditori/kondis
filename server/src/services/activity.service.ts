@@ -1,6 +1,7 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
+import { publicMediaUrl } from 'src/demo/media';
 import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus } from 'src/enum';
@@ -84,6 +85,7 @@ export class ActivityService {
     private readonly importProgressStore?: ImportProgressStore,
     private readonly activityImageRepository?: ActivityImageRepository,
     private readonly socialRepository?: SocialRepository,
+    private readonly mediaBaseUrl?: string,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -703,6 +705,12 @@ export class ActivityService {
 
   private async toImageDto(image: ActivityImage) {
     const files = (await this.activityImageRepository?.getFiles(image.id)) ?? [];
+    const fileUrl = (variant: 'thumbnail' | 'preview' | 'original'): string | null => {
+      const file = files.find((candidate) => candidate.variant === variant);
+      return file
+        ? publicMediaUrl(this.mediaBaseUrl, file.storage_path, `/api/v1/activity-images/${image.id}/${variant}`)
+        : null;
+    };
     return {
       id: image.id,
       caption: image.caption,
@@ -710,13 +718,9 @@ export class ActivityService {
       width: image.width,
       height: image.height,
       status: image.status,
-      thumbnail: files.some((file) => file.variant === 'thumbnail')
-        ? `/api/v1/activity-images/${image.id}/thumbnail`
-        : null,
-      preview: files.some((file) => file.variant === 'preview') ? `/api/v1/activity-images/${image.id}/preview` : null,
-      original: files.some((file) => file.variant === 'original')
-        ? `/api/v1/activity-images/${image.id}/original`
-        : null,
+      thumbnail: fileUrl('thumbnail'),
+      preview: fileUrl('preview'),
+      original: fileUrl('original'),
     };
   }
 

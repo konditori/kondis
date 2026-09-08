@@ -1,4 +1,5 @@
 import { sql } from 'kysely';
+import { publicMediaUrl } from 'src/demo/media';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import type { ActivityCommentEvent, RealtimePort } from 'src/ports/realtime.port';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -9,6 +10,7 @@ export class SocialService {
     private readonly social: SocialRepository,
     private readonly db: KondisDatabase,
     private readonly eventRepository: RealtimePort,
+    private readonly mediaBaseUrl?: string,
   ) {}
 
   async people(viewerId: string, query?: string) {
@@ -376,6 +378,6 @@ export class SocialService {
   }
 
   private avatarUrl(userId: string, path: string | null): string | null {
-    return path ? `/api/v1/users/${userId}/avatar` : null;
+    return path ? publicMediaUrl(this.mediaBaseUrl, path, `/api/v1/users/${userId}/avatar`) : null;
   }
 }

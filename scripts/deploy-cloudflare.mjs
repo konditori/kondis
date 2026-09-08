@@ -1,17 +1,20 @@
-import { readFile, writeFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const serverDir = resolve(rootDir, 'server');
-const webDir = resolve(rootDir, 'web');
-const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const serverDir = resolve(rootDir, "server");
+const webDir = resolve(rootDir, "web");
+const demoMediaSourceDir = resolve(rootDir, "test/test-assets/demo/v1");
+const demoMediaTargetDir = resolve(webDir, "static/demo-media/v1");
+const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const environmentPattern = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 const hyperdrivePattern = /^[a-f0-9]{32}$/i;
 
-const usage = () => `Usage: pnpm deploy:cloudflare <environment> [--dry-run] [--config-dir <path>]
+const usage =
+  () => `Usage: pnpm deploy:cloudflare <environment> [--dry-run] [--config-dir <path>]
 
 Required environment:
  KONDIS_HYPERDRIVE_ID  Hyperdrive ID created by Terraform
@@ -26,34 +29,63 @@ const run = (cwd, args, { capture = false, env = process.env } = {}) =>
   new Promise((resolvePromise, reject) => {
     const child = spawn(pnpmCommand, args, {
       cwd,
-      env: Object.fromEntries(Object.entries(env).filter(([key]) => key !== 'CLOUDFLARE_ENV')),
-      stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+      env: Object.fromEntries(
+        Object.entries(env).filter(([key]) => key !== "CLOUDFLARE_ENV"),
+      ),
+      stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
     });
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
     if (capture) {
-      child.stdout.on('data', (chunk) => {
+      child.stdout.on("data", (chunk) => {
         stdout += chunk;
       });
-      child.stderr.on('data', (chunk) => {
+      child.stderr.on("data", (chunk) => {
         stderr += chunk;
       });
     }
 
-    child.on('error', reject);
-    child.on('close', (code) => {
+    child.on("error", reject);
+    child.on("close", (code) => {
       if (code === 0) {
         resolvePromise({ stdout, stderr });
         return;
       }
 
-      const output = [stdout, stderr].filter(Boolean).join('\n').trim();
-      reject(new Error(`pnpm ${args.join(' ')} failed with exit code ${code}${output ? `\n${output}` : ''}`));
+      const output = [stdout, stderr].filter(Boolean).join("\n").trim();
+      reject(
+        new Error(
+          `pnpm ${args.join(" ")} failed with exit code ${code}${output ? `\n${output}` : ""}`,
+        ),
+      );
     });
   });
 
-const runWrangler = (args, options) => run(serverDir, ['exec', 'wrangler', ...args], options);
+const runWrangler = (args, options) =>
+  run(serverDir, ["exec", "wrangler", ...args], options);
+
+const stageDemoMedia = async () => {
+  await rm(demoMediaTargetDir, { recursive: true, force: true });
+  await mkdir(resolve(webDir, "static/demo-media"), { recursive: true });
+  try {
+    await cp(demoMediaSourceDir, demoMediaTargetDir, {
+      recursive: true,
+      filter: (source) => !source.endsWith(".DS_Store"),
+    });
+  } catch (error) {
+    throw new Error(
+      `Could not stage demo media from ${demoMediaSourceDir}. ` +
+        "Initialize the test-assets submodule with `git submodule update --init --recursive`.",
+      { cause: error },
+    );
+  }
+  console.log(`Staged demo media from ${demoMediaSourceDir}`);
+};
+
+const cleanStagedDemoMedia = async () => {
+  await rm(demoMediaTargetDir, { recursive: true, force: true });
+};
 
 const isAlreadyExistsError = (error) =>
   /already exists|already been created|already in use|already taken|code:\s*(?:10004|11009)/i.test(
@@ -63,7 +95,9 @@ const isAlreadyExistsError = (error) =>
 const createR2Bucket = async (bucketName) => {
   console.log(`Creating R2 bucket: ${bucketName}`);
   try {
-    await runWrangler(['r2', 'bucket', 'create', bucketName], { capture: true });
+    await runWrangler(["r2", "bucket", "create", bucketName], {
+      capture: true,
+    });
     console.log(`R2 bucket created: ${bucketName}`);
   } catch (error) {
     if (isAlreadyExistsError(error)) {
@@ -77,7 +111,7 @@ const createR2Bucket = async (bucketName) => {
 const createQueue = async (queueName) => {
   console.log(`Creating queue: ${queueName}`);
   try {
-    await runWrangler(['queues', 'create', queueName], { capture: true });
+    await runWrangler(["queues", "create", queueName], { capture: true });
     console.log(`Queue created: ${queueName}`);
   } catch (error) {
     if (isAlreadyExistsError(error)) {
@@ -88,20 +122,21 @@ const createQueue = async (queueName) => {
   }
 };
 
-const readJsonc = async (path, parseJsonc) => parseJsonc(await readFile(path, 'utf8'));
+const readJsonc = async (path, parseJsonc) =>
+  parseJsonc(await readFile(path, "utf8"));
 
 const parseArguments = () => {
   const argumentsList = process.argv.slice(2);
-  const dryRun = argumentsList.includes('--dry-run');
+  const dryRun = argumentsList.includes("--dry-run");
   const positional = [];
   let configDirArgument;
 
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
-    if (argument === '--dry-run') continue;
-    if (argument === '--config-dir') {
+    if (argument === "--dry-run") continue;
+    if (argument === "--config-dir") {
       const nextArgument = argumentsList[index + 1];
-      if (!nextArgument || nextArgument.startsWith('--')) {
+      if (!nextArgument || nextArgument.startsWith("--")) {
         throw new Error(`--config-dir requires a path.\n\n${usage()}`);
       }
       configDirArgument = nextArgument;
@@ -111,12 +146,13 @@ const parseArguments = () => {
     positional.push(argument);
   }
 
-  if (positional.includes('--help') || positional.includes('-h')) {
+  if (positional.includes("--help") || positional.includes("-h")) {
     console.log(usage());
     process.exit(0);
   }
-  if (positional.length > 1) throw new Error(`Expected one environment name.\n\n${usage()}`);
-  if (!configDirArgument && argumentsList.includes('--config-dir')) {
+  if (positional.length > 1)
+    throw new Error(`Expected one environment name.\n\n${usage()}`);
+  if (!configDirArgument && argumentsList.includes("--config-dir")) {
     throw new Error(`--config-dir requires a path.\n\n${usage()}`);
   }
 
@@ -130,46 +166,64 @@ const parseArguments = () => {
   const hyperdriveId = process.env.KONDIS_HYPERDRIVE_ID;
   if (!hyperdriveId || !hyperdrivePattern.test(hyperdriveId)) {
     throw new Error(
-      'KONDIS_HYPERDRIVE_ID must be the 32-character Hyperdrive ID produced by Terraform. ' +
-        'Hyperdrive and Cloudflare Access are not provisioned by this script.',
+      "KONDIS_HYPERDRIVE_ID must be the 32-character Hyperdrive ID produced by Terraform. " +
+        "Hyperdrive and Cloudflare Access are not provisioned by this script.",
     );
   }
 
-  const nodeProcessorEnabled = process.env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED || 'false';
-  if (!['true', 'false'].includes(nodeProcessorEnabled)) {
-    throw new Error('KONDIS_CLOUD_NODE_PROCESSOR_ENABLED must be either true or false.');
+  const nodeProcessorEnabled =
+    process.env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED || "false";
+  if (!["true", "false"].includes(nodeProcessorEnabled)) {
+    throw new Error(
+      "KONDIS_CLOUD_NODE_PROCESSOR_ENABLED must be either true or false.",
+    );
   }
 
-  const demoModeSetting = process.env.KONDIS_DEMO_MODE || 'false';
-  if (!['true', 'false'].includes(demoModeSetting)) {
-    throw new Error('KONDIS_DEMO_MODE must be either true or false.');
+  const demoModeSetting = process.env.KONDIS_DEMO_MODE || "false";
+  if (!["true", "false"].includes(demoModeSetting)) {
+    throw new Error("KONDIS_DEMO_MODE must be either true or false.");
   }
-  const demoMode = demoModeSetting === 'true';
+  const demoMode = demoModeSetting === "true";
   return {
     environment,
     dryRun,
     hyperdriveId,
-    nodeProcessorEnabled: nodeProcessorEnabled === 'true',
+    nodeProcessorEnabled: nodeProcessorEnabled === "true",
     demoMode,
-    configDir: configDirArgument ? resolve(rootDir, configDirArgument) : undefined,
+    configDir: configDirArgument
+      ? resolve(rootDir, configDirArgument)
+      : undefined,
   };
 };
 
 const main = async () => {
-  const { environment, dryRun, hyperdriveId, nodeProcessorEnabled, demoMode, configDir } = parseArguments();
-  const require = createRequire(resolve(serverDir, 'scripts/generate-cloudflare-config.cjs'));
+  const {
+    environment,
+    dryRun,
+    hyperdriveId,
+    nodeProcessorEnabled,
+    demoMode,
+    configDir,
+  } = parseArguments();
+  const require = createRequire(
+    resolve(serverDir, "scripts/generate-cloudflare-config.cjs"),
+  );
   const {
     generateCloudflareConfig,
     generateQueueExecutorConfig,
     parseJsonc,
-  } = require(resolve(serverDir, 'scripts/generate-cloudflare-config.cjs'));
+  } = require(resolve(serverDir, "scripts/generate-cloudflare-config.cjs"));
 
   const apiBaseConfig = await readJsonc(
-    configDir ? resolve(configDir, 'wrangler-api.jsonc') : resolve(serverDir, 'wrangler.jsonc'),
+    configDir
+      ? resolve(configDir, "wrangler-api.jsonc")
+      : resolve(serverDir, "wrangler.jsonc"),
     parseJsonc,
   );
   const webBaseConfig = await readJsonc(
-    configDir ? resolve(configDir, 'wrangler-web.jsonc') : resolve(webDir, 'wrangler.jsonc'),
+    configDir
+      ? resolve(configDir, "wrangler-web.jsonc")
+      : resolve(webDir, "wrangler.jsonc"),
     parseJsonc,
   );
   const apiConfig = generateCloudflareConfig({
@@ -181,17 +235,25 @@ const main = async () => {
   });
   const executorConfig = demoMode
     ? undefined
-    : generateQueueExecutorConfig({ baseConfig: apiBaseConfig, environment, hyperdriveId });
+    : generateQueueExecutorConfig({
+        baseConfig: apiBaseConfig,
+        environment,
+        hyperdriveId,
+      });
   const apiWorkerName = apiConfig.name;
   const webConfig = {
     ...webBaseConfig,
-    name: demoMode ? webBaseConfig.name : `${webBaseConfig.name}-${environment}`,
+    name: demoMode
+      ? webBaseConfig.name
+      : `${webBaseConfig.name}-${environment}`,
     vars: {
       ...(webBaseConfig.vars || {}),
-      ...(demoMode ? { KONDIS_DEMO_MODE: 'true' } : {}),
+      ...(demoMode ? { KONDIS_DEMO_MODE: "true" } : {}),
     },
     services: (webBaseConfig.services || []).map((service) =>
-      service.binding === 'KONDIS_API' ? { ...service, service: apiWorkerName } : service,
+      service.binding === "KONDIS_API"
+        ? { ...service, service: apiWorkerName }
+        : service,
     ),
   };
 
@@ -199,32 +261,53 @@ const main = async () => {
   const apiConfigPath = configDir
     ? resolve(configOutputDir, `wrangler-generated-${environment}-api.json`)
     : resolve(serverDir, `wrangler-generated-${environment}.json`);
-  const executorConfigPath = resolve(configOutputDir, `wrangler-generated-${environment}-queue-executor.json`);
+  const executorConfigPath = resolve(
+    configOutputDir,
+    `wrangler-generated-${environment}-queue-executor.json`,
+  );
   const webConfigPath = configDir
     ? resolve(configOutputDir, `wrangler-generated-${environment}-web.json`)
     : resolve(webDir, `wrangler-generated-${environment}.json`);
   await writeFile(apiConfigPath, `${JSON.stringify(apiConfig, null, 2)}\n`);
   if (executorConfig) {
-    await writeFile(executorConfigPath, `${JSON.stringify(executorConfig, null, 2)}\n`);
+    await writeFile(
+      executorConfigPath,
+      `${JSON.stringify(executorConfig, null, 2)}\n`,
+    );
   }
   await writeFile(webConfigPath, `${JSON.stringify(webConfig, null, 2)}\n`);
 
-  const bucketNames = (apiConfig.r2_buckets || []).map(({ bucket_name }) => bucket_name).filter(Boolean);
-  const queueNames = [...new Set((apiConfig.queues?.consumers || []).map(({ queue }) => queue).filter(Boolean))];
+  const bucketNames = (apiConfig.r2_buckets || [])
+    .map(({ bucket_name }) => bucket_name)
+    .filter(Boolean);
+  const queueNames = [
+    ...new Set(
+      (apiConfig.queues?.consumers || [])
+        .map(({ queue }) => queue)
+        .filter(Boolean),
+    ),
+  ];
 
   console.log(`Cloudflare environment: ${environment}`);
   console.log(`API Worker: ${apiWorkerName}`);
-  console.log(`Queue executor: ${executorConfig?.name || 'not deployed (demo mode)'}`);
+  console.log(
+    `Queue executor: ${executorConfig?.name || "not deployed (demo mode)"}`,
+  );
   console.log(`Web Worker: ${webConfig.name}`);
-  console.log(`Hyperdrive: configured from Terraform (${hyperdriveId.slice(0, 6)}…${hyperdriveId.slice(-4)})`);
-  console.log(`R2 buckets: ${bucketNames.join(', ') || 'none'}`);
-  console.log(`Queues: ${queueNames.join(', ') || 'none'}`);
+  console.log(
+    `Hyperdrive: configured from Terraform (${hyperdriveId.slice(0, 6)}…${hyperdriveId.slice(-4)})`,
+  );
+  console.log(`R2 buckets: ${bucketNames.join(", ") || "none"}`);
+  console.log(`Queues: ${queueNames.join(", ") || "none"}`);
   console.log(`Generated API config: ${apiConfigPath}`);
-  if (executorConfig) console.log(`Generated queue executor config: ${executorConfigPath}`);
+  if (executorConfig)
+    console.log(`Generated queue executor config: ${executorConfigPath}`);
   console.log(`Generated web config: ${webConfigPath}`);
 
   if (dryRun) {
-    console.log('Dry run: skipping resource provisioning, build, and deployment.');
+    console.log(
+      "Dry run: skipping resource provisioning, build, and deployment.",
+    );
     return;
   }
 
@@ -233,23 +316,38 @@ const main = async () => {
 
   if (executorConfig) {
     console.log(`Deploying queue executor first: ${executorConfig.name}`);
-    await runWrangler(['deploy', '--config', executorConfigPath]);
+    await runWrangler(["deploy", "--config", executorConfigPath]);
   }
 
   console.log(`Deploying API Worker: ${apiWorkerName}`);
-  await runWrangler(['deploy', '--config', apiConfigPath]);
+  await runWrangler(["deploy", "--config", apiConfigPath]);
 
-  console.log('Building SDK');
-  await run(rootDir, ['--filter', '@kondis/sdk', 'run', 'build']);
+  console.log("Building SDK");
+  await run(rootDir, ["--filter", "@kondis/sdk", "run", "build"]);
 
-  console.log(`Building web Worker: ${webConfig.name}`);
-  await run(webDir, ['run', 'build'], {
-    env: { ...process.env, KONDIS_DEPLOY_TARGET: 'cloudflare' },
-  });
+  try {
+    if (demoMode) {
+      await stageDemoMedia();
+    }
+    console.log(`Building web Worker: ${webConfig.name}`);
+    await run(webDir, ["run", "build"], {
+      env: { ...process.env, KONDIS_DEPLOY_TARGET: "cloudflare" },
+    });
 
-  console.log(`Deploying web Worker: ${webConfig.name}`);
-  await run(webDir, ['exec', 'wrangler', 'deploy', '--config', webConfigPath]);
-  console.log('Cloudflare deployment complete.');
+    console.log(`Deploying web Worker: ${webConfig.name}`);
+    await run(webDir, [
+      "exec",
+      "wrangler",
+      "deploy",
+      "--config",
+      webConfigPath,
+    ]);
+  } finally {
+    if (demoMode) {
+      await cleanStagedDemoMedia();
+    }
+  }
+  console.log("Cloudflare deployment complete.");
 };
 
 main().catch((error) => {

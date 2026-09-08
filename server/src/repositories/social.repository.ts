@@ -1,9 +1,13 @@
 import { sql } from 'kysely';
+import { publicMediaUrl } from 'src/demo/media';
 import type { ActivityEngagement, SocialUser } from 'src/dtos/social.dto';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
 
 export class SocialRepository {
-  constructor(private readonly db: KondisDatabase) {}
+  constructor(
+    private readonly db: KondisDatabase,
+    private readonly mediaBaseUrl?: string,
+  ) {}
 
   activityEngagement(ids: string[], viewerId: string): Promise<ActivityEngagement[]> {
     return this.db
@@ -338,7 +342,9 @@ export class SocialRepository {
       id: user.id,
       firstName: user.first_name,
       lastName: user.last_name,
-      avatarUrl: user.avatar_path ? `/api/v1/users/${user.id}/avatar` : null,
+      avatarUrl: user.avatar_path
+        ? publicMediaUrl(this.mediaBaseUrl, user.avatar_path, `/api/v1/users/${user.id}/avatar`)
+        : null,
     };
   }
 }

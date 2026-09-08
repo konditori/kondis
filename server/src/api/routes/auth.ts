@@ -2,6 +2,7 @@ import { createRoute, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
 import { jsonBodyMiddleware } from 'src/api/validation';
+import { publicMediaUrl } from 'src/demo/media';
 import {
   ActivityEventsTicketSchema,
   AuthCapabilitiesSchema,
@@ -220,6 +221,7 @@ export const registerAuthSessionRoutes = (
   app: OpenAPIHono<ApiEnv>,
   service: Pick<AuthRouteService, 'revokeSession'>,
   users: ApiUserLookup,
+  mediaBaseUrl?: string,
 ): void => {
   app.openapi(capabilitiesRoute, (context) => context.json({ direct: true }, 200) as never);
   app.openapi(meRoute, async (context) => {
@@ -234,7 +236,9 @@ export const registerAuthSessionRoutes = (
         firstName: storedUser.first_name,
         lastName: storedUser.last_name,
         role: storedUser.role,
-        avatarUrl: storedUser.avatar_path ? `/api/v1/users/${storedUser.id}/avatar` : null,
+        avatarUrl: storedUser.avatar_path
+          ? publicMediaUrl(mediaBaseUrl, storedUser.avatar_path, `/api/v1/users/${storedUser.id}/avatar`)
+          : null,
       },
       200,
     ) as never;
@@ -250,9 +254,9 @@ export const registerAuthRoutes = (
   service: AuthRouteService,
   users: ApiUserLookup,
   config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
-  options: { includeEventTickets?: boolean } = {},
+  options: { includeEventTickets?: boolean; mediaBaseUrl?: string } = {},
 ): void => {
-  registerAuthSessionRoutes(app, service, users);
+  registerAuthSessionRoutes(app, service, users, options.mediaBaseUrl);
   app.openapi(setupStatusRoute, async (context) => {
     const status = await service.setupStatus();
     return context.json({ ...status, registrationEnabled: config.registrationEnabled }, 200) as never;

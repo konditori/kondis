@@ -6,5 +6,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "cache": { "enabled": true },
+  "placement": { "host": "db.demo.kondis.org:5432" },
   "preview_urls": true,
+  "vars": {
+    "KONDIS_DEMO_MEDIA_BASE_URL": "https://demo.kondis.org/demo-media/v1",
+  },
 }

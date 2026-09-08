@@ -36,7 +36,7 @@ import { handleDeadLetterBatch } from 'src/cloudflare/queue-handler';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
-import { provisionDemoData } from 'src/demo/provisioner';
+import { getDemoUser } from 'src/demo/provisioner';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
@@ -79,6 +79,7 @@ const createRequestApp = (
   });
   registerAuthRoutes(requestApp, composition.authService, composition.userRepository, composition.config, {
     includeEventTickets: composition.realtimeEnabled,
+    mediaBaseUrl: composition.demoMediaBaseUrl,
   });
   if (composition.cloudNodeProcessorEnabled && composition.queueBindingsConfigured) {
     registerWorkerQueueMutationRoutes(requestApp, { jobs: composition.jobService });
@@ -179,14 +180,7 @@ export default {
     const composition = createWorkerInvocationComposition(env);
     try {
       const demoMode = composition.config.demoMode;
-      const demoUser = demoMode
-        ? await provisionDemoData({
-            database: composition.database,
-            activities: composition.activityRepository,
-            uploads: composition.uploadRepository,
-            fit: composition.fitRepository,
-          })
-        : undefined;
+      const demoUser = demoMode ? await getDemoUser(composition.database) : undefined;
       if (demoMode && !['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
         return Response.json(
           { statusCode: 405, message: 'This demo is read-only' },

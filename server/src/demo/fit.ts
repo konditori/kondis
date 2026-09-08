@@ -504,9 +504,9 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   {
     slug: 'island-ride',
     filename: 'island-ride.fit',
-    startedAt: '2026-08-23T08:05:00.000Z',
+    startedAt: '2020-01-20T15:05:00.000Z',
     title: 'Island ride',
-    description: 'Smooth roads, warm coffee, no rush.',
+    description: 'Cold afternoon but beautiful sunset.',
     activitySport: 'ride',
     tags: ['commute'],
     distanceM: 41_800,

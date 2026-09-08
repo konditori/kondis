@@ -38,6 +38,10 @@ For the queue split deployment, this applies `1789000000000-SplitActivityQueues`
 
 ## Deploy
 
+The normal self-hosted development stack remains `docker/docker-compose.dev.yml`.
+The production demo database uses the separate `deployment/demo/docker-compose.yml`
+stack below; it does not start the normal Kondis API or web services.
+
 ### Public demo
 
 The public demo is an anonymous, read-only deployment. It serves the single
@@ -46,8 +50,46 @@ one day. It does not put a credential in the browser. `KONDIS_DEMO_MODE=true` is
 read by the server config repository and makes the API reject every non-read
 request. Demo config generation omits R2, Queues, queue executors, and Durable
 Objects because the demo does not accept uploads or edits. The first demo request
-provisions the demo user and its fictional FIT activity history automatically; it
-still aborts if the database contains more than one user.
+expects the demo database to already contain the demo user and its fictional FIT
+activity history; it fails clearly if the database has not been seeded.
+
+The demo PostgreSQL origin is `db.demo.kondis.org:5432`, and the demo API Worker
+uses that endpoint as its placement hint so Cloudflare can run the Worker near
+the database. The DNS record must identify the actual database endpoint rather
+than a proxied Cloudflare edge or Tunnel hostname. Keep the web Worker globally
+distributed: static assets are served from the edge closest to each visitor.
+The demo's avatars and activity preview images come from the `test/test-assets`
+submodule. The deployment script stages `demo/v1/` into the web Worker just
+before the Cloudflare build and removes the staging files afterward; the demo
+database stores only their predictable fixture metadata and paths, so no R2
+bucket is needed for demo media. Initialize the submodule before deploying:
+
+```sh
+git submodule update --init --recursive
+```
+
+On the database host, copy the demo environment template, configure the
+certificate and secret paths, then start PostgreSQL and run the one-shot seeder:
+
+```sh
+cp deployment/demo/.env.example deployment/demo/.env
+mise run demo-db
+```
+
+The demo compose file persists PostgreSQL data, enables TLS, runs all schema
+migrations, and seeds the demo content before the Worker is deployed. Keep the
+database and seeder credentials outside the repository.
+
+The normal start task is non-destructive. To deploy the new demo Workers first,
+then drop and recreate the demo database and reseed it from scratch, run:
+
+```sh
+KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" mise run deploy:demo-rebuild
+```
+
+The Worker deployment completes before the database reset begins. During the
+reset and seed interval, the new demo deployment can report that the database
+has not been seeded yet; once seeding completes, it is ready to use again.
 
 Provide the Hyperdrive ID for the database being deployed:
 

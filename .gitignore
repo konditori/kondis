@@ -9,6 +9,8 @@
 **/.wrangler/**
 
 docker/data
+deployment/demo/.env
+deployment/demo/data
 coverage
 server/.wrangler/
 server/wrangler.*.generated.json
