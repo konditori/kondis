@@ -1,0 +1,45 @@
+.gitignore
+  s_966f7e05d00a35::t_c3c3c9535b0253 12-13
+deployment/demo/wrangler-api.jsonc
+  s_966f7e05d00a35::t_9001282586a9f8 9,11-13
+scripts/deploy-cloudflare.mjs
+  s_966f7e05d00a35::t_1b261c7d42e081 1-12,16-17,32-35,38-39,41,44,49-50,56-61,65-88,98-100,114,125-126,130,136-137,139,149,153-155,169-170,174-179,182-184,186,191,193-195,200-210,215,218-220,224-226,238-242,246-248,251,254-256,264-267,273-276,280-289,293-295,297-301,303-304,308-310,319,323,325-326,328-335,337-350
+server/package.json
+  s_966f7e05d00a35::t_9d5a3607ecd478 29
+server/src/api/routes/auth.ts
+  s_966f7e05d00a35::t_f14c333dbf6ac0 5,224,239-241,257,259
+server/src/bin/provision-demo.ts
+  s_966f7e05d00a35::t_254594ead1ba02 1-33
+server/src/cloudflare/entrypoint.ts
+  s_966f7e05d00a35::t_b507f54d1fa056 39,82,183
+server/src/composition.worker.ts
+  s_966f7e05d00a35::t_1cf3a4f1bc04ff 45,68,97,101,115,117,121,145,172-173
+server/src/demo/media.ts
+  s_966f7e05d00a35::t_e9cd385ed98dbc 1-6
+server/src/repositories/social.repository.ts
+  s_966f7e05d00a35::t_271e75ae245cd1 2,7-10,345-347
+server/src/services/activity.service.ts
+  s_966f7e05d00a35::t_e13b3ff4c2fa49 4,88,708-713,721-723
+server/src/services/auth.service.ts
+  s_966f7e05d00a35::t_b171e958d37117 1,33,214-217
+server/src/services/social.service.ts
+  s_966f7e05d00a35::t_f52443677e1af7 2,13,381
+test/test-assets
+  s_966f7e05d00a35::t_4faca2ed147c21 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b0af13f362989bb609b021c36162acd33e2cc321",
+  "prompts": {},
+  "sessions": {
+    "s_966f7e05d00a35": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07fd4-28b2-7e40-b08c-77f464e72662",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
