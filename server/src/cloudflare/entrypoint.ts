@@ -47,7 +47,7 @@ import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 
-export { DemoLiveTracker } from 'src/demo/demo-live-tracker';
+export { DemoLiveTracker } from 'src/demo/live-tracker';
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
 
 export type WorkerEnv = WorkerBindings;

@@ -1,4 +1,4 @@
-import { aargau } from 'src/demo/demo-data';
+import { aargau } from 'src/demo/routes';
 import { ActivityType } from 'src/enum';
 import { haversineDistance } from 'src/utils/geo';
 

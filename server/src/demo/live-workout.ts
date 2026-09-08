@@ -6,7 +6,7 @@ import {
   DEMO_LIVE_INGESTION_PATH,
   DEMO_LIVE_TRACKER_NAME,
   type DemoLiveTrackerNamespaceBinding,
-} from 'src/demo/demo-live-tracker';
+} from 'src/demo/live-tracker';
 import { LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
 
 const DemoLiveWorkoutPointsSchema = LiveWorkoutPointsSchema.extend({ finished: z.boolean().optional() });

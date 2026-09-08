@@ -11,14 +11,14 @@ import {
   DEMO_USER_CONFIGS,
   demoFixtureId,
   JOHN_EMAIL,
-} from 'src/demo/demo-data';
+} from 'src/demo/data';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
 
-export { DEMO_SESSION_ID } from 'src/demo/demo-data';
+export { DEMO_SESSION_ID } from 'src/demo/data';
 
 export type DemoImageMetadata = {
   originalName: string;
