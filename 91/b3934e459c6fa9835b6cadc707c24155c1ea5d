@@ -1,0 +1,27 @@
+server/src/adapters/node/pgboss-queue.adapter.ts
+  s_21dc406fc704d0::t_fab2a87b109a85 576-578,583-584,588-593
+server/src/cloudflare/dispatcher.ts
+  s_21dc406fc704d0::t_581a4423048502 51-53
+server/src/demo/fit.ts
+  s_21dc406fc704d0::t_c7d50e38a91f5f 89
+server/src/demo/provisioner.ts
+  s_21dc406fc704d0::t_9c12cd72c0ab65 224-235
+server/src/jobs/job-semantics.ts
+  s_21dc406fc704d0::t_cb459f6b7841ad 54-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "91b3934e459c6fa9835b6cadc707c24155c1ea5d",
+  "prompts": {},
+  "sessions": {
+    "s_21dc406fc704d0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "569d0b50-0406-4959-b88f-5e5b31593ad6",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
