@@ -48,7 +48,9 @@ export const reclaimStaleJobs = async (db: KondisDatabase): Promise<number> => {
   `.execute(db);
   const progress = new ImportProgressStore(db);
   for (const row of result.rows) {
-    if (!row.exhausted) {continue;}
+    if (!row.exhausted) {
+      continue;
+    }
     const data = row.payload?.data as { takeoutImportId?: unknown; takeoutItemKey?: unknown } | undefined;
     if (typeof data?.takeoutImportId === 'string' && typeof data.takeoutItemKey === 'string') {
       await progress.failJobItem(data.takeoutImportId, data.takeoutItemKey, 'Job lease expired; retry limit exhausted');

@@ -51,7 +51,9 @@ const singleton = (singletonKey: string): { singletonKey: string; singletonSecon
 
 const jobKey = (singletonKey: string): { singletonKey: string } => ({ singletonKey });
 
-export const getJobOptions = (item: JobItem): { singletonKey?: string; singletonSeconds?: number; priority?: number } => {
+export const getJobOptions = (
+  item: JobItem,
+): { singletonKey?: string; singletonSeconds?: number; priority?: number } => {
   switch (item.name) {
     case JobName.AuthCredentialCleanup: {
       return singleton(item.name);

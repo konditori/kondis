@@ -573,24 +573,24 @@ export class PgBossQueueAdapter {
   private async dispatchRankingRefresh(job: Job<StoredJob>): Promise<JobResult> {
     if (!this.rankingRefreshPromise) {
       const refresh = delay(RANKING_REFRESH_COALESCE_MS).then(() => this.dispatch(job));
-      const gate = refresh.then(
-        async (status) => delay(RANKING_REFRESH_COALESCE_MS).then(() => status),
-      ).catch(async (error) => {
+      const gate = refresh
+        .then(async (status) => delay(RANKING_REFRESH_COALESCE_MS).then(() => status))
+        .catch(async (error) => {
           await delay(RANKING_REFRESH_COALESCE_MS);
           throw error;
         });
       this.rankingRefreshPromise = gate;
-      void gate.then(
-        () => {
+      void gate
+        .then(() => {
           if (this.rankingRefreshPromise === gate) {
             this.rankingRefreshPromise = null;
           }
-        },
-      ).catch(() => {
-        if (this.rankingRefreshPromise === gate) {
-          this.rankingRefreshPromise = null;
-        }
-      });
+        })
+        .catch(() => {
+          if (this.rankingRefreshPromise === gate) {
+            this.rankingRefreshPromise = null;
+          }
+        });
     }
 
     try {

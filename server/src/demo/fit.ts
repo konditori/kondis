@@ -86,8 +86,7 @@ const interpolateRoute = (route: readonly Point[], ratio: number): Point => {
   for (let index = 1; index < route.length; index++) {
     routeDistance += segmentDistance(route[index - 1], route[index]);
   }
-  const targetDistance =
-    Math.min(1, Math.max(0, ratio)) * routeDistance;
+  const targetDistance = Math.min(1, Math.max(0, ratio)) * routeDistance;
   let distanceBefore = 0;
   for (let index = 1; index < route.length; index++) {
     const before = route[index - 1];

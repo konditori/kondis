@@ -221,17 +221,18 @@ const provisionDemoDataOnce = async (dependencies: DemoProvisioningDependencies)
       .select('id')
       .where('checksum', 'like', 'demo-fit-v1:%')
       .execute();
-    const existingActivities = existingUploads.length > 0
-      ? await transaction
-          .selectFrom('activity')
-          .select('id')
-          .where(
-            'upload_id',
-            'in',
-            existingUploads.map(({ id }) => id),
-          )
-          .execute()
-      : [];
+    const existingActivities =
+      existingUploads.length > 0
+        ? await transaction
+            .selectFrom('activity')
+            .select('id')
+            .where(
+              'upload_id',
+              'in',
+              existingUploads.map(({ id }) => id),
+            )
+            .execute()
+        : [];
     if (existingActivities.length === DEMO_FIT_SPECS.length) {
       return {
         user: asAuthenticatedUser(users[0]),
