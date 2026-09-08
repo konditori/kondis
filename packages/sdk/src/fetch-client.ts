@@ -835,14 +835,13 @@ export function takeoutImportControllerScan(
 export function takeoutImportControllerUploadActivity(
   {
     id,
-    xKondisTakeoutMetadata,
     body,
   }: {
     id: string;
-    xKondisTakeoutMetadata: string;
     body: {
       /** One extracted .fit, .tcx, or .gpx activity file */
       file: Blob;
+      metadata: string;
     };
   },
   opts?: Oazapfts.RequestOpts,
@@ -857,9 +856,6 @@ export function takeoutImportControllerUploadActivity(
         ...opts,
         method: 'POST',
         body,
-        headers: oazapfts.mergeHeaders(opts?.headers, {
-          'x-kondis-takeout-metadata': xKondisTakeoutMetadata,
-        }),
       }),
     ),
   );

@@ -143,20 +143,17 @@ describe(CloudflareQueueAdapter.name, () => {
 
   it('does not publish the same outbox row from concurrent dispatchers', async () => {
     await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
-    let release!: () => void;
-    const publishing = new Promise<void>((resolve) => {
-      release = resolve;
-    });
+    const publishing = Promise.withResolvers<void>();
     const started = Promise.withResolvers<void>();
     const publishBatch = vi.fn(async () => {
       started.resolve();
-      await publishing;
+      await publishing.promise;
     });
 
     const first = dispatchUnpublishedJobs(db, { publishBatch });
     await started.promise;
     const second = await dispatchUnpublishedJobs(db, { publishBatch });
-    release();
+    publishing.resolve();
 
     await expect(first).resolves.toBe(1);
     expect(second).toBe(0);

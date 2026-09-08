@@ -24,8 +24,8 @@ export type TakeoutImportItem = {
   metadata: unknown;
 };
 
-const terminalItemStates: TakeoutImportItemStatus[] = ['completed', 'failed', 'duplicate'];
-const isTerminal = (status: TakeoutImportItemStatus): boolean => terminalItemStates.includes(status);
+const terminalItemStates: Set<TakeoutImportItemStatus> = new Set(['completed', 'failed', 'duplicate']);
+const isTerminal = (status: TakeoutImportItemStatus): boolean => terminalItemStates.has(status);
 
 type ItemTransition = {
   uploaded: number;
@@ -187,7 +187,9 @@ export class ImportProgressStore {
     });
   }
 
-  /** Marks a queued job's item failed when the job has exhausted its retries. */
+  /**
+  Marks a queued job's item failed when the job has exhausted its retries.
+  */
   async failJobItem(importId: string, itemKey: string, error: string): Promise<boolean> {
     return this.db
       .transaction()
@@ -237,7 +239,7 @@ export class ImportProgressStore {
       .where('item_key', '=', itemKey)
       .forUpdate()
       .executeTakeFirst();
-    if (!item || (isTerminal(item.status) && !(item.status === 'failed' && status !== 'failed'))) {
+    if (!item || (isTerminal(item.status) && (item.status !== 'failed' || status === 'failed'))) {
       return false;
     }
 

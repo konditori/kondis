@@ -44,33 +44,38 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.TemporaryFileCleanup]: QueueName.Storage,
 };
 
-export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?: number } => {
+const singleton = (singletonKey: string): { singletonKey: string; singletonSeconds: number } => ({
+  singletonKey,
+  singletonSeconds: 60,
+});
+
+const jobKey = (singletonKey: string): { singletonKey: string } => ({ singletonKey });
+
+export const getJobOptions = (item: JobItem): { singletonKey?: string; singletonSeconds?: number; priority?: number } => {
   switch (item.name) {
     case JobName.AuthCredentialCleanup: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.ActivityUpload: {
-      return {
-        singletonKey: `${item.name}:${item.data.checksum ?? item.data.storagePath}`,
-      };
+      return singleton(`${item.name}:${item.data.checksum ?? item.data.storagePath}`);
     }
     case JobName.ActivityMetricCompute: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityBestEffortCompute: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityRouteMatchCompute: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityParse: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return singleton(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityManualCreate: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityDelete: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityBestEffortRank: {
       return {
@@ -79,22 +84,22 @@ export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?
       };
     }
     case JobName.ActivityImageIngest: {
-      return { singletonKey: `${item.name}:${item.data.imageId}` };
+      return jobKey(`${item.name}:${item.data.imageId}`);
     }
     case JobName.ActivityImageAttach: {
-      return { singletonKey: `${item.name}:${item.data.uploadId}` };
+      return jobKey(`${item.name}:${item.data.uploadId}`);
     }
     case JobName.ActivityImageGenerateThumbnails: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityImageGenerateQueueAll: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.ActivityParseQueueAll: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.TemporaryFileCleanup: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.UserAvatarUpload: {
       return {};

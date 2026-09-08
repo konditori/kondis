@@ -359,7 +359,11 @@ jobs:
         uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.2.0
 
       - name: Check translation catalogs
-        run: mise run //:i18n:check
+        run: |
+          if ! mise run //:i18n:check; then
+            echo "::error::Remove the duplicate JSON keys reported above from the translation catalogs, then rerun 'mise run //:i18n:check'."
+            exit 1
+          fi
 
       - name: Regenerate Android translations
         run: mise run //:i18n:android

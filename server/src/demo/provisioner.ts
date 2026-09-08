@@ -221,7 +221,7 @@ const provisionDemoDataOnce = async (dependencies: DemoProvisioningDependencies)
       .select('id')
       .where('checksum', 'like', 'demo-fit-v1:%')
       .execute();
-    const existingActivities = existingUploads.length
+    const existingActivities = existingUploads.length > 0
       ? await transaction
           .selectFrom('activity')
           .select('id')
