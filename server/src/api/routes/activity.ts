@@ -14,6 +14,7 @@ import {
   ActivityUpdateSchema,
   BestEffortListParamSchema,
   BestEffortListResponseSchema,
+  DirectActivityCreateSchema,
   MatchedRouteListResponseSchema,
 } from 'src/dtos/activity.dto';
 import { NotFoundException } from 'src/errors';
@@ -21,7 +22,13 @@ import type { ActivityService } from 'src/services/activity.service';
 
 export type ActivityReadService = Pick<
   ActivityService,
-  'deleteById' | 'getById' | 'listBestEfforts' | 'listMatchedRoutes' | 'listRecent' | 'updateById'
+  | 'createDirectActivity'
+  | 'deleteById'
+  | 'getById'
+  | 'listBestEfforts'
+  | 'listMatchedRoutes'
+  | 'listRecent'
+  | 'updateById'
 >;
 
 const activityListResponse = ActivityListResponseSchema.openapi('ActivityListResponseDto_Output');
@@ -32,6 +39,23 @@ const activityDetailResponse = ActivityDetailSchema.openapi('ActivityDetailDto_O
 const matchedRouteListResponse = MatchedRouteListResponseSchema.openapi('MatchedRouteListResponseDto_Output');
 const activityResponse = ActivitySchema.openapi('ActivityDto_Output');
 const activityUpdateInput = ActivityUpdateSchema.openapi('ActivityUpdateDto');
+const directActivityCreateInput = DirectActivityCreateSchema.openapi('DirectActivityCreateDto');
+
+const createActivityRoute = createRoute({
+  method: 'post',
+  path: '/activities',
+  operationId: 'ActivityController_create',
+  middleware: [jsonBodyMiddleware] as const,
+  request: { body: { required: true, content: { 'application/json': { schema: directActivityCreateInput } } } },
+  responses: {
+    201: {
+      description: 'Activity created',
+      content: { 'application/json': { schema: activityResponse } },
+    },
+  },
+  summary: 'Create an activity from direct data',
+  tags: ['activities'],
+});
 
 const listRecentRoute = createRoute({
   method: 'get',
@@ -190,6 +214,10 @@ export const registerActivityReadOnlyRoutes = (app: OpenAPIHono<ApiEnv>, activit
 
 export const registerActivityReadRoutes = (app: OpenAPIHono<ApiEnv>, activities: ActivityReadService): void => {
   registerActivityReadOnlyRoutes(app, activities);
+  app.openapi(createActivityRoute, async (context) => {
+    const activity = await activities.createDirectActivity(context.get('user').id, context.req.valid('json'));
+    return context.json(activityResponse.parse(activity), 201);
+  });
   app.openapi(updateByIdRoute, async (context) => {
     const { id } = context.req.valid('param');
     const payload = context.req.valid('json');

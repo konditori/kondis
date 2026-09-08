@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
+import type { ActivityDto } from 'src/dtos/activity.dto';
+import { ActivityType } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const ACTIVITY_ID = '00000000-0000-4000-8000-000000000002';
@@ -21,6 +23,93 @@ describe('API activity routes', () => {
     const response = await createApiApp(newApiDependencies()).request('/activities/tags');
 
     expect(response.status).toBe(401);
+  });
+
+  it('creates an activity from direct data', async () => {
+    const createDirectActivity = vi.fn((): Promise<ActivityDto> =>
+      Promise.resolve({
+        id: ACTIVITY_ID,
+        uploadId: '00000000-0000-4000-8000-000000000003',
+        userId: TEST_API_USER.id,
+        sport: 'run',
+        name: 'Morning run',
+        description: null,
+        excludeFromRankings: false,
+        tags: [],
+        startedAt: '2026-09-08T07:00:00.000Z',
+        timezoneOffsetMinutes: 0,
+        metrics: {
+          elapsedTime: 60,
+          movingTime: 60,
+          distance: 200,
+          elevationGain: 2,
+          elevationLoss: 1,
+          avgSpeed: 3.3,
+          maxSpeed: 4,
+          avgHr: 140,
+          maxHr: 150,
+          avgCadence: null,
+          maxCadence: null,
+          avgPower: null,
+          maxPower: null,
+          normalizedPower: null,
+          calories: 20,
+        },
+        createdAt: '2026-09-08T07:01:00.000Z',
+        updatedAt: '2026-09-08T07:01:00.000Z',
+      } as ActivityDto),
+    );
+    const app = createApiApp(
+      newApiDependencies({ activities: { createDirectActivity }, users: newApiUsers() }),
+    );
+    const payload = {
+      sport: 'run',
+      name: 'Morning run',
+      description: null,
+      tags: [],
+      startedAt: '2026-09-08T07:00:00.000Z',
+      timezoneOffsetMinutes: 0,
+      metrics: {
+        elapsedTime: 60,
+        movingTime: 60,
+        distance: 200,
+        elevationGain: 2,
+        elevationLoss: 1,
+        avgSpeed: 3.3,
+        maxSpeed: 4,
+        avgHr: 140,
+        maxHr: 150,
+        avgCadence: null,
+        maxCadence: null,
+        avgPower: null,
+        maxPower: null,
+        normalizedPower: null,
+        calories: 20,
+      },
+      streams: [{ type: 'time', data: [0, 60] }],
+      laps: [],
+    };
+    const response = await app.request('/activities', {
+      method: 'POST',
+      headers: { ...apiAuthHeaders(), 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    expect(response.status).toBe(201);
+    expect(createDirectActivity).toHaveBeenCalledWith(TEST_API_USER.id, payload);
+  });
+
+  it('rejects incomplete direct activity data', async () => {
+    const createDirectActivity = vi.fn();
+    const app = createApiApp(newApiDependencies({ activities: { createDirectActivity }, users: newApiUsers() }));
+    const response = await app.request('/activities', {
+      method: 'POST',
+      headers: { ...apiAuthHeaders(), 'content-type': 'application/json' },
+      body: JSON.stringify({ sport: 'run' }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(createDirectActivity).not.toHaveBeenCalled();
   });
 
   it('validates inputs and delegates authenticated reads to the activity service', async () => {
@@ -75,10 +164,10 @@ describe('API activity routes', () => {
   });
 
   it('validates and delegates activity updates and deletes', async () => {
-    const updatedActivity = {
+    const updatedActivity: ActivityDto = {
       id: ACTIVITY_ID,
       uploadId: '00000000-0000-4000-8000-000000000003',
-      sport: 'run' as const,
+      sport: ActivityType.Run,
       name: 'Evening run',
       description: null,
       excludeFromRankings: false,

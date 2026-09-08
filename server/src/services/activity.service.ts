@@ -2,7 +2,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
 import { publicMediaUrl } from 'src/demo/media';
-import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
+import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
@@ -298,6 +298,85 @@ export class ActivityService {
       await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'completed');
     }
     return JobStatus.Success;
+  }
+
+  async createDirectActivity(userId: string, input: DirectActivityCreateDto) {
+    const uploadId = crypto.randomUUID();
+    const activityId = await this.databaseRepository.withTransaction(async (trx) => {
+      await this.uploadRepository.create(
+        {
+          id: uploadId,
+          checksum: `direct:${uploadId}`,
+          original_name: 'Direct activity data',
+          byte_size: 0,
+          storage_path: '',
+          user_id: userId,
+          status: 'parsed',
+        },
+        trx,
+      );
+      const id = await this.activityRepository.create(
+        {
+          activity: {
+            id: crypto.randomUUID(),
+            upload_id: uploadId,
+            user_id: userId,
+            sport: input.sport,
+            name: input.name,
+            description: input.description,
+            tags: input.tags,
+            started_at: new Date(input.startedAt),
+            timezone_offset_minutes: input.timezoneOffsetMinutes,
+          },
+          streams: input.streams,
+          laps: input.laps.map((lap) => ({
+            lap_index: lap.lapIndex,
+            started_at: lap.startedAt ? new Date(lap.startedAt) : null,
+            elapsed_time: lap.elapsedTime,
+            moving_time: lap.movingTime,
+            distance: lap.distance,
+            avg_hr: lap.avgHr,
+            max_hr: lap.maxHr,
+            avg_power: lap.avgPower,
+            avg_speed_mps: lap.avgSpeedMps,
+          })),
+        },
+        trx,
+      );
+      await this.activityRepository.setMetrics(
+        id,
+        {
+          elapsed_time: input.metrics.elapsedTime,
+          moving_time: input.metrics.movingTime,
+          distance: input.metrics.distance,
+          elevation_gain: input.metrics.elevationGain,
+          elevation_loss: input.metrics.elevationLoss,
+          avg_speed: input.metrics.avgSpeed,
+          max_speed: input.metrics.maxSpeed,
+          avg_hr: input.metrics.avgHr,
+          max_hr: input.metrics.maxHr,
+          avg_cadence: input.metrics.avgCadence,
+          max_cadence: input.metrics.maxCadence,
+          avg_power: input.metrics.avgPower,
+          max_power: input.metrics.maxPower,
+          normalized_power: input.metrics.normalizedPower,
+          calories: input.metrics.calories,
+        },
+        trx,
+      );
+      await Promise.all([
+        this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx }),
+        this.jobRepository.queue({ name: JobName.ActivityRouteMatchCompute, data: { id } }, { transaction: trx }),
+      ]);
+      return id;
+    });
+    const activity = await this.activityRepository.getById(activityId);
+    if (!activity) {
+      throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
+    }
+    const dto = this.toActivityDto(activity, 'Direct activity data');
+    await this.eventRepository.emit('ActivityCreate', dto);
+    return dto;
   }
 
   async handleActivityMetricCompute({ id }: JobOf<JobName.ActivityMetricCompute>): Promise<JobStatus> {

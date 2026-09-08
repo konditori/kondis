@@ -28,7 +28,6 @@
     "migrate": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/migrations.ts run",
     "demo:seed": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/provision-demo.ts",
     "db:reset-development-data": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/reset-development-data.ts",
-    "demo:fit": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/generate-demo-fit-files.ts",
     "db:codegen": "kysely-codegen --dialect postgres --out-file src/db/schema.generated.ts",
     "sync-open-api": "node -r @swc-node/register scripts/run-typescript.cjs src/bin/sync-open-api.ts"
   },

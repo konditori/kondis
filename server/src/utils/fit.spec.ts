@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
+import { ActivityType } from 'src/enum';
+import { FitBaseType } from 'fit-file-parser';
 import type { FitMessages } from 'src/types';
 import { computeRunningBestEfforts } from 'src/utils/best-effort';
-import { findStream, FitParseError, parseFitMessages } from 'src/utils/fit';
+import {
+  findStream,
+  fitField,
+  fitScaledField,
+  fitSport,
+  fitTimestamp,
+  FitParseError,
+  parseFitMessages,
+  toSemicircles,
+} from 'src/utils/fit';
 
 const START = new Date('2015-06-22T08:00:00.000Z');
 const at = (offsetS: number) => new Date(START.getTime() + offsetS * 1000);
@@ -10,6 +21,55 @@ const at = (offsetS: number) => new Date(START.getTime() + offsetS * 1000);
 // ~58.67N, ~11.73E in semicircles, which is how FIT stores position.
 const LAT_SEMICIRCLES = 700_000_000;
 const LON_SEMICIRCLES = 140_000_000;
+
+describe('fitSport', () => {
+  it.each([
+    [ActivityType.Run, { sport: 1, subSport: 0 }],
+    [ActivityType.TrailRun, { sport: 1, subSport: 3 }],
+    [ActivityType.Ride, { sport: 2, subSport: 7 }],
+    [ActivityType.GravelRide, { sport: 2, subSport: 11 }],
+    [ActivityType.Swim, { sport: 5, subSport: 0 }],
+    [ActivityType.WeightTraining, { sport: 4, subSport: 20 }],
+    [ActivityType.VirtualRun, { sport: 1, subSport: 1 }],
+  ])('maps %s to FIT sport values', (activityType, expected) => {
+    expect(fitSport(activityType)).toEqual(expected);
+  });
+
+  it('defines a mapping for every activity type', () => {
+    for (const activityType of Object.values(ActivityType)) {
+      expect(fitSport(activityType)).toEqual({
+        sport: expect.any(Number),
+        subSport: expect.any(Number),
+      });
+    }
+  });
+});
+
+describe('FIT encoding helpers', () => {
+  it('encodes timestamps from the FIT epoch', () => {
+    expect(fitTimestamp(new Date('1989-12-31T00:00:00.000Z'))).toBe(0);
+    expect(fitTimestamp(new Date('1990-01-01T00:00:00.000Z'))).toBe(86_400);
+  });
+
+  it.each([
+    [0, 0],
+    [59.329199, 707_824_915],
+    [-122.4194, -1_460_520_332],
+  ])('converts %s degrees to FIT semicircles', (degrees, expected) => {
+    expect(toSemicircles(degrees)).toBe(expected);
+  });
+
+  it('creates fields with FIT byte sizes and scaled values', () => {
+    expect(fitField(2, FitBaseType.Uint16, 12)).toEqual({
+      number: 2,
+      size: 2,
+      baseType: FitBaseType.Uint16,
+      value: 12,
+    });
+    expect(fitField(253, FitBaseType.Uint32, 12)).toMatchObject({ size: 4 });
+    expect(fitScaledField(6, FitBaseType.Uint16, 2.3456, 1000)).toMatchObject({ value: 2346 });
+  });
+});
 
 describe('parseFitMessages', () => {
   it('prefers device session summaries over stream-derived values', () => {

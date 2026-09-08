@@ -1089,6 +1089,11 @@ button {
   width: min(1060px, 100%);
   margin: 0 auto;
 }
+.live-activity-page .live-workout-view {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
 .live-workout-heading {
   display: flex;
   align-items: flex-start;

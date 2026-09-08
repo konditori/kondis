@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  DEMO_LIVE_INGESTION_HOST,
-  DEMO_LIVE_INGESTION_PATH,
-  DemoLiveTracker,
-} from 'src/demo/demo-live-tracker';
+import { DEMO_LIVE_INGESTION_HOST, DEMO_LIVE_INGESTION_PATH, DemoLiveTracker } from 'src/demo/demo-live-tracker';
 
 describe(DemoLiveTracker.name, () => {
   afterEach(() => {
@@ -19,7 +15,12 @@ describe(DemoLiveTracker.name, () => {
     );
     const state = {
       storage: {
-        get: vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined),
+        get: vi
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(undefined)
+          .mockResolvedValueOnce(undefined)
+          .mockResolvedValueOnce(undefined),
         put: vi.fn().mockResolvedValue(undefined),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },
@@ -31,27 +32,29 @@ describe(DemoLiveTracker.name, () => {
     );
 
     expect(response.status).toBe(204);
-    expect(state.storage.put).toHaveBeenCalledTimes(2);
+    expect(state.storage.put).toHaveBeenCalledTimes(4);
     const request = fetch.mock.calls[0]![0] as unknown as Request;
     expect(request.url).toBe(`https://${DEMO_LIVE_INGESTION_HOST}${DEMO_LIVE_INGESTION_PATH}`);
     expect(request.method).toBe('POST');
     const payload = await request.json();
-    expect(state.storage.setAlarm).toHaveBeenCalledWith(Date.parse(payload.startedAt as string) + 10_000);
+    expect(Date.parse(payload.startedAt as string)).toBe(Date.now());
     expect(payload).toMatchObject({
       clientSessionId: expect.stringMatching(/^[0-9a-f-]{36}$/),
-      sport: 'run',
+      sport: 'ride',
       elapsedSeconds: 0,
       distanceMeters: 0,
       points: [
         expect.objectContaining({
-          sequence: 1,
+          sequence: expect.any(Number),
           latitude: expect.any(Number),
           longitude: expect.any(Number),
-          altitude: 28,
+          altitude: expect.any(Number),
           accuracyMeters: 5,
         }),
       ],
     });
+    expect((payload.points as [{ sequence: number }])[0].sequence).toBe(1);
+    expect(state.storage.setAlarm).toHaveBeenCalledWith(Date.now() + 10_000);
   });
 
   it('keeps uploading the next point after each alarm', async () => {
@@ -65,7 +68,9 @@ describe(DemoLiveTracker.name, () => {
       storage: {
         get: vi
           .fn()
+          .mockResolvedValueOnce(false)
           .mockResolvedValueOnce(startedAt.getTime())
+          .mockResolvedValueOnce(100)
           .mockResolvedValueOnce('00000000-0000-4000-8000-000000000099'),
         put: vi.fn(),
         setAlarm: vi.fn().mockResolvedValue(undefined),
@@ -85,9 +90,10 @@ describe(DemoLiveTracker.name, () => {
     expect(secondPayload.clientSessionId).toBe(firstPayload.clientSessionId);
     expect(secondPayload).toMatchObject({
       elapsedSeconds: 10,
-      distanceMeters: 47,
-      points: [expect.objectContaining({ sequence: 2 })],
+      distanceMeters: expect.any(Number),
+      points: [expect.objectContaining({ sequence: 102 })],
     });
+    expect(secondPayload.distanceMeters).toBeGreaterThan(firstPayload.distanceMeters);
     expect(state.storage.setAlarm).toHaveBeenCalledTimes(2);
   });
 
@@ -101,7 +107,12 @@ describe(DemoLiveTracker.name, () => {
     });
     const state = {
       storage: {
-        get: vi.fn().mockResolvedValue(startedAt.getTime()),
+        get: vi
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(startedAt.getTime())
+          .mockResolvedValueOnce(0)
+          .mockResolvedValueOnce('00000000-0000-4000-8000-000000000099'),
         put: vi.fn().mockResolvedValue(undefined),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },

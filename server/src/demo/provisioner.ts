@@ -1,19 +1,24 @@
 import { sql } from 'kysely';
 
-import { DEMO_FIT_SPECS, createDemoFitFile } from 'src/demo/fit';
+import {
+  createDemoActivityData,
+  DEMO_ACTIVITY_COMMENTS,
+  DEMO_FIT_SPECS,
+  DEMO_IMAGE_MIME_TYPE,
+  DEMO_PASSWORD_HASH,
+  DEMO_SESSION_ID,
+  DEMO_SESSION_TOKEN_HASH,
+  DEMO_USER_CONFIGS,
+  demoFixtureId,
+  JOHN_EMAIL,
+} from 'src/demo/demo-data';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { FitRepository } from 'src/repositories/fit.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
-import { parseFitMessages } from 'src/utils/fit';
 
-export const JOHN_EMAIL = 'john@kondis.org';
-const DEMO_PASSWORD_HASH = '$2b$12$q5KRFbq3UirFSlEhM7Xa.uoi96PRJvpMz4b6UPvN4clsmqB0VxfGW';
-const DEMO_IMAGE_MIME_TYPE = 'image/jpeg';
-const SOFIA_EMAIL = 'sofia@kondis.org';
-const MARCUS_EMAIL = 'marcus@kondis.org';
+export { DEMO_SESSION_ID } from 'src/demo/demo-data';
 
 export type DemoImageMetadata = {
   originalName: string;
@@ -23,141 +28,12 @@ export type DemoImageMetadata = {
   height: number;
 };
 
-const demoFixtureId = (kind: number, index: number): string =>
-  `00000000-0000-4000-8000-${String(kind * 100 + index + 1).padStart(12, '0')}`;
-
-// TODO: dont hardcode the session id
-export const DEMO_SESSION_ID = demoFixtureId(9, 0);
-const DEMO_SESSION_TOKEN_HASH = '9b95c4cbc655cd99db0b02ec50991d59c06c6c3c19aaaea7618ddef8e9b5e73a';
-
-const DEMO_USER_CONFIGS = [
-  {
-    id: demoFixtureId(1, 0),
-    email: JOHN_EMAIL,
-    role: 'admin',
-    first_name: 'John',
-    last_name: 'Doe',
-    avatar_path: 'avatars/john-doe.jpg',
-    avatar_mime_type: DEMO_IMAGE_MIME_TYPE,
-    avatar_size: 144_935,
-  },
-  {
-    id: demoFixtureId(1, 1),
-    email: SOFIA_EMAIL,
-    role: 'user',
-    first_name: 'Sofia',
-    last_name: 'Berg',
-    avatar_path: 'avatars/sofia-berg.jpg',
-    avatar_mime_type: DEMO_IMAGE_MIME_TYPE,
-    avatar_size: 168_522,
-  },
-  {
-    id: demoFixtureId(1, 2),
-    email: MARCUS_EMAIL,
-    role: 'user',
-    first_name: 'Marcus',
-    last_name: 'Lee',
-    avatar_path: 'avatars/marcus-lee.jpg',
-    avatar_mime_type: DEMO_IMAGE_MIME_TYPE,
-    avatar_size: 100_841,
-  },
-] as const;
-
-type DemoCommentConfig = {
-  userEmail: string;
-  body: string;
-};
-
-const DEMO_ACTIVITY_COMMENTS: Record<string, readonly DemoCommentConfig[]> = {
-  'golden-hour-trail': [
-    {
-      userEmail: SOFIA_EMAIL,
-      body: 'That light is worth the early alarm. The loop looks perfect.',
-    },
-    {
-      userEmail: JOHN_EMAIL,
-      body: 'It really was. The legs felt better than expected too.',
-    },
-  ],
-  'city-tempo': [
-    {
-      userEmail: MARCUS_EMAIL,
-      body: 'The middle three kilometres look properly spicy. Nice pacing.',
-    },
-  ],
-  'island-ride': [
-    {
-      userEmail: JOHN_EMAIL,
-      body: 'Cold hands, warm sunset. That is a pretty good trade.',
-    },
-  ],
-  'gravel-after-work': [
-    {
-      userEmail: SOFIA_EMAIL,
-      body: 'Did the final climb feel as fast as it looks?',
-    },
-    {
-      userEmail: JOHN_EMAIL,
-      body: 'Somehow, yes. The dusty descent made up for the first half.',
-    },
-  ],
-  'long-sunday-run': [
-    {
-      userEmail: MARCUS_EMAIL,
-      body: 'This is exactly the kind of run that makes Monday feel easier.',
-    },
-  ],
-  'park-walk': [
-    {
-      userEmail: JOHN_EMAIL,
-      body: 'A very good choice after a long day. The park looks peaceful.',
-    },
-  ],
-  'golden-gate-intervals': [
-    {
-      userEmail: SOFIA_EMAIL,
-      body: 'Short and sharp is right. Those efforts add up quickly.',
-    },
-  ],
-  'central-park-progression': [
-    {
-      userEmail: MARCUS_EMAIL,
-      body: 'The best kind of progression: relaxed enough at the start to enjoy it.',
-    },
-  ],
-  'seawall-sunrise-ride': [
-    {
-      userEmail: JOHN_EMAIL,
-      body: 'That is a beautiful way to start the day. Smooth route, too.',
-    },
-  ],
-  'wildwood-climb': [
-    {
-      userEmail: SOFIA_EMAIL,
-      body: 'Muddy shoes and a fast descent is a solid day out.',
-    },
-  ],
-  'thames-evening-ride': [
-    {
-      userEmail: MARCUS_EMAIL,
-      body: 'The river light must have been excellent on this one.',
-    },
-  ],
-  'canal-recovery-spin': [
-    {
-      userEmail: JOHN_EMAIL,
-      body: 'Exactly the right amount of effort for a recovery day.',
-    },
-  ],
-};
-
 export type DemoProvisioningDependencies = {
   database: KondisDatabase;
   activities: ActivityRepository;
   imageMetadata: Readonly<Record<string, readonly DemoImageMetadata[]>>;
   images: ActivityImageRepository;
   uploads: UploadRepository;
-  fit: FitRepository;
   social: SocialRepository;
 };
 
@@ -176,18 +52,6 @@ type DemoActivity = {
   spec: (typeof DEMO_FIT_SPECS)[number];
 };
 
-const toLapInput = (lap: ReturnType<typeof parseFitMessages>['laps'][number]) => ({
-  lap_index: lap.index,
-  started_at: lap.startedAt,
-  elapsed_time: lap.elapsedTimeS,
-  moving_time: lap.movingTimeS,
-  distance: lap.distanceM,
-  avg_hr: lap.avgHr,
-  max_hr: lap.maxHr,
-  avg_power: lap.avgPower,
-  avg_speed_mps: lap.avgSpeedMps,
-});
-
 const seedActivity = async (
   executor: KondisExecutor,
   dependencies: DemoProvisioningDependencies,
@@ -195,15 +59,14 @@ const seedActivity = async (
   spec: (typeof DEMO_FIT_SPECS)[number],
   index: number,
 ): Promise<string> => {
-  const bytes = createDemoFitFile(spec);
-  const parsed = parseFitMessages(dependencies.fit.decode(bytes));
+  const data = createDemoActivityData(spec);
   const upload = await dependencies.uploads.create(
     {
       id: demoFixtureId(2, index),
-      checksum: `demo-fit-v1:${spec.slug}`,
-      original_name: spec.filename,
-      byte_size: bytes.byteLength,
-      storage_path: `demo/${spec.filename}`,
+      checksum: `demo-activity-v1:${spec.slug}`,
+      original_name: `${spec.slug}.activity.json`,
+      byte_size: 0,
+      storage_path: '',
       user_id: user.id,
       status: 'parsed',
     },
@@ -219,35 +82,15 @@ const seedActivity = async (
         name: spec.title,
         description: spec.description,
         tags: spec.tags,
-        started_at: parsed.startedAt,
+        started_at: new Date(spec.startedAt),
         timezone_offset_minutes: 120,
       },
-      streams: parsed.streams,
-      laps: parsed.laps.map((lap) => toLapInput(lap)),
+      streams: data.streams,
+      laps: data.laps,
     },
     executor,
   );
-  await dependencies.activities.setMetrics(
-    activityId,
-    {
-      elapsed_time: parsed.elapsedTime,
-      moving_time: parsed.movingTime,
-      distance: parsed.distance,
-      elevation_gain: parsed.elevationGain,
-      elevation_loss: parsed.elevationLoss,
-      avg_speed: parsed.avgSpeed,
-      max_speed: parsed.maxSpeed,
-      avg_hr: parsed.avgHr,
-      max_hr: parsed.maxHr,
-      avg_cadence: parsed.avgCadence,
-      max_cadence: parsed.maxCadence,
-      avg_power: parsed.avgPower,
-      max_power: parsed.maxPower,
-      normalized_power: parsed.normalizedPower,
-      calories: parsed.calories,
-    },
-    executor,
-  );
+  await dependencies.activities.setMetrics(activityId, data.metrics, executor);
   return activityId;
 };
 
@@ -439,7 +282,7 @@ const provisionDemoDataOnce = async (dependencies: DemoProvisioningDependencies)
     const existingUploads = await transaction
       .selectFrom('upload')
       .select('id')
-      .where('checksum', 'like', 'demo-fit-v1:%')
+      .where('checksum', 'like', 'demo-activity-v1:%')
       .execute();
     const existingActivities =
       existingUploads.length > 0

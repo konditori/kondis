@@ -1,12 +1,15 @@
+import { z } from '@hono/zod-openapi';
 import type { AuthenticatedUser } from 'src/auth';
+import type { createWorkerInvocationComposition } from 'src/composition.worker';
 import {
   DEMO_LIVE_INGESTION_HOST,
   DEMO_LIVE_INGESTION_PATH,
   DEMO_LIVE_TRACKER_NAME,
   type DemoLiveTrackerNamespaceBinding,
 } from 'src/demo/demo-live-tracker';
-import type { createWorkerInvocationComposition } from 'src/composition.worker';
 import { LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
+
+const DemoLiveWorkoutPointsSchema = LiveWorkoutPointsSchema.extend({ finished: z.boolean().optional() });
 
 type DemoLiveEnvironment = {
   KONDIS_DEMO_MODE?: boolean | string;
@@ -64,12 +67,19 @@ export const ingestDemoLiveTrackerPoint = async (
     return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
   }
   const session = LiveWorkoutCreateSchema.safeParse(body);
-  const points = LiveWorkoutPointsSchema.safeParse(body);
+  const points = DemoLiveWorkoutPointsSchema.safeParse(body);
   if (!session.success || !points.success) {
     return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
   }
   const workout = await composition.liveWorkoutService.create(demoUser.id, session.data);
   const acknowledgement = await composition.liveWorkoutService.appendPoints(workout.id, demoUser.id, points.data);
+  if (points.data.finished) {
+    await composition.liveWorkoutService.updateState(workout.id, demoUser.id, {
+      status: 'ended',
+      elapsedSeconds: points.data.elapsedSeconds,
+      distanceMeters: points.data.distanceMeters,
+    });
+  }
   return Response.json(acknowledgement, { status: 201 });
 };
 

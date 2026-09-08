@@ -125,18 +125,7 @@ export const CRON_JOBS: { item: JobItem; cron: string }[] = [
     item: { name: JobName.AuthCredentialCleanup, data: {} },
     cron: '15 * * * *',
   },
-  {
-    item: { name: JobName.ActivityParseQueueAll, data: { force: false } },
-    cron: '30 3 * * *',
-  },
   { item: { name: JobName.TemporaryFileCleanup, data: {} }, cron: '0 4 * * *' },
-  {
-    item: {
-      name: JobName.ActivityImageGenerateQueueAll,
-      data: { force: false },
-    },
-    cron: '30 4 * * *',
-  },
 ];
 
 export const JOB_CONCURRENCY = {
@@ -158,7 +147,6 @@ export type JobFailureTransition = {
   retryCount: number;
 };
 
-// retryLimit is the number of retries after the initial attempt.
 export const getJobFailureTransition = (retryCount: number, retryLimit: number): JobFailureTransition => {
   const nextRetryCount = retryCount + 1;
   return {

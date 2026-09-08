@@ -1,3 +1,6 @@
+import { FitBaseType, FitEncoder } from 'fit-file-parser';
+
+import { FIT_SEMICIRCLES_PER_DEGREE } from 'src/constants';
 import type {
   FitLapMesg,
   FitMessages,
@@ -7,6 +10,7 @@ import type {
   ParsedLap,
   ParsedStream,
   StreamType,
+  ActivityType,
 } from 'src/types';
 import { toActivityType } from 'src/utils/activity';
 import {
@@ -22,6 +26,91 @@ const SEMICIRCLE_TO_DEGREES = 180 / 2 ** 31;
 
 // FIT timestamps count seconds from 1989-12-31T00:00:00Z
 const FIT_EPOCH_OFFSET_S = 631_065_600;
+
+export type FitField = {
+  number: number;
+  size: number;
+  baseType: FitBaseType;
+  value: number;
+};
+
+export const fitField = (number: number, baseType: FitBaseType, value: number): FitField => ({
+  number,
+  size: baseType === FitBaseType.Uint32 || baseType === FitBaseType.Sint32 ? 4 : baseType >= 128 ? 2 : 1,
+  baseType,
+  value,
+});
+
+export const fitScaledField = (number: number, baseType: FitBaseType, value: number, scale: number): FitField =>
+  fitField(number, baseType, Math.round(value * scale));
+
+export const fitTimestamp = (date: Date): number => FitEncoder.toFitTimestamp(date);
+
+export const toSemicircles = (degrees: number): number => Math.round(degrees * FIT_SEMICIRCLES_PER_DEGREE);
+
+export type FitSport = { sport: number; subSport: number };
+
+const FIT_SPORT_BY_ACTIVITY: Record<ActivityType, FitSport> = {
+  alpine_ski: { sport: 13, subSport: 0 },
+  backcountry_ski: { sport: 13, subSport: 37 },
+  badminton: { sport: 0, subSport: 0 },
+  basketball: { sport: 6, subSport: 0 },
+  canoeing: { sport: 19, subSport: 0 },
+  cricket: { sport: 0, subSport: 0 },
+  cross_country_ski: { sport: 12, subSport: 0 },
+  crossfit: { sport: 4, subSport: 23 },
+  dance: { sport: 4, subSport: 23 },
+  e_bike_ride: { sport: 21, subSport: 0 },
+  elliptical: { sport: 4, subSport: 15 },
+  e_mountain_bike_ride: { sport: 21, subSport: 8 },
+  golf: { sport: 25, subSport: 0 },
+  gravel_ride: { sport: 2, subSport: 11 },
+  handcycle: { sport: 2, subSport: 12 },
+  high_intensity_interval_training: { sport: 4, subSport: 26 },
+  hike: { sport: 17, subSport: 0 },
+  ice_skate: { sport: 0, subSport: 0 },
+  inline_skate: { sport: 27, subSport: 0 },
+  kayaking: { sport: 19, subSport: 0 },
+  kitesurf: { sport: 35, subSport: 0 },
+  mountain_bike_ride: { sport: 2, subSport: 8 },
+  padel: { sport: 8, subSport: 0 },
+  physical_therapy: { sport: 4, subSport: 23 },
+  pickleball: { sport: 8, subSport: 0 },
+  pilates: { sport: 4, subSport: 23 },
+  racquetball: { sport: 8, subSport: 0 },
+  ride: { sport: 2, subSport: 7 },
+  rock_climbing: { sport: 28, subSport: 0 },
+  roller_ski: { sport: 12, subSport: 0 },
+  rowing: { sport: 15, subSport: 0 },
+  run: { sport: 1, subSport: 0 },
+  sail: { sport: 29, subSport: 0 },
+  skateboard: { sport: 0, subSport: 0 },
+  snowboard: { sport: 14, subSport: 0 },
+  snowshoe: { sport: 39, subSport: 0 },
+  soccer: { sport: 7, subSport: 0 },
+  squash: { sport: 8, subSport: 0 },
+  stair_stepper: { sport: 4, subSport: 16 },
+  stand_up_paddling: { sport: 33, subSport: 0 },
+  surfing: { sport: 34, subSport: 0 },
+  swim: { sport: 5, subSport: 0 },
+  table_tennis: { sport: 8, subSport: 0 },
+  tennis: { sport: 8, subSport: 0 },
+  trail_run: { sport: 1, subSport: 3 },
+  velomobile: { sport: 2, subSport: 7 },
+  virtual_ride: { sport: 2, subSport: 6 },
+  virtual_row: { sport: 15, subSport: 14 },
+  virtual_run: { sport: 1, subSport: 1 },
+  volleyball: { sport: 0, subSport: 0 },
+  walk: { sport: 11, subSport: 0 },
+  weight_training: { sport: 4, subSport: 20 },
+  wheelchair: { sport: 38, subSport: 0 },
+  windsurf: { sport: 0, subSport: 0 },
+  workout: { sport: 4, subSport: 23 },
+  yoga: { sport: 4, subSport: 23 },
+  other: { sport: 0, subSport: 0 },
+};
+
+export const fitSport = (activityType: ActivityType): FitSport => FIT_SPORT_BY_ACTIVITY[activityType];
 
 export class FitParseError extends Error {
   constructor(message: string) {

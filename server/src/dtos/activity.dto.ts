@@ -63,6 +63,42 @@ export const ActivityMetricSchema = z
   })
   .meta({ id: 'ActivityMetricDto' });
 
+const ActivityStreamTypeSchema = z.enum([
+  'time',
+  'latitude',
+  'longitude',
+  'altitude',
+  'distance',
+  'speed',
+  'heartrate',
+  'cadence',
+  'power',
+  'temperature',
+]);
+const DirectActivityLapSchema = z.object({
+  lapIndex: z.number().int().nonnegative(),
+  startedAt: z.string().datetime().nullable(),
+  elapsedTime: z.number().int().nonnegative().nullable(),
+  movingTime: z.number().int().nonnegative().nullable(),
+  distance: z.number().nonnegative().nullable(),
+  avgHr: z.number().int().nonnegative().nullable(),
+  maxHr: z.number().int().nonnegative().nullable(),
+  avgPower: z.number().int().nonnegative().nullable(),
+  avgSpeedMps: z.number().nonnegative().nullable(),
+});
+export const DirectActivityCreateSchema = z.object({
+  sport: ActivityTypeSchema,
+  name: z.string().max(200).nullable(),
+  description: z.string().max(10_000).nullable(),
+  tags: z.array(ActivityTagSchema).max(20),
+  startedAt: z.string().datetime(),
+  timezoneOffsetMinutes: z.number().int().nullable(),
+  metrics: ActivityMetricSchema,
+  streams: z.array(z.object({ type: ActivityStreamTypeSchema, data: z.array(z.number().finite()) })),
+  laps: z.array(DirectActivityLapSchema),
+});
+export type DirectActivityCreateDto = z.output<typeof DirectActivityCreateSchema>;
+
 export const ActivitySchema = z.object({
   id: z.string().uuid().describe('Activity id'),
   uploadId: z.string().uuid().describe('Source upload id'),

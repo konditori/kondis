@@ -4,14 +4,12 @@ import { resolve } from 'node:path';
 import sharp from 'sharp';
 
 import { createDatabase } from 'src/db/database';
-import { DEMO_FIT_SPECS } from 'src/demo/fit';
+import { DEMO_FIT_SPECS } from 'src/demo/demo-data';
 import { provisionDemoData, type DemoImageMetadata } from 'src/demo/provisioner';
-import { ConsoleLogger } from 'src/logger';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
-import { FitRepository } from 'src/repositories/fit.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 
@@ -66,7 +64,6 @@ const main = async (): Promise<void> => {
       imageMetadata,
       images: new ActivityImageRepository(database),
       uploads: new UploadRepository(database),
-      fit: new FitRepository(new ConsoleLogger()),
       social: new SocialRepository(database),
     });
     console.log('Demo database migrated and seeded.');
