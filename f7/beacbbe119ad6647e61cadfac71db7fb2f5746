@@ -1,0 +1,25 @@
+.gitignore
+  s_966f7e05d00a35::t_157d8af0e9daa7 19
+mise.toml
+  s_966f7e05d00a35::t_ba778330ad9f24 70
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_966f7e05d00a35::t_24262f0610cd24 71-82,89-93,95,98-101,104,106,109,112-135
+test/test-assets
+  s_966f7e05d00a35::t_9d4e1ffd06570b 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f7beacbbe119ad6647e61cadfac71db7fb2f5746",
+  "prompts": {},
+  "sessions": {
+    "s_966f7e05d00a35": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07fd4-28b2-7e40-b08c-77f464e72662",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
