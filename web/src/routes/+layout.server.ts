@@ -29,6 +29,7 @@ export const load: LayoutServerLoad = async ({
         avatarUrl: string | null;
       }
     | undefined;
+  // Shared token links are intentionally standalone/public.
   const publicLiveView = url?.pathname.startsWith("/live/") ?? false;
   const publicAuthPage =
     url?.pathname === "/login" ||

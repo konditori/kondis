@@ -5,7 +5,7 @@
     LoaderCircle,
   } from "@lucide/svelte";
   import { goto } from "$app/navigation";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { page } from "$app/state";
   import type { Snapshot } from "@sveltejs/kit";
   import ActivityCard from "$lib/components/ActivityCard.svelte";
@@ -41,6 +41,7 @@
   // The server-rendered list is only a snapshot: the page HTML may come from
   // the CDN cache, so the client reconciles live workouts itself.
   let liveWorkoutsOverride = $state<LiveWorkout[] | null>(null);
+  let now = $state(Date.now());
   const liveWorkouts = $derived(liveWorkoutsOverride ?? data.liveWorkouts);
   const activities = $derived.by(() => {
     const byUpload = new Map(
@@ -73,6 +74,11 @@
       ? t("activity_found", { count: displayedTotal })
       : t("activities_found", { count: displayedTotal }),
   );
+
+  onMount(() => {
+    const clock = window.setInterval(() => (now = Date.now()), 1_000);
+    return () => window.clearInterval(clock);
+  });
 
   $effect(() => {
     if (data.activities) {
@@ -192,6 +198,7 @@
                   elapsedSeconds: event.workout.elapsedSeconds,
                   distanceMeters: event.workout.distanceMeters,
                   lastSequence: event.workout.lastSequence,
+                  lastReceivedAt: new Date().toISOString(),
                 }
               : workout,
           );
@@ -354,14 +361,21 @@
     <section class="live-workout-list" aria-label={t("live_activities")}>
       {#each liveWorkouts as workout (workout.id)}
         {@const Icon = sportIcon(workout.sport)}
+        {@const ageSeconds = workout.lastReceivedAt
+          ? Math.max(
+              0,
+              Math.floor((now - Date.parse(workout.lastReceivedAt)) / 1000),
+            )
+          : null}
         {@const averageSpeed =
           workout.elapsedSeconds > 0
             ? workout.distanceMeters / workout.elapsedSeconds
             : null}
         <article class="activity-card live-activity-card">
-          <a class="activity-card-summary" href={`/live/session/${workout.id}`}>
+          <a class="activity-card-summary" href={`/activity/${workout.id}`}>
             <div class="sport-badge">
               <Icon size={24} strokeWidth={1.8} />
+              <span class="live-label">{t("live").toUpperCase()}</span>
               <span
                 class:paused={workout.status === "paused"}
                 class="live-beacon"
@@ -376,6 +390,11 @@
                 {localDate(workout.startedAt)} · {localTime(workout.startedAt)} ·
                 {workout.status === "paused" ? t("paused") : t("live")}
               </p>
+              <span class="live-updated"
+                >{ageSeconds === null
+                  ? t("waiting_for_gps")
+                  : t("updated_seconds_ago", { seconds: ageSeconds })}</span
+              >
             </div>
             <div class="activity-feed-stats">
               <div class="activity-stat">
@@ -403,7 +422,7 @@
           {#if workout.route.length >= 2}
             <a
               class="activity-card-media-link"
-              href={`/live/session/${workout.id}`}
+              href={`/activity/${workout.id}`}
             >
               <div class="activity-card-media">
                 <div class="activity-card-map live-list-map">

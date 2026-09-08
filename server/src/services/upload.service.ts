@@ -7,7 +7,7 @@ import {
   TakeoutImportScanDto,
   TakeoutManualItemDto,
 } from 'src/dtos/upload.dto';
-import { JobName, JobStatus } from 'src/enum';
+import { ActivityType as ActivityTypeEnum, JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
 import type { CryptoPort } from 'src/ports/crypto.port';
@@ -211,7 +211,7 @@ export class UploadService {
       if (activity && this.eventRepository) {
         await this.eventRepository.emit(
           'ActivityUploadSkipped',
-          { id: activity.id, name: activity.name, sport: activity.sport },
+          { id: activity.id, name: activity.name, sport: activity.sport as ActivityTypeEnum },
           originalName,
         );
       }

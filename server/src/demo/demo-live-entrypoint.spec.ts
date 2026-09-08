@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { DEMO_LIVE_TRACKER_NAME } from 'src/cloudflare/demo-live-tracker';
+import { DEMO_LIVE_TRACKER_NAME } from 'src/demo/demo-live-tracker';
 
 const mocks = vi.hoisted(() => ({
   createComposition: vi.fn(),

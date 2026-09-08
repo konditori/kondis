@@ -2,7 +2,7 @@ import { createCloudflareCryptoAdapter } from 'src/adapters/cloudflare/crypto.ad
 import type { CloudflareQueueBinding } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
 import { R2StorageAdapter, type R2BucketBinding } from 'src/adapters/cloudflare/storage.adapter';
-import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/cloudflare/demo-live-tracker';
+import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/demo-live-tracker';
 import { createPortableWorkerHandlers } from 'src/cloudflare/queue-handler';
 import {
   DurableObjectRealtimeAdapter,
@@ -145,7 +145,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const workerUserService = storage
     ? new WorkerUserService(userRepository, socialRepository, storage, queueAdapter)
     : undefined;
-  const socialService = new SocialService(socialRepository, database, workerEvents, env.KONDIS_DEMO_MEDIA_BASE_URL);
+  const socialService = new SocialService(socialRepository, workerEvents, env.KONDIS_DEMO_MEDIA_BASE_URL);
   const liveWorkoutService = new LiveWorkoutService(new LiveWorkoutRepository(database), workerCrypto, workerEvents);
   const jobService = new JobService({ admin: queueAdapter, producer: queueAdapter }, workerEvents, new ConsoleLogger());
 

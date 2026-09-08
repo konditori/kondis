@@ -4,6 +4,7 @@ import { DEMO_FIT_SPECS, createDemoFitFile } from 'src/demo/fit';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
 import { parseFitMessages } from 'src/utils/fit';
@@ -25,8 +26,7 @@ export type DemoImageMetadata = {
 const demoFixtureId = (kind: number, index: number): string =>
   `00000000-0000-4000-8000-${String(kind * 100 + index + 1).padStart(12, '0')}`;
 
-// A stable, far-future session lets the read-only demo issue realtime event
-// tickets without granting write access to anything else.
+// TODO: dont hardcode the session id
 export const DEMO_SESSION_ID = demoFixtureId(9, 0);
 const DEMO_SESSION_TOKEN_HASH = '9b95c4cbc655cd99db0b02ec50991d59c06c6c3c19aaaea7618ddef8e9b5e73a';
 
@@ -158,6 +158,7 @@ export type DemoProvisioningDependencies = {
   images: ActivityImageRepository;
   uploads: UploadRepository;
   fit: FitRepository;
+  social: SocialRepository;
 };
 
 type DemoUser = {
@@ -380,6 +381,7 @@ const seedActivityForUser = async (
 
 const seedSocialData = async (
   executor: KondisExecutor,
+  dependencies: DemoProvisioningDependencies,
   users: readonly DemoUser[],
   activities: readonly DemoActivity[],
 ) => {
@@ -414,16 +416,16 @@ const seedSocialData = async (
         throw new Error(`Missing demo comment user ${comment.userEmail}`);
       }
       const createdAt = new Date(new Date(activity.spec.startedAt).getTime() + (commentIndex + 1) * 60 * 60 * 1000);
-      await executor
-        .insertInto('activity_comment')
-        .values({
+      await dependencies.social.createComment(
+        {
           activity_id: activity.id,
           user_id: actor.id,
           body: comment.body,
           created_at: createdAt,
           updated_at: createdAt,
-        })
-        .executeTakeFirstOrThrow();
+        },
+        executor,
+      );
     }
   }
 };
@@ -469,7 +471,7 @@ const provisionDemoDataOnce = async (dependencies: DemoProvisioningDependencies)
       });
     }
     await seedDemoImages(transaction, dependencies, activities);
-    await seedSocialData(transaction, users, activities);
+    await seedSocialData(transaction, dependencies, users, activities);
     return {
       user: asAuthenticatedUser(users[0]),
       activityIds: activities.map(({ id }) => id),

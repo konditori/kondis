@@ -12,6 +12,7 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
+import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 
 const demoMediaDirectory = process.env.KONDIS_DEMO_MEDIA_DIR ?? resolve(process.cwd(), '../test/test-assets/demo/v1');
@@ -66,6 +67,7 @@ const main = async (): Promise<void> => {
       images: new ActivityImageRepository(database),
       uploads: new UploadRepository(database),
       fit: new FitRepository(new ConsoleLogger()),
+      social: new SocialRepository(database),
     });
     console.log('Demo database migrated and seeded.');
   } finally {

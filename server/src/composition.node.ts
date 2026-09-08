@@ -109,7 +109,7 @@ export const createApplicationComposition = ({
   );
   const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository, eventRepository);
   const serverService = new ServerService();
-  const socialService = new SocialService(socialRepository, database, eventRepository);
+  const socialService = new SocialService(socialRepository, eventRepository);
   const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
   const uploadService = new UploadService(
     uploadRepository,

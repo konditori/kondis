@@ -3,9 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DEMO_LIVE_INGESTION_HOST,
   DEMO_LIVE_INGESTION_PATH,
-  DEMO_LIVE_TRACKER_CLIENT_SESSION_ID,
   DemoLiveTracker,
-} from 'src/cloudflare/demo-live-tracker';
+} from 'src/demo/demo-live-tracker';
 
 describe(DemoLiveTracker.name, () => {
   afterEach(() => {
@@ -20,7 +19,7 @@ describe(DemoLiveTracker.name, () => {
     );
     const state = {
       storage: {
-        get: vi.fn().mockResolvedValue(undefined),
+        get: vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined),
         put: vi.fn().mockResolvedValue(undefined),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },
@@ -32,14 +31,14 @@ describe(DemoLiveTracker.name, () => {
     );
 
     expect(response.status).toBe(204);
-    expect(state.storage.put).toHaveBeenCalledOnce();
+    expect(state.storage.put).toHaveBeenCalledTimes(2);
     const request = fetch.mock.calls[0]![0] as unknown as Request;
     expect(request.url).toBe(`https://${DEMO_LIVE_INGESTION_HOST}${DEMO_LIVE_INGESTION_PATH}`);
     expect(request.method).toBe('POST');
     const payload = await request.json();
     expect(state.storage.setAlarm).toHaveBeenCalledWith(Date.parse(payload.startedAt as string) + 10_000);
     expect(payload).toMatchObject({
-      clientSessionId: DEMO_LIVE_TRACKER_CLIENT_SESSION_ID,
+      clientSessionId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       sport: 'run',
       elapsedSeconds: 0,
       distanceMeters: 0,
@@ -64,7 +63,10 @@ describe(DemoLiveTracker.name, () => {
     );
     const state = {
       storage: {
-        get: vi.fn().mockResolvedValue(startedAt.getTime()),
+        get: vi
+          .fn()
+          .mockResolvedValueOnce(startedAt.getTime())
+          .mockResolvedValueOnce('00000000-0000-4000-8000-000000000099'),
         put: vi.fn(),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },
@@ -76,8 +78,12 @@ describe(DemoLiveTracker.name, () => {
     await tracker.alarm();
 
     expect(fetch).toHaveBeenCalledTimes(2);
+    const firstRequest = fetch.mock.calls[0]![0] as unknown as Request;
     const request = fetch.mock.calls[1]![0] as unknown as Request;
-    await expect(request.json()).resolves.toMatchObject({
+    const firstPayload = await firstRequest.json();
+    const secondPayload = await request.json();
+    expect(secondPayload.clientSessionId).toBe(firstPayload.clientSessionId);
+    expect(secondPayload).toMatchObject({
       elapsedSeconds: 10,
       distanceMeters: 47,
       points: [expect.objectContaining({ sequence: 2 })],

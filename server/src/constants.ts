@@ -1,4 +1,5 @@
 import type { ActivityTagSettings, ActivityTypeSettings, BestEffortType } from 'src/types';
+import { ActivityType } from 'src/enum';
 import { AverageMetric, BestEffortGroup } from 'src/types';
 export {
   JOB_CONCURRENCY,
@@ -24,6 +25,10 @@ export const IMAGE_PREVIEW_SIZE = 1440;
 export const IMAGE_PROCESSING_VERSION = 1;
 
 export const TRACK_SIMPLIFY_TOLERANCE_DEG = 0.00002;
+export const EARTH_RADIUS_M = 6_371_000;
+export const FIT_PROFILE_VERSION = 810;
+export const FIT_PROTOCOL_VERSION = 0x20;
+export const FIT_SEMICIRCLES_PER_DEGREE = 2 ** 31 / 180;
 export const ROUTE_CANDIDATE_LIMIT = 250;
 export const ROUTE_PREFILTER_RADIUS_METERS = 250;
 export const ROUTE_ENDPOINT_TOLERANCE_METERS = 120;
@@ -342,10 +347,7 @@ export const ACTIVITY_TYPES = [
   }),
 ] as const satisfies readonly ActivityTypeSettings[];
 
-export const ACTIVITY_TYPE_IDS = ACTIVITY_TYPES.map(({ type }) => type) as [
-  (typeof ACTIVITY_TYPES)[number]['type'],
-  ...(typeof ACTIVITY_TYPES)[number]['type'][],
-];
+export const ACTIVITY_TYPE_IDS = Object.values(ActivityType) as [ActivityType, ...ActivityType[]];
 
 export const RUNNING_BEST_EFFORTS = [
   { type: '400m', distance: 400, valueKind: 'duration', higherIsBetter: false },

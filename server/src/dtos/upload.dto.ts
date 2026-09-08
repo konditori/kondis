@@ -1,8 +1,9 @@
 import { z } from '@hono/zod-openapi';
 
-import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS } from 'src/constants';
+import { ACTIVITY_TAG_IDS } from 'src/constants';
+import { ActivityType } from 'src/enum';
 
-const ActivityTypeSchema = z.enum(ACTIVITY_TYPE_IDS);
+const ActivityTypeSchema = z.enum(ActivityType);
 const ActivityTagSchema = z.enum(ACTIVITY_TAG_IDS);
 
 export const FitUploadResponseSchema = z.object({

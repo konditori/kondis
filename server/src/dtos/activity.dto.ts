@@ -1,12 +1,13 @@
 import { z } from '@hono/zod-openapi';
 
-import { ACTIVITY_TAG_IDS, ACTIVITY_TYPE_IDS, BEST_EFFORT_TYPES } from 'src/constants';
+import { ACTIVITY_TAG_IDS, BEST_EFFORT_TYPES } from 'src/constants';
 import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
 import { SocialUserSchema } from 'src/dtos/social.dto';
+import { ActivityType } from 'src/enum';
 import { AverageMetric, BestEffortGroup } from 'src/types';
 
 export const ActivityTypeSchema = z
-  .enum(ACTIVITY_TYPE_IDS)
+  .enum(ActivityType)
   .describe('Activity sport type')
   .meta({ id: 'ActivityType' });
 export const ActivityTypeSettingsSchema = z

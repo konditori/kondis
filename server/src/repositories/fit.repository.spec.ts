@@ -2,14 +2,13 @@ import { FitBaseType, FitEncoder } from 'fit-file-parser';
 import { describe, expect, it } from 'vitest';
 
 import { ConsoleLogger } from 'src/logger';
+import { FIT_SEMICIRCLES_PER_DEGREE } from 'src/constants';
 import { FitDecodeError, FitRepository } from 'src/repositories/fit.repository';
 
 const MESG_FILE_ID = 0;
 const MESG_SESSION = 18;
 const MESG_LAP = 19;
 const MESG_RECORD = 20;
-
-const SEMICIRCLES_PER_DEGREE = 2 ** 31 / 180;
 
 const enumField = (number: number, value: number) => ({ number, size: 1, baseType: FitBaseType.Enum, value });
 const uint8 = (number: number, value: number) => ({ number, size: 1, baseType: FitBaseType.Uint8, value });
@@ -34,8 +33,8 @@ const buildFitFile = (): Buffer => {
 
   encoder.writeMessage(MESG_RECORD, [
     timestamp(startedAt),
-    sint32(0, Math.round(57.7 * SEMICIRCLES_PER_DEGREE)), // position_lat
-    sint32(1, Math.round(12.47 * SEMICIRCLES_PER_DEGREE)), // position_long
+    sint32(0, Math.round(57.7 * FIT_SEMICIRCLES_PER_DEGREE)), // position_lat
+    sint32(1, Math.round(12.47 * FIT_SEMICIRCLES_PER_DEGREE)), // position_long
     uint16(2, (179 + 500) * 5), // altitude, scale 5 offset -500
     uint8(3, 142), // heart_rate
     uint8(4, 86), // cadence

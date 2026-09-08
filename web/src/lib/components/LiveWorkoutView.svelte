@@ -90,7 +90,7 @@
           .filter(({ distance }) => distance <= 5 * 60 * 1000)
           .sort((a, b) => a.distance - b.distance)[0]?.candidate;
         if (activity)
-          await goto(`/activities/${activity.id}`, { replaceState: true });
+          await goto(`/activity/${activity.id}`, { replaceState: true });
       } finally {
         resolvingFinishedWorkout = false;
       }

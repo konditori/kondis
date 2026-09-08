@@ -1035,6 +1035,19 @@ button {
 }
 .live-activity-card .sport-badge {
   position: relative;
+  display: flex;
+  height: auto;
+  min-height: 38px;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 1px;
+}
+.live-label {
+  color: #e11d48;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
 }
 .live-list-map {
   position: relative;
@@ -1050,6 +1063,12 @@ button {
   background: #e11d48;
   box-shadow: 0 0 0 3px #e11d4826;
   animation: live-pulse 1.6s ease-in-out infinite;
+}
+.live-updated {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
 }
 .live-beacon.paused {
   background: #d97706;

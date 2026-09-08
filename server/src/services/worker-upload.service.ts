@@ -5,7 +5,7 @@ import {
   TakeoutImportScanDto,
   TakeoutManualItemDto,
 } from 'src/dtos/upload.dto';
-import { JobName, JobStatus } from 'src/enum';
+import { ActivityType as ActivityTypeEnum, JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { JobProducerPort } from 'src/ports/queue.port';
@@ -294,7 +294,7 @@ export class WorkerUploadService {
     if (activity) {
       await this.realtime.emit(
         'ActivityUploadSkipped',
-        { id: activity.id, name: activity.name, sport: activity.sport },
+        { id: activity.id, name: activity.name, sport: activity.sport as ActivityTypeEnum },
         originalName,
       );
     }

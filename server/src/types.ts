@@ -1,3 +1,5 @@
+import type { ActivityType as ActivityTypeEnum } from 'src/enum';
+
 import type { Kysely, Transaction } from 'kysely';
 import type { Activity, ActivityMetric, ActivityUpdate, DB, NewActivity, NewLap } from 'src/db/schema';
 
@@ -221,7 +223,7 @@ export type ActivityTypeSettings = {
   bestEffortGroup: BestEffortGroup;
 };
 
-export type ActivityType = (typeof import('src/constants').ACTIVITY_TYPES)[number]['type'];
+export type ActivityType = `${ActivityTypeEnum}`;
 export type RunBestEffortType = (typeof import('src/constants').RUNNING_BEST_EFFORTS)[number]['type'];
 export type CyclingBestEffortType = (typeof import('src/constants').CYCLING_BEST_EFFORTS)[number]['type'];
 export type BestEffortType = RunBestEffortType | CyclingBestEffortType;

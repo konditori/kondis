@@ -92,6 +92,7 @@ export type UserFollow = Selectable<UserFollowTable>;
 export type UserBlock = Selectable<UserBlockTable>;
 export type ActivityLike = Selectable<ActivityLikeTable>;
 export type ActivityComment = Selectable<ActivityCommentTable>;
+export type NewActivityComment = Insertable<ActivityCommentTable>;
 export type Notification = Selectable<NotificationTable>;
 
 export { type StreamType } from 'src/types';

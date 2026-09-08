@@ -3,13 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { NotFoundException } from 'src/errors';
 import type { EventRepository } from 'src/repositories/event.repository';
 import { SocialService } from 'src/services/social.service';
-import type { KondisDatabase } from 'src/types';
-
 const makeService = () => {
   const social = {
     canViewActivity: vi.fn(),
   };
-  const service = new SocialService(social as never, {} as KondisDatabase, {} as EventRepository);
+  const service = new SocialService(social as never, {} as EventRepository);
   return { service, social };
 };
 
@@ -29,32 +27,22 @@ describe(SocialService.name, () => {
         return Promise.resolve();
       }),
     };
-    const db = {
-      transaction: () => ({
-        execute: (callback: (trx: unknown) => Promise<unknown>) =>
-          callback({
-            insertInto: () => ({
-              values: () => ({
-                returningAll: () => ({
-                  executeTakeFirstOrThrow: () => {
-                    order.push('insert');
-                    return Promise.resolve({
-                      id: 'notification-id',
-                      type: 'activity_like',
-                      created_at: new Date('2026-08-18T12:00:00.000Z'),
-                      activity_id: 'activity-id',
-                    });
-                  },
-                }),
-              }),
-            }),
-          }).then((row) => {
-            order.push('commit');
-            return row;
-          }),
+    const social = {
+      createNotification: vi.fn(() => {
+        order.push('insert');
+        order.push('commit');
+        return Promise.resolve({
+          id: 'notification-id',
+          type: 'activity_like' as const,
+          activity_id: 'activity-id',
+          created_at: new Date('2026-08-18T12:00:00.000Z'),
+          actor_id: 'actor-id',
+          user_id: 'recipient-id',
+          read_at: null,
+        });
       }),
     };
-    const service = new SocialService({} as never, db as never, eventRepository as never);
+    const service = new SocialService(social as never, eventRepository as never);
 
     await (
       service as unknown as {

@@ -1,11 +1,12 @@
 import { FitBaseType, FitEncoder } from 'fit-file-parser';
 
+import {
+  EARTH_RADIUS_M,
+  FIT_PROFILE_VERSION,
+  FIT_PROTOCOL_VERSION,
+  FIT_SEMICIRCLES_PER_DEGREE,
+} from 'src/constants';
 import type { ActivityTag, ActivityType } from 'src/types';
-
-const FIT_PROFILE_VERSION = 810;
-const FIT_PROTOCOL_VERSION = 0x20;
-const SEMICIRCLES_PER_DEGREE = 2 ** 31 / 180;
-const EARTH_RADIUS_M = 6_371_000;
 
 type Point = readonly [latitude: number, longitude: number, altitude: number];
 type Waypoint = readonly [latitude: number, longitude: number];
@@ -123,8 +124,8 @@ const recordFields = (spec: DemoFitSpec, startedAt: Date, index: number, count: 
 
   return [
     field(253, FitBaseType.Uint32, fitTimestamp(new Date(startedAt.getTime() + elapsed * 1000))),
-    field(0, FitBaseType.Sint32, Math.round(latitude * SEMICIRCLES_PER_DEGREE)),
-    field(1, FitBaseType.Sint32, Math.round(longitude * SEMICIRCLES_PER_DEGREE)),
+    field(0, FitBaseType.Sint32, Math.round(latitude * FIT_SEMICIRCLES_PER_DEGREE)),
+    field(1, FitBaseType.Sint32, Math.round(longitude * FIT_SEMICIRCLES_PER_DEGREE)),
     scaledField(2, FitBaseType.Uint16, altitude + 500, 5),
     scaledField(5, FitBaseType.Uint32, spec.distanceM * progress, 100),
     scaledField(6, FitBaseType.Uint16, speed, 1000),
@@ -184,7 +185,6 @@ export const createDemoFitFile = (spec: DemoFitSpec): Uint8Array => {
   return encoder.close();
 };
 
-// Pedestrian waypoints sampled from the mapped Kungsholmen waterfront route.
 const centralStockholm = routeAtElevation(
   [
     [59.329199, 18.068299],
@@ -274,7 +274,6 @@ const lakeLoop: readonly Point[] = [
   [59.349, 18.092, 23],
   [59.347, 18.101, 22],
 ];
-// Pedestrian waypoints sample the Crissy Field, Golden Gate Promenade, and Presidio trail network.
 const sanFranciscoGoldenGate = routeAtElevation(
   [
     [37.806009, -122.431927],
@@ -328,7 +327,6 @@ const sanFranciscoGoldenGate = routeAtElevation(
   ],
   26,
 );
-// Pedestrian waypoints sampled from Central Park Drive, the Conservancy's six-mile running loop.
 const newYorkCentralPark = routeAtElevation(
   [
     [40.768154, -73.981936],
