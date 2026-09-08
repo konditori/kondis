@@ -1,0 +1,39 @@
+server/src/demo/live-workout.ts
+  s_ca57beca1d3a17::t_ae723bb756647a 1,3,12-13,70,76-82
+server/src/demo/provisioner.ts
+  s_1f4369d65d8c7d::t_b07f69625a053b 3-14,21,62,66-69,85,88-89,93,285
+web/src/app.css
+  s_4bfddbee412c63::t_e63779574d2547 1092-1096
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "084940eea4975b95e90aa143cd0126ad0b334a11",
+  "prompts": {},
+  "sessions": {
+    "s_1f4369d65d8c7d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "1b35aaaf-0b31-4e2a-a110-098fa6d0e0c5",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_4bfddbee412c63": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a082ac-d0e0-7070-846a-d857f181e612",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_ca57beca1d3a17": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "75d3eefc-b6aa-4f82-b8cc-2556aa75e7fb",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
