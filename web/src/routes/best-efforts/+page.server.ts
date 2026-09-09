@@ -1,6 +1,7 @@
 import {
   activityControllerListBestEfforts,
-  BestEffortSportInput,
+  type BestEffortSportInput,
+  type BestEffortType,
 } from "$lib/api";
 import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { BestEffortHistory } from "$lib/types";
@@ -20,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
             $type: type as BestEffortType,
           },
           requestOptions,
-        )) as BestEffortHistory;
+        )) as unknown as BestEffortHistory;
       } catch {
         return null;
       }
@@ -42,7 +43,7 @@ export const load: PageServerLoad = async ({ locals }) => {
                 $type: option.type as BestEffortType,
               },
               requestOptions,
-            )) as BestEffortHistory;
+            )) as unknown as BestEffortHistory;
           } catch {
             // Keep the effort visible even if an individual history is unavailable.
           }

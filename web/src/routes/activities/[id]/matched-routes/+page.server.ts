@@ -7,11 +7,10 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ locals, params }) => {
   try {
     const response = await activityControllerListMatchedRoutes(
-      params.id,
+      { id: params.id },
       getServerSdkRequestOptions(locals.kondisFetch),
     );
-    if (response.status !== 200) throw { status: response.status };
-    const history = response.data as MatchedRouteHistory;
+    const history = response as MatchedRouteHistory;
     return { history };
   } catch (requestError) {
     const status = (requestError as { status?: number }).status;

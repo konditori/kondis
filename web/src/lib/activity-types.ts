@@ -12,6 +12,7 @@ import type { Component } from "svelte";
 import {
   AverageMetric,
   type ActivityTypeSettingsOutput,
+  type ActivityType_Output,
 } from "$lib/api";
 import type { ActivityType } from "$lib/types";
 
@@ -67,11 +68,7 @@ export const ACTIVITY_TYPE_PRESENTATION = {
   roller_ski: presentation("Roller skiing", Mountain),
   rowing: presentation("Rowing", WavesHorizontal),
   run: presentation("Run", SportShoe),
-  sail: presentation(
-    "Sailing",
-    WavesHorizontal,
-    ActivityMapStyle.Heatmap,
-  ),
+  sail: presentation("Sailing", WavesHorizontal, ActivityMapStyle.Heatmap),
   skateboard: presentation(
     "Skateboarding",
     SportShoe,
@@ -87,11 +84,7 @@ export const ACTIVITY_TYPE_PRESENTATION = {
   squash: presentation("Squash", HeartPulse),
   stair_stepper: presentation("Stair stepper", HeartPulse),
   stand_up_paddling: presentation("Stand-up paddling", WavesHorizontal),
-  surfing: presentation(
-    "Surfing",
-    WavesHorizontal,
-    ActivityMapStyle.Heatmap,
-  ),
+  surfing: presentation("Surfing", WavesHorizontal, ActivityMapStyle.Heatmap),
   swim: presentation("Swim", WavesHorizontal),
   table_tennis: presentation("Table tennis", HeartPulse),
   tennis: presentation("Tennis", HeartPulse),
@@ -115,7 +108,7 @@ export type ActivityTypeSettings = ActivityTypeSettingsOutput &
 
 export const activityTypeSettings = (
   types: ActivityTypeSettingsOutput[],
-  type: ActivityType,
+  type: ActivityType_Output,
 ): ActivityTypeSettings => {
   const settings = types.find((candidate) => candidate.type === type);
   if (!settings) throw new Error(`Missing backend settings for ${type}`);
@@ -124,7 +117,7 @@ export const activityTypeSettings = (
 
 export const activityTypeOptions = (
   types: ActivityTypeSettingsOutput[],
-): { value: ActivityType; label: string }[] =>
+): { value: ActivityType_Output; label: string }[] =>
   types.map(({ type }) => ({
     value: type,
     label: ACTIVITY_TYPE_PRESENTATION[type].label,

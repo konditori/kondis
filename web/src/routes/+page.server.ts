@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({
       ? ((await liveResponse.json()) as LiveWorkout[])
       : [];
     return {
-      ...(body.data as ActivityPage),
+      ...(body as ActivityPage),
       unavailable: false,
       eventsUrl,
       liveWorkouts,

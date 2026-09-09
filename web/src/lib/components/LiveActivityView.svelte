@@ -142,7 +142,8 @@
 <section class="live-workout-view">
   <header class="detail-header live-workout-header">
     <a class="back-link" href="/" data-sveltekit-preload-data="hover">
-      <ArrowLeft size={18} /> {t("all_activities")}
+      <ArrowLeft size={18} />
+      {t("all_activities")}
     </a>
     <div class="live-workout-heading">
       <div>

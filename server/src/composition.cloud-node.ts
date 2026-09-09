@@ -57,8 +57,7 @@ export const createCloudNodeProcessorComposition = ({
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
   const eventRepository =
-    realtime ??
-    createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
+    realtime ?? createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
   const importProgressStore = new ImportProgressStore(database);
 
   const activityService = new ActivityService(

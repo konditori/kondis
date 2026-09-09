@@ -2,8 +2,8 @@ import { sql } from 'kysely';
 
 import { nextJobFailure, type BackgroundJobRecord } from 'src/cloudflare/background-job';
 import { JobName, JobStatus, QueueName } from 'src/enum';
-import type { CloudJobConsumer } from 'src/jobs/job-semantics';
 import type { AnyJobHandlerDescriptor } from 'src/jobs/job-handler';
+import type { CloudJobConsumer } from 'src/jobs/job-semantics';
 import {
   CLOUD_JOB_CONSUMER,
   JOB_CONCURRENCY,
@@ -87,7 +87,10 @@ export const claimNextPollingJob = async (
       WITH candidate AS (
         SELECT job.id
         FROM background_job AS job
-        WHERE job.consumer IN (${sql.join(consumers.map((consumer) => sql`${consumer}`), sql`, `)})
+        WHERE job.consumer IN (${sql.join(
+          consumers.map((consumer) => sql`${consumer}`),
+          sql`, `,
+        )})
           AND job.queue = ${queue}
           AND job.state IN ('created', 'retry')
           AND job.start_after <= now()

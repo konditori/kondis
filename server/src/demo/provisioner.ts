@@ -2,8 +2,8 @@ import { sql } from 'kysely';
 
 import { insertBackgroundJobs } from 'src/cloudflare/background-job';
 import {
-  DEMO_ACTIVITY_IMAGE_IDS,
   DEMO_ACTIVITIES,
+  DEMO_ACTIVITY_IMAGE_IDS,
   DEMO_IMAGE_MIME_TYPE,
   DEMO_PASSWORD_HASH,
   DEMO_SESSION_TOKEN_HASH,
@@ -11,7 +11,7 @@ import {
   DEMO_USERS,
   JOHN_USER_ID,
   SESSION_ID,
-} from 'src/demo/data';
+} from 'src/demo/demo-data';
 import { JobName, type UserRole } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
@@ -22,7 +22,7 @@ import { UserRepository } from 'src/repositories/user.repository';
 import type { ActivityStreamInput, KondisDatabase, KondisExecutor } from 'src/types';
 import { haversineDistance } from 'src/utils/geo';
 
-export { SESSION_ID as DEMO_SESSION_ID } from 'src/demo/data';
+export { SESSION_ID as DEMO_SESSION_ID } from 'src/demo/demo-data';
 
 export type DemoImageMetadata = {
   originalName: string;

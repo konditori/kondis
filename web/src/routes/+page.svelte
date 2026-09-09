@@ -159,9 +159,7 @@
           );
           if (current) {
             appendedActivities = [
-              ...appendedActivities.filter(
-                ({ id }) => id !== current.id,
-              ),
+              ...appendedActivities.filter(({ id }) => id !== current.id),
               { ...current, likeCount: event.activity.likeCount },
             ];
           }
@@ -174,9 +172,7 @@
           return;
         const { activity } = event;
         appendedActivities = [
-          ...appendedActivities.filter(
-            ({ id }) => id !== activity.id,
-          ),
+          ...appendedActivities.filter(({ id }) => id !== activity.id),
           activity,
         ];
         void refreshRecent();
@@ -238,13 +234,9 @@
         {},
         getSdkRequestOptions(),
       )) as unknown as ActivityPage;
-      const refreshedUploads = new Set(
-        page.activities.map(({ id }) => id),
-      );
+      const refreshedUploads = new Set(page.activities.map(({ id }) => id));
       appendedActivities = [
-        ...appendedActivities.filter(
-          ({ id }) => !refreshedUploads.has(id),
-        ),
+        ...appendedActivities.filter(({ id }) => !refreshedUploads.has(id)),
         ...page.activities,
       ];
       totalOverride = page.total;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import ActivityDetailPage from "$lib/components/ActivityDetailPage.svelte";
+  import { t } from "$lib/i18n";
   import LiveActivityView from "$lib/components/LiveActivityView.svelte";
   import type { LiveWorkout } from "$lib/types";
 
@@ -7,7 +8,7 @@
   const liveWorkout = $derived(data.liveWorkout as LiveWorkout | undefined);
 </script>
 
-<svelte:head><title>Kondis</title></svelte:head>
+<svelte:head><title>{t("activities")} · Kondis</title></svelte:head>
 
 {#if liveWorkout}
   <div class="detail-page live-activity-page">

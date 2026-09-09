@@ -580,9 +580,7 @@ export class ActivityService {
     }
 
     const upload = await this.uploadRepository.getById(activity.upload_id);
-    const activityImages = this.mediaRepository
-      ? await this.mediaRepository.listForActivity(activity.id)
-      : [];
+    const activityImages = this.mediaRepository ? await this.mediaRepository.listForActivity(activity.id) : [];
     const imageFiles = this.mediaRepository
       ? await Promise.all(activityImages.map((image) => this.mediaRepository!.getFiles(image.id)))
       : [];

@@ -4,7 +4,7 @@ import { basename, resolve } from 'node:path';
 import sharp from 'sharp';
 
 import { createDatabase } from 'src/db/database';
-import { DEMO_ACTIVITIES } from 'src/demo/data';
+import { DEMO_ACTIVITIES } from 'src/demo/demo-data';
 import { provisionDemoData, type DemoImageMetadata } from 'src/demo/provisioner';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';

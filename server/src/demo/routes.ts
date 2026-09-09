@@ -1,4 +1,4 @@
-import type { Point } from 'src/demo/data';
+import type { Point } from 'src/demo/demo-data';
 
 export const munksjon: readonly Point[] = [
   [57.778575, 14.168459, 89.67],

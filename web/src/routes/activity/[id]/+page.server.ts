@@ -7,10 +7,10 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ locals, params }) => {
   try {
     const response = await activityControllerGetById(
-      params.id,
+      { id: params.id },
       getServerSdkRequestOptions(locals.kondisFetch),
     );
-    const activity = response.data as ActivityDetail;
+    const activity = response as ActivityDetail;
     return { activity };
   } catch (requestError) {
     const status = (requestError as { status?: number }).status;

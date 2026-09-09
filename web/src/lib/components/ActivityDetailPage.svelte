@@ -27,7 +27,6 @@
     ActivityUpdateSport,
     getSdkRequestOptions,
     socialControllerLikers,
-    Sport,
   } from "$lib/api";
   import {
     ActivityMapStyle,
@@ -117,7 +116,7 @@
   const activityTypeOptionsList = $derived(
     activityTypeOptions(data.activityTypes),
   );
-  let draftSport = $state<Activity["sport"]>(Sport.Other);
+  let draftSport = $state<Activity["sport"]>("other" as Activity["sport"]);
   const Icon = $derived(sportIcon(activity.sport));
   const excludedFromRankings = $derived(activity.excludeFromRankings);
   const activitySettings = $derived(

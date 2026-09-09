@@ -60,8 +60,7 @@ export const load: LayoutServerLoad = async ({
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
     const response = await activityTypesPromise;
-    if (response.status === 200)
-      activityTypes = response.data as ActivityTypeSettingsOutput[];
+    activityTypes = response as ActivityTypeSettingsOutput[];
   } catch {
     // Activity pages already surface API availability; keep settings usable.
   }
