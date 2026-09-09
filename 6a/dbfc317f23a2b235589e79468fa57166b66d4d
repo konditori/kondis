@@ -1,0 +1,21 @@
+server/src/demo/data.ts
+  s_6adbad8300fd86::t_9b7e3475bf5933 6,11,14,20-23,28-36,38-51,53-81,83,85,88,94,96,99,105,107,110,115-146,152,154-156,174,180,182,185,197-201,204,206,221-222,225,227,242-243,246,248,263-267,270,272,287-288,291,293,298,308-309,312,314,329-330,333,335,350-356,359,361,376-377,380,382,397-398,401,403,418-419,422,424,439-440
+server/src/enum.ts
+  s_6adbad8300fd86::t_73578d8d674865 61-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6adbfc317f23a2b235589e79468fa57166b66d4d",
+  "prompts": {},
+  "sessions": {
+    "s_6adbad8300fd86": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b377552-b04a-49f6-ba58-33c19edb2b14",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
