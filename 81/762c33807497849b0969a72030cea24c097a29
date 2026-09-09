@@ -1,0 +1,43 @@
+deployment/demo/bin/demo-db-down.sh
+  s_85374374aaa931::t_1fa04e21b4da50 1-4
+deployment/demo/bin/demo-db-rebuild.sh
+  s_8f2879b14efc59::t_1ae8b00a261cad 1-18
+deployment/demo/bin/demo-db.sh
+  s_8f2879b14efc59::t_4a3b92082c60cb 1-5
+deployment/demo/bin/deploy-demo-rebuild.sh
+  s_85374374aaa931::t_a44e49486ea0fb 1-7
+deployment/demo/docker-compose.yml
+  s_8f2879b14efc59::t_2d5740a2c847ba 25-51
+mise.toml
+  s_85374374aaa931::t_6b27f5e2c7560d 59,64,69,74
+server/src/composition.cloud-node.ts
+  s_8f2879b14efc59::t_9f31bdb3c3b46d 119-121
+server/src/job-handler.registry.spec.ts
+  s_8f2879b14efc59::t_83674bf4597176 123-129
+server/src/jobs/polling-job.consumer.ts
+  s_8f2879b14efc59::t_ef763684fe6f84 5,27,31,37-40,64,70-73,80-84,90,165,170,205-206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "81762c33807497849b0969a72030cea24c097a29",
+  "prompts": {},
+  "sessions": {
+    "s_85374374aaa931": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b38e5cbd-ba0e-424c-aef4-24f64ee78270",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_8f2879b14efc59": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08682-2118-7db1-b11f-511db5b5f763",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
