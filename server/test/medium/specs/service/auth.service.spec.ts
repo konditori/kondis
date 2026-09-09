@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ConflictException, UnauthorizedException } from 'src/errors';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
@@ -13,13 +13,13 @@ import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/t
 
 describe(AuthService.name, () => {
   let db: KondisDatabase;
-  let credentials: AuthCredentialRepository;
+  let credentials: SessionRepository;
   let users: UserRepository;
   let sut: AuthService;
 
   beforeAll(() => {
     db = createMediumTestDatabase();
-    credentials = new AuthCredentialRepository(db);
+    credentials = new SessionRepository(db);
     users = new UserRepository(db);
     sut = new AuthService(
       users,

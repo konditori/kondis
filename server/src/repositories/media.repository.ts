@@ -7,7 +7,7 @@ import {
 } from 'src/db/schema';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
 
-export class ActivityImageRepository {
+export class MediaRepository {
   constructor(private readonly db: KondisDatabase) {}
 
   create(input: NewActivityImage, executor: KondisExecutor = this.db): Promise<ActivityImage> {

@@ -8,7 +8,7 @@ import type { CryptoPort } from 'src/ports/crypto.port';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisTransaction } from 'src/types';
@@ -21,7 +21,7 @@ const extensionOf = (name: string): string => {
 
 export class WorkerActivityImageService {
   constructor(
-    private readonly images: ActivityImageRepository,
+    private readonly images: MediaRepository,
     private readonly activities: ActivityRepository,
     private readonly storage: StoragePort,
     private readonly crypto: CryptoPort,

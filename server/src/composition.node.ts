@@ -2,9 +2,9 @@ import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -50,8 +50,8 @@ export const createApplicationComposition = ({
   const database = createDatabase(configRepository.database);
 
   const activityRepository = new ActivityRepository(database);
-  const activityImageRepository = new ActivityImageRepository(database);
-  const authCredentialRepository = new AuthCredentialRepository(database);
+  const activityImageRepository = new MediaRepository(database);
+  const authCredentialRepository = new SessionRepository(database);
   const cryptoRepository = new CryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
@@ -171,8 +171,8 @@ export const createApplicationComposition = ({
   const instances = new Map<Class<unknown>, unknown>([
     [ConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
-    [ActivityImageRepository, activityImageRepository],
-    [AuthCredentialRepository, authCredentialRepository],
+    [MediaRepository, activityImageRepository],
+    [SessionRepository, authCredentialRepository],
     [CryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],
     [EventRepository, eventRepository],

@@ -7,16 +7,18 @@ import {
   DEMO_IMAGE_MIME_TYPE,
   DEMO_PASSWORD_HASH,
   DEMO_SESSION_TOKEN_HASH,
+  USERS as DEMO_USERS,
   demoFixtureId,
   JOHN_EMAIL,
   SESSION_ID,
-  USERS,
 } from 'src/demo/data';
 import { JobName } from 'src/enum';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 import type { ActivityStreamInput, KondisDatabase, KondisExecutor } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
 import { haversineDistance } from 'src/utils/geo';
@@ -35,9 +37,11 @@ export type DemoProvisioningDependencies = {
   database: KondisDatabase;
   activities: ActivityRepository;
   imageMetadata: Readonly<Record<string, readonly DemoImageMetadata[]>>;
-  images: ActivityImageRepository;
+  images: MediaRepository;
   uploads: UploadRepository;
   social: SocialRepository;
+  sessions: SessionRepository;
+  users: UserRepository;
 };
 
 type DemoUser = {
@@ -182,9 +186,11 @@ class DemoProvisioner {
   private readonly database: KondisDatabase;
   private readonly activityRepository: ActivityRepository;
   private readonly imageMetadata: Readonly<Record<string, readonly DemoImageMetadata[]>>;
-  private readonly activityImageRepository: ActivityImageRepository;
+  private readonly activityImageRepository: MediaRepository;
   private readonly uploadRepository: UploadRepository;
   private readonly socialRepository: SocialRepository;
+  private readonly sessionRepository: SessionRepository;
+  private readonly userRepository: UserRepository;
 
   public constructor(dependencies: DemoProvisioningDependencies) {
     this.database = dependencies.database;
@@ -193,6 +199,8 @@ class DemoProvisioner {
     this.activityImageRepository = dependencies.images;
     this.uploadRepository = dependencies.uploads;
     this.socialRepository = dependencies.social;
+    this.sessionRepository = dependencies.sessions;
+    this.userRepository = dependencies.users;
   }
 
   private async seedActivity(
@@ -239,54 +247,33 @@ class DemoProvisioner {
     return activityId;
   }
 
-  private async createDemoUsers(executor: KondisExecutor): Promise<DemoUser[]> {
-    const existingUsers = await executor
-      .selectFrom('user')
-      .select(['id', 'email', 'role', 'first_name', 'last_name'])
-      .where(
-        'email',
-        'in',
-        USERS.map(({ email }) => email),
-      )
-      .execute();
-    const usersByEmail = new Map(existingUsers.map((user) => [user.email, user]));
-
-    for (const config of USERS) {
-      if (usersByEmail.has(config.email)) {
-        continue;
-      }
-      const user = await executor
-        .insertInto('user')
-        .values({
-          ...config,
-          password_hash: DEMO_PASSWORD_HASH,
-        })
-        .returning(['id', 'email', 'role', 'first_name', 'last_name'])
-        .executeTakeFirstOrThrow();
-      usersByEmail.set(user.email, user);
-    }
-
-    return USERS.map(({ email }) => usersByEmail.get(email)!);
+  private async provisionUser(executor: KondisExecutor, config: (typeof DEMO_USERS)[number]): Promise<DemoUser> {
+    const user = await this.userRepository.create(
+      {
+        ...config,
+        password_hash: DEMO_PASSWORD_HASH,
+      },
+      executor,
+    );
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      first_name: user.first_name,
+      last_name: user.last_name,
+    };
   }
 
-  private async seedDemoSession(executor: KondisExecutor, userId: string): Promise<void> {
-    const existing = await executor
-      .selectFrom('auth_session')
-      .select('id')
-      .where('id', '=', SESSION_ID)
-      .executeTakeFirst();
-    if (existing) {
-      return;
-    }
-    await executor
-      .insertInto('auth_session')
-      .values({
-        id: SESSION_ID,
-        user_id: userId,
-        token_hash: DEMO_SESSION_TOKEN_HASH,
-        expires_at: new Date('2099-01-01T00:00:00.000Z'),
-      })
-      .execute();
+  private async provisionSession(executor: KondisExecutor, userId: string): Promise<void> {
+    await this.sessionRepository.createSessionRecord(
+      {
+        id: SESSION_ID, // Use a fixed session ID and token hash for demo purposes
+
+        userId,
+        tokenHash: DEMO_SESSION_TOKEN_HASH,
+      },
+      executor,
+    );
   }
 
   private async seedDemoImages(executor: KondisExecutor, activities: readonly DemoActivity[]): Promise<void> {
@@ -301,23 +288,21 @@ class DemoProvisioner {
           imageIndex === 0
             ? `demo-image-v1:${activity.spec.slug}`
             : `demo-image-v1:${activity.spec.slug}:${imageIndex + 1}`;
-        const image =
-          (await this.activityImageRepository.getByUploadChecksum(activity.uploadId, checksum, executor)) ??
-          (await this.activityImageRepository.create(
-            {
-              id: demoFixtureId(4, activityIndex + imageIndex * DEMO_FIT_SPECS.length),
-              upload_id: activity.uploadId,
-              checksum,
-              original_name: metadata.originalName,
-              sort_order: imageIndex,
-              mime_type: DEMO_IMAGE_MIME_TYPE,
-              byte_size: metadata.byteSize,
-              width: metadata.width,
-              height: metadata.height,
-              status: 'ready',
-            },
-            executor,
-          ));
+        const image = await this.activityImageRepository.create(
+          {
+            id: demoFixtureId(4, activityIndex + imageIndex * DEMO_FIT_SPECS.length),
+            upload_id: activity.uploadId,
+            checksum,
+            original_name: metadata.originalName,
+            sort_order: imageIndex,
+            mime_type: DEMO_IMAGE_MIME_TYPE,
+            byte_size: metadata.byteSize,
+            width: metadata.width,
+            height: metadata.height,
+            status: 'ready',
+          },
+          executor,
+        );
 
         await this.activityImageRepository.upsertFile(
           {
@@ -398,31 +383,13 @@ class DemoProvisioner {
     const provisioning = await this.database.transaction().execute(async (transaction) => {
       await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:demo-provisioning'))`.execute(transaction);
       await transaction.deleteFrom('notification').execute();
-      const users = await this.createDemoUsers(transaction);
-      await this.seedDemoSession(transaction, users[0].id);
-      const existingUploads = await transaction
-        .selectFrom('upload')
-        .select('id')
-        .where('checksum', 'like', 'demo-activity-v1:%')
-        .execute();
-      const existingActivities =
-        existingUploads.length > 0
-          ? await transaction
-              .selectFrom('activity')
-              .select('id')
-              .where(
-                'upload_id',
-                'in',
-                existingUploads.map(({ id }) => id),
-              )
-              .execute()
-          : [];
-      if (existingActivities.length === DEMO_FIT_SPECS.length) {
-        return {
-          user: asAuthenticatedUser(users[0]),
-          activityIds: existingActivities.map(({ id }) => id),
-        };
+
+      const users: DemoUser[] = [];
+      for (const user of DEMO_USERS) {
+        users.push(await this.provisionUser(transaction, user));
       }
+
+      await this.provisionSession(transaction, users[0].id);
 
       const activities: DemoActivity[] = [];
       for (const [index, spec] of DEMO_FIT_SPECS.entries()) {

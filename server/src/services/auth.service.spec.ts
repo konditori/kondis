@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import type { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import type { SessionRepository } from 'src/repositories/session.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
@@ -48,7 +48,7 @@ describe(AuthService.name, () => {
     consumeSetupBootstrap,
     clearSetupTickets,
     revokeSession,
-  } as unknown as AuthCredentialRepository;
+  } as unknown as SessionRepository;
   const rateLimiting = { consume: consumeRateLimit } as unknown as RateLimitingRepository;
   const events = { emit } as never;
   const database = { withTransaction } as unknown as TransactionPort;

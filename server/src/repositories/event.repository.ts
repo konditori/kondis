@@ -9,7 +9,7 @@ import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { ArgsOf, EmitEvent, RealtimePort } from 'src/ports/realtime.port';
 import { eventSerializers, type WebsocketEvent } from 'src/realtime/protocol';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
@@ -59,7 +59,7 @@ export class EventRepository implements RealtimePort {
     private readonly db: KondisDatabase,
     private readonly config: Pick<ConfigPort, 'database'>,
     private readonly social: SocialRepository,
-    private readonly credentials: AuthCredentialRepository,
+    private readonly credentials: SessionRepository,
   ) {}
 
   async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {

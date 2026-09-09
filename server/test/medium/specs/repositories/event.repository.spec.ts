@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ActivityDto } from 'src/dtos/activity.dto';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
@@ -24,7 +24,7 @@ describe(EventRepository.name, () => {
       db,
       { database: getTestDatabaseConfig() } as never,
       new SocialRepository(db),
-      new AuthCredentialRepository(db),
+      new SessionRepository(db),
     ),
   });
 

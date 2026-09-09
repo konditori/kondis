@@ -5,7 +5,7 @@ import type { ConfigPort } from 'src/ports/config.port';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisExecutor } from 'src/types';
@@ -27,7 +27,7 @@ export class AuthService {
     private readonly config: Pick<ConfigPort, 'registrationEnabled' | 'setupToken'>,
     private readonly rateLimitingRepository: RateLimitingRepository,
     private readonly crypto: CryptoPort,
-    private readonly credentials: AuthCredentialRepository,
+    private readonly credentials: SessionRepository,
     private readonly events: RealtimePort,
     private readonly database: TransactionPort,
     private readonly mediaBaseUrl?: string,

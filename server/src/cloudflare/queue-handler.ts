@@ -9,7 +9,7 @@ import {
   type JobDeliveryEnvelope,
 } from 'src/ports/job-transport.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import type { ActivityService } from 'src/services/activity.service';
 import type { WorkerUploadService } from 'src/services/worker-upload.service';
 import { ImportProgressStore } from 'src/state/import-progress.store';
@@ -270,7 +270,7 @@ export const createPortableWorkerHandlers = (
   db: KondisDatabase,
   services: PortableWorkerServices = {},
 ): CloudJobHandlers => {
-  const credentials = new AuthCredentialRepository(db);
+  const credentials = new SessionRepository(db);
   const handlers: CloudJobHandlers = {
     [JobName.AuthCredentialCleanup]: async () => {
       await credentials.deleteExpired();

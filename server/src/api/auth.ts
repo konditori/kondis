@@ -3,7 +3,7 @@ import { createMiddleware } from 'hono/factory';
 import { getAccessToken, type AuthenticatedUser } from 'src/auth';
 import { DEMO_SESSION_ID } from 'src/demo/provisioner';
 import { ForbiddenException } from 'src/errors';
-import type { AuthenticatedSession } from 'src/repositories/auth-credential.repository';
+import type { AuthenticatedSession } from 'src/repositories/session.repository';
 
 export type ApiEnv = {
   Bindings: ApiBindings;

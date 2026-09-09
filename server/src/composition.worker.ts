@@ -12,9 +12,9 @@ import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-tracker';
 import { ConsoleLogger } from 'src/logger';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
@@ -68,9 +68,9 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   };
   const queueAdapter = new CloudflareQueueAdapter(database);
   const storage = env.STORAGE_BUCKET ? new R2StorageAdapter(env.STORAGE_BUCKET) : undefined;
-  const activityImageRepository = new ActivityImageRepository(database);
+  const activityImageRepository = new MediaRepository(database);
   const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
-  const authCredentialRepository = new AuthCredentialRepository(database);
+  const authCredentialRepository = new SessionRepository(database);
   const userRepository = new UserRepository(database);
   const config = new ConfigRepository({
     KONDIS_DEMO_MODE: toConfigValue(env.KONDIS_DEMO_MODE),

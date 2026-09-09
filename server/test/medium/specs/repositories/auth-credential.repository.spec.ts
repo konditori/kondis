@@ -1,18 +1,18 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisDatabase } from 'src/types';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
-describe(AuthCredentialRepository.name, () => {
+describe(SessionRepository.name, () => {
   let db: KondisDatabase;
-  let credentials: AuthCredentialRepository;
+  let credentials: SessionRepository;
   let users: UserRepository;
 
   beforeAll(() => {
     db = createMediumTestDatabase();
-    credentials = new AuthCredentialRepository(db);
+    credentials = new SessionRepository(db);
     users = new UserRepository(db);
   });
   beforeEach(() => resetMediumTestDatabase(db));
@@ -78,7 +78,7 @@ describe(AuthCredentialRepository.name, () => {
   it('stores only the bootstrap token hash and accepts an injected seed', async () => {
     const injectedToken = 'a'.repeat(64);
     const first = await credentials.getOrCreateSetupToken(injectedToken);
-    const second = await new AuthCredentialRepository(db).getOrCreateSetupToken(injectedToken);
+    const second = await new SessionRepository(db).getOrCreateSetupToken(injectedToken);
     const stored = await db.selectFrom('auth_bootstrap').select('token_hash').executeTakeFirstOrThrow();
 
     expect(first).toBe(injectedToken);
@@ -93,7 +93,7 @@ describe(AuthCredentialRepository.name, () => {
 
   it('exposes an automatically generated bootstrap token only to its creator', async () => {
     const first = await credentials.getOrCreateSetupToken();
-    const second = await new AuthCredentialRepository(db).getOrCreateSetupToken();
+    const second = await new SessionRepository(db).getOrCreateSetupToken();
 
     expect(first).toMatch(/^[a-f\d]{64}$/);
     expect(second).toBeUndefined();

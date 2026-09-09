@@ -29,8 +29,27 @@ export type AuthenticatedSession = {
   user: AuthenticatedUser;
 };
 
-export class AuthCredentialRepository {
+export type SessionRecord = {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt?: Date;
+};
+
+export class SessionRepository {
   constructor(private readonly db: KondisDatabase) {}
+
+  async createSessionRecord(record: SessionRecord, executor: KondisExecutor = this.db): Promise<void> {
+    await executor
+      .insertInto('auth_session')
+      .values({
+        id: record.id,
+        user_id: record.userId,
+        token_hash: record.tokenHash,
+        expires_at: record.expiresAt ?? new Date(Date.now() + SESSION_LIFETIME_MS),
+      })
+      .executeTakeFirstOrThrow();
+  }
 
   async createSession(userId: string, executor: KondisExecutor = this.db): Promise<string> {
     const token = createToken();

@@ -6,12 +6,14 @@ import sharp from 'sharp';
 import { createDatabase } from 'src/db/database';
 import { DEMO_FIT_SPECS } from 'src/demo/data';
 import { provisionDemoData, type DemoImageMetadata } from 'src/demo/provisioner';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
+import { UserRepository } from 'src/repositories/user.repository';
 
 const demoMediaDirectory = process.env.KONDIS_DEMO_MEDIA_DIR ?? resolve(process.cwd(), '../test/test-assets/demo/v1');
 
@@ -62,9 +64,11 @@ const main = async (): Promise<void> => {
       database,
       activities: new ActivityRepository(database),
       imageMetadata,
-      images: new ActivityImageRepository(database),
+      images: new MediaRepository(database),
       uploads: new UploadRepository(database),
       social: new SocialRepository(database),
+      sessions: new SessionRepository(database),
+      users: new UserRepository(database),
     });
     console.log('Demo database migrated and seeded.');
   } finally {

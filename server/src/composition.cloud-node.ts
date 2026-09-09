@@ -5,9 +5,9 @@ import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { createPollingJobHandlers, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
 import type { RealtimePort } from 'src/ports/realtime.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -45,8 +45,8 @@ export const createCloudNodeProcessorComposition = ({
   const queueAdapter = new CloudflareQueueAdapter(database);
   const cryptoRepository = new CryptoRepository();
   const activityRepository = new ActivityRepository(database);
-  const activityImageRepository = new ActivityImageRepository(database);
-  const authCredentialRepository = new AuthCredentialRepository(database);
+  const activityImageRepository = new MediaRepository(database);
+  const authCredentialRepository = new SessionRepository(database);
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(logger);
   const gpxRepository = new GpxRepository(logger);
@@ -152,7 +152,7 @@ const createCloudNodeRealtimePublisher = (
   database: ReturnType<typeof createDatabase>,
   config: ConfigRepository,
   social: SocialRepository,
-  credentials: AuthCredentialRepository,
+  credentials: SessionRepository,
 ): RealtimePort => {
   const url = process.env.KONDIS_REALTIME_PUBLISH_URL;
   const token = process.env.KONDIS_REALTIME_PUBLISH_TOKEN;

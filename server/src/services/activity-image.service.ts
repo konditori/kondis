@@ -15,7 +15,7 @@ import { BadRequestException, NotFoundException, PayloadTooLargeException } from
 import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import type { StoragePort } from 'src/ports/storage.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -26,7 +26,7 @@ import { BufferedUploadedFileData } from 'src/types/uploads';
 
 export class ActivityImageService {
   constructor(
-    private readonly images: ActivityImageRepository,
+    private readonly images: MediaRepository,
     private readonly activities: ActivityRepository,
     private readonly storage: StoragePort,
     private readonly crypto: CryptoRepository,

@@ -10,7 +10,7 @@ import type { JobProducerPort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
@@ -85,7 +85,7 @@ export class ActivityService {
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
     private readonly importProgressStore?: ImportProgressStore,
-    private readonly activityImageRepository?: ActivityImageRepository,
+    private readonly activityImageRepository?: MediaRepository,
     private readonly socialRepository?: SocialRepository,
     private readonly mediaBaseUrl?: string,
   ) {
