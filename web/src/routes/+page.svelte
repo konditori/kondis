@@ -186,6 +186,14 @@
             void refreshLiveWorkouts();
             return;
           }
+          const currentWorkout = current.find(
+            ({ id }) => id === event.workout.id,
+          )!;
+          const sequenceGap =
+            event.workout.lastSequence > currentWorkout.lastSequence + 1;
+          if (sequenceGap) {
+            void refreshLiveWorkouts();
+          }
           liveWorkoutsOverride = current.map((workout) =>
             workout.id === event.workout.id
               ? {
@@ -195,6 +203,10 @@
                   distanceMeters: event.workout.distanceMeters,
                   lastSequence: event.workout.lastSequence,
                   lastReceivedAt: new Date().toISOString(),
+                  route:
+                    event.workout.lastSequence === workout.lastSequence + 1
+                      ? [...workout.route, event.workout.position]
+                      : workout.route,
                 }
               : workout,
           );

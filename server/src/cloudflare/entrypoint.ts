@@ -41,14 +41,14 @@ import {
   ingestDemoLiveTrackerPoint,
   isDemoLiveTrackerIngestionRequest,
   isDemoLiveWorkoutRequest,
-} from 'src/demo/live-workout';
-import { getDemoUser } from 'src/demo/provisioner';
+} from 'src/demo/live-entrypoint';
+import { getDemoUser } from 'src/demo/demo-provisioner';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
-export { DemoLiveTracker } from 'src/demo/live-tracker';
+export { DemoLiveTracker } from 'src/demo/live-durable-object';
 
 export type WorkerEnv = WorkerBindings;
 

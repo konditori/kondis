@@ -1,4 +1,4 @@
-import { aargau } from 'src/demo/routes';
+import { aargau } from 'src/demo/demo-routes';
 import { ActivityType } from 'src/enum';
 import { haversineDistance } from 'src/utils/geo';
 
@@ -106,9 +106,16 @@ export class DemoLiveTracker {
     const now = Date.now();
     const elapsedSeconds = Math.max(0, Math.floor((now - startedAt) / 1000));
     const distanceMeters = DISTANCE_METERS_BY_POINT[pointIndex]!;
-    const [latitude, longitude, altitude] = aargau[pointIndex]!;
     const finished = pointIndex === aargau.length - 1;
     const clientSessionId = await this.getClientSessionId();
+    const points = aargau.slice(0, pointIndex + 1).map(([pointLatitude, pointLongitude, pointAltitude], index) => ({
+      sequence: index + 1,
+      recordedAt: new Date(index === pointIndex ? now : startedAt + index * TICK_MS).toISOString(),
+      latitude: pointLatitude,
+      longitude: pointLongitude,
+      altitude: pointAltitude,
+      accuracyMeters: 5,
+    }));
     const response = await this.env.DEMO_LIVE_INGESTION.fetch(
       new Request(`https://${DEMO_LIVE_INGESTION_HOST}${DEMO_LIVE_INGESTION_PATH}`, {
         method: 'POST',
@@ -120,16 +127,7 @@ export class DemoLiveTracker {
           elapsedSeconds,
           distanceMeters,
           finished,
-          points: [
-            {
-              sequence: pointIndex + 1,
-              recordedAt: new Date(now).toISOString(),
-              latitude,
-              longitude,
-              altitude,
-              accuracyMeters: 5,
-            },
-          ],
+          points,
         }),
       }),
     );

@@ -3,7 +3,7 @@ import { z } from '@hono/zod-openapi';
 import { ActivityTypeSchema } from 'src/dtos/activity.dto';
 
 const LiveWorkoutStatusSchema = z.enum(['recording', 'paused', 'ended', 'discarded']);
-const LivePointSchema = z.object({
+export const LivePointSchema = z.object({
   sequence: z.number().int().positive(),
   recordedAt: z.string().datetime(),
   latitude: z.number().gte(-90).lte(90),

@@ -10,7 +10,7 @@ import {
   scania,
   singapore,
   vancouver,
-} from 'src/demo/routes';
+} from 'src/demo/demo-routes';
 import { ActivityType, UserRole } from 'src/enum';
 import type { ActivityTag } from 'src/types';
 

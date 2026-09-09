@@ -6,10 +6,16 @@ import {
   DEMO_LIVE_INGESTION_PATH,
   DEMO_LIVE_TRACKER_NAME,
   type DemoLiveTrackerNamespaceBinding,
-} from 'src/demo/live-tracker';
-import { LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
+} from 'src/demo/live-durable-object';
+import { LivePointSchema, LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
+import { aargau } from 'src/demo/demo-routes';
 
-const DemoLiveWorkoutPointsSchema = LiveWorkoutPointsSchema.extend({ finished: z.boolean().optional() });
+const DemoLiveWorkoutPointsSchema = LiveWorkoutPointsSchema.safeExtend({
+  // The simulator may need to repair a workout after its PostgreSQL row was
+  // recreated while the Durable Object retained its route position.
+  points: z.array(LivePointSchema).min(1).max(aargau.length),
+  finished: z.boolean().optional(),
+});
 
 type DemoLiveEnvironment = {
   KONDIS_DEMO_MODE?: boolean | string;

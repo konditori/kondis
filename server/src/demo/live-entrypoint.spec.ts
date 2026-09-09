@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { DEMO_LIVE_TRACKER_NAME } from 'src/demo/live-tracker';
+import { DEMO_LIVE_TRACKER_NAME } from 'src/demo/live-durable-object';
 import { UserRole } from 'src/enum';
 
 const mocks = vi.hoisted(() => ({
@@ -14,7 +14,7 @@ vi.mock('src/composition.worker', async (importOriginal) => ({
 }));
 
 vi.mock('src/demo/provisioner', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('src/demo/provisioner')>()),
+  ...(await importOriginal<typeof import('src/demo/demo-provisioner')>()),
   getDemoUser: mocks.getDemoUser,
 }));
 

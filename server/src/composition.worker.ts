@@ -9,7 +9,7 @@ import {
   type DurableObjectNamespaceBinding,
 } from 'src/cloudflare/realtime-durable-object';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
-import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-tracker';
+import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-durable-object';
 import { ConsoleLogger } from 'src/logger';
 import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';

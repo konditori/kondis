@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { DEMO_LIVE_INGESTION_HOST, DEMO_LIVE_INGESTION_PATH, DemoLiveTracker } from 'src/demo/live-tracker';
-import { aargau } from 'src/demo/routes';
+import { DEMO_LIVE_INGESTION_HOST, DEMO_LIVE_INGESTION_PATH, DemoLiveTracker } from 'src/demo/live-durable-object';
+import { aargau } from 'src/demo/demo-routes';
 
 describe(DemoLiveTracker.name, () => {
   afterEach(() => {
@@ -94,8 +94,8 @@ describe(DemoLiveTracker.name, () => {
     expect(secondPayload).toMatchObject({
       elapsedSeconds: 10,
       distanceMeters: expect.any(Number),
-      points: [expect.objectContaining({ sequence: 102 })],
     });
+    expect((secondPayload.points as { sequence: number }[]).at(-1)?.sequence).toBe(102);
     expect(secondPayload.distanceMeters).toBeGreaterThan(firstPayload.distanceMeters);
     expect(state.storage.setAlarm).toHaveBeenCalledTimes(2);
   });
@@ -156,8 +156,8 @@ describe(DemoLiveTracker.name, () => {
     const finishedPayload = await (fetch.mock.calls[0]![0] as Request).clone().json();
     expect(finishedPayload).toMatchObject({
       finished: true,
-      points: [{ sequence: aargau.length }],
     });
+    expect((finishedPayload.points as { sequence: number }[]).at(-1)?.sequence).toBe(aargau.length);
     expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-started-at-v2');
     expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-point-index-v2');
     expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-client-session-id-v2');
