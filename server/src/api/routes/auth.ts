@@ -16,6 +16,7 @@ import {
   SetupTokenCredentialsSchema,
   SetupValidationSchema,
 } from 'src/dtos/auth.dto';
+import { UserRole } from 'src/enum';
 import { ForbiddenException, UnauthorizedException } from 'src/errors';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { AuthService } from 'src/services/auth.service';
@@ -313,7 +314,7 @@ export const registerAuthRoutes = (
       ),
     );
     app.openapi(jobTicketRoute, async (context) => {
-      if (context.get('user').role !== 'admin') {
+      if (context.get('user').role !== UserRole.Admin) {
         throw new ForbiddenException('Administrator access is required');
       }
       return context.json(

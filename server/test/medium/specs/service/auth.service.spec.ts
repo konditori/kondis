@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { UserRole } from 'src/enum';
 import { ConflictException, UnauthorizedException } from 'src/errors';
-import { SessionRepository } from 'src/repositories/session.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import type { KondisDatabase } from 'src/types';
@@ -43,13 +44,19 @@ describe(AuthService.name, () => {
     const { sut } = setup();
     const email = `auth-${crypto.randomUUID()}@example.com`;
 
-    const user = await sut.create(email.toUpperCase(), '  Medium', 'User  ', 'a sufficiently long password', 'user');
+    const user = await sut.create(
+      email.toUpperCase(),
+      '  Medium',
+      'User  ',
+      'a sufficiently long password',
+      UserRole.User,
+    );
     const token = await sut.login(email, 'a sufficiently long password');
 
-    expect(user).toMatchObject({ email, first_name: 'Medium', last_name: 'User', role: 'user' });
+    expect(user).toMatchObject({ email, first_name: 'Medium', last_name: 'User', role: UserRole.User });
     expect(token).toMatchObject({
       setup: false,
-      user: { id: user.id, email, firstName: 'Medium', lastName: 'User', role: 'user' },
+      user: { id: user.id, email, firstName: 'Medium', lastName: 'User', role: UserRole.User },
     });
     expect(token.accessToken).toEqual(expect.any(String));
   });
@@ -57,10 +64,10 @@ describe(AuthService.name, () => {
   it('rejects duplicate accounts and invalid credentials', async () => {
     const { sut } = setup();
     const email = `auth-${crypto.randomUUID()}@example.com`;
-    await sut.create(email, 'Medium', 'User', 'a sufficiently long password', 'user');
+    await sut.create(email, 'Medium', 'User', 'a sufficiently long password', UserRole.User);
 
     await expect(
-      sut.create(email.toUpperCase(), 'Another', 'User', 'a sufficiently long password', 'user'),
+      sut.create(email.toUpperCase(), 'Another', 'User', 'a sufficiently long password', UserRole.User),
     ).rejects.toBeInstanceOf(ConflictException);
     await expect(sut.login(email, 'wrong password')).rejects.toThrow('Invalid email or password');
     await expect(sut.login(`missing-${email}`, 'a sufficiently long password')).rejects.toThrow(
@@ -78,7 +85,7 @@ describe(AuthService.name, () => {
       'Medium',
       'User',
       'a sufficiently long password',
-      'user',
+      UserRole.User,
     );
     const after = await sut.setupStatus();
 

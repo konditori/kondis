@@ -58,6 +58,11 @@ export enum ActivityType {
   Other = 'other',
 }
 
+export enum UserRole {
+  Admin = 'admin',
+  User = 'user',
+}
+
 export enum WorkerType {
   API = 'api',
   WORKER = 'worker',

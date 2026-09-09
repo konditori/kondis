@@ -2,11 +2,12 @@ import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiAuthMiddleware, type ApiEnv, type ApiSessionLookup } from 'src/api/auth';
+import { UserRole } from 'src/enum';
 
 const TOKEN_USER = {
   id: '00000000-0000-4000-8000-000000000001',
   email: 'admin@example.com',
-  role: 'admin' as const,
+  role: UserRole.Admin,
   firstName: 'Current',
   lastName: 'Name',
 };

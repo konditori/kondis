@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ActivityDto } from 'src/dtos/activity.dto';
-import { SessionRepository } from 'src/repositories/session.repository';
 import { EventRepository } from 'src/repositories/event.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 

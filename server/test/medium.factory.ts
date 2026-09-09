@@ -1,4 +1,5 @@
 import type { AuthenticatedUser } from 'src/auth';
+import { UserRole } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -18,7 +19,7 @@ type UserOverrides = Partial<{
   first_name: string;
   last_name: string;
   password_hash: string;
-  role: 'admin' | 'user';
+  role: UserRole;
 }>;
 
 const defaultMetrics: ActivityMetrics = {
@@ -50,7 +51,7 @@ export const createMediumFactory = (db: KondisDatabase) => {
       first_name: 'Medium Test',
       last_name: 'User',
       password_hash: 'not-a-real-password-hash',
-      role: 'user',
+      role: UserRole.User,
       ...overrides,
     });
 

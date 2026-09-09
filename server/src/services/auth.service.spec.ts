@@ -1,12 +1,13 @@
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import type { SessionRepository } from 'src/repositories/session.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import type { SessionRepository } from 'src/repositories/session.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
 import { newTestService } from 'test/utils';
@@ -82,7 +83,7 @@ describe(AuthService.name, () => {
       email: 'user@example.com',
       first_name: 'User',
       last_name: 'Test',
-      role: 'user',
+      role: UserRole.User,
       password_hash: 'hash',
     });
     createInitialAdmin.mockResolvedValue({
@@ -90,7 +91,7 @@ describe(AuthService.name, () => {
       email: 'admin@example.com',
       first_name: 'Admin',
       last_name: 'Test',
-      role: 'admin',
+      role: UserRole.Admin,
       password_hash: 'hash',
     });
   });
@@ -98,7 +99,7 @@ describe(AuthService.name, () => {
   it('creates normalized user name parts', async () => {
     const { sut } = setup();
 
-    const user = await sut.create('USER@example.com', '  User  ', ' Test ', 'long enough password', 'user');
+    const user = await sut.create('USER@example.com', '  User  ', ' Test ', 'long enough password', UserRole.User);
 
     expect(user).toMatchObject({ email: 'user@example.com', first_name: 'User', last_name: 'Test' });
     expect(create).toHaveBeenCalledWith(
@@ -109,13 +110,13 @@ describe(AuthService.name, () => {
   it('rejects invalid account data and duplicate emails', async () => {
     const { sut } = setup();
 
-    await expect(sut.create('invalid', 'User', 'Test', 'long enough password', 'user')).rejects.toBeInstanceOf(
+    await expect(sut.create('invalid', 'User', 'Test', 'long enough password', UserRole.User)).rejects.toBeInstanceOf(
       BadRequestException,
     );
     findByEmail.mockResolvedValue({ id: 'existing' });
-    await expect(sut.create('user@example.com', 'User', 'Test', 'long enough password', 'user')).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(
+      sut.create('user@example.com', 'User', 'Test', 'long enough password', UserRole.User),
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('logs in with valid credentials and rejects invalid credentials', async () => {
@@ -126,7 +127,7 @@ describe(AuthService.name, () => {
       email: 'user@example.com',
       first_name: 'User',
       last_name: 'Test',
-      role: 'user',
+      role: UserRole.User,
       password_hash: passwordHash,
     });
 
@@ -146,7 +147,7 @@ describe(AuthService.name, () => {
     const { token } = await sut.verifySetupToken(SETUP_TOKEN);
     await expect(sut.validateSetupTicket(token)).resolves.toEqual({ valid: true });
     await expect(sut.setup('admin@example.com', 'Admin', 'Test', 'long enough password', token)).resolves.toMatchObject(
-      { setup: true, user: { role: 'admin' } },
+      { setup: true, user: { role: UserRole.Admin } },
     );
     expect(createInitialAdmin).toHaveBeenCalledOnce();
 

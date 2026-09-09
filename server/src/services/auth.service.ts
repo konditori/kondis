@@ -1,12 +1,12 @@
-import { JobStatus } from 'src/enum';
+import { JobStatus, UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import { SessionRepository } from 'src/repositories/session.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisExecutor } from 'src/types';
 import { publicMediaUrl } from 'src/utils/media';
@@ -104,7 +104,7 @@ Do not share this secret token with anyone.
           {
             ...account,
             password_hash: passwordHash,
-            role: 'admin',
+            role: UserRole.Admin,
           },
           transaction,
         );
@@ -145,7 +145,10 @@ Do not share this secret token with anyone.
         if (await this.users.findByEmail(account.email, transaction)) {
           throw new ConflictException('Email is already in use');
         }
-        const user = await this.users.create({ ...account, password_hash: passwordHash, role: 'user' }, transaction);
+        const user = await this.users.create(
+          { ...account, password_hash: passwordHash, role: UserRole.User },
+          transaction,
+        );
         this.logger.log(`Public user account created for ${user.email} (${user.id})`);
         return this.issue(user, false, transaction);
       });
@@ -177,7 +180,7 @@ Do not share this secret token with anyone.
     await this.credentials.deleteExpired();
     return JobStatus.Success;
   }
-  async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
+  async create(email: string, firstName: string, lastName: string, password: string, role: UserRole) {
     const account = this.normalizeAccount(email, firstName, lastName, password);
     if (await this.users.findByEmail(account.email)) {
       throw new ConflictException('Email is already in use');
@@ -198,7 +201,7 @@ Do not share this secret token with anyone.
   }
 
   private async issue(
-    user: { id: string; role: 'admin' | 'user'; email: string; first_name: string; last_name: string },
+    user: { id: string; role: UserRole; email: string; first_name: string; last_name: string },
     setup: boolean,
     executor?: KondisExecutor,
   ) {

@@ -2,6 +2,7 @@ import { createMiddleware } from 'hono/factory';
 
 import { getAccessToken, type AuthenticatedUser } from 'src/auth';
 import { DEMO_SESSION_ID } from 'src/demo/provisioner';
+import { UserRole } from 'src/enum';
 import { ForbiddenException } from 'src/errors';
 import type { AuthenticatedSession } from 'src/repositories/session.repository';
 
@@ -22,7 +23,7 @@ type IsPublicRequest = (method: string, path: string) => boolean;
 type StoredUser = {
   id: string;
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   first_name: string;
   last_name: string;
   avatar_path?: string | null;
@@ -76,7 +77,7 @@ export const createApiAuthMiddleware = (
   });
 
 export const requireAdmin = createMiddleware<ApiEnv>(async (context, next) => {
-  if (context.get('user').role !== 'admin') {
+  if (context.get('user').role !== UserRole.Admin) {
     throw new ForbiddenException('Administrator access is required');
   }
   await next();

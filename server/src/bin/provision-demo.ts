@@ -1,5 +1,5 @@
-import { readdir, stat } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { stat } from 'node:fs/promises';
+import { basename, resolve } from 'node:path';
 
 import sharp from 'sharp';
 
@@ -19,27 +19,17 @@ const demoMediaDirectory = process.env.KONDIS_DEMO_MEDIA_DIR ?? resolve(process.
 
 const readDemoImageMetadata = async (): Promise<Readonly<Record<string, readonly DemoImageMetadata[]>>> => {
   const entries = await Promise.all(
-    DEMO_FIT_SPECS.map(async ({ slug }) => {
-      const relativeDirectory = `activities/${slug}`;
-      const directory = resolve(demoMediaDirectory, relativeDirectory);
-      const entries = await readdir(directory, { withFileTypes: true });
-      const files = entries
-        .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.jpg'))
-        .sort((left, right) => left.name.localeCompare(right.name, undefined, { numeric: true }));
-      if (files.length === 0) {
-        throw new Error(`No JPG demo images found in ${directory}`);
-      }
-
+    DEMO_FIT_SPECS.map(async ({ slug, imageFiles }) => {
       const metadata = await Promise.all(
-        files.map(async (file): Promise<DemoImageMetadata> => {
-          const filePath = resolve(directory, file.name);
+        imageFiles.map(async (imagePath): Promise<DemoImageMetadata> => {
+          const filePath = resolve(demoMediaDirectory, 'activities', imagePath);
           const [fileStats, imageMetadata] = await Promise.all([stat(filePath), sharp(filePath).metadata()]);
           if (imageMetadata.width === undefined || imageMetadata.height === undefined) {
             throw new Error(`Could not read dimensions for demo image ${filePath}`);
           }
           return {
-            originalName: file.name,
-            storagePath: `${relativeDirectory}/${file.name}`,
+            originalName: basename(imagePath),
+            storagePath: `activities/${imagePath}`,
             byteSize: fileStats.size,
             width: imageMetadata.width,
             height: imageMetadata.height,

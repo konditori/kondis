@@ -1,5 +1,7 @@
 import { z } from '@hono/zod-openapi';
 
+import { UserRole } from 'src/enum';
+
 export const CredentialsSchema = z.object({
   email: z.string().max(254),
   firstName: z.string().max(200).optional(),
@@ -31,7 +33,7 @@ export const AuthUserSchema = z.object({
   email: z.email(),
   firstName: z.string(),
   lastName: z.string(),
-  role: z.enum(['admin', 'user']),
+  role: z.enum([UserRole.Admin, UserRole.User]),
   avatarUrl: z.string().nullable(),
 });
 export const AuthSessionSchema = z.object({

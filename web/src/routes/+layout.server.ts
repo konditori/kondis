@@ -3,6 +3,7 @@ import {
   parseUnitSystem,
   UNIT_SYSTEM_COOKIE,
 } from "$lib/units";
+import { Role } from "@kondis/sdk";
 import {
   activityControllerListTypes,
   type ActivityTypeSettingsOutput,
@@ -25,7 +26,7 @@ export const load: LayoutServerLoad = async ({
         email: string;
         firstName: string;
         lastName: string;
-        role: "admin" | "user";
+        role: Role;
         avatarUrl: string | null;
       }
     | undefined;

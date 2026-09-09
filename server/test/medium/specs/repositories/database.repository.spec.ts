@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { UserRole } from 'src/enum';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 
@@ -29,7 +30,7 @@ describe(DatabaseRepository.name, () => {
           first_name: 'Transaction',
           last_name: 'User',
           password_hash: 'hash',
-          role: 'user',
+          role: UserRole.User,
         })
         .execute();
     });
@@ -49,7 +50,7 @@ describe(DatabaseRepository.name, () => {
             first_name: 'Rollback',
             last_name: 'User',
             password_hash: 'hash',
-            role: 'user',
+            role: UserRole.User,
           })
           .execute();
         throw new Error('rollback');

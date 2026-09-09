@@ -2,17 +2,17 @@ import { sql } from 'kysely';
 
 import { insertBackgroundJobs } from 'src/cloudflare/background-job';
 import {
-  DEMO_ACTIVITY_COMMENTS,
+  DEMO_ACTIVITY_IMAGE_IDS,
   DEMO_FIT_SPECS,
   DEMO_IMAGE_MIME_TYPE,
   DEMO_PASSWORD_HASH,
   DEMO_SESSION_TOKEN_HASH,
-  USERS as DEMO_USERS,
-  demoFixtureId,
-  JOHN_EMAIL,
+  DEMO_UPLOAD_IDS,
+  DEMO_USERS,
+  JOHN_USER_ID,
   SESSION_ID,
 } from 'src/demo/data';
-import { JobName } from 'src/enum';
+import { JobName, type UserRole } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
@@ -47,16 +47,10 @@ export type DemoProvisioningDependencies = {
 type DemoUser = {
   id: string;
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   first_name: string;
   last_name: string;
-};
-
-type DemoActivity = {
-  id: string;
-  uploadId: string;
-  owner: DemoUser;
-  spec: (typeof DEMO_FIT_SPECS)[number];
+  follows: readonly string[];
 };
 
 type DemoActivityData = {
@@ -162,7 +156,7 @@ const createDemoActivityData = (spec: (typeof DEMO_FIT_SPECS)[number]): DemoActi
   };
 };
 
-const asAuthenticatedUser = (user: DemoUser) => ({
+const asAuthenticatedUser = (user: Omit<DemoUser, 'follows'>) => ({
   id: user.id,
   role: user.role,
   email: user.email,
@@ -174,10 +168,10 @@ export const getDemoUser = async (database: KondisDatabase) => {
   const user = await database
     .selectFrom('user')
     .select(['id', 'email', 'role', 'first_name', 'last_name'])
-    .where('email', '=', JOHN_EMAIL)
+    .where('id', '=', JOHN_USER_ID)
     .executeTakeFirst();
   if (!user) {
-    throw new Error(`Demo database is not seeded; expected ${JOHN_EMAIL}`);
+    throw new Error(`Demo database is not seeded; expected ${JOHN_USER_ID}`);
   }
   return asAuthenticatedUser(user);
 };
@@ -203,16 +197,16 @@ class DemoProvisioner {
     this.userRepository = dependencies.users;
   }
 
-  private async seedActivity(
+  private async provisionActivity(
     executor: KondisExecutor,
     user: DemoUser,
     spec: (typeof DEMO_FIT_SPECS)[number],
-    index: number,
+    usersById: ReadonlyMap<string, DemoUser>,
   ): Promise<string> {
     const data = createDemoActivityData(spec);
     const upload = await this.uploadRepository.create(
       {
-        id: demoFixtureId(2, index),
+        id: DEMO_UPLOAD_IDS[spec.slug],
         checksum: `demo-activity-v1:${spec.slug}`,
         original_name: `${spec.slug}.activity.json`,
         byte_size: 0,
@@ -225,7 +219,7 @@ class DemoProvisioner {
     const activityId = await this.activityRepository.create(
       {
         activity: {
-          id: demoFixtureId(3, index),
+          id: spec.id,
           upload_id: upload.id,
           user_id: user.id,
           sport: spec.activitySport,
@@ -244,13 +238,73 @@ class DemoProvisioner {
       { name: JobName.ActivityMetricCompute, data: { id: activityId } },
       { name: JobName.ActivityRouteMatchCompute, data: { id: activityId } },
     ]);
+    for (const [commentIndex, comment] of spec.comments.entries()) {
+      const actor = usersById.get(comment.userId);
+      if (!actor) {
+        throw new Error(`Missing demo comment user ${comment.userId}`);
+      }
+      const createdAt = new Date(spec.startedAt.getTime() + (commentIndex + 1) * 60 * 60 * 1000);
+      await this.socialRepository.createComment(
+        {
+          activity_id: activityId,
+          user_id: actor.id,
+          body: comment.body,
+          created_at: createdAt,
+          updated_at: createdAt,
+        },
+        executor,
+      );
+    }
+    for (const likeUserId of spec.likes) {
+      const actor = usersById.get(likeUserId);
+      if (!actor) {
+        throw new Error(`Missing demo like user ${likeUserId}`);
+      }
+      await executor.insertInto('activity_like').values({ activity_id: activityId, user_id: actor.id }).execute();
+    }
+    const imageMetadata = this.imageMetadata[spec.slug];
+    if (!imageMetadata) {
+      throw new Error(`Missing demo image metadata for ${spec.slug}`);
+    }
+    for (const [imageIndex, metadata] of imageMetadata.entries()) {
+      const checksum = imageIndex === 0 ? `demo-image-v1:${spec.slug}` : `demo-image-v1:${spec.slug}:${imageIndex + 1}`;
+      const image = await this.activityImageRepository.create(
+        {
+          id: DEMO_ACTIVITY_IMAGE_IDS[spec.slug][imageIndex],
+          upload_id: upload.id,
+          checksum,
+          original_name: metadata.originalName,
+          sort_order: imageIndex,
+          mime_type: DEMO_IMAGE_MIME_TYPE,
+          byte_size: metadata.byteSize,
+          width: metadata.width,
+          height: metadata.height,
+          status: 'ready',
+        },
+        executor,
+      );
+
+      await this.activityImageRepository.upsertFile(
+        {
+          image_id: image.id,
+          variant: 'preview',
+          storage_path: metadata.storagePath,
+          mime_type: DEMO_IMAGE_MIME_TYPE,
+          byte_size: metadata.byteSize,
+          width: metadata.width,
+          height: metadata.height,
+        },
+        executor,
+      );
+    }
     return activityId;
   }
 
   private async provisionUser(executor: KondisExecutor, config: (typeof DEMO_USERS)[number]): Promise<DemoUser> {
+    const { follows, ...userConfig } = config;
     const user = await this.userRepository.create(
       {
-        ...config,
+        ...userConfig,
         password_hash: DEMO_PASSWORD_HASH,
       },
       executor,
@@ -261,6 +315,7 @@ class DemoProvisioner {
       role: user.role,
       first_name: user.first_name,
       last_name: user.last_name,
+      follows,
     };
   }
 
@@ -276,109 +331,6 @@ class DemoProvisioner {
     );
   }
 
-  private async seedDemoImages(executor: KondisExecutor, activities: readonly DemoActivity[]): Promise<void> {
-    for (const activity of activities) {
-      const imageMetadata = this.imageMetadata[activity.spec.slug];
-      if (!imageMetadata) {
-        throw new Error(`Missing demo image metadata for ${activity.spec.slug}`);
-      }
-      const activityIndex = DEMO_FIT_SPECS.indexOf(activity.spec);
-      for (const [imageIndex, metadata] of imageMetadata.entries()) {
-        const checksum =
-          imageIndex === 0
-            ? `demo-image-v1:${activity.spec.slug}`
-            : `demo-image-v1:${activity.spec.slug}:${imageIndex + 1}`;
-        const image = await this.activityImageRepository.create(
-          {
-            id: demoFixtureId(4, activityIndex + imageIndex * DEMO_FIT_SPECS.length),
-            upload_id: activity.uploadId,
-            checksum,
-            original_name: metadata.originalName,
-            sort_order: imageIndex,
-            mime_type: DEMO_IMAGE_MIME_TYPE,
-            byte_size: metadata.byteSize,
-            width: metadata.width,
-            height: metadata.height,
-            status: 'ready',
-          },
-          executor,
-        );
-
-        await this.activityImageRepository.upsertFile(
-          {
-            image_id: image.id,
-            variant: 'preview',
-            storage_path: metadata.storagePath,
-            mime_type: DEMO_IMAGE_MIME_TYPE,
-            byte_size: metadata.byteSize,
-            width: metadata.width,
-            height: metadata.height,
-          },
-          executor,
-        );
-      }
-    }
-  }
-
-  private seedActivityForUser(
-    executor: KondisExecutor,
-    owner: DemoUser,
-    spec: (typeof DEMO_FIT_SPECS)[number],
-    index: number,
-  ): Promise<string> {
-    return this.seedActivity(executor, owner, spec, index);
-  }
-
-  private async seedSocialData(
-    executor: KondisExecutor,
-    users: readonly DemoUser[],
-    activities: readonly DemoActivity[],
-  ): Promise<void> {
-    const usersByEmail = new Map(users.map((user) => [user.email, user]));
-    for (const follower of users) {
-      for (const followee of users) {
-        if (follower.id === followee.id) {
-          continue;
-        }
-        await executor
-          .insertInto('user_follow')
-          .values({ follower_id: follower.id, followee_id: followee.id })
-          .onConflict((conflict) => conflict.doNothing())
-          .execute();
-      }
-    }
-
-    for (const activity of activities) {
-      const ownerIndex = users.findIndex((user) => user.id === activity.owner.id);
-      for (let offset = 1; offset < users.length; offset++) {
-        const actor = users[(ownerIndex + offset) % users.length];
-        await executor.insertInto('activity_like').values({ activity_id: activity.id, user_id: actor.id }).execute();
-      }
-
-      const comments = DEMO_ACTIVITY_COMMENTS[activity.spec.slug];
-      if (!comments) {
-        throw new Error(`Missing demo comments for ${activity.spec.slug}`);
-      }
-      for (const [commentIndex, comment] of comments.entries()) {
-        const actor = usersByEmail.get(comment.userEmail);
-        if (!actor) {
-          throw new Error(`Missing demo comment user ${comment.userEmail}`);
-        }
-        const createdAt = new Date(activity.spec.startedAt.getTime() + (commentIndex + 1) * 60 * 60 * 1000);
-        await this.socialRepository.createComment(
-          {
-            activity_id: activity.id,
-            user_id: actor.id,
-            body: comment.body,
-            created_at: createdAt,
-            updated_at: createdAt,
-          },
-          executor,
-        );
-      }
-    }
-  }
-
   public async provision(): Promise<ReturnType<typeof asAuthenticatedUser>> {
     const provisioning = await this.database.transaction().execute(async (transaction) => {
       await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:demo-provisioning'))`.execute(transaction);
@@ -388,24 +340,32 @@ class DemoProvisioner {
       for (const user of DEMO_USERS) {
         users.push(await this.provisionUser(transaction, user));
       }
+      const usersById = new Map(users.map((user) => [user.id, user]));
+
+      for (const follower of users) {
+        for (const followeeId of follower.follows) {
+          const followee = usersById.get(followeeId);
+          if (!followee) {
+            throw new Error(`Missing demo follow user ${followeeId}`);
+          }
+          await transaction
+            .insertInto('user_follow')
+            .values({ follower_id: follower.id, followee_id: followee.id })
+            .onConflict((conflict) => conflict.doNothing())
+            .execute();
+        }
+      }
 
       await this.provisionSession(transaction, users[0].id);
 
-      const activities: DemoActivity[] = [];
+      const activityIds: string[] = [];
       for (const [index, spec] of DEMO_FIT_SPECS.entries()) {
         const owner = users[index % users.length];
-        activities.push({
-          id: await this.seedActivityForUser(transaction, owner, spec, index),
-          uploadId: demoFixtureId(2, index),
-          owner,
-          spec,
-        });
+        activityIds.push(await this.provisionActivity(transaction, owner, spec, usersById));
       }
-      await this.seedDemoImages(transaction, activities);
-      await this.seedSocialData(transaction, users, activities);
       return {
         user: asAuthenticatedUser(users[0]),
-        activityIds: activities.map(({ id }) => id),
+        activityIds,
       };
     });
 

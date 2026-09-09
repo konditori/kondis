@@ -4,9 +4,9 @@ import { createServer } from 'node:http';
 import { describe, expect, it, vi } from 'vitest';
 import { WebSocket, type WebSocketServer } from 'ws';
 
-import type { SessionRepository } from 'src/repositories/session.repository';
 import type { ConfigRepository } from 'src/repositories/config.repository';
 import { EventRepository } from 'src/repositories/event.repository';
+import type { SessionRepository } from 'src/repositories/session.repository';
 import type { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 

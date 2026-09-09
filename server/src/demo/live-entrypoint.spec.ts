@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { DEMO_LIVE_TRACKER_NAME } from 'src/demo/live-tracker';
+import { UserRole } from 'src/enum';
 
 const mocks = vi.hoisted(() => ({
   createComposition: vi.fn(),
@@ -63,7 +64,7 @@ describe('demo live workout API boundary', () => {
       liveWorkoutService,
       close,
     });
-    mocks.getDemoUser.mockResolvedValue({ id: 'demo-user', email: 'john@kondis.org', role: 'admin' });
+    mocks.getDemoUser.mockResolvedValue({ id: 'demo-user', email: 'john@kondis.org', role: UserRole.Admin });
 
     const waitUntil = vi.fn();
     const response = worker.fetch(

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { UserRole } from 'src/enum';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisDatabase } from 'src/types';
@@ -26,7 +27,7 @@ describe(SessionRepository.name, () => {
       first_name: 'Credential',
       last_name: 'Test',
       password_hash: 'not-used',
-      role: 'user',
+      role: UserRole.User,
     });
 
   it('stores only a session hash and resolves the current user', async () => {
@@ -38,7 +39,7 @@ describe(SessionRepository.name, () => {
     expect(stored.token_hash).not.toBe(token);
     await expect(credentials.findSession(token)).resolves.toMatchObject({
       id: stored.id,
-      user: { id: user.id, email: user.email, role: 'user' },
+      user: { id: user.id, email: user.email, role: UserRole.User },
     });
     await expect(credentials.findSession(`${token}x`)).resolves.toBeUndefined();
   });
