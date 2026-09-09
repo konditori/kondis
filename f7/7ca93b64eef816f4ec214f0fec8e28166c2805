@@ -1,0 +1,45 @@
+server/src/bin/provision-demo.ts
+  s_6adbad8300fd86::t_426c1b13bab3d0 12-13,16,67,70-71
+server/src/repositories/media.repository.ts
+  s_6adbad8300fd86::t_c6cd0f76c3b556 10
+server/src/services/activity-image.service.ts
+  s_6adbad8300fd86::t_ed4ff8d481e21a 18,29
+server/src/services/activity.service.ts
+  s_6adbad8300fd86::t_16c3564c761bf8 13,88
+server/src/services/worker-activity-image.service.ts
+  s_6adbad8300fd86::t_20593683a171f5 11,24
+server/src/api/auth.ts
+  s_6adbad8300fd86::t_99a84f66de0a24 6
+server/src/cloudflare/queue-handler.ts
+  s_6adbad8300fd86::t_b2502e68243227 12,273
+server/src/composition.cloud-node.ts
+  s_6adbad8300fd86::t_2c9ce5bd3edcda 8,10,48-49,155
+server/src/composition.node.ts
+  s_6adbad8300fd86::t_51aa44ea7b9256 5,7,53-54,174-175
+server/src/composition.worker.ts
+  s_6adbad8300fd86::t_90788808b38a94 15,17,71,73
+server/src/repositories/event.repository.spec.ts
+  s_6adbad8300fd86::t_6ae050a91fd632 7,37
+server/src/repositories/event.repository.ts
+  s_6adbad8300fd86::t_3a10f123ddfe3d 12,62
+server/src/services/auth.service.spec.ts
+  s_6adbad8300fd86::t_469b2ce8c5bad5 7,51
+server/src/services/auth.service.ts
+  s_6adbad8300fd86::t_a5d8137d2ee1c2 8,30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f77ca93b64eef816f4ec214f0fec8e28166c2805",
+  "prompts": {},
+  "sessions": {
+    "s_6adbad8300fd86": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b377552-b04a-49f6-ba58-33c19edb2b14",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
