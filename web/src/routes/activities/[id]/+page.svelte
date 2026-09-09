@@ -1,6 +1,6 @@
 <script lang="ts">
   import ActivityDetailPage from "$lib/components/ActivityDetailPage.svelte";
-  import LiveWorkoutView from "$lib/components/LiveWorkoutView.svelte";
+  import LiveActivityView from "$lib/components/LiveActivityView.svelte";
   import type { LiveWorkout } from "$lib/types";
 
   let { data } = $props();
@@ -11,7 +11,7 @@
 
 {#if liveWorkout}
   <div class="detail-page live-activity-page">
-    <LiveWorkoutView
+    <LiveActivityView
       workout={liveWorkout}
       endpoint={`/api/v1/live-workouts/${liveWorkout.id}`}
       activityTypes={data.activityTypes}

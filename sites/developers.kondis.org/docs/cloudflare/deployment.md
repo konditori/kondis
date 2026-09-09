@@ -40,7 +40,8 @@ For the queue split deployment, this applies `1789000000000-SplitActivityQueues`
 
 The normal self-hosted development stack remains `docker/docker-compose.dev.yml`.
 The production demo database uses the separate `deployment/demo/docker-compose.yml`
-stack below; it does not start the normal Kondis API or web services.
+stack below. It starts the Kondis Node API and pg-boss worker alongside PostgreSQL;
+the public web and API Workers remain independently deployed.
 
 ### Public demo
 
@@ -99,19 +100,20 @@ cp deployment/demo/.env.example deployment/demo/.env
 mise run demo-db
 ```
 
-`mise run demo-db` builds or starts the demo PostgreSQL container, waits for it
-to become healthy, and runs the one-shot seeder. It does not drop the database
-or delete the configured `DEMO_DB_DATA_DIR`, so it is safe to use after a host
-or container restart. The seeder applies migrations and creates the demo
-fixtures. Keep the database and seeder credentials outside the repository.
+`mise run demo-db` starts PostgreSQL and the full Kondis Node runtime, then runs
+the one-shot seeder. The seeder uses application services to create fixtures and
+waits for pg-boss to finish metrics, route matching, best efforts, and image
+processing before it exits. It does not drop the database or delete the
+configured `DEMO_DB_DATA_DIR`, so it is safe to use after a host or container
+restart. Keep the database and seeder credentials outside the repository.
 
 To inspect, stop, or restart the database without changing its data:
 
 ```sh
 cd deployment/demo
 docker compose --env-file .env -f ./docker-compose.yml ps
-docker compose --env-file .env -f ./docker-compose.yml stop database
-docker compose --env-file .env -f ./docker-compose.yml start database
+docker compose --env-file .env -f ./docker-compose.yml stop database server
+docker compose --env-file .env -f ./docker-compose.yml start database server
 ```
 
 #### Routine Worker deployment

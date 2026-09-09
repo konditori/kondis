@@ -29,8 +29,7 @@ describe(SocialService.name, () => {
     };
     const social = {
       createNotification: vi.fn(() => {
-        order.push('insert');
-        order.push('commit');
+        order.push('insert', 'commit');
         return Promise.resolve({
           id: 'notification-id',
           type: 'activity_like' as const,

@@ -22,6 +22,33 @@ services:
       - demo_db_username
       - demo_db_password
 
+  server:
+    build:
+      context: ../..
+      dockerfile: server/Dockerfile
+    environment:
+      KONDIS_DB_HOSTNAME: database
+      KONDIS_DB_PORT: 5432
+      KONDIS_DB_DATABASE_NAME: ${DEMO_DB_DATABASE_NAME:-kondis_demo}
+      KONDIS_DEMO_MODE: 'true'
+      KONDIS_STORAGE_DIR: /data
+    volumes:
+      - ${DEMO_SERVER_DATA_DIR:-./server-data}:/data
+    ports:
+      - "${DEMO_SERVER_BIND_ADDRESS:-127.0.0.1}:${DEMO_SERVER_PORT:-2293}:2293"
+    secrets:
+      - demo_db_username
+      - demo_db_password
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        export KONDIS_DB_USERNAME="$$(cat /run/secrets/demo_db_username)"
+        export KONDIS_DB_PASSWORD="$$(cat /run/secrets/demo_db_password)"
+        exec node dist/bin/start.js
+    depends_on:
+      database:
+        condition: service_healthy
+
   seeder:
     profiles: ["seed"]
     build:
@@ -34,6 +61,7 @@ services:
       KONDIS_DEMO_MEDIA_DIR: /usr/src/app/demo-media
     volumes:
       - ../../test/test-assets/demo/v1:/usr/src/app/demo-media:ro
+      - ${DEMO_SERVER_DATA_DIR:-./server-data}:/data
     secrets:
       - demo_db_username
       - demo_db_password
@@ -44,8 +72,8 @@ services:
         export KONDIS_DB_PASSWORD="$$(cat /run/secrets/demo_db_password)"
         exec node dist/bin/provision-demo.js
     depends_on:
-      database:
-        condition: service_healthy
+      server:
+        condition: service_started
     restart: "no"
 
 secrets:

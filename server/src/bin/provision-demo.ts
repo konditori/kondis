@@ -1,68 +1,34 @@
-import { stat } from 'node:fs/promises';
-import { basename, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
-import sharp from 'sharp';
-
-import { createDatabase } from 'src/db/database';
-import { DEMO_FIT_SPECS } from 'src/demo/data';
-import { provisionDemoData, type DemoImageMetadata } from 'src/demo/provisioner';
-import { ActivityRepository } from 'src/repositories/activity.repository';
+import { createApplicationComposition } from 'src/composition.node';
+import { provisionDemoData } from 'src/demo/provisioner';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
-import { MediaRepository } from 'src/repositories/media.repository';
-import { SessionRepository } from 'src/repositories/session.repository';
-import { SocialRepository } from 'src/repositories/social.repository';
-import { UploadRepository } from 'src/repositories/upload.repository';
-import { UserRepository } from 'src/repositories/user.repository';
 
 const demoMediaDirectory = process.env.KONDIS_DEMO_MEDIA_DIR ?? resolve(process.cwd(), '../test/test-assets/demo/v1');
 
-const readDemoImageMetadata = async (): Promise<Readonly<Record<string, readonly DemoImageMetadata[]>>> => {
-  const entries = await Promise.all(
-    DEMO_FIT_SPECS.map(async ({ slug, imageFiles }) => {
-      const metadata = await Promise.all(
-        imageFiles.map(async (imagePath): Promise<DemoImageMetadata> => {
-          const filePath = resolve(demoMediaDirectory, 'activities', imagePath);
-          const [fileStats, imageMetadata] = await Promise.all([stat(filePath), sharp(filePath).metadata()]);
-          if (imageMetadata.width === undefined || imageMetadata.height === undefined) {
-            throw new Error(`Could not read dimensions for demo image ${filePath}`);
-          }
-          return {
-            originalName: basename(imagePath),
-            storagePath: `activities/${imagePath}`,
-            byteSize: fileStats.size,
-            width: imageMetadata.width,
-            height: imageMetadata.height,
-          };
-        }),
-      );
-
-      return [slug, metadata] as const;
-    }),
-  );
-  return Object.fromEntries(entries);
-};
-
 const main = async (): Promise<void> => {
   const config = new ConfigRepository().getEnv();
-  const imageMetadata = await readDemoImageMetadata();
   await migrateDatabase(config.database);
-
-  const database = createDatabase(config.database);
+  const application = createApplicationComposition({ role: 'api' });
   try {
+    const setupStatus = await application.authService.setupStatus();
+    if (!setupStatus.setupRequired) {
+      console.log('Demo database is already seeded.');
+      return;
+    }
     await provisionDemoData({
-      database,
-      activities: new ActivityRepository(database),
-      imageMetadata,
-      images: new MediaRepository(database),
-      uploads: new UploadRepository(database),
-      social: new SocialRepository(database),
-      sessions: new SessionRepository(database),
-      users: new UserRepository(database),
+      activities: application.activityService,
+      images: application.activityImageService,
+      auth: application.authService,
+      social: application.socialService,
+      users: application.userService,
+      queue: application.queueAdapter,
+      mediaDirectory: demoMediaDirectory,
     });
-    console.log('Demo database migrated and seeded.');
+    console.log('Demo database migrated, seeded, and fully processed.');
   } finally {
-    await database.destroy();
+    await application.close();
   }
 };
 

@@ -3,7 +3,6 @@ import pg from 'pg';
 
 import { configureTypeParsers } from 'src/db/database';
 import type { DB } from 'src/db/schema';
-import type { KondisDatabase } from 'src/types';
 
 export type HyperdriveDatabase = {
   db: Kysely<DB>;

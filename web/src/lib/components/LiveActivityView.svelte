@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
   import {
     Activity,
+    ArrowLeft,
     Clock3,
     Link,
     Pause,
@@ -89,8 +89,7 @@
           }))
           .filter(({ distance }) => distance <= 5 * 60 * 1000)
           .sort((a, b) => a.distance - b.distance)[0]?.candidate;
-        if (activity)
-          await goto(`/activity/${activity.id}`, { replaceState: true });
+        if (activity) window.location.replace(`/activity/${activity.id}`);
       } finally {
         resolvingFinishedWorkout = false;
       }
@@ -141,75 +140,94 @@
 </script>
 
 <section class="live-workout-view">
-  <div class="live-workout-heading">
-    <div>
-      <p class:live={connection === "Live"} class="live-status">
-        {#if connection === "Live"}<Radio
-            size={15}
-          />{:else if connection === "Paused"}<Pause
-            size={15}
-          />{:else if connection === "Connection lost"}<WifiOff
-            size={15}
-          />{:else}<Clock3 size={15} />{/if}
-        {connectionLabel(connection)}
-      </p>
-      <h1>
-        {workout.status === "ended"
-          ? t("live_workout_finished", {
-              activity: activityTypeLabel(activityTypes, workout.sport),
-            })
-          : t("live_workout_in_progress", {
-              activity: activityTypeLabel(activityTypes, workout.sport),
-            })}
-      </h1>
-      <span
-        >{ageSeconds === null
-          ? t("waiting_for_gps")
-          : t("updated_seconds_ago", { seconds: ageSeconds })}</span
-      >
+  <header class="detail-header live-workout-header">
+    <a class="back-link" href="/" data-sveltekit-preload-data="hover">
+      <ArrowLeft size={18} /> {t("all_activities")}
+    </a>
+    <div class="live-workout-heading">
+      <div>
+        <p class:live={connection === "Live"} class="live-status">
+          {#if connection === "Live"}<Radio
+              size={15}
+            />{:else if connection === "Paused"}<Pause
+              size={15}
+            />{:else if connection === "Connection lost"}<WifiOff
+              size={15}
+            />{:else}<Clock3 size={15} />{/if}
+          {connectionLabel(connection)}
+        </p>
+        <h1>
+          {workout.status === "ended"
+            ? t("live_workout_finished", {
+                activity: activityTypeLabel(activityTypes, workout.sport),
+              })
+            : t("live_workout_in_progress", {
+                activity: activityTypeLabel(activityTypes, workout.sport),
+              })}
+        </h1>
+        <span
+          >{ageSeconds === null
+            ? t("waiting_for_gps")
+            : t("updated_seconds_ago", { seconds: ageSeconds })}</span
+        >
+      </div>
+      {#if allowSharing}
+        <button
+          class="live-share-button"
+          onclick={createShare}
+          disabled={sharing}
+        >
+          <Link size={17} />
+          {sharing
+            ? t("creating_share_link")
+            : shareUrl
+              ? t("new_share_link")
+              : t("share_live")}
+        </button>
+      {/if}
     </div>
-    {#if allowSharing}
-      <button
-        class="live-share-button"
-        onclick={createShare}
-        disabled={sharing}
-      >
-        <Link size={17} />
-        {sharing
-          ? t("creating_share_link")
-          : shareUrl
-            ? t("new_share_link")
-            : t("share_live")}
-      </button>
-    {/if}
-  </div>
+  </header>
   {#if shareUrl}
-    <div class="live-share-link">
+    <div class="live-share-link live-share-feedback">
       <strong>{t("beacon_link_copied")}</strong><span>{shareUrl}</span>
     </div>
   {:else if shareError}
-    <p class="form-error">{shareError}</p>
+    <p class="form-error live-share-feedback">{shareError}</p>
   {/if}
-  <div class="live-stats">
-    <div>
-      <strong>{distance(workout.distanceMeters, unitSystem)}</strong><span
-        >{t("distance")}</span
-      >
-    </div>
-    <div>
-      <strong>{duration(workout.elapsedSeconds)}</strong><span
-        >{t("elapsed")}</span
-      >
-    </div>
-    <div>
-      <strong>{workout.route.length}</strong><span>{t("gps_points")}</span>
-    </div>
-  </div>
-  <LiveRouteMap coordinates={workout.route} follow={connection === "Live"} />
+  <section class="activity-map-section" aria-label={t("live_workout_route")}>
+    <section class="map-panel">
+      <LiveRouteMap
+        coordinates={workout.route}
+        follow={connection === "Live"}
+      />
+    </section>
+  </section>
   {#if workout.route.length === 0}
     <div class="live-waiting">
       <Activity size={22} />
       {t("waiting_for_first_gps_position")}
     </div>
   {/if}
+  <section class="metrics-section live-metrics-section">
+    <div class="metric-grid">
+      <article class="metric">
+        <div>
+          <small>{t("distance")}</small>
+          <strong>{distance(workout.distanceMeters, unitSystem)}</strong>
+        </div>
+      </article>
+      <article class="metric">
+        <div>
+          <small>{t("elapsed")}</small>
+          <strong>{duration(workout.elapsedSeconds)}</strong>
+        </div>
+      </article>
+      <article class="metric">
+        <div>
+          <small>{t("gps_points")}</small>
+          <strong>{workout.route.length}</strong>
+        </div>
+      </article>
+    </div>
+  </section>
 </section>

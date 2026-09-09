@@ -6,7 +6,7 @@ import type { CryptoPort } from 'src/ports/crypto.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
-import { SessionRepository } from 'src/repositories/session.repository';
+import { SessionRepository, type SessionRecord } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisExecutor } from 'src/types';
 import { publicMediaUrl } from 'src/utils/media';
@@ -191,6 +191,12 @@ Do not share this secret token with anyone.
       role,
     });
     return user;
+  }
+
+  // Used by the immutable public demo. Keeping this at the auth boundary means
+  // provisioning never needs to reach into the session repository directly.
+  createSessionRecord(record: SessionRecord): Promise<void> {
+    return this.credentials.createSessionRecord(record);
   }
 
   private normalizeAccount(email: string, firstName: string, lastName: string, password: string) {
