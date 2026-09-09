@@ -1,0 +1,27 @@
+server/scripts/generate-cloudflare-config.cjs
+  s_58c3a0a21a8a64::t_2134ac5dcbc13d 119
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_58c3a0a21a8a64::t_dbedc300c42bae 135-136
+web/src/routes/+layout.server.ts
+  s_58c3a0a21a8a64::t_ea58d0dbf7997d 11-15,62-64
+web/src/routes/activities/[id]/matched-routes/+page.server.ts
+  s_58c3a0a21a8a64::t_7b61847522daf1 9-10,12-14
+web/src/routes/favicon.ico/+server.ts
+  s_58c3a0a21a8a64::t_0dabd8b13eaaa0 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d25b3a83ebd8ac98c21360d144eb4b0718be0d0e",
+  "prompts": {},
+  "sessions": {
+    "s_58c3a0a21a8a64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08658-5d20-7d60-87dc-3a98af036118",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
