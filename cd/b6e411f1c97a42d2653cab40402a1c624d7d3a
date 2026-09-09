@@ -1,0 +1,21 @@
+server/src/bin/provision-demo.ts
+  s_58c3a0a21a8a64::t_69408eb7c9c681 1-2,4-9,12-16,20-45,48,50-51,54-61,63,65
+server/src/demo/provisioner.ts
+  s_58c3a0a21a8a64::t_f03e373526406e 1,3-23,28-35,37-44,51-52,56-71,76-83,85-86,89,96,102,104-106,109,123-135,137,139,141,145-153,159-166,171,174,176,179-187,189-244,246-261,263,265-267,269-285,287-297,300-331,334-355,359-386,388-389,393
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cdb6e411f1c97a42d2653cab40402a1c624d7d3a",
+  "prompts": {},
+  "sessions": {
+    "s_58c3a0a21a8a64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08658-5d20-7d60-87dc-3a98af036118",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
