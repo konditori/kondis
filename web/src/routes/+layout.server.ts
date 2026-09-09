@@ -8,8 +8,11 @@ import {
   activityControllerListTypes,
   type ActivityTypeSettingsOutput,
 } from "$lib/api";
-import { activityEventsUrl, getServerSdkRequestOptions } from "$lib/server/api";
-import { apiUrl } from "$lib/server/api";
+import {
+  activityEventsUrl,
+  apiUrl,
+  getServerSdkRequestOptions,
+} from "$lib/server/api";
 import type { LayoutServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 
@@ -56,7 +59,9 @@ export const load: LayoutServerLoad = async ({
   }
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
-    activityTypes = await activityTypesPromise;
+    const response = await activityTypesPromise;
+    if (response.status === 200)
+      activityTypes = response.data as ActivityTypeSettingsOutput[];
   } catch {
     // Activity pages already surface API availability; keep settings usable.
   }

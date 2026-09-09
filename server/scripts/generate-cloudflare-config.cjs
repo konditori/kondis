@@ -116,7 +116,7 @@ const generateCloudflareConfig = ({
 }) => {
   const prefix = demoMode ? baseConfig.name : `${baseConfig.name}-${environment}`;
   const demoBaseConfig = (() => {
-    const { r2_buckets: _r2Buckets, ...config } = baseConfig;
+    const { r2_buckets: _r2Buckets, queues: _queues, triggers: _triggers, ...config } = baseConfig;
     return config;
   })();
   const commonConfig = {
@@ -168,8 +168,6 @@ const generateCloudflareConfig = ({
   if (demoMode) {
     return {
       ...commonConfig,
-      queues: generatedQueueConfig,
-      triggers: baseConfig.triggers || { crons: ['* * * * *'] },
     };
   }
 

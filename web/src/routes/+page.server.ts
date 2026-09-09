@@ -21,15 +21,17 @@ export const load: PageServerLoad = async ({
   try {
     const [liveResponse, body] = await Promise.all([
       locals.kondisFetch(apiUrl("api/v1/live-workouts")),
-      socialControllerFeed(
-        {},
-        getServerSdkRequestOptions(locals.kondisFetch),
-      ) as unknown as Promise<ActivityPage>,
+      socialControllerFeed({}, getServerSdkRequestOptions(locals.kondisFetch)),
     ]);
     const liveWorkouts = liveResponse.ok
       ? ((await liveResponse.json()) as LiveWorkout[])
       : [];
-    return { ...body, unavailable: false, eventsUrl, liveWorkouts };
+    return {
+      ...(body.data as ActivityPage),
+      unavailable: false,
+      eventsUrl,
+      liveWorkouts,
+    };
   } catch {
     // Don't cache this error page, next reload should come from origin
     setHeaders({ "x-kondis-cache-bypass": "1" });
