@@ -68,6 +68,21 @@ description = "Stop the persistent demo PostgreSQL stack"
 dir = "deployment/demo"
 run = "bash ./bin/demo-db-down.sh"
 
+[tasks."postgres:up"]
+description = "Start the self-hosted PostgreSQL origin"
+dir = "deployment/postgres"
+run = "bash ./bin/db.sh up"
+
+[tasks."postgres:migrate"]
+description = "Run pending migrations on the self-hosted PostgreSQL origin"
+dir = "deployment/postgres"
+run = "bash ./bin/db.sh migrate"
+
+[tasks."postgres:down"]
+description = "Stop the self-hosted PostgreSQL origin"
+dir = "deployment/postgres"
+run = "bash ./bin/db.sh down"
+
 [tasks."deploy:demo-rebuild"]
 description = "Deploy the demo Workers, then drop, recreate, migrate, and reseed the demo database"
 dir = "deployment/demo"

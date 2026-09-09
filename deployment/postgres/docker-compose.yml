@@ -1,0 +1,69 @@
+name: kondis-postgres
+
+services:
+  database:
+    container_name: kondis_postgres
+    build:
+      context: ../../packages/postgres
+      dockerfile: Dockerfile
+      args:
+        PG_MAJOR: ${POSTGRES_MAJOR_VERSION:-17}
+        VECTORCHORD_TAG: ${VECTORCHORD_TAG:-1.1.1}
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/migrator_username
+      POSTGRES_PASSWORD_FILE: /run/secrets/migrator_password
+      POSTGRES_DB: ${KONDIS_DB_DATABASE_NAME:-kondis}
+      POSTGRES_INITDB_ARGS: --data-checksums
+      KONDIS_DB_STORAGE_TYPE: ${KONDIS_DB_STORAGE_TYPE:-SSD}
+      KONDIS_DB_RUNTIME_USERNAME: ${KONDIS_DB_RUNTIME_USERNAME:-kondis_runtime}
+    volumes:
+      - ${KONDIS_DB_DATA_DIR:?KONDIS_DB_DATA_DIR must be set}:/var/lib/postgresql
+      # Hyperdrive requires a publicly trusted certificate for the database
+      # hostname. The image generates a self-signed certificate only when
+      # these files are absent, which is suitable for local development only.
+      - ${KONDIS_DB_TLS_CERT:?KONDIS_DB_TLS_CERT must point to server.crt}:/etc/postgresql/server.crt:ro
+      - ${KONDIS_DB_TLS_KEY:?KONDIS_DB_TLS_KEY must point to server.key}:/etc/postgresql/server.key:ro
+      - ./init/01-create-runtime-role.sh:/docker-entrypoint-initdb.d/01-create-runtime-role.sh:ro
+    ports:
+      - "127.0.0.1:${KONDIS_DB_PORT:-5432}:5432"
+    secrets:
+      - migrator_username
+      - migrator_password
+      - runtime_username
+      - runtime_password
+    shm_size: 128mb
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+
+  migrations:
+    profiles: [ops]
+    build:
+      context: ../..
+      dockerfile: server/Dockerfile
+    environment:
+      KONDIS_DB_HOSTNAME: database
+      KONDIS_DB_PORT: 5432
+      KONDIS_DB_DATABASE_NAME: ${KONDIS_DB_DATABASE_NAME:-kondis}
+      KONDIS_DB_USERNAME: ${KONDIS_DB_MIGRATOR_USERNAME:-kondis_migrator}
+      KONDIS_DB_PASSWORD_FILE: /run/secrets/migrator_password
+    secrets:
+      - migrator_password
+    entrypoint: ["/bin/sh", "-ec"]
+    command: >-
+      export KONDIS_DB_PASSWORD="$$(cat /run/secrets/migrator_password)";
+      exec node dist/bin/migrations.js run
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: "no"
+
+secrets:
+  migrator_username:
+    file: ${KONDIS_DB_MIGRATOR_USERNAME_FILE:?KONDIS_DB_MIGRATOR_USERNAME_FILE must point to a file}
+  migrator_password:
+    file: ${KONDIS_DB_MIGRATOR_PASSWORD_FILE:?KONDIS_DB_MIGRATOR_PASSWORD_FILE must point to a file}
+  runtime_username:
+    file: ${KONDIS_DB_RUNTIME_USERNAME_FILE:?KONDIS_DB_RUNTIME_USERNAME_FILE must point to a file}
+  runtime_password:
+    file: ${KONDIS_DB_RUNTIME_PASSWORD_FILE:?KONDIS_DB_RUNTIME_PASSWORD_FILE must point to a file}
