@@ -1,0 +1,43 @@
+server/src/api/auth.ts
+  s_16b2c29dff831a::t_eed1a152f8c164 4
+server/src/bin/provision-demo.ts
+  s_16b2c29dff831a::t_91e5321bfc1bbe 8
+server/src/cloudflare/entrypoint.ts
+  s_16b2c29dff831a::t_3e6cc101571154 44-45,51
+server/src/demo/demo-data.ts
+  s_16b2c29dff831a::t_1ab95c07318175 13
+server/src/demo/live-durable-object.spec.ts
+  s_9892b2bce248a3::t_40f2a9ff575d74 3-4,98,160
+server/src/demo/live-durable-object.ts
+  s_9892b2bce248a3::t_162a271fa76226 1,111-118,130
+server/src/demo/live-entrypoint.ts
+  s_9892b2bce248a3::t_af18645a0ade7a 9-11,13-18
+server/src/dtos/live-workout.dto.ts
+  s_9892b2bce248a3::t_2cacc2ce1508d9 6
+web/src/routes/+page.svelte
+  s_9892b2bce248a3::t_a3a39b46324de9 189-196,206-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9cb1f6ab5a0adb22c407361187092adfc0edb3a4",
+  "prompts": {},
+  "sessions": {
+    "s_16b2c29dff831a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8c644d93-23b6-4d61-aad5-760d49b930c7",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_9892b2bce248a3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0881e-342f-7ff1-bd97-fae157012bfb",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
