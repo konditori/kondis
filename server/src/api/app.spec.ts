@@ -39,6 +39,7 @@ const expectedOperations = [
   'PUT /activities/{id} ActivityController_updateById',
   'DELETE /activities/{id} ActivityController_deleteById',
   'GET /activities/{id}/matched-routes ActivityController_listMatchedRoutes',
+  'POST /activities ActivityController_create',
   'POST /activities/{id}/images ActivityImageController_upload',
   'GET /activities/{id}/images ActivityImageController_list',
   'PATCH /activities/{activityId}/images/{imageId} ActivityImageController_update',
