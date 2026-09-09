@@ -1,0 +1,69 @@
+deployment/demo/wrangler-api.jsonc
+  s_6adbad8300fd86::t_e7b69368fde2a3 19-26,28-128
+server/scripts/generate-cloudflare-config.cjs
+  s_6adbad8300fd86::t_a2828b5b6c8c3d 119,146-175,184
+server/src/api/routes/activity.spec.ts
+  s_9c53f6ad454a0e::t_641ace15c5e6cf 62
+server/src/api/routes/auth.ts
+  s_9c53f6ad454a0e::t_08cc8262fb98ac 22
+server/src/cloudflare/entrypoint.ts
+  s_6adbad8300fd86::t_6345c840c7d914 35,51,273-282,332-346
+server/src/composition.worker.ts
+  s_9c53f6ad454a0e::t_80ad2ada78df6c 12
+server/src/constants.ts
+  s_9c53f6ad454a0e::t_25806ba093279c 2
+server/src/demo/live-entrypoint.spec.ts
+  s_9c53f6ad454a0e::t_6cd5716f6f3247 51-55
+server/src/demo/live-tracker.spec.ts
+  s_9c53f6ad454a0e::t_fafd435ec2703c 4,26,78,120,130-203
+server/src/demo/live-tracker.ts
+  s_9c53f6ad454a0e::t_2384e9b4cf816f 40,70,84,140-143,206-221
+server/src/dtos/activity.dto.ts
+  s_9c53f6ad454a0e::t_6c1b11b6dc9fc0 9
+server/src/jobs/generate-cloudflare-config.spec.ts
+  s_9c53f6ad454a0e::t_acde244938352e 135-136
+server/src/repositories/fit.repository.spec.ts
+  s_9c53f6ad454a0e::t_3a44dc73733836 5
+server/src/repositories/social.repository.ts
+  s_9c53f6ad454a0e::t_5c0eb9eec25b8c 5,174-176
+server/src/services/activity.service.spec.ts
+  s_9c53f6ad454a0e::t_cfa5a28beda196 43,76,382-406
+server/src/services/activity.service.ts
+  s_6adbad8300fd86::t_df91a33e2eb9ea 26,32-33,41,397-399,419-446
+server/src/services/auth.service.ts
+  s_9c53f6ad454a0e::t_5c43d0c6033a6d 12
+server/src/services/social.service.ts
+  s_9c53f6ad454a0e::t_ebc2ce34214021 4,15-17
+server/src/utils/fit.spec.ts
+  s_9c53f6ad454a0e::t_b6fcf1d7ca3315 4,10
+server/src/utils/fit.ts
+  s_9c53f6ad454a0e::t_e1a6cc06513dbe 5
+web/src/routes/activities/[id]/+page.svelte
+  s_9c53f6ad454a0e::t_d9e8ee418e25d5 7
+web/src/routes/activity/[id]/+page.svelte
+  s_9c53f6ad454a0e::t_e306253af9e663 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "256117f43f060242cefa31bdc85780cd2a065eb1",
+  "prompts": {},
+  "sessions": {
+    "s_6adbad8300fd86": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b377552-b04a-49f6-ba58-33c19edb2b14",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_9c53f6ad454a0e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0850b-246b-7780-963a-2290a288de48",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
