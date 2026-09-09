@@ -1,0 +1,55 @@
+server/src/demo/provisioner.ts
+  s_6adbad8300fd86::t_e545e3c1bbd362 1-2,4-12,18-28,35-36,39,41,46-51,53-54,57,64,70,72-77,80,92,95-109,112,114,118-126,129-145,153,156,158-164,167-168,170-203,205-220,223-228,230-231,233-241,243-258,260,263-269,271,274,276-289,293
+deployment/demo/docker-compose.yml
+  s_0cbe616262c97f::t_f7d0acf78b72bb 25-51,64,75-76
+mise.toml
+  s_0cbe616262c97f::t_598bbbfb77f372 62,72,86,103,117
+server/src/bin/provision-demo.ts
+  s_6adbad8300fd86::t_74d77752739655 1,3-4,13,15-19,21-27,29,31
+server/src/services/auth.service.ts
+  s_0cbe616262c97f::t_32dac3c79df6fb 9,196-201
+server/src/services/social.service.spec.ts
+  s_6adbad8300fd86::t_9c557358a71063 32
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_0cbe616262c97f::t_b18160a15d5d53 43-44,103-108,115-116
+web/src/app.css
+  s_0cbe616262c97f::t_c6be0e7c77b8bf 1089,1101,1105-1107,1157-1160,1164-1165,1173-1175,1178-1184,3834-3836
+web/src/routes/activities/[id]/+page.svelte
+  s_e9e3298767c810::t_0f197210965dcb 3,14
+web/src/routes/activity/[id]/+page.svelte
+  s_e9e3298767c810::t_582301f392ffd8 3,14
+web/src/routes/live/[token]/+page.svelte
+  s_e9e3298767c810::t_dae4ddb9e4ddb5 2,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3a84a28501433496e2643603ce238cdd6c477429",
+  "prompts": {},
+  "sessions": {
+    "s_0cbe616262c97f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0863c-10cd-7df0-8703-780d2b94ef75",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_6adbad8300fd86": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b377552-b04a-49f6-ba58-33c19edb2b14",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e9e3298767c810": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0863f-9311-7803-9fa5-b501dbadf2b9",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
