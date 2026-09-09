@@ -45,8 +45,8 @@ export const createCloudNodeProcessorComposition = ({
   const queueAdapter = new CloudflareQueueAdapter(database);
   const cryptoRepository = new CryptoRepository();
   const activityRepository = new ActivityRepository(database);
-  const activityImageRepository = new MediaRepository(database);
-  const authCredentialRepository = new SessionRepository(database);
+  const mediaRepository = new MediaRepository(database);
+  const sessionRepository = new SessionRepository(database);
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(logger);
   const gpxRepository = new GpxRepository(logger);
@@ -58,7 +58,7 @@ export const createCloudNodeProcessorComposition = ({
   const userRepository = new UserRepository(database);
   const eventRepository =
     realtime ??
-    createCloudNodeRealtimePublisher(database, configRepository, socialRepository, authCredentialRepository);
+    createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
   const importProgressStore = new ImportProgressStore(database);
 
   const activityService = new ActivityService(
@@ -73,11 +73,11 @@ export const createCloudNodeProcessorComposition = ({
     tcxRepository,
     logger,
     importProgressStore,
-    activityImageRepository,
+    mediaRepository,
     socialRepository,
   );
   const activityImageService = new ActivityImageService(
-    activityImageRepository,
+    mediaRepository,
     activityRepository,
     storageRepository,
     cryptoRepository,
@@ -91,7 +91,7 @@ export const createCloudNodeProcessorComposition = ({
     configRepository,
     rateLimitingRepository,
     cryptoRepository,
-    authCredentialRepository,
+    sessionRepository,
     eventRepository,
     databaseRepository,
   );

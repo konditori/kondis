@@ -85,7 +85,7 @@ export class ActivityService {
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
     private readonly importProgressStore?: ImportProgressStore,
-    private readonly activityImageRepository?: MediaRepository,
+    private readonly mediaRepository?: MediaRepository,
     private readonly socialRepository?: SocialRepository,
     private readonly mediaBaseUrl?: string,
   ) {
@@ -580,11 +580,11 @@ export class ActivityService {
     }
 
     const upload = await this.uploadRepository.getById(activity.upload_id);
-    const activityImages = this.activityImageRepository
-      ? await this.activityImageRepository.listForUpload(activity.upload_id)
+    const activityImages = this.mediaRepository
+      ? await this.mediaRepository.listForActivity(activity.id)
       : [];
-    const imageFiles = this.activityImageRepository
-      ? await Promise.all(activityImages.map((image) => this.activityImageRepository!.getFiles(image.id)))
+    const imageFiles = this.mediaRepository
+      ? await Promise.all(activityImages.map((image) => this.mediaRepository!.getFiles(image.id)))
       : [];
 
     await this.databaseRepository.withTransaction(async (trx) => {
@@ -653,7 +653,7 @@ export class ActivityService {
       achievementCounts.map(({ activity_id, achievement_count }) => [activity_id, achievement_count]),
     );
     const imagesByActivity = await Promise.all(
-      page.map((row) => this.listImageDtos(row.upload_id, feedUserId ? undefined : userId)),
+      page.map((row) => this.listImageDtos(row.id, feedUserId ? undefined : userId)),
     );
 
     return {
@@ -776,7 +776,7 @@ export class ActivityService {
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
-      this.activityImageRepository?.listForUpload(row.upload_id) ?? Promise.resolve([]),
+      this.mediaRepository?.listForActivity(row.id) ?? Promise.resolve([]),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
     const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
@@ -805,16 +805,16 @@ export class ActivityService {
     };
   }
 
-  private async listImageDtos(uploadId: string, userId?: string) {
-    if (!this.activityImageRepository) {
+  private async listImageDtos(activityId: string, userId?: string) {
+    if (!this.mediaRepository) {
       return [];
     }
-    const images = await this.activityImageRepository.listForUpload(uploadId, userId);
+    const images = await this.mediaRepository.listForActivity(activityId, userId);
     return Promise.all(images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)));
   }
 
   private async toImageDto(image: ActivityImage) {
-    const files = (await this.activityImageRepository?.getFiles(image.id)) ?? [];
+    const files = (await this.mediaRepository?.getFiles(image.id)) ?? [];
     const fileUrl = (variant: 'thumbnail' | 'preview' | 'original'): string | null => {
       const file = files.find((candidate) => candidate.variant === variant);
       return file

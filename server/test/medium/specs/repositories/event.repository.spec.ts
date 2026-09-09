@@ -32,11 +32,11 @@ describe(EventRepository.name, () => {
     const { sut } = setup();
     const activity = {
       id: crypto.randomUUID(),
-      uploadId: crypto.randomUUID(),
       sport: 'run',
       name: 'medium test',
       description: null,
       excludeFromRankings: false,
+      tags: [],
       startedAt: new Date().toISOString(),
       timezoneOffsetMinutes: 0,
       metrics: null,

@@ -17,39 +17,39 @@ export class MediaRepository {
   getById(id: string, userId?: string): Promise<ActivityImage | undefined> {
     return this.db
       .selectFrom('activity_image')
-      .innerJoin('upload', 'upload.id', 'activity_image.upload_id')
+      .innerJoin('activity', 'activity.id', 'activity_image.activity_id')
       .selectAll('activity_image')
       .where('activity_image.id', '=', id)
-      .$if(!!userId, (query) => query.where('upload.user_id', '=', userId!))
+      .$if(!!userId, (query) => query.where('activity.user_id', '=', userId!))
       .executeTakeFirst();
   }
 
-  getByUploadChecksum(uploadId: string, checksum: string, executor: KondisExecutor = this.db) {
+  getByActivityChecksum(activityId: string, checksum: string, executor: KondisExecutor = this.db) {
     return executor
       .selectFrom('activity_image')
       .selectAll()
-      .where('upload_id', '=', uploadId)
+      .where('activity_id', '=', activityId)
       .where('checksum', '=', checksum)
       .executeTakeFirst();
   }
 
-  listForUpload(uploadId: string, userId?: string) {
+  listForActivity(activityId: string, userId?: string) {
     return this.db
       .selectFrom('activity_image')
-      .innerJoin('upload', 'upload.id', 'activity_image.upload_id')
+      .innerJoin('activity', 'activity.id', 'activity_image.activity_id')
       .selectAll('activity_image')
-      .$if(!!userId, (query) => query.where('upload.user_id', '=', userId!))
-      .where('activity_image.upload_id', '=', uploadId)
+      .$if(!!userId, (query) => query.where('activity.user_id', '=', userId!))
+      .where('activity_image.activity_id', '=', activityId)
       .orderBy('activity_image.sort_order')
       .orderBy('activity_image.created_at')
       .execute();
   }
 
-  async nextSortOrder(uploadId: string, executor: KondisExecutor = this.db): Promise<number> {
+  async nextSortOrder(activityId: string, executor: KondisExecutor = this.db): Promise<number> {
     const row = await executor
       .selectFrom('activity_image')
       .select(({ fn }) => fn.max('sort_order').as('sort_order'))
-      .where('upload_id', '=', uploadId)
+      .where('activity_id', '=', activityId)
       .executeTakeFirstOrThrow();
     return (row.sort_order === null ? -1 : Number(row.sort_order)) + 1;
   }

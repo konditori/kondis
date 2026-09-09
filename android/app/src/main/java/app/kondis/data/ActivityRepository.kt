@@ -264,7 +264,6 @@ class ActivityRepository
             val activity =
                 Activity(
                     id = localId,
-                    uploadId = localId,
                     sport = sport,
                     name = title.ifBlank { null },
                     description = null,
@@ -282,7 +281,6 @@ class ActivityRepository
             val detail =
                 ActivityDetail(
                     id = activity.id,
-                    uploadId = activity.uploadId,
                     sport = activity.sport,
                     name = activity.name,
                     description = null,

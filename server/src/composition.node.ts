@@ -48,9 +48,8 @@ export const createApplicationComposition = ({
   const consumeJobs = role === 'worker';
   const newLogger = (): ConsoleLogger => new ConsoleLogger({ logLevels });
   const database = createDatabase(configRepository.database);
-
   const activityRepository = new ActivityRepository(database);
-  const activityImageRepository = new MediaRepository(database);
+  const mediaRepository = new MediaRepository(database);
   const authCredentialRepository = new SessionRepository(database);
   const cryptoRepository = new CryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
@@ -80,11 +79,11 @@ export const createApplicationComposition = ({
     tcxRepository,
     newLogger(),
     importProgressStore,
-    activityImageRepository,
+    mediaRepository,
     socialRepository,
   );
   const activityImageService = new ActivityImageService(
-    activityImageRepository,
+    mediaRepository,
     activityRepository,
     storageRepository,
     cryptoRepository,
@@ -141,7 +140,7 @@ export const createApplicationComposition = ({
     database,
     configRepository,
     activityRepository,
-    activityImageRepository,
+    mediaRepository,
     authCredentialRepository,
     cryptoRepository,
     databaseRepository,
@@ -171,7 +170,7 @@ export const createApplicationComposition = ({
   const instances = new Map<Class<unknown>, unknown>([
     [ConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
-    [MediaRepository, activityImageRepository],
+    [MediaRepository, mediaRepository],
     [SessionRepository, authCredentialRepository],
     [CryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],

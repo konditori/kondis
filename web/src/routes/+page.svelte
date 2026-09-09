@@ -44,12 +44,12 @@
   let now = $state(Date.now());
   const liveWorkouts = $derived(liveWorkoutsOverride ?? data.liveWorkouts);
   const activities = $derived.by(() => {
-    const byUpload = new Map(
-      data.activities.map((activity) => [activity.uploadId, activity]),
+    const byActivity = new Map(
+      data.activities.map((activity) => [activity.id, activity]),
     );
     for (const activity of appendedActivities)
-      byUpload.set(activity.uploadId, activity);
-    return [...byUpload.values()].sort(
+      byActivity.set(activity.id, activity);
+    return [...byActivity.values()].sort(
       (a, b) =>
         b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id),
     );
@@ -160,7 +160,7 @@
           if (current) {
             appendedActivities = [
               ...appendedActivities.filter(
-                ({ uploadId }) => uploadId !== current.uploadId,
+                ({ id }) => id !== current.id,
               ),
               { ...current, likeCount: event.activity.likeCount },
             ];
@@ -175,7 +175,7 @@
         const { activity } = event;
         appendedActivities = [
           ...appendedActivities.filter(
-            ({ uploadId }) => uploadId !== activity.uploadId,
+            ({ id }) => id !== activity.id,
           ),
           activity,
         ];
@@ -239,11 +239,11 @@
         getSdkRequestOptions(),
       )) as unknown as ActivityPage;
       const refreshedUploads = new Set(
-        page.activities.map(({ uploadId }) => uploadId),
+        page.activities.map(({ id }) => id),
       );
       appendedActivities = [
         ...appendedActivities.filter(
-          ({ uploadId }) => !refreshedUploads.has(uploadId),
+          ({ id }) => !refreshedUploads.has(id),
         ),
         ...page.activities,
       ];

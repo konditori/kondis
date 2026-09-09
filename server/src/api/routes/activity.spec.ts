@@ -164,7 +164,6 @@ describe('API activity routes', () => {
   it('validates and delegates activity updates and deletes', async () => {
     const updatedActivity: ActivityDto = {
       id: ACTIVITY_ID,
-      uploadId: '00000000-0000-4000-8000-000000000003',
       sport: ActivityType.Run,
       name: 'Evening run',
       description: null,

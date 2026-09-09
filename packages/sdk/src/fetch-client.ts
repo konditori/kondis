@@ -26,7 +26,7 @@ export type FitUploadResponseDtoOutput = {
 };
 export type TakeoutImportCreateResponseDtoOutput = {
   importId: string;
-  status: Status;
+  status: 'scanning';
 };
 export type TakeoutImportScanResponseDtoOutput = {
   pendingItemKeys: string[];
@@ -36,7 +36,7 @@ export type TakeoutItemSubmissionResponseDtoOutput = {
 };
 export type TakeoutImportStatusDtoOutput = {
   importId: string;
-  status: Status2;
+  status: 'scanning' | 'uploading' | 'processing' | 'completed' | 'failed' | 'cancelled';
   total: number | null;
   uploaded: number;
   processed: number;
@@ -86,15 +86,17 @@ export type AllJobStatusResponseDtoOutput = {
 };
 export type JobCreateDto = {
   /** The job to run */
-  name: Name;
+  name: 'reparse-failed-uploads' | 'reparse-all-uploads';
 };
+export type QueueNameOutput =
+  'activityParsing' | 'activityEnrichment' | 'backgroundTask' | 'imageProcessing' | 'storage';
 export type JobHistoryResponseDtoOutput = {
   jobs: {
     id: string;
     name: string;
     activityId: string | null;
-    queue: QueueName_Output;
-    status: Status3;
+    queue: QueueNameOutput;
+    status: 'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
     createdAt: string;
     startedAt: string | null;
     finishedAt: string | null;
@@ -104,19 +106,78 @@ export type JobHistoryResponseDtoOutput = {
   }[];
   total: number;
 };
+export type QueueName = 'activityParsing' | 'activityEnrichment' | 'backgroundTask' | 'imageProcessing' | 'storage';
 export type QueueCommandDto = {
   /** Operation to perform on the queue */
-  command: Command;
+  command: 'pause' | 'resume' | 'empty' | 'clear-failed';
 };
 export type QueueStatusReportDtoOutput = {
   jobCounts: JobCountsDtoOutput;
   queueStatus: QueueStatusDtoOutput;
 };
+export type ActivityTypeOutput =
+  | 'alpine_ski'
+  | 'backcountry_ski'
+  | 'badminton'
+  | 'basketball'
+  | 'canoeing'
+  | 'cricket'
+  | 'cross_country_ski'
+  | 'crossfit'
+  | 'dance'
+  | 'e_bike_ride'
+  | 'elliptical'
+  | 'e_mountain_bike_ride'
+  | 'golf'
+  | 'gravel_ride'
+  | 'handcycle'
+  | 'high_intensity_interval_training'
+  | 'hike'
+  | 'ice_skate'
+  | 'inline_skate'
+  | 'kayaking'
+  | 'kitesurf'
+  | 'mountain_bike_ride'
+  | 'padel'
+  | 'physical_therapy'
+  | 'pickleball'
+  | 'pilates'
+  | 'racquetball'
+  | 'ride'
+  | 'rock_climbing'
+  | 'roller_ski'
+  | 'rowing'
+  | 'run'
+  | 'sail'
+  | 'skateboard'
+  | 'snowboard'
+  | 'snowshoe'
+  | 'soccer'
+  | 'squash'
+  | 'stair_stepper'
+  | 'stand_up_paddling'
+  | 'surfing'
+  | 'swim'
+  | 'table_tennis'
+  | 'tennis'
+  | 'trail_run'
+  | 'velomobile'
+  | 'virtual_ride'
+  | 'virtual_row'
+  | 'virtual_run'
+  | 'volleyball'
+  | 'walk'
+  | 'weight_training'
+  | 'wheelchair'
+  | 'windsurf'
+  | 'workout'
+  | 'yoga'
+  | 'other';
 export type LiveWorkoutListDtoOutput = {
   id: string;
-  sport: ActivityType_Output;
+  sport: ActivityTypeOutput;
   startedAt: string;
-  status: Status4;
+  status: 'recording' | 'paused' | 'ended' | 'discarded';
   canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
@@ -125,6 +186,64 @@ export type LiveWorkoutListDtoOutput = {
   lastReceivedAt: string | null;
   route: number[][];
 }[];
+export type ActivityType =
+  | 'alpine_ski'
+  | 'backcountry_ski'
+  | 'badminton'
+  | 'basketball'
+  | 'canoeing'
+  | 'cricket'
+  | 'cross_country_ski'
+  | 'crossfit'
+  | 'dance'
+  | 'e_bike_ride'
+  | 'elliptical'
+  | 'e_mountain_bike_ride'
+  | 'golf'
+  | 'gravel_ride'
+  | 'handcycle'
+  | 'high_intensity_interval_training'
+  | 'hike'
+  | 'ice_skate'
+  | 'inline_skate'
+  | 'kayaking'
+  | 'kitesurf'
+  | 'mountain_bike_ride'
+  | 'padel'
+  | 'physical_therapy'
+  | 'pickleball'
+  | 'pilates'
+  | 'racquetball'
+  | 'ride'
+  | 'rock_climbing'
+  | 'roller_ski'
+  | 'rowing'
+  | 'run'
+  | 'sail'
+  | 'skateboard'
+  | 'snowboard'
+  | 'snowshoe'
+  | 'soccer'
+  | 'squash'
+  | 'stair_stepper'
+  | 'stand_up_paddling'
+  | 'surfing'
+  | 'swim'
+  | 'table_tennis'
+  | 'tennis'
+  | 'trail_run'
+  | 'velomobile'
+  | 'virtual_ride'
+  | 'virtual_row'
+  | 'virtual_run'
+  | 'volleyball'
+  | 'walk'
+  | 'weight_training'
+  | 'wheelchair'
+  | 'windsurf'
+  | 'workout'
+  | 'yoga'
+  | 'other';
 export type LiveWorkoutCreateDto = {
   clientSessionId: string;
   sport: ActivityType;
@@ -132,9 +251,9 @@ export type LiveWorkoutCreateDto = {
 };
 export type LiveWorkoutDtoOutput = {
   id: string;
-  sport: ActivityType_Output;
+  sport: ActivityTypeOutput;
   startedAt: string;
-  status: Status4;
+  status: 'recording' | 'paused' | 'ended' | 'discarded';
   canShare: boolean;
   elapsedSeconds: number;
   distanceMeters: number;
@@ -144,7 +263,7 @@ export type LiveWorkoutDtoOutput = {
   route: number[][];
 };
 export type LiveWorkoutStateDto = {
-  status: Status5;
+  status: 'recording' | 'paused' | 'ended';
   elapsedSeconds: number;
   distanceMeters: number;
 };
@@ -168,6 +287,8 @@ export type LiveWorkoutShareDtoOutput = {
   token: string;
   expiresAt: string;
 };
+export type ActivityTagOutput =
+  'race' | 'long_run' | 'commute' | 'workout' | 'competition' | 'recovery' | 'with_pet' | 'with_kid' | 'for_a_cause';
 export type ActivityMetricDtoOutput = {
   /** Elapsed duration in seconds */
   elapsedTime: number;
@@ -200,12 +321,51 @@ export type ActivityMetricDtoOutput = {
   /** Calories in kcal */
   calories: number | null;
 };
+export type BestEffortTypeOutput =
+  | '400m'
+  | '1k'
+  | 'half_mile'
+  | '1_mile'
+  | '2_miles'
+  | '5k'
+  | '10k'
+  | '15k'
+  | '10_miles'
+  | '20k'
+  | 'half_marathon'
+  | '30k'
+  | 'marathon'
+  | '50k'
+  | 'longest_ride'
+  | 'biggest_climb'
+  | 'elevation_gain'
+  | '5_miles'
+  | '40k'
+  | '80k'
+  | '50_miles'
+  | '90k'
+  | '100k'
+  | '100_miles'
+  | '180k'
+  | 'power_5s'
+  | 'power_15s'
+  | 'power_30s'
+  | 'power_1m'
+  | 'power_2m'
+  | 'power_3m'
+  | 'power_5m'
+  | 'power_8m'
+  | 'power_10m'
+  | 'power_15m'
+  | 'power_20m'
+  | 'power_30m'
+  | 'power_45m'
+  | 'power_1h'
+  | 'power_2h';
 export type ActivityListResponseDtoOutput = {
   activities: {
     /** Activity id */
     id: string;
-    /** Source upload id */
-    uploadId: string;
     /** Original uploaded activity filename */
     uploadFileName?: string;
     /** Activity owner id */
@@ -219,7 +379,7 @@ export type ActivityListResponseDtoOutput = {
     likeCount?: number;
     commentCount?: number;
     viewerLiked?: boolean;
-    sport: ActivityType_Output;
+    sport: ActivityTypeOutput;
     /** Activity name */
     name: string | null;
     /** Activity description */
@@ -227,7 +387,7 @@ export type ActivityListResponseDtoOutput = {
     /** Exclude from rankings */
     excludeFromRankings: boolean;
     /** Activity tags */
-    tags: ActivityTag_Output[];
+    tags: ActivityTagOutput[];
     /** Start time in ISO-8601 format */
     startedAt: string;
     /** Minutes east of UTC */
@@ -240,7 +400,7 @@ export type ActivityListResponseDtoOutput = {
     updatedAt: string;
     topBestEfforts:
       | {
-          type: BestEffortType_Output;
+          type: BestEffortTypeOutput;
           /** Best-effort value; watts for power efforts */
           value: number;
           overallRank: number;
@@ -250,7 +410,7 @@ export type ActivityListResponseDtoOutput = {
     achievementCount: number | null;
     /** Simplified GPS route as GeoJSON */
     track: {
-      type: Type;
+      type: 'LineString';
       coordinates: number[][];
     } | null;
     images: {
@@ -259,7 +419,7 @@ export type ActivityListResponseDtoOutput = {
       sortOrder: number;
       width: number | null;
       height: number | null;
-      status: Status6;
+      status: 'pending' | 'ready' | 'failed';
       thumbnail: string | null;
       preview: string | null;
       original: string | null;
@@ -270,48 +430,45 @@ export type ActivityListResponseDtoOutput = {
   /** Total number of activities */
   total: number;
 };
-export type ActivityTypeSettingsOutput = {
-  type: ActivityType_Output;
-  averageMetric: AverageMetric;
-  showAveragePower: boolean;
-  bestEffortGroup: BestEffortGroup;
-};
-export type ActivityTypeListResponseDtoOutput = ActivityTypeSettingsOutput[];
-export type ActivityTagListResponseDtoOutput = {
-  tag: ActivityTag_Output;
-  label: string;
-  sports: 'all' | ActivityType_Output[];
-}[];
-export type BestEffortListResponseDtoOutput = {
-  sport: BestEffortSport_Output;
-  type: BestEffortType_Output;
-  valueKind: BestEffortValueKind_Output;
-  higherIsBetter: boolean;
-  /** Selected distance in meters, when applicable */
-  distance: number | null;
-  /** Selected duration in seconds, when applicable */
-  duration: number | null;
-  options: {
-    type: BestEffortType_Output;
-    valueKind: BestEffortValueKind_Output;
+export type ActivityTag =
+  'race' | 'long_run' | 'commute' | 'workout' | 'competition' | 'recovery' | 'with_pet' | 'with_kid' | 'for_a_cause';
+export type DirectActivityCreateDto = {
+  sport: ActivityType;
+  name: string | null;
+  description: string | null;
+  tags: ActivityTag[];
+  startedAt: string;
+  timezoneOffsetMinutes: number | null;
+  metrics: ActivityMetricDtoOutput;
+  streams: {
+    type:
+      | 'time'
+      | 'latitude'
+      | 'longitude'
+      | 'altitude'
+      | 'distance'
+      | 'speed'
+      | 'heartrate'
+      | 'cadence'
+      | 'power'
+      | 'temperature';
+    data: number[];
   }[];
-  efforts: {
-    activityId: string;
-    activityName: string | null;
-    sport: ActivityType_Output;
-    startedAt: string;
-    elapsedTime: number;
-    value: number;
-    overallRank: number;
-    year: number;
-    yearRank: number;
+  laps: {
+    lapIndex: number;
+    startedAt: string | null;
+    elapsedTime: number | null;
+    movingTime: number | null;
+    distance: number | null;
+    avgHr: number | null;
+    maxHr: number | null;
+    avgPower: number | null;
+    avgSpeedMps: number | null;
   }[];
 };
-export type ActivityDetailDtoOutput = {
+export type ActivityDtoOutput = {
   /** Activity id */
   id: string;
-  /** Source upload id */
-  uploadId: string;
   /** Original uploaded activity filename */
   uploadFileName?: string;
   /** Activity owner id */
@@ -325,7 +482,7 @@ export type ActivityDetailDtoOutput = {
   likeCount?: number;
   commentCount?: number;
   viewerLiked?: boolean;
-  sport: ActivityType_Output;
+  sport: ActivityTypeOutput;
   /** Activity name */
   name: string | null;
   /** Activity description */
@@ -333,7 +490,124 @@ export type ActivityDetailDtoOutput = {
   /** Exclude from rankings */
   excludeFromRankings: boolean;
   /** Activity tags */
-  tags: ActivityTag_Output[];
+  tags: ActivityTagOutput[];
+  /** Start time in ISO-8601 format */
+  startedAt: string;
+  /** Minutes east of UTC */
+  timezoneOffsetMinutes: number | null;
+  /** Derived metrics, or null while computation is pending */
+  metrics: ActivityMetricDtoOutput | null;
+  /** Creation timestamp in ISO-8601 format */
+  createdAt: string;
+  /** Last update timestamp in ISO-8601 format */
+  updatedAt: string;
+};
+export type ActivityTypeSettingsOutput = {
+  type: ActivityTypeOutput;
+  averageMetric: 'none' | 'pace' | 'swim_pace' | 'speed';
+  showAveragePower: boolean;
+  bestEffortGroup: 'none' | 'run' | 'ride';
+};
+export type ActivityTypeListResponseDtoOutput = ActivityTypeSettingsOutput[];
+export type ActivityTagListResponseDtoOutput = {
+  tag: ActivityTagOutput;
+  label: string;
+  sports: 'all' | ActivityTypeOutput[];
+}[];
+export type BestEffortSport = 'run' | 'ride';
+export type BestEffortType =
+  | '400m'
+  | '1k'
+  | 'half_mile'
+  | '1_mile'
+  | '2_miles'
+  | '5k'
+  | '10k'
+  | '15k'
+  | '10_miles'
+  | '20k'
+  | 'half_marathon'
+  | '30k'
+  | 'marathon'
+  | '50k'
+  | 'longest_ride'
+  | 'biggest_climb'
+  | 'elevation_gain'
+  | '5_miles'
+  | '40k'
+  | '80k'
+  | '50_miles'
+  | '90k'
+  | '100k'
+  | '100_miles'
+  | '180k'
+  | 'power_5s'
+  | 'power_15s'
+  | 'power_30s'
+  | 'power_1m'
+  | 'power_2m'
+  | 'power_3m'
+  | 'power_5m'
+  | 'power_8m'
+  | 'power_10m'
+  | 'power_15m'
+  | 'power_20m'
+  | 'power_30m'
+  | 'power_45m'
+  | 'power_1h'
+  | 'power_2h';
+export type BestEffortSportOutput = 'run' | 'ride';
+export type BestEffortValueKindOutput = 'duration' | 'distance' | 'elevation' | 'power';
+export type BestEffortListResponseDtoOutput = {
+  sport: BestEffortSportOutput;
+  type: BestEffortTypeOutput;
+  valueKind: BestEffortValueKindOutput;
+  higherIsBetter: boolean;
+  /** Selected distance in meters, when applicable */
+  distance: number | null;
+  /** Selected duration in seconds, when applicable */
+  duration: number | null;
+  options: {
+    type: BestEffortTypeOutput;
+    valueKind: BestEffortValueKindOutput;
+  }[];
+  efforts: {
+    activityId: string;
+    activityName: string | null;
+    sport: ActivityTypeOutput;
+    startedAt: string;
+    elapsedTime: number;
+    value: number;
+    overallRank: number;
+    year: number;
+    yearRank: number;
+  }[];
+};
+export type ActivityDetailDtoOutput = {
+  /** Activity id */
+  id: string;
+  /** Original uploaded activity filename */
+  uploadFileName?: string;
+  /** Activity owner id */
+  userId?: string | null;
+  athlete?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
+  likeCount?: number;
+  commentCount?: number;
+  viewerLiked?: boolean;
+  sport: ActivityTypeOutput;
+  /** Activity name */
+  name: string | null;
+  /** Activity description */
+  description: string | null;
+  /** Exclude from rankings */
+  excludeFromRankings: boolean;
+  /** Activity tags */
+  tags: ActivityTagOutput[];
   /** Start time in ISO-8601 format */
   startedAt: string;
   /** Minutes east of UTC */
@@ -350,14 +624,14 @@ export type ActivityDetailDtoOutput = {
     sortOrder: number;
     width: number | null;
     height: number | null;
-    status: Status6;
+    status: 'pending' | 'ready' | 'failed';
     thumbnail: string | null;
     preview: string | null;
     original: string | null;
   }[];
   /** GPS route as GeoJSON */
   track: {
-    type: Type;
+    type: 'LineString';
     coordinates: number[][];
   } | null;
   /** Split, profile, and route data for activity analysis */
@@ -392,7 +666,7 @@ export type ActivityDetailDtoOutput = {
   } | null;
   bestEfforts:
     | {
-        type: BestEffortType_Output;
+        type: BestEffortTypeOutput;
         /** Best-effort value; watts for power efforts */
         value: number;
         /** Standard effort distance in meters */
@@ -431,52 +705,12 @@ export type ActivityUpdateDto = {
   /** Updated start time in ISO-8601 format */
   startedAt?: string;
 };
-export type ActivityDtoOutput = {
-  /** Activity id */
-  id: string;
-  /** Source upload id */
-  uploadId: string;
-  /** Original uploaded activity filename */
-  uploadFileName?: string;
-  /** Activity owner id */
-  userId?: string | null;
-  athlete?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    avatarUrl: string | null;
-  };
-  likeCount?: number;
-  commentCount?: number;
-  viewerLiked?: boolean;
-  sport: ActivityType_Output;
-  /** Activity name */
-  name: string | null;
-  /** Activity description */
-  description: string | null;
-  /** Exclude from rankings */
-  excludeFromRankings: boolean;
-  /** Activity tags */
-  tags: ActivityTag_Output[];
-  /** Start time in ISO-8601 format */
-  startedAt: string;
-  /** Minutes east of UTC */
-  timezoneOffsetMinutes: number | null;
-  /** Derived metrics, or null while computation is pending */
-  metrics: ActivityMetricDtoOutput | null;
-  /** Creation timestamp in ISO-8601 format */
-  createdAt: string;
-  /** Last update timestamp in ISO-8601 format */
-  updatedAt: string;
-};
 export type MatchedRouteListResponseDtoOutput = {
   sourceActivityId: string;
   activities:
     | {
         /** Activity id */
         id: string;
-        /** Source upload id */
-        uploadId: string;
         /** Original uploaded activity filename */
         uploadFileName?: string;
         /** Activity owner id */
@@ -490,7 +724,7 @@ export type MatchedRouteListResponseDtoOutput = {
         likeCount?: number;
         commentCount?: number;
         viewerLiked?: boolean;
-        sport: ActivityType_Output;
+        sport: ActivityTypeOutput;
         /** Activity name */
         name: string | null;
         /** Activity description */
@@ -498,7 +732,7 @@ export type MatchedRouteListResponseDtoOutput = {
         /** Exclude from rankings */
         excludeFromRankings: boolean;
         /** Activity tags */
-        tags: ActivityTag_Output[];
+        tags: ActivityTagOutput[];
         /** Start time in ISO-8601 format */
         startedAt: string;
         /** Minutes east of UTC */
@@ -518,7 +752,7 @@ export type ActivityImageListDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status6;
+  status: 'pending' | 'ready' | 'failed';
   thumbnail: string | null;
   preview: string | null;
   original: string | null;
@@ -529,7 +763,7 @@ export type ActivityImageDtoOutput = {
   sortOrder: number;
   width: number | null;
   height: number | null;
-  status: Status6;
+  status: 'pending' | 'ready' | 'failed';
   thumbnail: string | null;
   preview: string | null;
   original: string | null;
@@ -560,7 +794,7 @@ export type AuthSessionDtoOutput = {
     email: string;
     firstName: string;
     lastName: string;
-    role: Role;
+    role: 'admin' | 'user';
     avatarUrl: string | null;
   };
 };
@@ -594,7 +828,7 @@ export type AuthUserDtoOutput = {
   email: string;
   firstName: string;
   lastName: string;
-  role: Role;
+  role: 'admin' | 'user';
   avatarUrl: string | null;
 };
 export type ActivityEventsTicketDtoOutput = {
@@ -606,7 +840,7 @@ export type UserCreateDto = {
   firstName: string;
   lastName: string;
   password: string;
-  role?: Role2;
+  role?: 'user' | 'admin';
 };
 export type UserUpdateDto = {
   firstName: string;
@@ -665,7 +899,7 @@ export type LikerListDtoOutput = {
 export type NotificationListDtoOutput = {
   notifications: {
     id: string;
-    type: Type2;
+    type: 'activity_like' | 'activity_comment' | 'follow_request';
     createdAt: string;
     actor: {
       id: string;
@@ -719,323 +953,442 @@ export type CommentUpdateDto = {
  * Health check endpoint
  */
 export function serverControllerPing(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: PingResponseDtoOutput;
-    }>('/ping', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: PingResponseDtoOutput;
+  }>('/ping', {
+    ...opts,
+  });
 }
 /**
  * Upload a FIT, TCX, or GPX activity file
  */
 export function uploadControllerUploadActivity(
-  {
-    body,
-  }: {
-    body: {
-      /** .fit, .tcx, or .gpx activity file */
-      file: Blob;
-    };
+  body: {
+    /** .fit, .tcx, or .gpx activity file */
+    file: Blob;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: FitUploadResponseDtoOutput;
-    }>(
-      '/upload/activity',
-      oazapfts.multipart({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: FitUploadResponseDtoOutput;
+  }>(
+    '/upload/activity',
+    oazapfts.multipart({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 /**
  * Create a browser-extracted Strava takeout import
  */
 export function takeoutImportControllerCreate(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: TakeoutImportCreateResponseDtoOutput;
-    }>('/upload/strava/imports', {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: TakeoutImportCreateResponseDtoOutput;
+  }>('/upload/strava/imports', {
+    ...opts,
+    method: 'POST',
+  });
 }
 /**
  * Record validated takeout manifest rows
  */
 export function takeoutImportControllerScan(
-  {
-    id,
-    body,
-  }: {
-    id: string;
-    body?: {
-      items: (
-        | {
-            itemKey: string;
-            originalName: string;
-            name: string | null;
-            description: string | null;
-            sport?: Sport;
-            tags: Tags[];
-            kind: Kind;
-          }
-        | {
-            itemKey: string;
-            kind: Kind2;
-            sourceId: string;
-            name: string | null;
-            description: string | null;
-            sport: Sport;
-            tags: Tags[];
-            startedAt: string;
-            elapsedTime: number;
-            movingTime: number | null;
-            distance: number | null;
-            elevationGain: number | null;
-            elevationLoss: number | null;
-            avgSpeed: number | null;
-            maxSpeed: number | null;
-            avgHr: number | null;
-            maxHr: number | null;
-            calories: number | null;
-          }
-      )[];
-    };
+  id: string,
+  body?: {
+    items: (
+      | {
+          itemKey: string;
+          originalName: string;
+          name: string | null;
+          description: string | null;
+          sport?:
+            | 'alpine_ski'
+            | 'backcountry_ski'
+            | 'badminton'
+            | 'basketball'
+            | 'canoeing'
+            | 'cricket'
+            | 'cross_country_ski'
+            | 'crossfit'
+            | 'dance'
+            | 'e_bike_ride'
+            | 'elliptical'
+            | 'e_mountain_bike_ride'
+            | 'golf'
+            | 'gravel_ride'
+            | 'handcycle'
+            | 'high_intensity_interval_training'
+            | 'hike'
+            | 'ice_skate'
+            | 'inline_skate'
+            | 'kayaking'
+            | 'kitesurf'
+            | 'mountain_bike_ride'
+            | 'padel'
+            | 'physical_therapy'
+            | 'pickleball'
+            | 'pilates'
+            | 'racquetball'
+            | 'ride'
+            | 'rock_climbing'
+            | 'roller_ski'
+            | 'rowing'
+            | 'run'
+            | 'sail'
+            | 'skateboard'
+            | 'snowboard'
+            | 'snowshoe'
+            | 'soccer'
+            | 'squash'
+            | 'stair_stepper'
+            | 'stand_up_paddling'
+            | 'surfing'
+            | 'swim'
+            | 'table_tennis'
+            | 'tennis'
+            | 'trail_run'
+            | 'velomobile'
+            | 'virtual_ride'
+            | 'virtual_row'
+            | 'virtual_run'
+            | 'volleyball'
+            | 'walk'
+            | 'weight_training'
+            | 'wheelchair'
+            | 'windsurf'
+            | 'workout'
+            | 'yoga'
+            | 'other';
+          tags: (
+            | 'race'
+            | 'long_run'
+            | 'commute'
+            | 'workout'
+            | 'competition'
+            | 'recovery'
+            | 'with_pet'
+            | 'with_kid'
+            | 'for_a_cause'
+          )[];
+          kind: 'activity';
+        }
+      | {
+          itemKey: string;
+          kind: 'manual';
+          sourceId: string;
+          name: string | null;
+          description: string | null;
+          sport:
+            | 'alpine_ski'
+            | 'backcountry_ski'
+            | 'badminton'
+            | 'basketball'
+            | 'canoeing'
+            | 'cricket'
+            | 'cross_country_ski'
+            | 'crossfit'
+            | 'dance'
+            | 'e_bike_ride'
+            | 'elliptical'
+            | 'e_mountain_bike_ride'
+            | 'golf'
+            | 'gravel_ride'
+            | 'handcycle'
+            | 'high_intensity_interval_training'
+            | 'hike'
+            | 'ice_skate'
+            | 'inline_skate'
+            | 'kayaking'
+            | 'kitesurf'
+            | 'mountain_bike_ride'
+            | 'padel'
+            | 'physical_therapy'
+            | 'pickleball'
+            | 'pilates'
+            | 'racquetball'
+            | 'ride'
+            | 'rock_climbing'
+            | 'roller_ski'
+            | 'rowing'
+            | 'run'
+            | 'sail'
+            | 'skateboard'
+            | 'snowboard'
+            | 'snowshoe'
+            | 'soccer'
+            | 'squash'
+            | 'stair_stepper'
+            | 'stand_up_paddling'
+            | 'surfing'
+            | 'swim'
+            | 'table_tennis'
+            | 'tennis'
+            | 'trail_run'
+            | 'velomobile'
+            | 'virtual_ride'
+            | 'virtual_row'
+            | 'virtual_run'
+            | 'volleyball'
+            | 'walk'
+            | 'weight_training'
+            | 'wheelchair'
+            | 'windsurf'
+            | 'workout'
+            | 'yoga'
+            | 'other';
+          tags: (
+            | 'race'
+            | 'long_run'
+            | 'commute'
+            | 'workout'
+            | 'competition'
+            | 'recovery'
+            | 'with_pet'
+            | 'with_kid'
+            | 'for_a_cause'
+          )[];
+          startedAt: string;
+          elapsedTime: number;
+          movingTime: number | null;
+          distance: number | null;
+          elevationGain: number | null;
+          elevationLoss: number | null;
+          avgSpeed: number | null;
+          maxSpeed: number | null;
+          avgHr: number | null;
+          maxHr: number | null;
+          calories: number | null;
+        }
+    )[];
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: TakeoutImportScanResponseDtoOutput;
-    }>(
-      `/upload/strava/imports/${encodeURIComponent(id)}/scan`,
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: TakeoutImportScanResponseDtoOutput;
+  }>(
+    `/upload/strava/imports/${encodeURIComponent(id)}/scan`,
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 /**
  * Upload one extracted Strava activity
  */
 export function takeoutImportControllerUploadActivity(
-  {
-    id,
-    body,
-  }: {
-    id: string;
-    body: {
-      /** One extracted .fit, .tcx, or .gpx activity file */
-      file: Blob;
-      metadata: string;
-    };
+  id: string,
+  body: {
+    /** One extracted .fit, .tcx, or .gpx activity file */
+    file: Blob;
+    metadata: string;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 202;
-      data: TakeoutItemSubmissionResponseDtoOutput;
-    }>(
-      `/upload/strava/imports/${encodeURIComponent(id)}/activities`,
-      oazapfts.multipart({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 202;
+    data: TakeoutItemSubmissionResponseDtoOutput;
+  }>(
+    `/upload/strava/imports/${encodeURIComponent(id)}/activities`,
+    oazapfts.multipart({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 /**
  * Submit one manual Strava activity
  */
 export function takeoutImportControllerSubmitManual(
-  {
-    id,
-    body,
-  }: {
-    id: string;
-    body?: {
-      itemKey: string;
-      kind: Kind2;
-      sourceId: string;
-      name: string | null;
-      description: string | null;
-      sport: Sport;
-      tags: Tags[];
-      startedAt: string;
-      elapsedTime: number;
-      movingTime: number | null;
-      distance: number | null;
-      elevationGain: number | null;
-      elevationLoss: number | null;
-      avgSpeed: number | null;
-      maxSpeed: number | null;
-      avgHr: number | null;
-      maxHr: number | null;
-      calories: number | null;
-    };
+  id: string,
+  body?: {
+    itemKey: string;
+    kind: 'manual';
+    sourceId: string;
+    name: string | null;
+    description: string | null;
+    sport:
+      | 'alpine_ski'
+      | 'backcountry_ski'
+      | 'badminton'
+      | 'basketball'
+      | 'canoeing'
+      | 'cricket'
+      | 'cross_country_ski'
+      | 'crossfit'
+      | 'dance'
+      | 'e_bike_ride'
+      | 'elliptical'
+      | 'e_mountain_bike_ride'
+      | 'golf'
+      | 'gravel_ride'
+      | 'handcycle'
+      | 'high_intensity_interval_training'
+      | 'hike'
+      | 'ice_skate'
+      | 'inline_skate'
+      | 'kayaking'
+      | 'kitesurf'
+      | 'mountain_bike_ride'
+      | 'padel'
+      | 'physical_therapy'
+      | 'pickleball'
+      | 'pilates'
+      | 'racquetball'
+      | 'ride'
+      | 'rock_climbing'
+      | 'roller_ski'
+      | 'rowing'
+      | 'run'
+      | 'sail'
+      | 'skateboard'
+      | 'snowboard'
+      | 'snowshoe'
+      | 'soccer'
+      | 'squash'
+      | 'stair_stepper'
+      | 'stand_up_paddling'
+      | 'surfing'
+      | 'swim'
+      | 'table_tennis'
+      | 'tennis'
+      | 'trail_run'
+      | 'velomobile'
+      | 'virtual_ride'
+      | 'virtual_row'
+      | 'virtual_run'
+      | 'volleyball'
+      | 'walk'
+      | 'weight_training'
+      | 'wheelchair'
+      | 'windsurf'
+      | 'workout'
+      | 'yoga'
+      | 'other';
+    tags: (
+      'race' | 'long_run' | 'commute' | 'workout' | 'competition' | 'recovery' | 'with_pet' | 'with_kid' | 'for_a_cause'
+    )[];
+    startedAt: string;
+    elapsedTime: number;
+    movingTime: number | null;
+    distance: number | null;
+    elevationGain: number | null;
+    elevationLoss: number | null;
+    avgSpeed: number | null;
+    maxSpeed: number | null;
+    avgHr: number | null;
+    maxHr: number | null;
+    calories: number | null;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 202;
-      data: TakeoutItemSubmissionResponseDtoOutput;
-    }>(
-      `/upload/strava/imports/${encodeURIComponent(id)}/manual-activities`,
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 202;
+    data: TakeoutItemSubmissionResponseDtoOutput;
+  }>(
+    `/upload/strava/imports/${encodeURIComponent(id)}/manual-activities`,
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 /**
  * Record an extraction failure for one takeout item
  */
 export function takeoutImportControllerFailItem(
-  {
-    id,
-    body,
-  }: {
-    id: string;
-    body?: {
-      itemKey: string;
-      error: string;
-    };
+  id: string,
+  body?: {
+    itemKey: string;
+    error: string;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 202;
-      data: TakeoutItemSubmissionResponseDtoOutput;
-    }>(
-      `/upload/strava/imports/${encodeURIComponent(id)}/items/fail`,
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 202;
+    data: TakeoutItemSubmissionResponseDtoOutput;
+  }>(
+    `/upload/strava/imports/${encodeURIComponent(id)}/items/fail`,
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 /**
  * Mark browser extraction complete
  */
 export function takeoutImportControllerFinalize(
-  {
-    id,
-    body,
-  }: {
-    id: string;
-    body?: {
-      extractionErrors?: number;
-    };
+  id: string,
+  body?: {
+    extractionErrors?: number;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: TakeoutImportStatusDtoOutput;
-    }>(
-      `/upload/strava/imports/${encodeURIComponent(id)}/finalize`,
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: TakeoutImportStatusDtoOutput;
+  }>(
+    `/upload/strava/imports/${encodeURIComponent(id)}/finalize`,
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 /**
  * Cancel a takeout import
  */
-export function takeoutImportControllerCancel(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/upload/strava/imports/${encodeURIComponent(id)}/cancel`, {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+export function takeoutImportControllerCancel(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/upload/strava/imports/${encodeURIComponent(id)}/cancel`, {
+    ...opts,
+    method: 'POST',
+  });
 }
 /**
  * Get browser takeout import progress
  */
-export function takeoutImportControllerGetStatus(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: TakeoutImportStatusDtoOutput;
-    }>(`/upload/strava/imports/${encodeURIComponent(id)}`, {
-      ...opts,
-    }),
-  );
+export function takeoutImportControllerGetStatus(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: TakeoutImportStatusDtoOutput;
+  }>(`/upload/strava/imports/${encodeURIComponent(id)}`, {
+    ...opts,
+  });
 }
 /**
  * Queue depths and worker status
  */
 export function jobControllerGetAllJobStatus(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: AllJobStatusResponseDtoOutput;
-    }>('/jobs', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: AllJobStatusResponseDtoOutput;
+  }>('/jobs', {
+    ...opts,
+  });
 }
 /**
  * Run a job by hand
  */
-export function jobControllerCreateJob(
-  {
-    jobCreateDto,
-  }: {
-    jobCreateDto: JobCreateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(
-      '/jobs',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: jobCreateDto,
-      }),
-    ),
+export function jobControllerCreateJob(jobCreateDto: JobCreateDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(
+    '/jobs',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: jobCreateDto,
+    }),
   );
 }
 /**
@@ -1048,214 +1401,135 @@ export function jobControllerGetJobHistory(
   }: {
     limit?: number;
     offset?: number;
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: JobHistoryResponseDtoOutput;
-    }>(
-      `/jobs/history${QS.query(
-        QS.explode({
-          limit,
-          offset,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: JobHistoryResponseDtoOutput;
+  }>(
+    `/jobs/history${QS.query(
+      QS.explode({
+        limit,
+        offset,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
   );
 }
 /**
  * Control a queue
  */
 export function jobControllerRunQueueCommand(
-  {
-    name,
-    queueCommandDto,
-  }: {
-    name: QueueName;
-    queueCommandDto: QueueCommandDto;
-  },
+  name: QueueName,
+  queueCommandDto: QueueCommandDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: QueueStatusReportDtoOutput;
-    }>(
-      `/jobs/${encodeURIComponent(name)}`,
-      oazapfts.json({
-        ...opts,
-        method: 'PUT',
-        body: queueCommandDto,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: QueueStatusReportDtoOutput;
+  }>(
+    `/jobs/${encodeURIComponent(name)}`,
+    oazapfts.json({
+      ...opts,
+      method: 'PUT',
+      body: queueCommandDto,
+    }),
   );
 }
 export function liveWorkoutControllerList(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LiveWorkoutListDtoOutput;
-    }>('/live-workouts', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LiveWorkoutListDtoOutput;
+  }>('/live-workouts', {
+    ...opts,
+  });
 }
-export function liveWorkoutControllerCreate(
-  {
-    liveWorkoutCreateDto,
-  }: {
-    liveWorkoutCreateDto: LiveWorkoutCreateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: LiveWorkoutDtoOutput;
-    }>(
-      '/live-workouts',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: liveWorkoutCreateDto,
-      }),
-    ),
-  );
-}
-export function liveWorkoutControllerGetShared(
-  {
-    token,
-  }: {
-    token: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(`/live-workouts/shared/${encodeURIComponent(token)}`, {
-      ...opts,
-    }),
-  );
-}
-export function liveWorkoutControllerGet(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(`/live-workouts/${encodeURIComponent(id)}`, {
-      ...opts,
-    }),
-  );
-}
-export function liveWorkoutControllerUpdate(
-  {
-    id,
-    liveWorkoutStateDto,
-  }: {
-    id: string;
-    liveWorkoutStateDto: LiveWorkoutStateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(
-      `/live-workouts/${encodeURIComponent(id)}`,
-      oazapfts.json({
-        ...opts,
-        method: 'PATCH',
-        body: liveWorkoutStateDto,
-      }),
-    ),
-  );
-}
-export function liveWorkoutControllerDiscard(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
-}
-export function liveWorkoutControllerPoints(
-  {
-    id,
-    liveWorkoutPointsDto,
-  }: {
-    id: string;
-    liveWorkoutPointsDto: LiveWorkoutPointsDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: LiveWorkoutAckDtoOutput;
-    }>(
-      `/live-workouts/${encodeURIComponent(id)}/points`,
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: liveWorkoutPointsDto,
-      }),
-    ),
-  );
-}
-export function liveWorkoutControllerShare(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: LiveWorkoutShareDtoOutput;
-    }>(`/live-workouts/${encodeURIComponent(id)}/share`, {
+export function liveWorkoutControllerCreate(liveWorkoutCreateDto: LiveWorkoutCreateDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: LiveWorkoutDtoOutput;
+  }>(
+    '/live-workouts',
+    oazapfts.json({
       ...opts,
       method: 'POST',
+      body: liveWorkoutCreateDto,
     }),
   );
 }
-export function liveWorkoutControllerRevokeShare(
-  {
-    id,
-  }: {
-    id: string;
-  },
+export function liveWorkoutControllerGetShared(token: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LiveWorkoutDtoOutput;
+  }>(`/live-workouts/shared/${encodeURIComponent(token)}`, {
+    ...opts,
+  });
+}
+export function liveWorkoutControllerGet(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LiveWorkoutDtoOutput;
+  }>(`/live-workouts/${encodeURIComponent(id)}`, {
+    ...opts,
+  });
+}
+export function liveWorkoutControllerUpdate(
+  id: string,
+  liveWorkoutStateDto: LiveWorkoutStateDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}/share`, {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LiveWorkoutDtoOutput;
+  }>(
+    `/live-workouts/${encodeURIComponent(id)}`,
+    oazapfts.json({
       ...opts,
-      method: 'DELETE',
+      method: 'PATCH',
+      body: liveWorkoutStateDto,
     }),
   );
+}
+export function liveWorkoutControllerDiscard(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}`, {
+    ...opts,
+    method: 'DELETE',
+  });
+}
+export function liveWorkoutControllerPoints(
+  id: string,
+  liveWorkoutPointsDto: LiveWorkoutPointsDto,
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: LiveWorkoutAckDtoOutput;
+  }>(
+    `/live-workouts/${encodeURIComponent(id)}/points`,
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: liveWorkoutPointsDto,
+    }),
+  );
+}
+export function liveWorkoutControllerShare(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: LiveWorkoutShareDtoOutput;
+  }>(`/live-workouts/${encodeURIComponent(id)}/share`, {
+    ...opts,
+    method: 'POST',
+  });
+}
+export function liveWorkoutControllerRevokeShare(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}/share`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
 /**
  * List recent activities
@@ -1273,775 +1547,537 @@ export function activityControllerListRecent(
     search?: string;
     tags?: string;
     tagMatch?: 'any' | 'all';
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityListResponseDtoOutput;
-    }>(
-      `/activities${QS.query(
-        QS.explode({
-          cursor,
-          limit,
-          search,
-          tags,
-          tagMatch,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityListResponseDtoOutput;
+  }>(
+    `/activities${QS.query(
+      QS.explode({
+        cursor,
+        limit,
+        search,
+        tags,
+        tagMatch,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
+  );
+}
+/**
+ * Create an activity from direct data
+ */
+export function activityControllerCreate(
+  directActivityCreateDto: DirectActivityCreateDto,
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: ActivityDtoOutput;
+  }>(
+    '/activities',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: directActivityCreateDto,
+    }),
   );
 }
 /**
  * List activity types and their behavior
  */
 export function activityControllerListTypes(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityTypeListResponseDtoOutput;
-    }>('/activities/types', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityTypeListResponseDtoOutput;
+  }>('/activities/types', {
+    ...opts,
+  });
 }
 /**
  * List activity tags and their applicability
  */
 export function activityControllerListTags(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityTagListResponseDtoOutput;
-    }>('/activities/tags', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityTagListResponseDtoOutput;
+  }>('/activities/tags', {
+    ...opts,
+  });
 }
 /**
  * List best efforts over time for a sport
  */
 export function activityControllerListBestEfforts(
-  {
-    sport,
-    $type,
-  }: {
-    sport: BestEffortSport;
-    $type: BestEffortType;
-  },
+  sport: BestEffortSport,
+  $type: BestEffortType,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: BestEffortListResponseDtoOutput;
-    }>(`/activities/best-efforts/${encodeURIComponent(sport)}/${encodeURIComponent($type)}`, {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: BestEffortListResponseDtoOutput;
+  }>(`/activities/best-efforts/${encodeURIComponent(sport)}/${encodeURIComponent($type)}`, {
+    ...opts,
+  });
 }
 /**
  * Get one activity and its route
  */
-export function activityControllerGetById(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityDetailDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}`, {
-      ...opts,
-    }),
-  );
+export function activityControllerGetById(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityDetailDtoOutput;
+  }>(`/activities/${encodeURIComponent(id)}`, {
+    ...opts,
+  });
 }
 /**
  * Update one activity
  */
 export function activityControllerUpdateById(
-  {
-    id,
-    activityUpdateDto,
-  }: {
-    id: string;
-    activityUpdateDto: ActivityUpdateDto;
-  },
+  id: string,
+  activityUpdateDto: ActivityUpdateDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityDtoOutput;
-    }>(
-      `/activities/${encodeURIComponent(id)}`,
-      oazapfts.json({
-        ...opts,
-        method: 'PUT',
-        body: activityUpdateDto,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityDtoOutput;
+  }>(
+    `/activities/${encodeURIComponent(id)}`,
+    oazapfts.json({
+      ...opts,
+      method: 'PUT',
+      body: activityUpdateDto,
+    }),
   );
 }
 /**
  * Delete one activity
  */
-export function activityControllerDeleteById(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/activities/${encodeURIComponent(id)}`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+export function activityControllerDeleteById(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/activities/${encodeURIComponent(id)}`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
 /**
  * List activities matched to the same GPS route
  */
-export function activityControllerListMatchedRoutes(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: MatchedRouteListResponseDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}/matched-routes`, {
-      ...opts,
-    }),
-  );
+export function activityControllerListMatchedRoutes(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: MatchedRouteListResponseDtoOutput;
+  }>(`/activities/${encodeURIComponent(id)}/matched-routes`, {
+    ...opts,
+  });
 }
 /**
  * List ready images attached to an activity
  */
-export function activityImageControllerList(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityImageListDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}/images`, {
-      ...opts,
-    }),
-  );
+export function activityImageControllerList(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityImageListDtoOutput;
+  }>(`/activities/${encodeURIComponent(id)}/images`, {
+    ...opts,
+  });
 }
 /**
  * Upload an image to an activity
  */
 export function activityImageControllerUpload(
-  {
-    id,
-    body,
-  }: {
-    id: string;
-    body: {
-      file: Blob;
-      caption?: string;
-    };
+  id: string,
+  body: {
+    file: Blob;
+    caption?: string;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: ActivityImageDtoOutput;
-    }>(
-      `/activities/${encodeURIComponent(id)}/images`,
-      oazapfts.multipart({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: ActivityImageDtoOutput;
+  }>(
+    `/activities/${encodeURIComponent(id)}/images`,
+    oazapfts.multipart({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 export function activityImageControllerUpdate(
-  {
-    activityId,
-    imageId,
-    activityImageUpdateDto,
-  }: {
-    activityId: string;
-    imageId: string;
-    activityImageUpdateDto: ActivityImageUpdateDto;
-  },
+  activityId: string,
+  imageId: string,
+  activityImageUpdateDto: ActivityImageUpdateDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityImageDtoOutput;
-    }>(
-      `/activities/${encodeURIComponent(activityId)}/images/${encodeURIComponent(imageId)}`,
-      oazapfts.json({
-        ...opts,
-        method: 'PATCH',
-        body: activityImageUpdateDto,
-      }),
-    ),
-  );
-}
-export function activityImageControllerDelete(
-  {
-    activityId,
-    imageId,
-  }: {
-    activityId: string;
-    imageId: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/images/${encodeURIComponent(imageId)}`, {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityImageDtoOutput;
+  }>(
+    `/activities/${encodeURIComponent(activityId)}/images/${encodeURIComponent(imageId)}`,
+    oazapfts.json({
       ...opts,
-      method: 'DELETE',
+      method: 'PATCH',
+      body: activityImageUpdateDto,
     }),
   );
+}
+export function activityImageControllerDelete(activityId: string, imageId: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/images/${encodeURIComponent(imageId)}`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
 /**
  * Read an image variant
  */
-export function activityImageControllerFile(
-  {
-    imageId,
-    variant,
-  }: {
-    imageId: string;
-    variant: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchBlob<
-      | {
-          status: 200;
-          data: Blob;
-        }
-      | {
-          status: 206;
-          data: Blob;
-        }
-      | {
-          status: 304;
-        }
-      | {
-          status: 404;
-        }
-      | {
-          status: 416;
-        }
-    >(`/activity-images/${encodeURIComponent(imageId)}/${encodeURIComponent(variant)}`, {
-      ...opts,
-    }),
-  );
+export function activityImageControllerFile(imageId: string, variant: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchBlob<
+    | {
+        status: 200;
+        data: Blob;
+      }
+    | {
+        status: 206;
+        data: Blob;
+      }
+    | {
+        status: 304;
+      }
+    | {
+        status: 404;
+      }
+    | {
+        status: 416;
+      }
+  >(`/activity-images/${encodeURIComponent(imageId)}/${encodeURIComponent(variant)}`, {
+    ...opts,
+  });
 }
 export function authControllerCapabilities(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: AuthCapabilitiesDtoOutput;
-    }>('/auth/capabilities', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: AuthCapabilitiesDtoOutput;
+  }>('/auth/capabilities', {
+    ...opts,
+  });
 }
 export function authControllerSetupStatus(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: SetupStatusDtoOutput;
-    }>('/auth/setup', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: SetupStatusDtoOutput;
+  }>('/auth/setup', {
+    ...opts,
+  });
 }
-export function authControllerSetup(
-  {
-    setupCredentialsDto,
-  }: {
-    setupCredentialsDto: SetupCredentialsDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: AuthSessionDtoOutput;
-    }>(
-      '/auth/setup',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: setupCredentialsDto,
-      }),
-    ),
+export function authControllerSetup(setupCredentialsDto: SetupCredentialsDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: AuthSessionDtoOutput;
+  }>(
+    '/auth/setup',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: setupCredentialsDto,
+    }),
   );
 }
 export function authControllerVerifySetupToken(
-  {
-    setupTokenCredentialsDto,
-  }: {
-    setupTokenCredentialsDto: SetupTokenCredentialsDto;
-  },
+  setupTokenCredentialsDto: SetupTokenCredentialsDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: SetupTicketDtoOutput;
-    }>(
-      '/auth/setup/verify',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: setupTokenCredentialsDto,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: SetupTicketDtoOutput;
+  }>(
+    '/auth/setup/verify',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: setupTokenCredentialsDto,
+    }),
   );
 }
 export function authControllerValidateSetupTicket(
-  {
-    setupTicketCredentialsDto,
-  }: {
-    setupTicketCredentialsDto: SetupTicketCredentialsDto;
-  },
+  setupTicketCredentialsDto: SetupTicketCredentialsDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: SetupValidationDtoOutput;
-    }>(
-      '/auth/setup/validate',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: setupTicketCredentialsDto,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: SetupValidationDtoOutput;
+  }>(
+    '/auth/setup/validate',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: setupTicketCredentialsDto,
+    }),
   );
 }
-export function authControllerLogin(
-  {
-    credentialsDto,
-  }: {
-    credentialsDto: CredentialsDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: AuthSessionDtoOutput;
-    }>(
-      '/auth/login',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: credentialsDto,
-      }),
-    ),
+export function authControllerLogin(credentialsDto: CredentialsDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: AuthSessionDtoOutput;
+  }>(
+    '/auth/login',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: credentialsDto,
+    }),
   );
 }
 export function authControllerRegister(
-  {
-    registrationCredentialsDto,
-  }: {
-    registrationCredentialsDto: RegistrationCredentialsDto;
-  },
+  registrationCredentialsDto: RegistrationCredentialsDto,
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: AuthSessionDtoOutput;
-    }>(
-      '/auth/register',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: registrationCredentialsDto,
-      }),
-    ),
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: AuthSessionDtoOutput;
+  }>(
+    '/auth/register',
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: registrationCredentialsDto,
+    }),
   );
 }
 export function authControllerMe(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: AuthUserDtoOutput;
-    }>('/auth/me', {
-      ...opts,
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: AuthUserDtoOutput;
+  }>('/auth/me', {
+    ...opts,
+  });
 }
 export function authControllerLogout(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchText('/auth/logout', {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+  return oazapfts.fetchText('/auth/logout', {
+    ...opts,
+    method: 'POST',
+  });
 }
 export function authControllerActivityEventsTicket(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: ActivityEventsTicketDtoOutput;
-    }>('/auth/activity-events-ticket', {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: ActivityEventsTicketDtoOutput;
+  }>('/auth/activity-events-ticket', {
+    ...opts,
+    method: 'POST',
+  });
 }
 export function authControllerJobEventsTicket(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: ActivityEventsTicketDtoOutput;
-    }>('/auth/job-events-ticket', {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: ActivityEventsTicketDtoOutput;
+  }>('/auth/job-events-ticket', {
+    ...opts,
+    method: 'POST',
+  });
 }
 export function userControllerList(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchText('/users', {
+  return oazapfts.fetchText('/users', {
+    ...opts,
+  });
+}
+export function userControllerCreate(userCreateDto: UserCreateDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(
+    '/users',
+    oazapfts.json({
       ...opts,
+      method: 'POST',
+      body: userCreateDto,
     }),
   );
 }
-export function userControllerCreate(
-  {
-    userCreateDto,
-  }: {
-    userCreateDto: UserCreateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(
-      '/users',
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: userCreateDto,
-      }),
-    ),
-  );
-}
-export function userControllerUpdateMe(
-  {
-    userUpdateDto,
-  }: {
-    userUpdateDto: UserUpdateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(
-      '/users/me',
-      oazapfts.json({
-        ...opts,
-        method: 'PATCH',
-        body: userUpdateDto,
-      }),
-    ),
+export function userControllerUpdateMe(userUpdateDto: UserUpdateDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(
+    '/users/me',
+    oazapfts.json({
+      ...opts,
+      method: 'PATCH',
+      body: userUpdateDto,
+    }),
   );
 }
 export function userControllerUploadAvatar(
-  {
-    body,
-  }: {
-    body: {
-      file: Blob;
-    };
+  body: {
+    file: Blob;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchText(
-      '/users/me/avatar',
-      oazapfts.multipart({
-        ...opts,
-        method: 'POST',
-        body,
-      }),
-    ),
+  return oazapfts.fetchText(
+    '/users/me/avatar',
+    oazapfts.multipart({
+      ...opts,
+      method: 'POST',
+      body,
+    }),
   );
 }
 export function userControllerDeleteAvatar(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchText('/users/me/avatar', {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+  return oazapfts.fetchText('/users/me/avatar', {
+    ...opts,
+    method: 'DELETE',
+  });
 }
-export function userControllerAvatarFile(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchBlob<
-      | {
-          status: 200;
-          data: Blob;
-        }
-      | {
-          status: 206;
-          data: Blob;
-        }
-      | {
-          status: 304;
-        }
-      | {
-          status: 404;
-        }
-      | {
-          status: 416;
-        }
-    >(`/users/${encodeURIComponent(id)}/avatar`, {
-      ...opts,
-    }),
-  );
+export function userControllerAvatarFile(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchBlob<
+    | {
+        status: 200;
+        data: Blob;
+      }
+    | {
+        status: 206;
+        data: Blob;
+      }
+    | {
+        status: 304;
+      }
+    | {
+        status: 404;
+      }
+    | {
+        status: 416;
+      }
+  >(`/users/${encodeURIComponent(id)}/avatar`, {
+    ...opts,
+  });
 }
 export function socialControllerPeople(
   {
     query,
   }: {
     query?: string;
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: PeopleListDtoOutput;
-    }>(
-      `/people${QS.query(
-        QS.explode({
-          query,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: PeopleListDtoOutput;
+  }>(
+    `/people${QS.query(
+      QS.explode({
+        query,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
   );
 }
-export function socialControllerPerson(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: PersonDtoOutput;
-    }>(`/people/${encodeURIComponent(id)}`, {
-      ...opts,
-    }),
-  );
+export function socialControllerPerson(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: PersonDtoOutput;
+  }>(`/people/${encodeURIComponent(id)}`, {
+    ...opts,
+  });
 }
 export function socialControllerActivities(
+  id: string,
   {
-    id,
     cursor,
     limit,
     search,
     tags,
     tagMatch,
   }: {
-    id: string;
     cursor?: string;
     limit?: number;
     search?: string;
     tags?: string;
     tagMatch?: 'any' | 'all';
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityListResponseDtoOutput;
-    }>(
-      `/people/${encodeURIComponent(id)}/activities${QS.query(
-        QS.explode({
-          cursor,
-          limit,
-          search,
-          tags,
-          tagMatch,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityListResponseDtoOutput;
+  }>(
+    `/people/${encodeURIComponent(id)}/activities${QS.query(
+      QS.explode({
+        cursor,
+        limit,
+        search,
+        tags,
+        tagMatch,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
   );
 }
-export function socialControllerSend(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow-request`, {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+export function socialControllerSend(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow-request`, {
+    ...opts,
+    method: 'POST',
+  });
 }
-export function socialControllerCancel(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow-request`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+export function socialControllerCancel(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow-request`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
-export function socialControllerUnfollow(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+export function socialControllerUnfollow(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/people/${encodeURIComponent(id)}/follow`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
-export function socialControllerBlock(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/block`, {
-      ...opts,
-      method: 'PUT',
-    }),
-  );
+export function socialControllerBlock(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/people/${encodeURIComponent(id)}/block`, {
+    ...opts,
+    method: 'PUT',
+  });
 }
-export function socialControllerUnblock(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/people/${encodeURIComponent(id)}/block`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+export function socialControllerUnblock(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/people/${encodeURIComponent(id)}/block`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
 export function socialControllerRequests(
   {
     direction,
   }: {
     direction?: 'incoming' | 'outgoing';
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: RequestListDtoOutput;
-    }>(
-      `/follow-requests${QS.query(
-        QS.explode({
-          direction,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: RequestListDtoOutput;
+  }>(
+    `/follow-requests${QS.query(
+      QS.explode({
+        direction,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
   );
 }
-export function socialControllerAccept(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/follow-requests/${encodeURIComponent(id)}/accept`, {
-      ...opts,
-      method: 'POST',
-    }),
-  );
+export function socialControllerAccept(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/follow-requests/${encodeURIComponent(id)}/accept`, {
+    ...opts,
+    method: 'POST',
+  });
 }
-export function socialControllerIgnore(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/follow-requests/${encodeURIComponent(id)}`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+export function socialControllerIgnore(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/follow-requests/${encodeURIComponent(id)}`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
 export function socialControllerFeed(
   {
@@ -2056,609 +2092,144 @@ export function socialControllerFeed(
     search?: string;
     tags?: string;
     tagMatch?: 'any' | 'all';
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: ActivityListResponseDtoOutput;
-    }>(
-      `/feed${QS.query(
-        QS.explode({
-          cursor,
-          limit,
-          search,
-          tags,
-          tagMatch,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: ActivityListResponseDtoOutput;
+  }>(
+    `/feed${QS.query(
+      QS.explode({
+        cursor,
+        limit,
+        search,
+        tags,
+        tagMatch,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
   );
 }
-export function socialControllerLike(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LikeStateDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}/like`, {
-      ...opts,
-      method: 'PUT',
-    }),
-  );
+export function socialControllerLike(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LikeStateDtoOutput;
+  }>(`/activities/${encodeURIComponent(id)}/like`, {
+    ...opts,
+    method: 'PUT',
+  });
 }
-export function socialControllerUnlike(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LikeStateDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}/like`, {
-      ...opts,
-      method: 'DELETE',
-    }),
-  );
+export function socialControllerUnlike(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LikeStateDtoOutput;
+  }>(`/activities/${encodeURIComponent(id)}/like`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }
-export function socialControllerLikers(
-  {
-    id,
-  }: {
-    id: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: LikerListDtoOutput;
-    }>(`/activities/${encodeURIComponent(id)}/likes`, {
-      ...opts,
-    }),
-  );
+export function socialControllerLikers(id: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: LikerListDtoOutput;
+  }>(`/activities/${encodeURIComponent(id)}/likes`, {
+    ...opts,
+  });
 }
 export function socialControllerNotifications(
   {
     limit,
   }: {
     limit?: number;
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: NotificationListDtoOutput;
-    }>(
-      `/notifications${QS.query(
-        QS.explode({
-          limit,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: NotificationListDtoOutput;
+  }>(
+    `/notifications${QS.query(
+      QS.explode({
+        limit,
+      }),
+    )}`,
+    {
+      ...opts,
+    },
   );
 }
 export function socialControllerMarkNotificationsRead(opts?: Oazapfts.RequestOpts) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: NotificationsReadDtoOutput;
-    }>('/notifications/read', {
-      ...opts,
-      method: 'PATCH',
-    }),
-  );
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: NotificationsReadDtoOutput;
+  }>('/notifications/read', {
+    ...opts,
+    method: 'PATCH',
+  });
 }
 export function socialControllerComments(
+  id: string,
   {
-    id,
     cursor,
     limit,
   }: {
-    id: string;
     cursor?: string;
     limit?: number;
-  },
+  } = {},
   opts?: Oazapfts.RequestOpts,
 ) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: CommentListDtoOutput;
-    }>(
-      `/activities/${encodeURIComponent(id)}/comments${QS.query(
-        QS.explode({
-          cursor,
-          limit,
-        }),
-      )}`,
-      {
-        ...opts,
-      },
-    ),
-  );
-}
-export function socialControllerComment(
-  {
-    id,
-    commentCreateDto,
-  }: {
-    id: string;
-    commentCreateDto: CommentCreateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 201;
-      data: CommentDtoOutput;
-    }>(
-      `/activities/${encodeURIComponent(id)}/comments`,
-      oazapfts.json({
-        ...opts,
-        method: 'POST',
-        body: commentCreateDto,
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: CommentListDtoOutput;
+  }>(
+    `/activities/${encodeURIComponent(id)}/comments${QS.query(
+      QS.explode({
+        cursor,
+        limit,
       }),
-    ),
-  );
-}
-export function socialControllerUpdateComment(
-  {
-    activityId,
-    commentId,
-    commentUpdateDto,
-  }: {
-    activityId: string;
-    commentId: string;
-    commentUpdateDto: CommentUpdateDto;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchJson<{
-      status: 200;
-      data: CommentDtoOutput;
-    }>(
-      `/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`,
-      oazapfts.json({
-        ...opts,
-        method: 'PATCH',
-        body: commentUpdateDto,
-      }),
-    ),
-  );
-}
-export function socialControllerDeleteComment(
-  {
-    activityId,
-    commentId,
-  }: {
-    activityId: string;
-    commentId: string;
-  },
-  opts?: Oazapfts.RequestOpts,
-) {
-  return oazapfts.ok(
-    oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`, {
+    )}`,
+    {
       ...opts,
-      method: 'DELETE',
+    },
+  );
+}
+export function socialControllerComment(id: string, commentCreateDto: CommentCreateDto, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchJson<{
+    status: 201;
+    data: CommentDtoOutput;
+  }>(
+    `/activities/${encodeURIComponent(id)}/comments`,
+    oazapfts.json({
+      ...opts,
+      method: 'POST',
+      body: commentCreateDto,
     }),
   );
 }
-export enum Status {
-  Scanning = 'scanning',
+export function socialControllerUpdateComment(
+  activityId: string,
+  commentId: string,
+  commentUpdateDto: CommentUpdateDto,
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.fetchJson<{
+    status: 200;
+    data: CommentDtoOutput;
+  }>(
+    `/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`,
+    oazapfts.json({
+      ...opts,
+      method: 'PATCH',
+      body: commentUpdateDto,
+    }),
+  );
 }
-export enum Sport {
-  AlpineSki = 'alpine_ski',
-  BackcountrySki = 'backcountry_ski',
-  Badminton = 'badminton',
-  Basketball = 'basketball',
-  Canoeing = 'canoeing',
-  Cricket = 'cricket',
-  CrossCountrySki = 'cross_country_ski',
-  Crossfit = 'crossfit',
-  Dance = 'dance',
-  EBikeRide = 'e_bike_ride',
-  Elliptical = 'elliptical',
-  EMountainBikeRide = 'e_mountain_bike_ride',
-  Golf = 'golf',
-  GravelRide = 'gravel_ride',
-  Handcycle = 'handcycle',
-  HighIntensityIntervalTraining = 'high_intensity_interval_training',
-  Hike = 'hike',
-  IceSkate = 'ice_skate',
-  InlineSkate = 'inline_skate',
-  Kayaking = 'kayaking',
-  Kitesurf = 'kitesurf',
-  MountainBikeRide = 'mountain_bike_ride',
-  Padel = 'padel',
-  PhysicalTherapy = 'physical_therapy',
-  Pickleball = 'pickleball',
-  Pilates = 'pilates',
-  Racquetball = 'racquetball',
-  Ride = 'ride',
-  RockClimbing = 'rock_climbing',
-  RollerSki = 'roller_ski',
-  Rowing = 'rowing',
-  Run = 'run',
-  Sail = 'sail',
-  Skateboard = 'skateboard',
-  Snowboard = 'snowboard',
-  Snowshoe = 'snowshoe',
-  Soccer = 'soccer',
-  Squash = 'squash',
-  StairStepper = 'stair_stepper',
-  StandUpPaddling = 'stand_up_paddling',
-  Surfing = 'surfing',
-  Swim = 'swim',
-  TableTennis = 'table_tennis',
-  Tennis = 'tennis',
-  TrailRun = 'trail_run',
-  Velomobile = 'velomobile',
-  VirtualRide = 'virtual_ride',
-  VirtualRow = 'virtual_row',
-  VirtualRun = 'virtual_run',
-  Volleyball = 'volleyball',
-  Walk = 'walk',
-  WeightTraining = 'weight_training',
-  Wheelchair = 'wheelchair',
-  Windsurf = 'windsurf',
-  Workout = 'workout',
-  Yoga = 'yoga',
-  Other = 'other',
-}
-export enum Tags {
-  Race = 'race',
-  LongRun = 'long_run',
-  Commute = 'commute',
-  Workout = 'workout',
-  Competition = 'competition',
-  Recovery = 'recovery',
-  WithPet = 'with_pet',
-  WithKid = 'with_kid',
-  ForACause = 'for_a_cause',
-}
-export enum Kind {
-  Activity = 'activity',
-}
-export enum Kind2 {
-  Manual = 'manual',
-}
-export enum Status2 {
-  Scanning = 'scanning',
-  Uploading = 'uploading',
-  Processing = 'processing',
-  Completed = 'completed',
-  Failed = 'failed',
-  Cancelled = 'cancelled',
-}
-export enum Name {
-  ReparseFailedUploads = 'reparse-failed-uploads',
-  ReparseAllUploads = 'reparse-all-uploads',
-}
-export enum QueueName_Output {
-  ActivityParsing = 'activityParsing',
-  ActivityEnrichment = 'activityEnrichment',
-  BackgroundTask = 'backgroundTask',
-  ImageProcessing = 'imageProcessing',
-  Storage = 'storage',
-}
-export enum Status3 {
-  Queued = 'queued',
-  Running = 'running',
-  Succeeded = 'succeeded',
-  Failed = 'failed',
-  Skipped = 'skipped',
-}
-export enum QueueName {
-  ActivityParsing = 'activityParsing',
-  ActivityEnrichment = 'activityEnrichment',
-  BackgroundTask = 'backgroundTask',
-  ImageProcessing = 'imageProcessing',
-  Storage = 'storage',
-}
-export enum Command {
-  Pause = 'pause',
-  Resume = 'resume',
-  Empty = 'empty',
-  ClearFailed = 'clear-failed',
-}
-export enum ActivityType_Output {
-  AlpineSki = 'alpine_ski',
-  BackcountrySki = 'backcountry_ski',
-  Badminton = 'badminton',
-  Basketball = 'basketball',
-  Canoeing = 'canoeing',
-  Cricket = 'cricket',
-  CrossCountrySki = 'cross_country_ski',
-  Crossfit = 'crossfit',
-  Dance = 'dance',
-  EBikeRide = 'e_bike_ride',
-  Elliptical = 'elliptical',
-  EMountainBikeRide = 'e_mountain_bike_ride',
-  Golf = 'golf',
-  GravelRide = 'gravel_ride',
-  Handcycle = 'handcycle',
-  HighIntensityIntervalTraining = 'high_intensity_interval_training',
-  Hike = 'hike',
-  IceSkate = 'ice_skate',
-  InlineSkate = 'inline_skate',
-  Kayaking = 'kayaking',
-  Kitesurf = 'kitesurf',
-  MountainBikeRide = 'mountain_bike_ride',
-  Padel = 'padel',
-  PhysicalTherapy = 'physical_therapy',
-  Pickleball = 'pickleball',
-  Pilates = 'pilates',
-  Racquetball = 'racquetball',
-  Ride = 'ride',
-  RockClimbing = 'rock_climbing',
-  RollerSki = 'roller_ski',
-  Rowing = 'rowing',
-  Run = 'run',
-  Sail = 'sail',
-  Skateboard = 'skateboard',
-  Snowboard = 'snowboard',
-  Snowshoe = 'snowshoe',
-  Soccer = 'soccer',
-  Squash = 'squash',
-  StairStepper = 'stair_stepper',
-  StandUpPaddling = 'stand_up_paddling',
-  Surfing = 'surfing',
-  Swim = 'swim',
-  TableTennis = 'table_tennis',
-  Tennis = 'tennis',
-  TrailRun = 'trail_run',
-  Velomobile = 'velomobile',
-  VirtualRide = 'virtual_ride',
-  VirtualRow = 'virtual_row',
-  VirtualRun = 'virtual_run',
-  Volleyball = 'volleyball',
-  Walk = 'walk',
-  WeightTraining = 'weight_training',
-  Wheelchair = 'wheelchair',
-  Windsurf = 'windsurf',
-  Workout = 'workout',
-  Yoga = 'yoga',
-  Other = 'other',
-}
-export enum Status4 {
-  Recording = 'recording',
-  Paused = 'paused',
-  Ended = 'ended',
-  Discarded = 'discarded',
-}
-export enum ActivityType {
-  AlpineSki = 'alpine_ski',
-  BackcountrySki = 'backcountry_ski',
-  Badminton = 'badminton',
-  Basketball = 'basketball',
-  Canoeing = 'canoeing',
-  Cricket = 'cricket',
-  CrossCountrySki = 'cross_country_ski',
-  Crossfit = 'crossfit',
-  Dance = 'dance',
-  EBikeRide = 'e_bike_ride',
-  Elliptical = 'elliptical',
-  EMountainBikeRide = 'e_mountain_bike_ride',
-  Golf = 'golf',
-  GravelRide = 'gravel_ride',
-  Handcycle = 'handcycle',
-  HighIntensityIntervalTraining = 'high_intensity_interval_training',
-  Hike = 'hike',
-  IceSkate = 'ice_skate',
-  InlineSkate = 'inline_skate',
-  Kayaking = 'kayaking',
-  Kitesurf = 'kitesurf',
-  MountainBikeRide = 'mountain_bike_ride',
-  Padel = 'padel',
-  PhysicalTherapy = 'physical_therapy',
-  Pickleball = 'pickleball',
-  Pilates = 'pilates',
-  Racquetball = 'racquetball',
-  Ride = 'ride',
-  RockClimbing = 'rock_climbing',
-  RollerSki = 'roller_ski',
-  Rowing = 'rowing',
-  Run = 'run',
-  Sail = 'sail',
-  Skateboard = 'skateboard',
-  Snowboard = 'snowboard',
-  Snowshoe = 'snowshoe',
-  Soccer = 'soccer',
-  Squash = 'squash',
-  StairStepper = 'stair_stepper',
-  StandUpPaddling = 'stand_up_paddling',
-  Surfing = 'surfing',
-  Swim = 'swim',
-  TableTennis = 'table_tennis',
-  Tennis = 'tennis',
-  TrailRun = 'trail_run',
-  Velomobile = 'velomobile',
-  VirtualRide = 'virtual_ride',
-  VirtualRow = 'virtual_row',
-  VirtualRun = 'virtual_run',
-  Volleyball = 'volleyball',
-  Walk = 'walk',
-  WeightTraining = 'weight_training',
-  Wheelchair = 'wheelchair',
-  Windsurf = 'windsurf',
-  Workout = 'workout',
-  Yoga = 'yoga',
-  Other = 'other',
-}
-export enum Status5 {
-  Recording = 'recording',
-  Paused = 'paused',
-  Ended = 'ended',
-}
-export enum ActivityTag_Output {
-  Race = 'race',
-  LongRun = 'long_run',
-  Commute = 'commute',
-  Workout = 'workout',
-  Competition = 'competition',
-  Recovery = 'recovery',
-  WithPet = 'with_pet',
-  WithKid = 'with_kid',
-  ForACause = 'for_a_cause',
-}
-export enum BestEffortType_Output {
-  $400M = '400m',
-  $1K = '1k',
-  HalfMile = 'half_mile',
-  $1Mile = '1_mile',
-  $2Miles = '2_miles',
-  $5K = '5k',
-  $10K = '10k',
-  $15K = '15k',
-  $10Miles = '10_miles',
-  $20K = '20k',
-  HalfMarathon = 'half_marathon',
-  $30K = '30k',
-  Marathon = 'marathon',
-  $50K = '50k',
-  LongestRide = 'longest_ride',
-  BiggestClimb = 'biggest_climb',
-  ElevationGain = 'elevation_gain',
-  $5Miles = '5_miles',
-  $40K = '40k',
-  $80K = '80k',
-  $50Miles = '50_miles',
-  $90K = '90k',
-  $100K = '100k',
-  $100Miles = '100_miles',
-  $180K = '180k',
-  Power5S = 'power_5s',
-  Power15S = 'power_15s',
-  Power30S = 'power_30s',
-  Power1M = 'power_1m',
-  Power2M = 'power_2m',
-  Power3M = 'power_3m',
-  Power5M = 'power_5m',
-  Power8M = 'power_8m',
-  Power10M = 'power_10m',
-  Power15M = 'power_15m',
-  Power20M = 'power_20m',
-  Power30M = 'power_30m',
-  Power45M = 'power_45m',
-  Power1H = 'power_1h',
-  Power2H = 'power_2h',
-}
-export enum Type {
-  LineString = 'LineString',
-}
-export enum Status6 {
-  Pending = 'pending',
-  Ready = 'ready',
-  Failed = 'failed',
-}
-export enum AverageMetric {
-  None = 'none',
-  Pace = 'pace',
-  SwimPace = 'swim_pace',
-  Speed = 'speed',
-}
-export enum BestEffortGroup {
-  None = 'none',
-  Run = 'run',
-  Ride = 'ride',
-}
-export enum BestEffortSport {
-  Run = 'run',
-  Ride = 'ride',
-}
-export enum BestEffortType {
-  $400M = '400m',
-  $1K = '1k',
-  HalfMile = 'half_mile',
-  $1Mile = '1_mile',
-  $2Miles = '2_miles',
-  $5K = '5k',
-  $10K = '10k',
-  $15K = '15k',
-  $10Miles = '10_miles',
-  $20K = '20k',
-  HalfMarathon = 'half_marathon',
-  $30K = '30k',
-  Marathon = 'marathon',
-  $50K = '50k',
-  LongestRide = 'longest_ride',
-  BiggestClimb = 'biggest_climb',
-  ElevationGain = 'elevation_gain',
-  $5Miles = '5_miles',
-  $40K = '40k',
-  $80K = '80k',
-  $50Miles = '50_miles',
-  $90K = '90k',
-  $100K = '100k',
-  $100Miles = '100_miles',
-  $180K = '180k',
-  Power5S = 'power_5s',
-  Power15S = 'power_15s',
-  Power30S = 'power_30s',
-  Power1M = 'power_1m',
-  Power2M = 'power_2m',
-  Power3M = 'power_3m',
-  Power5M = 'power_5m',
-  Power8M = 'power_8m',
-  Power10M = 'power_10m',
-  Power15M = 'power_15m',
-  Power20M = 'power_20m',
-  Power30M = 'power_30m',
-  Power45M = 'power_45m',
-  Power1H = 'power_1h',
-  Power2H = 'power_2h',
-}
-export enum BestEffortSport_Output {
-  Run = 'run',
-  Ride = 'ride',
-}
-export enum BestEffortValueKind_Output {
-  Duration = 'duration',
-  Distance = 'distance',
-  Elevation = 'elevation',
-  Power = 'power',
-}
-export enum ActivityTag {
-  Race = 'race',
-  LongRun = 'long_run',
-  Commute = 'commute',
-  Workout = 'workout',
-  Competition = 'competition',
-  Recovery = 'recovery',
-  WithPet = 'with_pet',
-  WithKid = 'with_kid',
-  ForACause = 'for_a_cause',
-}
-export enum Role {
-  Admin = 'admin',
-  User = 'user',
-}
-export enum Role2 {
-  User = 'user',
-  Admin = 'admin',
-}
-export enum Type2 {
-  ActivityLike = 'activity_like',
-  ActivityComment = 'activity_comment',
-  FollowRequest = 'follow_request',
+export function socialControllerDeleteComment(activityId: string, commentId: string, opts?: Oazapfts.RequestOpts) {
+  return oazapfts.fetchText(`/activities/${encodeURIComponent(activityId)}/comments/${encodeURIComponent(commentId)}`, {
+    ...opts,
+    method: 'DELETE',
+  });
 }

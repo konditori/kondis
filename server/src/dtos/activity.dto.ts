@@ -98,7 +98,6 @@ export type DirectActivityCreateDto = z.output<typeof DirectActivityCreateSchema
 
 export const ActivitySchema = z.object({
   id: z.string().uuid().describe('Activity id'),
-  uploadId: z.string().uuid().describe('Source upload id'),
   uploadFileName: z.string().optional().describe('Original uploaded activity filename'),
   userId: z.string().uuid().nullable().optional().describe('Activity owner id'),
   athlete: SocialUserSchema.optional(),

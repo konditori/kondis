@@ -180,7 +180,7 @@ class DemoProvisioner {
   private readonly database: KondisDatabase;
   private readonly activityRepository: ActivityRepository;
   private readonly imageMetadata: Readonly<Record<string, readonly DemoImageMetadata[]>>;
-  private readonly activityImageRepository: MediaRepository;
+  private readonly mediaRepository: MediaRepository;
   private readonly uploadRepository: UploadRepository;
   private readonly socialRepository: SocialRepository;
   private readonly sessionRepository: SessionRepository;
@@ -190,7 +190,7 @@ class DemoProvisioner {
     this.database = dependencies.database;
     this.activityRepository = dependencies.activities;
     this.imageMetadata = dependencies.imageMetadata;
-    this.activityImageRepository = dependencies.images;
+    this.mediaRepository = dependencies.images;
     this.uploadRepository = dependencies.uploads;
     this.socialRepository = dependencies.social;
     this.sessionRepository = dependencies.sessions;
@@ -268,10 +268,10 @@ class DemoProvisioner {
     }
     for (const [imageIndex, metadata] of imageMetadata.entries()) {
       const checksum = imageIndex === 0 ? `demo-image-v1:${spec.slug}` : `demo-image-v1:${spec.slug}:${imageIndex + 1}`;
-      const image = await this.activityImageRepository.create(
+      const image = await this.mediaRepository.create(
         {
           id: DEMO_ACTIVITY_IMAGE_IDS[spec.slug][imageIndex],
-          upload_id: upload.id,
+          activity_id: activityId,
           checksum,
           original_name: metadata.originalName,
           sort_order: imageIndex,
@@ -284,7 +284,7 @@ class DemoProvisioner {
         executor,
       );
 
-      await this.activityImageRepository.upsertFile(
+      await this.mediaRepository.upsertFile(
         {
           image_id: image.id,
           variant: 'preview',

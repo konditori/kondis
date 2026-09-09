@@ -14,7 +14,6 @@ export type ActivityTag =
 
 export type Activity = {
   id: string;
-  uploadId: string;
   uploadFileName?: string;
   userId?: string | null;
   athlete?: {

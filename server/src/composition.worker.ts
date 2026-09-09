@@ -68,7 +68,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   };
   const queueAdapter = new CloudflareQueueAdapter(database);
   const storage = env.STORAGE_BUCKET ? new R2StorageAdapter(env.STORAGE_BUCKET) : undefined;
-  const activityImageRepository = new MediaRepository(database);
+  const mediaRepository = new MediaRepository(database);
   const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
   const authCredentialRepository = new SessionRepository(database);
   const userRepository = new UserRepository(database);
@@ -115,13 +115,13 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     new TcxRepository(new ConsoleLogger()),
     new ConsoleLogger(),
     importProgressStore,
-    activityImageRepository,
+    mediaRepository,
     socialRepository,
     env.KONDIS_DEMO_MEDIA_BASE_URL,
   );
   const workerActivityImageService = storage
     ? new WorkerActivityImageService(
-        activityImageRepository,
+        mediaRepository,
         activityRepository,
         storage,
         workerCrypto,
@@ -172,7 +172,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     workerActivityImageService,
     workerUploadService,
     workerUserService,
-    activityImageRepository,
+    mediaRepository,
     demoMediaBaseUrl: env.KONDIS_DEMO_MEDIA_BASE_URL,
     jobAdmin: queueAdapter,
     jobHandlers: createPortableWorkerHandlers(database, { activityService, uploadService: workerUploadService }),
