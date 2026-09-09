@@ -1,0 +1,47 @@
+.gitignore
+  s_58c3a0a21a8a64::t_125ff5c5a4adf5 14-15
+deployment/demo/docker-compose.yml
+  s_0cbe616262c97f::t_26977ca6b37225 35,49-50
+packages/sdk/src/fetch-client.ts
+  s_0cbe616262c97f::t_bce7c1e9df3556 17-32,205
+server/src/bin/provision-demo.ts
+  s_0cbe616262c97f::t_3fea6a8afd2675 13-15,17
+sites/developers.kondis.org/docs/cloudflare/deployment.md
+  s_0cbe616262c97f::t_8ada41842a0c49 43-45,104-110,117-118
+web/src/lib/activity-types.ts
+  s_0cbe616262c97f::t_8c54a0a6204756 38-70,75,80-82,87-90,95-110
+web/src/lib/api.ts
+  s_0cbe616262c97f::t_41c8437ad7a5ec 10,12-13,41-42,88-89,91-92,120-121
+web/src/routes/activities/[id]/matched-routes/+page.svelte
+  s_0cbe616262c97f::t_164c3263947b36 25,27
+web/src/routes/admin/jobs/+page.server.ts
+  s_0cbe616262c97f::t_42f692775195fd 33
+web/src/routes/admin/jobs/+page.svelte
+  s_0cbe616262c97f::t_40d765aad2d2a2 81,87,93,99,105
+web/src/routes/best-efforts/+page.server.ts
+  s_0cbe616262c97f::t_b849c9d22eb61e 13-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "083842c83e3a72da710e636f15480c564f3fee13",
+  "prompts": {},
+  "sessions": {
+    "s_0cbe616262c97f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0863c-10cd-7df0-8703-780d2b94ef75",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_58c3a0a21a8a64": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a08658-5d20-7d60-87dc-3a98af036118",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
