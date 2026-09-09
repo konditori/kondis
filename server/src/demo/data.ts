@@ -284,7 +284,7 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 0,
     calories: 1176,
     route: singapore,
-    comments: [{ userId: MARCUS_USER_ID, body: 'This is exactly the kind of run that makes Monday feel easier.' }],
+    comments: [{ userId: MARCUS_USER_ID, body: 'You must have had a great view of the ocean!' }],
     likes: [JOHN_USER_ID, SOFIA_USER_ID],
   },
   {
