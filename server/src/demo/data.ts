@@ -197,6 +197,7 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     comments: [
       { userId: SOFIA_USER_ID, body: 'That light is worth the early alarm. The loop looks perfect.' },
       { userId: JOHN_USER_ID, body: 'It really was. The legs felt better than expected too.' },
+      { userId: EMMA_USER_ID, body: 'Five in the morning me would like to file a formal complaint.' },
     ],
     likes: [SOFIA_USER_ID, MARCUS_USER_ID],
   },
@@ -284,7 +285,10 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 0,
     calories: 1176,
     route: singapore,
-    comments: [{ userId: MARCUS_USER_ID, body: 'You must have had a great view of the ocean!' }],
+    comments: [
+      { userId: MARCUS_USER_ID, body: 'You must have had a great view of the ocean!' },
+      { userId: LUCAS_USER_ID, body: 'A conversational pace is brave when the conversation is with your own lungs.' },
+    ],
     likes: [JOHN_USER_ID, SOFIA_USER_ID],
   },
   {
@@ -305,7 +309,10 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 0,
     calories: 362,
     route: scania,
-    comments: [{ userId: JOHN_USER_ID, body: 'A very good choice after a long day. The park looks peaceful.' }],
+    comments: [
+      { userId: JOHN_USER_ID, body: 'A very good choice after a long day. The park looks peaceful.' },
+      { userId: MAYA_USER_ID, body: 'The rare workout where the main achievement is returning home equally tired.' },
+    ],
     likes: [JOHN_USER_ID, MARCUS_USER_ID],
   },
   {
@@ -326,7 +333,10 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 0,
     calories: 742,
     route: sanFranciscoGoldenGate,
-    comments: [{ userId: SOFIA_USER_ID, body: 'Short and sharp is right. Those efforts add up quickly.' }],
+    comments: [
+      { userId: SOFIA_USER_ID, body: 'Short and sharp is right. Those efforts add up quickly.' },
+      { userId: OSCAR_USER_ID, body: 'My legs read "intervals" and immediately requested a lawyer.' },
+    ],
     likes: [SOFIA_USER_ID, MARCUS_USER_ID],
   },
   {
@@ -352,6 +362,7 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
         userId: MARCUS_USER_ID,
         body: 'The best kind of progression: relaxed enough at the start to enjoy it.',
       },
+      { userId: EMMA_USER_ID, body: 'A sneaky tempo run wearing an easy-run costume. Very rude.' },
     ],
     likes: [JOHN_USER_ID, SOFIA_USER_ID],
   },
@@ -373,7 +384,10 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 388,
     calories: 874,
     route: vancouverSeawall,
-    comments: [{ userId: JOHN_USER_ID, body: 'That is a beautiful way to start the day. Smooth route, too.' }],
+    comments: [
+      { userId: JOHN_USER_ID, body: 'That is a beautiful way to start the day. Smooth route, too.' },
+      { userId: LUCAS_USER_ID, body: 'The mountains are showing off, and the bike appears to be taking notes.' },
+    ],
     likes: [JOHN_USER_ID, MARCUS_USER_ID],
   },
   {
@@ -394,7 +408,10 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 0,
     calories: 1198,
     route: portlandForestPark,
-    comments: [{ userId: SOFIA_USER_ID, body: 'Muddy shoes and a fast descent is a solid day out.' }],
+    comments: [
+      { userId: SOFIA_USER_ID, body: 'Muddy shoes and a fast descent is a solid day out.' },
+      { userId: MAYA_USER_ID, body: 'The forest kindly provided free resistance training and a shoe subscription.' },
+    ],
     likes: [SOFIA_USER_ID, MARCUS_USER_ID],
   },
   {
@@ -415,7 +432,10 @@ export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
     maximumPower: 354,
     calories: 721,
     route: londonThames,
-    comments: [{ userId: MARCUS_USER_ID, body: 'The river light must have been excellent on this one.' }],
+    comments: [
+      { userId: MARCUS_USER_ID, body: 'The river light must have been excellent on this one.' },
+      { userId: OSCAR_USER_ID, body: 'A commute with scenery? London is dangerously close to making cycling look fun.' },
+    ],
     likes: [JOHN_USER_ID, SOFIA_USER_ID],
   },
   {
