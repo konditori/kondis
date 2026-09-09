@@ -1,0 +1,51 @@
+web/src/lib/activity-types.ts
+  s_50cd19e1174ffa::t_9b3255c55cad73 15,71,87,111,120
+web/src/lib/api.ts
+  s_50cd19e1174ffa::t_ebc9f72c539c82 10,89
+web/src/lib/components/ActivityComments.svelte
+  s_50cd19e1174ffa::t_1a2ab2c54afb7a 73,76,91,95,124-128,132,147
+web/src/lib/components/ActivityDetailPage.svelte
+  s_50cd19e1174ffa::t_8e132d991c0ad2 119
+web/src/lib/types.ts
+  s_50cd19e1174ffa::t_b01d5b8eadba42 1,3
+web/src/routes/+layout.server.ts
+  s_50cd19e1174ffa::t_351565f9d53c24 63
+web/src/routes/+page.server.ts
+  s_50cd19e1174ffa::t_2c725c23f47ecd 32
+web/src/routes/activities/[id]/+page.server.ts
+  s_50cd19e1174ffa::t_f553bb2a3a8629 10,13
+web/src/routes/activities/[id]/matched-routes/+page.server.ts
+  s_50cd19e1174ffa::t_19e2b1471512ff 10,13
+web/src/routes/activity/[id]/+page.server.ts
+  s_50cd19e1174ffa::t_5d1763a8e1ba84 10,13
+web/src/routes/activity/[id]/+page.svelte
+  s_e51259d7d985a5::t_570b9ca63c549b 3,11
+web/src/routes/best-efforts/+page.server.ts
+  s_50cd19e1174ffa::t_20600d58ec5da5 3-4,24,46
+web/src/routes/best-efforts/[sport]/[distance]/+page.server.ts
+  s_50cd19e1174ffa::t_efce6fc27beb50 4-5,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3a6c5b55896f30c250a54cdd11cfc98d868dfeb3",
+  "prompts": {},
+  "sessions": {
+    "s_50cd19e1174ffa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a087fc-1313-7541-b25b-25f2b2696a6c",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e51259d7d985a5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "cd3f348f-1226-45ff-9f13-2254d4ffbb89",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
