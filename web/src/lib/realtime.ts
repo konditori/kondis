@@ -179,12 +179,17 @@ const connectActivityConnection = (
 
   const attempt = (async () => {
     try {
-      const ticketResponse = await fetch(
+      const ticketUrl = new URL(
         "/api/v1/auth/activity-events-ticket",
-        {
-          method: "POST",
-        },
+        window.location.href,
       );
+      const ticketMethod =
+        new URL(connection.url, window.location.href).searchParams.get(
+          "ticket_method",
+        ) === "get"
+          ? "GET"
+          : "POST";
+      const ticketResponse = await fetch(ticketUrl, { method: ticketMethod });
       if (!ticketResponse.ok) {
         const error = new Error(
           "Unable to authenticate activity events",

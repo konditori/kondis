@@ -457,6 +457,7 @@ button {
 .user-menu-identity {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 2px;
   padding: 8px 9px 12px;
   border-bottom: 1px solid var(--line);

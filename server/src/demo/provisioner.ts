@@ -3,7 +3,7 @@ import { sql } from 'kysely';
 import { insertBackgroundJobs } from 'src/cloudflare/background-job';
 import {
   DEMO_ACTIVITY_IMAGE_IDS,
-  DEMO_FIT_SPECS,
+  DEMO_ACTIVITIES,
   DEMO_IMAGE_MIME_TYPE,
   DEMO_PASSWORD_HASH,
   DEMO_SESSION_TOKEN_HASH,
@@ -72,7 +72,7 @@ const demoActivityProgress = (ratio: number): number => {
   return Math.min(1, Math.max(0, ratio + variation * ratio * (1 - ratio)));
 };
 
-const interpolateDemoRoute = (route: (typeof DEMO_FIT_SPECS)[number]['route'], ratio: number) => {
+const interpolateDemoRoute = (route: (typeof DEMO_ACTIVITIES)[number]['route'], ratio: number) => {
   const distances = route.slice(1).map((point, index) => {
     const before = route[index]!;
     return haversineDistance(before[0], before[1], point[0], point[1]);
@@ -97,7 +97,7 @@ const interpolateDemoRoute = (route: (typeof DEMO_FIT_SPECS)[number]['route'], r
   return route.at(-1)!;
 };
 
-const createDemoActivityData = (spec: (typeof DEMO_FIT_SPECS)[number]): DemoActivityData => {
+const createDemoActivityData = (spec: (typeof DEMO_ACTIVITIES)[number]): DemoActivityData => {
   let distanceM = 0;
   for (let index = 1; index < spec.route.length; index += 1) {
     const previous = spec.route[index - 1]!;
@@ -199,7 +199,7 @@ class DemoProvisioner {
   private async provisionActivity(
     executor: KondisExecutor,
     user: DemoUser,
-    spec: (typeof DEMO_FIT_SPECS)[number],
+    spec: (typeof DEMO_ACTIVITIES)[number],
     usersById: ReadonlyMap<string, DemoUser>,
   ): Promise<string> {
     const data = createDemoActivityData(spec);
@@ -355,9 +355,9 @@ class DemoProvisioner {
       await this.provisionSession(transaction, users[0].id);
 
       const activityIds: string[] = [];
-      for (const [index, spec] of DEMO_FIT_SPECS.entries()) {
+      for (const [index, spec] of DEMO_ACTIVITIES.entries()) {
         const owner = users[index % users.length];
-        console.log(`Creating activity ${index + 1}/${DEMO_FIT_SPECS.length}: ${spec.title}`);
+        console.log(`Creating activity ${index + 1}/${DEMO_ACTIVITIES.length}: ${spec.title}`);
         activityIds.push(await this.provisionActivity(transaction, owner, spec, usersById));
       }
       return {

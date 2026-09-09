@@ -204,6 +204,19 @@ const activityTicketRoute = createRoute({
   },
   tags: ['Auth'],
 });
+const activityTicketGetRoute = createRoute({
+  method: 'get',
+  path: '/auth/activity-events-ticket',
+  operationId: 'AuthController_activityEventsTicketGet',
+  parameters: [],
+  responses: {
+    200: {
+      description: 'Short-lived ticket for the activity event WebSocket',
+      content: { 'application/json': { schema: ticketResponse } },
+    },
+  },
+  tags: ['Auth'],
+});
 const jobTicketRoute = createRoute({
   method: 'post',
   path: '/auth/job-events-ticket',
@@ -255,7 +268,7 @@ export const registerAuthRoutes = (
   service: AuthRouteService,
   users: ApiUserLookup,
   config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
-  options: { includeEventTickets?: boolean; mediaBaseUrl?: string } = {},
+  options: { includeEventTickets?: boolean; mediaBaseUrl?: string; demoMode?: boolean } = {},
 ): void => {
   registerAuthSessionRoutes(app, service, users, options.mediaBaseUrl);
   app.openapi(setupStatusRoute, async (context) => {
@@ -313,6 +326,16 @@ export const registerAuthRoutes = (
         201,
       ),
     );
+    if (options.demoMode) {
+      app.openapi(activityTicketGetRoute, async (context) =>
+        context.json(
+          ticketResponse.parse(
+            await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId')),
+          ),
+          200,
+        ),
+      );
+    }
     app.openapi(jobTicketRoute, async (context) => {
       if (context.get('user').role !== UserRole.Admin) {
         throw new ForbiddenException('Administrator access is required');

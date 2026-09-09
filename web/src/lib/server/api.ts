@@ -23,6 +23,7 @@ export function activityEventsUrl(
   requestUrl: URL,
   forwardedProto?: string | null,
   cfVisitor?: string | null,
+  demoMode = false,
 ): string {
   const url = new URL(requestUrl);
   const cloudflareScheme = cfVisitor?.match(/"scheme"\s*:\s*"(https?)"/)?.[1];
@@ -40,6 +41,7 @@ export function activityEventsUrl(
       eventsUrl.protocol = secure ? "wss:" : "ws:";
       eventsUrl.port = secure ? "" : "2293";
     }
+    if (demoMode) eventsUrl.searchParams.set("ticket_method", "get");
     return eventsUrl.toString();
   }
 
@@ -47,6 +49,7 @@ export function activityEventsUrl(
   if (!secure) url.port = "2293";
   url.pathname = "/events";
   url.search = "";
+  if (demoMode) url.searchParams.set("ticket_method", "get");
   url.hash = "";
   return url.toString();
 }

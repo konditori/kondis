@@ -87,6 +87,7 @@ const createRequestApp = (
   registerAuthRoutes(requestApp, composition.authService, composition.userRepository, composition.config, {
     includeEventTickets: composition.realtimeEnabled,
     mediaBaseUrl: composition.demoMediaBaseUrl,
+    demoMode: composition.config.demoMode,
   });
   if (composition.cloudNodeProcessorEnabled && composition.queueBindingsConfigured) {
     registerWorkerQueueMutationRoutes(requestApp, { jobs: composition.jobService });
@@ -317,6 +318,7 @@ const isDemoCacheable = (request: Request, response: Response): boolean => {
     response.ok &&
     !path.includes('/events') &&
     !path.includes('/live-workouts') &&
+    !path.endsWith('/auth/activity-events-ticket') &&
     !path.includes('/_internal/')
   );
 };

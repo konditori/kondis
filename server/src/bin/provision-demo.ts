@@ -4,7 +4,7 @@ import { basename, resolve } from 'node:path';
 import sharp from 'sharp';
 
 import { createDatabase } from 'src/db/database';
-import { DEMO_FIT_SPECS } from 'src/demo/data';
+import { DEMO_ACTIVITIES } from 'src/demo/data';
 import { provisionDemoData, type DemoImageMetadata } from 'src/demo/provisioner';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
@@ -19,7 +19,7 @@ const demoMediaDirectory = process.env.KONDIS_DEMO_MEDIA_DIR ?? resolve(process.
 
 const readDemoImageMetadata = async (): Promise<Readonly<Record<string, readonly DemoImageMetadata[]>>> => {
   const entries = await Promise.all(
-    DEMO_FIT_SPECS.map(async ({ slug, imageFiles }) => {
+    DEMO_ACTIVITIES.map(async ({ slug, imageFiles }) => {
       const metadata = await Promise.all(
         imageFiles.map(async (imagePath): Promise<DemoImageMetadata> => {
           const filePath = resolve(demoMediaDirectory, 'activities', imagePath);

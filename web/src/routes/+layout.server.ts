@@ -47,7 +47,7 @@ export const load: LayoutServerLoad = async ({
   const activityTypesPromise = activityControllerListTypes(
     getServerSdkRequestOptions(locals.kondisFetch),
   );
-  if (url && !demoMode && !publicAuthPage && !publicLiveView) {
+  if (url && !publicAuthPage && !publicLiveView) {
     const me = await locals.kondisFetch(apiUrl("api/v1/auth/me"));
     if (!me.ok) {
       const setup = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
@@ -81,6 +81,7 @@ export const load: LayoutServerLoad = async ({
       url,
       request.headers.get("x-forwarded-proto"),
       request.headers.get("cf-visitor"),
+      demoMode,
     ),
   };
 };

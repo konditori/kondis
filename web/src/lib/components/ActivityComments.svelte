@@ -70,10 +70,11 @@
     loading = true;
     try {
       const result = await socialControllerComments(
-        { id: activity.id, cursor: "", limit: 50 },
+        activity.id,
+        { cursor: "", limit: 50 },
         getSdkRequestOptions(),
       );
-      comments = sortChronologically(result.comments as Comment[]);
+      comments = sortChronologically(result.data.comments as Comment[]);
     } catch {
       error = "Could not load comments.";
     } finally {
@@ -88,11 +89,12 @@
     error = "";
     try {
       const result = await socialControllerComment(
-        { id: activity.id, commentCreateDto: { body: body.trim() } },
+        activity.id,
+        { body: body.trim() },
         getSdkRequestOptions(),
       );
       body = "";
-      const comment = result as Comment;
+      const comment = result.data as Comment;
       if (!comments.some((item) => item.id === comment.id)) {
         locallyAddedCommentIds.add(comment.id);
       }
@@ -121,15 +123,13 @@
     error = "";
     try {
       const result = await socialControllerUpdateComment(
-        {
-          activityId: activity.id,
-          commentId: comment.id,
-          commentUpdateDto: { body: editingBody.trim() },
-        },
+        activity.id,
+        comment.id,
+        { body: editingBody.trim() },
         getSdkRequestOptions(),
       );
       comments = comments.map((item) =>
-        item.id === comment.id ? (result as Comment) : item,
+        item.id === comment.id ? (result.data as Comment) : item,
       );
       cancelEdit();
     } catch {
@@ -144,7 +144,8 @@
     error = "";
     try {
       await socialControllerDeleteComment(
-        { activityId: activity.id, commentId: id },
+        activity.id,
+        id,
         getSdkRequestOptions(),
       );
       comments = comments.filter((comment) => comment.id !== id);

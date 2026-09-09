@@ -11,12 +11,14 @@ export const load: PageServerLoad = async ({
   locals,
   request,
   setHeaders,
+  platform,
   url,
 }) => {
   const eventsUrl = activityEventsUrl(
     url,
     request.headers.get("x-forwarded-proto"),
     request.headers.get("cf-visitor"),
+    platform?.env.KONDIS_DEMO_MODE === "true",
   );
   try {
     const [liveResponse, body] = await Promise.all([
