@@ -1,0 +1,39 @@
+server/src/demo/routes.ts
+  s_85374374aaa931::t_b15db51172cf63 826-1470,1472-1860,2673-2972,2975-3562,3565,4346-4667
+server/src/api/routes/auth.ts
+  s_10fa2120a4b72a::t_1d1312b3b9cde0 207-219,271,329-338
+server/src/cloudflare/entrypoint.ts
+  s_10fa2120a4b72a::t_f10ea74817fa28 90,321
+web/src/lib/components/ActivityComments.svelte
+  s_10fa2120a4b72a::t_e37bf4be755b8c 73-74,77,92-93,97,126-128,132,147-148
+web/src/lib/realtime.ts
+  s_10fa2120a4b72a::t_c89e2f7f7576ac 182,184,186-192
+web/src/lib/server/api.ts
+  s_10fa2120a4b72a::t_86ba1c3034cc34 26,44,52
+web/src/routes/+page.server.ts
+  s_10fa2120a4b72a::t_5647442596b6e6 14,21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cfd5c58c3a48213f0bbb20132ef08fa18bf6e4be",
+  "prompts": {},
+  "sessions": {
+    "s_10fa2120a4b72a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a087e2-ce5d-7643-8164-904c045421d4",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_85374374aaa931": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b38e5cbd-ba0e-424c-aef4-24f64ee78270",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
