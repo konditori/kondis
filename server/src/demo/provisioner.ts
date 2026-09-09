@@ -20,7 +20,6 @@ import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { ActivityStreamInput, KondisDatabase, KondisExecutor } from 'src/types';
-import type { JobItem } from 'src/types/jobs';
 import { haversineDistance } from 'src/utils/geo';
 
 export { SESSION_ID as DEMO_SESSION_ID } from 'src/demo/data';
@@ -323,7 +322,6 @@ class DemoProvisioner {
     await this.sessionRepository.createSessionRecord(
       {
         id: SESSION_ID, // Use a fixed session ID and token hash for demo purposes
-
         userId,
         tokenHash: DEMO_SESSION_TOKEN_HASH,
       },
@@ -336,23 +334,21 @@ class DemoProvisioner {
       await sql`SELECT pg_advisory_xact_lock(hashtext('kondis:demo-provisioning'))`.execute(transaction);
       await transaction.deleteFrom('notification').execute();
 
+      console.log(`Creating ${DEMO_USERS.length} demo users`);
       const users: DemoUser[] = [];
       for (const user of DEMO_USERS) {
         users.push(await this.provisionUser(transaction, user));
       }
       const usersById = new Map(users.map((user) => [user.id, user]));
 
+      console.log('Creating follows and demo session');
       for (const follower of users) {
         for (const followeeId of follower.follows) {
           const followee = usersById.get(followeeId);
           if (!followee) {
             throw new Error(`Missing demo follow user ${followeeId}`);
           }
-          await transaction
-            .insertInto('user_follow')
-            .values({ follower_id: follower.id, followee_id: followee.id })
-            .onConflict((conflict) => conflict.doNothing())
-            .execute();
+          await this.socialRepository.addFollow(follower.id, followee.id, transaction);
         }
       }
 
@@ -361,6 +357,7 @@ class DemoProvisioner {
       const activityIds: string[] = [];
       for (const [index, spec] of DEMO_FIT_SPECS.entries()) {
         const owner = users[index % users.length];
+        console.log(`Creating activity ${index + 1}/${DEMO_FIT_SPECS.length}: ${spec.title}`);
         activityIds.push(await this.provisionActivity(transaction, owner, spec, usersById));
       }
       return {
@@ -368,23 +365,6 @@ class DemoProvisioner {
         activityIds,
       };
     });
-
-    for (const activityId of provisioning.activityIds) {
-      const activity = await this.activityRepository.getById(activityId);
-      if (!activity) {
-        continue;
-      }
-      const jobs: JobItem[] = [];
-      if (activity.metrics_computed_at === null) {
-        jobs.push({ name: JobName.ActivityMetricCompute, data: { id: activityId } });
-      } else if (activity.best_efforts_computed_at === null) {
-        jobs.push({ name: JobName.ActivityBestEffortCompute, data: { id: activityId } });
-      }
-      if (activity.route_matches_computed_at === null) {
-        jobs.push({ name: JobName.ActivityRouteMatchCompute, data: { id: activityId } });
-      }
-      await insertBackgroundJobs(this.database, jobs);
-    }
 
     return provisioning.user;
   }

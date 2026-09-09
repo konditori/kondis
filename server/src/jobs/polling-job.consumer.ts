@@ -2,6 +2,7 @@ import { sql } from 'kysely';
 
 import { nextJobFailure, type BackgroundJobRecord } from 'src/cloudflare/background-job';
 import { JobName, JobStatus, QueueName } from 'src/enum';
+import type { CloudJobConsumer } from 'src/jobs/job-semantics';
 import type { AnyJobHandlerDescriptor } from 'src/jobs/job-handler';
 import {
   CLOUD_JOB_CONSUMER,
@@ -23,16 +24,20 @@ type ClaimedJob = Pick<BackgroundJobRecord, 'id' | 'lease_id' | 'name' | 'queue'
 export type PollingJobHandler = (data: never) => Promise<JobStatus>;
 export type PollingJobHandlers = Partial<Record<JobName, PollingJobHandler>>;
 export type PollingJobConsumerOptions = {
+  consumers?: readonly CloudJobConsumer[];
   concurrency?: Partial<Record<QueueName, number>>;
   leaseHeartbeatMs?: number;
   pollIntervalMs?: number;
-  logger?: Pick<Console, 'error' | 'warn'>;
+  logger?: Pick<Console, 'log' | 'error' | 'warn'>;
 };
 
 const sleep = (milliseconds: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, milliseconds));
 const storedError = (error: unknown): string => asErrorMessage(error).slice(0, MAX_STORED_ERROR_LENGTH);
 
-export const createPollingJobHandlers = (descriptors: readonly AnyJobHandlerDescriptor[]): PollingJobHandlers => {
+export const createPollingJobHandlers = (
+  descriptors: readonly AnyJobHandlerDescriptor[],
+  consumers: readonly CloudJobConsumer[] = ['node'],
+): PollingJobHandlers => {
   const handlers: PollingJobHandlers = {};
   const seen = new Map<JobName, string>();
 
@@ -56,27 +61,33 @@ export const createPollingJobHandlers = (descriptors: readonly AnyJobHandlerDesc
         `Job handler ${descriptor.label} assigns ${descriptor.jobName} to the ${consumer} cloud consumer; shared semantics require ${CLOUD_JOB_CONSUMER[descriptor.jobName]}.`,
       );
     }
-    if (consumer === 'node') {
+    if (consumers.includes(consumer)) {
       handlers[descriptor.jobName] = descriptor.handler as PollingJobHandler;
     }
   }
 
   for (const jobName of Object.values(JobName)) {
-    if (CLOUD_JOB_CONSUMER[jobName] === 'node' && !handlers[jobName]) {
-      throw new KondisStartupError(`Failed to find a Node cloud job handler for JobName.${jobName} ("${jobName}").`);
+    if (consumers.includes(CLOUD_JOB_CONSUMER[jobName]) && !handlers[jobName]) {
+      throw new KondisStartupError(
+        `Failed to find a ${consumers.join('/')} cloud job handler for JobName.${jobName} ("${jobName}").`,
+      );
     }
   }
 
   return handlers;
 };
 
-export const claimNextPollingJob = async (db: KondisDatabase, queue: QueueName): Promise<ClaimedJob | undefined> =>
+export const claimNextPollingJob = async (
+  db: KondisDatabase,
+  queue: QueueName,
+  consumers: readonly CloudJobConsumer[] = ['node'],
+): Promise<ClaimedJob | undefined> =>
   db.transaction().execute(async (transaction) => {
     const result = await sql<ClaimedJob>`
       WITH candidate AS (
         SELECT job.id
         FROM background_job AS job
-        WHERE job.consumer = 'node'
+        WHERE job.consumer IN (${sql.join(consumers.map((consumer) => sql`${consumer}`), sql`, `)})
           AND job.queue = ${queue}
           AND job.state IN ('created', 'retry')
           AND job.start_after <= now()
@@ -151,11 +162,12 @@ export class PollingJobConsumer {
     const pollIntervalMs = this.options.pollIntervalMs ?? 1000;
     while (this.running) {
       try {
-        const job = await claimNextPollingJob(this.db, queue);
+        const job = await claimNextPollingJob(this.db, queue, this.options.consumers);
         if (!job) {
           await sleep(pollIntervalMs);
           continue;
         }
+        this.options.logger?.log(`Claimed ${job.name} (${job.id}) from ${queue}`);
         await this.process(job);
       } catch (error) {
         this.options.logger?.error(`Polling job consumer failed for ${queue}: ${asErrorMessage(error)}`);
@@ -190,6 +202,8 @@ export class PollingJobConsumer {
       `.execute(this.db);
       if (result.rows.length === 0) {
         this.options.logger?.warn(`Polling job ${job.id} completed after losing its lease; result was ignored`);
+      } else {
+        this.options.logger?.log(`Completed ${job.name} (${job.id}) with status ${status}`);
       }
     } finally {
       stopHeartbeat();

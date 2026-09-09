@@ -31,6 +31,14 @@ export class SocialRepository {
       .execute();
   }
 
+  addFollow(followerId: string, followeeId: string, executor: KondisExecutor = this.db) {
+    return executor
+      .insertInto('user_follow')
+      .values({ follower_id: followerId, followee_id: followeeId })
+      .onConflict((conflict) => conflict.doNothing())
+      .execute();
+  }
+
   countLikes(activityId: string): Promise<number> {
     return this.db
       .selectFrom('activity_like')

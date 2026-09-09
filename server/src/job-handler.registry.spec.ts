@@ -120,4 +120,11 @@ describe('createJobHandlerRegistry', () => {
         .sort(),
     );
   });
+
+  it('builds a demo polling registry with both cloud consumer classes', () => {
+    const { handlers } = setup();
+    const pollingHandlers = createPollingJobHandlers(handlers, ['node', 'worker']);
+
+    expect(Object.keys(pollingHandlers).sort()).toEqual(Object.values(JobName).sort());
+  });
 });

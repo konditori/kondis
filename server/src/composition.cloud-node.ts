@@ -116,7 +116,9 @@ export const createCloudNodeProcessorComposition = ({
     uploadService,
     userService,
   });
-  const pollingConsumer = new PollingJobConsumer(database, createPollingJobHandlers(descriptors), {
+  const consumers = configRepository.demoMode ? (['node', 'worker'] as const) : (['node'] as const);
+  const pollingConsumer = new PollingJobConsumer(database, createPollingJobHandlers(descriptors, consumers), {
+    consumers,
     logger,
   });
   const jobService = new JobService(

@@ -56,63 +56,22 @@ run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 [tasks.demo-db]
 description = "Start the persistent demo PostgreSQL stack and seed its database"
 dir = "deployment/demo"
-run = """
-set -euo pipefail
-docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
-docker compose --env-file .env -f ./docker-compose.yml --profile seed run --rm --build seeder
-"""
+run = "bash ./bin/demo-db.sh"
 
 [tasks.demo-db-rebuild]
 description = "Drop, recreate, migrate, and reseed the demo PostgreSQL database"
 dir = "deployment/demo"
-run = '''
-set -euo pipefail
-docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
-docker compose --env-file .env -f ./docker-compose.yml exec -T database /bin/bash -s <<'BASH'
-set -euo pipefail
-db_name="$POSTGRES_DB"
-db_user="$(cat /run/secrets/demo_db_username)"
-db_password="$(cat /run/secrets/demo_db_password)"
-PGPASSWORD="$db_password" psql --dbname=postgres --username="$db_user" -v ON_ERROR_STOP=1 -v db_name="$db_name" -v owner_name="$db_user" <<'SQL'
-SELECT pg_terminate_backend(pid)
-FROM pg_stat_activity
-WHERE datname = :'db_name' AND pid <> pg_backend_pid();
-SELECT format('DROP DATABASE IF EXISTS %I', :'db_name') \gexec
-SELECT format('CREATE DATABASE %I OWNER %I', :'db_name', :'owner_name') \gexec
-SQL
-BASH
-docker compose --env-file .env -f ./docker-compose.yml --profile seed run --rm --build seeder
-'''
+run = "bash ./bin/demo-db-rebuild.sh"
 
 [tasks.demo-db-down]
 description = "Stop the persistent demo PostgreSQL stack"
 dir = "deployment/demo"
-run = "docker compose --env-file .env -f ./docker-compose.yml down --remove-orphans"
+run = "bash ./bin/demo-db-down.sh"
 
 [tasks."deploy:demo-rebuild"]
 description = "Deploy the demo Workers, then drop, recreate, migrate, and reseed the demo database"
 dir = "deployment/demo"
-run = '''
-set -euo pipefail
-mise run //:deploy:demo
-echo "Demo Workers deployed. Rebuilding the demo database now."
-docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
-docker compose --env-file .env -f ./docker-compose.yml exec -T database /bin/bash -s <<'BASH'
-set -euo pipefail
-db_name="$POSTGRES_DB"
-db_user="$(cat /run/secrets/demo_db_username)"
-db_password="$(cat /run/secrets/demo_db_password)"
-PGPASSWORD="$db_password" psql --dbname=postgres --username="$db_user" -v ON_ERROR_STOP=1 -v db_name="$db_name" -v owner_name="$db_user" <<'SQL'
-SELECT pg_terminate_backend(pid)
-FROM pg_stat_activity
-WHERE datname = :'db_name' AND pid <> pg_backend_pid();
-SELECT format('DROP DATABASE IF EXISTS %I', :'db_name') \gexec
-SELECT format('CREATE DATABASE %I OWNER %I', :'db_name', :'owner_name') \gexec
-SQL
-BASH
-docker compose --env-file .env -f ./docker-compose.yml --profile seed run --rm --build seeder
-docker compose --env-file .env -f ./docker-compose.yml ps
-'''
+run = "bash ./bin/deploy-demo-rebuild.sh"
 
 [tasks.e2e]
 run = { task = "//e2e:test" }

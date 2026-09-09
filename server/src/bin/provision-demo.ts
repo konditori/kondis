@@ -44,8 +44,11 @@ const readDemoImageMetadata = async (): Promise<Readonly<Record<string, readonly
 };
 
 const main = async (): Promise<void> => {
+  console.log(`Starting demo seed with media directory ${demoMediaDirectory}`);
   const config = new ConfigRepository().getEnv();
+  console.log('Reading demo image metadata');
   const imageMetadata = await readDemoImageMetadata();
+  console.log('Applying database migrations');
   await migrateDatabase(config.database);
 
   const database = createDatabase(config.database);
@@ -62,11 +65,12 @@ const main = async (): Promise<void> => {
     });
     console.log('Demo database migrated and seeded.');
   } finally {
+    console.log('Closing database connection');
     await database.destroy();
   }
 };
 
 void main().catch((error: unknown) => {
-  console.error('[demo-seeder] failed:', error);
+  console.error('failed:', error);
   process.exitCode = 1;
 });
