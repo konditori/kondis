@@ -1,7 +1,6 @@
 import {
   activityControllerListBestEfforts,
   BestEffortSportInput,
-  BestEffortType,
 } from "$lib/api";
 import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { BestEffortHistory } from "$lib/types";
@@ -11,8 +10,8 @@ export const load: PageServerLoad = async ({ locals }) => {
   const requestOptions = getServerSdkRequestOptions(locals.kondisFetch);
   const [run, ride] = await Promise.all(
     [
-      ["run", BestEffortType.$5K],
-      ["ride", BestEffortType.$10K],
+      ["run", "5k"],
+      ["ride", "10k"],
     ].map(async ([sport, type]) => {
       try {
         return (await activityControllerListBestEfforts(

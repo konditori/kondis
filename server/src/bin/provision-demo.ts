@@ -10,8 +10,11 @@ const demoMediaDirectory = process.env.KONDIS_DEMO_MEDIA_DIR ?? resolve(process.
 const main = async (): Promise<void> => {
   const config = new ConfigRepository().getEnv();
   await migrateDatabase(config.database);
-  const application = createApplicationComposition({ role: 'api' });
+  // The one-shot seeder temporarily owns the complete service graph and the
+  // pg-boss consumers; no second Node server is needed during provisioning.
+  const application = createApplicationComposition({ role: 'worker' });
   try {
+    await application.initialize();
     const setupStatus = await application.authService.setupStatus();
     if (!setupStatus.setupRequired) {
       console.log('Demo database is already seeded.');

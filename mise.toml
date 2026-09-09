@@ -59,7 +59,6 @@ dir = "deployment/demo"
 run = """
 set -euo pipefail
 docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
-docker compose --env-file .env -f ./docker-compose.yml up -d --build server
 docker compose --env-file .env -f ./docker-compose.yml --profile seed run --rm --build seeder
 """
 
@@ -69,7 +68,6 @@ dir = "deployment/demo"
 run = '''
 set -euo pipefail
 docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
-docker compose --env-file .env -f ./docker-compose.yml stop server || true
 docker compose --env-file .env -f ./docker-compose.yml exec -T database /bin/bash -s <<'BASH'
 set -euo pipefail
 db_name="$POSTGRES_DB"
@@ -83,7 +81,6 @@ SELECT format('DROP DATABASE IF EXISTS %I', :'db_name') \gexec
 SELECT format('CREATE DATABASE %I OWNER %I', :'db_name', :'owner_name') \gexec
 SQL
 BASH
-docker compose --env-file .env -f ./docker-compose.yml up -d --build server
 docker compose --env-file .env -f ./docker-compose.yml --profile seed run --rm --build seeder
 '''
 
@@ -100,7 +97,6 @@ set -euo pipefail
 mise run //:deploy:demo
 echo "Demo Workers deployed. Rebuilding the demo database now."
 docker compose --env-file .env -f ./docker-compose.yml up -d --build --wait database
-docker compose --env-file .env -f ./docker-compose.yml stop server || true
 docker compose --env-file .env -f ./docker-compose.yml exec -T database /bin/bash -s <<'BASH'
 set -euo pipefail
 db_name="$POSTGRES_DB"
@@ -114,7 +110,6 @@ SELECT format('DROP DATABASE IF EXISTS %I', :'db_name') \gexec
 SELECT format('CREATE DATABASE %I OWNER %I', :'db_name', :'owner_name') \gexec
 SQL
 BASH
-docker compose --env-file .env -f ./docker-compose.yml up -d --build server
 docker compose --env-file .env -f ./docker-compose.yml --profile seed run --rm --build seeder
 docker compose --env-file .env -f ./docker-compose.yml ps
 '''

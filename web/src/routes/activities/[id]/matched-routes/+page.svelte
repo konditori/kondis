@@ -1,6 +1,5 @@
 <script lang="ts">
   import { ArrowLeft, ChevronRight, MapPinned, Timer } from "@lucide/svelte";
-  import { AverageMetric } from "$lib/api";
   import { activityTypeSettings } from "$lib/activity-types";
   import {
     activityName,
@@ -23,9 +22,9 @@
   const averageMetric = $derived(
     source
       ? activityTypeSettings(data.activityTypes, source.sport).averageMetric
-      : AverageMetric.Pace,
+      : "pace",
   );
-  const isSpeed = $derived(averageMetric === AverageMetric.Speed);
+  const isSpeed = $derived(averageMetric === "speed");
   const efforts = $derived(
     activities.map((activity) => ({
       ...activity,

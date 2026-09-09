@@ -17,7 +17,6 @@
     getSdkRequestOptions,
     jobControllerGetAllJobStatus,
     jobControllerGetJobHistory,
-    JobQueueName,
     type AllJobStatusResponseDtoOutput,
     type JobHistoryResponseDtoOutput,
   } from "$lib/api";
@@ -79,31 +78,31 @@
 
   const queueDefinitions = [
     {
-      key: JobQueueName.ActivityParsing,
+      key: "activityParsing",
       label: t("activity_processing"),
       description: t("activity_processing_description"),
       icon: FileChartColumnIncreasing,
     },
     {
-      key: JobQueueName.ActivityEnrichment,
+      key: "activityEnrichment",
       label: t("activity_enrichment"),
       description: t("activity_enrichment_description"),
       icon: Database,
     },
     {
-      key: JobQueueName.BackgroundTask,
+      key: "backgroundTask",
       label: t("imports_and_tasks"),
       description: t("imports_and_tasks_description"),
       icon: Archive,
     },
     {
-      key: JobQueueName.ImageProcessing,
+      key: "imageProcessing",
       label: t("image_processing"),
       description: t("image_processing_description"),
       icon: Image,
     },
     {
-      key: JobQueueName.Storage,
+      key: "storage",
       label: t("storage_tasks"),
       description: t("storage_tasks_description"),
       icon: HardDrive,

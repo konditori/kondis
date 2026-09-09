@@ -11,6 +11,8 @@
 docker/data
 deployment/demo/.env
 deployment/demo/data
+# Local data volume for the demo stack (uploads, avatars, and generated images)
+deployment/demo/server-data/
 coverage
 server/.wrangler/
 server/wrangler.*.generated.json
