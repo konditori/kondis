@@ -1,4 +1,3 @@
-import { publicMediaUrl } from 'src/demo/media';
 import { JobStatus } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
@@ -10,6 +9,7 @@ import { AuthCredentialRepository } from 'src/repositories/auth-credential.repos
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisExecutor } from 'src/types';
+import { publicMediaUrl } from 'src/utils/media';
 const BCRYPT_WORK_FACTOR = 12;
 // Keep unknown-account logins on the same expensive comparison path so the
 // response time does not reveal whether an email address is registered.

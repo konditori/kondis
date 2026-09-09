@@ -37,6 +37,7 @@ type DemoLiveTrackerState = {
   storage: {
     get: <T>(key: string) => Promise<T | undefined>;
     put: (key: string, value: boolean | number | string) => Promise<void>;
+    delete: (key: string) => Promise<boolean>;
     setAlarm: (scheduledTime: number | Date) => Promise<void>;
   };
 };
@@ -66,7 +67,7 @@ export class DemoLiveTracker {
     }
     try {
       if (await this.isCompleted()) {
-        return new Response(null, { status: 204 });
+        await this.reset();
       }
       await this.ingest();
       return new Response(null, { status: 204 });
@@ -80,7 +81,7 @@ export class DemoLiveTracker {
   async alarm(): Promise<void> {
     try {
       if (await this.isCompleted()) {
-        return;
+        await this.reset();
       }
       await this.ingest();
     } catch (error) {
@@ -136,8 +137,10 @@ export class DemoLiveTracker {
       throw new Error(`Demo live ingestion returned HTTP ${response.status}`);
     }
     if (finished) {
-      await this.state.storage.put(COMPLETED_KEY, true);
-      this.completed = true;
+      // The finished workout has been persisted by the ingestion service. Reset
+      // the simulator state so the next alarm starts a fresh virtual workout,
+      // including a new client session id.
+      await this.reset();
     } else {
       await this.state.storage.put(POINT_INDEX_KEY, pointIndex + 1);
       this.pointIndex = pointIndex + 1;
@@ -198,6 +201,22 @@ export class DemoLiveTracker {
     }
     this.completed = (await this.state.storage.get<boolean>(COMPLETED_KEY)) ?? false;
     return this.completed;
+  }
+
+  private async reset(): Promise<void> {
+    await Promise.all([
+      this.state.storage.delete(STARTED_AT_KEY),
+      this.state.storage.delete(POINT_INDEX_KEY),
+      this.state.storage.delete(CLIENT_SESSION_ID_KEY),
+      this.state.storage.delete(COMPLETED_KEY),
+    ]);
+    this.startedAt = undefined;
+    this.startedAtPromise = undefined;
+    this.pointIndex = undefined;
+    this.pointIndexPromise = undefined;
+    this.clientSessionId = undefined;
+    this.clientSessionIdPromise = undefined;
+    this.completed = false;
   }
 
   private async scheduleNextTick(): Promise<void> {

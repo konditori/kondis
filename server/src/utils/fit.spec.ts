@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { ActivityType } from 'src/enum';
 import { FitBaseType } from 'fit-file-parser';
+import { ActivityType } from 'src/enum';
 import type { FitMessages } from 'src/types';
 import { computeRunningBestEfforts } from 'src/utils/best-effort';
 import {
   findStream,
   fitField,
+  FitParseError,
   fitScaledField,
   fitSport,
   fitTimestamp,
-  FitParseError,
   parseFitMessages,
   toSemicircles,
 } from 'src/utils/fit';

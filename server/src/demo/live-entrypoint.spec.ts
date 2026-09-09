@@ -48,10 +48,11 @@ describe('demo live workout API boundary', () => {
   it('keeps Hyperdrive open until a simulated device point has been persisted', async () => {
     let persistPoint: (() => void) | undefined;
     const liveWorkoutService = {
-      create: vi.fn(() =>
-        new Promise((resolve) => {
-          persistPoint = () => resolve({ id: '00000000-0000-4000-8000-000000000001' });
-        }),
+      create: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            persistPoint = () => resolve({ id: '00000000-0000-4000-8000-000000000001' });
+          }),
       ),
       appendPoints: vi.fn().mockResolvedValue({ id: '00000000-0000-4000-8000-000000000001', lastSequence: 1 }),
     };

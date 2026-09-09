@@ -32,7 +32,7 @@ import {
   QUEUE_EXECUTOR_PATH,
   queueExecutorRequest,
 } from 'src/cloudflare/queue-executor.protocol';
-import { handleDeadLetterBatch } from 'src/cloudflare/queue-handler';
+import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
@@ -47,8 +47,8 @@ import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 
-export { DemoLiveTracker } from 'src/demo/live-tracker';
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
+export { DemoLiveTracker } from 'src/demo/live-tracker';
 
 export type WorkerEnv = WorkerBindings;
 
@@ -270,6 +270,16 @@ export default {
       if (activationFailure) {
         console.error('Demo live tracker scheduled activation failed', { status: activationFailure.status });
       }
+      if (env.HYPERDRIVE) {
+        const composition = createWorkerInvocationComposition(env);
+        try {
+          if (composition.queueBindingsConfigured) {
+            await drainUnpublishedJobs(composition.database, createQueueTransport(env));
+          }
+        } finally {
+          await composition.close();
+        }
+      }
       return;
     }
     if (!env.HYPERDRIVE) {
@@ -319,7 +329,21 @@ const withDemoCacheHeaders = (response: Response): Response => {
 
 const executeQueueBatch = async (env: WorkerEnv, queue: QueueName, batch: WorkerQueueBatch): Promise<void> => {
   if (!env.QUEUE_EXECUTOR) {
-    throw new Error('QUEUE_EXECUTOR is required for queue processing');
+    const composition = createWorkerInvocationComposition(env);
+    try {
+      const transport = createQueueTransport(env);
+      await handleQueueBatch(
+        transport.toDeliveryBatch(batch),
+        composition.database,
+        composition.jobHandlers,
+        queue,
+        composition.realtime,
+      );
+      await drainUnpublishedJobs(composition.database, transport);
+    } finally {
+      await composition.close();
+    }
+    return;
   }
   const response = await env.QUEUE_EXECUTOR.fetch(
     new Request(`https://queue-executor.internal${QUEUE_EXECUTOR_PATH}`, {

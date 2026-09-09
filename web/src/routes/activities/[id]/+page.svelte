@@ -4,9 +4,7 @@
   import type { LiveWorkout } from "$lib/types";
 
   let { data } = $props();
-  const liveWorkout = $derived(
-    data.liveWorkout as LiveWorkout | undefined,
-  );
+  const liveWorkout = $derived(data.liveWorkout as LiveWorkout | undefined);
 </script>
 
 <svelte:head><title>Kondis</title></svelte:head>

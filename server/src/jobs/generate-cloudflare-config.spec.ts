@@ -132,7 +132,8 @@ describe('generateCloudflareConfig', () => {
       KONDIS_DEMO_MODE: 'true',
     });
     expect(config).not.toHaveProperty('r2_buckets');
-    expect(config).not.toHaveProperty('queues');
+    expect(config.queues!.producers).toHaveLength(Object.values(QueueName).length);
+    expect(config.queues!.consumers).toHaveLength(Object.values(QueueName).length * 2);
     expect(config.triggers).toEqual({ crons: ['* * * * *'] });
     expect(config.services).toEqual([{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }]);
     expect(config.durable_objects).toEqual({

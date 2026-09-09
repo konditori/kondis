@@ -2,6 +2,7 @@ import { FitBaseType, FitEncoder } from 'fit-file-parser';
 
 import { FIT_SEMICIRCLES_PER_DEGREE } from 'src/constants';
 import type {
+  ActivityType,
   FitLapMesg,
   FitMessages,
   FitRecordMesg,
@@ -10,7 +11,6 @@ import type {
   ParsedLap,
   ParsedStream,
   StreamType,
-  ActivityType,
 } from 'src/types';
 import { toActivityType } from 'src/utils/activity';
 import {

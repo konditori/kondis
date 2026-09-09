@@ -2,7 +2,6 @@ import { createRoute, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
 import { jsonBodyMiddleware } from 'src/api/validation';
-import { publicMediaUrl } from 'src/demo/media';
 import {
   ActivityEventsTicketSchema,
   AuthCapabilitiesSchema,
@@ -20,6 +19,7 @@ import {
 import { ForbiddenException, UnauthorizedException } from 'src/errors';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { AuthService } from 'src/services/auth.service';
+import { publicMediaUrl } from 'src/utils/media';
 
 export type AuthRouteService = Pick<
   AuthService,

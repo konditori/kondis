@@ -2,7 +2,6 @@ import { createCloudflareCryptoAdapter } from 'src/adapters/cloudflare/crypto.ad
 import type { CloudflareQueueBinding } from 'src/adapters/cloudflare/queue-transport.adapter';
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
 import { R2StorageAdapter, type R2BucketBinding } from 'src/adapters/cloudflare/storage.adapter';
-import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-tracker';
 import { createPortableWorkerHandlers } from 'src/cloudflare/queue-handler';
 import {
   DurableObjectRealtimeAdapter,
@@ -10,6 +9,7 @@ import {
   type DurableObjectNamespaceBinding,
 } from 'src/cloudflare/realtime-durable-object';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-tracker';
 import { ConsoleLogger } from 'src/logger';
 import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityImageRepository } from 'src/repositories/activity-image.repository';

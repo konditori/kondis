@@ -1,6 +1,6 @@
 import {
   amsterdamCanals,
-  centralStockholm,
+  munksjon,
   djurgarden,
   lidingo,
   londonThames,
@@ -8,11 +8,11 @@ import {
   portlandForestPark,
   sanFranciscoGoldenGate,
   singapore,
+  scania,
   vancouverSeawall,
 } from 'src/demo/routes';
 import { ActivityType } from 'src/enum';
-import type { ActivityMetrics, ActivityStreamInput, ActivityTag } from 'src/types';
-import { haversineDistance } from 'src/utils/geo';
+import type { ActivityTag } from 'src/types';
 
 export const JOHN_EMAIL = 'john@kondis.org';
 export const SOFIA_EMAIL = 'sofia@kondis.org';
@@ -24,9 +24,9 @@ export const DEMO_SESSION_TOKEN_HASH = '9b95c4cbc655cd99db0b02ec50991d59c06c6c3c
 export const demoFixtureId = (kind: number, index: number): string =>
   `00000000-0000-4000-8000-${String(kind * 100 + index + 1).padStart(12, '0')}`;
 
-export const DEMO_SESSION_ID = demoFixtureId(9, 0);
+export const SESSION_ID = demoFixtureId(9, 0);
 
-export const DEMO_USER_CONFIGS = [
+export const USERS = [
   {
     id: demoFixtureId(1, 0),
     email: JOHN_EMAIL,
@@ -60,9 +60,10 @@ export const DEMO_USER_CONFIGS = [
 ] as const;
 
 export type Point = readonly [latitude: number, longitude: number, altitude: number];
-export type DemoFitSpec = {
+
+export type DemoActivity = {
   slug: string;
-  startedAt: string;
+  startedAt: Date;
   title: string;
   description: string;
   activitySport: ActivityType;
@@ -76,139 +77,6 @@ export type DemoFitSpec = {
   maximumPower: number;
   calories: number;
   route: readonly Point[];
-};
-
-export type DemoActivityData = {
-  metrics: ActivityMetrics;
-  streams: ActivityStreamInput[];
-  laps: {
-    lap_index: number;
-    started_at: Date;
-    elapsed_time: number;
-    moving_time: number;
-    distance: number;
-    avg_hr: number;
-    max_hr: number;
-    avg_power: number;
-    avg_speed_mps: number;
-  }[];
-};
-
-const demoActivityProgress = (ratio: number): number => {
-  const variation = Math.sin(ratio * Math.PI * 5) * 0.012 + Math.sin(ratio * Math.PI * 13) * 0.004;
-  return Math.min(1, Math.max(0, ratio + variation * ratio * (1 - ratio)));
-};
-
-const interpolateDemoRoute = (route: readonly Point[], ratio: number): Point => {
-  const distances = route.slice(1).map((point, index) => {
-    const before = route[index];
-    return haversineDistance(before[0], before[1], point[0], point[1]);
-  });
-  const totalDistance = distances.reduce((total, distance) => total + distance, 0);
-  const targetDistance = Math.min(1, Math.max(0, ratio)) * totalDistance;
-  let distanceBefore = 0;
-  for (let index = 1; index < route.length; index++) {
-    const distance = distances[index - 1];
-    if (distanceBefore + distance >= targetDistance || index === route.length - 1) {
-      const before = route[index - 1];
-      const after = route[index];
-      const remainder = distance === 0 ? 0 : (targetDistance - distanceBefore) / distance;
-      return [
-        before[0] + (after[0] - before[0]) * remainder,
-        before[1] + (after[1] - before[1]) * remainder,
-        before[2] + (after[2] - before[2]) * remainder,
-      ];
-    }
-    distanceBefore += distance;
-  }
-  return route.at(-1)!;
-};
-
-export const createDemoActivityData = (spec: DemoFitSpec): DemoActivityData => {
-  const startedAt = new Date(spec.startedAt);
-  let distanceM = 0;
-  let elevationGainM = 0;
-  let elevationLossM = 0;
-  for (let index = 1; index < spec.route.length; index += 1) {
-    const previous = spec.route[index - 1]!;
-    const point = spec.route[index]!;
-    distanceM += haversineDistance(previous[0], previous[1], point[0], point[1]);
-    const elevationChange = point[2] - previous[2];
-    if (elevationChange > 0) {
-      elevationGainM += elevationChange;
-    } else {
-      elevationLossM -= elevationChange;
-    }
-  }
-  const recordCount = Math.max(121, Math.floor(spec.elapsedTimeS / 5) + 1);
-  const data: Record<ActivityStreamInput['type'], number[]> = {
-    time: [],
-    latitude: [],
-    longitude: [],
-    altitude: [],
-    distance: [],
-    speed: [],
-    heartrate: [],
-    cadence: [],
-    power: [],
-    temperature: [],
-  };
-
-  for (let index = 0; index < recordCount; index++) {
-    const ratio = index / (recordCount - 1);
-    const elapsed = Math.round(spec.elapsedTimeS * ratio);
-    const progress = demoActivityProgress(ratio);
-    const [latitude, longitude, altitude] = interpolateDemoRoute(spec.route, progress);
-    const averageSpeed = distanceM / spec.elapsedTimeS;
-    data.time.push(elapsed);
-    data.latitude.push(latitude);
-    data.longitude.push(longitude);
-    data.altitude.push(altitude);
-    data.distance.push(distanceM * progress);
-    data.speed.push(averageSpeed * (1 + Math.sin(ratio * Math.PI * 4) * 0.04 + Math.sin(ratio * Math.PI * 11) * 0.015));
-    data.heartrate.push(spec.averageHeartRate + Math.sin(ratio * Math.PI * 2) * 5 + Math.sin(ratio * Math.PI * 7) * 2);
-    data.cadence.push(spec.averageCadence + Math.sin(ratio * Math.PI * 6) * 4);
-    data.power.push(spec.averagePower > 0 ? spec.averagePower + Math.sin(ratio * Math.PI * 3) * 25 : 0);
-    data.temperature.push(12 - altitude / 100);
-  }
-
-  const averageSpeed = distanceM / spec.elapsedTimeS;
-  return {
-    metrics: {
-      elapsed_time: spec.elapsedTimeS,
-      moving_time: spec.elapsedTimeS - 30,
-      distance: distanceM,
-      elevation_gain: elevationGainM,
-      elevation_loss: elevationLossM,
-      avg_speed: averageSpeed,
-      max_speed: averageSpeed * 1.25,
-      avg_hr: spec.averageHeartRate,
-      max_hr: spec.maximumHeartRate,
-      avg_cadence: spec.averageCadence,
-      max_cadence: spec.maximumCadence,
-      avg_power: spec.averagePower,
-      max_power: spec.maximumPower,
-      normalized_power: spec.averagePower > 0 ? spec.averagePower + 10 : 0,
-      calories: spec.calories,
-    },
-    streams: Object.entries(data).map(([type, values]) => ({
-      type: type as ActivityStreamInput['type'],
-      data: values,
-    })),
-    laps: [
-      {
-        lap_index: 0,
-        started_at: startedAt,
-        elapsed_time: spec.elapsedTimeS,
-        moving_time: spec.elapsedTimeS - 30,
-        distance: distanceM,
-        avg_hr: spec.averageHeartRate,
-        max_hr: spec.maximumHeartRate,
-        avg_power: spec.averagePower,
-        avg_speed_mps: averageSpeed,
-      },
-    ],
-  };
 };
 
 export type DemoCommentConfig = {
@@ -299,14 +167,14 @@ export const DEMO_ACTIVITY_COMMENTS: Record<string, readonly DemoCommentConfig[]
   ],
 };
 
-export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
+export const DEMO_FIT_SPECS: readonly DemoActivity[] = [
   {
-    slug: 'golden-hour-trail',
-    startedAt: '2026-08-29T05:42:00.000Z',
-    title: 'Golden hour trail run',
-    description: 'A quiet loop before the city woke up.',
-    activitySport: ActivityType.TrailRun,
-    tags: ['long_run'],
+    slug: 'djurgarden',
+    startedAt: new Date('2026-08-29T05:42:00.000Z'),
+    title: 'Djurgården x2',
+    description: 'Catching the early morning in the green areas of Stockholm',
+    activitySport: ActivityType.Run,
+    tags: [],
     elapsedTimeS: 3980,
     averageHeartRate: 151,
     maximumHeartRate: 178,
@@ -318,10 +186,10 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
     route: djurgarden,
   },
   {
-    slug: 'city-tempo',
-    startedAt: '2026-08-25T16:20:00.000Z',
-    title: 'City tempo',
-    description: 'Three bright kilometres in the middle, easy home.',
+    slug: 'monk-lake-5k',
+    startedAt: new Date('2026-08-25T16:20:00.000Z'),
+    title: 'Munksjön 5k',
+    description: 'Round the lake we go',
     activitySport: ActivityType.Run,
     tags: ['workout'],
     elapsedTimeS: 2640,
@@ -332,11 +200,11 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
     averagePower: 0,
     maximumPower: 0,
     calories: 594,
-    route: centralStockholm,
+    route: munksjon,
   },
   {
     slug: 'island-ride',
-    startedAt: '2020-01-20T15:05:00.000Z',
+    startedAt: new Date('2020-01-20T15:05:00.000Z'),
     title: 'Island ride',
     description: 'Cold afternoon but beautiful sunset.',
     activitySport: ActivityType.Ride,
@@ -353,7 +221,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'gravel-after-work',
-    startedAt: '2026-08-19T17:40:00.000Z',
+    startedAt: new Date('2026-08-19T17:40:00.000Z'),
     title: 'Gravel after work',
     description: 'Dusty paths and a surprisingly fast final climb.',
     activitySport: ActivityType.GravelRide,
@@ -370,7 +238,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'long-sunday-run',
-    startedAt: '2026-08-16T07:15:00.000Z',
+    startedAt: new Date('2026-08-16T07:15:00.000Z'),
     title: 'Long Sunday run',
     description: 'A patient, conversational long run by the water.',
     activitySport: ActivityType.Run,
@@ -387,11 +255,11 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'park-walk',
-    startedAt: '2026-08-12T18:10:00.000Z',
+    startedAt: new Date('2026-08-12T18:10:00.000Z'),
     title: 'Park walk',
     description: 'An easy reset after a long day.',
     activitySport: ActivityType.Hike,
-    tags: ['recovery'],
+    tags: ['recovery'], 
     elapsedTimeS: 5100,
     averageHeartRate: 104,
     maximumHeartRate: 128,
@@ -400,11 +268,11 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
     averagePower: 0,
     maximumPower: 0,
     calories: 362,
-    route: centralStockholm,
+    route: scania,
   },
   {
     slug: 'golden-gate-intervals',
-    startedAt: '2026-08-10T15:35:00.000Z',
+    startedAt: new Date('2026-08-10T15:35:00.000Z'),
     title: 'Golden Gate intervals',
     description: 'Short, sharp efforts with the bay opening up at every turn.',
     activitySport: ActivityType.Run,
@@ -421,7 +289,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'central-park-progression',
-    startedAt: '2026-08-07T11:10:00.000Z',
+    startedAt: new Date('2026-08-07T11:10:00.000Z'),
     title: 'Central Park progression',
     description: 'Easy laps that gradually turned into a proper city tempo.',
     activitySport: ActivityType.Run,
@@ -438,7 +306,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'seawall-sunrise-ride',
-    startedAt: '2026-08-03T13:20:00.000Z',
+    startedAt: new Date('2026-08-03T13:20:00.000Z'),
     title: 'Seawall sunrise ride',
     description: 'A calm spin around the harbour before the mountains warmed up.',
     activitySport: ActivityType.Ride,
@@ -455,7 +323,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'wildwood-climb',
-    startedAt: '2026-07-29T16:45:00.000Z',
+    startedAt: new Date('2026-07-29T16:45:00.000Z'),
     title: 'Wildwood climb',
     description: 'A shaded forest climb with muddy shoes and a fast descent home.',
     activitySport: ActivityType.TrailRun,
@@ -472,7 +340,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'thames-evening-ride',
-    startedAt: '2026-07-24T18:25:00.000Z',
+    startedAt: new Date('2026-07-24T18:25:00.000Z'),
     title: 'Thames evening ride',
     description: 'Bridges, river light, and a steady wheel through the evening commute.',
     activitySport: ActivityType.Ride,
@@ -489,7 +357,7 @@ export const DEMO_FIT_SPECS: readonly DemoFitSpec[] = [
   },
   {
     slug: 'canal-recovery-spin',
-    startedAt: '2026-07-20T08:40:00.000Z',
+    startedAt: new Date('2026-07-20T08:40:00.000Z'),
     title: 'Canal recovery spin',
     description: 'Flat streets, quiet canals, and exactly the effort the legs needed.',
     activitySport: ActivityType.Ride,

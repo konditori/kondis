@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DEMO_LIVE_INGESTION_HOST, DEMO_LIVE_INGESTION_PATH, DemoLiveTracker } from 'src/demo/live-tracker';
+import { aargau } from 'src/demo/routes';
 
 describe(DemoLiveTracker.name, () => {
   afterEach(() => {
@@ -22,6 +23,7 @@ describe(DemoLiveTracker.name, () => {
           .mockResolvedValueOnce(undefined)
           .mockResolvedValueOnce(undefined),
         put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(true),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },
     };
@@ -73,6 +75,7 @@ describe(DemoLiveTracker.name, () => {
           .mockResolvedValueOnce(100)
           .mockResolvedValueOnce('00000000-0000-4000-8000-000000000099'),
         put: vi.fn(),
+        delete: vi.fn().mockResolvedValue(true),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },
     };
@@ -114,6 +117,7 @@ describe(DemoLiveTracker.name, () => {
           .mockResolvedValueOnce(0)
           .mockResolvedValueOnce('00000000-0000-4000-8000-000000000099'),
         put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(true),
         setAlarm: vi.fn().mockResolvedValue(undefined),
       },
     };
@@ -122,5 +126,79 @@ describe(DemoLiveTracker.name, () => {
     await tracker.fetch(new Request('https://demo-live-tracker.internal/activate', { method: 'POST' }));
 
     expect(state.storage.setAlarm).toHaveBeenCalledWith(startedAt.getTime() + 10_000);
+  });
+
+  it('resets the simulator after the final point and schedules a new run', async () => {
+    vi.useFakeTimers();
+    const startedAt = new Date('2026-09-08T12:00:00.000Z');
+    vi.setSystemTime(startedAt);
+    const fetch = vi.fn((_request: Request | string, _init?: RequestInit) =>
+      Promise.resolve(new Response(null, { status: 201 })),
+    );
+    const state = {
+      storage: {
+        get: vi
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(startedAt.getTime())
+          .mockResolvedValueOnce(aargau.length - 1)
+          .mockResolvedValueOnce('00000000-0000-4000-8000-000000000099'),
+        put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(true),
+        setAlarm: vi.fn().mockResolvedValue(undefined),
+      },
+    };
+    const tracker = new DemoLiveTracker(state as never, { DEMO_LIVE_INGESTION: { fetch } });
+
+    await tracker.alarm();
+
+    expect(fetch).toHaveBeenCalledOnce();
+    const finishedPayload = await (fetch.mock.calls[0]![0] as Request).clone().json();
+    expect(finishedPayload).toMatchObject({
+      finished: true,
+      points: [{ sequence: aargau.length }],
+    });
+    expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-started-at-v2');
+    expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-point-index-v2');
+    expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-client-session-id-v2');
+    expect(state.storage.delete).toHaveBeenCalledWith('demo-live-tracker-completed-v2');
+    expect(state.storage.setAlarm).toHaveBeenCalledWith(Date.now() + 10_000);
+
+    vi.setSystemTime(new Date(startedAt.getTime() + 10_000));
+    await tracker.alarm();
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const restartedPayload = await (fetch.mock.calls[1]![0] as Request).clone().json();
+    expect(restartedPayload).toMatchObject({ finished: false, points: [{ sequence: 1 }] });
+    expect(restartedPayload.clientSessionId).not.toBe('00000000-0000-4000-8000-000000000099');
+  });
+
+  it('recovers a durable object that was reconstructed with completed state', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-08T12:00:00.000Z'));
+    const fetch = vi.fn((_request: Request | string, _init?: RequestInit) =>
+      Promise.resolve(new Response(null, { status: 201 })),
+    );
+    const state = {
+      storage: {
+        get: vi
+          .fn()
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(undefined)
+          .mockResolvedValueOnce(undefined)
+          .mockResolvedValueOnce(undefined),
+        put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(true),
+        setAlarm: vi.fn().mockResolvedValue(undefined),
+      },
+    };
+    const tracker = new DemoLiveTracker(state as never, { DEMO_LIVE_INGESTION: { fetch } });
+
+    await tracker.fetch(new Request('https://demo-live-tracker.internal/activate', { method: 'POST' }));
+
+    expect(fetch).toHaveBeenCalledOnce();
+    const payload = await (fetch.mock.calls[0]![0] as Request).clone().json();
+    expect(payload).toMatchObject({ finished: false, points: [{ sequence: 1 }] });
+    expect(state.storage.delete).toHaveBeenCalledTimes(4);
   });
 });

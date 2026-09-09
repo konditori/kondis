@@ -1,8 +1,8 @@
 import { sql } from 'kysely';
-import { publicMediaUrl } from 'src/demo/media';
 import type { ActivityComment, NewActivityComment, Notification } from 'src/db/schema';
 import type { ActivityEngagement, SocialUser } from 'src/dtos/social.dto';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
+import { publicMediaUrl } from 'src/utils/media';
 
 export class SocialRepository {
   constructor(
@@ -171,9 +171,9 @@ export class SocialRepository {
     type: Notification['type'];
     activity_id: string | null;
   }): Promise<Notification> {
-    return this.db.transaction().execute((trx) =>
-      trx.insertInto('notification').values(input).returningAll().executeTakeFirstOrThrow(),
-    );
+    return this.db
+      .transaction()
+      .execute((trx) => trx.insertInto('notification').values(input).returningAll().executeTakeFirstOrThrow());
   }
 
   activityEngagement(ids: string[], viewerId: string): Promise<ActivityEngagement[]> {

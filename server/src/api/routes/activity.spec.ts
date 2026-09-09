@@ -59,9 +59,7 @@ describe('API activity routes', () => {
         updatedAt: '2026-09-08T07:01:00.000Z',
       } as ActivityDto),
     );
-    const app = createApiApp(
-      newApiDependencies({ activities: { createDirectActivity }, users: newApiUsers() }),
-    );
+    const app = createApiApp(newApiDependencies({ activities: { createDirectActivity }, users: newApiUsers() }));
     const payload = {
       sport: 'run',
       name: 'Morning run',

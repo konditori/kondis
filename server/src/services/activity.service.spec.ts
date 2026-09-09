@@ -40,6 +40,7 @@ describe('ActivityService', () => {
   const recomputeBestEfforts = vi.fn<(id: string) => Promise<boolean>>();
   const recomputeRouteMatches = vi.fn<(id: string) => Promise<boolean>>();
   const refreshBestEffortRankings = vi.fn(async () => {});
+  const getStreams = vi.fn();
   const getBestEfforts = vi.fn();
   const updateActivity = vi.fn();
 
@@ -72,6 +73,7 @@ describe('ActivityService', () => {
     recomputeBestEfforts,
     recomputeRouteMatches,
     refreshBestEffortRankings,
+    getStreams,
     getBestEfforts,
     update: updateActivity,
   } as unknown as ActivityRepository;
@@ -376,6 +378,31 @@ describe('ActivityService', () => {
     it('skips an activity that no longer exists', async () => {
       await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Skipped);
       expect(readLimited).not.toHaveBeenCalled();
+    });
+
+    it('computes metrics from backend-owned streams when the demo has no source file', async () => {
+      getUploadById.mockResolvedValueOnce(anUpload({ storage_path: '' }));
+      getActivityById.mockResolvedValueOnce({
+        id: ACTIVITY_ID,
+        upload_id: UPLOAD_ID,
+        started_at: new Date('2024-03-01T06:00:00.000Z'),
+      });
+      getStreams.mockResolvedValueOnce([
+        { type: 'time', data: [0, 10, 20] },
+        { type: 'distance', data: [0, 100, 250] },
+        { type: 'speed', data: [10, 10, 15] },
+        { type: 'altitude', data: [10, 12, 11] },
+        { type: 'heartrate', data: [120, 130, 125] },
+      ]);
+
+      await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);
+
+      expect(readLimited).not.toHaveBeenCalled();
+      expect(setMetrics).toHaveBeenCalledWith(
+        ACTIVITY_ID,
+        expect.objectContaining({ elapsed_time: 20, distance: 250, avg_hr: 125, max_hr: 130 }),
+        'trx',
+      );
     });
   });
 

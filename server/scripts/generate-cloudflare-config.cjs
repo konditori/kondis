@@ -116,7 +116,7 @@ const generateCloudflareConfig = ({
 }) => {
   const prefix = demoMode ? baseConfig.name : `${baseConfig.name}-${environment}`;
   const demoBaseConfig = (() => {
-    const { r2_buckets: _r2Buckets, queues: _queues, ...config } = baseConfig;
+    const { r2_buckets: _r2Buckets, ...config } = baseConfig;
     return config;
   })();
   const commonConfig = {
@@ -129,10 +129,6 @@ const generateCloudflareConfig = ({
     },
     hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
   };
-
-  if (demoMode) {
-    return commonConfig;
-  }
 
   const queues = Object.entries(JOB_CONCURRENCY).map(([queue, concurrency]) => {
     const name = queueName(prefix, queue);
@@ -147,6 +143,36 @@ const generateCloudflareConfig = ({
     };
   });
 
+  const generatedQueueConfig = {
+    producers: queues.map(({ binding, name }) => ({ binding, queue: name })),
+    consumers: queues.flatMap(({ name, deadLetterQueue, concurrency }) => [
+      {
+        queue: name,
+        max_batch_size: 1,
+        max_batch_timeout: 5,
+        max_retries: JOB_RETRY_LIMIT,
+        retry_delay: JOB_RETRY_DELAY_SECONDS,
+        max_concurrency: concurrency,
+        dead_letter_queue: deadLetterQueue,
+      },
+      {
+        queue: deadLetterQueue,
+        max_batch_size: 1,
+        max_batch_timeout: 5,
+        max_retries: 0,
+        max_concurrency: 1,
+      },
+    ]),
+  };
+
+  if (demoMode) {
+    return {
+      ...commonConfig,
+      queues: generatedQueueConfig,
+      triggers: baseConfig.triggers || { crons: ['* * * * *'] },
+    };
+  }
+
   return {
     ...commonConfig,
     r2_buckets: [{ binding: 'STORAGE_BUCKET', bucket_name: `${prefix}-storage` }],
@@ -155,27 +181,7 @@ const generateCloudflareConfig = ({
     },
     migrations: [{ tag: 'realtime-v1', new_sqlite_classes: ['RealtimeDurableObject'] }],
     services: [...(baseConfig.services || []), { binding: 'QUEUE_EXECUTOR', service: `${prefix}-queue-executor` }],
-    queues: {
-      producers: queues.map(({ binding, name }) => ({ binding, queue: name })),
-      consumers: queues.flatMap(({ name, deadLetterQueue, concurrency }) => [
-        {
-          queue: name,
-          max_batch_size: 1,
-          max_batch_timeout: 5,
-          max_retries: JOB_RETRY_LIMIT,
-          retry_delay: JOB_RETRY_DELAY_SECONDS,
-          max_concurrency: concurrency,
-          dead_letter_queue: deadLetterQueue,
-        },
-        {
-          queue: deadLetterQueue,
-          max_batch_size: 1,
-          max_batch_timeout: 5,
-          max_retries: 0,
-          max_concurrency: 1,
-        },
-      ]),
-    },
+    queues: generatedQueueConfig,
     triggers: {
       crons: [
         ...CRON_JOBS.filter(({ item }) => nodeProcessorEnabled || CLOUD_JOB_CONSUMER[item.name] === 'worker').map(

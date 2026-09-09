@@ -1,8 +1,8 @@
 import { FitBaseType, FitEncoder } from 'fit-file-parser';
 import { describe, expect, it } from 'vitest';
 
-import { ConsoleLogger } from 'src/logger';
 import { FIT_SEMICIRCLES_PER_DEGREE } from 'src/constants';
+import { ConsoleLogger } from 'src/logger';
 import { FitDecodeError, FitRepository } from 'src/repositories/fit.repository';
 
 const MESG_FILE_ID = 0;

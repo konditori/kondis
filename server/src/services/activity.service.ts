@@ -1,7 +1,6 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
-import { publicMediaUrl } from 'src/demo/media';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus } from 'src/enum';
@@ -20,16 +19,18 @@ import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
 import { ImportProgressStore } from 'src/state/import-progress.store';
-import type { FitMessages } from 'src/types';
 import {
   ActivityListRecord,
   ActivityMetrics,
   ActivityRecord,
+  ActivityStreamInput,
   ActivityTag,
   ActivityType,
   BestEffortGroup,
   BestEffortType,
   CreateActivityInput,
+  FitMessages,
+  FitRecordMesg,
   ParsedActivity,
   ParsedActivityStructure,
   UpdateActivityInput,
@@ -37,6 +38,7 @@ import {
 import { JobItem, JobOf } from 'src/types/jobs';
 import { buildActivityAnalysis } from 'src/utils/activity-details';
 import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
+import { publicMediaUrl } from 'src/utils/media';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
 const extname = (path: string): string => path.slice(path.lastIndexOf('.'));
@@ -392,8 +394,9 @@ export class ActivityService {
       return JobStatus.Skipped;
     }
 
-    const contents = await this.readActivityFile(upload.storage_path);
-    const parsed = this.computeActivityFile(upload.storage_path, contents);
+    const parsed = upload.storage_path
+      ? this.computeActivityFile(upload.storage_path, await this.readActivityFile(upload.storage_path))
+      : await this.computeStoredActivity(id, activity.started_at);
     const found = await this.databaseRepository.withTransaction(async (trx) => {
       const activityFound = await this.activityRepository.setMetrics(id, this.toMetrics(parsed), trx);
       if (activityFound) {
@@ -411,6 +414,34 @@ export class ActivityService {
     }
     this.logger.log(`Computed metrics for activity ${id}`);
     return JobStatus.Success;
+  }
+
+  private async computeStoredActivity(
+    activityId: string,
+    startedAt: Date | string,
+  ): Promise<ReturnType<typeof parseFitMessages>> {
+    const streams = await this.activityRepository.getStreams(activityId);
+    const byType = new Map(streams.map((stream) => [stream.type, stream.data]));
+    const recordCount = Math.max(...streams.map((stream) => stream.data.length), 0);
+    const value = (type: ActivityStreamInput['type'], index: number): number | undefined => {
+      const sample = byType.get(type)?.[index];
+      return Number.isFinite(sample) ? sample : undefined;
+    };
+    const startedAtMs = new Date(startedAt).getTime();
+    const records: FitRecordMesg[] = Array.from({ length: recordCount }, (_, index) => ({
+      timestamp: new Date(startedAtMs + (value('time', index) ?? index) * 1000),
+      positionLat: value('latitude', index),
+      positionLong: value('longitude', index),
+      altitude: value('altitude', index),
+      distance: value('distance', index),
+      speed: value('speed', index),
+      heartRate: value('heartrate', index),
+      cadence: value('cadence', index),
+      power: value('power', index),
+      temperature: value('temperature', index),
+    }));
+    const messages: FitMessages = { recordMesgs: records };
+    return parseFitMessages(messages);
   }
 
   private decodeActivityFile(path: string, contents: Buffer): FitMessages {

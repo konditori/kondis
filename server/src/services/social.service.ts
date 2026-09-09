@@ -1,7 +1,7 @@
-import { publicMediaUrl } from 'src/demo/media';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import type { ActivityCommentEvent, RealtimePort } from 'src/ports/realtime.port';
 import { SocialRepository } from 'src/repositories/social.repository';
+import { publicMediaUrl } from 'src/utils/media';
 
 export class SocialService {
   constructor(
@@ -12,7 +12,9 @@ export class SocialService {
 
   async people(viewerId: string, query?: string) {
     const users = await this.repository.searchUsers(viewerId, query);
-    return Promise.all(users.map(async (user) => ({ user, relation: await this.repository.relation(viewerId, user.id) })));
+    return Promise.all(
+      users.map(async (user) => ({ user, relation: await this.repository.relation(viewerId, user.id) })),
+    );
   }
 
   async person(viewerId: string, id: string) {
