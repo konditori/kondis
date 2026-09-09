@@ -1,0 +1,31 @@
+.gitignore
+  s_77ef0b200c8408::t_aca8a0b0e00e77 14-15
+deployment/postgres/.env.example
+  s_77ef0b200c8408::t_7f8f1da86b8151 1-24
+deployment/postgres/README.md
+  s_77ef0b200c8408::t_cde8c83cc088e2 1-47
+deployment/postgres/bin/db.sh
+  s_77ef0b200c8408::t_08f3972cf7858a 1-29
+deployment/postgres/docker-compose.yml
+  s_77ef0b200c8408::t_08cd4f4a514871 1-69
+deployment/postgres/init/01-create-runtime-role.sh
+  s_77ef0b200c8408::t_811db909f64a80 1-32
+mise.toml
+  s_77ef0b200c8408::t_75d250f919d4c5 71-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "021c53b80739abca21669a1a6621730c744b7b44",
+  "prompts": {},
+  "sessions": {
+    "s_77ef0b200c8408": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0884e-4eb7-75e2-9e91-64f00974599a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
