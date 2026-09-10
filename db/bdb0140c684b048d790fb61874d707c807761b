@@ -1,0 +1,21 @@
+deployment/postgres/README.md
+  s_77ef0b200c8408::t_b6c2c0ec4edd40 12-13,16,28-32,45-49
+deployment/postgres/env.example
+  s_77ef0b200c8408::t_60ad1a633c5ba0 3,9-10,14-15,17-20,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dbbdb0140c684b048d790fb61874d707c807761b",
+  "prompts": {},
+  "sessions": {
+    "s_77ef0b200c8408": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0884e-4eb7-75e2-9e91-64f00974599a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
