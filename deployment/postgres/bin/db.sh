@@ -11,7 +11,9 @@ case "$command" in
     "${compose[@]}" up -d --build database
     ;;
   migrate)
-    "${compose[@]}" --profile ops run --rm --build migrations
+    echo "Migrations are run outside this 1 GB database host." >&2
+    echo "Use 'mise run postgres:migrate' from GitHub Actions or a development machine." >&2
+    exit 2
     ;;
   logs)
     "${compose[@]}" logs -f database

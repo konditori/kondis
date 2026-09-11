@@ -74,9 +74,8 @@ dir = "deployment/postgres"
 run = "bash ./bin/db.sh up"
 
 [tasks."postgres:migrate"]
-description = "Run pending migrations on the self-hosted PostgreSQL origin"
-dir = "deployment/postgres"
-run = "bash ./bin/db.sh migrate"
+description = "Run pending migrations through the Cloudflare Tunnel Access proxy"
+run = "bash deployment/postgres/bin/migrate-through-tunnel.sh"
 
 [tasks."postgres:down"]
 description = "Stop the self-hosted PostgreSQL origin"

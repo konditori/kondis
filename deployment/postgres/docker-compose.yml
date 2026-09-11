@@ -40,28 +40,6 @@ services:
     healthcheck:
       disable: false
 
-  migrations:
-    profiles: [ops]
-    build:
-      context: ../..
-      dockerfile: server/Dockerfile
-    environment:
-      KONDIS_DB_HOSTNAME: database
-      KONDIS_DB_PORT: 5432
-      KONDIS_DB_DATABASE_NAME: ${KONDIS_DB_DATABASE_NAME:-kondis}
-      KONDIS_DB_USERNAME: ${KONDIS_DB_MIGRATOR_USERNAME:-kondis_migrator}
-      KONDIS_DB_PASSWORD_FILE: /run/secrets/migrator_password
-    secrets:
-      - migrator_password
-    entrypoint: ["/bin/sh", "-ec"]
-    command: >-
-      export KONDIS_DB_PASSWORD="$$(cat /run/secrets/migrator_password)";
-      exec node dist/bin/migrations.js run
-    depends_on:
-      database:
-        condition: service_healthy
-    restart: "no"
-
 secrets:
   migrator_username:
     file: ${KONDIS_DB_MIGRATOR_USERNAME_FILE:?KONDIS_DB_MIGRATOR_USERNAME_FILE must point to a file}

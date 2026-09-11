@@ -10,15 +10,12 @@ psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
   --set migrator_username="$migrator_username" \
   --set runtime_username="$runtime_username" \
   --set runtime_password="$runtime_password" <<'SQL'
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'runtime_username') THEN
-    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', :'runtime_username', :'runtime_password');
-  ELSE
-    EXECUTE format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'runtime_username', :'runtime_password');
-  END IF;
-END
-$$;
+SELECT CASE
+  WHEN EXISTS (SELECT FROM pg_roles WHERE rolname = :'runtime_username')
+    THEN format('ALTER ROLE %I WITH LOGIN PASSWORD %L', :'runtime_username', :'runtime_password')
+  ELSE format('CREATE ROLE %I LOGIN PASSWORD %L', :'runtime_username', :'runtime_password')
+END;
+\gexec
 
 GRANT CONNECT ON DATABASE :"database_name" TO :"runtime_username";
 GRANT USAGE ON SCHEMA public TO :"runtime_username";
