@@ -1,0 +1,19 @@
+.github/workflows/demo.yml
+  s_b3fa36d566688e::t_a40837589cf858 77-79,82-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b45b65b72bb4e8e04a11ef02ec6d019d76d4aafc",
+  "prompts": {},
+  "sessions": {
+    "s_b3fa36d566688e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f6e33a7a6fferKan0WuMy2c1XZ",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
