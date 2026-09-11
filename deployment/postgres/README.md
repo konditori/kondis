@@ -69,9 +69,10 @@ export KONDIS_DB_MIGRATOR_PASSWORD=...
 mise run postgres:migrate
 ```
 
-The task starts `cloudflared access tcp` on `127.0.0.1:15432`, waits until an
-authenticated PostgreSQL connection succeeds through the complete tunnel,
-runs the migration once, and terminates the proxy afterwards.
+The task starts `cloudflared access tcp` on `127.0.0.1:15432`, waits for its
+local listener, runs the migration once, and terminates the proxy afterwards.
+`cloudflared access tcp` opens its upstream WebSocket on demand when the
+migration connects.
 
 The `Migrate PostgreSQL` GitHub workflow runs only on `main` (or manually),
 never on pull requests. Create a GitHub Environment named `production` and

@@ -27,7 +27,6 @@ fi
 
 local_port="${KONDIS_DB_TUNNEL_LOCAL_PORT:-15432}"
 log_file="$(mktemp)"
-probe_log="$(mktemp)"
 
 cleanup() {
   if [[ -n "${proxy_pid:-}" ]] && kill -0 "$proxy_pid" 2>/dev/null; then
@@ -35,63 +34,44 @@ cleanup() {
     wait "$proxy_pid" 2>/dev/null || true
   fi
   rm -f "$log_file"
-  rm -f "$probe_log"
 }
 trap cleanup EXIT INT TERM
 
-TUNNEL_SERVICE_TOKEN_ID="$KONDIS_DB_TUNNEL_CLIENT_ID" \
-TUNNEL_SERVICE_TOKEN_SECRET="$KONDIS_DB_TUNNEL_CLIENT_SECRET" \
-  cloudflared access tcp \
+cloudflared access tcp \
   --hostname "$KONDIS_DB_TUNNEL_HOSTNAME" \
   --url "127.0.0.1:${local_port}" \
+  --service-token-id "$KONDIS_DB_TUNNEL_CLIENT_ID" \
+  --service-token-secret "$KONDIS_DB_TUNNEL_CLIENT_SECRET" \
   >"$log_file" 2>&1 &
 proxy_pid=$!
+
+listener_ready=false
+for _ in {1..30}; do
+  if ! kill -0 "$proxy_pid" 2>/dev/null; then
+    cat "$log_file" >&2
+    exit 1
+  fi
+
+  if grep -q "Start Websocket listener" "$log_file"; then
+    listener_ready=true
+    break
+  fi
+
+  sleep 0.2
+done
+
+if [[ "$listener_ready" != true ]]; then
+  echo "Timed out waiting for the local Cloudflare Access TCP listener" >&2
+  cat "$log_file" >&2
+  exit 1
+fi
 
 export KONDIS_DB_HOSTNAME=127.0.0.1
 export KONDIS_DB_PORT="$local_port"
 export KONDIS_DB_USERNAME="$KONDIS_DB_MIGRATOR_USERNAME"
 export KONDIS_DB_PASSWORD="$KONDIS_DB_MIGRATOR_PASSWORD"
 
-database_ready=false
-for _ in {1..60}; do
-  if ! kill -0 "$proxy_pid" 2>/dev/null; then
-    cat "$log_file" >&2
-    exit 1
-  fi
-
-  # access tcp establishes its upstream WebSocket on demand for each local
-  # client. A successful database connection is therefore the readiness signal
-  # for the complete GitHub runner -> Access -> Tunnel -> PostgreSQL path.
-  if pnpm --filter kondis-server exec node -e '
-    const { Client } = require("pg");
-    const client = new Client({
-      host: process.env.KONDIS_DB_HOSTNAME,
-      port: Number(process.env.KONDIS_DB_PORT),
-      user: process.env.KONDIS_DB_USERNAME,
-      password: process.env.KONDIS_DB_PASSWORD,
-      database: process.env.KONDIS_DB_DATABASE_NAME,
-      connectionTimeoutMillis: 2000,
-    });
-    client.connect()
-      .then(() => client.end())
-      .catch(async (error) => {
-        console.error(error instanceof Error ? error.message : String(error));
-        await client.end().catch(() => {});
-        process.exit(1);
-      });
-  ' >"$probe_log" 2>&1; then
-    database_ready=true
-    break
-  fi
-
-  sleep 1
-done
-
-if [[ "$database_ready" != true ]]; then
-  echo "Timed out waiting for PostgreSQL through the Cloudflare Access tunnel" >&2
-  cat "$probe_log" >&2
+if ! mise run //server:migrate; then
   cat "$log_file" >&2
   exit 1
 fi
-
-mise run //server:migrate
