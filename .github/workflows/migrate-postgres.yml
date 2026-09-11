@@ -42,7 +42,7 @@ jobs:
       - name: Install cloudflared
         env:
           CLOUDFLARED_VERSION: 2026.9.0
-          CLOUDFLARED_SHA256: 57f6a86a7f77b75722227729f6d6ce41e5ab1bc82415bd4d39a734c7d9e0c4ce
+          CLOUDFLARED_SHA256: 53b7a7a5420d188758d24341294acb0d1bca54296548ac05e38811a694ac6134
         run: |
           curl --fail --location --show-error \
             --output /tmp/cloudflared \
@@ -50,6 +50,7 @@ jobs:
           echo "${CLOUDFLARED_SHA256}  /tmp/cloudflared" | sha256sum --check --status
           install -m 0755 /tmp/cloudflared "$RUNNER_TEMP/cloudflared"
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/cloudflared" --version
 
       - name: Apply pending migrations
         env:
