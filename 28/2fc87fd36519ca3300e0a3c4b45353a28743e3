@@ -1,0 +1,23 @@
+.github/workflows/migrate-postgres.yml
+  s_77ef0b200c8408::t_799fc86e4469a7 44-47
+deployment/postgres/README.md
+  s_77ef0b200c8408::t_bbef4b28631323 72-80
+deployment/postgres/bin/migrate-through-tunnel.sh
+  s_77ef0b200c8408::t_954651ba95b06a 40,43-44,48-49,55-56,60,63-64,69-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "282fc87fd36519ca3300e0a3c4b45353a28743e3",
+  "prompts": {},
+  "sessions": {
+    "s_77ef0b200c8408": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0884e-4eb7-75e2-9e91-64f00974599a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
