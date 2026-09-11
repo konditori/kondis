@@ -8,8 +8,8 @@ required=(
   KONDIS_DB_TUNNEL_HOSTNAME
   KONDIS_DB_TUNNEL_CLIENT_ID
   KONDIS_DB_TUNNEL_CLIENT_SECRET
-  KONDIS_DB_USERNAME
-  KONDIS_DB_PASSWORD
+  KONDIS_DB_MIGRATOR_USERNAME
+  KONDIS_DB_MIGRATOR_PASSWORD
   KONDIS_DB_DATABASE_NAME
 )
 
@@ -54,6 +54,8 @@ for _ in {1..60}; do
   if (echo >/dev/tcp/127.0.0.1/"$local_port") 2>/dev/null; then
     export KONDIS_DB_HOSTNAME=127.0.0.1
     export KONDIS_DB_PORT="$local_port"
+    export KONDIS_DB_USERNAME="$KONDIS_DB_MIGRATOR_USERNAME"
+    export KONDIS_DB_PASSWORD="$KONDIS_DB_MIGRATOR_PASSWORD"
     mise run //server:migrate
     exit 0
   fi
