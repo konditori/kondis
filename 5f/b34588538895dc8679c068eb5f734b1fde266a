@@ -1,0 +1,19 @@
+deployment/demo/bin/hyperdrive.sh
+  s_b3fa36d566688e::t_41371f629b1628 26-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5fb34588538895dc8679c068eb5f734b1fde266a",
+  "prompts": {},
+  "sessions": {
+    "s_b3fa36d566688e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f6e33a7a6fferKan0WuMy2c1XZ",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
