@@ -85,10 +85,16 @@ Secrets:
 | `KONDIS_DB_TUNNEL_CLIENT_SECRET` | Migration service-token Client Secret |
 | `KONDIS_HYPERDRIVE_ACCESS_CLIENT_ID` | Hyperdrive service-token Client ID |
 | `KONDIS_HYPERDRIVE_ACCESS_CLIENT_SECRET` | Hyperdrive service-token Client Secret |
+| `KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID` | Service-token Client ID for the protected public-demo smoke test |
+| `KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET` | Service-token Client Secret for the protected public-demo smoke test |
 
-The two Access tokens must be separate and included in a `Service Auth` policy
-for the PostgreSQL Tunnel application. The zone WAF rules must not challenge or
-block WebSocket traffic to that hostname before Access evaluates it.
+The database tunnel and Hyperdrive Access tokens must be separate and included
+in `Service Auth` policies for the PostgreSQL Tunnel application. The zone WAF
+rules must not challenge or block WebSocket traffic to that hostname before
+Access evaluates it.
+
+If `demo.kondis.org` is protected by Access, create a separate service token for
+the smoke test and include it in a `Service Auth` policy on that application.
 
 ## Manual operations
 

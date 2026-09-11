@@ -23,6 +23,12 @@ for name in "${required[@]}"; do
     exit 2
   fi
 done
+if [[ "$action" == "ensure" || "$action" == "update" ]]; then
+  if [[ ! "$KONDIS_HYPERDRIVE_CA_CERTIFICATE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+    echo "KONDIS_HYPERDRIVE_CA_CERTIFICATE_ID must be a UUID without whitespace" >&2
+    exit 2
+  fi
+fi
 
 wrangler=(pnpm --dir "$repo_root/server" exec wrangler)
 
