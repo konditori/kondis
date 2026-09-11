@@ -61,21 +61,4 @@ jobs:
           KONDIS_DB_MIGRATOR_PASSWORD: ${{ secrets.KONDIS_DB_MIGRATOR_PASSWORD }}
           KONDIS_DB_TUNNEL_CLIENT_ID: ${{ secrets.KONDIS_DB_TUNNEL_CLIENT_ID }}
           KONDIS_DB_TUNNEL_CLIENT_SECRET: ${{ secrets.KONDIS_DB_TUNNEL_CLIENT_SECRET }}
-        run: |
-          headers="$RUNNER_TEMP/cloudflare-access-headers"
-          curl --silent --max-time 3 --output /dev/null --dump-header "$headers" \
-            --http1.1 \
-            --header "Connection: Upgrade" \
-            --header "Upgrade: websocket" \
-            --header "Sec-WebSocket-Version: 13" \
-            --header "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-            --header "CF-Access-Client-Id: $KONDIS_DB_TUNNEL_CLIENT_ID" \
-            --header "CF-Access-Client-Secret: $KONDIS_DB_TUNNEL_CLIENT_SECRET" \
-            "https://$KONDIS_DB_TUNNEL_HOSTNAME/" || true
-          status="$(awk '/^HTTP\// { status = $2 } END { print status }' "$headers")"
-          ray="$(awk 'tolower($1) == "cf-ray:" { gsub("\r", "", $2); print $2; exit }' "$headers")"
-          echo "Cloudflare Access preflight: HTTP ${status:-unknown}, Ray ${ray:-unknown}"
-          if [[ "$status" != "101" ]]; then
-            exit 1
-          fi
-          mise run postgres:migrate
+        run: mise run postgres:migrate
