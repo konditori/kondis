@@ -56,8 +56,36 @@ for _ in {1..60}; do
     export KONDIS_DB_PORT="$local_port"
     export KONDIS_DB_USERNAME="$KONDIS_DB_MIGRATOR_USERNAME"
     export KONDIS_DB_PASSWORD="$KONDIS_DB_MIGRATOR_PASSWORD"
-    mise run //server:migrate
-    exit 0
+
+    # The access-tcp process opens its local listener before it has completed
+    # the WebSocket connection to the tunnel origin. Perform a real PostgreSQL
+    # handshake before starting the migration, so migrations run only once.
+    for _ in {1..60}; do
+      if pnpm --filter kondis-server exec node -e '
+        const { Client } = require("pg");
+        const client = new Client({
+          host: process.env.KONDIS_DB_HOSTNAME,
+          port: Number(process.env.KONDIS_DB_PORT),
+          user: process.env.KONDIS_DB_USERNAME,
+          password: process.env.KONDIS_DB_PASSWORD,
+          database: process.env.KONDIS_DB_DATABASE_NAME,
+          connectionTimeoutMillis: 2000,
+        });
+        client.connect().then(() => client.end()).catch(async () => {
+          await client.end().catch(() => {});
+          process.exit(1);
+        });
+      ' >/dev/null 2>&1; then
+        mise run //server:migrate
+        exit 0
+      fi
+
+      sleep 1
+    done
+
+    echo "Timed out waiting for PostgreSQL through the Cloudflare Access tunnel" >&2
+    cat "$log_file" >&2
+    exit 1
   fi
 
   sleep 1

@@ -41,8 +41,8 @@ jobs:
 
       - name: Install cloudflared
         env:
-          CLOUDFLARED_VERSION: 2026.8.3
-          CLOUDFLARED_SHA256: f29324fe934d1e100617484c78deef803c4dc2cd351d645bbde42e96b4fccc5e
+          CLOUDFLARED_VERSION: 2026.9.0
+          CLOUDFLARED_SHA256: 57f6a86a7f77b75722227729f6d6ce41e5ab1bc82415bd4d39a734c7d9e0c4ce
         run: |
           curl --fail --location --show-error \
             --output /tmp/cloudflared \
