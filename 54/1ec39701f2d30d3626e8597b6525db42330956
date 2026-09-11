@@ -1,0 +1,21 @@
+deployment/postgres/README.md
+  s_77ef0b200c8408::t_bbef4b28631323 72-75
+deployment/postgres/bin/migrate-through-tunnel.sh
+  s_77ef0b200c8408::t_954651ba95b06a 40,43-44,48-49,55-56,60,63-64,69-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "541ec39701f2d30d3626e8597b6525db42330956",
+  "prompts": {},
+  "sessions": {
+    "s_77ef0b200c8408": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0884e-4eb7-75e2-9e91-64f00974599a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
