@@ -68,6 +68,17 @@ jobs:
           install -m 0755 /tmp/cloudflared "$RUNNER_TEMP/cloudflared"
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
 
+      - name: Verify demo smoke-test Access policy
+        run: |
+          if [[ -z "$KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" || -z "$KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" ]]; then
+            echo "Demo smoke-test Access credentials must be set" >&2
+            exit 2
+          fi
+          curl --fail --show-error --silent --retry 2 --retry-all-errors \
+            --header "CF-Access-Client-Id: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" \
+            --header "CF-Access-Client-Secret: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" \
+            https://demo.kondis.org/cdn-cgi/access/get-identity >/dev/null
+
       - name: Enable maintenance mode
         run: bash deployment/demo/bin/maintenance.sh enable
 
@@ -82,10 +93,6 @@ jobs:
 
       - name: Smoke test public demo
         run: |
-          if [[ -z "$KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" || -z "$KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" ]]; then
-            echo "Demo smoke-test Access credentials must be set" >&2
-            exit 2
-          fi
           if ! curl --fail --show-error --silent --retry 5 --retry-all-errors \
             --header "CF-Access-Client-Id: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" \
             --header "CF-Access-Client-Secret: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" \
