@@ -53,21 +53,6 @@ run = "docker compose -f ./docker-compose.dev.yml run --rm kondis-server 'pnpm -
 dir = "docker"
 run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
 
-[tasks.demo-db]
-description = "Start the persistent demo PostgreSQL stack and seed its database"
-dir = "deployment/demo"
-run = "bash ./bin/demo-db.sh"
-
-[tasks.demo-db-rebuild]
-description = "Drop, recreate, migrate, and reseed the demo PostgreSQL database"
-dir = "deployment/demo"
-run = "bash ./bin/demo-db-rebuild.sh"
-
-[tasks.demo-db-down]
-description = "Stop the persistent demo PostgreSQL stack"
-dir = "deployment/demo"
-run = "bash ./bin/demo-db-down.sh"
-
 [tasks."postgres:up"]
 description = "Start the self-hosted PostgreSQL origin"
 dir = "deployment/postgres"
@@ -77,15 +62,18 @@ run = "bash ./bin/db.sh up"
 description = "Run pending migrations through the Cloudflare Tunnel Access proxy"
 run = "bash deployment/postgres/bin/migrate-through-tunnel.sh"
 
+[tasks."postgres:demo-reset"]
+description = "Recreate, migrate, and seed a guarded demo database through Cloudflare Tunnel"
+run = "bash deployment/postgres/bin/migrate-through-tunnel.sh demo-reset"
+
+[tasks."postgres:demo-drop"]
+description = "Drop a guarded PR demo database through Cloudflare Tunnel"
+run = "bash deployment/postgres/bin/migrate-through-tunnel.sh demo-drop"
+
 [tasks."postgres:down"]
 description = "Stop the self-hosted PostgreSQL origin"
 dir = "deployment/postgres"
 run = "bash ./bin/db.sh down"
-
-[tasks."deploy:demo-rebuild"]
-description = "Deploy the demo Workers, then drop, recreate, migrate, and reseed the demo database"
-dir = "deployment/demo"
-run = "bash ./bin/deploy-demo-rebuild.sh"
 
 [tasks.e2e]
 run = { task = "//e2e:test" }
@@ -241,4 +229,4 @@ run = "node ./scripts/deploy-cloudflare.mjs"
 
 [tasks."deploy:demo"]
 description = "Deploy the Kondis demo site to Cloudflare (only available to Kondis dev team)"
-run = "pnpm run deploy:demo"
+run = "node ./deployment/demo/deploy.mjs"

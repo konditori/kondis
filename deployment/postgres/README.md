@@ -43,18 +43,19 @@ development machine through the Cloudflare Tunnel instead.
 
 The default `HDD` storage preset is intended for a modest VPS.
 
-The Hyperdrive connection should use `kondis_runtime`; CI or an operator uses
-`kondis_migrator` for migrations. The runtime role is created on the first
-database initialization and receives DML permissions plus default privileges
-for objects created by the migration role.
+The stable main Hyperdrive connection uses `kondis_runtime`; CI uses
+`kondis_migrator` to administer disposable demo databases. The runtime role is
+created on first cluster initialization. Each PR receives a separate restricted
+runtime role.
 
 ## Tunnel-backed migrations
 
 Use the same Cloudflare Tunnel that Hyperdrive will use, with a public TCP
 hostname that routes to `tcp://127.0.0.1:5432` on this host. Protect that
 hostname with an Access application. Its policy must include a `Service Auth`
-rule for a dedicated `kondis-migrations` service token. Do not give GitHub the
-Hyperdrive service token.
+rule for separate migration and Hyperdrive service tokens. GitHub needs both in
+the protected `demo` Environment: one for its local migration proxy, and one
+for creating Hyperdrive configurations.
 
 For a local migration, install `cloudflared`, then export the following values
 and run the Mise task from the repository root:
@@ -63,7 +64,7 @@ and run the Mise task from the repository root:
 export KONDIS_DB_TUNNEL_HOSTNAME=postgres-tunnel.example.com
 export KONDIS_DB_TUNNEL_CLIENT_ID=...
 export KONDIS_DB_TUNNEL_CLIENT_SECRET=...
-export KONDIS_DB_DATABASE_NAME=kondis
+export KONDIS_DB_DATABASE_NAME=kondis-demo
 export KONDIS_DB_MIGRATOR_USERNAME=kondis_migrator
 export KONDIS_DB_MIGRATOR_PASSWORD=...
 mise run postgres:migrate
@@ -74,19 +75,11 @@ local listener, runs the migration once, and terminates the proxy afterwards.
 `cloudflared access tcp` opens its upstream WebSocket on demand when the
 migration connects.
 
-The `Migrate PostgreSQL` GitHub workflow runs only on `main` (or manually),
-never on pull requests. Create a GitHub Environment named `production` and
-set these values there before enabling it:
+The demo workflows do not merely migrate an existing database. Main recreates
+`kondis-demo` on every push, and each internal PR recreates its own
+`kondis-demo-pr-N` database. The administration command refuses any other
+database naming pattern, revokes public database access, creates a restricted
+runtime role, and grants only application DML privileges.
 
-| Type | Name |
-| --- | --- |
-| Variable | `KONDIS_DB_TUNNEL_HOSTNAME` |
-| Variable | `KONDIS_DB_DATABASE_NAME` |
-| Secret | `KONDIS_DB_MIGRATOR_USERNAME` |
-| Secret | `KONDIS_DB_MIGRATOR_PASSWORD` |
-| Secret | `KONDIS_DB_TUNNEL_CLIENT_ID` |
-| Secret | `KONDIS_DB_TUNNEL_CLIENT_SECRET` |
-
-PR previews must use a separate database (or schema and role) per preview.
-They must not receive these production migration secrets or migrate this shared
-database.
+See `deployment/demo/README.md` for workflow configuration and resource
+lifecycle details.

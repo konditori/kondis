@@ -13,6 +13,22 @@ required=(
   KONDIS_DB_DATABASE_NAME
 )
 
+operation="${1:-migrate}"
+case "$operation" in
+  migrate)
+    ;;
+  demo-reset)
+    required+=(KONDIS_DB_RUNTIME_USERNAME KONDIS_DB_RUNTIME_PASSWORD)
+    ;;
+  demo-drop)
+    required+=(KONDIS_DB_RUNTIME_USERNAME)
+    ;;
+  *)
+    echo "Usage: $0 {migrate|demo-reset|demo-drop}" >&2
+    exit 2
+    ;;
+esac
+
 for name in "${required[@]}"; do
   if [[ -z "${!name:-}" ]]; then
     echo "${name} must be set" >&2
@@ -71,7 +87,7 @@ export KONDIS_DB_PORT="$local_port"
 export KONDIS_DB_USERNAME="$KONDIS_DB_MIGRATOR_USERNAME"
 export KONDIS_DB_PASSWORD="$KONDIS_DB_MIGRATOR_PASSWORD"
 
-if ! mise run //server:migrate; then
+if ! KONDIS_DB_LIFECYCLE_OPERATION="$operation" mise run //server:database-lifecycle-lock; then
   cat "$log_file" >&2
   exit 1
 fi

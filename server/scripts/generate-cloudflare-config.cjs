@@ -114,7 +114,7 @@ const generateCloudflareConfig = ({
   nodeProcessorEnabled = false,
   demoMode = false,
 }) => {
-  const prefix = demoMode ? baseConfig.name : `${baseConfig.name}-${environment}`;
+  const prefix = demoMode && environment === 'demo' ? baseConfig.name : `${baseConfig.name}-${environment}`;
   const demoBaseConfig = (() => {
     const { r2_buckets: _r2Buckets, queues: _queues, triggers: _triggers, ...config } = baseConfig;
     return config;
@@ -128,6 +128,9 @@ const generateCloudflareConfig = ({
       ...(demoMode ? { KONDIS_DEMO_MODE: 'true' } : {}),
     },
     hyperdrive: [{ binding: 'HYPERDRIVE', id: hyperdriveId }],
+    services: ((demoMode ? demoBaseConfig : baseConfig).services || []).map((service) =>
+      service.service === baseConfig.name ? { ...service, service: prefix } : service,
+    ),
   };
 
   const queues = Object.entries(JOB_CONCURRENCY).map(([queue, concurrency]) => {

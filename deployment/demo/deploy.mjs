@@ -5,11 +5,21 @@ import { fileURLToPath } from "node:url";
 
 const argumentsList = process.argv.slice(2);
 const dryRun = argumentsList.includes("--dry-run");
-const positional = argumentsList.filter((argument) => argument !== "--dry-run");
-const environment = "demo";
+const prIndex = argumentsList.indexOf("--pr");
+const prNumber = prIndex === -1 ? undefined : argumentsList[prIndex + 1];
+const consumed = new Set(["--", "--dry-run"]);
+if (prIndex !== -1) {
+  consumed.add("--pr");
+  consumed.add(prNumber);
+}
+const positional = argumentsList.filter((argument) => !consumed.has(argument));
+const environment = prNumber ? `pr-${prNumber}` : "demo";
 
-if (positional.length > 0) {
-  throw new Error("Usage: pnpm run deploy:demo [--dry-run]");
+if (
+  positional.length > 0 ||
+  (prIndex !== -1 && (!prNumber || !/^[1-9][0-9]*$/.test(prNumber)))
+) {
+  throw new Error("Usage: mise run deploy:demo -- [--dry-run] [--pr NUMBER]");
 }
 if (!process.env.KONDIS_HYPERDRIVE_ID) {
   throw new Error("KONDIS_HYPERDRIVE_ID is required");
@@ -37,6 +47,14 @@ const child = spawn(
       ...process.env,
       KONDIS_DEMO_MODE: "true",
       KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: "false",
+      ...(prNumber
+        ? {
+            KONDIS_WEB_HOSTNAME: `pr-${prNumber}.demo.kondis.org`,
+            KONDIS_WEB_ROUTE_MODE: "route",
+            KONDIS_WEB_ZONE_NAME: "kondis.org",
+            KONDIS_DEMO_MEDIA_BASE_URL: `https://pr-${prNumber}.demo.kondis.org/demo-media/v1`,
+          }
+        : {}),
     },
   },
 );

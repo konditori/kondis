@@ -5,8 +5,5 @@
   "type": "module",
   "description": "Monorepo for Kondis",
   "license": "AGPL-3.0-or-later",
-  "scripts": {
-    "deploy:demo": "node deployment/demo/deploy.mjs"
-  },
   "packageManager": "pnpm@11.25.0"
 }

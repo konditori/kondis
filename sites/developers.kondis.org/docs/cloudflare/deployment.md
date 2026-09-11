@@ -12,7 +12,7 @@ Before deploying, select an [authentication mode](./authentication). Local bcryp
 
 ## Hyperdrive
 
-Kondis uses one cache-disabled Hyperdrive configuration per deployment environment. The Hyperdrive ID is infrastructure state, not an application secret, and is supplied to the deployment task rather than committed to the repository. Hyperdrive and Cloudflare Access are infrastructure concerns; the Worker deployment task does not create or modify them.
+Kondis uses one cache-disabled Hyperdrive configuration per deployment environment. The Hyperdrive ID is infrastructure state, not an application secret, and is supplied to the deployment task rather than committed to the repository. General deployments provision Hyperdrive separately; the repository's demo workflows manage their dedicated main and PR configurations.
 
 Create the Hyperdrive configuration once per environment using a TLS connection to the PostgreSQL 17 origin. Prefer Terraform when the environment is managed there. For a one-off Wrangler setup:
 
@@ -39,10 +39,8 @@ For the queue split deployment, this applies `1789000000000-SplitActivityQueues`
 ## Deploy
 
 The normal self-hosted development stack remains `docker/docker-compose.dev.yml`.
-The production demo database uses the separate `deployment/demo/docker-compose.yml`
-stack below. Its one-shot seeder starts the Kondis service graph and temporary
-pg-boss worker alongside PostgreSQL; the public web and API Workers remain
-independently deployed.
+The public demo and PR previews use the PostgreSQL cluster documented under
+`deployment/postgres/`; Cloudflare runs their public web and API Workers.
 
 ### Public demo
 
@@ -68,11 +66,9 @@ request expects the demo
 database to already contain the demo user and its fictional FIT activity history;
 it fails clearly if the database has not been seeded.
 
-The demo PostgreSQL origin is `db.demo.kondis.org:5432`, and the demo API Worker
-uses that endpoint as its placement hint so Cloudflare can run the Worker near
-the database. The DNS record must identify the actual database endpoint rather
-than a proxied Cloudflare edge or Tunnel hostname. Keep the web Worker globally
-distributed: static assets are served from the edge closest to each visitor.
+The demo PostgreSQL origin is reached through `postgres.kondis.org`. The demo
+API Worker is placed in `aws:eu-north-1`, near the VPS, while the web Worker
+remains globally distributed so static assets are served near visitors.
 The demo's avatars and activity preview images come from the `test/test-assets`
 submodule. The deployment script stages `demo/v1/` into the web Worker just
 before the Cloudflare build and removes the staging files afterward; the demo
@@ -85,75 +81,21 @@ git submodule update --init --recursive
 
 ### Demo lifecycle
 
-The demo has two independently managed parts: the Cloudflare API and web
-Workers, and the self-hosted PostgreSQL origin. The database host keeps the
-PostgreSQL data directory outside the repository. The Workers contain the
-static demo media; the database stores only the predictable media metadata and
-paths.
+The VPS runs one PostgreSQL cluster. Every push to `main` temporarily puts
+`demo.kondis.org` in maintenance mode, recreates `kondis-demo`, migrates and
+seeds it, updates Hyperdrive, and deploys matching API and web Workers. Failed
+deployments leave the maintenance Worker active rather than exposing a partial
+database.
 
-#### Initial provisioning and restart
+Internal PRs receive an isolated database, runtime role, Hyperdrive
+configuration, API Worker, web Worker, and `pr-N.demo.kondis.org` route. These
+resources are recreated when the PR changes and deleted when it closes. Fork
+PRs do not receive previews because they cannot safely execute with deployment
+credentials. Internal preview deployment also requires approval through the
+`demo-preview` GitHub Environment.
 
-On the database host, copy the demo environment template and configure the
-persistent data and secret paths:
-
-```sh
-cp deployment/demo/.env.example deployment/demo/.env
-mise run demo-db
-```
-
-`mise run demo-db` starts PostgreSQL, then runs one seeder container. The seeder
-starts the complete Kondis service graph and a temporary pg-boss worker
-in-process, uses application services to create fixtures, and waits for metrics,
-route matching, best efforts, and image processing before it exits. It does not
-drop the database or delete the configured `DEMO_DB_DATA_DIR`, so it is safe to
-use after a host or container restart. Keep the database and seeder credentials
-outside the repository.
-
-To inspect, stop, or restart the database without changing its data:
-
-```sh
-cd deployment/demo
-docker compose --env-file .env -f ./docker-compose.yml ps
-docker compose --env-file .env -f ./docker-compose.yml stop database
-docker compose --env-file .env -f ./docker-compose.yml start database
-```
-
-#### Routine Worker deployment
-
-Deploy Worker changes without rebuilding the demo database with:
-
-```sh
-KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" mise run deploy:demo
-```
-
-This deploys the API Worker and then the web Worker. It does not modify the
-PostgreSQL data directory or reseed the demo fixtures. Use this for normal code
-and frontend updates.
-
-#### Rebuild the demo from scratch
-
-To deploy the new Workers first, then drop and recreate the demo database and
-reseed it from scratch, run:
-
-```sh
-KONDIS_HYPERDRIVE_ID="<demo-hyperdrive-id>" mise run deploy:demo-rebuild
-```
-
-The task stops before the database reset if the Worker deployment fails. After a
-successful Worker deployment, it terminates active database connections, drops
-and recreates only `DEMO_DB_DATABASE_NAME`, then runs migrations and the demo
-seeder. It does not remove the PostgreSQL container, image, or
-`DEMO_DB_DATA_DIR`. This is still destructive to the logical demo database and
-should only be used for the disposable demo environment.
-
-There is an intentional transition while the database is empty and being
-seeded. The newly deployed Workers can report that the demo database has not
-been seeded yet. Once the seeder exits successfully, the demo is ready again.
-
-Use `--dry-run` to inspect the generated configs. In GitHub Actions, store the
-Hyperdrive ID in the matching GitHub Environment's secrets. The deployment script
-sets `KONDIS_DEMO_MODE=true` and `KONDIS_CLOUD_NODE_PROCESSOR_ENABLED=false` for
-you.
+See `deployment/demo/README.md` for naming, GitHub Environment configuration,
+DNS prerequisites, and manual dry runs.
 
 The demo's source and generated Wrangler configurations live under
 `deployment/demo/`; no demo configuration is written into `server/` or `web/`.

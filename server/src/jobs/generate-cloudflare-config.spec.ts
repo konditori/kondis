@@ -147,6 +147,28 @@ describe('generateCloudflareConfig', () => {
     ]);
   });
 
+  it('isolates a PR demo Worker while retaining demo behavior', () => {
+    const config = generateCloudflareConfig({
+      baseConfig: {
+        name: 'kondis-demo-api',
+        main: 'src/cloudflare/entrypoint.ts',
+        services: [{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }],
+      },
+      environment: 'pr-42',
+      hyperdriveId: 'e'.repeat(32),
+      demoMode: true,
+    });
+
+    expect(config.name).toBe('kondis-demo-api-pr-42');
+    expect(config.vars).toEqual({
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false',
+      KONDIS_DEMO_MODE: 'true',
+    });
+    expect(config.services).toEqual([{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api-pr-42' }]);
+    expect(config).not.toHaveProperty('r2_buckets');
+    expect(config).not.toHaveProperty('queues');
+  });
+
   it('enables Node-owned schedules only when the cloud processor is ready', () => {
     const config = generateCloudflareConfig({
       baseConfig: { name: 'kondis-api', main: 'src/cloudflare/entrypoint.ts' },

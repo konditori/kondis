@@ -12,17 +12,19 @@ const demoMediaTargetDir = resolve(webDir, "static/demo-media/v1");
 const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const environmentPattern = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 const hyperdrivePattern = /^[a-f0-9]{32}$/i;
+const hostnamePattern =
+  /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 
 const usage =
-  () => `Usage: pnpm deploy:cloudflare <environment> [--dry-run] [--config-dir <path>]
+  () => `Usage: mise run deploy:cloudflare -- <environment> [--dry-run] [--config-dir <path>]
 
 Required environment:
- KONDIS_HYPERDRIVE_ID  Hyperdrive ID created by Terraform
+  KONDIS_HYPERDRIVE_ID  Hyperdrive ID for this deployment
  KONDIS_DEMO_MODE     Set to true for the immutable public demo deployment
 
 Examples:
-  pnpm deploy:cloudflare worker-name
-  pnpm deploy:cloudflare worker-name --dry-run
+  mise run deploy:cloudflare -- worker-name
+  mise run deploy:cloudflare -- worker-name --dry-run
 `;
 
 const run = (cwd, args, { capture = false, env = process.env } = {}) =>
@@ -166,7 +168,7 @@ const parseArguments = () => {
   const hyperdriveId = process.env.KONDIS_HYPERDRIVE_ID;
   if (!hyperdriveId || !hyperdrivePattern.test(hyperdriveId)) {
     throw new Error(
-      "KONDIS_HYPERDRIVE_ID must be the 32-character Hyperdrive ID produced by Terraform. " +
+      "KONDIS_HYPERDRIVE_ID must be a 32-character Hyperdrive ID. " +
         "Hyperdrive and Cloudflare Access are not provisioned by this script.",
     );
   }
@@ -184,12 +186,30 @@ const parseArguments = () => {
     throw new Error("KONDIS_DEMO_MODE must be either true or false.");
   }
   const demoMode = demoModeSetting === "true";
+  const webHostname = process.env.KONDIS_WEB_HOSTNAME;
+  const webRouteMode = process.env.KONDIS_WEB_ROUTE_MODE || "custom-domain";
+  const webZoneName = process.env.KONDIS_WEB_ZONE_NAME;
+  if (webHostname && !hostnamePattern.test(webHostname)) {
+    throw new Error(`KONDIS_WEB_HOSTNAME is invalid: ${webHostname}`);
+  }
+  if (!["custom-domain", "route"].includes(webRouteMode)) {
+    throw new Error("KONDIS_WEB_ROUTE_MODE must be custom-domain or route.");
+  }
+  if (
+    webRouteMode === "route" &&
+    (!webZoneName || !hostnamePattern.test(webZoneName))
+  ) {
+    throw new Error("KONDIS_WEB_ZONE_NAME is required for a Worker route.");
+  }
   return {
     environment,
     dryRun,
     hyperdriveId,
     nodeProcessorEnabled: nodeProcessorEnabled === "true",
     demoMode,
+    webHostname,
+    webRouteMode,
+    webZoneName,
     configDir: configDirArgument
       ? resolve(rootDir, configDirArgument)
       : undefined,
@@ -203,6 +223,9 @@ const main = async () => {
     hyperdriveId,
     nodeProcessorEnabled,
     demoMode,
+    webHostname,
+    webRouteMode,
+    webZoneName,
     configDir,
   } = parseArguments();
   const require = createRequire(
@@ -214,12 +237,21 @@ const main = async () => {
     parseJsonc,
   } = require(resolve(serverDir, "scripts/generate-cloudflare-config.cjs"));
 
-  const apiBaseConfig = await readJsonc(
+  const apiBaseConfigSource = await readJsonc(
     configDir
       ? resolve(configDir, "wrangler-api.jsonc")
       : resolve(serverDir, "wrangler.jsonc"),
     parseJsonc,
   );
+  const apiBaseConfig = process.env.KONDIS_DEMO_MEDIA_BASE_URL
+    ? {
+        ...apiBaseConfigSource,
+        vars: {
+          ...(apiBaseConfigSource.vars || {}),
+          KONDIS_DEMO_MEDIA_BASE_URL: process.env.KONDIS_DEMO_MEDIA_BASE_URL,
+        },
+      }
+    : apiBaseConfigSource;
   const webBaseConfig = await readJsonc(
     configDir
       ? resolve(configDir, "wrangler-web.jsonc")
@@ -243,9 +275,19 @@ const main = async () => {
   const apiWorkerName = apiConfig.name;
   const webConfig = {
     ...webBaseConfig,
-    name: demoMode
-      ? webBaseConfig.name
-      : `${webBaseConfig.name}-${environment}`,
+    name:
+      demoMode && environment === "demo"
+        ? webBaseConfig.name
+        : `${webBaseConfig.name}-${environment}`,
+    ...(webHostname
+      ? {
+          routes: [
+            webRouteMode === "route"
+              ? { pattern: `${webHostname}/*`, zone_name: webZoneName }
+              : { pattern: webHostname, custom_domain: true },
+          ],
+        }
+      : {}),
     vars: {
       ...(webBaseConfig.vars || {}),
       ...(demoMode ? { KONDIS_DEMO_MODE: "true" } : {}),
@@ -295,7 +337,7 @@ const main = async () => {
   );
   console.log(`Web Worker: ${webConfig.name}`);
   console.log(
-    `Hyperdrive: configured from Terraform (${hyperdriveId.slice(0, 6)}…${hyperdriveId.slice(-4)})`,
+    `Hyperdrive: ${hyperdriveId.slice(0, 6)}…${hyperdriveId.slice(-4)}`,
   );
   console.log(`R2 buckets: ${bucketNames.join(", ") || "none"}`);
   console.log(`Queues: ${queueNames.join(", ") || "none"}`);

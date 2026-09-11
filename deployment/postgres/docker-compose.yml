@@ -12,7 +12,7 @@ services:
     environment:
       POSTGRES_USER_FILE: /run/secrets/migrator_username
       POSTGRES_PASSWORD_FILE: /run/secrets/migrator_password
-      POSTGRES_DB: ${KONDIS_DB_DATABASE_NAME:-kondis}
+      POSTGRES_DB: ${KONDIS_DB_DATABASE_NAME:-kondis-demo}
       # PostgreSQL 17 declares /var/lib/postgresql/data as a Docker volume.
       # Keep PGDATA outside that nested path so this host bind mount is the
       # only persistent store, including with Rootless Docker.
