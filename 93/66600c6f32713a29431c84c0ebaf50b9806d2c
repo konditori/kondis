@@ -1,0 +1,29 @@
+deployment/postgres/init/01-create-runtime-role.sh
+  s_77ef0b200c8408::t_956d0f972006b4 13-18
+.github/workflows/migrate-postgres.yml
+  s_77ef0b200c8408::t_50af3e11dc777d 1-63
+deployment/postgres/bin/migrate-through-tunnel.sh
+  s_77ef0b200c8408::t_6f74b5b69b0521 1-66
+deployment/postgres/bin/db.sh
+  s_77ef0b200c8408::t_6471c601d03059 14-16
+mise.toml
+  s_77ef0b200c8408::t_2624660a9ba917 77-78
+deployment/postgres/README.md
+  s_77ef0b200c8408::t_93e4475463c440 34,40-42,44,50-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9366600c6f32713a29431c84c0ebaf50b9806d2c",
+  "prompts": {},
+  "sessions": {
+    "s_77ef0b200c8408": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0884e-4eb7-75e2-9e91-64f00974599a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
