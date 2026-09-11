@@ -40,8 +40,8 @@ trap cleanup EXIT INT TERM
 cloudflared access tcp \
   --hostname "$KONDIS_DB_TUNNEL_HOSTNAME" \
   --url "127.0.0.1:${local_port}" \
-  --service-token-id "$KONDIS_DB_TUNNEL_CLIENT_ID" \
-  --service-token-secret "$KONDIS_DB_TUNNEL_CLIENT_SECRET" \
+  --header "CF-Access-Client-Id: $KONDIS_DB_TUNNEL_CLIENT_ID" \
+  --header "CF-Access-Client-Secret: $KONDIS_DB_TUNNEL_CLIENT_SECRET" \
   >"$log_file" 2>&1 &
 proxy_pid=$!
 
