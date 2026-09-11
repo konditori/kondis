@@ -43,7 +43,7 @@ const withClient = async <T>(database: string, operation: (client: pg.Client) =>
 const roleStatement = async (client: pg.Client, action: 'create' | 'alter', password: string): Promise<string> => {
   const keyword = action === 'create' ? 'CREATE' : 'ALTER';
   const result = await client.query<{ statement: string }>(
-    `SELECT format('${keyword} ROLE %I WITH LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION', $1, $2) AS statement`,
+    `SELECT format('${keyword} ROLE %I WITH LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION', $1::text, $2::text) AS statement`,
     [runtimeUsername, password],
   );
   return result.rows[0].statement;
