@@ -1,0 +1,27 @@
+server/src/demo/live-entrypoint.spec.ts
+  s_12aa2a9e03882a::t_2bcd5f2f6af64c 16,52,60,82,109-112,114
+server/src/demo/live-entrypoint.ts
+  s_12aa2a9e03882a::t_06edddfdd03f33 4,80-82,86-88
+server/src/repositories/live-workout.repository.ts
+  s_12aa2a9e03882a::t_b63de5748e94c6 81-92
+server/src/services/live-workout.service.spec.ts
+  s_12aa2a9e03882a::t_e4ea6effe5e813 35-36,47-48,77-86
+server/src/services/live-workout.service.ts
+  s_12aa2a9e03882a::t_239f4b050503e3 150-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a4d9a3efcf7727986dced4766e62dd9bd2aafb82",
+  "prompts": {},
+  "sessions": {
+    "s_12aa2a9e03882a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a096b5-b778-7231-9d44-6cad0b11ab97",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
