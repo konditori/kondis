@@ -1,0 +1,21 @@
+deployment/demo/bin/maintenance.sh
+  s_0ed93bd4f2eff8::t_5b1ed6525e0732 9-10,12-13
+deployment/demo/maintenance-worker.ts
+  s_0ed93bd4f2eff8::t_2f9ba23ec086f5 2,165,168-176,196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "415cb80bde12206e524c6ae542680ff1066654c1",
+  "prompts": {},
+  "sessions": {
+    "s_0ed93bd4f2eff8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a09764-ae90-7e52-be64-aa1f35fde67f",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
