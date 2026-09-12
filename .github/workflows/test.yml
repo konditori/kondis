@@ -68,18 +68,23 @@ jobs:
 
       - name: Run format check
         run: mise run //server:format
+        if: ${{ !cancelled() }}
 
       - name: Run typecheck
         run: mise run //server:check
+        if: ${{ !cancelled() }}
 
       - name: Run Worker typecheck
         run: mise run //server:check-worker
+        if: ${{ !cancelled() }}
 
       - name: Run unit tests
         run: mise run //server:test
+        if: ${{ !cancelled() }}
 
       - name: Run Worker runtime tests
         run: mise run //server:test-worker
+        if: ${{ !cancelled() }}
 
   server-audit:
     name: Audit Server Dependencies
