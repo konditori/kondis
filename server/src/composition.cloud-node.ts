@@ -132,6 +132,7 @@ export const createCloudNodeProcessorComposition = ({
     jobService,
     realtime: eventRepository,
     initialize: () => jobService.init(true),
+    drainJobs: (...queues: Parameters<PollingJobConsumer['drain']>) => pollingConsumer.drain(...queues),
     close: () => {
       closePromise ??= (async () => {
         try {

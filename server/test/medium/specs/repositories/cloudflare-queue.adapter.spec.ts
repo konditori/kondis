@@ -6,7 +6,7 @@ import { dispatchUnpublishedJobs, reclaimStaleJobs } from 'src/cloudflare/dispat
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { HttpStatus, UnsupportedOperationError } from 'src/errors';
-import { claimNextPollingJob } from 'src/jobs/polling-job.consumer';
+import { claimNextPollingJob, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
 import { JOB_DELIVERY_MESSAGE_VERSION, type JobDeliveryEnvelope } from 'src/ports/job-transport.port';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
@@ -213,6 +213,34 @@ describe(CloudflareQueueAdapter.name, () => {
       .where('consumer', '=', 'worker')
       .executeTakeFirstOrThrow();
     expect(workerJob).toEqual({ state: 'created', lease_id: null });
+  });
+
+  it('synchronously drains jobs created by other jobs to completion', async () => {
+    await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    const cleanup = vi.fn(async () => {
+      await jobs.queue(nodeJob);
+      return JobStatus.Success;
+    });
+    const removeActivity = vi.fn(() => Promise.resolve(JobStatus.Success));
+    const consumer = new PollingJobConsumer(
+      db,
+      {
+        [JobName.AuthCredentialCleanup]: cleanup,
+        [JobName.ActivityDelete]: removeActivity,
+      },
+      { consumers: ['node', 'worker'] },
+    );
+
+    await expect(consumer.drain(QueueName.BackgroundTask)).resolves.toBe(2);
+
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(removeActivity).toHaveBeenCalledOnce();
+    await expect(jobs.getJobCounts(QueueName.BackgroundTask)).resolves.toMatchObject({
+      active: 0,
+      queued: 0,
+      failed: 0,
+      total: 2,
+    });
   });
 
   it('retries handler failures through the outbox and exhausts the configured retry limit', async () => {

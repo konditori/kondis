@@ -148,10 +148,35 @@ export class PollingJobConsumer {
     this.loopPromises = [];
   }
 
+  async drain(...queues: QueueName[]): Promise<number> {
+    if (this.running) {
+      throw new Error('Cannot synchronously drain polling jobs while workers are running');
+    }
+
+    const names = queues.length > 0 ? queues : Object.values(QueueName);
+    let processed = 0;
+    for (;;) {
+      let found = false;
+      for (const queue of names) {
+        const job = await claimNextPollingJob(this.db, queue, this.options.consumers);
+        if (!job) {
+          continue;
+        }
+        found = true;
+        processed += 1;
+        this.options.logger?.log(`Claimed ${job.name} (${job.id}) from ${queue}`);
+        await this.process(job);
+      }
+      if (!found) {
+        return processed;
+      }
+    }
+  }
+
   async run<T extends JobName>({ name, data }: JobItem & { name: T }): Promise<JobStatus> {
     const handler = this.handlers[name];
     if (!handler) {
-      throw new Error(`No Node handler registered for cloud job ${name}`);
+      throw new Error(`No polling handler registered for cloud job ${name}`);
     }
     return handler(data as never);
   }
