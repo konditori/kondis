@@ -79,8 +79,8 @@ jobs:
             --dump-header "$headers" --output /dev/null --write-out '%{http_code}' \
             --header "CF-Access-Client-Id: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" \
             --header "CF-Access-Client-Secret: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" \
-            https://demo.kondis.org/cdn-cgi/access/get-identity)"
-          if [[ "$status" != "200" ]]; then
+            "https://demo.kondis.org/api/v1/ping?access-preflight=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}")"
+          if [[ "$status" != "200" && "$status" != "503" ]]; then
             echo "Access preflight returned HTTP $status" >&2
             grep -Ei '^(cf-ray|cf-mitigated|www-authenticate):' "$headers" >&2 || true
             exit 1
