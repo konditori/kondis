@@ -19,5 +19,6 @@
       "new_sqlite_classes": ["MaintenanceTimerDurableObject"],
     },
   ],
+  "services": [{ "binding": "KONDIS_API", "service": "kondis-demo-api" }],
   "routes": [{ "pattern": "demo.kondis.org", "custom_domain": true }],
 }

@@ -1,10 +1,15 @@
 interface Env {
+  KONDIS_API: ServiceBinding;
   MAINTENANCE_ENABLED_AT: string;
   MAINTENANCE_SESSION: string;
   MAINTENANCE_TIMER: DurableObjectNamespace;
 }
 
 type MaintenanceTimer = { elapsedSeconds: number; startedAt: number };
+
+type ServiceBinding = {
+  fetch(request: Request): Promise<Response>;
+};
 
 function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3_600);
@@ -146,6 +151,21 @@ function maintenancePage(timer: MaintenanceTimer): string {
         }
         updateTimer();
         window.setInterval(updateTimer, 1000);
+
+        async function checkForRecovery() {
+          try {
+            const response = await fetch("/api/v1/ping", { cache: "no-store" });
+            const body = response.ok ? await response.json() : undefined;
+            if (body?.status === "pong") {
+              window.location.reload();
+              return;
+            }
+          } catch {
+            // The API is not ready yet. Keep the maintenance page visible.
+          }
+          window.setTimeout(checkForRecovery, 5000);
+        }
+        window.setTimeout(checkForRecovery, 5000);
       })();
     </script>
   </body>
@@ -190,7 +210,15 @@ export class MaintenanceTimerDurableObject {
 }
 
 export default {
-  async fetch(_request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (request.method === "GET" && url.pathname === "/api/v1/ping") {
+      const response = await env.KONDIS_API.fetch(request);
+      const headers = new Headers(response.headers);
+      headers.set("Cache-Control", "no-store");
+      return new Response(response.body, { status: response.status, headers });
+    }
+
     const id = env.MAINTENANCE_TIMER.idFromName(env.MAINTENANCE_SESSION);
     const timerResponse = await env.MAINTENANCE_TIMER.get(id).fetch(
       `https://maintenance-timer/?enabledAt=${encodeURIComponent(env.MAINTENANCE_ENABLED_AT)}`,
