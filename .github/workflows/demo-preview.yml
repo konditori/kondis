@@ -80,6 +80,8 @@ jobs:
         run: |
           url="https://pr-${{ github.event.pull_request.number }}.demo.kondis.org"
           curl --fail --show-error --silent --retry 5 --retry-all-errors \
+            --header "CF-Access-Client-Id: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" \
+            --header "CF-Access-Client-Secret: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" \
             "$url/api/v1/ping?deployment=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             | jq --exit-status '.status == "pong"' >/dev/null
           printf '### Demo preview\n\n%s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
