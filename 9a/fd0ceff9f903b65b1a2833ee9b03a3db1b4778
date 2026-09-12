@@ -1,0 +1,19 @@
+web/cloudflare-adapter.js
+  s_8fb8b2249acf6a::t_9ffa7d0680f60e 3-8,24,34-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9afd0ceff9f903b65b1a2833ee9b03a3db1b4778",
+  "prompts": {},
+  "sessions": {
+    "s_8fb8b2249acf6a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a09784-4d9e-7da2-abab-4e5d577d58e1",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
