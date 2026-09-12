@@ -94,8 +94,8 @@ PRs do not receive previews because they cannot safely execute with deployment
 credentials. Internal preview deployment also requires approval through the
 `demo-preview` GitHub Environment.
 
-See `deployment/demo/README.md` for naming, GitHub Environment configuration,
-DNS prerequisites, and manual dry runs.
+See the [demo environment guide](../demo) for naming, GitHub Environment
+configuration, DNS prerequisites, and manual dry runs.
 
 The demo's source and generated Wrangler configurations live under
 `deployment/demo/`; no demo configuration is written into `server/` or `web/`.

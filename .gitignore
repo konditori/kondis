@@ -33,7 +33,3 @@ vite.config.js.timestamp-*
 mise.local.toml
 .mise.local.toml
 e2e/.setup-token
-
-# Local credential-bearing database helpers
-/test.sh
-/tunnel.sh
