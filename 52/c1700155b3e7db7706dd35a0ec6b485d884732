@@ -1,0 +1,21 @@
+deployment/demo/maintenance-worker.ts
+  s_0ed93bd4f2eff8::t_c61421a2b8e669 2,10-13,154-168,213-221
+deployment/demo/wrangler-maintenance.jsonc
+  s_0ed93bd4f2eff8::t_8b8d3b8cda3b90 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "52c1700155b3e7db7706dd35a0ec6b485d884732",
+  "prompts": {},
+  "sessions": {
+    "s_0ed93bd4f2eff8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a09764-ae90-7e52-be64-aa1f35fde67f",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
