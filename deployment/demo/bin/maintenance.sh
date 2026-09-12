@@ -6,10 +6,11 @@ wrangler=(pnpm --dir "$repo_root/server" exec wrangler)
 
 case "${1:-}" in
   enable)
-    maintenance_started_at="$(date +%s)"
-    maintenance_session="${maintenance_started_at}-${RANDOM}"
+    maintenance_enabled_at="$(( $(date +%s) * 1000 ))"
+    maintenance_session="${maintenance_enabled_at}-${RANDOM}"
     "${wrangler[@]}" deploy --config "$repo_root/deployment/demo/wrangler-maintenance.jsonc" \
-      --var "MAINTENANCE_SESSION:${maintenance_session}"
+      --var "MAINTENANCE_SESSION:${maintenance_session}" \
+      --var "MAINTENANCE_ENABLED_AT:${maintenance_enabled_at}"
     ;;
   *)
     echo "Usage: $0 enable" >&2
