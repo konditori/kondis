@@ -15,7 +15,7 @@ jobs:
     name: Deploy PR demo
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    environment: demo-preview
+    environment: demo
     permissions:
       contents: read
     env:
