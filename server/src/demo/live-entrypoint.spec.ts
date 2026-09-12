@@ -13,7 +13,7 @@ vi.mock('src/composition.worker', async (importOriginal) => ({
   createWorkerInvocationComposition: mocks.createComposition,
 }));
 
-vi.mock('src/demo/provisioner', async (importOriginal) => ({
+vi.mock('src/demo/demo-provisioner', async (importOriginal) => ({
   ...(await importOriginal<typeof import('src/demo/demo-provisioner')>()),
   getDemoUser: mocks.getDemoUser,
 }));
@@ -49,6 +49,7 @@ describe('demo live workout API boundary', () => {
   it('keeps Hyperdrive open until a simulated device point has been persisted', async () => {
     let persistPoint: (() => void) | undefined;
     const liveWorkoutService = {
+      deleteOtherSessions: vi.fn().mockResolvedValue(undefined),
       create: vi.fn(
         () =>
           new Promise((resolve) => {
@@ -56,6 +57,7 @@ describe('demo live workout API boundary', () => {
           }),
       ),
       appendPoints: vi.fn().mockResolvedValue({ id: '00000000-0000-4000-8000-000000000001', lastSequence: 1 }),
+      delete: vi.fn().mockResolvedValue(undefined),
     };
     const close = vi.fn().mockResolvedValue(undefined);
     mocks.createComposition.mockReturnValue({
@@ -77,6 +79,7 @@ describe('demo live workout API boundary', () => {
           startedAt: '2026-09-08T14:00:00.000Z',
           elapsedSeconds: 1,
           distanceMeters: 4.7,
+          finished: true,
           points: [
             {
               sequence: 1,
@@ -103,7 +106,12 @@ describe('demo live workout API boundary', () => {
 
     const backgroundIngestion = waitUntil.mock.calls[0]![0];
     await backgroundIngestion;
+    expect(liveWorkoutService.deleteOtherSessions).toHaveBeenCalledWith(
+      'demo-user',
+      '00000000-0000-4000-8000-000000000099',
+    );
     expect(liveWorkoutService.appendPoints).toHaveBeenCalledOnce();
+    expect(liveWorkoutService.delete).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', 'demo-user');
     expect(close).toHaveBeenCalledOnce();
   });
 });

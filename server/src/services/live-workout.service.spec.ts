@@ -32,6 +32,8 @@ describe(LiveWorkoutService.name, () => {
   const getById = vi.fn();
   const getByClientSessionId = vi.fn();
   const create = vi.fn();
+  const deleteById = vi.fn(() => Promise.resolve());
+  const deleteOtherSessions = vi.fn(() => Promise.resolve());
   const appendPoints = vi.fn(() => Promise.resolve());
   const updateProgress = vi.fn();
   const setShareToken = vi.fn(() => Promise.resolve());
@@ -42,6 +44,8 @@ describe(LiveWorkoutService.name, () => {
     getById,
     getByClientSessionId,
     create,
+    deleteById,
+    deleteOtherSessions,
     appendPoints,
     updateProgress,
     setShareToken,
@@ -68,6 +72,16 @@ describe(LiveWorkoutService.name, () => {
     });
 
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ userId: USER_ID, sport: 'run' }));
+  });
+
+  it('deletes an ended demo workout and its stale predecessor sessions', async () => {
+    const { sut } = setup();
+
+    await sut.deleteOtherSessions(USER_ID, '00000000-0000-4000-8000-000000000003');
+    await sut.delete(WORKOUT_ID, USER_ID);
+
+    expect(deleteOtherSessions).toHaveBeenCalledWith(USER_ID, '00000000-0000-4000-8000-000000000003');
+    expect(deleteById).toHaveBeenCalledWith(WORKOUT_ID, USER_ID);
   });
 
   it('acknowledges point batches without returning the growing route to the phone', async () => {

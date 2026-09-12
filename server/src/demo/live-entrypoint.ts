@@ -1,6 +1,7 @@
 import { z } from '@hono/zod-openapi';
 import type { AuthenticatedUser } from 'src/auth';
 import type { createWorkerInvocationComposition } from 'src/composition.worker';
+import { aargau } from 'src/demo/demo-routes';
 import {
   DEMO_LIVE_INGESTION_HOST,
   DEMO_LIVE_INGESTION_PATH,
@@ -8,7 +9,6 @@ import {
   type DemoLiveTrackerNamespaceBinding,
 } from 'src/demo/live-durable-object';
 import { LivePointSchema, LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
-import { aargau } from 'src/demo/demo-routes';
 
 const DemoLiveWorkoutPointsSchema = LiveWorkoutPointsSchema.safeExtend({
   // The simulator may need to repair a workout after its PostgreSQL row was
@@ -77,14 +77,15 @@ export const ingestDemoLiveTrackerPoint = async (
   if (!session.success || !points.success) {
     return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
   }
+  // A Durable Object can outlive a demo database reset or a failed earlier
+  // completion. Keep the public demo to its single simulated live workout.
+  await composition.liveWorkoutService.deleteOtherSessions(demoUser.id, session.data.clientSessionId);
   const workout = await composition.liveWorkoutService.create(demoUser.id, session.data);
   const acknowledgement = await composition.liveWorkoutService.appendPoints(workout.id, demoUser.id, points.data);
   if (points.data.finished) {
-    await composition.liveWorkoutService.updateState(workout.id, demoUser.id, {
-      status: 'ended',
-      elapsedSeconds: points.data.elapsedSeconds,
-      distanceMeters: points.data.distanceMeters,
-    });
+    // No finished rides are retained in the demo database. Deleting the row
+    // also cascades to its GPS points.
+    await composition.liveWorkoutService.delete(workout.id, demoUser.id);
   }
   return Response.json(acknowledgement, { status: 201 });
 };

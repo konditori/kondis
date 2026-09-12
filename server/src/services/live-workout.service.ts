@@ -147,6 +147,20 @@ export class LiveWorkoutService {
     await this.repository.updateProgress(id, 'discarded', workout.elapsed_seconds, workout.distance_meters);
   }
 
+  // The public demo has one simulated device. This cleanup is deliberately
+  // separate from discard(), which preserves a user's own workout history.
+  async deleteOtherSessions(userId: string, clientSessionId: string): Promise<void> {
+    await this.repository.deleteOtherSessions(userId, clientSessionId);
+  }
+
+  async delete(id: string, userId: string): Promise<void> {
+    const workout = await this.repository.getById(id, userId);
+    if (!workout) {
+      throw new NotFoundException('Live workout not found');
+    }
+    await this.repository.deleteById(id, userId);
+  }
+
   private async toDto(workout: Awaited<ReturnType<LiveWorkoutRepository['getById']>> & {}, viewerId?: string) {
     if (!workout) {
       throw new NotFoundException('Live workout not found');
