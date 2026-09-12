@@ -27,6 +27,9 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.kondisFetch = (input, requestInit) => {
     const request = new Request(input, requestInit);
     const url = new URL(request.url);
+    if (service && url.pathname.startsWith("/api/v1/")) {
+      url.pathname = url.pathname.slice("/api/v1".length);
+    }
     const headers = new Headers(request.headers);
     if (token) headers.set("authorization", `Bearer ${token}`);
     const upstreamInit: RequestInit & { duplex?: "half" } = {

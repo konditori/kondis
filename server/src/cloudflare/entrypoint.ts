@@ -36,13 +36,13 @@ import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-ha
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+import { getDemoUser } from 'src/demo/demo-provisioner';
 import {
   activateDemoLiveTracker,
   ingestDemoLiveTrackerPoint,
   isDemoLiveTrackerIngestionRequest,
   isDemoLiveWorkoutRequest,
 } from 'src/demo/live-entrypoint';
-import { getDemoUser } from 'src/demo/demo-provisioner';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { JobName, QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
@@ -77,6 +77,7 @@ const createRequestApp = (
 ): WorkerApp => {
   const requestApp = createApiShell(composition.authCredentialRepository, demoUser);
   requestApp.openapi(pingRoute, (context) => context.json({ status: 'pong' }, 200));
+  requestApp.get('/ping', (context) => context.json({ status: 'pong' }, 200));
   registerWorkerPortableRouteGroups(requestApp, {
     activities: composition.activityService,
     jobs: composition.jobService,
@@ -184,7 +185,10 @@ export default {
       }
     }
     if (!env.HYPERDRIVE) {
-      if (new URL(request.url).pathname === '/api/v1/ping' && request.method === 'GET') {
+      if (
+        (new URL(request.url).pathname === '/api/v1/ping' || new URL(request.url).pathname === '/ping') &&
+        request.method === 'GET'
+      ) {
         return Response.json({ status: 'pong' });
       }
       return Response.json({ statusCode: 404, message: 'Not Found' }, { status: 404 });
