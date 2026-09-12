@@ -9,8 +9,7 @@ case "${1:-}" in
     maintenance_started_at="$(date +%s)"
     maintenance_session="${maintenance_started_at}-${RANDOM}"
     "${wrangler[@]}" deploy --config "$repo_root/deployment/demo/wrangler-maintenance.jsonc" \
-      --var "MAINTENANCE_SESSION:${maintenance_session}" \
-      --var "MAINTENANCE_STARTED_AT:${maintenance_started_at}"
+      --var "MAINTENANCE_SESSION:${maintenance_session}"
     ;;
   *)
     echo "Usage: $0 enable" >&2

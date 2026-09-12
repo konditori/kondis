@@ -1,6 +1,5 @@
 interface Env {
   MAINTENANCE_SESSION: string;
-  MAINTENANCE_STARTED_AT: string;
   MAINTENANCE_TIMER: DurableObjectNamespace;
 }
 
@@ -162,14 +161,10 @@ export class MaintenanceTimerDurableObject {
     });
   }
 
-  async fetch(request: Request): Promise<Response> {
+  async fetch(): Promise<Response> {
     await this.ready;
     if (this.startedAt === undefined) {
-      const candidate = Number(
-        new URL(request.url).searchParams.get("startedAt"),
-      );
-      this.startedAt =
-        Number.isFinite(candidate) && candidate > 0 ? candidate : Date.now();
+      this.startedAt = Date.now();
       await this.state.storage.put("startedAt", this.startedAt);
     }
     return Response.json(
@@ -189,7 +184,7 @@ export default {
   async fetch(_request: Request, env: Env): Promise<Response> {
     const id = env.MAINTENANCE_TIMER.idFromName(env.MAINTENANCE_SESSION);
     const timerResponse = await env.MAINTENANCE_TIMER.get(id).fetch(
-      `https://maintenance-timer/?startedAt=${encodeURIComponent(env.MAINTENANCE_STARTED_AT)}`,
+      "https://maintenance-timer/",
     );
     const timer = (await timerResponse.json()) as MaintenanceTimer;
 
