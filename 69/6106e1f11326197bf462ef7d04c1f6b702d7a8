@@ -1,0 +1,19 @@
+server/src/cloudflare/entrypoint.ts
+  s_c40236e995adb9::t_edf5bfece1cb9f 39,80,188-191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "696106e1f11326197bf462ef7d04c1f6b702d7a8",
+  "prompts": {},
+  "sessions": {
+    "s_c40236e995adb9": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f6f79e75effehdrpLe1KKbmyHp",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
