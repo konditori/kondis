@@ -77,13 +77,32 @@ jobs:
         run: mise run deploy:demo -- --pr "${{ github.event.pull_request.number }}"
 
       - name: Smoke test preview
+        env:
+          KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID: ${{ secrets.KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID }}
+          KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET: ${{ secrets.KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET }}
         run: |
+          if [[ -z "$KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" || -z "$KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" ]]; then
+            echo "Demo smoke-test Access credentials must be set" >&2
+            exit 2
+          fi
           url="https://pr-${{ github.event.pull_request.number }}.demo.kondis.org"
-          curl --fail --show-error --silent --retry 5 --retry-all-errors \
+          response_headers="$RUNNER_TEMP/demo-preview-headers.txt"
+          response_body="$RUNNER_TEMP/demo-preview-body.txt"
+          if ! curl --fail-with-body --show-error --silent --retry 5 --retry-all-errors \
+            --dump-header "$response_headers" \
+            --output "$response_body" \
             --header "CF-Access-Client-Id: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_ID" \
             --header "CF-Access-Client-Secret: $KONDIS_DEMO_SMOKE_ACCESS_CLIENT_SECRET" \
-            "$url/api/v1/ping?deployment=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
-            | jq --exit-status '.status == "pong"' >/dev/null
+            "$url/api/v1/ping?deployment=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"; then
+            cat "$response_headers" >&2
+            cat "$response_body" >&2
+            exit 1
+          fi
+          if ! jq --exit-status '.status == "pong"' "$response_body" >/dev/null; then
+            cat "$response_headers" >&2
+            cat "$response_body" >&2
+            exit 1
+          fi
           printf '### Demo preview\n\n%s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Delete failed preview Workers
