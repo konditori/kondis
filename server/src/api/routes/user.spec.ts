@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
+import { UserRole } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const AVATAR_OWNER_ID = '00000000-0000-4000-8000-000000000002';
-const ADMIN_USER = { ...TEST_API_USER, role: 'admin' as const };
+const ADMIN_USER = { ...TEST_API_USER, role: UserRole.Admin };
 
 describe('API user read routes', () => {
   it('keeps the user list restricted to administrators', async () => {
@@ -24,7 +25,7 @@ describe('API user read routes', () => {
           id: TEST_API_USER.id,
           email: TEST_API_USER.email,
           password_hash: 'secret',
-          role: 'user',
+          role: UserRole.User,
         },
       ]),
     );

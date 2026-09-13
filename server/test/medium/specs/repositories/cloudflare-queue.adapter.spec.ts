@@ -6,7 +6,7 @@ import { dispatchUnpublishedJobs, reclaimStaleJobs } from 'src/cloudflare/dispat
 import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { HttpStatus, UnsupportedOperationError } from 'src/errors';
-import { claimNextPollingJob } from 'src/jobs/polling-job.consumer';
+import { claimNextPollingJob, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
 import { JOB_DELIVERY_MESSAGE_VERSION, type JobDeliveryEnvelope } from 'src/ports/job-transport.port';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
@@ -17,6 +17,10 @@ const upload = (storagePath = 'temporary/activity.gpx'): JobItem => ({
   name: JobName.ActivityUpload,
   data: { originalName: 'activity.gpx', storagePath },
 });
+const nodeJob: JobItem = {
+  name: JobName.ActivityDelete,
+  data: { id: '00000000-0000-4000-8000-000000000001' },
+};
 
 describe(CloudflareQueueAdapter.name, () => {
   let db: KondisDatabase;
@@ -62,18 +66,19 @@ describe(CloudflareQueueAdapter.name, () => {
     );
   });
 
-  it('persists the cloud consumer so Node jobs never reach Worker queues', async () => {
-    await jobs.queueAll([upload(), { name: JobName.AuthCredentialCleanup, data: {} }]);
+  it('persists the configured cloud consumer for each job', async () => {
+    await jobs.queueAll([upload(), nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
 
     const rows = await db.selectFrom('background_job').select(['name', 'consumer']).orderBy('name').execute();
     expect(rows).toEqual([
-      { name: JobName.ActivityUpload, consumer: 'node' },
+      { name: JobName.ActivityDelete, consumer: 'node' },
+      { name: JobName.ActivityUpload, consumer: 'worker' },
       { name: JobName.AuthCredentialCleanup, consumer: 'worker' },
     ]);
   });
 
   it('dispatches Worker jobs in a batch and leaves Node jobs for the polling processor', async () => {
-    await jobs.queueAll([upload(), { name: JobName.AuthCredentialCleanup, data: {} }]);
+    await jobs.queueAll([nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
     const sent: JobDeliveryEnvelope[] = [];
     const transport = new CloudflareQueueTransportAdapter({
       [QueueName.BackgroundTask]: {
@@ -136,11 +141,69 @@ describe(CloudflareQueueAdapter.name, () => {
     ]);
   });
 
+  it('does not publish the same outbox row from concurrent dispatchers', async () => {
+    await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    const publishing = Promise.withResolvers<void>();
+    const started = Promise.withResolvers<void>();
+    const publishBatch = vi.fn(async () => {
+      started.resolve();
+      await publishing.promise;
+    });
+
+    const first = dispatchUnpublishedJobs(db, { publishBatch });
+    await started.promise;
+    const second = await dispatchUnpublishedJobs(db, { publishBatch });
+    publishing.resolve();
+
+    await expect(first).resolves.toBe(1);
+    expect(second).toBe(0);
+    expect(publishBatch).toHaveBeenCalledOnce();
+  });
+
+  it('claims duplicate Queue deliveries only once', async () => {
+    await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    const row = await db.selectFrom('background_job').select('id').executeTakeFirstOrThrow();
+    const ack = vi.fn();
+    const handler = vi.fn(() => Promise.resolve(JobStatus.Success));
+    const delivery = {
+      payload: { jobId: row.id, queue: QueueName.BackgroundTask, version: JOB_DELIVERY_MESSAGE_VERSION },
+      acknowledge: ack,
+      retry: vi.fn(),
+    };
+
+    await handleQueueBatch(
+      { deliveries: [delivery, delivery] },
+      db,
+      {
+        [JobName.AuthCredentialCleanup]: handler,
+      },
+      QueueName.BackgroundTask,
+    );
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(ack).toHaveBeenCalledTimes(2);
+  });
+
+  it('allows simultaneous polling claims for distinct jobs in one queue', async () => {
+    await jobs.queueAll([
+      nodeJob,
+      { name: JobName.ActivityDelete, data: { id: '00000000-0000-4000-8000-000000000002' } },
+    ]);
+
+    const claimed = await Promise.all([
+      claimNextPollingJob(db, QueueName.BackgroundTask),
+      claimNextPollingJob(db, QueueName.BackgroundTask),
+    ]);
+
+    expect(claimed.map((job) => job?.id)).toEqual([expect.any(String), expect.any(String)]);
+    expect(new Set(claimed.map((job) => job?.id)).size).toBe(2);
+  });
+
   it('lets the polling processor claim only Node-owned jobs', async () => {
-    await jobs.queueAll([upload(), { name: JobName.AuthCredentialCleanup, data: {} }]);
+    await jobs.queueAll([nodeJob, { name: JobName.AuthCredentialCleanup, data: {} }]);
 
     await expect(claimNextPollingJob(db, QueueName.BackgroundTask)).resolves.toMatchObject({
-      name: JobName.ActivityUpload,
+      name: JobName.ActivityDelete,
       queue: QueueName.BackgroundTask,
       lease_id: expect.any(String),
     });
@@ -150,6 +213,34 @@ describe(CloudflareQueueAdapter.name, () => {
       .where('consumer', '=', 'worker')
       .executeTakeFirstOrThrow();
     expect(workerJob).toEqual({ state: 'created', lease_id: null });
+  });
+
+  it('synchronously drains jobs created by other jobs to completion', async () => {
+    await jobs.queue({ name: JobName.AuthCredentialCleanup, data: {} });
+    const cleanup = vi.fn(async () => {
+      await jobs.queue(nodeJob);
+      return JobStatus.Success;
+    });
+    const removeActivity = vi.fn(() => Promise.resolve(JobStatus.Success));
+    const consumer = new PollingJobConsumer(
+      db,
+      {
+        [JobName.AuthCredentialCleanup]: cleanup,
+        [JobName.ActivityDelete]: removeActivity,
+      },
+      { consumers: ['node', 'worker'] },
+    );
+
+    await expect(consumer.drain(QueueName.BackgroundTask)).resolves.toBe(2);
+
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(removeActivity).toHaveBeenCalledOnce();
+    await expect(jobs.getJobCounts(QueueName.BackgroundTask)).resolves.toMatchObject({
+      active: 0,
+      queued: 0,
+      failed: 0,
+      total: 2,
+    });
   });
 
   it('retries handler failures through the outbox and exhausts the configured retry limit', async () => {

@@ -1,11 +1,8 @@
 import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
-import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -13,7 +10,9 @@ import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
@@ -49,10 +48,9 @@ export const createApplicationComposition = ({
   const consumeJobs = role === 'worker';
   const newLogger = (): ConsoleLogger => new ConsoleLogger({ logLevels });
   const database = createDatabase(configRepository.database);
-
   const activityRepository = new ActivityRepository(database);
-  const activityImageRepository = new ActivityImageRepository(database);
-  const authCredentialRepository = new AuthCredentialRepository(database);
+  const mediaRepository = new MediaRepository(database);
+  const authCredentialRepository = new SessionRepository(database);
   const cryptoRepository = new CryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
@@ -68,7 +66,6 @@ export const createApplicationComposition = ({
   const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
 
   const importProgressStore = new ImportProgressStore(database);
-  const lagomTakeoutParser = new LagomTakeoutParser();
 
   const activityService = new ActivityService(
     uploadRepository,
@@ -82,11 +79,11 @@ export const createApplicationComposition = ({
     tcxRepository,
     newLogger(),
     importProgressStore,
-    activityImageRepository,
+    mediaRepository,
     socialRepository,
   );
   const activityImageService = new ActivityImageService(
-    activityImageRepository,
+    mediaRepository,
     activityRepository,
     storageRepository,
     cryptoRepository,
@@ -109,9 +106,9 @@ export const createApplicationComposition = ({
     eventRepository,
     newLogger(),
   );
-  const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository);
+  const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository, eventRepository);
   const serverService = new ServerService();
-  const socialService = new SocialService(socialRepository, database, eventRepository);
+  const socialService = new SocialService(socialRepository, eventRepository);
   const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
   const uploadService = new UploadService(
     uploadRepository,
@@ -120,9 +117,7 @@ export const createApplicationComposition = ({
     databaseRepository,
     queueAdapter,
     newLogger(),
-    lagomTakeoutParser,
     importProgressStore,
-    userRepository,
     activityRepository,
     eventRepository,
   );
@@ -145,7 +140,7 @@ export const createApplicationComposition = ({
     database,
     configRepository,
     activityRepository,
-    activityImageRepository,
+    mediaRepository,
     authCredentialRepository,
     cryptoRepository,
     databaseRepository,
@@ -161,7 +156,6 @@ export const createApplicationComposition = ({
     uploadRepository,
     userRepository,
     importProgressStore,
-    lagomTakeoutParser,
     activityService,
     activityImageService,
     authService,
@@ -176,8 +170,8 @@ export const createApplicationComposition = ({
   const instances = new Map<Class<unknown>, unknown>([
     [ConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
-    [ActivityImageRepository, activityImageRepository],
-    [AuthCredentialRepository, authCredentialRepository],
+    [MediaRepository, mediaRepository],
+    [SessionRepository, authCredentialRepository],
     [CryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],
     [EventRepository, eventRepository],
@@ -192,7 +186,6 @@ export const createApplicationComposition = ({
     [UploadRepository, uploadRepository],
     [UserRepository, userRepository],
     [ImportProgressStore, importProgressStore],
-    [LagomTakeoutParser, lagomTakeoutParser],
     [ActivityService, activityService],
     [ActivityImageService, activityImageService],
     [AuthService, authService],

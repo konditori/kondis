@@ -76,7 +76,7 @@ android {
         abortOnError = true
         checkReleaseBuilds = true
         warningsAsErrors = true
-        disable += setOf("ObsoleteSdkInt")
+        disable += setOf("NewerVersionAvailable", "ObsoleteSdkInt")
     }
 }
 

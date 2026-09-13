@@ -8,17 +8,24 @@ import {
   getJobFailureTransition,
 } from 'src/jobs/job-semantics';
 
+const WORKER_JOB_NAMES = new Set([
+  JobName.AuthCredentialCleanup,
+  JobName.ActivityUpload,
+  JobName.ActivityParse,
+  JobName.ActivityManualCreate,
+  JobName.ActivityMetricCompute,
+  JobName.ActivityBestEffortCompute,
+  JobName.ActivityBestEffortRank,
+  JobName.ActivityRouteMatchCompute,
+]);
+
 describe('cloud job semantics', () => {
   it('assigns every job to exactly one queue and cloud consumer', () => {
     expect(Object.keys(JOB_QUEUE).sort()).toEqual(Object.values(JobName).sort());
     expect(Object.keys(CLOUD_JOB_CONSUMER).sort()).toEqual(Object.values(JobName).sort());
     expect(new Set(Object.values(JOB_QUEUE))).toEqual(new Set(Object.values(QueueName)));
-    expect(CLOUD_JOB_CONSUMER[JobName.AuthCredentialCleanup]).toBe('worker');
-
     for (const name of Object.values(JobName)) {
-      if (name !== JobName.AuthCredentialCleanup) {
-        expect(CLOUD_JOB_CONSUMER[name]).toBe('node');
-      }
+      expect(CLOUD_JOB_CONSUMER[name]).toBe(WORKER_JOB_NAMES.has(name) ? 'worker' : 'node');
     }
   });
 

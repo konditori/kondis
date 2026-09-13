@@ -7,9 +7,9 @@ import { BadRequestException, NotFoundException, PayloadTooLargeException } from
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import type { StoragePort } from 'src/ports/storage.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import type { DatabaseRepository } from 'src/repositories/database.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisTransaction } from 'src/types';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
@@ -21,11 +21,11 @@ const extensionOf = (name: string): string => {
 
 export class WorkerActivityImageService {
   constructor(
-    private readonly images: ActivityImageRepository,
+    private readonly images: MediaRepository,
     private readonly activities: ActivityRepository,
     private readonly storage: StoragePort,
     private readonly crypto: CryptoPort,
-    private readonly database: DatabaseRepository,
+    private readonly database: TransactionPort,
     private readonly jobs: JobProducerPort,
     private readonly social: SocialRepository,
   ) {}
@@ -47,17 +47,17 @@ export class WorkerActivityImageService {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
     const checksum = await this.crypto.sha256(file.buffer);
-    const existing = await this.images.getByUploadChecksum(activity.upload_id, checksum);
+    const existing = await this.images.getByActivityChecksum(activity.id, checksum);
     if (existing) {
       return this.toDto(existing, await this.images.getFiles(existing.id));
     }
     const storagePath = this.storage.buildTemporaryPath(extensionOf(file.originalname) || '.bin');
     await this.storage.write(storagePath, file.buffer);
     try {
-      const sortOrder = await this.images.nextSortOrder(activity.upload_id);
+      const sortOrder = await this.images.nextSortOrder(activity.id);
       const image = await this.database.withTransaction((trx) =>
-        this.queueForUpload(
-          activity.upload_id,
+        this.queueForActivity(
+          activity.id,
           [
             {
               originalName: file.originalname,
@@ -77,8 +77,8 @@ export class WorkerActivityImageService {
     }
   }
 
-  async queueForUpload(
-    uploadId: string,
+  async queueForActivity(
+    activityId: string,
     stages: Array<{
       originalName: string;
       storagePath: string;
@@ -88,14 +88,18 @@ export class WorkerActivityImageService {
     }>,
     executor?: KondisTransaction,
   ) {
+    const activity = await this.activities.getById(activityId);
+    if (!activity) {
+      throw new NotFoundException(`Activity ${activityId} does not exist`);
+    }
     const run = async (trx: KondisTransaction) => {
       const result: ActivityImage[] = [];
       for (const stage of stages) {
-        let image = await this.images.getByUploadChecksum(uploadId, stage.checksum, trx);
+        let image = await this.images.getByActivityChecksum(activityId, stage.checksum, trx);
         if (!image) {
           image = await this.images.create(
             {
-              upload_id: uploadId,
+              activity_id: activityId,
               checksum: stage.checksum,
               original_name: stage.originalName,
               caption: stage.caption ?? null,
@@ -113,7 +117,7 @@ export class WorkerActivityImageService {
               name: JobName.ActivityImageIngest,
               data: {
                 imageId: image.id,
-                uploadId,
+                uploadId: activity.upload_id,
                 storagePath: stage.storagePath,
                 originalName: stage.originalName,
                 checksum: stage.checksum,
@@ -133,14 +137,14 @@ export class WorkerActivityImageService {
     if (!activity || !(await this.social.canViewActivity(activityId, userId))) {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
-    const images = await this.images.listForUpload(activity.upload_id);
+    const images = await this.images.listForActivity(activity.id);
     return images.map((image) => this.toDto(image, []));
   }
 
   async update(activityId: string, imageId: string, input: ActivityImageUpdateDto, userId: string) {
     const activity = await this.activities.getById(activityId, userId);
     const image = await this.images.getById(imageId, userId);
-    if (!activity || !image || image.upload_id !== activity.upload_id) {
+    if (!activity || !image || image.activity_id !== activity.id) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }
     const updated = await this.images.update(imageId, {
@@ -153,7 +157,7 @@ export class WorkerActivityImageService {
   async delete(activityId: string, imageId: string, userId: string): Promise<boolean> {
     const activity = await this.activities.getById(activityId, userId);
     const image = await this.images.getById(imageId, userId);
-    if (!activity || !image || image.upload_id !== activity.upload_id) {
+    if (!activity || !image || image.activity_id !== activity.id) {
       return false;
     }
     const files = await this.images.getFiles(imageId);
@@ -174,7 +178,7 @@ export class WorkerActivityImageService {
     if (!image) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }
-    const activity = await this.activities.getByUploadId(image.upload_id);
+    const activity = await this.activities.getById(image.activity_id);
     if (!activity || !(await this.social.canViewActivity(activity.id, userId))) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }

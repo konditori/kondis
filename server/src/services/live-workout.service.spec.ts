@@ -32,21 +32,27 @@ describe(LiveWorkoutService.name, () => {
   const getById = vi.fn();
   const getByClientSessionId = vi.fn();
   const create = vi.fn();
+  const deleteById = vi.fn(() => Promise.resolve());
+  const deleteOtherSessions = vi.fn(() => Promise.resolve());
   const appendPoints = vi.fn(() => Promise.resolve());
   const updateProgress = vi.fn();
   const setShareToken = vi.fn(() => Promise.resolve());
   const listPoints = vi.fn(() => Promise.resolve([]));
+  const emit = vi.fn(() => Promise.resolve());
 
   const repository = {
     getById,
     getByClientSessionId,
     create,
+    deleteById,
+    deleteOtherSessions,
     appendPoints,
     updateProgress,
     setShareToken,
     listPoints,
   } as unknown as LiveWorkoutRepository;
-  const setup = () => newTestService(LiveWorkoutService, [repository, new CryptoRepository()], { repository });
+  const setup = () =>
+    newTestService(LiveWorkoutService, [repository, new CryptoRepository(), { emit }], { repository, emit });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,6 +72,16 @@ describe(LiveWorkoutService.name, () => {
     });
 
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ userId: USER_ID, sport: 'run' }));
+  });
+
+  it('deletes an ended demo workout and its stale predecessor sessions', async () => {
+    const { sut } = setup();
+
+    await sut.deleteOtherSessions(USER_ID, '00000000-0000-4000-8000-000000000003');
+    await sut.delete(WORKOUT_ID, USER_ID);
+
+    expect(deleteOtherSessions).toHaveBeenCalledWith(USER_ID, '00000000-0000-4000-8000-000000000003');
+    expect(deleteById).toHaveBeenCalledWith(WORKOUT_ID, USER_ID);
   });
 
   it('acknowledges point batches without returning the growing route to the phone', async () => {
@@ -88,6 +104,15 @@ describe(LiveWorkoutService.name, () => {
     ).resolves.toEqual({ id: WORKOUT_ID, lastSequence: 3 });
     expect(appendPoints).toHaveBeenCalledOnce();
     expect(listPoints).not.toHaveBeenCalled();
+    expect(emit).toHaveBeenCalledWith(
+      'LiveWorkoutUpdated',
+      USER_ID,
+      expect.objectContaining({
+        id: WORKOUT_ID,
+        lastSequence: 3,
+        position: [11.9, 57.7],
+      }),
+    );
   });
 
   it('does not mint a public link for a workout outside the caller account', async () => {

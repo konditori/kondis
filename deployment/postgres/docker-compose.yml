@@ -1,0 +1,51 @@
+name: kondis-postgres
+
+services:
+  database:
+    container_name: kondis_postgres
+    build:
+      context: ../../packages/postgres
+      dockerfile: Dockerfile
+      args:
+        PG_MAJOR: ${POSTGRES_MAJOR_VERSION:-17}
+        VECTORCHORD_TAG: ${VECTORCHORD_TAG:-1.1.1}
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/migrator_username
+      POSTGRES_PASSWORD_FILE: /run/secrets/migrator_password
+      POSTGRES_DB: ${KONDIS_DB_DATABASE_NAME:-kondis-demo}
+      # PostgreSQL 17 declares /var/lib/postgresql/data as a Docker volume.
+      # Keep PGDATA outside that nested path so this host bind mount is the
+      # only persistent store, including with Rootless Docker.
+      PGDATA: /var/lib/postgresql/pgdata
+      POSTGRES_INITDB_ARGS: --data-checksums
+      KONDIS_DB_STORAGE_TYPE: ${KONDIS_DB_STORAGE_TYPE:-HDD}
+      KONDIS_DB_RUNTIME_USERNAME: ${KONDIS_DB_RUNTIME_USERNAME:-kondis_runtime}
+    volumes:
+      - ${KONDIS_DB_DATA_DIR:?KONDIS_DB_DATA_DIR must be set}:/var/lib/postgresql
+      # A stable self-signed certificate works with Hyperdrive when its public
+      # certificate is uploaded as a CA and the Hyperdrive mode is verify-ca.
+      # Mounting it makes the trust anchor survive container rebuilds.
+      - ${KONDIS_DB_TLS_CERT:?KONDIS_DB_TLS_CERT must point to server.crt}:/etc/postgresql/server.crt:ro
+      - ${KONDIS_DB_TLS_KEY:?KONDIS_DB_TLS_KEY must point to server.key}:/etc/postgresql/server.key:ro
+      - ./init/01-create-runtime-role.sh:/docker-entrypoint-initdb.d/01-create-runtime-role.sh:ro
+    ports:
+      - "127.0.0.1:${KONDIS_DB_PORT:-5432}:5432"
+    secrets:
+      - migrator_username
+      - migrator_password
+      - runtime_username
+      - runtime_password
+    shm_size: 128mb
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+
+secrets:
+  migrator_username:
+    file: ${KONDIS_DB_MIGRATOR_USERNAME_FILE:?KONDIS_DB_MIGRATOR_USERNAME_FILE must point to a file}
+  migrator_password:
+    file: ${KONDIS_DB_MIGRATOR_PASSWORD_FILE:?KONDIS_DB_MIGRATOR_PASSWORD_FILE must point to a file}
+  runtime_username:
+    file: ${KONDIS_DB_RUNTIME_USERNAME_FILE:?KONDIS_DB_RUNTIME_USERNAME_FILE must point to a file}
+  runtime_password:
+    file: ${KONDIS_DB_RUNTIME_PASSWORD_FILE:?KONDIS_DB_RUNTIME_PASSWORD_FILE must point to a file}

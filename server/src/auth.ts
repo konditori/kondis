@@ -1,6 +1,8 @@
+import type { UserRole } from 'src/enum';
+
 export type AuthenticatedUser = {
   id: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   email: string;
   firstName: string;
   lastName: string;

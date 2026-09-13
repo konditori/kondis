@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createNodeApiApp } from 'src/api/node';
+import { UserRole } from 'src/enum';
 import { AuthService } from 'src/services/auth.service';
 import type { KondisDatabase } from 'src/types';
 import { createTestApp, type TestApp } from 'test/medium/test-app';
@@ -31,7 +32,7 @@ describe('authentication API smoke tests', () => {
   it('logs in with valid credentials and returns a usable access token', async () => {
     const email = `login-${crypto.randomUUID()}@example.com`;
     const password = 'a sufficiently long password';
-    const user = await auth.create(email, 'Medium', 'Test', password, 'user');
+    const user = await auth.create(email, 'Medium', 'Test', password, UserRole.User);
 
     const response = await api.request('/auth/login', {
       method: 'POST',
@@ -43,7 +44,7 @@ describe('authentication API smoke tests', () => {
     const session = await response.json();
     expect(session).toMatchObject({
       setup: false,
-      user: { id: user.id, email, firstName: 'Medium', lastName: 'Test', role: 'user' },
+      user: { id: user.id, email, firstName: 'Medium', lastName: 'Test', role: UserRole.User },
       accessToken: expect.any(String),
     });
 
@@ -60,7 +61,7 @@ describe('authentication API smoke tests', () => {
 
   it('rejects invalid login credentials without issuing a session', async () => {
     const email = `login-${crypto.randomUUID()}@example.com`;
-    await auth.create(email, 'Medium', 'Test', 'a sufficiently long password', 'user');
+    await auth.create(email, 'Medium', 'Test', 'a sufficiently long password', UserRole.User);
 
     const response = await api.request('/auth/login', {
       method: 'POST',

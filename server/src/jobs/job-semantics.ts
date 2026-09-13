@@ -6,20 +6,19 @@ export type QueuePolicy = 'exclusive' | 'standard';
 
 export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
   [JobName.AuthCredentialCleanup]: 'worker',
-  [JobName.ActivityUpload]: 'node',
-  [JobName.ActivityMetricCompute]: 'node',
-  [JobName.ActivityBestEffortCompute]: 'node',
-  [JobName.ActivityBestEffortRank]: 'node',
-  [JobName.ActivityRouteMatchCompute]: 'node',
-  [JobName.ActivityParse]: 'node',
-  [JobName.ActivityManualCreate]: 'node',
+  [JobName.ActivityUpload]: 'worker',
+  [JobName.ActivityMetricCompute]: 'worker',
+  [JobName.ActivityBestEffortCompute]: 'worker',
+  [JobName.ActivityBestEffortRank]: 'worker',
+  [JobName.ActivityRouteMatchCompute]: 'worker',
+  [JobName.ActivityParse]: 'worker',
+  [JobName.ActivityManualCreate]: 'worker',
   [JobName.ActivityParseQueueAll]: 'node',
   [JobName.ActivityDelete]: 'node',
   [JobName.ActivityImageIngest]: 'node',
   [JobName.ActivityImageAttach]: 'node',
   [JobName.ActivityImageGenerateThumbnails]: 'node',
   [JobName.ActivityImageGenerateQueueAll]: 'node',
-  [JobName.LagomTakeoutImport]: 'node',
   [JobName.UserAvatarUpload]: 'node',
   [JobName.FileDelete]: 'node',
   [JobName.TemporaryFileCleanup]: 'node',
@@ -28,10 +27,10 @@ export const CLOUD_JOB_CONSUMER: Record<JobName, CloudJobConsumer> = {
 export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.AuthCredentialCleanup]: QueueName.BackgroundTask,
   [JobName.ActivityUpload]: QueueName.BackgroundTask,
-  [JobName.ActivityMetricCompute]: QueueName.ActivityParsing,
-  [JobName.ActivityBestEffortCompute]: QueueName.ActivityParsing,
-  [JobName.ActivityBestEffortRank]: QueueName.ActivityParsing,
-  [JobName.ActivityRouteMatchCompute]: QueueName.ActivityParsing,
+  [JobName.ActivityMetricCompute]: QueueName.ActivityEnrichment,
+  [JobName.ActivityBestEffortCompute]: QueueName.ActivityEnrichment,
+  [JobName.ActivityBestEffortRank]: QueueName.ActivityEnrichment,
+  [JobName.ActivityRouteMatchCompute]: QueueName.ActivityEnrichment,
   [JobName.ActivityParse]: QueueName.ActivityParsing,
   [JobName.ActivityManualCreate]: QueueName.ActivityParsing,
   [JobName.ActivityParseQueueAll]: QueueName.BackgroundTask,
@@ -40,39 +39,45 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.ActivityImageAttach]: QueueName.ImageProcessing,
   [JobName.ActivityImageGenerateThumbnails]: QueueName.ImageProcessing,
   [JobName.ActivityImageGenerateQueueAll]: QueueName.BackgroundTask,
-  [JobName.LagomTakeoutImport]: QueueName.BackgroundTask,
   [JobName.UserAvatarUpload]: QueueName.ImageProcessing,
   [JobName.FileDelete]: QueueName.Storage,
   [JobName.TemporaryFileCleanup]: QueueName.Storage,
 };
 
-export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?: number } => {
+const singleton = (singletonKey: string): { singletonKey: string; singletonSeconds: number } => ({
+  singletonKey,
+  singletonSeconds: 60,
+});
+
+const jobKey = (singletonKey: string): { singletonKey: string } => ({ singletonKey });
+
+export const getJobOptions = (
+  item: JobItem,
+): { singletonKey?: string; singletonSeconds?: number; priority?: number } => {
   switch (item.name) {
     case JobName.AuthCredentialCleanup: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.ActivityUpload: {
-      return {
-        singletonKey: `${item.name}:${item.data.checksum ?? item.data.storagePath}`,
-      };
+      return singleton(`${item.name}:${item.data.checksum ?? item.data.storagePath}`);
     }
     case JobName.ActivityMetricCompute: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityBestEffortCompute: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityRouteMatchCompute: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityParse: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return singleton(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityManualCreate: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityDelete: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityBestEffortRank: {
       return {
@@ -81,25 +86,22 @@ export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?
       };
     }
     case JobName.ActivityImageIngest: {
-      return { singletonKey: `${item.name}:${item.data.imageId}` };
+      return jobKey(`${item.name}:${item.data.imageId}`);
     }
     case JobName.ActivityImageAttach: {
-      return { singletonKey: `${item.name}:${item.data.uploadId}` };
+      return jobKey(`${item.name}:${item.data.uploadId}`);
     }
     case JobName.ActivityImageGenerateThumbnails: {
-      return { singletonKey: `${item.name}:${item.data.id}` };
+      return jobKey(`${item.name}:${item.data.id}`);
     }
     case JobName.ActivityImageGenerateQueueAll: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.ActivityParseQueueAll: {
-      return { singletonKey: item.name };
+      return singleton(item.name);
     }
     case JobName.TemporaryFileCleanup: {
-      return { singletonKey: item.name };
-    }
-    case JobName.LagomTakeoutImport: {
-      return {};
+      return singleton(item.name);
     }
     case JobName.UserAvatarUpload: {
       return {};
@@ -111,8 +113,9 @@ export const getJobOptions = (item: JobItem): { singletonKey?: string; priority?
 };
 
 export const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
-  [QueueName.ActivityParsing]: 'exclusive',
-  [QueueName.BackgroundTask]: 'exclusive',
+  [QueueName.ActivityParsing]: 'standard',
+  [QueueName.ActivityEnrichment]: 'standard',
+  [QueueName.BackgroundTask]: 'standard',
   [QueueName.ImageProcessing]: 'standard',
   [QueueName.Storage]: 'standard',
 };
@@ -122,23 +125,13 @@ export const CRON_JOBS: { item: JobItem; cron: string }[] = [
     item: { name: JobName.AuthCredentialCleanup, data: {} },
     cron: '15 * * * *',
   },
-  {
-    item: { name: JobName.ActivityParseQueueAll, data: { force: false } },
-    cron: '30 3 * * *',
-  },
   { item: { name: JobName.TemporaryFileCleanup, data: {} }, cron: '0 4 * * *' },
-  {
-    item: {
-      name: JobName.ActivityImageGenerateQueueAll,
-      data: { force: false },
-    },
-    cron: '30 4 * * *',
-  },
 ];
 
 export const JOB_CONCURRENCY = {
-  [QueueName.ActivityParsing]: 1,
-  [QueueName.BackgroundTask]: 1,
+  [QueueName.ActivityParsing]: 3,
+  [QueueName.ActivityEnrichment]: 3,
+  [QueueName.BackgroundTask]: 3,
   [QueueName.ImageProcessing]: 2,
   [QueueName.Storage]: 2,
 } satisfies Record<QueueName, number>;
@@ -154,7 +147,6 @@ export type JobFailureTransition = {
   retryCount: number;
 };
 
-// retryLimit is the number of retries after the initial attempt.
 export const getJobFailureTransition = (retryCount: number, retryLimit: number): JobFailureTransition => {
   const nextRetryCount = retryCount + 1;
   return {

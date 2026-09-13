@@ -1,7 +1,7 @@
 import {
   activityControllerListBestEfforts,
-  BestEffortSportInput,
-  BestEffortType,
+  type BestEffortSportInput,
+  type BestEffortType,
 } from "$lib/api";
 import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { BestEffortHistory } from "$lib/types";
@@ -11,8 +11,8 @@ export const load: PageServerLoad = async ({ locals }) => {
   const requestOptions = getServerSdkRequestOptions(locals.kondisFetch);
   const [run, ride] = await Promise.all(
     [
-      ["run", BestEffortType.$5K],
-      ["ride", BestEffortType.$10K],
+      ["run", "5k"],
+      ["ride", "10k"],
     ].map(async ([sport, type]) => {
       try {
         return (await activityControllerListBestEfforts(
@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
             $type: type as BestEffortType,
           },
           requestOptions,
-        )) as BestEffortHistory;
+        )) as unknown as BestEffortHistory;
       } catch {
         return null;
       }
@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ locals }) => {
                 $type: option.type as BestEffortType,
               },
               requestOptions,
-            )) as BestEffortHistory;
+            )) as unknown as BestEffortHistory;
           } catch {
             // Keep the effort visible even if an individual history is unavailable.
           }

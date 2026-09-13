@@ -1,14 +1,15 @@
-import { JobStatus } from 'src/enum';
+import { JobStatus, UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import { SessionRepository, type SessionRecord } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisExecutor } from 'src/types';
+import { publicMediaUrl } from 'src/utils/media';
 const BCRYPT_WORK_FACTOR = 12;
 // Keep unknown-account logins on the same expensive comparison path so the
 // response time does not reveal whether an email address is registered.
@@ -26,9 +27,10 @@ export class AuthService {
     private readonly config: Pick<ConfigPort, 'registrationEnabled' | 'setupToken'>,
     private readonly rateLimitingRepository: RateLimitingRepository,
     private readonly crypto: CryptoPort,
-    private readonly credentials: AuthCredentialRepository,
+    private readonly credentials: SessionRepository,
     private readonly events: RealtimePort,
     private readonly database: TransactionPort,
+    private readonly mediaBaseUrl?: string,
   ) {}
   get registrationEnabled() {
     return this.config.registrationEnabled;
@@ -66,6 +68,9 @@ Do not share this secret token with anyone.
       throw new ConflictException('Initial setup is already complete');
     }
     await this.rateLimitingRepository.consume(clientId, SETUP_TOKEN_RATE_LIMIT);
+    if (this.config.setupToken) {
+      await this.credentials.getOrCreateSetupToken(this.config.setupToken);
+    }
     if (!(await this.credentials.verifySetupToken(setupToken))) {
       this.logger.warn('Invalid setup token supplied during initial setup verification');
       throw new UnauthorizedException('Invalid setup token');
@@ -99,7 +104,7 @@ Do not share this secret token with anyone.
           {
             ...account,
             password_hash: passwordHash,
-            role: 'admin',
+            role: UserRole.Admin,
           },
           transaction,
         );
@@ -140,7 +145,10 @@ Do not share this secret token with anyone.
         if (await this.users.findByEmail(account.email, transaction)) {
           throw new ConflictException('Email is already in use');
         }
-        const user = await this.users.create({ ...account, password_hash: passwordHash, role: 'user' }, transaction);
+        const user = await this.users.create(
+          { ...account, password_hash: passwordHash, role: UserRole.User },
+          transaction,
+        );
         this.logger.log(`Public user account created for ${user.email} (${user.id})`);
         return this.issue(user, false, transaction);
       });
@@ -172,7 +180,7 @@ Do not share this secret token with anyone.
     await this.credentials.deleteExpired();
     return JobStatus.Success;
   }
-  async create(email: string, firstName: string, lastName: string, password: string, role: 'admin' | 'user') {
+  async create(email: string, firstName: string, lastName: string, password: string, role: UserRole) {
     const account = this.normalizeAccount(email, firstName, lastName, password);
     if (await this.users.findByEmail(account.email)) {
       throw new ConflictException('Email is already in use');
@@ -185,6 +193,12 @@ Do not share this secret token with anyone.
     return user;
   }
 
+  // Used by the immutable public demo. Keeping this at the auth boundary means
+  // provisioning never needs to reach into the session repository directly.
+  createSessionRecord(record: SessionRecord): Promise<void> {
+    return this.credentials.createSessionRecord(record);
+  }
+
   private normalizeAccount(email: string, firstName: string, lastName: string, password: string) {
     if (!/^\S+@\S+\.\S+$/.test(email) || password.length < 10 || !firstName.trim() || !lastName.trim()) {
       throw new BadRequestException('Use a first name, last name, valid email, and password of at least 10 characters');
@@ -193,7 +207,7 @@ Do not share this secret token with anyone.
   }
 
   private async issue(
-    user: { id: string; role: 'admin' | 'user'; email: string; first_name: string; last_name: string },
+    user: { id: string; role: UserRole; email: string; first_name: string; last_name: string },
     setup: boolean,
     executor?: KondisExecutor,
   ) {
@@ -206,7 +220,10 @@ Do not share this secret token with anyone.
         firstName: user.first_name,
         lastName: user.last_name,
         role: user.role,
-        avatarUrl: 'avatar_path' in user && user.avatar_path ? `/api/v1/users/${user.id}/avatar` : null,
+        avatarUrl:
+          'avatar_path' in user && typeof user.avatar_path === 'string'
+            ? publicMediaUrl(this.mediaBaseUrl, user.avatar_path, `/api/v1/users/${user.id}/avatar`)
+            : null,
       },
     };
   }

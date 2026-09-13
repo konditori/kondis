@@ -6,12 +6,22 @@
 !.vscode/extensions.json
 .idea
 .kotlin/
+**/.wrangler/**
 
 docker/data
+deployment/demo/.env
+deployment/demo/data
+deployment/postgres/.env
+deployment/postgres/data
+# Local data volume for the demo stack (uploads, avatars, and generated images)
+deployment/demo/server-data/
 coverage
 server/.wrangler/
 server/wrangler.*.generated.json
 server/wrangler-generated-*.json
+web/wrangler-generated-*.json
+web/static/demo-media/
+deployment/demo/wrangler-generated-*.json
 
 vite.config.js.timestamp-*
 .pnpm-store

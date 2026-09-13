@@ -5,14 +5,14 @@
     LoaderCircle,
   } from "@lucide/svelte";
   import { goto } from "$app/navigation";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { page } from "$app/state";
   import type { Snapshot } from "@sveltejs/kit";
   import ActivityCard from "$lib/components/ActivityCard.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import { socialControllerFeed, getSdkRequestOptions } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
-  import type { Activity, ActivityPage } from "$lib/types";
+  import type { Activity, ActivityPage, LiveWorkout } from "$lib/types";
   import { activityTypeLabel, sportIcon } from "$lib/activity-types";
   import {
     distance,
@@ -38,13 +38,18 @@
   let searchGeneration = 0;
   let loading = $state(false);
   let loadError = $state(false);
+  // The server-rendered list is only a snapshot: the page HTML may come from
+  // the CDN cache, so the client reconciles live workouts itself.
+  let liveWorkoutsOverride = $state<LiveWorkout[] | null>(null);
+  let now = $state(Date.now());
+  const liveWorkouts = $derived(liveWorkoutsOverride ?? data.liveWorkouts);
   const activities = $derived.by(() => {
-    const byUpload = new Map(
-      data.activities.map((activity) => [activity.uploadId, activity]),
+    const byActivity = new Map(
+      data.activities.map((activity) => [activity.id, activity]),
     );
     for (const activity of appendedActivities)
-      byUpload.set(activity.uploadId, activity);
-    return [...byUpload.values()].sort(
+      byActivity.set(activity.id, activity);
+    return [...byActivity.values()].sort(
       (a, b) =>
         b.startedAt.localeCompare(a.startedAt) || b.id.localeCompare(a.id),
     );
@@ -69,6 +74,11 @@
       ? t("activity_found", { count: displayedTotal })
       : t("activities_found", { count: displayedTotal }),
   );
+
+  onMount(() => {
+    const clock = window.setInterval(() => (now = Date.now()), 1_000);
+    return () => window.clearInterval(clock);
+  });
 
   $effect(() => {
     if (data.activities) {
@@ -131,8 +141,9 @@
     return () => clearTimeout(timer);
   });
 
-  $effect(() =>
-    subscribeToActivityEvents(
+  $effect(() => {
+    void refreshLiveWorkouts();
+    return subscribeToActivityEvents(
       data.eventsUrl,
       (event) => {
         if (
@@ -148,9 +159,7 @@
           );
           if (current) {
             appendedActivities = [
-              ...appendedActivities.filter(
-                ({ uploadId }) => uploadId !== current.uploadId,
-              ),
+              ...appendedActivities.filter(({ id }) => id !== current.id),
               { ...current, likeCount: event.activity.likeCount },
             ];
           }
@@ -163,16 +172,48 @@
           return;
         const { activity } = event;
         appendedActivities = [
-          ...appendedActivities.filter(
-            ({ uploadId }) => uploadId !== activity.uploadId,
-          ),
+          ...appendedActivities.filter(({ id }) => id !== activity.id),
           activity,
         ];
         void refreshRecent();
       },
-      () => {},
-    ),
-  );
+      () => void refreshLiveWorkouts(),
+      {
+        onLiveWorkout: (event) => {
+          const current = liveWorkoutsOverride ?? data.liveWorkouts;
+          const known = current.some(({ id }) => id === event.workout.id);
+          if (!known || event.workout.status === "ended") {
+            void refreshLiveWorkouts();
+            return;
+          }
+          const currentWorkout = current.find(
+            ({ id }) => id === event.workout.id,
+          )!;
+          const sequenceGap =
+            event.workout.lastSequence > currentWorkout.lastSequence + 1;
+          if (sequenceGap) {
+            void refreshLiveWorkouts();
+          }
+          liveWorkoutsOverride = current.map((workout) =>
+            workout.id === event.workout.id
+              ? {
+                  ...workout,
+                  status: event.workout.status,
+                  elapsedSeconds: event.workout.elapsedSeconds,
+                  distanceMeters: event.workout.distanceMeters,
+                  lastSequence: event.workout.lastSequence,
+                  lastReceivedAt: new Date().toISOString(),
+                  route:
+                    event.workout.lastSequence === workout.lastSequence + 1
+                      ? [...workout.route, event.workout.position]
+                      : workout.route,
+                }
+              : workout,
+          );
+        },
+      },
+    );
+  });
 
   $effect(() => {
     const handleClearSearch = () => clearSearch();
@@ -187,19 +228,27 @@
     };
   });
 
+  async function refreshLiveWorkouts() {
+    try {
+      const response = await fetch("/api/v1/live-workouts", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      liveWorkoutsOverride = (await response.json()) as LiveWorkout[];
+    } catch {
+      // The socket will retry and reconcile again after reconnecting.
+    }
+  }
+
   async function refreshRecent() {
     try {
       const page = (await socialControllerFeed(
         {},
         getSdkRequestOptions(),
       )) as unknown as ActivityPage;
-      const refreshedUploads = new Set(
-        page.activities.map(({ uploadId }) => uploadId),
-      );
+      const refreshedUploads = new Set(page.activities.map(({ id }) => id));
       appendedActivities = [
-        ...appendedActivities.filter(
-          ({ uploadId }) => !refreshedUploads.has(uploadId),
-        ),
+        ...appendedActivities.filter(({ id }) => !refreshedUploads.has(id)),
         ...page.activities,
       ];
       totalOverride = page.total;
@@ -312,18 +361,25 @@
     </div>
   {/if}
 
-  {#if data.liveWorkouts.length}
+  {#if liveWorkouts.length}
     <section class="live-workout-list" aria-label={t("live_activities")}>
-      {#each data.liveWorkouts as workout (workout.id)}
+      {#each liveWorkouts as workout (workout.id)}
         {@const Icon = sportIcon(workout.sport)}
+        {@const ageSeconds = workout.lastReceivedAt
+          ? Math.max(
+              0,
+              Math.floor((now - Date.parse(workout.lastReceivedAt)) / 1000),
+            )
+          : null}
         {@const averageSpeed =
           workout.elapsedSeconds > 0
             ? workout.distanceMeters / workout.elapsedSeconds
             : null}
         <article class="activity-card live-activity-card">
-          <a class="activity-card-summary" href={`/live/session/${workout.id}`}>
+          <a class="activity-card-summary" href={`/activity/${workout.id}`}>
             <div class="sport-badge">
               <Icon size={24} strokeWidth={1.8} />
+              <span class="live-label">{t("live").toUpperCase()}</span>
               <span
                 class:paused={workout.status === "paused"}
                 class="live-beacon"
@@ -338,6 +394,11 @@
                 {localDate(workout.startedAt)} · {localTime(workout.startedAt)} ·
                 {workout.status === "paused" ? t("paused") : t("live")}
               </p>
+              <span class="live-updated"
+                >{ageSeconds === null
+                  ? t("waiting_for_gps")
+                  : t("updated_seconds_ago", { seconds: ageSeconds })}</span
+              >
             </div>
             <div class="activity-feed-stats">
               <div class="activity-stat">
@@ -365,7 +426,7 @@
           {#if workout.route.length >= 2}
             <a
               class="activity-card-media-link"
-              href={`/live/session/${workout.id}`}
+              href={`/activity/${workout.id}`}
             >
               <div class="activity-card-media">
                 <div class="activity-card-map live-list-map">

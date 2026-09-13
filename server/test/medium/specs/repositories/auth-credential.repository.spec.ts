@@ -1,18 +1,19 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { UserRole } from 'src/enum';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { KondisDatabase } from 'src/types';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
-describe(AuthCredentialRepository.name, () => {
+describe(SessionRepository.name, () => {
   let db: KondisDatabase;
-  let credentials: AuthCredentialRepository;
+  let credentials: SessionRepository;
   let users: UserRepository;
 
   beforeAll(() => {
     db = createMediumTestDatabase();
-    credentials = new AuthCredentialRepository(db);
+    credentials = new SessionRepository(db);
     users = new UserRepository(db);
   });
   beforeEach(() => resetMediumTestDatabase(db));
@@ -26,7 +27,7 @@ describe(AuthCredentialRepository.name, () => {
       first_name: 'Credential',
       last_name: 'Test',
       password_hash: 'not-used',
-      role: 'user',
+      role: UserRole.User,
     });
 
   it('stores only a session hash and resolves the current user', async () => {
@@ -38,7 +39,7 @@ describe(AuthCredentialRepository.name, () => {
     expect(stored.token_hash).not.toBe(token);
     await expect(credentials.findSession(token)).resolves.toMatchObject({
       id: stored.id,
-      user: { id: user.id, email: user.email, role: 'user' },
+      user: { id: user.id, email: user.email, role: UserRole.User },
     });
     await expect(credentials.findSession(`${token}x`)).resolves.toBeUndefined();
   });
@@ -64,10 +65,11 @@ describe(AuthCredentialRepository.name, () => {
     const setupTicket = await credentials.createTicket('initial-setup');
 
     await expect(credentials.findTicket(eventTicket.token, 'activity-events')).resolves.toEqual({ userId: user.id });
-    await expect(credentials.findEventTicket(eventTicket.token)).resolves.toEqual({
+    await expect(credentials.findEventTicket(eventTicket.token)).resolves.toMatchObject({
       scope: 'activity-events',
       sessionId: session!.id,
       userId: user.id,
+      sessionExpiresAt: expect.any(Date),
     });
     await expect(credentials.findTicket(eventTicket.token, 'job-events')).resolves.toBeUndefined();
     await expect(credentials.consumeTicket(setupTicket.token, 'initial-setup')).resolves.toEqual({ userId: null });
@@ -77,7 +79,7 @@ describe(AuthCredentialRepository.name, () => {
   it('stores only the bootstrap token hash and accepts an injected seed', async () => {
     const injectedToken = 'a'.repeat(64);
     const first = await credentials.getOrCreateSetupToken(injectedToken);
-    const second = await new AuthCredentialRepository(db).getOrCreateSetupToken(injectedToken);
+    const second = await new SessionRepository(db).getOrCreateSetupToken(injectedToken);
     const stored = await db.selectFrom('auth_bootstrap').select('token_hash').executeTakeFirstOrThrow();
 
     expect(first).toBe(injectedToken);
@@ -92,7 +94,7 @@ describe(AuthCredentialRepository.name, () => {
 
   it('exposes an automatically generated bootstrap token only to its creator', async () => {
     const first = await credentials.getOrCreateSetupToken();
-    const second = await new AuthCredentialRepository(db).getOrCreateSetupToken();
+    const second = await new SessionRepository(db).getOrCreateSetupToken();
 
     expect(first).toMatch(/^[a-f\d]{64}$/);
     expect(second).toBeUndefined();

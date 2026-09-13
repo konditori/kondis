@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
+import { UserRole } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 describe('API user mutation routes', () => {
@@ -13,7 +14,7 @@ describe('API user mutation routes', () => {
         email: TEST_API_USER.email,
         firstName: 'Updated',
         lastName: 'Name',
-        role: 'user' as const,
+        role: UserRole.User,
         avatarUrl: null,
       }),
     );

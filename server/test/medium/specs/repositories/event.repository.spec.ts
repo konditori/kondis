@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ActivityDto } from 'src/dtos/activity.dto';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { EventRepository } from 'src/repositories/event.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
@@ -24,7 +24,7 @@ describe(EventRepository.name, () => {
       db,
       { database: getTestDatabaseConfig() } as never,
       new SocialRepository(db),
-      new AuthCredentialRepository(db),
+      new SessionRepository(db),
     ),
   });
 
@@ -32,11 +32,11 @@ describe(EventRepository.name, () => {
     const { sut } = setup();
     const activity = {
       id: crypto.randomUUID(),
-      uploadId: crypto.randomUUID(),
       sport: 'run',
       name: 'medium test',
       description: null,
       excludeFromRankings: false,
+      tags: [],
       startedAt: new Date().toISOString(),
       timezoneOffsetMinutes: 0,
       metrics: null,

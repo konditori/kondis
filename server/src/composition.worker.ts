@@ -9,14 +9,17 @@ import {
   type DurableObjectNamespaceBinding,
 } from 'src/cloudflare/realtime-durable-object';
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-durable-object';
 import { ConsoleLogger } from 'src/logger';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
+import { ConfigRepository } from 'src/repositories/config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -39,10 +42,17 @@ export type WorkerBindings = {
   KONDIS_SETUP_TOKEN?: string;
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
+  KONDIS_DEMO_MODE?: boolean | string;
+  KONDIS_DEMO_MEDIA_BASE_URL?: string;
   KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
+  KONDIS_REALTIME_PUBLISH_TOKEN?: string;
+  QUEUE_EXECUTOR?: { fetch: (request: Request) => Promise<Response> };
   STORAGE_BUCKET?: R2BucketBinding;
   REALTIME?: DurableObjectNamespaceBinding;
+  DEMO_LIVE_TRACKER?: DemoLiveTrackerNamespaceBinding;
+  DEMO_LIVE_INGESTION?: DemoLiveIngestionBinding;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
+  ACTIVITY_ENRICHMENT_QUEUE?: CloudflareQueueBinding;
   BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
   IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
   STORAGE_QUEUE?: CloudflareQueueBinding;
@@ -53,22 +63,32 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     throw new Error('HYPERDRIVE is required for this Worker invocation');
   }
   const { db: database, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+  const transactions: TransactionPort = {
+    withTransaction: (fn) => database.transaction().execute(fn),
+  };
   const queueAdapter = new CloudflareQueueAdapter(database);
   const storage = env.STORAGE_BUCKET ? new R2StorageAdapter(env.STORAGE_BUCKET) : undefined;
+  const mediaRepository = new MediaRepository(database);
   const workerEvents = env.REALTIME ? new DurableObjectRealtimeAdapter(env.REALTIME) : noopRealtime;
-  const authCredentialRepository = new AuthCredentialRepository(database);
+  const authCredentialRepository = new SessionRepository(database);
   const userRepository = new UserRepository(database);
-  const config = {
-    registrationEnabled: env.KONDIS_REGISTRATION_ENABLED === true || env.KONDIS_REGISTRATION_ENABLED === 'true',
-    setupToken: env.KONDIS_SETUP_TOKEN,
-    trustProxyHeaders: true,
-  };
+  const config = new ConfigRepository({
+    KONDIS_DEMO_MODE: toConfigValue(env.KONDIS_DEMO_MODE),
+    KONDIS_REGISTRATION_ENABLED: toConfigValue(env.KONDIS_REGISTRATION_ENABLED),
+    KONDIS_SETUP_TOKEN: env.KONDIS_SETUP_TOKEN,
+    KONDIS_TRUST_PROXY_HEADERS: 'true',
+  });
   const cloudNodeProcessorEnabled =
     env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === true || env.KONDIS_CLOUD_NODE_PROCESSOR_ENABLED === 'true';
   const queueBindingsConfigured = Boolean(
-    env.ACTIVITY_PARSING_QUEUE && env.BACKGROUND_TASK_QUEUE && env.IMAGE_PROCESSING_QUEUE && env.STORAGE_QUEUE,
+    env.ACTIVITY_PARSING_QUEUE &&
+    env.ACTIVITY_ENRICHMENT_QUEUE &&
+    env.BACKGROUND_TASK_QUEUE &&
+    env.IMAGE_PROCESSING_QUEUE &&
+    env.STORAGE_QUEUE,
   );
   const rateLimitingRepository = new RateLimitingRepository(database);
+  const fitRepository = new FitRepository(new ConsoleLogger());
   const authService = new AuthService(
     userRepository,
     config,
@@ -76,45 +96,57 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     workerCrypto,
     authCredentialRepository,
     workerEvents,
-    { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+    transactions,
+    env.KONDIS_DEMO_MEDIA_BASE_URL,
   );
   const activityRepository = new ActivityRepository(database);
-  const socialRepository = new SocialRepository(database);
+  const uploadRepository = new UploadRepository(database);
+  const socialRepository = new SocialRepository(database, env.KONDIS_DEMO_MEDIA_BASE_URL);
+  const importProgressStore = new ImportProgressStore(database);
   const activityService = new ActivityService(
-    new UploadRepository(database),
-    {} as never,
+    uploadRepository,
+    storage ?? ({} as never),
     activityRepository,
-    { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+    transactions,
     workerEvents,
     queueAdapter,
-    new FitRepository(new ConsoleLogger()),
+    fitRepository,
     new GpxRepository(new ConsoleLogger()),
     new TcxRepository(new ConsoleLogger()),
     new ConsoleLogger(),
-    undefined,
-    undefined,
+    importProgressStore,
+    mediaRepository,
     socialRepository,
+    env.KONDIS_DEMO_MEDIA_BASE_URL,
   );
   const workerActivityImageService = storage
     ? new WorkerActivityImageService(
-        new ActivityImageRepository(database),
+        mediaRepository,
         activityRepository,
         storage,
         workerCrypto,
-        { withTransaction: (fn: never) => database.transaction().execute(fn) } as never,
+        transactions,
         queueAdapter,
         socialRepository,
       )
     : undefined;
-  const importProgressStore = storage ? new ImportProgressStore(database) : undefined;
   const workerUploadService = storage
-    ? new WorkerUploadService(storage, workerCrypto, queueAdapter, importProgressStore!)
+    ? new WorkerUploadService(
+        storage,
+        workerCrypto,
+        queueAdapter,
+        importProgressStore,
+        uploadRepository,
+        activityRepository,
+        transactions,
+        workerEvents,
+      )
     : undefined;
   const workerUserService = storage
     ? new WorkerUserService(userRepository, socialRepository, storage, queueAdapter)
     : undefined;
-  const socialService = new SocialService(socialRepository, database, workerEvents);
-  const liveWorkoutService = new LiveWorkoutService(new LiveWorkoutRepository(database), workerCrypto);
+  const socialService = new SocialService(socialRepository, workerEvents, env.KONDIS_DEMO_MEDIA_BASE_URL);
+  const liveWorkoutService = new LiveWorkoutService(new LiveWorkoutRepository(database), workerCrypto, workerEvents);
   const jobService = new JobService({ admin: queueAdapter, producer: queueAdapter }, workerEvents, new ConsoleLogger());
 
   return {
@@ -123,6 +155,9 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     authCredentialRepository,
     authService,
     activityService,
+    activityRepository,
+    uploadRepository,
+    fitRepository,
     socialService,
     liveWorkoutService,
     jobService,
@@ -131,15 +166,21 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     cloudNodeProcessorEnabled,
     queueBindingsConfigured,
     realtimeEnabled: Boolean(env.REALTIME),
+    realtime: workerEvents,
     authCredentialCleanupToken: env.KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN,
     storage,
     workerActivityImageService,
     workerUploadService,
     workerUserService,
+    mediaRepository,
+    demoMediaBaseUrl: env.KONDIS_DEMO_MEDIA_BASE_URL,
     jobAdmin: queueAdapter,
-    jobHandlers: createPortableWorkerHandlers(database),
+    jobHandlers: createPortableWorkerHandlers(database, { activityService, uploadService: workerUploadService }),
     jobProducer: queueAdapter,
   };
 };
+
+const toConfigValue = (value: boolean | string | undefined): string | undefined =>
+  typeof value === 'boolean' ? String(value) : value;
 
 export type WorkerInvocationComposition = ReturnType<typeof createWorkerInvocationComposition>;

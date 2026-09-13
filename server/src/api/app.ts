@@ -4,6 +4,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createApiAuthMiddleware, type ApiEnv } from 'src/api/auth';
 import { registerAllRouteGroups, type ApiRouteGroups } from 'src/api/route-groups';
 import { RequestValidationError } from 'src/api/validation';
+import type { AuthenticatedUser } from 'src/auth';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { HttpException } from 'src/errors';
 import { ServerService } from 'src/services/server.service';
@@ -46,7 +47,7 @@ const publicRoutes = new Set([
   'POST /_internal/auth-credential-cleanup',
 ]);
 
-export const createApiShell = (sessions: ApiDependencies['sessions']) => {
+export const createApiShell = (sessions: ApiDependencies['sessions'], demoUser?: AuthenticatedUser) => {
   const app = new OpenAPIHono<ApiEnv>({
     strict: false,
     defaultHook: (result, context) => {
@@ -58,15 +59,19 @@ export const createApiShell = (sessions: ApiDependencies['sessions']) => {
 
   app.use(
     '*',
-    createApiAuthMiddleware(sessions, (method, path) => {
-      const normalizedMethod = method === 'HEAD' ? 'GET' : method;
-      const runtimePath = path.startsWith(`${API_PREFIX}/`) ? path.slice(API_PREFIX.length) : path;
-      const normalizedPath = runtimePath.length > 1 ? runtimePath.replace(/\/+$/, '') : runtimePath;
-      return (
-        publicRoutes.has(`${normalizedMethod} ${normalizedPath}`) ||
-        (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-workouts/shared/'))
-      );
-    }),
+    createApiAuthMiddleware(
+      sessions,
+      (method, path) => {
+        const normalizedMethod = method === 'HEAD' ? 'GET' : method;
+        const runtimePath = path.startsWith(`${API_PREFIX}/`) ? path.slice(API_PREFIX.length) : path;
+        const normalizedPath = runtimePath.length > 1 ? runtimePath.replace(/\/+$/, '') : runtimePath;
+        return (
+          publicRoutes.has(`${normalizedMethod} ${normalizedPath}`) ||
+          (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-workouts/shared/'))
+        );
+      },
+      demoUser,
+    ),
   );
 
   registerApiErrorHandlers(app);
@@ -83,7 +88,7 @@ export const registerApiErrorHandlers = (app: OpenAPIHono<ApiEnv>) => {
       const status = error.getStatus() as ContentfulStatusCode;
       const response = error.getResponse();
       const body = typeof response === 'string' ? { statusCode: status, message: response } : response;
-      return context.json(body, status);
+      return context.json(body, status, error.getHeaders());
     }
     console.error(error);
     return context.json({ statusCode: 500, message: 'Internal server error' }, 500);

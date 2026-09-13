@@ -44,9 +44,36 @@ trap 'docker compose -f ./docker-compose.dev.yml start kondis-server' EXIT
 docker compose -f ./docker-compose.dev.yml run --rm kondis-reset
 """
 
+[tasks.dev-migrate]
+description = "Run pending database migrations in the development container"
+dir = "docker"
+run = "docker compose -f ./docker-compose.dev.yml run --rm kondis-server 'pnpm --dir server run migrate'"
+
 [tasks.dev-down]
 dir = "docker"
 run = "docker compose -f ./docker-compose.dev.yml down --remove-orphans"
+
+[tasks."postgres:up"]
+description = "Start the self-hosted PostgreSQL origin"
+dir = "deployment/postgres"
+run = "bash ./bin/db.sh up"
+
+[tasks."postgres:migrate"]
+description = "Run pending migrations through the Cloudflare Tunnel Access proxy"
+run = "bash deployment/postgres/bin/migrate-through-tunnel.sh"
+
+[tasks."postgres:demo-reset"]
+description = "Recreate, migrate, and seed a guarded demo database through Cloudflare Tunnel"
+run = "bash deployment/postgres/bin/migrate-through-tunnel.sh demo-reset"
+
+[tasks."postgres:demo-drop"]
+description = "Drop a guarded PR demo database through Cloudflare Tunnel"
+run = "bash deployment/postgres/bin/migrate-through-tunnel.sh demo-drop"
+
+[tasks."postgres:down"]
+description = "Stop the self-hosted PostgreSQL origin"
+dir = "deployment/postgres"
+run = "bash ./bin/db.sh down"
 
 [tasks.e2e]
 run = { task = "//e2e:test" }
@@ -171,7 +198,7 @@ run = "docker compose -f ./docker-compose.yml down --remove-orphans"
 
 [tasks."open-api:typescript"]
 run = [
-  "pnpm install --filter @kondis/sdk --frozen-lockfile",
+ "pnpm install --filter @kondis/sdk --frozen-lockfile",
   "oazapfts --optimistic --argumentStyle=object --useEnumType --allSchemas open-api/kondis-openapi-specs.json packages/sdk/src/fetch-client.ts",
   "cd packages/sdk && ./node_modules/.bin/prettier --log-level warn --write src/fetch-client.ts",
   "pnpm --filter @kondis/sdk build",
@@ -195,3 +222,11 @@ run = [
 description = "Generate Android string resources from the shared translation catalogs"
 depends = ["i18n:check"]
 run = "node ./scripts/generate-android-i18n.mjs"
+
+[tasks."deploy:cloudflare"]
+description = "Deploy your own Kondis instance to Cloudflare"
+run = "node ./scripts/deploy-cloudflare.mjs"
+
+[tasks."deploy:demo"]
+description = "Deploy the Kondis demo site to Cloudflare (only available to Kondis dev team)"
+run = "node ./deployment/demo/deploy.mjs"

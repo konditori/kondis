@@ -52,6 +52,7 @@ type RawJobCounts = Omit<JobCounts, 'ready'>;
 type StoredJobCounts = RawJobCounts & { name: string };
 
 const COMPLETION_POLL_MS = 100;
+const RANKING_REFRESH_COALESCE_MS = 100;
 const WORKER_BATCH_SIZE = 25;
 
 const deadLetterName = (queue: QueueName): string => `${queue}.deadLetter`;
@@ -61,6 +62,7 @@ export class PgBossQueueAdapter {
   private readonly pausedQueues = new Set<QueueName>();
 
   private bossPromise: Promise<PgBoss> | null = null;
+  private rankingRefreshPromise: Promise<JobStatus> | null = null;
   private onJobRun: ((item: JobItem) => Promise<JobStatus>) | null = null;
   private stopped = false;
 
@@ -562,10 +564,44 @@ export class PgBossQueueAdapter {
       });
     }
     if (rankingRefresh) {
-      results.push(await this.dispatchResult(rankingRefresh));
+      results.push(await this.dispatchRankingRefresh(rankingRefresh));
     }
 
     return results;
+  }
+
+  private async dispatchRankingRefresh(job: Job<StoredJob>): Promise<JobResult> {
+    if (!this.rankingRefreshPromise) {
+      const refresh = delay(RANKING_REFRESH_COALESCE_MS).then(() => this.dispatch(job));
+      const gate = refresh
+        .then(async (status) => delay(RANKING_REFRESH_COALESCE_MS).then(() => status))
+        .catch(async (error) => {
+          await delay(RANKING_REFRESH_COALESCE_MS);
+          throw error;
+        });
+      this.rankingRefreshPromise = gate;
+      void gate
+        .then(() => {
+          if (this.rankingRefreshPromise === gate) {
+            this.rankingRefreshPromise = null;
+          }
+        })
+        .catch(() => {
+          if (this.rankingRefreshPromise === gate) {
+            this.rankingRefreshPromise = null;
+          }
+        });
+    }
+
+    try {
+      return { id: job.id, status: 'completed', output: { status: await this.rankingRefreshPromise } };
+    } catch (error) {
+      return {
+        id: job.id,
+        status: 'failed',
+        output: { message: asErrorMessage(error) },
+      };
+    }
   }
 
   private dispatch(job: Job<StoredJob>): Promise<JobStatus> {

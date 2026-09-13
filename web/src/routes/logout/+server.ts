@@ -2,7 +2,10 @@ import { redirect } from "@sveltejs/kit";
 import { apiUrl } from "$lib/server/api";
 import type { RequestHandler } from "./$types";
 
-const logout: RequestHandler = async ({ cookies, locals }) => {
+const logout: RequestHandler = async ({ cookies, locals, platform }) => {
+  if (platform?.env.KONDIS_DEMO_MODE === "true") {
+    throw redirect(303, "/");
+  }
   await locals
     .kondisFetch(apiUrl("api/v1/auth/logout"), {
       method: "POST",

@@ -1,8 +1,10 @@
 import { createMiddleware } from 'hono/factory';
 
 import { getAccessToken, type AuthenticatedUser } from 'src/auth';
+import { DEMO_SESSION_ID } from 'src/demo/demo-provisioner';
+import { UserRole } from 'src/enum';
 import { ForbiddenException } from 'src/errors';
-import type { AuthenticatedSession } from 'src/repositories/auth-credential.repository';
+import type { AuthenticatedSession } from 'src/repositories/session.repository';
 
 export type ApiEnv = {
   Bindings: ApiBindings;
@@ -21,7 +23,7 @@ type IsPublicRequest = (method: string, path: string) => boolean;
 type StoredUser = {
   id: string;
   email: string;
-  role: 'admin' | 'user';
+  role: UserRole;
   first_name: string;
   last_name: string;
   avatar_path?: string | null;
@@ -33,13 +35,24 @@ export type ApiSessionLookup = {
   findSession: (token: string) => Promise<AuthenticatedSession | undefined>;
 };
 
-export const createApiAuthMiddleware = (sessions: ApiSessionLookup, isPublic: IsPublicRequest) =>
+export const createApiAuthMiddleware = (
+  sessions: ApiSessionLookup,
+  isPublic: IsPublicRequest,
+  demoUser?: AuthenticatedUser,
+) =>
   createMiddleware<ApiEnv>(async (context, next) => {
     if (context.req.matchedRoutes.every(({ method }) => method === 'ALL')) {
       await next();
       return;
     }
     if (isPublic(context.req.method, context.req.path)) {
+      await next();
+      return;
+    }
+
+    if (demoUser) {
+      context.set('user', demoUser);
+      context.set('sessionId', DEMO_SESSION_ID);
       await next();
       return;
     }
@@ -64,7 +77,7 @@ export const createApiAuthMiddleware = (sessions: ApiSessionLookup, isPublic: Is
   });
 
 export const requireAdmin = createMiddleware<ApiEnv>(async (context, next) => {
-  if (context.get('user').role !== 'admin') {
+  if (context.get('user').role !== UserRole.Admin) {
     throw new ForbiddenException('Administrator access is required');
   }
   await next();

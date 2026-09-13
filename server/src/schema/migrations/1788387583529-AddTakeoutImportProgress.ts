@@ -5,9 +5,11 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     CREATE TABLE takeout_import (
       id uuid PRIMARY KEY,
       user_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
-      status text NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'processing', 'completed', 'failed')),
+      status text NOT NULL DEFAULT 'scanning'
+        CHECK (status IN ('scanning', 'uploading', 'processing', 'completed', 'failed', 'cancelled')),
       total integer,
       processed integer NOT NULL DEFAULT 0,
+      uploaded integer NOT NULL DEFAULT 0,
       failed integer NOT NULL DEFAULT 0,
       duplicates integer NOT NULL DEFAULT 0,
       error text,
@@ -15,6 +17,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       updated_at timestamptz NOT NULL DEFAULT now(),
       CHECK (total IS NULL OR total >= 0),
       CHECK (processed >= 0),
+      CHECK (uploaded >= 0),
       CHECK (failed >= 0),
       CHECK (duplicates >= 0)
     )

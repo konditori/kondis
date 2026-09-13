@@ -2,6 +2,7 @@ import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
 import { fileResponse, type FileReader } from 'src/api/file-response';
+import { UserRole } from 'src/enum';
 import { ForbiddenException, NotFoundException } from 'src/errors';
 import type { UserService } from 'src/services/user.service';
 
@@ -74,7 +75,7 @@ export const registerUserAvatarRoute = (
 
 export const registerUserListRoutes = (app: OpenAPIHono<ApiEnv>, users: UserReadRepository): void => {
   app.openapi(listUsersRoute, async (context) => {
-    if (context.get('user').role !== 'admin') {
+    if (context.get('user').role !== UserRole.Admin) {
       throw new ForbiddenException('Administrator access is required');
     }
     const allUsers = await users.all();

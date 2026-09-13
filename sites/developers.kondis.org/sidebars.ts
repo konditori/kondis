@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
       label: "Deploying on Cloudflare",
       items: ["cloudflare/deployment", "cloudflare/authentication"],
     },
+    "demo",
     "local-development",
     "contributing",
     { type: "link", label: "User guides", href: "https://docs.kondis.org/" },

@@ -3,18 +3,23 @@ import {
   parseUnitSystem,
   UNIT_SYSTEM_COOKIE,
 } from "$lib/units";
+import { Role } from "@kondis/sdk";
 import {
   activityControllerListTypes,
   type ActivityTypeSettingsOutput,
 } from "$lib/api";
-import { activityEventsUrl, getServerSdkRequestOptions } from "$lib/server/api";
-import { apiUrl } from "$lib/server/api";
+import {
+  activityEventsUrl,
+  apiUrl,
+  getServerSdkRequestOptions,
+} from "$lib/server/api";
 import type { LayoutServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 
 export const load: LayoutServerLoad = async ({
   cookies,
   locals,
+  platform,
   request,
   url,
 }) => {
@@ -24,16 +29,21 @@ export const load: LayoutServerLoad = async ({
         email: string;
         firstName: string;
         lastName: string;
-        role: "admin" | "user";
+        role: Role;
         avatarUrl: string | null;
       }
     | undefined;
+  // Shared token links are intentionally standalone/public.
   const publicLiveView = url?.pathname.startsWith("/live/") ?? false;
   const publicAuthPage =
     url?.pathname === "/login" ||
     url?.pathname === "/setup" ||
     url?.pathname.startsWith("/setup/") ||
     url?.pathname === "/register";
+  const demoMode = platform?.env.KONDIS_DEMO_MODE === "true";
+  if (demoMode && publicAuthPage) {
+    throw redirect(303, "/");
+  }
   const activityTypesPromise = activityControllerListTypes(
     getServerSdkRequestOptions(locals.kondisFetch),
   );
@@ -49,7 +59,8 @@ export const load: LayoutServerLoad = async ({
   }
   let activityTypes: ActivityTypeSettingsOutput[] = [];
   try {
-    activityTypes = await activityTypesPromise;
+    const response = await activityTypesPromise;
+    activityTypes = response as ActivityTypeSettingsOutput[];
   } catch {
     // Activity pages already surface API availability; keep settings usable.
   }
@@ -69,7 +80,7 @@ export const load: LayoutServerLoad = async ({
       url,
       request.headers.get("x-forwarded-proto"),
       request.headers.get("cf-visitor"),
-      request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
+      demoMode,
     ),
   };
 };

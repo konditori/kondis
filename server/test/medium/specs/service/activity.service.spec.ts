@@ -261,7 +261,7 @@ describe(ActivityService.name, () => {
       ]);
 
       await serviceApi.updateById({ id: goldId }, { excludeFromRankings: true });
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
 
       const history = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
       expect(history.efforts.map(({ activityName, overallRank }) => ({ activityName, overallRank }))).toEqual([
@@ -534,7 +534,7 @@ describe(ActivityService.name, () => {
           startedAt: '2024-01-01T10:15:00.000Z',
         },
       );
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
 
       expect(updated.sport).toBe('trail_run');
       expect(updated.startedAt).toBe('2024-01-01T10:15:00.000Z');
@@ -549,12 +549,12 @@ describe(ActivityService.name, () => {
       expect(initialActivity.bestEfforts).toHaveLength(3);
 
       await serviceApi.updateById({ id: activityId }, { sport: 'ride' });
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
       const rideActivity = await serviceApi.getById({ id: activityId });
       expect(rideActivity.bestEfforts?.map(({ type }) => type)).toEqual(['longest_ride', 'elevation_gain']);
 
       await serviceApi.updateById({ id: activityId }, { sport: 'run' });
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
       const runActivity = await serviceApi.getById({ id: activityId });
       expect(runActivity.bestEfforts).toHaveLength(3);
     });
@@ -579,7 +579,7 @@ describe(ActivityService.name, () => {
       const immediatelyHidden = await serviceApi.listRecent({ limit: 50 });
       expect(immediatelyHidden.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
 
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
       const afterAdd = await serviceApi.listRecent({ limit: 50 });
       expect(afterAdd.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
       const goldActivity = await serviceApi.getById({ id: goldId });
@@ -593,7 +593,7 @@ describe(ActivityService.name, () => {
       await serviceApi.updateById({ id: goldId }, { excludeFromRankings: false });
       // Re-enabling ranking also queues recomputation and ranking; do not rely on the
       // request thread to make the old podium correct.
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
 
       const afterRemove = await serviceApi.listRecent({ limit: 50 });
       expect(afterRemove.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual(
@@ -616,7 +616,7 @@ describe(ActivityService.name, () => {
       ]);
 
       await serviceApi.updateById({ id: activityId }, { startedAt: '2025-01-01T08:00:00.000Z' });
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
 
       await expect(
         db
@@ -775,7 +775,7 @@ describe(ActivityService.name, () => {
       ]);
 
       await serviceApi.deleteById({ id: firstId });
-      await jobs.waitForQueueCompletion(QueueName.ActivityParsing);
+      await jobs.waitForQueueCompletion(QueueName.ActivityParsing, QueueName.ActivityEnrichment);
 
       await expect(
         db

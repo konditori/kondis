@@ -1,4 +1,4 @@
-const EARTH_RADIUS_M = 6_371_000;
+import { EARTH_RADIUS_M } from 'src/constants';
 
 export const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const toRadians = (value: number) => (value * Math.PI) / 180;

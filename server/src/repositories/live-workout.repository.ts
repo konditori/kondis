@@ -78,6 +78,18 @@ export class LiveWorkoutRepository {
       .executeTakeFirstOrThrow();
   }
 
+  deleteById(id: string, userId: string) {
+    return this.db.deleteFrom('live_workout').where('id', '=', id).where('user_id', '=', userId).execute();
+  }
+
+  deleteOtherSessions(userId: string, clientSessionId: string) {
+    return this.db
+      .deleteFrom('live_workout')
+      .where('user_id', '=', userId)
+      .where('client_session_id', '!=', clientSessionId)
+      .execute();
+  }
+
   async appendPoints(id: string, points: LivePointInput[]): Promise<void> {
     await this.db.transaction().execute(async (transaction) => {
       await transaction

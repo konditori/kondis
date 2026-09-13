@@ -10,7 +10,7 @@ const HISTORY_PAGE_SIZE = 75;
 
 export const load: PageServerLoad = async ({ fetch, locals, parent, url }) => {
   const { user } = await parent();
-  if (user?.role !== "admin") throw redirect(303, "/");
+  if (user?.role !== Role.Admin) throw redirect(303, "/");
 
   const requestedPage = Number(url.searchParams.get("jobsPage"));
   const requestedCount = Number(url.searchParams.get("jobsCount"));
@@ -30,3 +30,4 @@ export const load: PageServerLoad = async ({ fetch, locals, parent, url }) => {
 
   return { queues, history, historyOffset: offset };
 };
+import { Role } from "@kondis/sdk";

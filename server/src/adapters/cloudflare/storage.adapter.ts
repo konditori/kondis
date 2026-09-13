@@ -107,7 +107,7 @@ export class R2StorageAdapter implements StoragePort {
   }
 
   async read(relativePath: string): Promise<Buffer> {
-    return (await toUint8Array(await this.required(relativePath))) as unknown as Buffer;
+    return Buffer.from(await toUint8Array(await this.required(relativePath)));
   }
 
   async readLimited(relativePath: string, maximumBytes: number): Promise<Buffer> {
@@ -115,7 +115,7 @@ export class R2StorageAdapter implements StoragePort {
     if (object.size > maximumBytes) {
       throw new FileSizeLimitError(`File exceeds ${maximumBytes} bytes`);
     }
-    return (await toUint8Array(object)) as unknown as Buffer;
+    return Buffer.from(await toUint8Array(object));
   }
 
   async write(relativePath: string, contents: Buffer): Promise<void> {

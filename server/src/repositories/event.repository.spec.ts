@@ -4,9 +4,9 @@ import { createServer } from 'node:http';
 import { describe, expect, it, vi } from 'vitest';
 import { WebSocket, type WebSocketServer } from 'ws';
 
-import type { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import type { ConfigRepository } from 'src/repositories/config.repository';
 import { EventRepository } from 'src/repositories/event.repository';
+import type { SessionRepository } from 'src/repositories/session.repository';
 import type { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
@@ -34,7 +34,7 @@ const findActiveSessionIds = vi.fn((sessionIds: string[]) => Promise.resolve(new
 const credentials = {
   findEventTicket: () => Promise.resolve({ scope: 'activity-events', sessionId: 'session-id', userId: USER_ID }),
   findActiveSessionIds,
-} as unknown as AuthCredentialRepository;
+} as unknown as SessionRepository;
 
 const setup = (
   canViewActivity: CanViewActivity = vi.fn(() => Promise.resolve({ id: ACTIVITY_ID, user_id: USER_ID })),

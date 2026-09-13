@@ -1,5 +1,6 @@
 import type { ApiDependencies } from 'src/api/app';
 import type { AuthenticatedUser } from 'src/auth';
+import { UserRole } from 'src/enum';
 
 type ApiDependencyOverrides = {
   [Key in keyof ApiDependencies]?: Partial<ApiDependencies[Key]>;
@@ -8,7 +9,7 @@ type ApiDependencyOverrides = {
 export const TEST_API_USER: AuthenticatedUser = {
   id: '00000000-0000-4000-8000-000000000001',
   email: 'user@example.com',
-  role: 'user',
+  role: UserRole.User,
   firstName: 'Test',
   lastName: 'User',
 };
