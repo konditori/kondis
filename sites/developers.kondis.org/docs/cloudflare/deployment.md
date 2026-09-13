@@ -12,7 +12,6 @@ Before deploying, select an [authentication mode](./authentication). Local bcryp
 
 ## Hyperdrive
 
-
 Kondis uses one cache-disabled Hyperdrive configuration per deployment environment. The Hyperdrive ID is infrastructure state, not an application secret, and is supplied to the deployment task rather than committed to the repository. General deployments provision Hyperdrive separately; the repository's demo workflows manage their dedicated main and PR configurations.
 
 Create the Hyperdrive configuration once per environment using a TLS connection to the PostgreSQL 17 origin. Prefer Terraform when the environment is managed there. For a one-off Wrangler setup:
