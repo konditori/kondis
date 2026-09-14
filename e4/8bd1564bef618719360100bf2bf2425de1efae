@@ -1,0 +1,23 @@
+server/src/bin/provision-demo.ts
+  s_b2838cae0d9d5e::t_9b9df94ab88e91 100
+server/test/medium/specs/repositories/pgboss-queue.adapter.spec.ts
+  s_b2838cae0d9d5e::t_80078d348f8092 168,171,178,182,185-186,190-191,195,203-204,207,214-215
+server/test/medium/specs/service/activity.service.spec.ts
+  s_b2838cae0d9d5e::t_92306e7abffac3 264-268,541-545,560-564,569-573,598-602,616-620,643-647,806-810
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e48bd1564bef618719360100bf2bf2425de1efae",
+  "prompts": {},
+  "sessions": {
+    "s_b2838cae0d9d5e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a0a8-813c-75a2-b7fd-e276885eb144",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
