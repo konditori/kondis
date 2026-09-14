@@ -97,7 +97,7 @@ const main = async (): Promise<void> => {
       users: new UserRepository(database),
     });
     console.log('Processing demo enrichment jobs');
-    const processed = await application.drainJobs(QueueName.ActivityEnrichment);
+    const processed = await application.drainJobs(QueueName.ActivityEnrichment, QueueName.ActivityRanking);
     await assertProvisioningCompleted(database);
     console.log(`Demo database migrated, seeded, and fully processed (${processed} jobs).`);
   } finally {
