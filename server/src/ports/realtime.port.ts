@@ -1,5 +1,15 @@
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 
+export type LiveWorkoutProgressEvent = {
+  id: string;
+  status: 'recording' | 'paused' | 'ended';
+  elapsedSeconds: number;
+  distanceMeters: number;
+  lastSequence: number;
+  recordedAt: string;
+  position: [longitude: number, latitude: number];
+};
+
 export type ActivityCommentEvent = {
   id: string;
   body: string;
@@ -39,6 +49,7 @@ export type EventMap = {
   ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
   NotificationCreated: [notification: NotificationCreatedEvent];
   NotificationsRead: [notification: NotificationsReadEvent];
+  LiveWorkoutUpdated: [userId: string, workout: LiveWorkoutProgressEvent];
 };
 
 export type EmitEvent = keyof EventMap;

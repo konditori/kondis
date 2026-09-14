@@ -1,9 +1,188 @@
 import { sql } from 'kysely';
+import type { ActivityComment, NewActivityComment, Notification } from 'src/db/schema';
 import type { ActivityEngagement, SocialUser } from 'src/dtos/social.dto';
 import type { KondisDatabase, KondisExecutor } from 'src/types';
+import { publicMediaUrl } from 'src/utils/media';
 
 export class SocialRepository {
-  constructor(private readonly db: KondisDatabase) {}
+  constructor(
+    private readonly db: KondisDatabase,
+    private readonly mediaBaseUrl?: string,
+  ) {}
+
+  createComment(input: NewActivityComment, executor: KondisExecutor = this.db): Promise<ActivityComment> {
+    return executor.insertInto('activity_comment').values(input).returningAll().executeTakeFirstOrThrow();
+  }
+
+  addLike(activityId: string, userId: string): Promise<number> {
+    return this.db
+      .insertInto('activity_like')
+      .values({ activity_id: activityId, user_id: userId })
+      .onConflict((oc) => oc.doNothing())
+      .executeTakeFirst()
+      .then((result) => Number(result.numInsertedOrUpdatedRows ?? 0));
+  }
+
+  removeLike(activityId: string, userId: string) {
+    return this.db
+      .deleteFrom('activity_like')
+      .where('activity_id', '=', activityId)
+      .where('user_id', '=', userId)
+      .execute();
+  }
+
+  addFollow(followerId: string, followeeId: string, executor: KondisExecutor = this.db) {
+    return executor
+      .insertInto('user_follow')
+      .values({ follower_id: followerId, followee_id: followeeId })
+      .onConflict((conflict) => conflict.doNothing())
+      .execute();
+  }
+
+  countLikes(activityId: string): Promise<number> {
+    return this.db
+      .selectFrom('activity_like')
+      .select(({ fn }) => fn.countAll<number>().as('count'))
+      .where('activity_id', '=', activityId)
+      .executeTakeFirstOrThrow()
+      .then((row) => Number(row.count));
+  }
+
+  async listComments(activityId: string, viewerId: string, cursor?: string, limit = 50) {
+    let query = this.db
+      .selectFrom('activity_comment')
+      .innerJoin('user', 'user.id', 'activity_comment.user_id')
+      .select([
+        'activity_comment.id',
+        'activity_comment.body',
+        'activity_comment.created_at',
+        'activity_comment.updated_at',
+        'user.id as user_id',
+        'user.avatar_path',
+        'user.first_name',
+        'user.last_name',
+      ])
+      .where('activity_comment.activity_id', '=', activityId)
+      .where(
+        sql<boolean>`NOT EXISTS (SELECT 1 FROM user_block b WHERE (b.blocker_id = ${viewerId}::uuid AND b.blocked_id = activity_comment.user_id) OR (b.blocker_id = activity_comment.user_id AND b.blocked_id = ${viewerId}::uuid))`,
+      );
+    if (cursor) {
+      const cursorComment = await this.db
+        .selectFrom('activity_comment')
+        .select('created_at')
+        .where('id', '=', cursor)
+        .where('activity_id', '=', activityId)
+        .executeTakeFirst();
+      if (cursorComment) {
+        query = query.where(({ and, eb, or }) =>
+          or([
+            eb('activity_comment.created_at', '>', cursorComment.created_at),
+            and([
+              eb('activity_comment.created_at', '=', cursorComment.created_at),
+              eb('activity_comment.id', '>', cursor),
+            ]),
+          ]),
+        );
+      }
+    }
+    return query
+      .orderBy('activity_comment.created_at', 'asc')
+      .orderBy('activity_comment.id', 'asc')
+      .limit(limit + 1)
+      .execute();
+  }
+
+  getComment(activityId: string, commentId: string, userId: string) {
+    return this.db
+      .selectFrom('activity_comment')
+      .selectAll()
+      .where('id', '=', commentId)
+      .where('activity_id', '=', activityId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+  }
+
+  updateComment(commentId: string, body: string) {
+    return this.db
+      .updateTable('activity_comment')
+      .set({ body })
+      .where('id', '=', commentId)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  }
+
+  deleteComment(activityId: string, commentId: string, userId: string) {
+    return this.db
+      .deleteFrom('activity_comment')
+      .where('id', '=', commentId)
+      .where('activity_id', '=', activityId)
+      .where('user_id', '=', userId)
+      .returning('id')
+      .executeTakeFirst();
+  }
+
+  listLikers(activityId: string) {
+    return this.db
+      .selectFrom('activity_like')
+      .innerJoin('user', 'user.id', 'activity_like.user_id')
+      .select(['user.id', 'user.first_name', 'user.last_name', 'user.avatar_path'])
+      .where('activity_like.activity_id', '=', activityId)
+      .orderBy('activity_like.created_at', 'desc')
+      .execute();
+  }
+
+  listNotifications(viewerId: string, limit: number) {
+    return this.db
+      .selectFrom('notification')
+      .innerJoin('user as actor', 'actor.id', 'notification.actor_id')
+      .leftJoin('activity', 'activity.id', 'notification.activity_id')
+      .select([
+        'notification.id',
+        'notification.type',
+        'notification.created_at',
+        'notification.read_at',
+        'notification.activity_id',
+        'activity.name as activity_name',
+        'actor.id as actor_id',
+        'actor.first_name',
+        'actor.last_name',
+        'actor.avatar_path',
+      ])
+      .where('notification.user_id', '=', viewerId)
+      .orderBy('notification.created_at', 'desc')
+      .limit(limit)
+      .execute();
+  }
+
+  countUnreadNotifications(viewerId: string): Promise<number> {
+    return this.db
+      .selectFrom('notification')
+      .select(({ fn }) => fn.countAll<number>().as('count'))
+      .where('notification.user_id', '=', viewerId)
+      .where('notification.read_at', 'is', null)
+      .executeTakeFirstOrThrow()
+      .then((row) => Number(row.count));
+  }
+
+  markNotificationsRead(viewerId: string, readAt: Date) {
+    return this.db
+      .updateTable('notification')
+      .set({ read_at: readAt })
+      .where('user_id', '=', viewerId)
+      .where('read_at', 'is', null)
+      .execute();
+  }
+
+  createNotification(input: {
+    user_id: string;
+    actor_id: string;
+    type: Notification['type'];
+    activity_id: string | null;
+  }): Promise<Notification> {
+    return this.db
+      .transaction()
+      .execute((trx) => trx.insertInto('notification').values(input).returningAll().executeTakeFirstOrThrow());
+  }
 
   activityEngagement(ids: string[], viewerId: string): Promise<ActivityEngagement[]> {
     return this.db
@@ -338,7 +517,9 @@ export class SocialRepository {
       id: user.id,
       firstName: user.first_name,
       lastName: user.last_name,
-      avatarUrl: user.avatar_path ? `/api/v1/users/${user.id}/avatar` : null,
+      avatarUrl: user.avatar_path
+        ? publicMediaUrl(this.mediaBaseUrl, user.avatar_path, `/api/v1/users/${user.id}/avatar`)
+        : null,
     };
   }
 }

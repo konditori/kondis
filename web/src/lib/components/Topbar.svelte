@@ -403,7 +403,7 @@
     <div class="user-menu-popover">
       <div class="user-menu-identity">
         <strong>{accountName}</strong>
-        <small>{user?.email}</small>
+        {#if user?.email}<small>{user.email}</small>{/if}
       </div>
       <a href="/settings" onclick={closeMenu}
         ><Settings size={17} /> {t("settings")}</a

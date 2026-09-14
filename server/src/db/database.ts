@@ -6,7 +6,7 @@ import type { DatabaseConfig, KondisDatabase } from 'src/types';
 
 let typeParsersConfigured = false;
 
-const configureTypeParsers = (): void => {
+export const configureTypeParsers = (): void => {
   if (typeParsersConfigured) {
     return;
   }

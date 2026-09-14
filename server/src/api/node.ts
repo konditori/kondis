@@ -12,7 +12,7 @@ import multer, { diskStorage, memoryStorage } from 'multer';
 import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
 import type { FileRange, OpenFile } from 'src/api/file-response';
-import type { ImageUpload, UploadKind, UploadReader } from 'src/api/uploads';
+import type { ImageUpload, TakeoutActivityUpload, UploadKind, UploadReader } from 'src/api/uploads';
 import type { ApplicationComposition } from 'src/composition.node';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
@@ -50,6 +50,10 @@ const uploadStorage = diskStorage({
 const uploadHandlers: Record<UploadKind, RequestHandler> = {
   activity: multer({
     storage: uploadStorage,
+    limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 1, parts: 2 },
+  }).single('file'),
+  takeoutActivity: multer({
+    storage: uploadStorage,
     limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0, parts: 2 },
   }).single('file'),
   avatar: multer({
@@ -59,10 +63,6 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
   image: multer({
     storage: memoryStorage(),
     limits: { fileSize: UPLOAD_LIMITS.imageFileBytes, files: 1, fields: 1 },
-  }).single('file'),
-  takeout: multer({
-    storage: uploadStorage,
-    limits: { fileSize: UPLOAD_LIMITS.takeoutFileBytes, files: 1, fields: 0, parts: 2 },
   }).single('file'),
 };
 
@@ -91,7 +91,7 @@ function readNodeUpload(
   _request: globalThis.Request,
   platform: ApiBindings | undefined,
   kind: UploadKind,
-): Promise<ImageUpload | UploadedFileData | undefined> {
+): Promise<ImageUpload | TakeoutActivityUpload | UploadedFileData | undefined> {
   const incoming = platform?.incoming as Request | undefined;
   const outgoing = platform?.outgoing as Response | undefined;
   if (!incoming || !outgoing) {
@@ -104,8 +104,15 @@ function readNodeUpload(
         return;
       }
       const caption = typeof incoming.body?.caption === 'string' ? incoming.body.caption : undefined;
+      const metadata = typeof incoming.body?.metadata === 'string' ? incoming.body.metadata : undefined;
       if (!incoming.file) {
-        resolve(kind === 'image' ? { file: undefined, caption } : undefined);
+        resolve(
+          kind === 'image'
+            ? { file: undefined, caption }
+            : kind === 'takeoutActivity'
+              ? { file: undefined, metadata }
+              : undefined,
+        );
         return;
       }
       const { buffer, originalname, path, size } = incoming.file;
@@ -113,7 +120,13 @@ function readNodeUpload(
         resolve({ file: { originalname, size, buffer }, caption });
         return;
       }
-      resolve(kind === 'avatar' ? { originalname, size, buffer } : { originalname, size, path });
+      resolve(
+        kind === 'avatar'
+          ? { originalname, size, buffer }
+          : kind === 'takeoutActivity'
+            ? ({ file: { originalname, size, path }, metadata } satisfies TakeoutActivityUpload)
+            : { originalname, size, path },
+      );
     });
   });
 }

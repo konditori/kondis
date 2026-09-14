@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LiveWorkoutView from "$lib/components/LiveWorkoutView.svelte";
+  import LiveActivityView from "$lib/components/LiveActivityView.svelte";
   import { t } from "$lib/i18n";
   let { data } = $props();
 </script>
@@ -8,7 +8,7 @@
 
 <main class="public-live-page">
   <a class="public-live-brand" href="/">⚡ Kondis</a>
-  <LiveWorkoutView
+  <LiveActivityView
     workout={data.workout}
     endpoint={`/api/v1/live-workouts/shared/${data.token}`}
     activityTypes={data.activityTypes}

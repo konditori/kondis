@@ -14,37 +14,54 @@ import {
 type GeneratedConfig = {
   name: string;
   vars: { KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: string };
-  r2_buckets: { binding: string; bucket_name: string }[];
-  durable_objects: { bindings: { name: string; class_name: string }[] };
-  migrations: { tag: string; new_sqlite_classes: string[] }[];
+  r2_buckets?: { binding: string; bucket_name: string }[];
+  durable_objects?: { bindings: { name: string; class_name: string }[] };
+  migrations?: { tag: string; new_sqlite_classes: string[] }[];
   hyperdrive: { binding: string; id: string }[];
-  queues: {
+  services?: { binding: string; service: string }[];
+  queues?: {
     producers: { binding: string; queue: string }[];
     consumers: {
       queue: string;
       max_retries: number;
+      max_batch_size: number;
       retry_delay?: number;
       max_concurrency: number;
       dead_letter_queue?: string;
     }[];
   };
-  triggers: { crons: string[] };
+  triggers?: { crons: string[] };
 };
 
 const require = createRequire(import.meta.url);
-const { generateCloudflareConfig } = require('../../scripts/generate-cloudflare-config.cjs') as {
-  generateCloudflareConfig(input: {
-    baseConfig: Record<string, unknown>;
-    environment: string;
-    hyperdriveId: string;
-    nodeProcessorEnabled?: boolean;
-  }): GeneratedConfig;
-};
+const { generateCloudflareConfig, generateQueueExecutorConfig, parseJsonc } =
+  require('../../scripts/generate-cloudflare-config.cjs') as {
+    generateCloudflareConfig(input: {
+      baseConfig: Record<string, unknown>;
+      environment: string;
+      hyperdriveId: string;
+      nodeProcessorEnabled?: boolean;
+      demoMode?: boolean;
+    }): GeneratedConfig;
+    generateQueueExecutorConfig(input: {
+      baseConfig: Record<string, unknown>;
+      environment: string;
+      hyperdriveId: string;
+    }): Record<string, unknown>;
+    parseJsonc(source: string): Record<string, unknown>;
+  };
 
 describe('generateCloudflareConfig', () => {
+  it('parses JSONC URLs without treating the protocol as a comment', () => {
+    expect(parseJsonc('{ "url": "https://api.internal",\n }')).toEqual({ url: 'https://api.internal' });
+  });
+
   it('derives every queue and cron setting from shared job semantics', () => {
     const config = generateCloudflareConfig({
-      baseConfig: { name: 'kondis-api', main: 'src/cloudflare/entrypoint.ts' },
+      baseConfig: {
+        name: 'kondis-api',
+        main: 'src/cloudflare/entrypoint.ts',
+      },
       environment: 'staging',
       hyperdriveId: 'a'.repeat(32),
     });
@@ -57,31 +74,99 @@ describe('generateCloudflareConfig', () => {
     });
     expect(config.migrations).toEqual([{ tag: 'realtime-v1', new_sqlite_classes: ['RealtimeDurableObject'] }]);
     expect(config.hyperdrive).toEqual([{ binding: 'HYPERDRIVE', id: 'a'.repeat(32) }]);
-    expect(config.queues.producers).toHaveLength(Object.values(QueueName).length);
-    expect(config.queues.consumers).toHaveLength(Object.values(QueueName).length * 2);
+    expect(config.services).toEqual([{ binding: 'QUEUE_EXECUTOR', service: 'kondis-api-staging-queue-executor' }]);
+    expect(config.queues!.producers).toHaveLength(Object.values(QueueName).length);
+    expect(config.queues!.consumers).toHaveLength(Object.values(QueueName).length * 2);
 
     for (const queue of Object.values(QueueName)) {
       const resourceName = queue.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
       const name = `kondis-api-staging-${resourceName}`;
-      expect(config.queues.producers).toContainEqual(expect.objectContaining({ queue: name }));
-      expect(config.queues.consumers).toContainEqual(
+      expect(config.queues!.producers).toContainEqual(expect.objectContaining({ queue: name }));
+      expect(config.queues!.consumers).toContainEqual(
         expect.objectContaining({
           queue: name,
           max_retries: JOB_RETRY_LIMIT,
+          max_batch_size: 1,
           retry_delay: JOB_RETRY_DELAY_SECONDS,
           max_concurrency: JOB_CONCURRENCY[queue],
           dead_letter_queue: `${name}-dlq`,
         }),
       );
-      expect(config.queues.consumers).toContainEqual(
+      expect(config.queues!.consumers).toContainEqual(
         expect.objectContaining({ queue: `${name}-dlq`, max_retries: 0, max_concurrency: 1 }),
       );
     }
 
-    expect(config.triggers.crons).toEqual([
+    expect(config.triggers!.crons).toEqual([
       ...CRON_JOBS.filter(({ item }) => CLOUD_JOB_CONSUMER[item.name] === 'worker').map(({ cron }) => cron),
       '* * * * *',
     ]);
+  });
+
+  it('enables anonymous read-only demo access in demo mode', () => {
+    const config = generateCloudflareConfig({
+      baseConfig: {
+        name: 'kondis-demo-api',
+        main: 'src/cloudflare/entrypoint.ts',
+        durable_objects: {
+          bindings: [
+            { name: 'DEMO_LIVE_TRACKER', class_name: 'DemoLiveTracker' },
+            { name: 'REALTIME', class_name: 'RealtimeDurableObject' },
+          ],
+        },
+        migrations: [
+          { tag: 'demo-live-tracker-v1', new_sqlite_classes: ['DemoLiveTracker'] },
+          { tag: 'demo-live-tracker-v2', new_sqlite_classes: ['RealtimeDurableObject'] },
+        ],
+        services: [{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }],
+        triggers: { crons: ['* * * * *'] },
+      },
+      environment: 'demo',
+      hyperdriveId: 'd'.repeat(32),
+      demoMode: true,
+    });
+
+    expect(config.name).toBe('kondis-demo-api');
+    expect(config.vars).toEqual({
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false',
+      KONDIS_DEMO_MODE: 'true',
+    });
+    expect(config).not.toHaveProperty('r2_buckets');
+    expect(config).not.toHaveProperty('queues');
+    expect(config).not.toHaveProperty('triggers');
+    expect(config.services).toEqual([{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }]);
+    expect(config.durable_objects).toEqual({
+      bindings: [
+        { name: 'DEMO_LIVE_TRACKER', class_name: 'DemoLiveTracker' },
+        { name: 'REALTIME', class_name: 'RealtimeDurableObject' },
+      ],
+    });
+    expect(config.migrations).toEqual([
+      { tag: 'demo-live-tracker-v1', new_sqlite_classes: ['DemoLiveTracker'] },
+      { tag: 'demo-live-tracker-v2', new_sqlite_classes: ['RealtimeDurableObject'] },
+    ]);
+  });
+
+  it('isolates a PR demo Worker while retaining demo behavior', () => {
+    const config = generateCloudflareConfig({
+      baseConfig: {
+        name: 'kondis-demo-api',
+        main: 'src/cloudflare/entrypoint.ts',
+        services: [{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api' }],
+      },
+      environment: 'pr-42',
+      hyperdriveId: 'e'.repeat(32),
+      demoMode: true,
+    });
+
+    expect(config.name).toBe('kondis-demo-api-pr-42');
+    expect(config.vars).toEqual({
+      KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'false',
+      KONDIS_DEMO_MODE: 'true',
+    });
+    expect(config.services).toEqual([{ binding: 'DEMO_LIVE_INGESTION', service: 'kondis-demo-api-pr-42' }]);
+    expect(config).not.toHaveProperty('r2_buckets');
+    expect(config).not.toHaveProperty('queues');
   });
 
   it('enables Node-owned schedules only when the cloud processor is ready', () => {
@@ -93,6 +178,29 @@ describe('generateCloudflareConfig', () => {
     });
 
     expect(config.vars).toEqual({ KONDIS_CLOUD_NODE_PROCESSOR_ENABLED: 'true' });
-    expect(config.triggers.crons).toEqual([...CRON_JOBS.map(({ cron }) => cron), '* * * * *']);
+    expect(config.triggers!.crons).toEqual([...CRON_JOBS.map(({ cron }) => cron), '* * * * *']);
+  });
+
+  it('creates a private, Stockholm-placed executor using existing resources', () => {
+    const config = generateQueueExecutorConfig({
+      baseConfig: { name: 'kondis-api', main: 'src/cloudflare/entrypoint.ts' },
+      environment: 'staging',
+      hyperdriveId: 'c'.repeat(32),
+    });
+
+    expect(config).toMatchObject({
+      name: 'kondis-api-staging-queue-executor',
+      main: 'src/cloudflare/queue-executor.ts',
+      workers_dev: false,
+      preview_urls: false,
+      placement: { region: 'aws:eu-north-1' },
+      hyperdrive: [{ binding: 'HYPERDRIVE', id: 'c'.repeat(32) }],
+      durable_objects: {
+        bindings: [{ name: 'REALTIME', class_name: 'RealtimeDurableObject', script_name: 'kondis-api-staging' }],
+      },
+    });
+    expect(config).not.toHaveProperty('migrations');
+    expect(config).not.toHaveProperty('triggers');
+    expect((config.queues as { producers: unknown[] }).producers).toHaveLength(Object.values(QueueName).length);
   });
 });

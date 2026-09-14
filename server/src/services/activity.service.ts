@@ -1,7 +1,7 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
 import { ActivityImage } from 'src/db/schema';
-import { ActivitySchema, type ActivityDetailDto } from 'src/dtos/activity.dto';
+import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
@@ -9,26 +9,28 @@ import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { DatabaseRepository } from 'src/repositories/database.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
 import { ImportProgressStore } from 'src/state/import-progress.store';
-import type { FitMessages } from 'src/types';
 import {
   ActivityListRecord,
   ActivityMetrics,
   ActivityRecord,
+  ActivityStreamInput,
   ActivityTag,
   ActivityType,
   BestEffortGroup,
   BestEffortType,
   CreateActivityInput,
+  FitMessages,
+  FitRecordMesg,
   ParsedActivity,
   ParsedActivityStructure,
   UpdateActivityInput,
@@ -36,6 +38,7 @@ import {
 import { JobItem, JobOf } from 'src/types/jobs';
 import { buildActivityAnalysis } from 'src/utils/activity-details';
 import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
+import { publicMediaUrl } from 'src/utils/media';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
 const extname = (path: string): string => path.slice(path.lastIndexOf('.'));
@@ -74,7 +77,7 @@ export class ActivityService {
     private readonly uploadRepository: UploadRepository,
     private readonly storageRepository: StoragePort,
     private readonly activityRepository: ActivityRepository,
-    private readonly databaseRepository: DatabaseRepository,
+    private readonly databaseRepository: TransactionPort,
     private readonly eventRepository: RealtimePort,
     private readonly jobRepository: JobProducerPort,
     private readonly fitRepository: FitRepository,
@@ -82,8 +85,9 @@ export class ActivityService {
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
     private readonly importProgressStore?: ImportProgressStore,
-    private readonly activityImageRepository?: ActivityImageRepository,
+    private readonly mediaRepository?: MediaRepository,
     private readonly socialRepository?: SocialRepository,
+    private readonly mediaBaseUrl?: string,
   ) {
     this.logger.setContext(ActivityService.name);
   }
@@ -96,6 +100,7 @@ export class ActivityService {
     activitySport,
     activityTags,
     takeoutImportId,
+    takeoutItemKey,
     images,
   }: JobOf<JobName.ActivityParse>): Promise<JobStatus> {
     const upload = await this.uploadRepository.getById(id);
@@ -123,8 +128,8 @@ export class ActivityService {
         if (images?.length) {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
-        if (takeoutImportId) {
-          await this.importProgressStore?.increment(takeoutImportId);
+        if (takeoutImportId && takeoutItemKey) {
+          await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
         }
         return JobStatus.Skipped;
       }
@@ -135,7 +140,9 @@ export class ActivityService {
 
     try {
       const contents = await this.readActivityFile(upload.storage_path);
-      const parsed = this.parseActivityStructureFile(upload.storage_path, contents);
+      const messages = this.decodeActivityFile(upload.storage_path, contents);
+      const parsed = parseFitStructure(messages);
+      const metrics = parseFitMessages(messages);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
         const createdId = await this.activityRepository.create(
           this.toCreateInput(
@@ -149,9 +156,10 @@ export class ActivityService {
           ),
           trx,
         );
+        await this.activityRepository.setMetrics(createdId, this.toMetrics(metrics), trx);
         await Promise.all([
           this.jobRepository.queue(
-            { name: JobName.ActivityMetricCompute, data: { id: createdId } },
+            { name: JobName.ActivityBestEffortCompute, data: { id: createdId } },
             { transaction: trx },
           ),
           this.jobRepository.queue(
@@ -174,16 +182,16 @@ export class ActivityService {
         throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
-      if (takeoutImportId) {
-        await this.importProgressStore?.increment(takeoutImportId);
+      if (takeoutImportId && takeoutItemKey) {
+        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
 
       await this.uploadRepository.setStatus(id, 'failed', message);
-      if (takeoutImportId) {
-        await this.importProgressStore?.increment(takeoutImportId, true);
+      if (takeoutImportId && takeoutItemKey) {
+        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'failed', message);
       }
       throw error;
     }
@@ -212,8 +220,8 @@ export class ActivityService {
           data: { uploadId: existing.id, images: job.images },
         });
       }
-      if (job.takeoutImportId) {
-        await this.importProgressStore?.increment(job.takeoutImportId, false, true);
+      if (job.takeoutImportId && job.takeoutItemKey) {
+        await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'duplicate');
       }
       return JobStatus.Skipped;
     }
@@ -288,10 +296,89 @@ export class ActivityService {
     if (activity) {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
-    if (job.takeoutImportId) {
-      await this.importProgressStore?.increment(job.takeoutImportId);
+    if (job.takeoutImportId && job.takeoutItemKey) {
+      await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'completed');
     }
     return JobStatus.Success;
+  }
+
+  async createDirectActivity(userId: string, input: DirectActivityCreateDto) {
+    const uploadId = crypto.randomUUID();
+    const activityId = await this.databaseRepository.withTransaction(async (trx) => {
+      await this.uploadRepository.create(
+        {
+          id: uploadId,
+          checksum: `direct:${uploadId}`,
+          original_name: 'Direct activity data',
+          byte_size: 0,
+          storage_path: '',
+          user_id: userId,
+          status: 'parsed',
+        },
+        trx,
+      );
+      const id = await this.activityRepository.create(
+        {
+          activity: {
+            id: crypto.randomUUID(),
+            upload_id: uploadId,
+            user_id: userId,
+            sport: input.sport,
+            name: input.name,
+            description: input.description,
+            tags: input.tags,
+            started_at: new Date(input.startedAt),
+            timezone_offset_minutes: input.timezoneOffsetMinutes,
+          },
+          streams: input.streams,
+          laps: input.laps.map((lap) => ({
+            lap_index: lap.lapIndex,
+            started_at: lap.startedAt ? new Date(lap.startedAt) : null,
+            elapsed_time: lap.elapsedTime,
+            moving_time: lap.movingTime,
+            distance: lap.distance,
+            avg_hr: lap.avgHr,
+            max_hr: lap.maxHr,
+            avg_power: lap.avgPower,
+            avg_speed_mps: lap.avgSpeedMps,
+          })),
+        },
+        trx,
+      );
+      await this.activityRepository.setMetrics(
+        id,
+        {
+          elapsed_time: input.metrics.elapsedTime,
+          moving_time: input.metrics.movingTime,
+          distance: input.metrics.distance,
+          elevation_gain: input.metrics.elevationGain,
+          elevation_loss: input.metrics.elevationLoss,
+          avg_speed: input.metrics.avgSpeed,
+          max_speed: input.metrics.maxSpeed,
+          avg_hr: input.metrics.avgHr,
+          max_hr: input.metrics.maxHr,
+          avg_cadence: input.metrics.avgCadence,
+          max_cadence: input.metrics.maxCadence,
+          avg_power: input.metrics.avgPower,
+          max_power: input.metrics.maxPower,
+          normalized_power: input.metrics.normalizedPower,
+          calories: input.metrics.calories,
+        },
+        trx,
+      );
+      await Promise.all([
+        this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx }),
+        this.jobRepository.queue({ name: JobName.ActivityRouteMatchCompute, data: { id } }, { transaction: trx }),
+      ]);
+      return id;
+    });
+    const activity = await this.activityRepository.getById(activityId);
+    if (!activity) {
+      throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
+    }
+    const dto = this.toActivityDto(activity, 'Direct activity data');
+    await this.eventRepository.emit('ActivityCreate', dto);
+    return dto;
   }
 
   async handleActivityMetricCompute({ id }: JobOf<JobName.ActivityMetricCompute>): Promise<JobStatus> {
@@ -307,8 +394,9 @@ export class ActivityService {
       return JobStatus.Skipped;
     }
 
-    const contents = await this.readActivityFile(upload.storage_path);
-    const parsed = this.computeActivityFile(upload.storage_path, contents);
+    const parsed = upload.storage_path
+      ? this.computeActivityFile(upload.storage_path, await this.readActivityFile(upload.storage_path))
+      : await this.computeStoredActivity(id, activity.started_at);
     const found = await this.databaseRepository.withTransaction(async (trx) => {
       const activityFound = await this.activityRepository.setMetrics(id, this.toMetrics(parsed), trx);
       if (activityFound) {
@@ -326,6 +414,34 @@ export class ActivityService {
     }
     this.logger.log(`Computed metrics for activity ${id}`);
     return JobStatus.Success;
+  }
+
+  private async computeStoredActivity(
+    activityId: string,
+    startedAt: Date | string,
+  ): Promise<ReturnType<typeof parseFitMessages>> {
+    const streams = await this.activityRepository.getStreams(activityId);
+    const byType = new Map(streams.map((stream) => [stream.type, stream.data]));
+    const recordCount = Math.max(...streams.map((stream) => stream.data.length), 0);
+    const value = (type: ActivityStreamInput['type'], index: number): number | undefined => {
+      const sample = byType.get(type)?.[index];
+      return Number.isFinite(sample) ? sample : undefined;
+    };
+    const startedAtMs = new Date(startedAt).getTime();
+    const records: FitRecordMesg[] = Array.from({ length: recordCount }, (_, index) => ({
+      timestamp: new Date(startedAtMs + (value('time', index) ?? index) * 1000),
+      positionLat: value('latitude', index),
+      positionLong: value('longitude', index),
+      altitude: value('altitude', index),
+      distance: value('distance', index),
+      speed: value('speed', index),
+      heartRate: value('heartrate', index),
+      cadence: value('cadence', index),
+      power: value('power', index),
+      temperature: value('temperature', index),
+    }));
+    const messages: FitMessages = { recordMesgs: records };
+    return parseFitMessages(messages);
   }
 
   private decodeActivityFile(path: string, contents: Buffer): FitMessages {
@@ -363,10 +479,6 @@ export class ActivityService {
       }
       throw error;
     }
-  }
-
-  private parseActivityStructureFile(path: string, contents: Buffer): ParsedActivityStructure {
-    return parseFitStructure(this.decodeActivityFile(path, contents));
   }
 
   private computeActivityFile(path: string, contents: Buffer): ParsedActivity {
@@ -468,11 +580,9 @@ export class ActivityService {
     }
 
     const upload = await this.uploadRepository.getById(activity.upload_id);
-    const activityImages = this.activityImageRepository
-      ? await this.activityImageRepository.listForUpload(activity.upload_id)
-      : [];
-    const imageFiles = this.activityImageRepository
-      ? await Promise.all(activityImages.map((image) => this.activityImageRepository!.getFiles(image.id)))
+    const activityImages = this.mediaRepository ? await this.mediaRepository.listForActivity(activity.id) : [];
+    const imageFiles = this.mediaRepository
+      ? await Promise.all(activityImages.map((image) => this.mediaRepository!.getFiles(image.id)))
       : [];
 
     await this.databaseRepository.withTransaction(async (trx) => {
@@ -541,7 +651,7 @@ export class ActivityService {
       achievementCounts.map(({ activity_id, achievement_count }) => [activity_id, achievement_count]),
     );
     const imagesByActivity = await Promise.all(
-      page.map((row) => this.listImageDtos(row.upload_id, feedUserId ? undefined : userId)),
+      page.map((row) => this.listImageDtos(row.id, feedUserId ? undefined : userId)),
     );
 
     return {
@@ -664,7 +774,7 @@ export class ActivityService {
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
-      this.activityImageRepository?.listForUpload(row.upload_id) ?? Promise.resolve([]),
+      this.mediaRepository?.listForActivity(row.id) ?? Promise.resolve([]),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
     const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
@@ -693,16 +803,22 @@ export class ActivityService {
     };
   }
 
-  private async listImageDtos(uploadId: string, userId?: string) {
-    if (!this.activityImageRepository) {
+  private async listImageDtos(activityId: string, userId?: string) {
+    if (!this.mediaRepository) {
       return [];
     }
-    const images = await this.activityImageRepository.listForUpload(uploadId, userId);
+    const images = await this.mediaRepository.listForActivity(activityId, userId);
     return Promise.all(images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)));
   }
 
   private async toImageDto(image: ActivityImage) {
-    const files = (await this.activityImageRepository?.getFiles(image.id)) ?? [];
+    const files = (await this.mediaRepository?.getFiles(image.id)) ?? [];
+    const fileUrl = (variant: 'thumbnail' | 'preview' | 'original'): string | null => {
+      const file = files.find((candidate) => candidate.variant === variant);
+      return file
+        ? publicMediaUrl(this.mediaBaseUrl, file.storage_path, `/api/v1/activity-images/${image.id}/${variant}`)
+        : null;
+    };
     return {
       id: image.id,
       caption: image.caption,
@@ -710,13 +826,9 @@ export class ActivityService {
       width: image.width,
       height: image.height,
       status: image.status,
-      thumbnail: files.some((file) => file.variant === 'thumbnail')
-        ? `/api/v1/activity-images/${image.id}/thumbnail`
-        : null,
-      preview: files.some((file) => file.variant === 'preview') ? `/api/v1/activity-images/${image.id}/preview` : null,
-      original: files.some((file) => file.variant === 'original')
-        ? `/api/v1/activity-images/${image.id}/original`
-        : null,
+      thumbnail: fileUrl('thumbnail'),
+      preview: fileUrl('preview'),
+      original: fileUrl('original'),
     };
   }
 

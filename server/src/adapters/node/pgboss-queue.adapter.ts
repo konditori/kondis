@@ -8,6 +8,7 @@ import type { AnyJobHandlerDescriptor, JobHandlerDescriptor } from 'src/jobs/job
 import {
   CLOUD_JOB_CONSUMER,
   CRON_JOBS,
+  JOB_BATCH_SIZE,
   JOB_CONCURRENCY,
   JOB_CRON,
   JOB_EXPIRE_SECONDS,
@@ -52,7 +53,6 @@ type RawJobCounts = Omit<JobCounts, 'ready'>;
 type StoredJobCounts = RawJobCounts & { name: string };
 
 const COMPLETION_POLL_MS = 100;
-const WORKER_BATCH_SIZE = 25;
 
 const deadLetterName = (queue: QueueName): string => `${queue}.deadLetter`;
 
@@ -528,7 +528,7 @@ export class PgBossQueueAdapter {
     await boss.work<StoredJob>(
       queue,
       {
-        batchSize: WORKER_BATCH_SIZE,
+        batchSize: JOB_BATCH_SIZE[queue],
         burstWhenBatchFull: true,
         localConcurrency: JOB_CONCURRENCY[queue],
         perJobResults: true,
@@ -540,32 +540,7 @@ export class PgBossQueueAdapter {
   }
 
   private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<JobResult[]> {
-    const rankingRefreshes: Job<StoredJob>[] = [];
-    const results: JobResult[] = [];
-
-    for (const job of jobs) {
-      if (job.data.name === JobName.ActivityBestEffortRank) {
-        // TODO: remove this workaround
-        rankingRefreshes.push(job);
-        continue;
-      }
-
-      results.push(await this.dispatchResult(job));
-    }
-
-    const rankingRefresh = rankingRefreshes.pop();
-    for (const duplicate of rankingRefreshes) {
-      results.push({
-        id: duplicate.id,
-        status: 'completed',
-        output: { status: JobStatus.Skipped },
-      });
-    }
-    if (rankingRefresh) {
-      results.push(await this.dispatchResult(rankingRefresh));
-    }
-
-    return results;
+    return Promise.all(jobs.map((job) => this.dispatchResult(job)));
   }
 
   private dispatch(job: Job<StoredJob>): Promise<JobStatus> {

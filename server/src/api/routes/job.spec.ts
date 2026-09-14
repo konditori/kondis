@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createApiShell } from 'src/api/app';
 import { registerWorkerQueueMutationRoutes } from 'src/api/route-groups';
-import { QueueName } from 'src/enum';
+import { QueueName, UserRole } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
-const ADMIN = { ...TEST_API_USER, role: 'admin' as const };
+const ADMIN = { ...TEST_API_USER, role: UserRole.Admin };
 const counts = { active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 };
 const allStatus = Object.fromEntries(
   Object.values(QueueName).map((queue) => [queue, { jobCounts: counts, queueStatus: { paused: false } }]),

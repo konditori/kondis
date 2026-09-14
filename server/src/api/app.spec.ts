@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
+import { HttpException, HttpStatus } from 'src/errors';
 import { apiAuthHeaders, newApiDependencies, newApiUsers } from 'test/api';
 
 const findNoUser = (_id: string) => Promise.resolve(undefined);
@@ -9,8 +10,14 @@ const operationMethods = new Set(['delete', 'get', 'head', 'options', 'patch', '
 const expectedOperations = [
   'GET /ping ServerController_ping',
   'POST /upload/activity UploadController_uploadActivity',
-  'POST /upload/strava UploadController_uploadStravaTakeout',
-  'GET /upload/strava/{id} UploadController_getStravaTakeoutStatus',
+  'POST /upload/strava/imports TakeoutImportController_create',
+  'POST /upload/strava/imports/{id}/scan TakeoutImportController_scan',
+  'POST /upload/strava/imports/{id}/activities TakeoutImportController_uploadActivity',
+  'POST /upload/strava/imports/{id}/manual-activities TakeoutImportController_submitManual',
+  'POST /upload/strava/imports/{id}/items/fail TakeoutImportController_failItem',
+  'POST /upload/strava/imports/{id}/finalize TakeoutImportController_finalize',
+  'POST /upload/strava/imports/{id}/cancel TakeoutImportController_cancel',
+  'GET /upload/strava/imports/{id} TakeoutImportController_getStatus',
   'GET /jobs JobController_getAllJobStatus',
   'POST /jobs JobController_createJob',
   'GET /jobs/history JobController_getJobHistory',
@@ -32,6 +39,7 @@ const expectedOperations = [
   'PUT /activities/{id} ActivityController_updateById',
   'DELETE /activities/{id} ActivityController_deleteById',
   'GET /activities/{id}/matched-routes ActivityController_listMatchedRoutes',
+  'POST /activities ActivityController_create',
   'POST /activities/{id}/images ActivityImageController_upload',
   'GET /activities/{id}/images ActivityImageController_list',
   'PATCH /activities/{activityId}/images/{imageId} ActivityImageController_update',
@@ -119,6 +127,27 @@ describe('API application', () => {
     expect(response.status).toBe(404);
     expect(response.headers.get('Content-Type')).toContain('application/json');
     expect(await response.json()).toEqual({ statusCode: 404, message: 'Not Found' });
+  });
+
+  it('preserves Retry-After on rate-limited responses', async () => {
+    const response = await createApiApp(
+      newApiDependencies({
+        auth: {
+          createActivityEventsTicket: () =>
+            Promise.reject(
+              new HttpException('Too many event ticket attempts', HttpStatus.TOO_MANY_REQUESTS, {
+                headers: { 'Retry-After': '42' },
+              }),
+            ),
+        },
+      }),
+    ).request('/auth/activity-events-ticket', {
+      method: 'POST',
+      headers: apiAuthHeaders(),
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('42');
   });
 
   it('preserves the ping operation contract', () => {

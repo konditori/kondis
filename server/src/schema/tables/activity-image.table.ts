@@ -16,7 +16,7 @@ export class ActivityImageTable {
   id!: Generated<string>;
 
   @Column({ type: 'text' })
-  upload_id!: string;
+  activity_id!: string;
 
   @Column({ type: 'text' })
   checksum!: string;

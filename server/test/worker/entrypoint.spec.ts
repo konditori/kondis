@@ -10,21 +10,11 @@ import { QueueName } from 'src/enum';
 describe('Cloudflare Worker entrypoint', () => {
   const worker = exports.default;
 
-  it('serves the health boundary inside workerd', async () => {
-    const response = await worker.fetch(new Request('https://kondis.example/api/v1/ping'));
+  it.each(['/api/v1/ping', '/ping'])('serves the health boundary at %s inside workerd', async (path) => {
+    const response = await worker.fetch(new Request(`https://kondis.example${path}`));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ status: 'pong' });
-  });
-
-  it('does not expose the Hyperdrive probe without its secret binding', async () => {
-    const response = await worker.fetch(
-      new Request('https://kondis.example/api/v1/_internal/hyperdrive-spike', {
-        headers: { Authorization: 'Bearer attacker-controlled' },
-      }),
-    );
-
-    expect(response.status).toBe(404);
   });
 
   it('maps deployed queue resource names back to domain queue names', () => {

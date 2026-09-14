@@ -23,9 +23,7 @@ Wireguard is an open source VPN system that you can host yourself without relyin
 
 ## Cloudflare Tunnel
 
-:::note
-The main author of Kondis is a Cloudflare employee
-:::
+:::note The main author of Kondis is a Cloudflare employee :::
 
 Cloudflare Tunnel is a remote-access option for a Kondis server that you already run. It does not deploy Kondis to Cloudflare Workers or move your database to Cloudflare.
 
