@@ -1,0 +1,59 @@
+sites/developers.kondis.org/docs/demo.md
+  s_63b6fee1490772::t_ec50efc860c3ee 2,5,7,9,11-18,22-25
+sites/developers.kondis.org/docs/local-development.md
+  s_63b6fee1490772::t_f390060d278a7a 25-31
+sites/developers.kondis.org/docs/overview.md
+  s_63b6fee1490772::t_a7a12741254960 23,41
+sites/docs.kondis.org/docs/install/remote.md
+  s_63b6fee1490772::t_ff12779e7356a1 26
+sites/docs.kondis.org/docs/install/requirements.md
+  s_63b6fee1490772::t_cc45eac8388411 8
+sites/docs.kondis.org/docs/install/setup.md
+  s_63b6fee1490772::t_96dd709435abbd 29
+server/src/adapters/node/pgboss-queue.adapter.ts
+  s_b2838cae0d9d5e::t_b3cb1802e4306f 11,531,543
+server/src/cloudflare/entrypoint.ts
+  s_b2838cae0d9d5e::t_d51d706976a3e2 46,414
+server/src/cloudflare/queue-executor.ts
+  s_b2838cae0d9d5e::t_969d0a15171131 59
+server/src/composition.worker.ts
+  s_b2838cae0d9d5e::t_09bad5ddacbb7d 54,85
+server/src/enum.ts
+  s_b2838cae0d9d5e::t_7a35cec002204c 74
+server/src/job-handler.registry.spec.ts
+  s_b2838cae0d9d5e::t_a71bd2adf05d4a 84
+server/src/job-handler.registry.ts
+  s_b2838cae0d9d5e::t_0cd16f8b3be233 58
+server/src/jobs/job-semantics.spec.ts
+  s_b2838cae0d9d5e::t_bc68227b208677 6-7,10,52-58
+server/src/jobs/job-semantics.ts
+  s_b2838cae0d9d5e::t_cc01bc1488e8bc 32,118,135,140-148
+server/src/schema/add-activity-ranking-queue.migration.spec.ts
+  s_b2838cae0d9d5e::t_0d5ab9158c3847 1-38
+server/src/schema/migrations/1789658664158-AddActivityRankingQueue.ts
+  s_b2838cae0d9d5e::t_5320fdfcd80530 1-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9e134c26ee8e91b2c4060e8b39a3ea99cd54da33",
+  "prompts": {},
+  "sessions": {
+    "s_63b6fee1490772": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2d3be2ed-8e03-42fa-acb8-82fab42c75ef",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b2838cae0d9d5e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a0a8-813c-75a2-b7fd-e276885eb144",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
