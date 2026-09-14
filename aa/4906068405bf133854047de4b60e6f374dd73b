@@ -1,0 +1,19 @@
+sites/developers.kondis.org/docs/demo.md
+  s_ffb3db09b70c2d::t_3cd0ef1af5ccd0 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "aa4906068405bf133854047de4b60e6f374dd73b",
+  "prompts": {},
+  "sessions": {
+    "s_ffb3db09b70c2d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a172-71b4-7f81-b119-f9e0fdeac8f4",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
