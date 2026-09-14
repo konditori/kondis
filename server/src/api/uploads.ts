@@ -1,10 +1,14 @@
 import type { ApiBindings } from 'src/api/auth';
 import type { BufferedUploadedFileData, UploadedFileData } from 'src/types/uploads';
 
-export type UploadKind = 'activity' | 'avatar' | 'image' | 'takeout';
+export type UploadKind = 'activity' | 'takeoutActivity' | 'avatar' | 'image';
 export type ImageUpload = {
   file: BufferedUploadedFileData | undefined;
   caption: string | undefined;
+};
+export type TakeoutActivityUpload = {
+  file: UploadedFileData | undefined;
+  metadata: string | undefined;
 };
 
 export type UploadReader = {
@@ -12,5 +16,5 @@ export type UploadReader = {
     request: Request,
     platform: ApiBindings | undefined,
     kind: UploadKind,
-  ) => Promise<ImageUpload | UploadedFileData | undefined>;
+  ) => Promise<ImageUpload | TakeoutActivityUpload | UploadedFileData | undefined>;
 };

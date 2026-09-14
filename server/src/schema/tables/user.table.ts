@@ -1,3 +1,4 @@
+import { UserRole } from 'src/enum';
 import {
   Column,
   CreateDateColumn,
@@ -17,7 +18,7 @@ export class UserTable {
   @Column({ type: 'text', nullable: true }) avatar_mime_type!: string | null;
   @Column({ type: 'integer', nullable: true }) avatar_size!: number | null;
   @Column({ type: 'text' }) password_hash!: string;
-  @Column({ type: 'text' }) role!: Generated<'admin' | 'user'>;
+  @Column({ type: 'text' }) role!: Generated<UserRole>;
   @CreateDateColumn() created_at!: Generated<Timestamp>;
   @UpdateDateColumn() updated_at!: Generated<Timestamp>;
 }

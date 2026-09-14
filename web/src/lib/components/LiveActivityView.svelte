@@ -1,0 +1,234 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import {
+    Activity,
+    ArrowLeft,
+    Clock3,
+    Link,
+    Pause,
+    Radio,
+    WifiOff,
+  } from "@lucide/svelte";
+  import LiveRouteMap from "$lib/components/LiveRouteMap.svelte";
+  import { activityTypeLabel } from "$lib/activity-types";
+  import type { ActivityTypeSettingsOutput } from "$lib/api";
+  import type { LiveWorkout } from "$lib/types";
+  import type { UnitSystem } from "$lib/units";
+  import { distance, duration } from "$lib/format";
+  import { t } from "$lib/i18n";
+
+  let {
+    workout = $bindable(),
+    endpoint,
+    activityTypes,
+    unitSystem,
+    allowSharing = false,
+  }: {
+    workout: LiveWorkout;
+    endpoint: string;
+    activityTypes: ActivityTypeSettingsOutput[];
+    unitSystem: UnitSystem;
+    allowSharing?: boolean;
+  } = $props();
+  let shareUrl = $state<string | null>(null);
+  let shareError = $state<string | null>(null);
+  let sharing = $state(false);
+  let resolvingFinishedWorkout = $state(false);
+  let now = $state(Date.now());
+  const ageSeconds = $derived(
+    workout.lastReceivedAt
+      ? Math.max(
+          0,
+          Math.floor((now - Date.parse(workout.lastReceivedAt)) / 1000),
+        )
+      : null,
+  );
+  const connection = $derived(
+    workout.status === "paused"
+      ? "Paused"
+      : workout.status === "ended"
+        ? "Finished"
+        : ageSeconds === null || ageSeconds > 120
+          ? "Connection lost"
+          : ageSeconds > 30
+            ? "Catching up"
+            : "Live",
+  );
+
+  function connectionLabel(value: string) {
+    if (value === "Paused") return t("paused");
+    if (value === "Finished") return t("finished");
+    if (value === "Connection lost") return t("connection_lost");
+    if (value === "Catching up") return t("catching_up");
+    return t("live");
+  }
+
+  onMount(() => {
+    const resolveFinishedWorkout = async () => {
+      if (
+        !allowSharing ||
+        workout.status !== "ended" ||
+        resolvingFinishedWorkout
+      )
+        return;
+      resolvingFinishedWorkout = true;
+      try {
+        const response = await fetch("/api/v1/activities?limit=50", {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          activities?: Array<{ id: string; sport: string; startedAt: string }>;
+        };
+        const startedAt = Date.parse(workout.startedAt);
+        const activity = payload.activities
+          ?.filter((candidate) => candidate.sport === workout.sport)
+          .map((candidate) => ({
+            candidate,
+            distance: Math.abs(Date.parse(candidate.startedAt) - startedAt),
+          }))
+          .filter(({ distance }) => distance <= 5 * 60 * 1000)
+          .sort((a, b) => a.distance - b.distance)[0]?.candidate;
+        if (activity) window.location.replace(`/activity/${activity.id}`);
+      } finally {
+        resolvingFinishedWorkout = false;
+      }
+    };
+    const refresh = async () => {
+      try {
+        const response = await fetch(endpoint, { cache: "no-store" });
+        if (response.ok) {
+          workout = (await response.json()) as LiveWorkout;
+          void resolveFinishedWorkout();
+        }
+      } catch {
+        // The visible timestamp communicates a stale connection without hiding the route.
+      }
+    };
+    void resolveFinishedWorkout();
+    const poll = window.setInterval(() => void refresh(), 10_000);
+    const clock = window.setInterval(() => (now = Date.now()), 1_000);
+    return () => {
+      window.clearInterval(poll);
+      window.clearInterval(clock);
+    };
+  });
+
+  async function createShare() {
+    sharing = true;
+    shareError = null;
+    try {
+      const response = await fetch(
+        `/api/v1/live-workouts/${workout.id}/share`,
+        {
+          method: "POST",
+        },
+      );
+      if (!response.ok) throw new Error(t("could_not_create_share_link"));
+      const { token } = (await response.json()) as { token: string };
+      shareUrl = `${window.location.origin}/live/${token}`;
+      await navigator.clipboard?.writeText(shareUrl);
+    } catch (error) {
+      shareError =
+        error instanceof Error
+          ? error.message
+          : t("could_not_create_share_link");
+    } finally {
+      sharing = false;
+    }
+  }
+</script>
+
+<section class="live-workout-view">
+  <header class="detail-header live-workout-header">
+    <a class="back-link" href="/" data-sveltekit-preload-data="hover">
+      <ArrowLeft size={18} />
+      {t("all_activities")}
+    </a>
+    <div class="live-workout-heading">
+      <div>
+        <p class:live={connection === "Live"} class="live-status">
+          {#if connection === "Live"}<Radio
+              size={15}
+            />{:else if connection === "Paused"}<Pause
+              size={15}
+            />{:else if connection === "Connection lost"}<WifiOff
+              size={15}
+            />{:else}<Clock3 size={15} />{/if}
+          {connectionLabel(connection)}
+        </p>
+        <h1>
+          {workout.status === "ended"
+            ? t("live_workout_finished", {
+                activity: activityTypeLabel(activityTypes, workout.sport),
+              })
+            : t("live_workout_in_progress", {
+                activity: activityTypeLabel(activityTypes, workout.sport),
+              })}
+        </h1>
+        <span
+          >{ageSeconds === null
+            ? t("waiting_for_gps")
+            : t("updated_seconds_ago", { seconds: ageSeconds })}</span
+        >
+      </div>
+      {#if allowSharing}
+        <button
+          class="live-share-button"
+          onclick={createShare}
+          disabled={sharing}
+        >
+          <Link size={17} />
+          {sharing
+            ? t("creating_share_link")
+            : shareUrl
+              ? t("new_share_link")
+              : t("share_live")}
+        </button>
+      {/if}
+    </div>
+  </header>
+  {#if shareUrl}
+    <div class="live-share-link live-share-feedback">
+      <strong>{t("beacon_link_copied")}</strong><span>{shareUrl}</span>
+    </div>
+  {:else if shareError}
+    <p class="form-error live-share-feedback">{shareError}</p>
+  {/if}
+  <section class="activity-map-section" aria-label={t("live_workout_route")}>
+    <section class="map-panel">
+      <LiveRouteMap
+        coordinates={workout.route}
+        follow={connection === "Live"}
+      />
+    </section>
+  </section>
+  {#if workout.route.length === 0}
+    <div class="live-waiting">
+      <Activity size={22} />
+      {t("waiting_for_first_gps_position")}
+    </div>
+  {/if}
+  <section class="metrics-section live-metrics-section">
+    <div class="metric-grid">
+      <article class="metric">
+        <div>
+          <small>{t("distance")}</small>
+          <strong>{distance(workout.distanceMeters, unitSystem)}</strong>
+        </div>
+      </article>
+      <article class="metric">
+        <div>
+          <small>{t("elapsed")}</small>
+          <strong>{duration(workout.elapsedSeconds)}</strong>
+        </div>
+      </article>
+      <article class="metric">
+        <div>
+          <small>{t("gps_points")}</small>
+          <strong>{workout.route.length}</strong>
+        </div>
+      </article>
+    </div>
+  </section>
+</section>

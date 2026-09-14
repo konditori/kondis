@@ -22,8 +22,13 @@ The web app will be accessible `http://localhost:3000`.
 
 ### Limiting container CPU usage
 
-To limit CPU usage for all development containers, add `KONDIS_DEV_CPUS` to
-`docker/.env`. It supports fractional CPUs, for example:
+Sometimes you need to test how Kondis behaves with limited CPU resources. Just set `KONDIS_DEV_CPUS` in `docker/.env` to whatever value you want:
+
+```dotenv
+KONDIS_DEV_CPUS=2
+```
+
+Still too fast? You can even limit it to a fraction of a CPU:
 
 ```dotenv
 KONDIS_DEV_CPUS=0.5

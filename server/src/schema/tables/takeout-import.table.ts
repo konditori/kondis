@@ -19,6 +19,9 @@ export class TakeoutImportTable {
   processed!: Generated<number>;
 
   @Column({ type: 'integer' })
+  uploaded!: Generated<number>;
+
+  @Column({ type: 'integer' })
   failed!: Generated<number>;
 
   @Column({ type: 'integer' })

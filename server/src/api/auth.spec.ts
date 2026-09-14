@@ -2,21 +2,22 @@ import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiAuthMiddleware, type ApiEnv, type ApiSessionLookup } from 'src/api/auth';
+import { UserRole } from 'src/enum';
 
 const TOKEN_USER = {
   id: '00000000-0000-4000-8000-000000000001',
   email: 'admin@example.com',
-  role: 'admin' as const,
+  role: UserRole.Admin,
   firstName: 'Current',
   lastName: 'Name',
 };
 const TOKEN = 'a'.repeat(64);
 
-const createProtectedApp = (sessions: ApiSessionLookup) => {
+const createProtectedApp = (sessions: ApiSessionLookup, demoUser?: typeof TOKEN_USER) => {
   const app = new Hono<ApiEnv>();
   app.use(
     '*',
-    createApiAuthMiddleware(sessions, () => false),
+    createApiAuthMiddleware(sessions, () => false, demoUser),
   );
   app.get('/protected', (context) => context.json(context.get('user')));
   return app;
@@ -54,5 +55,14 @@ describe(createApiAuthMiddleware.name, () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ message: 'Invalid or expired access token' });
+  });
+
+  it('uses the configured demo user without accepting a browser credential', async () => {
+    const findSession = vi.fn(() => Promise.resolve(undefined));
+    const response = await createProtectedApp({ findSession }, TOKEN_USER).request('/protected');
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(TOKEN_USER);
+    expect(findSession).not.toHaveBeenCalled();
   });
 });

@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Activity(
     val id: String,
-    val uploadId: String,
     val sport: String,
     val name: String?,
     val description: String?,
@@ -169,7 +168,6 @@ data class ActivityPage(
 @Serializable
 data class ActivityDetail(
     val id: String,
-    val uploadId: String,
     val sport: String,
     val name: String?,
     val description: String?,
@@ -194,7 +192,6 @@ data class ActivityDetail(
     fun summary() =
         Activity(
             id = id,
-            uploadId = uploadId,
             sport = sport,
             name = name,
             description = description,

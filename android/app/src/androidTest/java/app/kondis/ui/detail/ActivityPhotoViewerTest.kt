@@ -79,7 +79,6 @@ class ActivityPhotoViewerTest {
     private fun testActivity() =
         ActivityDetail(
             id = "photo-viewer-test",
-            uploadId = "upload",
             sport = "run",
             name = "Photo viewer test",
             description = null,

@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { Role } from "@kondis/sdk";
   import { Activity, ListChecks, Trophy, Users } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { t } from "$lib/i18n";
   import { buildInfo } from "$lib/build-info";
 
-  let { user }: { user?: { role: "admin" | "user" } } = $props();
+  let { user }: { user?: { role: Role } } = $props();
 
   const items = [
     { href: "/", label: t("home"), icon: Activity, section: null },
@@ -59,7 +60,7 @@
         {item.label}
       </a>
     {/each}
-    {#if user?.role === "admin"}
+    {#if user?.role === Role.Admin}
       <a
         class:active={page.url.pathname.startsWith(adminItem.section)}
         href={adminItem.href}
@@ -102,7 +103,7 @@
   <a class:active={page.url.pathname.startsWith("/people")} href="/people"
     ><Users size={21} /><span>{t("people")}</span></a
   >
-  {#if user?.role === "admin"}
+  {#if user?.role === Role.Admin}
     <a
       class:active={page.url.pathname.startsWith("/admin/jobs")}
       href="/admin/jobs"><ListChecks size={21} /><span>{t("jobs")}</span></a

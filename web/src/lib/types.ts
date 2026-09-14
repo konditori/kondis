@@ -1,6 +1,6 @@
-import type { Sport } from "$lib/api";
+import type { ActivityType_Output } from "$lib/api";
 
-export type ActivityType = Sport;
+export type ActivityType = ActivityType_Output;
 export type ActivityTag =
   | "race"
   | "long_run"
@@ -14,7 +14,6 @@ export type ActivityTag =
 
 export type Activity = {
   id: string;
-  uploadId: string;
   uploadFileName?: string;
   userId?: string | null;
   athlete?: {

@@ -49,6 +49,7 @@ export class RateLimitingRepository {
     throw new HttpException(
       `Too many ${options.label.toLowerCase()} attempts. Try again in ${retryAfterSeconds} seconds.`,
       HttpStatus.TOO_MANY_REQUESTS,
+      { headers: { 'Retry-After': String(retryAfterSeconds) } },
     );
   }
 }

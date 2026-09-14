@@ -39,7 +39,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
         'ActivityImageAttach',
         'ActivityImageGenerateThumbnails',
         'ActivityImageGenerateQueueAll',
-        'LagomTakeoutImport',
         'UserAvatarUpload',
         'FileDelete',
         'TemporaryFileCleanup'
@@ -63,8 +62,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           'ActivityUpload',
           'ActivityParseQueueAll',
           'ActivityDelete',
-          'ActivityImageGenerateQueueAll',
-          'LagomTakeoutImport'
+          'ActivityImageGenerateQueueAll'
         ))
         OR (queue = 'imageProcessing' AND name IN (
           'ActivityImageIngest',

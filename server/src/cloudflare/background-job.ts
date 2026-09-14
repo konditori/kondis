@@ -1,6 +1,6 @@
 import { sql } from 'kysely';
 
-import type { QueueName } from 'src/enum';
+import { JobName, type QueueName } from 'src/enum';
 import {
   CLOUD_JOB_CONSUMER,
   JOB_QUEUE,
@@ -32,6 +32,8 @@ export const insertBackgroundJobs = async (executor: KondisExecutor, items: read
 
   const values = items.map((item) => {
     const jobOptions = getJobOptions(item);
+    const singletonKey =
+      item.name === JobName.ActivityUpload ? `${item.name}:${item.data.storagePath}` : jobOptions.singletonKey;
     return sql`(
       ${JOB_QUEUE[item.name]},
       ${item.name},
@@ -39,7 +41,7 @@ export const insertBackgroundJobs = async (executor: KondisExecutor, items: read
       ${CLOUD_JOB_CONSUMER[item.name]},
       'created',
       ${jobOptions.priority ?? 0},
-      ${jobOptions.singletonKey ?? null},
+      ${singletonKey ?? null},
       0,
       ${JOB_RETRY_LIMIT},
       now(),

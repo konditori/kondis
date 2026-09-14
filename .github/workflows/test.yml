@@ -68,18 +68,23 @@ jobs:
 
       - name: Run format check
         run: mise run //server:format
+        if: ${{ !cancelled() }}
 
       - name: Run typecheck
         run: mise run //server:check
+        if: ${{ !cancelled() }}
 
       - name: Run Worker typecheck
         run: mise run //server:check-worker
+        if: ${{ !cancelled() }}
 
       - name: Run unit tests
         run: mise run //server:test
+        if: ${{ !cancelled() }}
 
       - name: Run Worker runtime tests
         run: mise run //server:test-worker
+        if: ${{ !cancelled() }}
 
   server-audit:
     name: Audit Server Dependencies
@@ -359,7 +364,11 @@ jobs:
         uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.2.0
 
       - name: Check translation catalogs
-        run: mise run //:i18n:check
+        run: |
+          if ! mise run //:i18n:check; then
+            echo "::error::Remove the duplicate JSON keys reported above from the translation catalogs, then rerun 'mise run //:i18n:check'."
+            exit 1
+          fi
 
       - name: Regenerate Android translations
         run: mise run //:i18n:android

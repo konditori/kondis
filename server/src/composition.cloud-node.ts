@@ -1,19 +1,20 @@
 import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
+import { HttpRealtimePublisherAdapter } from 'src/adapters/http/realtime-publisher.adapter';
 import { createDatabase } from 'src/db/database';
-import { LagomTakeoutParser } from 'src/imports/lagom-takeout.parser';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { createPollingJobHandlers, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
-import { ActivityImageRepository } from 'src/repositories/activity-image.repository';
+import type { RealtimePort } from 'src/ports/realtime.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { AuthCredentialRepository } from 'src/repositories/auth-credential.repository';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EventRepository } from 'src/repositories/event.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
+import { MediaRepository } from 'src/repositories/media.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
@@ -31,19 +32,21 @@ import { ImportProgressStore } from 'src/state/import-progress.store';
 export type CloudNodeProcessorOptions = {
   configRepository?: ConfigRepository;
   logLevels?: LogLevel[];
+  realtime?: RealtimePort;
 };
 
 export const createCloudNodeProcessorComposition = ({
   configRepository = new ConfigRepository(),
   logLevels,
+  realtime,
 }: CloudNodeProcessorOptions = {}) => {
   const logger = new ConsoleLogger({ logLevels });
   const database = createDatabase(configRepository.database);
   const queueAdapter = new CloudflareQueueAdapter(database);
   const cryptoRepository = new CryptoRepository();
   const activityRepository = new ActivityRepository(database);
-  const activityImageRepository = new ActivityImageRepository(database);
-  const authCredentialRepository = new AuthCredentialRepository(database);
+  const mediaRepository = new MediaRepository(database);
+  const sessionRepository = new SessionRepository(database);
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(logger);
   const gpxRepository = new GpxRepository(logger);
@@ -53,9 +56,9 @@ export const createCloudNodeProcessorComposition = ({
   const tcxRepository = new TcxRepository(logger);
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
-  const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
+  const eventRepository =
+    realtime ?? createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
   const importProgressStore = new ImportProgressStore(database);
-  const lagomTakeoutParser = new LagomTakeoutParser();
 
   const activityService = new ActivityService(
     uploadRepository,
@@ -69,11 +72,11 @@ export const createCloudNodeProcessorComposition = ({
     tcxRepository,
     logger,
     importProgressStore,
-    activityImageRepository,
+    mediaRepository,
     socialRepository,
   );
   const activityImageService = new ActivityImageService(
-    activityImageRepository,
+    mediaRepository,
     activityRepository,
     storageRepository,
     cryptoRepository,
@@ -87,7 +90,7 @@ export const createCloudNodeProcessorComposition = ({
     configRepository,
     rateLimitingRepository,
     cryptoRepository,
-    authCredentialRepository,
+    sessionRepository,
     eventRepository,
     databaseRepository,
   );
@@ -99,9 +102,7 @@ export const createCloudNodeProcessorComposition = ({
     databaseRepository,
     queueAdapter,
     logger,
-    lagomTakeoutParser,
     importProgressStore,
-    userRepository,
     activityRepository,
     eventRepository,
   );
@@ -114,7 +115,9 @@ export const createCloudNodeProcessorComposition = ({
     uploadService,
     userService,
   });
-  const pollingConsumer = new PollingJobConsumer(database, createPollingJobHandlers(descriptors), {
+  const consumers = configRepository.demoMode ? (['node', 'worker'] as const) : (['node'] as const);
+  const pollingConsumer = new PollingJobConsumer(database, createPollingJobHandlers(descriptors, consumers), {
+    consumers,
     logger,
   });
   const jobService = new JobService(
@@ -127,14 +130,16 @@ export const createCloudNodeProcessorComposition = ({
   return {
     database,
     jobService,
+    realtime: eventRepository,
     initialize: () => jobService.init(true),
+    drainJobs: (...queues: Parameters<PollingJobConsumer['drain']>) => pollingConsumer.drain(...queues),
     close: () => {
       closePromise ??= (async () => {
         try {
           await pollingConsumer.stop();
         } finally {
           try {
-            await eventRepository.stop();
+            await (eventRepository instanceof EventRepository ? eventRepository.stop() : undefined);
           } finally {
             await database.destroy();
           }
@@ -143,6 +148,19 @@ export const createCloudNodeProcessorComposition = ({
       return closePromise;
     },
   };
+};
+
+const createCloudNodeRealtimePublisher = (
+  database: ReturnType<typeof createDatabase>,
+  config: ConfigRepository,
+  social: SocialRepository,
+  credentials: SessionRepository,
+): RealtimePort => {
+  const url = process.env.KONDIS_REALTIME_PUBLISH_URL;
+  const token = process.env.KONDIS_REALTIME_PUBLISH_TOKEN;
+  return url && token
+    ? new HttpRealtimePublisherAdapter(url, token)
+    : new EventRepository(database, config, social, credentials);
 };
 
 export type CloudNodeProcessorComposition = ReturnType<typeof createCloudNodeProcessorComposition>;

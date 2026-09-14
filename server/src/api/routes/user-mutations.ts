@@ -3,6 +3,7 @@ import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 import { requireAdmin, type ApiEnv } from 'src/api/auth';
 import type { UploadReader } from 'src/api/uploads';
 import { jsonBodyMiddleware } from 'src/api/validation';
+import { UserRole } from 'src/enum';
 import type { AuthService } from 'src/services/auth.service';
 import type { UserService } from 'src/services/user.service';
 
@@ -14,7 +15,7 @@ const createUserInput = z.object({
   firstName: z.string(),
   lastName: z.string(),
   password: z.string(),
-  role: z.enum(['user', 'admin']).default('user'),
+  role: z.enum([UserRole.User, UserRole.Admin]).default(UserRole.User),
 });
 const updateNameInput = z.object({
   firstName: z.string().trim().min(1).max(80),

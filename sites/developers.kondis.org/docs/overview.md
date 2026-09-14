@@ -20,8 +20,7 @@ mise //server:migrations create ShinyNewFeature
 
 There are several test suites: unit tests, medium tests, e2e tests.
 
-The CI-equivalent server integration suite is a root-level Mise task. Run it from
-any directory in the repository with:
+The CI-equivalent server integration suite is a root-level Mise task. Run it from any directory in the repository with:
 
 Medium tests:
 
@@ -39,8 +38,7 @@ mise e2e
 
 ### Android
 
-The Android client uses the Gradle wrapper and requires JDK 17 or newer. From
-`android/`, run the full local verification with:
+The Android client uses the Gradle wrapper and requires JDK 17 or newer. From `android/`, run the full local verification with:
 
 ```bash
 ./gradlew ktlintCheck :app:lintDebug :app:testDebugUnitTest :app:assembleDebug

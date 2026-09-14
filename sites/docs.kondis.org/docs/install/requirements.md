@@ -5,9 +5,7 @@ title: Requirements
 
 # Requirements
 
-:::note Requirements
-Kondis is under development and therefore the full system requirements are not fully understood.
-:::
+:::note Requirements Kondis is under development and therefore the full system requirements are not fully understood. :::
 
 Kondis is a self-hosted application, which means you need a computer to run it on. The performance requirements are modest, but it should be running continuously with a persistent internet connection. A wired internet connection is highly encouraged over Wi-Fi and cellular.
 

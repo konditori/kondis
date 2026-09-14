@@ -1,8 +1,8 @@
 import { error, redirect } from "@sveltejs/kit";
 import {
   activityControllerListBestEfforts,
-  BestEffortSportInput,
-  BestEffortType,
+  type BestEffortSportInput,
+  type BestEffortType,
 } from "$lib/api";
 import { getServerSdkRequestOptions } from "$lib/server/api";
 import type { BestEffortHistory } from "$lib/types";
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
         $type: params.distance as BestEffortType,
       },
       getServerSdkRequestOptions(locals.kondisFetch),
-    )) as BestEffortHistory;
+    )) as unknown as BestEffortHistory;
   } catch (requestError) {
     if ((requestError as { status?: number }).status === 400)
       error(404, "Best effort not found");

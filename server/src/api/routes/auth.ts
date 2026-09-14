@@ -16,9 +16,11 @@ import {
   SetupTokenCredentialsSchema,
   SetupValidationSchema,
 } from 'src/dtos/auth.dto';
+import { UserRole } from 'src/enum';
 import { ForbiddenException, UnauthorizedException } from 'src/errors';
 import type { ConfigPort } from 'src/ports/config.port';
 import type { AuthService } from 'src/services/auth.service';
+import { publicMediaUrl } from 'src/utils/media';
 
 export type AuthRouteService = Pick<
   AuthService,
@@ -202,6 +204,19 @@ const activityTicketRoute = createRoute({
   },
   tags: ['Auth'],
 });
+const activityTicketGetRoute = createRoute({
+  method: 'get',
+  path: '/auth/activity-events-ticket',
+  operationId: 'AuthController_activityEventsTicketGet',
+  parameters: [],
+  responses: {
+    200: {
+      description: 'Short-lived ticket for the activity event WebSocket',
+      content: { 'application/json': { schema: ticketResponse } },
+    },
+  },
+  tags: ['Auth'],
+});
 const jobTicketRoute = createRoute({
   method: 'post',
   path: '/auth/job-events-ticket',
@@ -220,6 +235,7 @@ export const registerAuthSessionRoutes = (
   app: OpenAPIHono<ApiEnv>,
   service: Pick<AuthRouteService, 'revokeSession'>,
   users: ApiUserLookup,
+  mediaBaseUrl?: string,
 ): void => {
   app.openapi(capabilitiesRoute, (context) => context.json({ direct: true }, 200) as never);
   app.openapi(meRoute, async (context) => {
@@ -234,7 +250,9 @@ export const registerAuthSessionRoutes = (
         firstName: storedUser.first_name,
         lastName: storedUser.last_name,
         role: storedUser.role,
-        avatarUrl: storedUser.avatar_path ? `/api/v1/users/${storedUser.id}/avatar` : null,
+        avatarUrl: storedUser.avatar_path
+          ? publicMediaUrl(mediaBaseUrl, storedUser.avatar_path, `/api/v1/users/${storedUser.id}/avatar`)
+          : null,
       },
       200,
     ) as never;
@@ -250,9 +268,9 @@ export const registerAuthRoutes = (
   service: AuthRouteService,
   users: ApiUserLookup,
   config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
-  options: { includeEventTickets?: boolean } = {},
+  options: { includeEventTickets?: boolean; mediaBaseUrl?: string; demoMode?: boolean } = {},
 ): void => {
-  registerAuthSessionRoutes(app, service, users);
+  registerAuthSessionRoutes(app, service, users, options.mediaBaseUrl);
   app.openapi(setupStatusRoute, async (context) => {
     const status = await service.setupStatus();
     return context.json({ ...status, registrationEnabled: config.registrationEnabled }, 200) as never;
@@ -308,8 +326,18 @@ export const registerAuthRoutes = (
         201,
       ),
     );
+    if (options.demoMode) {
+      app.openapi(activityTicketGetRoute, async (context) =>
+        context.json(
+          ticketResponse.parse(
+            await service.createActivityEventsTicket(context.get('user').id, context.get('sessionId')),
+          ),
+          200,
+        ),
+      );
+    }
     app.openapi(jobTicketRoute, async (context) => {
-      if (context.get('user').role !== 'admin') {
+      if (context.get('user').role !== UserRole.Admin) {
         throw new ForbiddenException('Administrator access is required');
       }
       return context.json(

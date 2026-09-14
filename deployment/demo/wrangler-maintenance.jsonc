@@ -1,0 +1,24 @@
+{
+  "$schema": "../../server/node_modules/wrangler/config-schema.json",
+  "name": "kondis-demo-web",
+  "main": "./maintenance-worker.ts",
+  "compatibility_date": "2026-09-11",
+  "workers_dev": false,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MAINTENANCE_TIMER",
+        "class_name": "MaintenanceTimerDurableObject",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "maintenance-timer-v1",
+      "new_sqlite_classes": ["MaintenanceTimerDurableObject"],
+    },
+  ],
+  "services": [{ "binding": "KONDIS_API", "service": "kondis-demo-api" }],
+  "routes": [{ "pattern": "demo.kondis.org", "custom_domain": true }],
+}

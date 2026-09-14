@@ -1,0 +1,34 @@
+{
+  "$schema": "../../server/node_modules/wrangler/config-schema.json",
+  "name": "kondis-demo-api",
+  "main": "../../server/src/cloudflare/entrypoint.ts",
+  "compatibility_date": "2026-09-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "cache": { "enabled": false },
+  "placement": { "region": "aws:eu-north-1" },
+  "workers_dev": false,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [
+      { "name": "DEMO_LIVE_TRACKER", "class_name": "DemoLiveTracker" },
+      { "name": "REALTIME", "class_name": "RealtimeDurableObject" },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "demo-live-tracker-v1",
+      "new_sqlite_classes": ["DemoLiveTracker"],
+    },
+    {
+      "tag": "demo-live-tracker-v2",
+      "new_sqlite_classes": ["RealtimeDurableObject"],
+    },
+  ],
+  "services": [
+    { "binding": "DEMO_LIVE_INGESTION", "service": "kondis-demo-api" },
+  ],
+  "vars": {
+    "KONDIS_DEMO_MEDIA_BASE_URL": "https://demo.kondis.org/demo-media/v1",
+  },
+}

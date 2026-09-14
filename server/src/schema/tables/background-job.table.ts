@@ -21,6 +21,7 @@ export class BackgroundJobTable {
   @Column({ type: 'timestamptz', nullable: true }) completed_on!: Timestamp | null;
   @Column({ type: 'jsonb', nullable: true }) output!: unknown;
   @Column({ type: 'timestamptz', nullable: true }) published_on!: Timestamp | null;
+  @Column({ type: 'uuid', nullable: true }) dispatch_token!: string | null;
   @Column({ type: 'timestamptz', nullable: true }) delete_after!: Timestamp | null;
   @Column({ type: 'uuid', nullable: true }) lease_id!: string | null;
   @Column({ type: 'timestamptz', nullable: true }) lease_expires_at!: Timestamp | null;
