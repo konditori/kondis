@@ -10,6 +10,11 @@ The name is Nordic slang for "conditioning"
 
 Main page: [kondis.org](https://kondis.org/).
 
+## Community
+
+* [Discord](https://discord.gg/jKjtYVe9uZ)
+* [Reddit](https://www.reddit.com/r/kondis/)
+
 ## Documentation
 Main documentation is available on the [documentation site](https://docs.kondis.org/).
 
