@@ -26,7 +26,6 @@ import {
   recoverOrphanedPublishedJobs,
   runScheduledCron,
 } from 'src/cloudflare/dispatcher';
-import { runHyperdriveSpike } from 'src/cloudflare/hyperdrive-spike';
 import {
   isQueueExecutorResponse,
   QUEUE_EXECUTOR_PATH,
@@ -44,7 +43,7 @@ import {
   isDemoLiveWorkoutRequest,
 } from 'src/demo/live-entrypoint';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
-import { JobName, QueueName } from 'src/enum';
+import { QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
@@ -113,17 +112,6 @@ const createRequestApp = (
       registerWorkerTakeoutImportRoutes(requestApp, storageRoutes);
     }
   }
-  requestApp.post('/api/v1/_internal/auth-credential-cleanup', async (context) => {
-    const token = composition.authCredentialCleanupToken;
-    if (!token) {
-      return context.json({ statusCode: 404, message: 'Not Found' }, 404);
-    }
-    if (context.req.header('Authorization') !== `Bearer ${token}`) {
-      return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);
-    }
-    await composition.jobProducer.queue({ name: JobName.AuthCredentialCleanup, data: {} });
-    return context.body(null, 202);
-  });
   requestApp.post('/api/v1/_internal/realtime-publish', async (context) => {
     const env = context.env as WorkerEnv;
     if (!env.REALTIME || !env.KONDIS_REALTIME_PUBLISH_TOKEN) {
@@ -148,21 +136,6 @@ const createRequestApp = (
       body: JSON.stringify(event),
     });
     return context.body(null, response.ok ? 204 : 502);
-  });
-  requestApp.get('/api/v1/_internal/hyperdrive-spike', async (context) => {
-    const env = context.env as WorkerEnv;
-    if (!env.HYPERDRIVE || !env.HYPERDRIVE_SPIKE_TOKEN) {
-      return context.json({ statusCode: 404, message: 'Not Found' }, 404);
-    }
-    if (context.req.header('Authorization') !== `Bearer ${env.HYPERDRIVE_SPIKE_TOKEN}`) {
-      return context.json({ statusCode: 401, message: 'Unauthorized' }, 401);
-    }
-    try {
-      return context.json(await runHyperdriveSpike(env.HYPERDRIVE.connectionString), 200);
-    } catch (error) {
-      console.error('Hyperdrive spike failed', error);
-      return context.json({ statusCode: 502, message: 'Hyperdrive spike failed' }, 502);
-    }
   });
   requestApp.get('/api/v1/openapi.json', (context) =>
     context.json(
@@ -438,6 +411,7 @@ const createQueueTransport = (env: WorkerEnv): CloudflareQueueTransportAdapter =
   new CloudflareQueueTransportAdapter({
     [QueueName.ActivityParsing]: requiredQueue(env.ACTIVITY_PARSING_QUEUE, QueueName.ActivityParsing),
     [QueueName.ActivityEnrichment]: requiredQueue(env.ACTIVITY_ENRICHMENT_QUEUE, QueueName.ActivityEnrichment),
+    [QueueName.ActivityRanking]: requiredQueue(env.ACTIVITY_RANKING_QUEUE, QueueName.ActivityRanking),
     [QueueName.BackgroundTask]: requiredQueue(env.BACKGROUND_TASK_QUEUE, QueueName.BackgroundTask),
     [QueueName.ImageProcessing]: requiredQueue(env.IMAGE_PROCESSING_QUEUE, QueueName.ImageProcessing),
     [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),

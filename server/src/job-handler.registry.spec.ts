@@ -81,7 +81,7 @@ describe('createJobHandlerRegistry', () => {
       [JobName.ActivityUpload]: QueueName.BackgroundTask,
       [JobName.ActivityMetricCompute]: QueueName.ActivityEnrichment,
       [JobName.ActivityBestEffortCompute]: QueueName.ActivityEnrichment,
-      [JobName.ActivityBestEffortRank]: QueueName.ActivityEnrichment,
+      [JobName.ActivityBestEffortRank]: QueueName.ActivityRanking,
       [JobName.ActivityRouteMatchCompute]: QueueName.ActivityEnrichment,
       [JobName.ActivityParse]: QueueName.ActivityParsing,
       [JobName.ActivityManualCreate]: QueueName.ActivityParsing,

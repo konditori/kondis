@@ -38,13 +38,11 @@ const workerCrypto = createCloudflareCryptoAdapter();
 
 export type WorkerBindings = {
   HYPERDRIVE: { connectionString: string };
-  HYPERDRIVE_SPIKE_TOKEN?: string;
   KONDIS_SETUP_TOKEN?: string;
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_DEMO_MODE?: boolean | string;
   KONDIS_DEMO_MEDIA_BASE_URL?: string;
-  KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN?: string;
   KONDIS_REALTIME_PUBLISH_TOKEN?: string;
   QUEUE_EXECUTOR?: { fetch: (request: Request) => Promise<Response> };
   STORAGE_BUCKET?: R2BucketBinding;
@@ -53,6 +51,7 @@ export type WorkerBindings = {
   DEMO_LIVE_INGESTION?: DemoLiveIngestionBinding;
   ACTIVITY_PARSING_QUEUE?: CloudflareQueueBinding;
   ACTIVITY_ENRICHMENT_QUEUE?: CloudflareQueueBinding;
+  ACTIVITY_RANKING_QUEUE?: CloudflareQueueBinding;
   BACKGROUND_TASK_QUEUE?: CloudflareQueueBinding;
   IMAGE_PROCESSING_QUEUE?: CloudflareQueueBinding;
   STORAGE_QUEUE?: CloudflareQueueBinding;
@@ -83,6 +82,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const queueBindingsConfigured = Boolean(
     env.ACTIVITY_PARSING_QUEUE &&
     env.ACTIVITY_ENRICHMENT_QUEUE &&
+    env.ACTIVITY_RANKING_QUEUE &&
     env.BACKGROUND_TASK_QUEUE &&
     env.IMAGE_PROCESSING_QUEUE &&
     env.STORAGE_QUEUE,
@@ -167,7 +167,6 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     queueBindingsConfigured,
     realtimeEnabled: Boolean(env.REALTIME),
     realtime: workerEvents,
-    authCredentialCleanupToken: env.KONDIS_AUTH_CREDENTIAL_CLEANUP_TOKEN,
     storage,
     workerActivityImageService,
     workerUploadService,

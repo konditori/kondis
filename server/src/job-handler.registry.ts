@@ -55,7 +55,7 @@ export const createJobHandlerRegistry = ({
     },
     [JobName.ActivityBestEffortRank]: {
       jobName: JobName.ActivityBestEffortRank,
-      queueName: QueueName.ActivityEnrichment,
+      queueName: QueueName.ActivityRanking,
       handler: activityService.handleActivityBestEffortRank.bind(activityService),
       label: 'ActivityService.handleActivityBestEffortRank',
       cloudConsumer: 'worker',

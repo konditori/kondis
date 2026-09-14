@@ -56,6 +56,7 @@ const createQueueTransport = (env: WorkerBindings): CloudflareQueueTransportAdap
   new CloudflareQueueTransportAdapter({
     activityParsing: requiredQueue(env.ACTIVITY_PARSING_QUEUE),
     activityEnrichment: requiredQueue(env.ACTIVITY_ENRICHMENT_QUEUE),
+    activityRanking: requiredQueue(env.ACTIVITY_RANKING_QUEUE),
     backgroundTask: requiredQueue(env.BACKGROUND_TASK_QUEUE),
     imageProcessing: requiredQueue(env.IMAGE_PROCESSING_QUEUE),
     storage: requiredQueue(env.STORAGE_QUEUE),

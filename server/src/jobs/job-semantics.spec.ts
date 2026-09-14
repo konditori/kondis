@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { JobName, QueueName } from 'src/enum';
 import {
   CLOUD_JOB_CONSUMER,
+  JOB_BATCH_SIZE,
+  JOB_CONCURRENCY,
   JOB_QUEUE,
   JOB_RETRY_DELAY_SECONDS,
+  QUEUE_POLICY,
   getJobFailureTransition,
 } from 'src/jobs/job-semantics';
 
@@ -45,5 +48,12 @@ describe('cloud job semantics', () => {
       exhausted: true,
       retryCount: 4,
     });
+  });
+
+  it('serializes global ranking refreshes in their own queue', () => {
+    expect(JOB_QUEUE[JobName.ActivityBestEffortRank]).toBe(QueueName.ActivityRanking);
+    expect(QUEUE_POLICY[QueueName.ActivityRanking]).toBe('exclusive');
+    expect(JOB_CONCURRENCY[QueueName.ActivityRanking]).toBe(1);
+    expect(JOB_BATCH_SIZE[QueueName.ActivityRanking]).toBe(1);
   });
 });

@@ -3,13 +3,9 @@ const sidebars: SidebarsConfig = {
   developer: [
     "index",
     "overview",
-    {
-      type: "category",
-      label: "Deploying on Cloudflare",
-      items: ["cloudflare/deployment", "cloudflare/authentication"],
-    },
-    "demo",
     "local-development",
+    "cloudflare",
+    "demo",
     "contributing",
     { type: "link", label: "User guides", href: "https://docs.kondis.org/" },
     { type: "link", label: "API reference", href: "https://api.kondis.org/" },

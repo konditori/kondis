@@ -8,6 +8,7 @@ import type { AnyJobHandlerDescriptor, JobHandlerDescriptor } from 'src/jobs/job
 import {
   CLOUD_JOB_CONSUMER,
   CRON_JOBS,
+  JOB_BATCH_SIZE,
   JOB_CONCURRENCY,
   JOB_CRON,
   JOB_EXPIRE_SECONDS,
@@ -52,8 +53,6 @@ type RawJobCounts = Omit<JobCounts, 'ready'>;
 type StoredJobCounts = RawJobCounts & { name: string };
 
 const COMPLETION_POLL_MS = 100;
-const RANKING_REFRESH_COALESCE_MS = 100;
-const WORKER_BATCH_SIZE = 25;
 
 const deadLetterName = (queue: QueueName): string => `${queue}.deadLetter`;
 
@@ -62,7 +61,6 @@ export class PgBossQueueAdapter {
   private readonly pausedQueues = new Set<QueueName>();
 
   private bossPromise: Promise<PgBoss> | null = null;
-  private rankingRefreshPromise: Promise<JobStatus> | null = null;
   private onJobRun: ((item: JobItem) => Promise<JobStatus>) | null = null;
   private stopped = false;
 
@@ -530,7 +528,7 @@ export class PgBossQueueAdapter {
     await boss.work<StoredJob>(
       queue,
       {
-        batchSize: WORKER_BATCH_SIZE,
+        batchSize: JOB_BATCH_SIZE[queue],
         burstWhenBatchFull: true,
         localConcurrency: JOB_CONCURRENCY[queue],
         perJobResults: true,
@@ -542,66 +540,7 @@ export class PgBossQueueAdapter {
   }
 
   private async dispatchBatch(jobs: Job<StoredJob>[]): Promise<JobResult[]> {
-    const rankingRefreshes: Job<StoredJob>[] = [];
-    const results: JobResult[] = [];
-
-    for (const job of jobs) {
-      if (job.data.name === JobName.ActivityBestEffortRank) {
-        // TODO: remove this workaround
-        rankingRefreshes.push(job);
-        continue;
-      }
-
-      results.push(await this.dispatchResult(job));
-    }
-
-    const rankingRefresh = rankingRefreshes.pop();
-    for (const duplicate of rankingRefreshes) {
-      results.push({
-        id: duplicate.id,
-        status: 'completed',
-        output: { status: JobStatus.Skipped },
-      });
-    }
-    if (rankingRefresh) {
-      results.push(await this.dispatchRankingRefresh(rankingRefresh));
-    }
-
-    return results;
-  }
-
-  private async dispatchRankingRefresh(job: Job<StoredJob>): Promise<JobResult> {
-    if (!this.rankingRefreshPromise) {
-      const refresh = delay(RANKING_REFRESH_COALESCE_MS).then(() => this.dispatch(job));
-      const gate = refresh
-        .then(async (status) => delay(RANKING_REFRESH_COALESCE_MS).then(() => status))
-        .catch(async (error) => {
-          await delay(RANKING_REFRESH_COALESCE_MS);
-          throw error;
-        });
-      this.rankingRefreshPromise = gate;
-      void gate
-        .then(() => {
-          if (this.rankingRefreshPromise === gate) {
-            this.rankingRefreshPromise = null;
-          }
-        })
-        .catch(() => {
-          if (this.rankingRefreshPromise === gate) {
-            this.rankingRefreshPromise = null;
-          }
-        });
-    }
-
-    try {
-      return { id: job.id, status: 'completed', output: { status: await this.rankingRefreshPromise } };
-    } catch (error) {
-      return {
-        id: job.id,
-        status: 'failed',
-        output: { message: asErrorMessage(error) },
-      };
-    }
+    return Promise.all(jobs.map((job) => this.dispatchResult(job)));
   }
 
   private dispatch(job: Job<StoredJob>): Promise<JobStatus> {

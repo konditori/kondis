@@ -29,7 +29,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   [JobName.ActivityUpload]: QueueName.BackgroundTask,
   [JobName.ActivityMetricCompute]: QueueName.ActivityEnrichment,
   [JobName.ActivityBestEffortCompute]: QueueName.ActivityEnrichment,
-  [JobName.ActivityBestEffortRank]: QueueName.ActivityEnrichment,
+  [JobName.ActivityBestEffortRank]: QueueName.ActivityRanking,
   [JobName.ActivityRouteMatchCompute]: QueueName.ActivityEnrichment,
   [JobName.ActivityParse]: QueueName.ActivityParsing,
   [JobName.ActivityManualCreate]: QueueName.ActivityParsing,
@@ -115,6 +115,7 @@ export const getJobOptions = (
 export const QUEUE_POLICY: Record<QueueName, QueuePolicy> = {
   [QueueName.ActivityParsing]: 'standard',
   [QueueName.ActivityEnrichment]: 'standard',
+  [QueueName.ActivityRanking]: 'exclusive',
   [QueueName.BackgroundTask]: 'standard',
   [QueueName.ImageProcessing]: 'standard',
   [QueueName.Storage]: 'standard',
@@ -131,9 +132,19 @@ export const CRON_JOBS: { item: JobItem; cron: string }[] = [
 export const JOB_CONCURRENCY = {
   [QueueName.ActivityParsing]: 3,
   [QueueName.ActivityEnrichment]: 3,
+  [QueueName.ActivityRanking]: 1,
   [QueueName.BackgroundTask]: 3,
   [QueueName.ImageProcessing]: 2,
   [QueueName.Storage]: 2,
+} satisfies Record<QueueName, number>;
+
+export const JOB_BATCH_SIZE = {
+  [QueueName.ActivityParsing]: 25,
+  [QueueName.ActivityEnrichment]: 25,
+  [QueueName.ActivityRanking]: 1,
+  [QueueName.BackgroundTask]: 25,
+  [QueueName.ImageProcessing]: 25,
+  [QueueName.Storage]: 25,
 } satisfies Record<QueueName, number>;
 export const JOB_RETRY_LIMIT = 3;
 export const JOB_RETRY_DELAY_SECONDS = 5;
