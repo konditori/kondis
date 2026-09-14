@@ -1,0 +1,19 @@
+mise.toml
+  s_e6a828b18f25f3::t_19bedc67c29f2d 78-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dd073d908346238a69f1b9463c84034969ac00ca",
+  "prompts": {},
+  "sessions": {
+    "s_e6a828b18f25f3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a021-958e-7ae1-a880-7fbff9180197",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
