@@ -14,7 +14,7 @@ services:
       KONDIS_DB_DATABASE_NAME: "database_name"
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      - ./data:/var/lib/postgresql
+      - ./data:/var/lib/postgresql/data
     restart: always
     secrets:
       - kondis_db_user
