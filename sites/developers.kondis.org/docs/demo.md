@@ -6,7 +6,7 @@ title: Demo environment
 
 Kondis has a demo environment running at [demo.kondis.org](https://demo.kondis.org). This shows the features of Kondis without having to install anything.
 
-The demo environment runs on Cloudflare; see the [Cloudflare deployment guide's Public demo section](./cloudflare/deployment) for how this is done.
+The demo environment runs on Cloudflare; see the [Cloudflare deployment guide](./cloudflare) for how this is done.
 
 The web and api workers serving the demo site have been deployed with `KONDIS_DEMO_MODE=true` which does the following:
 

@@ -71,6 +71,10 @@ export type AllJobStatusResponseDtoOutput = {
     jobCounts: JobCountsDtoOutput;
     queueStatus: QueueStatusDtoOutput;
   };
+  activityRanking: {
+    jobCounts: JobCountsDtoOutput;
+    queueStatus: QueueStatusDtoOutput;
+  };
   backgroundTask: {
     jobCounts: JobCountsDtoOutput;
     queueStatus: QueueStatusDtoOutput;
@@ -2398,6 +2402,7 @@ export enum Name {
 export enum QueueName_Output {
   ActivityParsing = 'activityParsing',
   ActivityEnrichment = 'activityEnrichment',
+  ActivityRanking = 'activityRanking',
   BackgroundTask = 'backgroundTask',
   ImageProcessing = 'imageProcessing',
   Storage = 'storage',
@@ -2412,6 +2417,7 @@ export enum Status3 {
 export enum QueueName {
   ActivityParsing = 'activityParsing',
   ActivityEnrichment = 'activityEnrichment',
+  ActivityRanking = 'activityRanking',
   BackgroundTask = 'backgroundTask',
   ImageProcessing = 'imageProcessing',
   Storage = 'storage',

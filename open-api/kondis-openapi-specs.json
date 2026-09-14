@@ -3220,6 +3220,22 @@
             ],
             "additionalProperties": false
           },
+          "activityRanking": {
+            "type": "object",
+            "properties": {
+              "jobCounts": {
+                "$ref": "#/components/schemas/JobCountsDto_Output"
+              },
+              "queueStatus": {
+                "$ref": "#/components/schemas/QueueStatusDto_Output"
+              }
+            },
+            "required": [
+              "jobCounts",
+              "queueStatus"
+            ],
+            "additionalProperties": false
+          },
           "backgroundTask": {
             "type": "object",
             "properties": {
@@ -3272,6 +3288,7 @@
         "required": [
           "activityParsing",
           "activityEnrichment",
+          "activityRanking",
           "backgroundTask",
           "imageProcessing",
           "storage"
@@ -3283,6 +3300,7 @@
         "enum": [
           "activityParsing",
           "activityEnrichment",
+          "activityRanking",
           "backgroundTask",
           "imageProcessing",
           "storage"
@@ -6204,6 +6222,7 @@
         "enum": [
           "activityParsing",
           "activityEnrichment",
+          "activityRanking",
           "backgroundTask",
           "imageProcessing",
           "storage"

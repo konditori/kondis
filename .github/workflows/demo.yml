@@ -16,8 +16,7 @@ jobs:
     name: Rebuild and deploy demo
     if: >-
       ${{
-        github.ref == 'refs/heads/main' ||
-        github.ref == 'refs/heads/feat/durable-object-websockets'
+        github.ref == 'refs/heads/main'
       }}
     runs-on: ubuntu-latest
     environment: demo
