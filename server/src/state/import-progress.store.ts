@@ -1,39 +1,19 @@
 import { sql } from 'kysely';
 
-import type { KondisDatabase, KondisTransaction } from 'src/types';
+import type {
+  ImportProgress,
+  ImportProgressStatus,
+  ItemTransition,
+  KondisDatabase,
+  KondisTransaction,
+  TakeoutImportItem,
+  TakeoutImportItemKind,
+  TakeoutImportItemStatus,
+} from 'src/types';
 import type { IActivityImageStage } from 'src/types/jobs';
-
-export type ImportProgressStatus = 'scanning' | 'uploading' | 'processing' | 'completed' | 'failed' | 'cancelled';
-export type TakeoutImportItemKind = 'activity' | 'manual';
-export type TakeoutImportItemStatus = 'pending' | 'uploading' | 'queued' | 'completed' | 'failed' | 'duplicate';
-
-export type ImportProgress = {
-  importId: string;
-  userId: string;
-  status: ImportProgressStatus;
-  total: number | null;
-  uploaded: number;
-  processed: number;
-  failed: number;
-  duplicates: number;
-  error: string | null;
-};
-
-export type TakeoutImportItem = {
-  itemKey: string;
-  kind: TakeoutImportItemKind;
-  metadata: unknown;
-};
 
 const terminalItemStates: Set<TakeoutImportItemStatus> = new Set(['completed', 'failed', 'duplicate']);
 const isTerminal = (status: TakeoutImportItemStatus): boolean => terminalItemStates.has(status);
-
-type ItemTransition = {
-  uploaded: number;
-  processed: number;
-  failed: number;
-  duplicates: number;
-};
 
 const transitionDeltas = (from: TakeoutImportItemStatus, to: TakeoutImportItemStatus): ItemTransition => ({
   uploaded: from === 'pending' && to !== 'pending' ? 1 : 0,

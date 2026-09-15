@@ -1,7 +1,7 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
-import type { TakeoutActivityUpload, UploadReader } from 'src/api/uploads';
+import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import {
   FitUploadResponseSchema,
   TakeoutActivityMetadataSchema,

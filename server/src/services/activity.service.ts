@@ -3,7 +3,7 @@ import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EF
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
-import { JobName, JobStatus } from 'src/enum';
+import { BestEffortGroup, JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
@@ -26,7 +26,6 @@ import {
   ActivityStreamInput,
   ActivityTag,
   ActivityType,
-  BestEffortGroup,
   BestEffortType,
   CreateActivityInput,
   FitMessages,

@@ -30,7 +30,7 @@ mise //e2e:test
 
 ### Browser suite (Playwright)
 
-The browser suite tests the whole stack, from the browser, web frontend, api backend, and database. 
+The browser suite tests the whole stack, from the browser, web frontend, api backend, and database.
 
 ```sh
 mise //e2e:test-web

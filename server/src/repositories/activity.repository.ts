@@ -28,7 +28,7 @@ import type {
   KondisExecutor,
   UpdateActivityInput,
 } from 'src/types';
-import { BestEffortGroup } from 'src/types';
+import { BestEffortGroup } from 'src/enum';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
   computeBiggestClimb,

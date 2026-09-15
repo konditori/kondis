@@ -1,7 +1,30 @@
-import type { ActivityType as ActivityTypeEnum } from 'src/enum';
+import type {
+  ActivityType as ActivityTypeEnum,
+  AverageMetric as AverageMetricEnum,
+  BestEffortGroup as BestEffortGroupEnum,
+  BestEffortValueKind as BestEffortValueKindEnum,
+  DeployTarget as DeployTargetEnum,
+  ImportProgressStatus as ImportProgressStatusEnum,
+  StreamType as StreamTypeEnum,
+  TakeoutImportItemKind as TakeoutImportItemKindEnum,
+  TakeoutImportItemStatus as TakeoutImportItemStatusEnum,
+  UploadKind as UploadKindEnum,
+} from 'src/enum';
+import type { ApiBindings } from 'src/api/auth';
 
 import type { Kysely, Transaction } from 'kysely';
 import type { Activity, ActivityMetric, ActivityUpdate, DB, NewActivity, NewLap } from 'src/db/schema';
+import type { BufferedUploadedFileData, UploadedFileData } from 'src/types/uploads';
+
+export type UploadKind = `${UploadKindEnum}`;
+export type ImportProgressStatus = `${ImportProgressStatusEnum}`;
+export type TakeoutImportItemKind = `${TakeoutImportItemKindEnum}`;
+export type TakeoutImportItemStatus = `${TakeoutImportItemStatusEnum}`;
+export type DeployTarget = `${DeployTargetEnum}`;
+export type AverageMetric = `${AverageMetricEnum}`;
+export type BestEffortGroup = `${BestEffortGroupEnum}`;
+export type BestEffortValueKind = `${BestEffortValueKindEnum}`;
+export type StreamType = `${StreamTypeEnum}`;
 
 export type KondisDatabase = Kysely<DB>;
 export type KondisTransaction = Transaction<DB>;
@@ -11,6 +34,49 @@ export type UploadPageOptions = {
   force: boolean;
   after?: string;
   limit: number;
+};
+
+export type ImageUpload = {
+  file: BufferedUploadedFileData | undefined;
+  caption: string | undefined;
+};
+
+export type TakeoutActivityUpload = {
+  file: UploadedFileData | undefined;
+  metadata: string | undefined;
+};
+
+export type UploadReader = {
+  read: (
+    request: Request,
+    platform: ApiBindings | undefined,
+    kind: UploadKind,
+  ) => Promise<ImageUpload | TakeoutActivityUpload | UploadedFileData | undefined>;
+};
+
+export type ImportProgress = {
+  importId: string;
+  userId: string;
+  status: ImportProgressStatus;
+  total: number | null;
+  uploaded: number;
+  processed: number;
+  failed: number;
+  duplicates: number;
+  error: string | null;
+};
+
+export type TakeoutImportItem = {
+  itemKey: string;
+  kind: TakeoutImportItemKind;
+  metadata: unknown;
+};
+
+export type ItemTransition = {
+  uploaded: number;
+  processed: number;
+  failed: number;
+  duplicates: number;
 };
 
 export type ManualActivitySignature = {
@@ -180,8 +246,6 @@ export type DatabaseConfig = {
   database: string;
 };
 
-export type DeployTarget = 'local' | 'cloudflare';
-
 export type EnvData = {
   deployTarget: DeployTarget;
   setupToken?: string;
@@ -194,13 +258,6 @@ export type EnvData = {
   demoMode: boolean;
 };
 
-export enum AverageMetric {
-  None = 'none',
-  Pace = 'pace',
-  SwimPace = 'swim_pace',
-  Speed = 'speed',
-}
-
 export type ActivityTag = (typeof import('src/constants').ACTIVITY_TAG_IDS)[number];
 
 export type ActivityTagSettings = {
@@ -208,12 +265,6 @@ export type ActivityTagSettings = {
   label: string;
   sports: readonly string[] | 'all';
 };
-
-export enum BestEffortGroup {
-  None = 'none',
-  Run = 'run',
-  Ride = 'ride',
-}
 
 export type ActivityTypeSettings = {
   type: string;
@@ -227,7 +278,6 @@ export type ActivityType = `${ActivityTypeEnum}`;
 export type RunBestEffortType = (typeof import('src/constants').RUNNING_BEST_EFFORTS)[number]['type'];
 export type CyclingBestEffortType = (typeof import('src/constants').CYCLING_BEST_EFFORTS)[number]['type'];
 export type BestEffortType = RunBestEffortType | CyclingBestEffortType;
-export type BestEffortValueKind = 'duration' | 'distance' | 'elevation' | 'power';
 export type DistanceBestEffortDefinition = { type: BestEffortType; distance: number };
 
 export type BestEffort = {
@@ -239,18 +289,6 @@ export type BestEffort = {
   value: number;
   valueKind: BestEffortValueKind;
 };
-
-export type StreamType =
-  | 'time'
-  | 'latitude'
-  | 'longitude'
-  | 'altitude'
-  | 'distance'
-  | 'speed'
-  | 'heartrate'
-  | 'cadence'
-  | 'power'
-  | 'temperature';
 
 export type ParsedStream = {
   type: StreamType;

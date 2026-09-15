@@ -2,7 +2,7 @@ import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
 import { fileResponse, type FileReader } from 'src/api/file-response';
-import type { ImageUpload, UploadReader } from 'src/api/uploads';
+import type { ImageUpload, UploadReader } from 'src/types';
 import { jsonBodyMiddleware } from 'src/api/validation';
 import { ActivityImageListSchema, ActivityImageSchema, ActivityImageUpdateSchema } from 'src/dtos/activity-image.dto';
 import { NotFoundException } from 'src/errors';

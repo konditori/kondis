@@ -12,7 +12,7 @@ import multer, { diskStorage, memoryStorage } from 'multer';
 import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
 import type { FileRange, OpenFile } from 'src/api/file-response';
-import type { ImageUpload, TakeoutActivityUpload, UploadKind, UploadReader } from 'src/api/uploads';
+import type { ImageUpload, TakeoutActivityUpload, UploadKind, UploadReader } from 'src/types';
 import type { ApplicationComposition } from 'src/composition.node';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';

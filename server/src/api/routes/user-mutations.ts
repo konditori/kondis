@@ -1,7 +1,7 @@
 import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import { requireAdmin, type ApiEnv } from 'src/api/auth';
-import type { UploadReader } from 'src/api/uploads';
+import type { UploadReader } from 'src/types';
 import { jsonBodyMiddleware } from 'src/api/validation';
 import { UserRole } from 'src/enum';
 import type { AuthService } from 'src/services/auth.service';

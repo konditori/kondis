@@ -1,6 +1,5 @@
-import { ActivityType } from 'src/enum';
+import { ActivityType, AverageMetric, BestEffortGroup } from 'src/enum';
 import type { ActivityTagSettings, ActivityTypeSettings, BestEffortType } from 'src/types';
-import { AverageMetric, BestEffortGroup } from 'src/types';
 export {
   JOB_CONCURRENCY,
   JOB_CRON,
