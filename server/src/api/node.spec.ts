@@ -10,6 +10,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX, createApiApp, type ApiDependencies } from 'src/api/app';
 import { createNodeServer, nodeFileReader, nodeUploadReader } from 'src/api/node';
+import type { TakeoutActivityMetadataDto } from 'src/dtos/upload.dto';
+import type { UploadedFileData } from 'src/types/uploads';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const closeServer = (server: Server): Promise<void> =>
@@ -109,6 +111,59 @@ describe(createNodeServer.name, () => {
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({ byteSize: 9, queued: true });
     expect(uploadActivity).toHaveBeenCalledOnce();
+  });
+
+  it('accepts metadata alongside a streamed Strava takeout activity', async () => {
+    const importId = '00000000-0000-4000-8000-000000000002';
+    const submitTakeoutActivity = vi.fn(
+      async (
+        receivedImportId: string,
+        userId: string,
+        metadata: TakeoutActivityMetadataDto,
+        file: UploadedFileData | undefined,
+      ) => {
+        expect(receivedImportId).toBe(importId);
+        expect(userId).toBe(TEST_API_USER.id);
+        expect(metadata).toMatchObject({ itemKey: 'activity:activities/lunch-walk.fit', name: 'Lunch Walk' });
+        const path = file?.path;
+        if (!path) throw new Error('Expected a disk-backed upload');
+        expect(file).toMatchObject({ originalname: 'lunch-walk.fit', size: 9 });
+        expect(await readFile(path, 'utf8')).toBe('fit bytes');
+        await rm(path, { force: true });
+        return true;
+      },
+    );
+    const baseUrl = await startApp(
+      newApiDependencies({
+        uploads: nodeUploadReader,
+        uploadService: { submitTakeoutActivity },
+        users: newApiUsers(),
+      }),
+    );
+    const form = new FormData();
+    form.append(
+      'metadata',
+      JSON.stringify({
+        itemKey: 'activity:activities/lunch-walk.fit',
+        kind: 'activity',
+        originalName: 'lunch-walk.fit',
+        name: 'Lunch Walk',
+        description: null,
+        tags: [],
+      }),
+    );
+    form.append('forwarded-metadata', 'proxy bookkeeping');
+    form.append('file', new Blob(['fit bytes']), 'lunch-walk.fit');
+
+    const response = await fetch(`${baseUrl}${API_PREFIX}/upload/strava/imports/${importId}/activities`, {
+      method: 'POST',
+      headers: apiAuthHeaders(),
+      body: form,
+    });
+
+    expect(response.status).toBe(202);
+    expect(await response.json()).toEqual({ accepted: true });
+    expect(submitTakeoutActivity).toHaveBeenCalledOnce();
   });
 
   it('rejects extra avatar form fields before buffering the file', async () => {
