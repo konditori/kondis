@@ -1,0 +1,59 @@
+server/src/schema/tables/takeout-import.table.ts
+  s_cd35bf7f54dcf6::t_79b287931a3769 2
+server/src/services/upload.service.ts
+  s_cd35bf7f54dcf6::t_c2ea1507be4a03 21-22
+server/src/services/worker-upload.service.ts
+  s_cd35bf7f54dcf6::t_c044191c0028b5 18-19
+server/src/state/import-progress.store.ts
+  s_cd35bf7f54dcf6::t_bc1dd78ea44d9d 3-12
+server/src/api/node.ts
+  s_cd35bf7f54dcf6::t_3361b3aa65b570 15
+server/src/api/route-groups.ts
+  s_cd35bf7f54dcf6::t_4042bd07ff8fd6 53
+server/src/api/routes/activity-image.ts
+  s_cd35bf7f54dcf6::t_3bfb00ba326544 5
+server/src/api/routes/upload.ts
+  s_cd35bf7f54dcf6::t_abd37f11509b75 4
+server/src/api/routes/user-mutations.ts
+  s_cd35bf7f54dcf6::t_87f0e3bba22495 4
+server/src/constants.ts
+  s_7b23b971953425::t_d00b862d41a504 1
+server/src/dtos/activity.dto.ts
+  s_7b23b971953425::t_7063bec9cd10d1 6
+server/src/enum.ts
+  s_7b23b971953425::t_c949a426db603e 61-129
+server/src/repositories/activity.repository.ts
+  s_7b23b971953425::t_00c88cc43d1d10 31
+server/src/services/activity.service.ts
+  s_7b23b971953425::t_271a4afd7113d6 6
+server/src/types.ts
+  s_7b23b971953425::t_b43b22043698a8 1-13,17-27,39-81
+server/src/utils/activity.spec.ts
+  s_7b23b971953425::t_1fb863087dc1a4 4
+sites/developers.kondis.org/docs/testing.md
+  s_7b23b971953425::t_b2d95397d554cd 33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8dd86359fbad90a6ceebdb3654103d16ca806248",
+  "prompts": {},
+  "sessions": {
+    "s_7b23b971953425": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8200c075-58c0-4e50-9f7c-44e2f19545a3",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_cd35bf7f54dcf6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "06731e9d-a647-4101-9482-0e41f7023fff",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
