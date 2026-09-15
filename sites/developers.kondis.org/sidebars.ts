@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
     "index",
     "overview",
     "local-development",
+    "testing",
     "cloudflare",
     "demo",
     "contributing",

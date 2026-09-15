@@ -1,6 +1,5 @@
 import { deflateSync } from 'node:zlib';
 
-// Tiny deterministic RGB PNGs generated from numbers, without binary fixtures or image dependencies.
 export function png(seed: number): Buffer {
   const chunk = (name: string, data: Buffer) => {
     const payload = Buffer.concat([Buffer.from(name), data]);

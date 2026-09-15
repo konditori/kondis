@@ -1,4 +1,3 @@
-// Own only this run's containers, processes, and temporary storage.
 import { execFile, spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';

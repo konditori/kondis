@@ -53,8 +53,6 @@ export const test = base.extend<{ imports: Set<string> }, { authState: AuthState
           })
           .toBe(true);
       }
-      // Delete serially: concurrent cascading activity deletes can deadlock in
-      // activity_route_match, and cleanup must be deterministic.
       for (;;) {
         const { activities } = await listActivities(page);
         if (activities.length === 0) {

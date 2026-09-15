@@ -2,9 +2,6 @@ name: Test
 
 on:
   workflow_dispatch:
-  schedule:
-    # Weekly scale coverage: the browser suite enables @scale tests via KONDIS_E2E_SCALE.
-    - cron: '17 4 * * 1'
   pull_request:
   push:
     branches: [main]

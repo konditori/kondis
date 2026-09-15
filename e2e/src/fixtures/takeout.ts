@@ -10,8 +10,6 @@ export const manualName = 'Synthetic lunch walk';
 const fixtureRoot = resolve(import.meta.dirname, '../../../test/test-assets');
 const timestamp = new Date('2000-01-01T00:00:00Z');
 
-// Export column order is intentionally independent of the production parser.
-// Repeated columns are part of Strava's export format; the second Distance is meters.
 const headers = [
   'Activity ID',
   'Activity Date',
@@ -72,7 +70,7 @@ function row(id: number, name: string, filename: string, sport = 'Run', descript
   ]);
 }
 
-// Invented coordinates in the open Pacific, fixed times, no account or device metadata.
+// Fake coordinates in the Pacific
 function points(day: number) {
   return Array.from({ length: 12 }, (_, index) => ({
     lat: 0,
@@ -163,7 +161,6 @@ export async function makeTakeout(
     'profile.csv',
     'Athlete ID,Email Address,First Name,Last Name\r\n99999,unused@example.com,Synthetic,Importer\r\n',
   );
-  // Video is deliberately not decoded or transferred; photos above are real PNGs.
   text('media/video.mp4', 'synthetic video sentinel');
   text('equipment.csv', 'Name\r\nSynthetic shoes\r\n');
   if (variant === 'missing-manifest') {
