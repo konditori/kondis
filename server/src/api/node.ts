@@ -54,7 +54,14 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
   }).single('file'),
   takeoutActivity: multer({
     storage: uploadStorage,
-    limits: { fileSize: UPLOAD_LIMITS.activityFileBytes, files: 1, fields: 0, parts: 2 },
+    // Keep text fields bounded while accepting takeout metadata and its activity file.
+    limits: {
+      fileSize: UPLOAD_LIMITS.activityFileBytes,
+      fieldSize: 16 * 1024,
+      files: 1,
+      fields: 2,
+      parts: 4,
+    },
   }).single('file'),
   avatar: multer({
     storage: memoryStorage(),
