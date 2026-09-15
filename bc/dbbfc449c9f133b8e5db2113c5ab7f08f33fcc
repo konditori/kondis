@@ -1,0 +1,85 @@
+server/scripts/mcp-smoke-server.ts
+  s_6db1d3aa9584a5::t_14abeb9fe261a1 1-97
+server/src/mcp/app.ts
+  s_6db1d3aa9584a5::t_9c81f59f05e48c 1-354
+server/src/mcp/registry.ts
+  s_6db1d3aa9584a5::t_4db78ed38d3af2 1-319
+server/src/repositories/session.repository.ts
+  s_6db1d3aa9584a5::t_ac4a8b943e6ba9 282-286
+server/test/worker/mcp.spec.ts
+  s_6db1d3aa9584a5::t_7acc7d14c6e639 1-45
+pnpm-lock.yaml
+  s_e6e600bda34f6b::t_7e980e27ce73ca 87-89,2406-2415,4011-4014,4051-4058,4307-4310,4623-4626,4631-4634,4645-4648,4677-4680,5317-5320,5329-5334,5339-5342,5420-5423,5489-5492,5804-5807,5874-5877,6006-6008,6080-6082,6110-6112,6439-6442,6449-6452,6776-6779,7020-7022,7084-7087,7654-7657,7896-7899,7974-7977,7997-8000,8517-8520,9075-9079,12052-12073,13816-13820,13850-13853,14119-14132,14457-14458,14461-14462,14469-14470,14495-14499,15190-15193,15208-15215,15252-15284,15371-15381,15435-15436,15886-15889,15933-15934,16026-16027,16102-16103,16122-16123,16514-16515,16535-16536,16983-16986,17241-17242,17298-17299,17918-17924,18295-18304,18387-18402,18441-18449,19056-19061,19666-19669
+server/package.json
+  s_e6e600bda34f6b::t_85cb406e6cbee4 37
+server/scripts/mcp-smoke-client.py
+  s_2e7b68f0e8874b::t_de33005b2be09a 1-67
+server/src/api/node.ts
+  s_e6e600bda34f6b::t_4a2011f04927cb 177-180,183-185
+server/src/cloudflare/entrypoint.ts
+  s_e6e600bda34f6b::t_35b04b4ff520ea 47,178-194
+server/src/composition.worker.ts
+  s_e6e600bda34f6b::t_3823161502da6c 42
+server/src/main.ts
+  s_e6e600bda34f6b::t_c8856c2c3bfbb3 6,104-116
+server/src/mcp/app.spec.ts
+  s_e6e600bda34f6b::t_fcd806b9748ffd 1-138
+server/src/mcp/context.ts
+  s_e6e600bda34f6b::t_e99ff359a892b5 1-41
+server/src/mcp/oauth.ts
+  s_e6e600bda34f6b::t_78a77c479c041e 1-170
+server/src/repositories/config.repository.ts
+  s_e6e600bda34f6b::t_559eeebad8ed3e 102-105
+server/src/services/activity-query.service.ts
+  s_e6e600bda34f6b::t_bb656a85eac1e2 1-258
+server/src/services/api-key.service.ts
+  s_e6e600bda34f6b::t_fd8fda8794030a 1-68
+server/src/services/operation.service.ts
+  s_e6e600bda34f6b::t_5945c56ac77daf 1-343
+server/test/medium/specs/service/mcp.spec.ts
+  s_e6e600bda34f6b::t_5566ed766e41fb 1-216
+web/src/hooks.server.ts
+  s_e6e600bda34f6b::t_4d298965ded863 2,10-36
+web/src/routes/+layout.server.ts
+  s_e6e600bda34f6b::t_ef670dddbff088 56-59
+web/src/routes/login/+page.server.ts
+  s_e6e600bda34f6b::t_f2e0dd11b761c6 18,37-43
+web/src/routes/settings/+page.svelte
+  s_e6e600bda34f6b::t_4c6bf67ee7f856 106
+web/src/routes/settings/connections/+page.svelte
+  s_e6e600bda34f6b::t_ac90340787d2bf 1-289
+web/src/routes/settings/connections/authorize/+page.svelte
+  s_e6e600bda34f6b::t_6d2e1a5ea4697a 1-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bcdbbfc449c9f133b8e5db2113c5ab7f08f33fcc",
+  "prompts": {},
+  "sessions": {
+    "s_2e7b68f0e8874b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a5b9-e723-7681-8ea9-de81324c5ccf",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_6db1d3aa9584a5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f59f280a7ffe4As2aQH11wbUEt",
+        "model": "@cf/moonshotai/kimi-k3"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e6e600bda34f6b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a5b4-b2f7-7123-9152-71fc75694f3b",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
