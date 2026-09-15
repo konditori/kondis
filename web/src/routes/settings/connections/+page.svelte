@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   type Connection = {
     id: string;
@@ -11,14 +12,14 @@
     revokedAt: string | null;
   };
   const scopes = [
-    { value: "profile:read", label: "Read profile and preferences" },
+    { value: "profile:read", label: t("connection_scope_profile") },
     {
       value: "activities:read",
-      label: "Read activities and training summaries",
+      label: t("connection_scope_activities"),
     },
-    { value: "location:read", label: "Read GPS coordinates" },
-    { value: "activities:write", label: "Create and edit activities" },
-    { value: "activities:import", label: "Import activity files" },
+    { value: "location:read", label: t("connection_scope_location") },
+    { value: "activities:write", label: t("connection_scope_write") },
+    { value: "activities:import", label: t("connection_scope_import") },
   ];
   let connections = $state<Connection[]>([]);
   let endpoint = $state<string | null>(null);
@@ -37,7 +38,7 @@
     const response = await fetch(`/api/v1/connections${path}`, init);
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      throw new Error(body.message ?? "Could not update connections.");
+      throw new Error(body.message ?? t("could_not_update_connections"));
     }
     return response.status === 204 ? null : response.json();
   }
@@ -75,7 +76,7 @@
       name = "";
       await refresh();
     } catch (e) {
-      error = e instanceof Error ? e.message : "Could not create key.";
+      error = e instanceof Error ? e.message : t("could_not_create_key");
     } finally {
       busy = false;
     }
@@ -90,7 +91,7 @@
       });
       await refresh();
     } catch (e) {
-      error = e instanceof Error ? e.message : "Could not revoke connection.";
+      error = e instanceof Error ? e.message : t("could_not_revoke_connection");
     } finally {
       busy = false;
     }
@@ -107,30 +108,26 @@
       });
       saved = true;
     } catch (e) {
-      error = e instanceof Error ? e.message : "Could not save preferences.";
+      error = e instanceof Error ? e.message : t("could_not_save_preferences");
     } finally {
       busy = false;
     }
   }
 </script>
 
-<svelte:head><title>Connected apps · Kondis</title></svelte:head>
+<svelte:head><title>{t("connected_apps")} · Kondis</title></svelte:head>
 <main class="page-shell connections-page">
-  <a href="/settings">← Settings</a>
-  <h1>Connected apps</h1>
+  <a href="/settings">← {t("settings")}</a>
+  <h1>{t("connected_apps")}</h1>
   <p>
-    Give an assistant access to your training history. Choose what each
-    connection can read or change.
+    {t("connected_apps_description")}
   </p>
   {#if error}<p role="alert" class="error">{error}</p>{/if}
-  {#if !loaded}<p>Loading connections…</p>{:else}
+  {#if !loaded}<p>{t("loading_connections")}</p>{:else}
     <section>
-      <h2>Connect an assistant</h2>
-      {#if endpoint}<p>MCP server URL: <code>{endpoint}</code></p>
-      {:else}<p>
-          Your server administrator needs to enable MCP before an assistant can
-          connect.
-        </p>{/if}
+      <h2>{t("connect_an_assistant")}</h2>
+      {#if endpoint}<p>{t("mcp_server_url")}: <code>{endpoint}</code></p>
+      {:else}<p>{t("mcp_disabled_description")}</p>{/if}
       <form
         onsubmit={(e) => {
           e.preventDefault();
@@ -138,15 +135,15 @@
         }}
       >
         <label
-          >Connection name <input
+          >{t("connection_name")} <input
             bind:value={name}
             required
             maxlength="80"
-            placeholder="My training assistant"
+            placeholder={t("connection_name_placeholder")}
           /></label
         >
         <fieldset>
-          <legend>Permissions</legend>
+          <legend>{t("permissions")}</legend>
           {#each scopes as scope}<label class="scope"
               ><input
                 type="checkbox"
@@ -156,7 +153,7 @@
             >{/each}
         </fieldset>
         <label
-          >Expires after (days) <input
+          >{t("expires_after_days")} <input
             type="number"
             bind:value={expiresInDays}
             min="1"
@@ -165,28 +162,28 @@
           /></label
         >
         <button disabled={busy || !endpoint || selected.length === 0}
-          >Create API key</button
+          >{t("create_api_key")}</button
         >
       </form>
       {#if secret}<div role="status">
-          <p>Copy this key now. It will only be shown once.</p>
-          <input aria-label="New API key" readonly value={secret} /><button
+          <p>{t("copy_key_once")}</p>
+          <input aria-label={t("new_api_key")} readonly value={secret} /><button
             type="button"
             onclick={() => {
               secret = "";
-            }}>Dismiss key</button
+            }}>{t("dismiss_key")}</button
           >
         </div>{/if}
     </section>
     <section>
-      <h2>Your connections</h2>
-      {#if connections.length === 0}<p>No connected apps yet.</p>{/if}
+      <h2>{t("your_connections")}</h2>
+      {#if connections.length === 0}<p>{t("no_connected_apps")}</p>{/if}
       {#each connections as connection}<article>
           <h3>{connection.name}</h3>
           <p>
-            {connection.kind === "oauth" ? "Connected app" : "API key"} · {connection.revokedAt
-              ? "Revoked"
-              : `Expires ${new Date(connection.expiresAt).toLocaleDateString()}`}
+            {connection.kind === "oauth" ? t("connected_app") : t("api_key")} · {connection.revokedAt
+              ? t("revoked")
+              : `${t("expires")} ${new Date(connection.expiresAt).toLocaleDateString()}`}
           </p>
           <p>
             {connection.scopes
@@ -194,17 +191,17 @@
               .join(" · ")}
           </p>
           {#if connection.lastUsedAt}<p>
-              Last used {new Date(connection.lastUsedAt).toLocaleString()}
+              {t("last_used")} {new Date(connection.lastUsedAt).toLocaleString()}
             </p>{/if}
           {#if !connection.revokedAt}<button
               type="button"
               disabled={busy}
-              onclick={() => revoke(connection.id)}>Revoke access</button
+              onclick={() => revoke(connection.id)}>{t("revoke_access")}</button
             >{/if}
         </article>{/each}
     </section>
     <section>
-      <h2>Assistant preferences</h2>
+      <h2>{t("assistant_preferences")}</h2>
       <form
         onsubmit={(e) => {
           e.preventDefault();
@@ -212,23 +209,23 @@
         }}
       >
         <label
-          >Timezone <input
+          >{t("timezone")} <input
             bind:value={timezone}
             required
-            placeholder="Europe/Lisbon"
+            placeholder={t("timezone_placeholder")}
           /></label
         >
         <label
-          >Preferred display units <select bind:value={units}
-            ><option value="metric">Metric</option><option value="imperial"
-              >Imperial</option
+          >{t("preferred_display_units")} <select bind:value={units}
+            ><option value="metric">{t("metric")}</option><option value="imperial"
+              >{t("imperial")}</option
             ></select
           ></label
         >
-        <button disabled={busy}>Save preferences</button>{#if saved}<p
+        <button disabled={busy}>{t("save_preferences")}</button>{#if saved}<p
             role="status"
           >
-            Preferences saved.
+            {t("preferences_saved")}
           </p>{/if}
       </form>
     </section>

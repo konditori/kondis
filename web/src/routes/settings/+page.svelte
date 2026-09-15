@@ -103,7 +103,7 @@
   <header class="page-header">
     <div>
       <h1>{t("settings")}</h1>
-      <a href="/settings/connections">Connected apps</a>
+      <a href="/settings/connections">{t("connected_apps")}</a>
       <p>{t("choose_activity_display")}</p>
     </div>
   </header>
