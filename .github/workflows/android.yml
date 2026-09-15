@@ -3,17 +3,6 @@ name: Android
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - android/**
-      - server/**
-      - open-api/**
-      - test/**
-      - packages/postgres/**
-      - docker/**
-      - package.json
-      - pnpm-lock.yaml
-      - mise.toml
-      - .github/workflows/android.yml
   push:
     branches: [main]
     tags: ['android-v*']
@@ -39,8 +28,43 @@ env:
   GRADLE_ARGS: --no-daemon --warning-mode=fail --console=plain
 
 jobs:
+  changed-files:
+    name: Check Android Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      android: ${{ steps.filter.outputs.android }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check which Android dependencies changed
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            android:
+              - android/**
+              - server/**
+              - open-api/**
+              - test/**
+              - packages/postgres/**
+              - docker/**
+              - package.json
+              - pnpm-lock.yaml
+              - mise.toml
+              - .github/workflows/android.yml
+
   lint:
     name: Lint
+    needs: changed-files
+    if: >-
+      github.event_name != 'pull_request' ||
+      needs.changed-files.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -83,6 +107,10 @@ jobs:
 
   test:
     name: Unit tests
+    needs: changed-files
+    if: >-
+      github.event_name != 'pull_request' ||
+      needs.changed-files.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -116,6 +144,10 @@ jobs:
 
   build:
     name: Build
+    needs: changed-files
+    if: >-
+      github.event_name != 'pull_request' ||
+      needs.changed-files.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -176,6 +208,10 @@ jobs:
 
   instrumented:
     name: Emulator E2E
+    needs: changed-files
+    if: >-
+      github.event_name != 'pull_request' ||
+      needs.changed-files.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

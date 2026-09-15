@@ -3,13 +3,6 @@ name: Sites
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - 'sites/**'
-      - 'open-api/kondis-openapi-specs.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'mise.toml'
-      - '.github/workflows/sites.yml'
   push:
     branches: [main]
     paths:
@@ -32,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: read
     outputs:
       should_run: ${{ steps.filter.outputs.changes }}
     steps:
