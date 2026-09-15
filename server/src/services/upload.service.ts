@@ -6,6 +6,7 @@ import {
   TakeoutActivityMetadataDto,
   TakeoutImportScanDto,
   TakeoutManualItemDto,
+  TakeoutPhotoMetadataDto,
 } from 'src/dtos/upload.dto';
 import { ActivityType as ActivityTypeEnum, JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
@@ -20,6 +21,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { ImportProgressStore, type TakeoutImportItem } from 'src/state/import-progress.store';
 import { JobOf } from 'src/types/jobs';
 import { UploadedFileData } from 'src/types/uploads';
+import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 
@@ -44,7 +46,13 @@ export class UploadService {
     options: Partial<
       Pick<
         JobOf<JobName.ActivityUpload>,
-        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+        | 'activityName'
+        | 'activityDescription'
+        | 'activitySport'
+        | 'activityTags'
+        | 'takeoutImportId'
+        | 'takeoutItemKey'
+        | 'images'
       >
     > = {},
   ): Promise<FitUploadResponseDto> {
@@ -83,6 +91,23 @@ export class UploadService {
     );
   }
 
+  submitTakeoutPhoto(
+    importId: string,
+    userId: string,
+    metadata: TakeoutPhotoMetadataDto,
+    file: UploadedFileData | undefined,
+  ): Promise<boolean> {
+    return stageTakeoutPhoto(
+      this.importProgressStore,
+      this.storageRepository,
+      this.cryptoRepository,
+      importId,
+      userId,
+      metadata,
+      file,
+    );
+  }
+
   async submitTakeoutActivity(
     importId: string,
     userId: string,
@@ -100,6 +125,7 @@ export class UploadService {
         activityTags: metadata.tags,
         takeoutImportId: importId,
         takeoutItemKey: metadata.itemKey,
+        images: await this.importProgressStore.getStagedPhotos(importId, userId, metadata.itemKey),
       });
       await this.importProgressStore.markQueued(importId, metadata.itemKey);
       return true;
@@ -137,6 +163,7 @@ export class UploadService {
           calories: item.calories,
           takeoutImportId: importId,
           takeoutItemKey: item.itemKey,
+          images: await this.importProgressStore.getStagedPhotos(importId, userId, item.itemKey),
         },
       });
       await this.importProgressStore.markQueued(importId, item.itemKey);
@@ -280,7 +307,13 @@ export class UploadService {
     options: Partial<
       Pick<
         JobOf<JobName.ActivityUpload>,
-        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+        | 'activityName'
+        | 'activityDescription'
+        | 'activitySport'
+        | 'activityTags'
+        | 'takeoutImportId'
+        | 'takeoutItemKey'
+        | 'images'
       >
     > = {},
   ): Promise<void> {
@@ -301,6 +334,7 @@ export class UploadService {
         ...(options.activityTags?.length && { activityTags: options.activityTags }),
         ...(options.takeoutImportId && { takeoutImportId: options.takeoutImportId }),
         ...(options.takeoutItemKey && { takeoutItemKey: options.takeoutItemKey }),
+        ...(options.images?.length && { images: options.images }),
       },
     });
   }

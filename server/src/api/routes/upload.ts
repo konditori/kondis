@@ -13,6 +13,7 @@ import {
   TakeoutItemFailureSchema,
   TakeoutItemSubmissionResponseSchema,
   TakeoutManualItemSchema,
+  TakeoutPhotoMetadataSchema,
 } from 'src/dtos/upload.dto';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import type { UploadedFileData } from 'src/types/uploads';
@@ -28,6 +29,12 @@ export type TakeoutImportRouteService = {
     userId: string,
     scan: z.output<typeof TakeoutImportScanSchema>,
   ) => Promise<string[]>;
+  submitTakeoutPhoto: (
+    importId: string,
+    userId: string,
+    metadata: z.output<typeof TakeoutPhotoMetadataSchema>,
+    file: UploadedFileData | undefined,
+  ) => Promise<boolean>;
   submitTakeoutActivity: (
     importId: string,
     userId: string,
@@ -139,6 +146,38 @@ const uploadTakeoutActivityRoute = createRoute({
   summary: 'Upload one extracted Strava activity',
   tags: ['uploads'],
 });
+const photoRoute = createRoute({
+  method: 'post',
+  path: '/upload/strava/imports/{id}/photos',
+  operationId: 'TakeoutImportController_uploadPhoto',
+  request: {
+    params: idParams,
+    body: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            required: ['file', 'metadata'],
+            properties: {
+              file: {
+                type: 'string',
+                format: 'binary',
+                description: 'One takeout photo image associated with an activity',
+              },
+              metadata: { type: 'string', maxLength: 16 * 1024 },
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    202: { description: 'Photo staged for its activity', content: { 'application/json': { schema: itemResponse } } },
+  },
+  summary: 'Stage one takeout photo before submitting its activity',
+  tags: ['uploads'],
+});
 const submitManualRoute = createRoute({
   method: 'post',
   path: '/upload/strava/imports/{id}/manual-activities',
@@ -245,6 +284,23 @@ export const registerTakeoutImportRoutes = (
       }),
       202,
     );
+  });
+  app.openapi(photoRoute, async (context) => {
+    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutPhoto')) as
+      TakeoutActivityUpload | undefined;
+    let metadata: z.output<typeof TakeoutPhotoMetadataSchema>;
+    try {
+      metadata = TakeoutPhotoMetadataSchema.parse(JSON.parse(upload?.metadata ?? ''));
+    } catch {
+      throw new BadRequestException('Invalid takeout photo metadata');
+    }
+    const accepted = await service.submitTakeoutPhoto(
+      context.req.valid('param').id,
+      context.get('user').id,
+      metadata,
+      upload?.file,
+    );
+    return context.json(itemResponse.parse({ accepted }), 202);
   });
   app.openapi(submitManualRoute, async (context) =>
     context.json(

@@ -63,6 +63,10 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
       parts: 4,
     },
   }).single('file'),
+  takeoutPhoto: multer({
+    storage: memoryStorage(),
+    limits: { fileSize: UPLOAD_LIMITS.imageFileBytes, files: 1, fields: 1, fieldSize: 16 * 1024, parts: 3 },
+  }).single('file'),
   avatar: multer({
     storage: memoryStorage(),
     limits: { fileSize: UPLOAD_LIMITS.avatarFileBytes, files: 1, fields: 0, parts: 2 },
@@ -116,7 +120,7 @@ function readNodeUpload(
         resolve(
           kind === 'image'
             ? { file: undefined, caption }
-            : kind === 'takeoutActivity'
+            : kind === 'takeoutActivity' || kind === 'takeoutPhoto'
               ? { file: undefined, metadata }
               : undefined,
         );
@@ -130,8 +134,11 @@ function readNodeUpload(
       resolve(
         kind === 'avatar'
           ? { originalname, size, buffer }
-          : kind === 'takeoutActivity'
-            ? ({ file: { originalname, size, path }, metadata } satisfies TakeoutActivityUpload)
+          : kind === 'takeoutActivity' || kind === 'takeoutPhoto'
+            ? ({
+                file: kind === 'takeoutPhoto' ? { originalname, size, buffer } : { originalname, size, path },
+                metadata,
+              } satisfies TakeoutActivityUpload)
             : { originalname, size, path },
       );
     });

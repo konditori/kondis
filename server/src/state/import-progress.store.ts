@@ -1,6 +1,7 @@
 import { sql } from 'kysely';
 
 import type { KondisDatabase, KondisTransaction } from 'src/types';
+import type { IActivityImageStage } from 'src/types/jobs';
 
 export type ImportProgressStatus = 'scanning' | 'uploading' | 'processing' | 'completed' | 'failed' | 'cancelled';
 export type TakeoutImportItemKind = 'activity' | 'manual';
@@ -68,7 +69,7 @@ export class ImportProgressStore {
   async registerItems(importId: string, userId: string, items: TakeoutImportItem[]): Promise<string[]> {
     return this.db.transaction().execute(async (trx) => {
       const importRecord = await this.lockImport(trx, importId, userId);
-      if (!importRecord || importRecord.status === 'cancelled') {
+      if (!importRecord || ['cancelled', 'completed'].includes(importRecord.status)) {
         return [];
       }
 
@@ -154,6 +155,54 @@ export class ImportProgressStore {
       await this.applyDeltas(trx, importId, delta);
       return true;
     });
+  }
+
+  async stagePhoto(
+    importId: string,
+    userId: string,
+    itemKey: string,
+    photo: IActivityImageStage & { photoKey: string },
+  ): Promise<boolean> {
+    return this.db.transaction().execute(async (trx) => {
+      const owner = await this.lockImport(trx, importId, userId);
+      if (!owner || ['cancelled', 'completed'].includes(owner.status)) {
+        return false;
+      }
+      const item = await trx
+        .selectFrom('takeout_import_item')
+        .select(['status', 'staged_images'])
+        .where('import_id', '=', importId)
+        .where('item_key', '=', itemKey)
+        .forUpdate()
+        .executeTakeFirst();
+      if (!item || !['pending', 'failed'].includes(item.status)) {
+        return false;
+      }
+      const photos = item.staged_images.filter((image) => image.photoKey !== photo.photoKey);
+      if (photos.length >= 100) {
+        return false;
+      }
+      photos.push(photo);
+      await trx
+        .updateTable('takeout_import_item')
+        .set({ staged_images: sql`${JSON.stringify(photos)}::jsonb` })
+        .where('import_id', '=', importId)
+        .where('item_key', '=', itemKey)
+        .execute();
+      return true;
+    });
+  }
+
+  async getStagedPhotos(importId: string, userId: string, itemKey: string): Promise<IActivityImageStage[]> {
+    const item = await this.db
+      .selectFrom('takeout_import_item as item')
+      .innerJoin('takeout_import as parent', 'parent.id', 'item.import_id')
+      .select('item.staged_images')
+      .where('parent.id', '=', importId)
+      .where('parent.user_id', '=', userId)
+      .where('item.item_key', '=', itemKey)
+      .executeTakeFirst();
+    return item?.staged_images ?? [];
   }
 
   async markQueued(importId: string, itemKey: string): Promise<void> {

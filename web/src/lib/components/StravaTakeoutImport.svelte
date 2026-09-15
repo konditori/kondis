@@ -26,7 +26,7 @@
     total?: number;
     uploaded?: number;
     extractionErrors?: number;
-    skipped?: { photos: number; videos: number; profileImages: number };
+    skipped?: { videos: number };
     message?: string;
   };
 
@@ -45,6 +45,7 @@
     | "cancelled"
   >("idle");
   let message = $state("");
+  let mediaMessage = $state("");
   let processed = $state(0);
   let uploaded = $state(0);
   let total = $state<number | null>(null);
@@ -89,7 +90,7 @@
         if (file) localStorage.removeItem(importKey(file));
         const imported = processed - status.duplicates - status.failed;
         const parts =
-          imported > 0
+          imported > 0 || status.total === 0
             ? [t("strava_imported_activities", { count: imported })]
             : [];
         if (status.duplicates > 0)
@@ -98,7 +99,9 @@
           );
         if (status.failed > 0)
           parts.push(t("strava_failed_activities", { count: status.failed }));
-        message = `${parts.join("; ")}.`;
+        message = [parts.length ? `${parts.join("; ")}.` : "", status.error]
+          .filter(Boolean)
+          .join(" ");
         await invalidateAll();
         return false;
       } else if (status.status === "failed" || status.status === "cancelled") {
@@ -145,6 +148,7 @@
     importId = undefined;
     phase = "idle";
     message = "";
+    mediaMessage = "";
     processed = 0;
     uploaded = 0;
     total = null;
@@ -160,34 +164,47 @@
     )
       return;
     message = "";
-    const saved = localStorage.getItem(importKey(file));
-    try {
-      if (saved) {
-        const status = await api<ImportStatus>(
-          `/upload/strava/imports/${saved}`,
-        );
-        if (status.status !== "completed" && status.status !== "cancelled")
-          importId = saved;
-      }
-    } catch {
-      localStorage.removeItem(importKey(file));
-    }
-    if (!importId) {
-      const created = await api<{ importId: string }>(
-        "/upload/strava/imports",
-        { method: "POST" },
-      );
-      importId = created.importId;
-      localStorage.setItem(importKey(file), importId);
-    }
     phase = "scanning";
-    worker = new Worker(
-      new URL("../workers/strava-takeout.worker.ts", import.meta.url),
-      { type: "module" },
-    );
-    worker.onmessage = (event: MessageEvent<WorkerEvent>) =>
-      void handleWorkerEvent(event.data);
-    worker.postMessage({ type: "start", file, importId, apiBase });
+    worker?.terminate();
+    importId = undefined;
+    try {
+      const saved = localStorage.getItem(importKey(file));
+      try {
+        if (saved) {
+          const status = await api<ImportStatus>(
+            `/upload/strava/imports/${saved}`,
+          );
+          if (status.status !== "completed" && status.status !== "cancelled")
+            importId = saved;
+        }
+      } catch {
+        localStorage.removeItem(importKey(file));
+      }
+      if (!importId) {
+        const created = await api<{ importId: string }>(
+          "/upload/strava/imports",
+          { method: "POST" },
+        );
+        importId = created.importId;
+        localStorage.setItem(importKey(file), importId);
+      }
+      phase = "scanning";
+      worker = new Worker(
+        new URL("../workers/strava-takeout.worker.ts", import.meta.url),
+        { type: "module" },
+      );
+      worker.onmessage = (event: MessageEvent<WorkerEvent>) =>
+        void handleWorkerEvent(event.data).catch(showError);
+      worker.onerror = () => showError(new Error(t("strava_import_failed")));
+      worker.postMessage({ type: "start", file, importId, apiBase });
+    } catch (error) {
+      showError(error);
+    }
+  }
+
+  function showError(error: unknown) {
+    phase = "error";
+    message = error instanceof Error ? error.message : String(error);
   }
 
   async function handleWorkerEvent(event: WorkerEvent) {
@@ -198,10 +215,8 @@
     if (event.type === "scanned") {
       total = event.total ?? null;
       if (event.skipped) {
-        message = t("strava_skipped_media", {
-          photos: event.skipped.photos,
+        mediaMessage = t("strava_skipped_videos", {
           videos: event.skipped.videos,
-          profiles: event.skipped.profileImages,
         });
       }
       return;
@@ -235,6 +250,7 @@
         method: "POST",
       });
     if (file) localStorage.removeItem(importKey(file));
+    importId = undefined;
     phase = "cancelled";
   }
 
@@ -287,6 +303,7 @@
     class="sr-only"
     type="file"
     accept=".zip,application/zip"
+    aria-label={t("strava_takeout")}
     onchange={(event) => selectFile(event.currentTarget.files?.[0])}
   />
 
@@ -309,9 +326,13 @@
       class:error={phase === "error"}
       class:upload-success={phase === "done"}
       class="upload-message"
+      role="status"
     >
       {message}
     </p>
+  {/if}
+  {#if mediaMessage}
+    <p class="upload-message" role="note">{mediaMessage}</p>
   {/if}
   {#if busy() && total !== null}
     <div class="upload-progress" aria-live="polite">

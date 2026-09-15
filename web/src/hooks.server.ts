@@ -4,7 +4,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get("kondis_session");
   const service = import.meta.env.DEV
     ? undefined
-    : event.platform?.env.KONDIS_API;
+    : event.platform?.env?.KONDIS_API;
   const pathname = new URL(event.request.url).pathname;
   const isRealtimeUpgrade =
     (pathname === "/events" || pathname === "/api/v1/events") &&
@@ -41,7 +41,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     return upstreamFetch(url.toString(), upstreamInit);
   };
   const isDemoPage =
-    event.platform?.env.KONDIS_DEMO_MODE === "true" &&
+    event.platform?.env?.KONDIS_DEMO_MODE === "true" &&
     event.request.method === "GET" &&
     !pathname.startsWith("/api/") &&
     pathname !== "/events";

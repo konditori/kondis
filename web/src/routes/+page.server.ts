@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({
     url,
     request.headers.get("x-forwarded-proto"),
     request.headers.get("cf-visitor"),
-    platform?.env.KONDIS_DEMO_MODE === "true",
+    platform?.env?.KONDIS_DEMO_MODE === "true",
   );
   try {
     const [liveResponse, body] = await Promise.all([

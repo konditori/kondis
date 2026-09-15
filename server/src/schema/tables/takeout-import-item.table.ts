@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Generated, Table, Timestamp, UpdateDateColumn } from 'src/schema/decorators';
+import type { IActivityImageStage } from 'src/types/jobs';
 
 @Table('takeout_import_item')
 export class TakeoutImportItemTable {
@@ -18,6 +19,9 @@ export class TakeoutImportItemTable {
 
   @Column({ type: 'jsonb' })
   metadata!: unknown;
+
+  @Column({ type: 'jsonb', default: "'[]'::jsonb" })
+  staged_images!: Generated<Array<IActivityImageStage & { photoKey: string }>>;
 
   @Column({ type: 'text', nullable: true })
   error!: string | null;

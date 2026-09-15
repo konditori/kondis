@@ -109,6 +109,7 @@
     <string name="i18n_strava_scanning">ZIP-filen granskas på den här enheten…</string>
     <string name="i18n_strava_uploading">Extraherade aktiviteter laddas upp…</string>
     <string name="i18n_strava_server_processing">Servern bearbetar aktiviteter…</string>
+    <string name="i18n_strava_skipped_videos">Hoppade över %1$s videor. Foton och profilinformation importeras.</string>
     <string name="i18n_strava_skipped_media">Hoppas över tills vidare: %1$s foton, %2$s videor och %3$s profilbilder.</string>
     <string name="i18n_strava_cancel">Avbryt import</string>
     <string name="i18n_strava_drop_takeout">Släpp Strava-exportfilen här</string>

@@ -106,6 +106,7 @@
   "strava_scanning": "ZIP-filen granskas på den här enheten…",
   "strava_uploading": "Extraherade aktiviteter laddas upp…",
   "strava_server_processing": "Servern bearbetar aktiviteter…",
+  "strava_skipped_videos": "Hoppade över {videos} videor. Foton och profilinformation importeras.",
   "strava_skipped_media": "Hoppas över tills vidare: {photos} foton, {videos} videor och {profiles} profilbilder.",
   "strava_cancel": "Avbryt import",
   "strava_drop_takeout": "Släpp Strava-exportfilen här",

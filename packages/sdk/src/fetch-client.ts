@@ -2308,6 +2308,37 @@ export function socialControllerDeleteComment(
     }),
   );
 }
+/**
+ * Stage one takeout photo before submitting its activity
+ */
+export function takeoutImportControllerUploadPhoto(
+  {
+    id,
+    body,
+  }: {
+    id: string;
+    body: {
+      /** One takeout photo image associated with an activity */
+      file: Blob;
+      metadata: string;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 202;
+      data: TakeoutItemSubmissionResponseDtoOutput;
+    }>(
+      `/upload/strava/imports/${encodeURIComponent(id)}/photos`,
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
+  );
+}
 export enum Status {
   Scanning = 'scanning',
 }

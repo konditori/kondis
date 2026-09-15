@@ -15,6 +15,7 @@ const requestLimitFor = (kind: Parameters<UploadReader['read']>[2]): number => {
     case 'avatar': {
       return UPLOAD_LIMITS.avatarFileBytes;
     }
+    case 'takeoutPhoto':
     case 'image': {
       return UPLOAD_LIMITS.imageFileBytes;
     }
@@ -31,7 +32,7 @@ export const workerUploadReader: UploadReader = {
     const value = form.get('file');
     const metadata = form.get('metadata');
     if (value === null) {
-      return kind === 'takeoutActivity'
+      return kind === 'takeoutActivity' || kind === 'takeoutPhoto'
         ? ({ file: undefined, metadata: metadata?.toString() } satisfies TakeoutActivityUpload)
         : undefined;
     }
@@ -45,6 +46,6 @@ export const workerUploadReader: UploadReader = {
       // R2 and remains free of Node runtime dependencies in the Worker.
       buffer: new Uint8Array(await value.arrayBuffer()) as unknown as Buffer,
     };
-    return kind === 'takeoutActivity' ? { file, metadata: metadata?.toString() } : file;
+    return kind === 'takeoutActivity' || kind === 'takeoutPhoto' ? { file, metadata: metadata?.toString() } : file;
   },
 };

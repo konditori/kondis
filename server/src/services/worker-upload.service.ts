@@ -4,6 +4,7 @@ import {
   TakeoutActivityMetadataDto,
   TakeoutImportScanDto,
   TakeoutManualItemDto,
+  TakeoutPhotoMetadataDto,
 } from 'src/dtos/upload.dto';
 import { ActivityType as ActivityTypeEnum, JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
@@ -17,6 +18,7 @@ import type { UploadRepository } from 'src/repositories/upload.repository';
 import { ImportProgressStore, type TakeoutImportItem } from 'src/state/import-progress.store';
 import type { JobOf } from 'src/types/jobs';
 import type { UploadedFileData } from 'src/types/uploads';
+import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 const extensionOf = (name: string): string => {
@@ -42,7 +44,13 @@ export class WorkerUploadService {
     options: Partial<
       Pick<
         JobOf<JobName.ActivityUpload>,
-        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+        | 'activityName'
+        | 'activityDescription'
+        | 'activitySport'
+        | 'activityTags'
+        | 'takeoutImportId'
+        | 'takeoutItemKey'
+        | 'images'
       >
     > = {},
   ): Promise<FitUploadResponseDto> {
@@ -94,6 +102,15 @@ export class WorkerUploadService {
     );
   }
 
+  submitTakeoutPhoto(
+    importId: string,
+    userId: string,
+    metadata: TakeoutPhotoMetadataDto,
+    file: UploadedFileData | undefined,
+  ): Promise<boolean> {
+    return stageTakeoutPhoto(this.progress, this.storage, this.crypto, importId, userId, metadata, file);
+  }
+
   async submitTakeoutActivity(
     importId: string,
     userId: string,
@@ -111,6 +128,7 @@ export class WorkerUploadService {
         activityTags: metadata.tags,
         takeoutImportId: importId,
         takeoutItemKey: metadata.itemKey,
+        images: await this.progress.getStagedPhotos(importId, userId, metadata.itemKey),
       });
       await this.progress.markQueued(importId, metadata.itemKey);
       return true;
@@ -148,6 +166,7 @@ export class WorkerUploadService {
           calories: item.calories,
           takeoutImportId: importId,
           takeoutItemKey: item.itemKey,
+          images: await this.progress.getStagedPhotos(importId, userId, item.itemKey),
         },
       });
       await this.progress.markQueued(importId, item.itemKey);
