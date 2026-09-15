@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
   let clientName = $state("");
   let scopes = $state<string[]>([]);
   let request = $state<Record<string, string>>({});
@@ -10,7 +11,7 @@
       .then(async (response) => {
         if (!response.ok)
           throw new Error(
-            "This authorization request is invalid or has expired.",
+            t("authorization_request_invalid"),
           );
         const data = await response.json();
         clientName = data.clientName;
@@ -30,39 +31,39 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ request, allow }),
       });
-      if (!response.ok) throw new Error("Could not authorize this app.");
+      if (!response.ok) throw new Error(t("could_not_authorize_app"));
       window.location.assign((await response.json()).redirect);
     } catch (e) {
-      error = e instanceof Error ? e.message : "Could not authorize this app.";
+      error = e instanceof Error ? e.message : t("could_not_authorize_app");
       busy = false;
     }
   }
   const labels: Record<string, string> = {
-    "profile:read": "Read your profile and preferences",
-    "activities:read": "Read your activities and training summaries",
-    "location:read": "Read your GPS coordinates",
-    "activities:write": "Create and edit your activities",
-    "activities:import": "Import activity files",
+    "profile:read": t("authorization_scope_profile"),
+    "activities:read": t("authorization_scope_activities"),
+    "location:read": t("authorization_scope_location"),
+    "activities:write": t("authorization_scope_write"),
+    "activities:import": t("authorization_scope_import"),
   };
 </script>
 
 <svelte:head
-  ><title>Authorize an app · Kondis</title><meta
+  ><title>{t("authorize_an_app")} · Kondis</title><meta
     name="referrer"
     content="no-referrer"
   /></svelte:head
 >
 <main class="page-shell">
-  <h1>Connect {clientName || "an app"}</h1>
+  <h1>{t("connect_app", { app: clientName || t("an_app") })}</h1>
   {#if error}<p role="alert">{error}</p>{/if}
-  {#if clientName}<p>This app is requesting permission to:</p>
+  {#if clientName}<p>{t("app_requesting_permission")}</p>
     <ul>
       {#each scopes as scope}<li>{labels[scope] ?? scope}</li>{/each}
     </ul>
-    <p>You can revoke this access in Connected apps at any time.</p>
-    <button disabled={busy} onclick={() => decide(true)}>Allow access</button>
-    <button disabled={busy} onclick={() => decide(false)}>Cancel</button>
-  {:else if !error}<p>Loading request…</p>{/if}
+    <p>{t("revoke_access_anytime")}</p>
+    <button disabled={busy} onclick={() => decide(true)}>{t("allow_access")}</button>
+    <button disabled={busy} onclick={() => decide(false)}>{t("common_cancel")}</button>
+  {:else if !error}<p>{t("loading_request")}</p>{/if}
 </main>
 
 <style>

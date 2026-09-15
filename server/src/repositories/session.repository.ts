@@ -92,6 +92,20 @@ export class SessionRepository {
     return inserted ? token : undefined;
   }
 
+  async rotateSetupToken(preferredToken?: string): Promise<string> {
+    if (preferredToken && (preferredToken.length < 32 || preferredToken.length > 512)) {
+      throw new Error('KONDIS_SETUP_TOKEN must contain between 32 and 512 characters');
+    }
+    const token = preferredToken || createToken();
+    const tokenHash = await hashToken(token);
+    await this.db
+      .insertInto('auth_bootstrap')
+      .values({ token_hash: tokenHash })
+      .onConflict((conflict) => conflict.column('id').doUpdateSet({ token_hash: tokenHash }))
+      .executeTakeFirstOrThrow();
+    return token;
+  }
+
   async verifySetupToken(token: string): Promise<boolean> {
     if (token.length === 0 || token.length > 512) {
       return false;
