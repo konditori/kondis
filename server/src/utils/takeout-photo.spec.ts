@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { TakeoutPhotoMetadataDto } from 'src/dtos/upload.dto';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import type { ImportProgressStore } from 'src/state/import-progress.store';
@@ -9,9 +10,13 @@ import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 describe('stageTakeoutPhoto', () => {
   const importId = '00000000-0000-4000-8000-000000000002';
   const userId = '00000000-0000-4000-8000-000000000001';
-  const metadata = { itemKey: 'activity:activities/run.fit', photoKey: 'photo:media/1.jpg', sortOrder: 0 };
+  const metadata: TakeoutPhotoMetadataDto = {
+    itemKey: 'activity:activities/run.fit',
+    photoKey: 'photo:media/1.jpg',
+    sortOrder: 0,
+  };
   const buffer = Buffer.from('photo bytes');
-  const file = { originalname: '1.JPG', buffer, size: buffer.length, path: '/tmp/upload' };
+  const file = { originalname: '1.JPG', buffer, size: buffer.length };
 
   const buildTemporaryPath = vi.fn(() => 'temporary/photo.jpg');
   const write = vi.fn(() => Promise.resolve());
@@ -36,7 +41,7 @@ describe('stageTakeoutPhoto', () => {
 
   it('rejects a missing photo before touching the import', async () => {
     await expect(stage(metadata, undefined)).rejects.toThrow('Missing photo upload');
-    await expect(stage(metadata, { ...file, buffer: undefined as unknown as Buffer })).rejects.toThrow(
+    await expect(stage(metadata, { ...file, buffer: undefined as unknown as typeof buffer })).rejects.toThrow(
       'Missing photo upload',
     );
     expect(get).not.toHaveBeenCalled();

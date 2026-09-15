@@ -152,7 +152,9 @@ describe('API browser takeout import routes', () => {
   });
 
   it('rejects a photo with invalid metadata', async () => {
-    const read = vi.fn(() => Promise.resolve({ file: { originalname: '1.jpg' }, metadata: '{invalid' }));
+    const read = vi.fn(() =>
+      Promise.resolve({ file: { originalname: '1.jpg', size: 5, path: '/tmp/photo' }, metadata: '{invalid' }),
+    );
     const submitTakeoutPhoto = vi.fn();
     const app = createApiApp(
       newApiDependencies({
