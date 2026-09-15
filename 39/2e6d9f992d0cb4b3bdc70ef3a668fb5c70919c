@@ -1,0 +1,21 @@
+web/src/routes/settings/+page.svelte
+  s_483f5613996950::t_26493b0401452e 106
+web/src/routes/settings/connections/+page.svelte
+  s_483f5613996950::t_c833b6522a76f1 3,15,18,20-22,41,79,94,111,118,120-121,123,126,128-130,138,142,146,156,165,169-170,174,179-180,184-186,194,199,204,212,215,219-221,225,228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "392e6d9f992d0cb4b3bdc70ef3a668fb5c70919c",
+  "prompts": {},
+  "sessions": {
+    "s_483f5613996950": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a708-8b4b-71d1-933c-d8e0e00db030",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
