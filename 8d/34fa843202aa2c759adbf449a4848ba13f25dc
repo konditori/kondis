@@ -1,0 +1,29 @@
+server/src/repositories/session.repository.ts
+  s_cd35bf7f54dcf6::t_46830547db4310 95-108
+server/src/services/auth.service.spec.ts
+  s_cd35bf7f54dcf6::t_2c0ebd55bf5979 27,48,75,194,199,203-204
+server/src/services/auth.service.ts
+  s_cd35bf7f54dcf6::t_dec27f23f4936e 45
+server/test/medium/specs/repositories/auth-credential.repository.spec.ts
+  s_cd35bf7f54dcf6::t_4befd2772a9082 95-97,100-103
+i18n/en.json
+  s_cd35bf7f54dcf6::t_b11da35c05ed64 164-214
+i18n/sv.json
+  s_cd35bf7f54dcf6::t_305e6fcdea3da1 163-213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8d34fa843202aa2c759adbf449a4848ba13f25dc",
+  "prompts": {},
+  "sessions": {
+    "s_cd35bf7f54dcf6": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "06731e9d-a647-4101-9482-0e41f7023fff",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
