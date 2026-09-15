@@ -1,0 +1,29 @@
+server/src/api/node.spec.ts
+  s_a3866c2913959e::t_06172303a275b8 13-14,116-168
+server/src/api/node.ts
+  s_23b589d54f8355::t_c550b3302183a6 57-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c64b857ef250bdd83c1fa00a6663630dea5b1dae",
+  "prompts": {},
+  "sessions": {
+    "s_23b589d54f8355": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a284-c0b2-7f53-95ef-df07428e870a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_a3866c2913959e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a27b-254e-7240-80db-0dbfab65dc52",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
