@@ -1,0 +1,73 @@
+server/src/api/routes/activity-image.ts
+  s_7b23b971953425::t_69f3e2248de810 6,145
+server/src/api/routes/activity.spec.ts
+  s_7b23b971953425::t_9b9eef1fdf8503 3,88
+server/src/api/routes/upload.ts
+  s_7b23b971953425::t_28a6a76927f087 5,242,268,290
+server/src/api/routes/user-mutations.ts
+  s_7b23b971953425::t_9ba61c29b9bca9 6,114
+server/src/cloudflare/dispatcher.ts
+  s_7b23b971953425::t_339c7ef39f8fac 11,49
+server/src/cloudflare/queue-handler.ts
+  s_7b23b971953425::t_a5d800fab585e1 15,154
+server/src/composition.cloud-node.ts
+  s_7b23b971953425::t_78d939144a14d0 30,61
+server/src/composition.node.ts
+  s_7b23b971953425::t_e87bfc2a426541 31,68,188
+server/src/composition.worker.ts
+  s_7b23b971953425::t_c1cf5fccbb1d99 35,105
+server/src/constants.ts
+  s_7b23b971953425::t_4f75d0a7e1f445 68-69,72-73
+server/src/repositories/activity.repository.ts
+  s_7b23b971953425::t_23eea30e83f806 30,100-101,771-772,782-786,798,803
+server/src/repositories/config.repository.ts
+  s_7b23b971953425::t_984e4626caf9bb 3-4,41-42
+server/src/schema/tables/activity-stream.table.ts
+  s_7b23b971953425::t_11fa41f57af610 2
+server/src/services/upload.service.ts
+  s_7b23b971953425::t_102830472be0c1 11-17,27,43,96-100,128,144,150,183,263,305
+server/src/services/worker-upload.service.ts
+  s_7b23b971953425::t_8639fae4578966 9-15,24,41,107-111,131,147,153,186,305,338
+server/src/utils/activity-details.spec.ts
+  s_7b23b971953425::t_4e99827649e307 3,9-14,26
+server/src/utils/activity-details.ts
+  s_7b23b971953425::t_a9c1a62d99bffb 1-2,4,39,149-150,155-158
+server/src/utils/activity.ts
+  s_7b23b971953425::t_8207b5186428d4 2-3,9-11,37,40,43,52,55
+server/src/utils/best-effort.ts
+  s_7b23b971953425::t_c55f8cafe48244 2,74,153,164,196,273
+server/src/utils/fit.spec.ts
+  s_7b23b971953425::t_70695005994d64 4-5,24-26,122-123,134,147,152,168,199,218,230-231,245-247
+server/src/utils/fit.ts
+  s_7b23b971953425::t_3332008c67548c 4,164-172,224,261,264-265,269,289-295
+server/src/utils/takeout-photo.spec.ts
+  s_7b23b971953425::t_8bee2b4b6af901 7,30
+server/src/utils/takeout-photo.ts
+  s_7b23b971953425::t_8784f7f97d54ce 6,11
+server/test/medium/specs/repositories/live-workout.repository.spec.ts
+  s_7b23b971953425::t_8d589873d05c74 4,27
+server/test/medium/specs/repositories/pgboss-queue.adapter.spec.ts
+  s_7b23b971953425::t_4ea6a09ef5b634 8,128
+server/test/medium/specs/service/activity.service.spec.ts
+  s_7b23b971953425::t_54ebb32b6e1742 3,6,48,76,122-123,154-155,158-159,162-163,166-167,185-187,189,220-221,224-225,228-229,232-233,248-249,252-253,256-257,260-261,285-286,289-290,293-294,313-314,316,319,353-356,372-373,376-377,380-381,384-385,408-409,426-427,433,440,448-449,452-453,456-457,473-474,507-508,538,554-555,560,569,581-582,585-586,589-590,639-640,675-680,749,762,803-804,807-808
+server/src/db/schema.ts
+  s_7b23b971953425::t_f788f2695eb4c5 98
+server/src/dtos/activity.dto.ts
+  s_7b23b971953425::t_7f2b40f07bd0d0 6,21,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f2faa5c110c78ea7421254819ad8e3d43088f662",
+  "prompts": {},
+  "sessions": {
+    "s_7b23b971953425": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8200c075-58c0-4e50-9f7c-44e2f19545a3",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
