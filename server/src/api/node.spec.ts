@@ -126,7 +126,7 @@ describe(createNodeServer.name, () => {
         expect(userId).toBe(TEST_API_USER.id);
         expect(metadata).toMatchObject({ itemKey: 'activity:activities/lunch-walk.fit', name: 'Lunch Walk' });
         const path = file?.path;
-        if (!path) throw new Error('Expected a disk-backed upload');
+        if (!path) {throw new Error('Expected a disk-backed upload');}
         expect(file).toMatchObject({ originalname: 'lunch-walk.fit', size: 9 });
         expect(await readFile(path, 'utf8')).toBe('fit bytes');
         await rm(path, { force: true });
