@@ -1,0 +1,89 @@
+android/app/src/main/res/values-b+sv/strings.xml
+  s_00e35846f0f086::t_e2e6a49f1f43b2 112
+android/app/src/main/res/values/strings.xml
+  s_00e35846f0f086::t_a7603aa5bbba17 112
+e2e/src/browser/serve.ts
+  s_00e35846f0f086::t_f804178117789b 1-163
+e2e/src/fixtures/png.ts
+  s_00e35846f0f086::t_20117eacc101aa 1-39
+e2e/src/fixtures/takeout.ts
+  s_00e35846f0f086::t_b8d911880bada5 1-183
+e2e/src/specs/browser/takeout.spec.ts
+  s_00e35846f0f086::t_7b34f08cb28b05 1-230
+open-api/kondis-openapi-specs.json
+  s_00e35846f0f086::t_211e3c313ec312 2963-3020
+packages/sdk/src/fetch-client.ts
+  s_00e35846f0f086::t_e0071495e340b4 2311-2341
+server/src/adapters/cloudflare/upload.adapter.ts
+  s_00e35846f0f086::t_651c9d8c5d3948 18,35,49
+server/src/api/node.ts
+  s_00e35846f0f086::t_76ddcfd613eaf9 66-69,123,137-141
+server/src/services/upload.service.ts
+  s_00e35846f0f086::t_86cae1c44dbc32 9,24,49-55,94-110,128,166,310-316,337
+server/src/services/worker-upload.service.ts
+  s_00e35846f0f086::t_e1842ae8ef421e 7,21,47-53,105-113,131,169
+server/src/state/import-progress.store.ts
+  s_00e35846f0f086::t_6ff244eda67518 4,72,160-207
+server/src/utils/takeout-photo.ts
+  s_00e35846f0f086::t_fd52b4154f62a3 1-50
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_00e35846f0f086::t_5bf76e8e0d2e2e 29,48,93,102-104,151,167-169,171-186,188-189,191-194,196-201,203-207,218,253,306,329,334-336
+.gitignore
+  s_e2d25023c777a5::t_835817d37293cf 36-39
+e2e/mise.toml
+  s_e2d25023c777a5::t_98ef1bf1ba066e 15,17-24,27
+e2e/package.json
+  s_e2d25023c777a5::t_c5d5667d8148d9 14-15,20-21
+e2e/playwright.config.ts
+  s_e2d25023c777a5::t_944db2c75eb69c 1-34
+e2e/tsconfig.json
+  s_e2d25023c777a5::t_7cd8e37b9e72b3 24
+i18n/en.json
+  s_e2d25023c777a5::t_a1144f1a648611 110
+i18n/sv.json
+  s_e2d25023c777a5::t_008145b002ab96 109
+pnpm-lock.yaml
+  s_e2d25023c777a5::t_948da04c3764e9 35-40,2699-2703,7004-7013,12201-12204,17072-17077
+server/src/api/uploads.ts
+  s_e2d25023c777a5::t_8167fb248cec62 4
+server/src/dtos/upload.dto.ts
+  s_e2d25023c777a5::t_f12165bb89b8f4 30-36
+server/src/schema/migrations/1789658664159-AddTakeoutPhotos.ts
+  s_e2d25023c777a5::t_96ef6c14bb7afe 1-9
+server/src/schema/tables/takeout-import-item.table.ts
+  s_e2d25023c777a5::t_9ab9989058fb69 2,23-25
+web/src/hooks.server.ts
+  s_e2d25023c777a5::t_1f0b109deea0b6 7,44
+web/src/routes/+layout.server.ts
+  s_e2d25023c777a5::t_bd75f7a836a2a7 43
+web/src/routes/+page.server.ts
+  s_e2d25023c777a5::t_138f17ce72bdb7 21
+web/src/routes/login/+page.server.ts
+  s_e2d25023c777a5::t_25eee05cd8cf78 18,34
+web/src/routes/logout/+server.ts
+  s_e2d25023c777a5::t_9558a1b2478b02 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c41eda05ed857eb42e460b8807d9f1963775d1e9",
+  "prompts": {},
+  "sessions": {
+    "s_00e35846f0f086": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f5bc42025ffeBOFqvX4HMC9QEv",
+        "model": "@cf/moonshotai/kimi-k3"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_e2d25023c777a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a416-9056-7902-b876-c3b71e07c647",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
