@@ -25,11 +25,9 @@ export type {
   ImportProgressStatus,
   TakeoutImportItemKind,
   TakeoutImportItemStatus,
+  TakeoutImportItemTerminalStatus,
   UploadKind,
 } from 'src/enum';
-
-export type TakeoutImportItemTerminalStatus =
-  TakeoutImportItemStatus.Completed | TakeoutImportItemStatus.Failed | TakeoutImportItemStatus.Duplicate;
 
 export type KondisDatabase = Kysely<DB>;
 export type KondisTransaction = Transaction<DB>;

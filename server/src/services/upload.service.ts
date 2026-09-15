@@ -13,7 +13,7 @@ import {
   JobName,
   JobStatus,
   TakeoutImportItemKind,
-  TakeoutImportItemStatus,
+  TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
@@ -147,7 +147,7 @@ export class UploadService {
       await this.importProgressStore.completeItem(
         importId,
         metadata.itemKey,
-        TakeoutImportItemStatus.Failed,
+        TakeoutImportItemTerminalStatus.Failed,
         errorMessage(error),
       );
       throw error;
@@ -191,7 +191,7 @@ export class UploadService {
       await this.importProgressStore.completeItem(
         importId,
         item.itemKey,
-        TakeoutImportItemStatus.Failed,
+        TakeoutImportItemTerminalStatus.Failed,
         errorMessage(error),
       );
       throw error;
@@ -273,7 +273,11 @@ export class UploadService {
         });
       }
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore.completeItem(takeoutImportId, takeoutItemKey, TakeoutImportItemStatus.Duplicate);
+        await this.importProgressStore.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemTerminalStatus.Duplicate,
+        );
       }
       return JobStatus.Skipped;
     }
@@ -318,7 +322,7 @@ export class UploadService {
           await this.importProgressStore.completeItem(
             takeoutImportId,
             takeoutItemKey,
-            TakeoutImportItemStatus.Duplicate,
+            TakeoutImportItemTerminalStatus.Duplicate,
           );
         }
         return JobStatus.Skipped;

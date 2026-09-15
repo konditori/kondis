@@ -89,6 +89,12 @@ export enum TakeoutImportItemStatus {
   Duplicate = 'duplicate',
 }
 
+export enum TakeoutImportItemTerminalStatus {
+  Completed = 'completed',
+  Failed = 'failed',
+  Duplicate = 'duplicate',
+}
+
 export enum DeployTarget {
   Local = 'local',
   Cloudflare = 'cloudflare',

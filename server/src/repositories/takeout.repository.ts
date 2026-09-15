@@ -1,6 +1,11 @@
 import { sql } from 'kysely';
 
-import { ImportProgressStatus as ImportProgressStatusEnum, TakeoutImportItemStatus } from 'src/enum';
+import {
+  ImportProgressStatus as ImportProgressStatusEnum,
+  TakeoutImportItemKind,
+  TakeoutImportItemStatus,
+  TakeoutImportItemTerminalStatus,
+} from 'src/enum';
 import type {
   ImportProgress,
   ImportProgressStatus,
@@ -8,8 +13,6 @@ import type {
   KondisDatabase,
   KondisTransaction,
   TakeoutImportItem,
-  TakeoutImportItemKind,
-  TakeoutImportItemTerminalStatus,
 } from 'src/types';
 import type { IActivityImageStage } from 'src/types/jobs';
 
@@ -27,6 +30,20 @@ const pendingItemStates: Set<TakeoutImportItemStatus> = new Set([
   TakeoutImportItemStatus.Failed,
 ]);
 const isTerminal = (status: TakeoutImportItemStatus): boolean => terminalItemStates.has(status);
+
+const toItemStatus = (status: TakeoutImportItemTerminalStatus): TakeoutImportItemStatus => {
+  switch (status) {
+    case TakeoutImportItemTerminalStatus.Completed: {
+      return TakeoutImportItemStatus.Completed;
+    }
+    case TakeoutImportItemTerminalStatus.Failed: {
+      return TakeoutImportItemStatus.Failed;
+    }
+    case TakeoutImportItemTerminalStatus.Duplicate: {
+      return TakeoutImportItemStatus.Duplicate;
+    }
+  }
+};
 
 const transitionDeltas = (from: TakeoutImportItemStatus, to: TakeoutImportItemStatus): ItemTransition => ({
   uploaded: from === TakeoutImportItemStatus.Pending && to !== TakeoutImportItemStatus.Pending ? 1 : 0,
@@ -220,14 +237,16 @@ export class TakeoutRepository {
       if (!owner || owner.status === ImportProgressStatusEnum.Cancelled) {
         return false;
       }
-      return this.transitionItemWithExecutor(trx, importId, itemKey, TakeoutImportItemStatus.Failed, error);
+      return this.transitionItemWithExecutor(trx, importId, itemKey, TakeoutImportItemTerminalStatus.Failed, error);
     });
   }
 
   async failJobItem(importId: string, itemKey: string, error: string): Promise<boolean> {
     return this.db
       .transaction()
-      .execute((trx) => this.transitionItemWithExecutor(trx, importId, itemKey, TakeoutImportItemStatus.Failed, error));
+      .execute((trx) =>
+        this.transitionItemWithExecutor(trx, importId, itemKey, TakeoutImportItemTerminalStatus.Failed, error),
+      );
   }
 
   async finalize(importId: string, userId: string, extractionErrors = 0): Promise<ImportProgress | undefined> {
@@ -276,17 +295,17 @@ export class TakeoutRepository {
     if (
       !item ||
       (isTerminal(item.status as TakeoutImportItemStatus) &&
-        (item.status !== TakeoutImportItemStatus.Failed || status === TakeoutImportItemStatus.Failed))
+        (item.status !== TakeoutImportItemStatus.Failed || status === TakeoutImportItemTerminalStatus.Failed))
     ) {
       return false;
     }
 
-    const delta = transitionDeltas(item.status as TakeoutImportItemStatus, status);
+    const delta = transitionDeltas(item.status as TakeoutImportItemStatus, toItemStatus(status));
     await trx
       .updateTable('takeout_import_item')
       .set({
-        status,
-        error: status === TakeoutImportItemStatus.Failed ? (error ?? null) : null,
+        status: toItemStatus(status),
+        error: status === TakeoutImportItemTerminalStatus.Failed ? (error ?? null) : null,
       })
       .where('import_id', '=', importId)
       .where('item_key', '=', itemKey)

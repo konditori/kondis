@@ -11,7 +11,7 @@ import {
   JobName,
   JobStatus,
   TakeoutImportItemKind,
-  TakeoutImportItemStatus,
+  TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
@@ -145,7 +145,12 @@ export class WorkerUploadService {
       await this.progress.markQueued(importId, metadata.itemKey);
       return true;
     } catch (error) {
-      await this.progress.completeItem(importId, metadata.itemKey, TakeoutImportItemStatus.Failed, errorMessage(error));
+      await this.progress.completeItem(
+        importId,
+        metadata.itemKey,
+        TakeoutImportItemTerminalStatus.Failed,
+        errorMessage(error),
+      );
       throw error;
     }
   }
@@ -184,7 +189,12 @@ export class WorkerUploadService {
       await this.progress.markQueued(importId, item.itemKey);
       return true;
     } catch (error) {
-      await this.progress.completeItem(importId, item.itemKey, TakeoutImportItemStatus.Failed, errorMessage(error));
+      await this.progress.completeItem(
+        importId,
+        item.itemKey,
+        TakeoutImportItemTerminalStatus.Failed,
+        errorMessage(error),
+      );
       throw error;
     }
   }
@@ -303,7 +313,11 @@ export class WorkerUploadService {
       const raced = await this.uploads.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId && takeoutItemKey) {
-          await this.progress.completeItem(takeoutImportId, takeoutItemKey, TakeoutImportItemStatus.Duplicate);
+          await this.progress.completeItem(
+            takeoutImportId,
+            takeoutItemKey,
+            TakeoutImportItemTerminalStatus.Duplicate,
+          );
         }
         await this.storage.delete(storagePath);
         return JobStatus.Skipped;
@@ -339,7 +353,7 @@ export class WorkerUploadService {
       await this.progress.completeItem(
         options.takeoutImportId,
         options.takeoutItemKey,
-        TakeoutImportItemStatus.Duplicate,
+        TakeoutImportItemTerminalStatus.Duplicate,
       );
     }
     await this.storage.delete(storagePath);

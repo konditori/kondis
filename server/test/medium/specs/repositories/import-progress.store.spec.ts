@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { TakeoutImportItemKind, TakeoutImportItemStatus } from 'src/enum';
+import { TakeoutImportItemKind, TakeoutImportItemTerminalStatus } from 'src/enum';
 import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { createMediumFactory } from 'test/medium.factory';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
@@ -32,8 +32,10 @@ describe(TakeoutRepository.name, () => {
     );
     expect(claims.filter(Boolean)).toHaveLength(1);
     await store.finalize(id, user.id);
-    await Promise.all(Array.from({ length: 8 }, () => store.completeItem(id, 'a', TakeoutImportItemStatus.Completed)));
-    await store.completeItem(id, 'b', TakeoutImportItemStatus.Duplicate);
+    await Promise.all(
+      Array.from({ length: 8 }, () => store.completeItem(id, 'a', TakeoutImportItemTerminalStatus.Completed)),
+    );
+    await store.completeItem(id, 'b', TakeoutImportItemTerminalStatus.Duplicate);
     await store.failItem(id, user.id, 'c', 'Invalid activity');
     await expect(store.get(id, user.id)).resolves.toMatchObject({
       status: 'completed',
@@ -55,7 +57,7 @@ describe(TakeoutRepository.name, () => {
   it('finalizes after jobs finish and preserves extraction errors', async () => {
     const { store, user, id } = await setup();
     for (const key of ['a', 'b', 'c']) {
-      await store.completeItem(id, key, TakeoutImportItemStatus.Completed);
+      await store.completeItem(id, key, TakeoutImportItemTerminalStatus.Completed);
     }
     await expect(store.get(id, user.id)).resolves.toMatchObject({ status: 'uploading' });
     await store.finalize(id, user.id, 1);
@@ -84,7 +86,7 @@ describe(TakeoutRepository.name, () => {
     const { store, user, id } = await setup();
     await store.failItem(id, user.id, 'a', 'Temporary failure');
     expect(await store.beginItem(id, user.id, 'a', TakeoutImportItemKind.Activity)).toBe(true);
-    await store.completeItem(id, 'a', TakeoutImportItemStatus.Completed);
+    await store.completeItem(id, 'a', TakeoutImportItemTerminalStatus.Completed);
     await expect(store.get(id, user.id)).resolves.toMatchObject({ uploaded: 1, processed: 1, failed: 0 });
   });
 
@@ -97,7 +99,7 @@ describe(TakeoutRepository.name, () => {
     await expect(store.cancel(id, other.id)).resolves.toBe(false);
     await store.beginItem(id, user.id, 'a', TakeoutImportItemKind.Activity);
     await store.cancel(id, user.id);
-    await store.completeItem(id, 'a', TakeoutImportItemStatus.Completed);
+    await store.completeItem(id, 'a', TakeoutImportItemTerminalStatus.Completed);
     await expect(store.beginItem(id, user.id, 'b', TakeoutImportItemKind.Activity)).resolves.toBe(false);
     await store.finalize(id, user.id);
     await expect(store.get(id, user.id)).resolves.toMatchObject({ status: 'cancelled', uploaded: 1, processed: 1 });

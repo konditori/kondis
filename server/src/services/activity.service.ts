@@ -3,7 +3,14 @@ import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EF
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
-import { ActivityType, BestEffortGroup, JobName, JobStatus, StreamType, TakeoutImportItemStatus } from 'src/enum';
+import {
+  ActivityType,
+  BestEffortGroup,
+  JobName,
+  JobStatus,
+  StreamType,
+  TakeoutImportItemTerminalStatus,
+} from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
@@ -132,7 +139,7 @@ export class ActivityService {
           await this.importProgressStore?.completeItem(
             takeoutImportId,
             takeoutItemKey,
-            TakeoutImportItemStatus.Completed,
+            TakeoutImportItemTerminalStatus.Completed,
           );
         }
         return JobStatus.Skipped;
@@ -190,7 +197,7 @@ export class ActivityService {
         await this.importProgressStore?.completeItem(
           takeoutImportId,
           takeoutItemKey,
-          TakeoutImportItemStatus.Completed,
+          TakeoutImportItemTerminalStatus.Completed,
         );
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
@@ -202,7 +209,7 @@ export class ActivityService {
         await this.importProgressStore?.completeItem(
           takeoutImportId,
           takeoutItemKey,
-          TakeoutImportItemStatus.Failed,
+          TakeoutImportItemTerminalStatus.Failed,
           message,
         );
       }
@@ -237,7 +244,7 @@ export class ActivityService {
         await this.importProgressStore?.completeItem(
           job.takeoutImportId,
           job.takeoutItemKey,
-          TakeoutImportItemStatus.Duplicate,
+          TakeoutImportItemTerminalStatus.Duplicate,
         );
       }
       return JobStatus.Skipped;
@@ -317,7 +324,7 @@ export class ActivityService {
       await this.importProgressStore?.completeItem(
         job.takeoutImportId,
         job.takeoutItemKey,
-        TakeoutImportItemStatus.Completed,
+        TakeoutImportItemTerminalStatus.Completed,
       );
     }
     return JobStatus.Success;
