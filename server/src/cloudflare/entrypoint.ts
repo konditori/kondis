@@ -44,6 +44,7 @@ import {
 } from 'src/demo/live-entrypoint';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
+import { createMcpApp, isMcpPath } from 'src/mcp/app';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
@@ -174,6 +175,23 @@ export default {
       }
       const demoMode = composition.config.demoMode;
       const demoUser = demoMode ? await getDemoUser(composition.database) : undefined;
+      if (isMcpPath(new URL(request.url).pathname)) {
+        const mcp = createMcpApp({
+          database: composition.database,
+          sessions: composition.authCredentialRepository,
+          jobs: composition.jobProducer,
+          storage: composition.storage,
+          publicUrl: env.KONDIS_MCP_PUBLIC_URL,
+          mutationsEnabled: composition.queueBindingsConfigured,
+          demo: demoMode,
+          demoUserId: demoUser?.id,
+        });
+        const response = await mcp.fetch(request);
+        if (response.ok && request.method === 'POST' && !demoMode && composition.queueBindingsConfigured) {
+          _ctx.waitUntil(dispatchWorkerJobs(env));
+        }
+        return response;
+      }
       if (isDemoLiveTrackerIngestionRequest(request, env)) {
         const ingestion = ingestDemoLiveTrackerPoint(request, composition, demoUser)
           .catch((error) => {

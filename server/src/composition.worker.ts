@@ -39,6 +39,7 @@ const workerCrypto = createCloudflareCryptoAdapter();
 export type WorkerBindings = {
   HYPERDRIVE: { connectionString: string };
   KONDIS_SETUP_TOKEN?: string;
+  KONDIS_MCP_PUBLIC_URL?: string;
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_DEMO_MODE?: boolean | string;

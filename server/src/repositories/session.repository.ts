@@ -92,6 +92,20 @@ export class SessionRepository {
     return inserted ? token : undefined;
   }
 
+  async rotateSetupToken(preferredToken?: string): Promise<string> {
+    if (preferredToken && (preferredToken.length < 32 || preferredToken.length > 512)) {
+      throw new Error('KONDIS_SETUP_TOKEN must contain between 32 and 512 characters');
+    }
+    const token = preferredToken || createToken();
+    const tokenHash = await hashToken(token);
+    await this.db
+      .insertInto('auth_bootstrap')
+      .values({ token_hash: tokenHash })
+      .onConflict((conflict) => conflict.column('id').doUpdateSet({ token_hash: tokenHash }))
+      .executeTakeFirstOrThrow();
+    return token;
+  }
+
   async verifySetupToken(token: string): Promise<boolean> {
     if (token.length === 0 || token.length > 512) {
       return false;
@@ -279,6 +293,11 @@ export class SessionRepository {
 
   async deleteExpired(): Promise<void> {
     await Promise.all([
+      sql`DELETE FROM mcp_oauth_code WHERE expires_at <= now()`.execute(this.db),
+      sql`DELETE FROM mcp_upload WHERE expires_at <= now() - interval '1 day'`.execute(this.db),
+      sql`DELETE FROM mcp_oauth_client c WHERE c.created_at < now() - interval '30 days' AND NOT EXISTS (SELECT 1 FROM mcp_credential k WHERE k.client_id = c.id AND k.revoked_at IS NULL AND (k.expires_at > now() OR k.refresh_expires_at > now()))`.execute(
+        this.db,
+      ),
       this.db.deleteFrom('auth_session').where('expires_at', '<=', new Date()).execute(),
       this.db.deleteFrom('auth_ticket').where('expires_at', '<=', new Date()).execute(),
       this.db

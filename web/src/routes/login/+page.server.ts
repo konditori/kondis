@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   };
 };
 export const actions: Actions = {
-  login: async ({ request, cookies, fetch }) => {
+  login: async ({ request, cookies, fetch, url }) => {
     const form = await request.formData();
     const response = await fetch("/api/v1/auth/login", {
       method: "POST",
@@ -34,6 +34,12 @@ export const actions: Actions = {
       secure: true,
       maxAge: 60 * 60 * 24 * 30,
     });
-    throw redirect(303, "/");
+    const returnTo = url.searchParams.get("returnTo");
+    throw redirect(
+      303,
+      returnTo?.startsWith("/settings/connections") && !returnTo.includes("\\")
+        ? returnTo
+        : "/",
+    );
   },
 };

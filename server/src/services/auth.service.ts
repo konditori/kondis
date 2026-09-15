@@ -42,10 +42,7 @@ export class AuthService {
   async logSetupTokenIfRequired() {
     const status = await this.setupStatus();
     if (status.setupRequired) {
-      const setupToken = await this.credentials.getOrCreateSetupToken(this.config.setupToken);
-      if (!setupToken) {
-        return;
-      }
+      const setupToken = await this.credentials.rotateSetupToken(this.config.setupToken);
       this.logger.log(`
 ================================================================================
 Welcome to Kondis!

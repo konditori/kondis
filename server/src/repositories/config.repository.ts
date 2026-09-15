@@ -99,6 +99,10 @@ export class ConfigRepository implements ConfigPort {
     return this.getEnv().port;
   }
 
+  get mcpPublicUrl(): string | undefined {
+    return readEnv(this.environment, 'KONDIS_MCP_PUBLIC_URL');
+  }
+
   get deployTarget(): DeployTarget {
     return this.getEnv().deployTarget;
   }

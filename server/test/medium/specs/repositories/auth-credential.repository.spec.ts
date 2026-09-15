@@ -92,13 +92,15 @@ describe(SessionRepository.name, () => {
     await expect(credentials.verifySetupToken(first!)).resolves.toBe(false);
   });
 
-  it('exposes an automatically generated bootstrap token only to its creator', async () => {
-    const first = await credentials.getOrCreateSetupToken();
-    const second = await new SessionRepository(db).getOrCreateSetupToken();
+  it('rotates the automatically generated bootstrap token on each startup', async () => {
+    const first = await credentials.rotateSetupToken();
+    const second = await new SessionRepository(db).rotateSetupToken();
 
     expect(first).toMatch(/^[a-f\d]{64}$/);
-    expect(second).toBeUndefined();
-    await expect(credentials.verifySetupToken(first!)).resolves.toBe(true);
+    expect(second).toMatch(/^[a-f\d]{64}$/);
+    expect(second).not.toBe(first);
+    await expect(credentials.verifySetupToken(first)).resolves.toBe(false);
+    await expect(credentials.verifySetupToken(second)).resolves.toBe(true);
   });
 
   it('keeps concurrently issued tickets valid', async () => {

@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
     "overview",
     "local-development",
     "cloudflare",
+    "mcp",
     "demo",
     "contributing",
     { type: "link", label: "User guides", href: "https://docs.kondis.org/" },
