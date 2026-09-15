@@ -10,9 +10,9 @@ import {
 } from 'src/ports/job-transport.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { SessionRepository } from 'src/repositories/session.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { ActivityService } from 'src/services/activity.service';
 import type { WorkerUploadService } from 'src/services/worker-upload.service';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
@@ -151,7 +151,7 @@ const failImportItemForPayload = async (
   if (typeof data?.takeoutImportId !== 'string' || typeof data.takeoutItemKey !== 'string') {
     return;
   }
-  await new ImportProgressStore(db).failJobItem(data.takeoutImportId, data.takeoutItemKey, error);
+  await new TakeoutRepository(db).failJobItem(data.takeoutImportId, data.takeoutItemKey, error);
 };
 
 export const handleQueueBatch = async (

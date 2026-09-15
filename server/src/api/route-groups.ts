@@ -50,8 +50,8 @@ import {
   type UserCreationService,
   type UserMutationService,
 } from 'src/api/routes/user-mutations';
-import type { UploadReader } from 'src/api/uploads';
 import type { ConfigPort } from 'src/ports/config.port';
+import type { UploadReader } from 'src/types';
 
 export type ApiRouteGroups = {
   activities: ActivityReadService & SocialActivityReadService;

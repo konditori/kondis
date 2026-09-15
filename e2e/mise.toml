@@ -12,11 +12,19 @@ env._.path = "./node_modules/.bin"
 run = "vitest --run"
 
 [tasks.playwright-install]
+depends = ["//e2e:install"]
 env._.path = "./node_modules/.bin"
-run = "playwright install"
+run = "playwright install chromium firefox webkit"
+
+[tasks.build-web]
+depends = ["//web:install", "//e2e:install"]
+run = [
+  "pnpm --filter kondis-server build",
+  "pnpm --filter @kondis/web build",
+]
 
 [tasks."test-web"]
-depends = ["//e2e:build", "//e2e:ci-setup", "//e2e:playwright-install"]
+depends = ["//e2e:build-web", "//e2e:playwright-install"]
 env._.path = "./node_modules/.bin"
 run = "playwright test"
 

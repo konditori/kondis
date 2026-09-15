@@ -14,6 +14,7 @@ const expectedOperations = [
   'POST /upload/strava/imports/{id}/scan TakeoutImportController_scan',
   'POST /upload/strava/imports/{id}/activities TakeoutImportController_uploadActivity',
   'POST /upload/strava/imports/{id}/manual-activities TakeoutImportController_submitManual',
+  'POST /upload/strava/imports/{id}/photos TakeoutImportController_uploadPhoto',
   'POST /upload/strava/imports/{id}/items/fail TakeoutImportController_failItem',
   'POST /upload/strava/imports/{id}/finalize TakeoutImportController_finalize',
   'POST /upload/strava/imports/{id}/cancel TakeoutImportController_cancel',

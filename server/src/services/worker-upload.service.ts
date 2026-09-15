@@ -4,8 +4,15 @@ import {
   TakeoutActivityMetadataDto,
   TakeoutImportScanDto,
   TakeoutManualItemDto,
+  TakeoutPhotoMetadataDto,
 } from 'src/dtos/upload.dto';
-import { ActivityType as ActivityTypeEnum, JobName, JobStatus } from 'src/enum';
+import {
+  ActivityType as ActivityTypeEnum,
+  JobName,
+  JobStatus,
+  TakeoutImportItemKind,
+  TakeoutImportItemTerminalStatus,
+} from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { JobProducerPort } from 'src/ports/queue.port';
@@ -13,10 +20,12 @@ import type { RealtimePort } from 'src/ports/realtime.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import type { TransactionPort } from 'src/ports/transaction.port';
 import type { ActivityRepository } from 'src/repositories/activity.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
-import { ImportProgressStore, type TakeoutImportItem } from 'src/state/import-progress.store';
+import type { TakeoutImportItem } from 'src/types';
 import type { JobOf } from 'src/types/jobs';
 import type { UploadedFileData } from 'src/types/uploads';
+import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
 const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 const extensionOf = (name: string): string => {
@@ -29,7 +38,7 @@ export class WorkerUploadService {
     private readonly storage: StoragePort,
     private readonly crypto: CryptoPort,
     private readonly jobs: JobProducerPort,
-    private readonly progress: ImportProgressStore,
+    private readonly progress: TakeoutRepository,
     private readonly uploads: UploadRepository,
     private readonly activities: ActivityRepository,
     private readonly database: TransactionPort,
@@ -42,7 +51,13 @@ export class WorkerUploadService {
     options: Partial<
       Pick<
         JobOf<JobName.ActivityUpload>,
-        'activityName' | 'activityDescription' | 'activitySport' | 'activityTags' | 'takeoutImportId' | 'takeoutItemKey'
+        | 'activityName'
+        | 'activityDescription'
+        | 'activitySport'
+        | 'activityTags'
+        | 'takeoutImportId'
+        | 'takeoutItemKey'
+        | 'images'
       >
     > = {},
   ): Promise<FitUploadResponseDto> {
@@ -89,9 +104,23 @@ export class WorkerUploadService {
       importId,
       userId,
       scan.items.map(
-        (item) => ({ itemKey: item.itemKey, kind: item.kind, metadata: item }) satisfies TakeoutImportItem,
+        (item) =>
+          ({
+            itemKey: item.itemKey,
+            kind: item.kind === 'activity' ? TakeoutImportItemKind.Activity : TakeoutImportItemKind.Manual,
+            metadata: item,
+          }) satisfies TakeoutImportItem,
       ),
     );
+  }
+
+  submitTakeoutPhoto(
+    importId: string,
+    userId: string,
+    metadata: TakeoutPhotoMetadataDto,
+    file: UploadedFileData | undefined,
+  ): Promise<boolean> {
+    return stageTakeoutPhoto(this.progress, this.storage, this.crypto, importId, userId, metadata, file);
   }
 
   async submitTakeoutActivity(
@@ -100,7 +129,7 @@ export class WorkerUploadService {
     metadata: TakeoutActivityMetadataDto,
     file: UploadedFileData | undefined,
   ): Promise<boolean> {
-    if (!(await this.progress.beginItem(importId, userId, metadata.itemKey, 'activity'))) {
+    if (!(await this.progress.beginItem(importId, userId, metadata.itemKey, TakeoutImportItemKind.Activity))) {
       return false;
     }
     try {
@@ -111,17 +140,23 @@ export class WorkerUploadService {
         activityTags: metadata.tags,
         takeoutImportId: importId,
         takeoutItemKey: metadata.itemKey,
+        images: await this.progress.getStagedPhotos(importId, userId, metadata.itemKey),
       });
       await this.progress.markQueued(importId, metadata.itemKey);
       return true;
     } catch (error) {
-      await this.progress.completeItem(importId, metadata.itemKey, 'failed', errorMessage(error));
+      await this.progress.completeItem(
+        importId,
+        metadata.itemKey,
+        TakeoutImportItemTerminalStatus.Failed,
+        errorMessage(error),
+      );
       throw error;
     }
   }
 
   async submitTakeoutManual(importId: string, userId: string, item: TakeoutManualItemDto): Promise<boolean> {
-    if (!(await this.progress.beginItem(importId, userId, item.itemKey, 'manual'))) {
+    if (!(await this.progress.beginItem(importId, userId, item.itemKey, TakeoutImportItemKind.Manual))) {
       return false;
     }
     try {
@@ -148,12 +183,18 @@ export class WorkerUploadService {
           calories: item.calories,
           takeoutImportId: importId,
           takeoutItemKey: item.itemKey,
+          images: await this.progress.getStagedPhotos(importId, userId, item.itemKey),
         },
       });
       await this.progress.markQueued(importId, item.itemKey);
       return true;
     } catch (error) {
-      await this.progress.completeItem(importId, item.itemKey, 'failed', errorMessage(error));
+      await this.progress.completeItem(
+        importId,
+        item.itemKey,
+        TakeoutImportItemTerminalStatus.Failed,
+        errorMessage(error),
+      );
       throw error;
     }
   }
@@ -272,7 +313,11 @@ export class WorkerUploadService {
       const raced = await this.uploads.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId && takeoutItemKey) {
-          await this.progress.completeItem(takeoutImportId, takeoutItemKey, 'duplicate');
+          await this.progress.completeItem(
+            takeoutImportId,
+            takeoutItemKey,
+            TakeoutImportItemTerminalStatus.Duplicate,
+          );
         }
         await this.storage.delete(storagePath);
         return JobStatus.Skipped;
@@ -305,7 +350,11 @@ export class WorkerUploadService {
       });
     }
     if (options.takeoutImportId && options.takeoutItemKey) {
-      await this.progress.completeItem(options.takeoutImportId, options.takeoutItemKey, 'duplicate');
+      await this.progress.completeItem(
+        options.takeoutImportId,
+        options.takeoutItemKey,
+        TakeoutImportItemTerminalStatus.Duplicate,
+      );
     }
     await this.storage.delete(storagePath);
     return JobStatus.Skipped;

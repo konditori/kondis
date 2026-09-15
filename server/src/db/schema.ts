@@ -95,5 +95,5 @@ export type ActivityComment = Selectable<ActivityCommentTable>;
 export type NewActivityComment = Insertable<ActivityCommentTable>;
 export type Notification = Selectable<NotificationTable>;
 
-export { type StreamType } from 'src/types';
+export { StreamType } from 'src/enum';
 export { type UploadStatus } from 'src/types/uploads';

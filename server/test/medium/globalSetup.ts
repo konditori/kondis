@@ -26,7 +26,7 @@ const globalSetup = async (): Promise<() => Promise<void>> => {
   const postgresImage = await GenericContainer.fromDockerfile(
     resolve(import.meta.dirname, '../../../packages/postgres'),
   )
-    .withBuildArgs({ PG_MAJOR: '18', VECTORCHORD_TAG: '1.1.1' })
+    .withBuildArgs({ PG_MAJOR: '17', VECTORCHORD_TAG: '1.1.1' })
     .build('kondis-medium-postgres:latest', { deleteOnExit: false });
   const postgresContainer = await postgresImage
     .withExposedPorts(5432)

@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type ActivityType } from 'src/types';
+import { ActivityType } from 'src/enum';
 
 export type TestAsset = {
   expectedSport: ActivityType;
@@ -16,17 +16,17 @@ export const testAssetDirectory = resolve(currentDirectory, '../../../test/test-
 
 export const activityFixtures = {
   hindasRun: {
-    expectedSport: 'run',
+    expectedSport: ActivityType.Run,
     filename: '2015-06-22-run.fit',
     path: resolve(testAssetDirectory, 'activities/running/2015-hindas/2015-06-22-run.fit'),
   },
   orsaAlpineSki: {
-    expectedSport: 'other',
+    expectedSport: ActivityType.Other,
     filename: '2013-01-13-orsa.tcx',
     path: resolve(testAssetDirectory, 'activities/alpine-ski/2013-01-13-orsa.tcx'),
   },
   sampleRun: {
-    expectedSport: 'run',
+    expectedSport: ActivityType.Run,
     filename: '2024-03-01-run.gpx',
     path: resolve(testAssetDirectory, 'activities/running/2024-san-francisco/2024-03-01-run.gpx'),
   },
@@ -34,7 +34,7 @@ export const activityFixtures = {
 
 export const syntheticActivityFixtures = {
   missingRecordDistanceFit: {
-    expectedSport: 'run',
+    expectedSport: ActivityType.Run,
     filename: 'synthetic-missing-record-distance.fit',
     path: resolve(
       testAssetDirectory,

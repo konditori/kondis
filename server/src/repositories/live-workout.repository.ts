@@ -1,5 +1,6 @@
+import type { ActivityType } from 'src/enum';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
-import type { ActivityType, KondisDatabase } from 'src/types';
+import type { KondisDatabase } from 'src/types';
 
 type LivePointInput = {
   sequence: number;

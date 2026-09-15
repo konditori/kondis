@@ -12,10 +12,11 @@ import multer, { diskStorage, memoryStorage } from 'multer';
 import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
 import type { FileRange, OpenFile } from 'src/api/file-response';
-import type { ImageUpload, TakeoutActivityUpload, UploadKind, UploadReader } from 'src/api/uploads';
 import type { ApplicationComposition } from 'src/composition.node';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { UploadKind } from 'src/enum';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
+import type { ImageUpload, TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
 
 const openNodeFile = async (path: string): Promise<OpenFile> => {
@@ -62,6 +63,10 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
       fields: 2,
       parts: 4,
     },
+  }).single('file'),
+  takeoutPhoto: multer({
+    storage: memoryStorage(),
+    limits: { fileSize: UPLOAD_LIMITS.imageFileBytes, files: 1, fields: 1, fieldSize: 16 * 1024, parts: 3 },
   }).single('file'),
   avatar: multer({
     storage: memoryStorage(),
@@ -116,7 +121,7 @@ function readNodeUpload(
         resolve(
           kind === 'image'
             ? { file: undefined, caption }
-            : kind === 'takeoutActivity'
+            : kind === 'takeoutActivity' || kind === 'takeoutPhoto'
               ? { file: undefined, metadata }
               : undefined,
         );
@@ -130,8 +135,11 @@ function readNodeUpload(
       resolve(
         kind === 'avatar'
           ? { originalname, size, buffer }
-          : kind === 'takeoutActivity'
-            ? ({ file: { originalname, size, path }, metadata } satisfies TakeoutActivityUpload)
+          : kind === 'takeoutActivity' || kind === 'takeoutPhoto'
+            ? ({
+                file: kind === 'takeoutPhoto' ? { originalname, size, buffer } : { originalname, size, path },
+                metadata,
+              } satisfies TakeoutActivityUpload)
             : { originalname, size, path },
       );
     });

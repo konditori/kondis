@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   };
 };
 export const actions: Actions = {
-  login: async ({ request, cookies, fetch }) => {
+  login: async ({ request, cookies, fetch, url }) => {
     const form = await request.formData();
     const response = await fetch("/api/v1/auth/login", {
       method: "POST",
@@ -31,7 +31,7 @@ export const actions: Actions = {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: url.protocol === "https:",
       maxAge: 60 * 60 * 24 * 30,
     });
     throw redirect(303, "/");

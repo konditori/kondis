@@ -58,6 +58,81 @@ export enum ActivityType {
   Other = 'other',
 }
 
+export enum UploadKind {
+  Activity = 'activity',
+  TakeoutActivity = 'takeoutActivity',
+  TakeoutPhoto = 'takeoutPhoto',
+  Avatar = 'avatar',
+  Image = 'image',
+}
+
+export enum ImportProgressStatus {
+  Scanning = 'scanning',
+  Uploading = 'uploading',
+  Processing = 'processing',
+  Completed = 'completed',
+  Failed = 'failed',
+  Cancelled = 'cancelled',
+}
+
+export enum TakeoutImportItemKind {
+  Activity = 'activity',
+  Manual = 'manual',
+}
+
+export enum TakeoutImportItemStatus {
+  Pending = 'pending',
+  Uploading = 'uploading',
+  Queued = 'queued',
+  Completed = 'completed',
+  Failed = 'failed',
+  Duplicate = 'duplicate',
+}
+
+export enum TakeoutImportItemTerminalStatus {
+  Completed = 'completed',
+  Failed = 'failed',
+  Duplicate = 'duplicate',
+}
+
+export enum DeployTarget {
+  Local = 'local',
+  Cloudflare = 'cloudflare',
+}
+
+export enum AverageMetric {
+  None = 'none',
+  Pace = 'pace',
+  SwimPace = 'swim_pace',
+  Speed = 'speed',
+}
+
+export enum BestEffortGroup {
+  None = 'none',
+  Run = 'run',
+  Ride = 'ride',
+}
+
+export enum BestEffortValueKind {
+  Duration = 'duration',
+  Distance = 'distance',
+  Elevation = 'elevation',
+  Power = 'power',
+}
+
+export enum StreamType {
+  Time = 'time',
+  Latitude = 'latitude',
+  Longitude = 'longitude',
+  Altitude = 'altitude',
+  Distance = 'distance',
+  Speed = 'speed',
+  Heartrate = 'heartrate',
+  Cadence = 'cadence',
+  Power = 'power',
+  Temperature = 'temperature',
+}
+
 export enum UserRole {
   Admin = 'admin',
   User = 'user',

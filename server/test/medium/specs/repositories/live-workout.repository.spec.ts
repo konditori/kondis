@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { ActivityType } from 'src/enum';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 
 import { createMediumFactory } from 'test/medium.factory';
@@ -23,7 +24,7 @@ describe(LiveWorkoutRepository.name, () => {
     const workout = await sut.create({
       userId: user.id,
       clientSessionId: crypto.randomUUID(),
-      sport: 'run',
+      sport: ActivityType.Run,
       startedAt: new Date('2026-08-17T08:00:00.000Z'),
     });
 

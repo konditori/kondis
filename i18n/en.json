@@ -107,6 +107,7 @@
   "strava_scanning": "Scanning the ZIP on this device…",
   "strava_uploading": "Uploading extracted activities…",
   "strava_server_processing": "Server is processing activities…",
+  "strava_skipped_videos": "Skipped {videos} videos. Photos and profile information are imported.",
   "strava_skipped_media": "Skipped for now: {photos} photos, {videos} videos, and {profiles} profile images.",
   "strava_cancel": "Cancel import",
   "strava_drop_takeout": "Drop your Strava takeout here",

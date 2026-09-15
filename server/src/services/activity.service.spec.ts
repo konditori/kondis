@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { JobName, JobStatus } from 'src/enum';
+import { ActivityType, JobName, JobStatus, StreamType } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
 import { type ActivityRepository } from 'src/repositories/activity.repository';
@@ -247,7 +247,7 @@ describe('ActivityService', () => {
           id: UPLOAD_ID,
           activityName: 'Forest walk',
           activityDescription: 'A walk in the woods',
-          activitySport: 'roller_ski',
+          activitySport: ActivityType.RollerSki,
         }),
       ).resolves.toBe(JobStatus.Success);
 
@@ -256,7 +256,7 @@ describe('ActivityService', () => {
           activity: expect.objectContaining({
             name: 'Forest walk',
             description: 'A walk in the woods',
-            sport: 'roller_ski',
+            sport: ActivityType.RollerSki,
           }),
         }),
         'trx',
@@ -388,11 +388,11 @@ describe('ActivityService', () => {
         started_at: new Date('2024-03-01T06:00:00.000Z'),
       });
       getStreams.mockResolvedValueOnce([
-        { type: 'time', data: [0, 10, 20] },
-        { type: 'distance', data: [0, 100, 250] },
-        { type: 'speed', data: [10, 10, 15] },
-        { type: 'altitude', data: [10, 12, 11] },
-        { type: 'heartrate', data: [120, 130, 125] },
+        { type: StreamType.Time, data: [0, 10, 20] },
+        { type: StreamType.Distance, data: [0, 100, 250] },
+        { type: StreamType.Speed, data: [10, 10, 15] },
+        { type: StreamType.Altitude, data: [10, 12, 11] },
+        { type: StreamType.Heartrate, data: [120, 130, 125] },
       ]);
 
       await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);

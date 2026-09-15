@@ -11,11 +11,14 @@
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "lint:fix": "pnpm run lint --fix",
     "check": "tsc --noEmit",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "test:web": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@kondis/sdk": "workspace:*",
+    "@playwright/test": "^1.63.0",
+    "@zip.js/zip.js": "^2.11.1",
     "eslint": "^10.9.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",

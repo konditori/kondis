@@ -26,7 +26,9 @@ const IMAGE_EXTENSIONS = new Set([
 ]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".avi", ".m4v", ".webm"]);
 
+type PhotoItem = { entryName: string; caption: string; sortOrder: number };
 type ActivityItem = {
+  photos: PhotoItem[];
   itemKey: string;
   kind: "activity";
   originalName: string;
@@ -38,6 +40,7 @@ type ActivityItem = {
   gzip: boolean;
 };
 type ManualItem = {
+  photos: PhotoItem[];
   itemKey: string;
   kind: "manual";
   sourceId: string;
@@ -124,8 +127,7 @@ async function extract({
     if (!headers.includes("Filename"))
       throw new Error("activities.csv does not contain a Filename column");
 
-    // media.csv is intentionally read now so its validity is checked without
-    // materialising photo/video payloads. Media transfer is a later R2-direct feature.
+    // Read metadata first; photo payloads are extracted individually just before upload.
     const mediaEntry = entryByName.get(`${archiveRoot}media.csv`);
     const mediaRows = mediaEntry
       ? parseCsv(await readText(mediaEntry, LIMITS.manifestBytes))
@@ -138,6 +140,7 @@ async function extract({
       headers,
       archiveRoot,
       entryByName,
+      mediaRows,
     );
     const scan = await request<{ pendingItemKeys: string[] }>(
       `${apiBase}/upload/strava/imports/${importId}/scan`,
@@ -148,7 +151,11 @@ async function extract({
       },
     );
     const pending = new Set(scan.pendingItemKeys);
-    const skipped = countSkippedMedia(entryByName, mediaRows, archiveRoot);
+    const skipped = {
+      videos: [...entryByName.keys()].filter((name) =>
+        VIDEO_EXTENSIONS.has(extension(name)),
+      ).length,
+    };
     post("scanned", {
       total: items.length,
       pending: pending.size,
@@ -158,25 +165,25 @@ async function extract({
     assertNotCancelled();
 
     post("phase", { phase: "uploading" });
+    await importProfile(entryByName, archiveRoot, apiBase);
     let uploaded = 0;
-    let failures = extractionErrors;
     for (const item of items.filter(
       (item): item is ManualItem =>
         item.kind === "manual" && pending.has(item.itemKey),
     )) {
       try {
+        await uploadPhotos(item, entryByName, importId, apiBase);
         await request(
           `${apiBase}/upload/strava/imports/${importId}/manual-activities`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(item),
+            body: JSON.stringify(withoutEntryName(item)),
           },
         );
         uploaded += 1;
         post("uploaded", { uploaded, total: pending.size });
       } catch (error) {
-        failures += 1;
         await reportItemFailure(
           apiBase,
           importId,
@@ -203,6 +210,7 @@ async function extract({
       },
       async (item) => {
         try {
+          await uploadPhotos(item, entryByName, importId, apiBase);
           const entry = entryByName.get(item.entryName);
           if (!entry)
             throw new Error("Activity file is missing from the ZIP archive");
@@ -230,7 +238,6 @@ async function extract({
           uploaded += 1;
           post("uploaded", { uploaded, total: pending.size });
         } catch (error) {
-          failures += 1;
           await reportItemFailure(
             apiBase,
             importId,
@@ -247,11 +254,11 @@ async function extract({
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ extractionErrors: failures }),
+        body: JSON.stringify({ extractionErrors }),
       },
     );
     post("phase", { phase: "processing" });
-    post("complete", { status: final, extractionErrors: failures, skipped });
+    post("complete", { status: final, extractionErrors, skipped });
   } finally {
     await reader.close();
   }
@@ -334,11 +341,12 @@ async function readText(entry: FileEntry, maximum: number): Promise<string> {
   return decodeCsvText(new Uint8Array(await blob.arrayBuffer()));
 }
 
-function scanActivities(
+export function scanActivities(
   rows: string[][],
   headers: string[],
   root: string,
   entries: Map<string, FileEntry>,
+  mediaRows: string[][] = [],
 ) {
   const column = (name: string, occurrence = 0): number => {
     let found = 0;
@@ -353,13 +361,25 @@ function scanActivities(
     name: string,
     occurrence = 0,
   ): number | null => {
-    const parsed = Number(value(row, name, occurrence));
+    const raw = value(row, name, occurrence);
+    if (!raw) return null;
+    const parsed = Number(raw);
     return Number.isFinite(parsed) ? parsed : null;
   };
+  const captionHeaders = mediaRows[0] ?? [];
+  const captions = new Map(
+    mediaRows
+      .slice(1)
+      .map((row) => [
+        row[captionHeaders.indexOf("Media Filename")],
+        row[captionHeaders.indexOf("Media Caption")] ?? "",
+      ]),
+  );
   const items: ScanItem[] = [];
   const referenced = new Set<string>();
   let extractionErrors = 0;
   for (const [index, row] of rows.entries()) {
+    if (row.every((field) => !field.trim())) continue;
     const rowNumber = index + 2;
     const filename = value(row, "Filename");
     const name = value(row, "Activity Name") || null;
@@ -370,6 +390,28 @@ function scanActivities(
     )
       ? ["commute"]
       : [];
+    const photos: PhotoItem[] = [];
+    for (const path of new Set(
+      value(row, "Media")
+        .split("|")
+        .map((path) => path.trim())
+        .filter(Boolean),
+    )) {
+      if (!IMAGE_EXTENSIONS.has(extension(path))) continue;
+      if (
+        !isSafePath(path) ||
+        !entries.has(root + path) ||
+        photos.length >= 100
+      ) {
+        extractionErrors += 1;
+        continue;
+      }
+      photos.push({
+        entryName: root + path,
+        caption: captions.get(path) ?? "",
+        sortOrder: photos.length,
+      });
+    }
     if (!filename) {
       const startedAt = new Date(value(row, "Activity Date"));
       const elapsedTime = number(row, "Elapsed Time");
@@ -379,6 +421,7 @@ function scanActivities(
       }
       const sourceId = value(row, "Activity ID") || `row:${rowNumber}`;
       items.push({
+        photos,
         itemKey: `manual:${sourceId}`,
         kind: "manual",
         sourceId,
@@ -414,6 +457,7 @@ function scanActivities(
     }
     referenced.add(entryName);
     items.push({
+      photos,
       itemKey: `activity:${entryName}`,
       kind: "activity",
       originalName,
@@ -428,7 +472,7 @@ function scanActivities(
   return { items, extractionErrors };
 }
 
-function parseCsv(input: string): string[][] {
+export function parseCsv(input: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -461,41 +505,108 @@ function parseCsv(input: string): string[][] {
   return rows;
 }
 
-const withoutEntryName = (
-  item: ScanItem,
-): Omit<ActivityItem, "entryName" | "gzip"> | ManualItem => {
-  if (item.kind === "manual") return item;
-  const { entryName: _entryName, gzip: _gzip, ...metadata } = item;
+const withoutEntryName = (item: ScanItem) => {
+  if (item.kind === "manual") {
+    const { photos: _photos, ...metadata } = item;
+    return metadata;
+  }
+  const {
+    entryName: _entryName,
+    gzip: _gzip,
+    photos: _photos,
+    ...metadata
+  } = item;
   return metadata;
 };
 
-function countSkippedMedia(
-  entries: Map<string, FileEntry>,
-  mediaRows: string[][],
-  root: string,
-) {
-  let photos = 0;
-  let videos = 0;
-  let profileImages = 0;
-  for (const name of entries.keys()) {
-    const suffix = extension(name);
-    if (
-      name.startsWith(root) &&
-      /(^|\/)profile\./i.test(name) &&
-      IMAGE_EXTENSIONS.has(suffix)
-    )
-      profileImages += 1;
-    else if (IMAGE_EXTENSIONS.has(suffix)) photos += 1;
-    else if (VIDEO_EXTENSIONS.has(suffix)) videos += 1;
-  }
-  return {
-    photos: Math.max(photos, Math.max(0, mediaRows.length - 1)),
-    videos,
-    profileImages,
-  };
+async function photoBlob(entry: FileEntry, maximum: number) {
+  if (entry.uncompressedSize > maximum)
+    throw new Error("Photo exceeds its expanded size limit");
+  const blob = await entry.getData(new BlobWriter(), {
+    checkCrc32: true,
+    strictness: "strict",
+  });
+  if (blob.size > maximum)
+    throw new Error("Photo exceeds its expanded size limit");
+  return blob;
 }
 
-async function gunzipEntry(entry: FileEntry): Promise<Blob> {
+async function uploadPhotos(
+  item: ScanItem,
+  entries: Map<string, FileEntry>,
+  importId: string,
+  apiBase: string,
+) {
+  for (const photo of item.photos) {
+    assertNotCancelled();
+    const body = new FormData();
+    body.append(
+      "metadata",
+      JSON.stringify({
+        itemKey: item.itemKey,
+        photoKey: photo.entryName,
+        caption: photo.caption,
+        sortOrder: photo.sortOrder,
+      }),
+    );
+    body.append(
+      "file",
+      new File(
+        [await photoBlob(entries.get(photo.entryName)!, 25 * 1024 * 1024)],
+        photo.entryName.split("/").at(-1)!,
+      ),
+    );
+    const result = await request<{ accepted: boolean }>(
+      `${apiBase}/upload/strava/imports/${importId}/photos`,
+      { method: "POST", body },
+    );
+    if (!result.accepted)
+      throw new Error("Import no longer accepts photos for this activity");
+  }
+}
+
+async function importProfile(
+  entries: Map<string, FileEntry>,
+  root: string,
+  apiBase: string,
+) {
+  const profile = entries.get(`${root}profile.csv`);
+  if (profile) {
+    const [headers, row] = parseCsv(
+      await readText(profile, LIMITS.manifestBytes),
+    );
+    const firstName = row?.[headers?.indexOf("First Name")]?.trim();
+    const lastName = row?.[headers?.indexOf("Last Name")]?.trim();
+    if (firstName && lastName) {
+      assertNotCancelled();
+      await request(`${apiBase}/users/me`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ firstName, lastName }),
+      });
+    }
+  }
+  const avatar = [...entries.values()].find(
+    (entry) =>
+      entry.filename.startsWith(root) &&
+      /^profile\.[^/]+$/i.test(entry.filename.slice(root.length)) &&
+      IMAGE_EXTENSIONS.has(extension(entry.filename)),
+  );
+  if (avatar) {
+    assertNotCancelled();
+    const body = new FormData();
+    body.append(
+      "file",
+      new File(
+        [await photoBlob(avatar, 10 * 1024 * 1024)],
+        avatar.filename.split("/").at(-1)!,
+      ),
+    );
+    await request(`${apiBase}/users/me/avatar`, { method: "POST", body });
+  }
+}
+
+export async function gunzipEntry(entry: FileEntry): Promise<Blob> {
   if (!("DecompressionStream" in self))
     throw new Error("This browser does not support gzip takeout activities");
   let compressedBytes = 0;
@@ -526,11 +637,13 @@ async function gunzipEntry(entry: FileEntry): Promise<Blob> {
       }),
     );
   const blobPromise = new Response(expanded).blob();
-  await entry.getData(compressed.writable, {
-    checkCrc32: true,
-    strictness: "strict",
-  });
-  const blob = await blobPromise;
+  const [, blob] = await Promise.all([
+    entry.getData(compressed.writable, {
+      checkCrc32: true,
+      strictness: "strict",
+    }),
+    blobPromise,
+  ]);
   if (compressedBytes === 0 || expandedBytes / compressedBytes > LIMITS.ratio) {
     throw new Error(
       `GZIP activity exceeds the ${LIMITS.ratio}:1 compression ratio limit`,

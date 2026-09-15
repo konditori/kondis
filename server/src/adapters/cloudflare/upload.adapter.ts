@@ -1,24 +1,25 @@
-import type { TakeoutActivityUpload, UploadReader } from 'src/api/uploads';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { UploadKind } from 'src/enum';
 import { BadRequestException, PayloadTooLargeException } from 'src/errors';
+import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
 
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 const requestLimitFor = (kind: Parameters<UploadReader['read']>[2]): number => {
   switch (kind) {
-    case 'activity': {
+    case UploadKind.Activity:
+    case UploadKind.TakeoutActivity: {
       return UPLOAD_LIMITS.activityFileBytes;
     }
-    case 'takeoutActivity': {
-      return UPLOAD_LIMITS.activityFileBytes;
-    }
-    case 'avatar': {
+    case UploadKind.Avatar: {
       return UPLOAD_LIMITS.avatarFileBytes;
     }
-    case 'image': {
+    case UploadKind.TakeoutPhoto:
+    case UploadKind.Image: {
       return UPLOAD_LIMITS.imageFileBytes;
     }
   }
+  throw new Error(`Unsupported upload kind: ${kind}`);
 };
 
 export const workerUploadReader: UploadReader = {
@@ -31,7 +32,7 @@ export const workerUploadReader: UploadReader = {
     const value = form.get('file');
     const metadata = form.get('metadata');
     if (value === null) {
-      return kind === 'takeoutActivity'
+      return kind === UploadKind.TakeoutActivity || kind === UploadKind.TakeoutPhoto
         ? ({ file: undefined, metadata: metadata?.toString() } satisfies TakeoutActivityUpload)
         : undefined;
     }
@@ -41,10 +42,10 @@ export const workerUploadReader: UploadReader = {
     const file = {
       originalname: value.name || 'upload.bin',
       size: value.size,
-      // Buffer is the historical service contract. Uint8Array is accepted by
-      // R2 and remains free of Node runtime dependencies in the Worker.
       buffer: new Uint8Array(await value.arrayBuffer()) as unknown as Buffer,
     };
-    return kind === 'takeoutActivity' ? { file, metadata: metadata?.toString() } : file;
+    return kind === UploadKind.TakeoutActivity || kind === UploadKind.TakeoutPhoto
+      ? { file, metadata: metadata?.toString() }
+      : file;
   },
 };

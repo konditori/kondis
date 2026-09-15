@@ -1,6 +1,7 @@
+import { DeployTarget } from 'src/enum';
 import { Logger } from 'src/logger';
 import type { ConfigPort } from 'src/ports/config.port';
-import type { DatabaseConfig, DeployTarget, EnvData } from 'src/types';
+import type { DatabaseConfig, EnvData } from 'src/types';
 
 export type ConfigEnvironment = Readonly<Record<string, string | undefined>>;
 
@@ -37,8 +38,8 @@ const readBoolean = (environment: ConfigEnvironment, name: string, fallback: boo
 };
 
 const readDeployTarget = (environment: ConfigEnvironment): DeployTarget => {
-  const value = readEnv(environment, 'KONDIS_DEPLOY_TARGET', 'local');
-  if (value === 'local' || value === 'cloudflare') {
+  const value = readEnv(environment, 'KONDIS_DEPLOY_TARGET', DeployTarget.Local);
+  if (value === DeployTarget.Local || value === DeployTarget.Cloudflare) {
     return value;
   }
 
