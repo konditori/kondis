@@ -1,0 +1,21 @@
+.github/workflows/android.yml
+  s_b84aa0013f34e3::t_c6a85e2cf95268 31-61,64-67,110-113,147-150,211-214
+.github/workflows/sites.yml
+  s_b84aa0013f34e3::t_3d7626368cb14c 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "99bbc1a67c91ff8fd66a9ce5da5bfe181d9ce65c",
+  "prompts": {},
+  "sessions": {
+    "s_b84aa0013f34e3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a284-91aa-7942-bf6b-e692a1cc12a8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
