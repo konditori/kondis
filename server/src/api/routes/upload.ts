@@ -1,7 +1,6 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
-import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import {
   FitUploadResponseSchema,
   TakeoutActivityMetadataSchema,
@@ -15,7 +14,9 @@ import {
   TakeoutManualItemSchema,
   TakeoutPhotoMetadataSchema,
 } from 'src/dtos/upload.dto';
+import { UploadKind } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
+import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
 
 export type ActivityUploadRouteService = {
@@ -238,7 +239,8 @@ export const registerActivityUploadRoute = (
   uploads: UploadReader,
 ): void => {
   app.openapi(activityRoute, async (context) => {
-    const file = (await uploads.read(context.req.raw, context.env, 'activity')) as UploadedFileData | undefined;
+    const file = (await uploads.read(context.req.raw, context.env, UploadKind.Activity)) as
+      UploadedFileData | undefined;
     return context.json(activityResponse.parse(await service.uploadActivity(file, context.get('user').id)), 201);
   });
 };
@@ -264,7 +266,7 @@ export const registerTakeoutImportRoutes = (
     ),
   );
   app.openapi(uploadTakeoutActivityRoute, async (context) => {
-    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutActivity')) as
+    const upload = (await uploads.read(context.req.raw, context.env, UploadKind.TakeoutActivity)) as
       TakeoutActivityUpload | undefined;
     const rawMetadata = upload?.metadata;
     let metadata: z.output<typeof TakeoutActivityMetadataSchema>;
@@ -286,7 +288,7 @@ export const registerTakeoutImportRoutes = (
     );
   });
   app.openapi(photoRoute, async (context) => {
-    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutPhoto')) as
+    const upload = (await uploads.read(context.req.raw, context.env, UploadKind.TakeoutPhoto)) as
       TakeoutActivityUpload | undefined;
     let metadata: z.output<typeof TakeoutPhotoMetadataSchema>;
     try {

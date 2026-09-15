@@ -65,12 +65,12 @@ export const ACTIVITY_TAGS: readonly ActivityTagSettings[] = [
   { tag: 'for_a_cause', label: 'For a Cause', sports: 'all' },
 ];
 
-const defineActivityType = <const T extends string>(
-  type: T,
+const defineActivityType = (
+  type: string,
   settings: Omit<ActivityTypeSettings, 'type' | 'aliases' | 'bestEffortGroup'> &
     Partial<Pick<ActivityTypeSettings, 'aliases' | 'bestEffortGroup'>>,
-): ActivityTypeSettings & { type: T } => ({
-  type,
+): ActivityTypeSettings => ({
+  type: type as ActivityType,
   aliases: [],
   bestEffortGroup: BestEffortGroup.None,
   ...settings,

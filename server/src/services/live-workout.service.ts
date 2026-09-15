@@ -1,9 +1,9 @@
+import type { ActivityType } from 'src/enum';
 import { NotFoundException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { RealtimePort } from 'src/ports/realtime.port';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
-import type { ActivityType } from 'src/types';
 
 type PointInput = {
   sequence: number;

@@ -1,5 +1,5 @@
+import type { ImportProgressStatus } from 'src/enum';
 import { Column, CreateDateColumn, Generated, Table, Timestamp, UpdateDateColumn } from 'src/schema/decorators';
-import type { ImportProgressStatus } from 'src/types';
 
 @Table('takeout_import')
 export class TakeoutImportTable {

@@ -2,11 +2,12 @@ import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
 import { fileResponse, type FileReader } from 'src/api/file-response';
-import type { ImageUpload, UploadReader } from 'src/types';
 import { jsonBodyMiddleware } from 'src/api/validation';
 import { ActivityImageListSchema, ActivityImageSchema, ActivityImageUpdateSchema } from 'src/dtos/activity-image.dto';
+import { UploadKind } from 'src/enum';
 import { NotFoundException } from 'src/errors';
 import type { ActivityImageService } from 'src/services/activity-image.service';
+import type { ImageUpload, UploadReader } from 'src/types';
 
 export type ActivityImageRouteService = Pick<ActivityImageService, 'delete' | 'getFile' | 'list' | 'update' | 'upload'>;
 
@@ -141,7 +142,7 @@ export const registerActivityImageMutationRoutes = (
   uploads: UploadReader,
 ): void => {
   app.openapi(uploadRoute, async (context) => {
-    const upload = (await uploads.read(context.req.raw, context.env, 'image')) as ImageUpload | undefined;
+    const upload = (await uploads.read(context.req.raw, context.env, UploadKind.Image)) as ImageUpload | undefined;
     const result = await images.upload(
       context.req.valid('param').id,
       upload?.file,

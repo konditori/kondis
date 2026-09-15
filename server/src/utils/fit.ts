@@ -1,8 +1,8 @@
 import { FitBaseType, FitEncoder } from 'fit-file-parser';
 
 import { FIT_SEMICIRCLES_PER_DEGREE } from 'src/constants';
+import { ActivityType, StreamType } from 'src/enum';
 import type {
-  ActivityType,
   FitLapMesg,
   FitMessages,
   FitRecordMesg,
@@ -10,7 +10,6 @@ import type {
   ParsedActivityStructure,
   ParsedLap,
   ParsedStream,
-  StreamType,
 } from 'src/types';
 import { toActivityType } from 'src/utils/activity';
 import {
@@ -162,15 +161,15 @@ const heartRate = (value?: number | null): number | null => {
 };
 
 const EXTRACTORS: { type: StreamType; extract: (record: FitRecordMesg) => number | null }[] = [
-  { type: 'latitude', extract: (record) => toDegrees(record.positionLat) },
-  { type: 'longitude', extract: (record) => toDegrees(record.positionLong) },
-  { type: 'altitude', extract: (record) => num(record.enhancedAltitude ?? record.altitude) },
-  { type: 'distance', extract: (record) => num(record.distance) },
-  { type: 'speed', extract: (record) => num(record.enhancedSpeed ?? record.speed) },
-  { type: 'heartrate', extract: (record) => heartRate(record.heartRate) },
-  { type: 'cadence', extract: (record) => int(record.cadence) },
-  { type: 'power', extract: (record) => int(record.power) },
-  { type: 'temperature', extract: (record) => num(record.temperature) },
+  { type: StreamType.Latitude, extract: (record) => toDegrees(record.positionLat) },
+  { type: StreamType.Longitude, extract: (record) => toDegrees(record.positionLong) },
+  { type: StreamType.Altitude, extract: (record) => num(record.enhancedAltitude ?? record.altitude) },
+  { type: StreamType.Distance, extract: (record) => num(record.distance) },
+  { type: StreamType.Speed, extract: (record) => num(record.enhancedSpeed ?? record.speed) },
+  { type: StreamType.Heartrate, extract: (record) => heartRate(record.heartRate) },
+  { type: StreamType.Cadence, extract: (record) => int(record.cadence) },
+  { type: StreamType.Power, extract: (record) => int(record.power) },
+  { type: StreamType.Temperature, extract: (record) => num(record.temperature) },
 ];
 
 const hasAnySample = (data: number[]): boolean => data.some((value) => Number.isFinite(value));
@@ -222,7 +221,7 @@ export const buildStreams = (records: FitRecordMesg[], startedAt: Date): ParsedS
     return timestamp === null ? NaN : (timestamp.getTime() - startedAt.getTime()) / 1000;
   });
   if (hasAnySample(time)) {
-    streams.push({ type: 'time', data: time });
+    streams.push({ type: StreamType.Time, data: time });
   }
 
   for (const { type, extract } of EXTRACTORS) {
@@ -247,9 +246,6 @@ export const mapLap = (lap: FitLapMesg, index: number): ParsedLap => ({
   avgSpeedMps: num(lap.enhancedAvgSpeed ?? lap.avgSpeed),
 });
 
-export const findStream = (activity: ParsedActivity, type: StreamType): number[] | undefined =>
-  activity.streams.find((stream) => stream.type === type)?.data;
-
 export const parseFitStructure = (messages: FitMessages): ParsedActivityStructure => {
   const session = messages.sessionMesgs?.[0];
   const records = messages.recordMesgs ?? [];
@@ -262,15 +258,15 @@ export const parseFitStructure = (messages: FitMessages): ParsedActivityStructur
   const streams = buildStreams(records, startedAt);
   const streamData = (type: StreamType): number[] => streams.find((stream) => stream.type === type)?.data ?? [];
   const sessionDistance = num(session?.totalDistance);
-  const distance = streamData('distance');
+  const distance = streamData(StreamType.Distance);
   if (!hasAnySample(distance)) {
     const derivedDistance = deriveDistanceFromPosition(
-      streamData('latitude'),
-      streamData('longitude'),
+      streamData(StreamType.Latitude),
+      streamData(StreamType.Longitude),
       sessionDistance,
     );
     if (derivedDistance) {
-      streams.push({ type: 'distance', data: derivedDistance });
+      streams.push({ type: StreamType.Distance, data: derivedDistance });
     }
   }
 
@@ -290,13 +286,13 @@ export const parseFitMessages = (messages: FitMessages): ParsedActivity => {
   const streamData = (type: StreamType): number[] =>
     structure.streams.find((stream) => stream.type === type)?.data ?? [];
 
-  const time = streamData('time');
-  const altitude = streamData('altitude');
-  const speed = streamData('speed');
-  const power = streamData('power');
-  const heartrate = streamData('heartrate');
-  const cadence = streamData('cadence');
-  const distance = streamData('distance');
+  const time = streamData(StreamType.Time);
+  const altitude = streamData(StreamType.Altitude);
+  const speed = streamData(StreamType.Speed);
+  const power = streamData(StreamType.Power);
+  const heartrate = streamData(StreamType.Heartrate);
+  const cadence = streamData(StreamType.Cadence);
+  const distance = streamData(StreamType.Distance);
   const sessionDistance = num(session?.totalDistance);
 
   const sampleIntervalS = inferSampleInterval(time);

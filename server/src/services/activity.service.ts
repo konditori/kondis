@@ -3,7 +3,7 @@ import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EF
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
-import { BestEffortGroup, JobName, JobStatus } from 'src/enum';
+import { ActivityType, BestEffortGroup, JobName, JobStatus, StreamType, TakeoutImportItemStatus } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
 import type { JobProducerPort } from 'src/ports/queue.port';
@@ -15,17 +15,16 @@ import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 import {
   ActivityListRecord,
   ActivityMetrics,
   ActivityRecord,
   ActivityStreamInput,
   ActivityTag,
-  ActivityType,
   BestEffortType,
   CreateActivityInput,
   FitMessages,
@@ -47,15 +46,17 @@ const decodeCursor = (value: string): string => atob(value.replaceAll('-', '+').
 export type BestEffortSport = 'run' | 'ride';
 
 const BEST_EFFORT_SPORTS = {
-  run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(({ type }) => type),
+  run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(
+    ({ type }) => type as ActivityType,
+  ),
   ride: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Ride).map(
-    ({ type }) => type,
+    ({ type }) => type as ActivityType,
   ),
 } satisfies Record<BestEffortSport, readonly ActivityType[]>;
 const CYCLING_ANALYSIS_SPORTS: ReadonlySet<ActivityType> = new Set([
   ...BEST_EFFORT_SPORTS.ride,
-  'e_bike_ride',
-  'e_mountain_bike_ride',
+  ActivityType.EBikeRide,
+  ActivityType.EMountainBikeRide,
 ]);
 const BEST_EFFORT_DEFINITIONS = new Map(
   [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),
@@ -83,7 +84,7 @@ export class ActivityService {
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,
     private readonly logger: ConsoleLogger,
-    private readonly importProgressStore?: ImportProgressStore,
+    private readonly importProgressStore?: TakeoutRepository,
     private readonly mediaRepository?: MediaRepository,
     private readonly socialRepository?: SocialRepository,
     private readonly mediaBaseUrl?: string,
@@ -128,7 +129,11 @@ export class ActivityService {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
         if (takeoutImportId && takeoutItemKey) {
-          await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
+          await this.importProgressStore?.completeItem(
+            takeoutImportId,
+            takeoutItemKey,
+            TakeoutImportItemStatus.Completed,
+          );
         }
         return JobStatus.Skipped;
       }
@@ -182,7 +187,11 @@ export class ActivityService {
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
+        await this.importProgressStore?.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemStatus.Completed,
+        );
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
@@ -190,7 +199,12 @@ export class ActivityService {
 
       await this.uploadRepository.setStatus(id, 'failed', message);
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'failed', message);
+        await this.importProgressStore?.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemStatus.Failed,
+          message,
+        );
       }
       throw error;
     }
@@ -220,7 +234,11 @@ export class ActivityService {
         });
       }
       if (job.takeoutImportId && job.takeoutItemKey) {
-        await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'duplicate');
+        await this.importProgressStore?.completeItem(
+          job.takeoutImportId,
+          job.takeoutItemKey,
+          TakeoutImportItemStatus.Duplicate,
+        );
       }
       return JobStatus.Skipped;
     }
@@ -296,7 +314,11 @@ export class ActivityService {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
     if (job.takeoutImportId && job.takeoutItemKey) {
-      await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'completed');
+      await this.importProgressStore?.completeItem(
+        job.takeoutImportId,
+        job.takeoutItemKey,
+        TakeoutImportItemStatus.Completed,
+      );
     }
     return JobStatus.Success;
   }
@@ -428,16 +450,16 @@ export class ActivityService {
     };
     const startedAtMs = new Date(startedAt).getTime();
     const records: FitRecordMesg[] = Array.from({ length: recordCount }, (_, index) => ({
-      timestamp: new Date(startedAtMs + (value('time', index) ?? index) * 1000),
-      positionLat: value('latitude', index),
-      positionLong: value('longitude', index),
-      altitude: value('altitude', index),
-      distance: value('distance', index),
-      speed: value('speed', index),
-      heartRate: value('heartrate', index),
-      cadence: value('cadence', index),
-      power: value('power', index),
-      temperature: value('temperature', index),
+      timestamp: new Date(startedAtMs + (value(StreamType.Time, index) ?? index) * 1000),
+      positionLat: value(StreamType.Latitude, index),
+      positionLong: value(StreamType.Longitude, index),
+      altitude: value(StreamType.Altitude, index),
+      distance: value(StreamType.Distance, index),
+      speed: value(StreamType.Speed, index),
+      heartRate: value(StreamType.Heartrate, index),
+      cadence: value(StreamType.Cadence, index),
+      power: value(StreamType.Power, index),
+      temperature: value(StreamType.Temperature, index),
     }));
     const messages: FitMessages = { recordMesgs: records };
     return parseFitMessages(messages);

@@ -1,7 +1,7 @@
-import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { UploadKind } from 'src/enum';
 import { BadRequestException, PayloadTooLargeException } from 'src/errors';
+import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
 
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;

@@ -1,5 +1,6 @@
 import { sql } from 'kysely';
 
+import { ImportProgressStatus as ImportProgressStatusEnum, TakeoutImportItemStatus } from 'src/enum';
 import type {
   ImportProgress,
   ImportProgressStatus,
@@ -8,31 +9,40 @@ import type {
   KondisTransaction,
   TakeoutImportItem,
   TakeoutImportItemKind,
-  TakeoutImportItemStatus,
+  TakeoutImportItemTerminalStatus,
 } from 'src/types';
 import type { IActivityImageStage } from 'src/types/jobs';
 
-const terminalItemStates: Set<TakeoutImportItemStatus> = new Set(['completed', 'failed', 'duplicate']);
+const terminalItemStates: Set<TakeoutImportItemStatus> = new Set([
+  TakeoutImportItemStatus.Completed,
+  TakeoutImportItemStatus.Failed,
+  TakeoutImportItemStatus.Duplicate,
+]);
+const activeImportStates: Set<ImportProgressStatus> = new Set([
+  ImportProgressStatusEnum.Cancelled,
+  ImportProgressStatusEnum.Completed,
+]);
+const pendingItemStates: Set<TakeoutImportItemStatus> = new Set([
+  TakeoutImportItemStatus.Pending,
+  TakeoutImportItemStatus.Failed,
+]);
 const isTerminal = (status: TakeoutImportItemStatus): boolean => terminalItemStates.has(status);
 
 const transitionDeltas = (from: TakeoutImportItemStatus, to: TakeoutImportItemStatus): ItemTransition => ({
-  uploaded: from === 'pending' && to !== 'pending' ? 1 : 0,
+  uploaded: from === TakeoutImportItemStatus.Pending && to !== TakeoutImportItemStatus.Pending ? 1 : 0,
   processed: Number(isTerminal(to)) - Number(isTerminal(from)),
-  failed: Number(to === 'failed') - Number(from === 'failed'),
-  duplicates: Number(to === 'duplicate') - Number(from === 'duplicate'),
+  failed: Number(to === TakeoutImportItemStatus.Failed) - Number(from === TakeoutImportItemStatus.Failed),
+  duplicates: Number(to === TakeoutImportItemStatus.Duplicate) - Number(from === TakeoutImportItemStatus.Duplicate),
 });
 
-/*
- * Durable checkpoints for browser-owned ZIP extraction.
- *
- * Item transitions and denormalized counters are updated in the same
- * transaction. This avoids an aggregate scan per item and makes concurrent
- * uploads and retry-success transitions monotonic.
- */
-export class ImportProgressStore {
+export class TakeoutRepository {
   constructor(private readonly db: KondisDatabase) {}
 
-  async create(importId: string, userId: string, status: ImportProgressStatus = 'scanning'): Promise<void> {
+  async create(
+    importId: string,
+    userId: string,
+    status: ImportProgressStatus = ImportProgressStatusEnum.Scanning,
+  ): Promise<void> {
     await this.db.insertInto('takeout_import').values({ id: importId, user_id: userId, status }).execute();
   }
 
@@ -49,16 +59,16 @@ export class ImportProgressStore {
   async registerItems(importId: string, userId: string, items: TakeoutImportItem[]): Promise<string[]> {
     return this.db.transaction().execute(async (trx) => {
       const importRecord = await this.lockImport(trx, importId, userId);
-      if (!importRecord || ['cancelled', 'completed'].includes(importRecord.status)) {
+      if (!importRecord || activeImportStates.has(importRecord.status)) {
         return [];
       }
 
       await sql`
         WITH recovered AS (
           UPDATE takeout_import_item
-          SET status = 'pending', error = NULL
+          SET status = ${TakeoutImportItemStatus.Pending}, error = NULL
           WHERE import_id = ${importId}
-            AND status = 'uploading'
+            AND status = ${TakeoutImportItemStatus.Uploading}
           RETURNING 1
         )
         UPDATE takeout_import
@@ -87,18 +97,18 @@ export class ImportProgressStore {
         .updateTable('takeout_import')
         .set({
           total: sql<number>`COALESCE(total, 0) + ${inserted.length}`,
-          status: 'uploading',
+          status: ImportProgressStatusEnum.Uploading,
           error: null,
         })
         .where('id', '=', importId)
-        .where('status', 'not in', ['cancelled', 'completed'])
+        .where('status', 'not in', [ImportProgressStatusEnum.Cancelled, ImportProgressStatusEnum.Completed])
         .execute();
 
       const pending = await trx
         .selectFrom('takeout_import_item')
         .select('item_key')
         .where('import_id', '=', importId)
-        .where('status', 'in', ['pending', 'uploading'])
+        .where('status', 'in', [TakeoutImportItemStatus.Pending, TakeoutImportItemStatus.Uploading])
         .execute();
       return pending.map(({ item_key }) => item_key);
     });
@@ -107,7 +117,7 @@ export class ImportProgressStore {
   async beginItem(importId: string, userId: string, itemKey: string, kind: TakeoutImportItemKind): Promise<boolean> {
     return this.db.transaction().execute(async (trx) => {
       const owner = await this.lockImport(trx, importId, userId);
-      if (!owner || owner.status === 'cancelled' || owner.status === 'completed') {
+      if (!owner || activeImportStates.has(owner.status)) {
         return false;
       }
       const item = await trx
@@ -118,17 +128,15 @@ export class ImportProgressStore {
         .where('kind', '=', kind)
         .forUpdate()
         .executeTakeFirst();
-      // `uploading` is an in-flight claim. Only a fresh item or a previous
-      // failed attempt may be claimed again; this makes duplicate browser
-      // submissions harmless.
-      if (!item || !['pending', 'failed'].includes(item.status)) {
+
+      if (!item || !pendingItemStates.has(item.status as TakeoutImportItemStatus)) {
         return false;
       }
 
-      const delta = transitionDeltas(item.status, 'uploading');
+      const delta = transitionDeltas(item.status as TakeoutImportItemStatus, TakeoutImportItemStatus.Uploading);
       await trx
         .updateTable('takeout_import_item')
-        .set({ status: 'uploading', error: null })
+        .set({ status: TakeoutImportItemStatus.Uploading, error: null })
         .where('import_id', '=', importId)
         .where('item_key', '=', itemKey)
         .execute();
@@ -145,7 +153,7 @@ export class ImportProgressStore {
   ): Promise<boolean> {
     return this.db.transaction().execute(async (trx) => {
       const owner = await this.lockImport(trx, importId, userId);
-      if (!owner || ['cancelled', 'completed'].includes(owner.status)) {
+      if (!owner || activeImportStates.has(owner.status)) {
         return false;
       }
       const item = await trx
@@ -155,7 +163,7 @@ export class ImportProgressStore {
         .where('item_key', '=', itemKey)
         .forUpdate()
         .executeTakeFirst();
-      if (!item || !['pending', 'failed'].includes(item.status)) {
+      if (!item || !pendingItemStates.has(item.status as TakeoutImportItemStatus)) {
         return false;
       }
       const photos = item.staged_images.filter((image) => image.photoKey !== photo.photoKey);
@@ -188,17 +196,17 @@ export class ImportProgressStore {
   async markQueued(importId: string, itemKey: string): Promise<void> {
     await this.db
       .updateTable('takeout_import_item')
-      .set({ status: 'queued', error: null })
+      .set({ status: TakeoutImportItemStatus.Queued, error: null })
       .where('import_id', '=', importId)
       .where('item_key', '=', itemKey)
-      .where('status', '=', 'uploading')
+      .where('status', '=', TakeoutImportItemStatus.Uploading)
       .execute();
   }
 
   async completeItem(
     importId: string,
     itemKey: string,
-    status: Extract<TakeoutImportItemStatus, 'completed' | 'failed' | 'duplicate'>,
+    status: TakeoutImportItemTerminalStatus,
     error?: string,
   ): Promise<void> {
     await this.db.transaction().execute(async (trx) => {
@@ -209,32 +217,29 @@ export class ImportProgressStore {
   async failItem(importId: string, userId: string, itemKey: string, error: string): Promise<boolean> {
     return this.db.transaction().execute(async (trx) => {
       const owner = await this.lockImport(trx, importId, userId);
-      if (!owner || owner.status === 'cancelled') {
+      if (!owner || owner.status === ImportProgressStatusEnum.Cancelled) {
         return false;
       }
-      return this.transitionItemWithExecutor(trx, importId, itemKey, 'failed', error);
+      return this.transitionItemWithExecutor(trx, importId, itemKey, TakeoutImportItemStatus.Failed, error);
     });
   }
 
-  /**
-  Marks a queued job's item failed when the job has exhausted its retries.
-  */
   async failJobItem(importId: string, itemKey: string, error: string): Promise<boolean> {
     return this.db
       .transaction()
-      .execute((trx) => this.transitionItemWithExecutor(trx, importId, itemKey, 'failed', error));
+      .execute((trx) => this.transitionItemWithExecutor(trx, importId, itemKey, TakeoutImportItemStatus.Failed, error));
   }
 
   async finalize(importId: string, userId: string, extractionErrors = 0): Promise<ImportProgress | undefined> {
     const message = extractionErrors > 0 ? `${extractionErrors} archive entries could not be extracted` : null;
     await this.db.transaction().execute(async (trx) => {
       const owner = await this.lockImport(trx, importId, userId);
-      if (!owner || ['cancelled', 'completed'].includes(owner.status)) {
+      if (!owner || activeImportStates.has(owner.status)) {
         return;
       }
       await trx
         .updateTable('takeout_import')
-        .set({ status: 'processing', ...(message && { error: message }) })
+        .set({ status: ImportProgressStatusEnum.Processing, ...(message && { error: message }) })
         .where('id', '=', importId)
         .execute();
       await this.completeIfReady(trx, importId);
@@ -245,10 +250,10 @@ export class ImportProgressStore {
   async cancel(importId: string, userId: string): Promise<boolean> {
     const result = await this.db
       .updateTable('takeout_import')
-      .set({ status: 'cancelled' })
+      .set({ status: ImportProgressStatusEnum.Cancelled })
       .where('id', '=', importId)
       .where('user_id', '=', userId)
-      .where('status', 'not in', ['completed', 'cancelled'])
+      .where('status', 'not in', [ImportProgressStatusEnum.Completed, ImportProgressStatusEnum.Cancelled])
       .returning('id')
       .executeTakeFirst();
     return Boolean(result);
@@ -258,7 +263,7 @@ export class ImportProgressStore {
     trx: KondisTransaction,
     importId: string,
     itemKey: string,
-    status: Extract<TakeoutImportItemStatus, 'completed' | 'failed' | 'duplicate'>,
+    status: TakeoutImportItemTerminalStatus,
     error?: string,
   ): Promise<boolean> {
     const item = await trx
@@ -268,14 +273,21 @@ export class ImportProgressStore {
       .where('item_key', '=', itemKey)
       .forUpdate()
       .executeTakeFirst();
-    if (!item || (isTerminal(item.status) && (item.status !== 'failed' || status === 'failed'))) {
+    if (
+      !item ||
+      (isTerminal(item.status as TakeoutImportItemStatus) &&
+        (item.status !== TakeoutImportItemStatus.Failed || status === TakeoutImportItemStatus.Failed))
+    ) {
       return false;
     }
 
-    const delta = transitionDeltas(item.status, status);
+    const delta = transitionDeltas(item.status as TakeoutImportItemStatus, status);
     await trx
       .updateTable('takeout_import_item')
-      .set({ status, error: status === 'failed' ? (error ?? null) : null })
+      .set({
+        status,
+        error: status === TakeoutImportItemStatus.Failed ? (error ?? null) : null,
+      })
       .where('import_id', '=', importId)
       .where('item_key', '=', itemKey)
       .execute();
@@ -305,12 +317,17 @@ export class ImportProgressStore {
       .updateTable('takeout_import')
       .set({
         status: sql<ImportProgressStatus>`CASE
-          WHEN status = 'processing' AND processed >= COALESCE(total, 0) THEN 'completed'
+          WHEN status = ${ImportProgressStatusEnum.Processing} AND processed >= COALESCE(total, 0)
+            THEN ${ImportProgressStatusEnum.Completed}
           ELSE status
         END`,
       })
       .where('id', '=', importId)
-      .where('status', 'not in', ['cancelled', 'failed', 'completed'])
+      .where('status', 'not in', [
+        ImportProgressStatusEnum.Cancelled,
+        ImportProgressStatusEnum.Failed,
+        ImportProgressStatusEnum.Completed,
+      ])
       .execute();
   }
 

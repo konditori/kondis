@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ActivityType } from 'src/enum';
 import { NotFoundException } from 'src/errors';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { type LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
@@ -13,7 +14,7 @@ const workout = (overrides: Record<string, unknown> = {}) => ({
   id: WORKOUT_ID,
   user_id: USER_ID,
   client_session_id: '00000000-0000-4000-8000-000000000003',
-  sport: 'run',
+  sport: ActivityType.Run,
   started_at: new Date('2026-08-17T08:00:00.000Z'),
   status: 'recording',
   elapsed_seconds: 20,
@@ -67,11 +68,11 @@ describe(LiveWorkoutService.name, () => {
 
     await sut.create(USER_ID, {
       clientSessionId: '00000000-0000-4000-8000-000000000003',
-      sport: 'run',
+      sport: ActivityType.Run,
       startedAt: '2026-08-17T08:00:00.000Z',
     });
 
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ userId: USER_ID, sport: 'run' }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ userId: USER_ID, sport: ActivityType.Run }));
   });
 
   it('deletes an ended demo workout and its stale predecessor sessions', async () => {

@@ -4,7 +4,7 @@ import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import type { TakeoutPhotoMetadataDto } from 'src/dtos/upload.dto';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { StoragePort } from 'src/ports/storage.port';
-import type { ImportProgressStore } from 'src/state/import-progress.store';
+import type { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
 describe('stageTakeoutPhoto', () => {
@@ -27,7 +27,7 @@ describe('stageTakeoutPhoto', () => {
 
   const storage = { buildTemporaryPath, write, delete: deleteFile } as unknown as StoragePort;
   const crypto = { sha256 } as unknown as CryptoPort;
-  const progress = { get, stagePhoto } as unknown as ImportProgressStore;
+  const progress = { get, stagePhoto } as unknown as TakeoutRepository;
 
   const stage = (photoMetadata: typeof metadata, photoFile: typeof file | undefined) =>
     stageTakeoutPhoto(progress, storage, crypto, importId, userId, photoMetadata, photoFile);

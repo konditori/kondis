@@ -8,7 +8,7 @@ import {
   type JobDeliveryEnvelope,
   type JobPublisherPort,
 } from 'src/ports/job-transport.port';
-import { ImportProgressStore } from 'src/state/import-progress.store';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
 
@@ -46,7 +46,7 @@ export const reclaimStaleJobs = async (db: KondisDatabase): Promise<number> => {
     WHERE state = 'active' AND lease_expires_at <= now()
     RETURNING id::text, payload, (retry_count > retry_limit) AS exhausted
   `.execute(db);
-  const progress = new ImportProgressStore(db);
+  const progress = new TakeoutRepository(db);
   for (const row of result.rows) {
     if (!row.exhausted) {
       continue;

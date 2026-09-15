@@ -3,12 +3,12 @@ import type { TakeoutPhotoMetadataDto } from 'src/dtos/upload.dto';
 import { BadRequestException, PayloadTooLargeException } from 'src/errors';
 import type { CryptoPort } from 'src/ports/crypto.port';
 import type { StoragePort } from 'src/ports/storage.port';
-import type { ImportProgressStore } from 'src/state/import-progress.store';
+import type { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { UploadedFileData } from 'src/types/uploads';
 
 // Stage one bounded photo at a time. Only server-generated storage paths reach jobs.
 export async function stageTakeoutPhoto(
-  progress: ImportProgressStore,
+  progress: TakeoutRepository,
   storage: StoragePort,
   crypto: CryptoPort,
   importId: string,

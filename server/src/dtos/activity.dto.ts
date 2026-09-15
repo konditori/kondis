@@ -3,7 +3,7 @@ import { z } from '@hono/zod-openapi';
 import { ACTIVITY_TAG_IDS, BEST_EFFORT_TYPES } from 'src/constants';
 import { ActivityImageSchema } from 'src/dtos/activity-image.dto';
 import { SocialUserSchema } from 'src/dtos/social.dto';
-import { ActivityType, AverageMetric, BestEffortGroup } from 'src/enum';
+import { ActivityType, AverageMetric, BestEffortGroup, BestEffortValueKind, StreamType } from 'src/enum';
 
 export const ActivityTypeSchema = z.enum(ActivityType).describe('Activity sport type').meta({ id: 'ActivityType' });
 export const ActivityTypeSettingsSchema = z
@@ -17,9 +17,7 @@ export const ActivityTypeSettingsSchema = z
 export const ActivityTypeListResponseSchema = z.array(ActivityTypeSettingsSchema);
 export const ActivityTagSchema = z.enum(ACTIVITY_TAG_IDS).meta({ id: 'ActivityTag' });
 const BestEffortTypeSchema = z.enum(BEST_EFFORT_TYPES).meta({ id: 'BestEffortType' });
-const BestEffortValueKindSchema = z
-  .enum(['duration', 'distance', 'elevation', 'power'])
-  .meta({ id: 'BestEffortValueKind' });
+const BestEffortValueKindSchema = z.enum(BestEffortValueKind).meta({ id: 'BestEffortValueKind' });
 const BestEffortSportSchema = z.enum(['run', 'ride']).meta({ id: 'BestEffortSport' });
 
 export const BestEffortListParamSchema = z.object({
@@ -59,18 +57,7 @@ export const ActivityMetricSchema = z
   })
   .meta({ id: 'ActivityMetricDto' });
 
-const ActivityStreamTypeSchema = z.enum([
-  'time',
-  'latitude',
-  'longitude',
-  'altitude',
-  'distance',
-  'speed',
-  'heartrate',
-  'cadence',
-  'power',
-  'temperature',
-]);
+const ActivityStreamTypeSchema = z.enum(StreamType);
 const DirectActivityLapSchema = z.object({
   lapIndex: z.number().int().nonnegative(),
   startedAt: z.string().datetime().nullable(),

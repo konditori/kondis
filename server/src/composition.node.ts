@@ -15,6 +15,7 @@ import { RateLimitingRepository } from 'src/repositories/rate-limiting.repositor
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -28,7 +29,6 @@ import { SocialService } from 'src/services/social.service';
 import { StorageService } from 'src/services/storage.service';
 import { UploadService } from 'src/services/upload.service';
 import { UserService } from 'src/services/user.service';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 
 export type ApplicationRole = 'api' | 'worker';
 type Class<T> = new (...args: never[]) => T;
@@ -65,7 +65,7 @@ export const createApplicationComposition = ({
   const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
   const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
 
-  const importProgressStore = new ImportProgressStore(database);
+  const importProgressStore = new TakeoutRepository(database);
 
   const activityService = new ActivityService(
     uploadRepository,
@@ -185,7 +185,7 @@ export const createApplicationComposition = ({
     [TcxRepository, tcxRepository],
     [UploadRepository, uploadRepository],
     [UserRepository, userRepository],
-    [ImportProgressStore, importProgressStore],
+    [TakeoutRepository, importProgressStore],
     [ActivityService, activityService],
     [ActivityImageService, activityImageService],
     [AuthService, authService],

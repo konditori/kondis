@@ -1,30 +1,35 @@
-import type {
-  ActivityType as ActivityTypeEnum,
-  AverageMetric as AverageMetricEnum,
-  BestEffortGroup as BestEffortGroupEnum,
-  BestEffortValueKind as BestEffortValueKindEnum,
-  DeployTarget as DeployTargetEnum,
-  ImportProgressStatus as ImportProgressStatusEnum,
-  StreamType as StreamTypeEnum,
-  TakeoutImportItemKind as TakeoutImportItemKindEnum,
-  TakeoutImportItemStatus as TakeoutImportItemStatusEnum,
-  UploadKind as UploadKindEnum,
-} from 'src/enum';
 import type { ApiBindings } from 'src/api/auth';
+import type {
+  ActivityType,
+  AverageMetric,
+  BestEffortGroup,
+  BestEffortValueKind,
+  DeployTarget,
+  ImportProgressStatus,
+  StreamType,
+  TakeoutImportItemKind,
+  TakeoutImportItemStatus,
+  UploadKind,
+} from 'src/enum';
 
 import type { Kysely, Transaction } from 'kysely';
 import type { Activity, ActivityMetric, ActivityUpdate, DB, NewActivity, NewLap } from 'src/db/schema';
 import type { BufferedUploadedFileData, UploadedFileData } from 'src/types/uploads';
 
-export type UploadKind = `${UploadKindEnum}`;
-export type ImportProgressStatus = `${ImportProgressStatusEnum}`;
-export type TakeoutImportItemKind = `${TakeoutImportItemKindEnum}`;
-export type TakeoutImportItemStatus = `${TakeoutImportItemStatusEnum}`;
-export type DeployTarget = `${DeployTargetEnum}`;
-export type AverageMetric = `${AverageMetricEnum}`;
-export type BestEffortGroup = `${BestEffortGroupEnum}`;
-export type BestEffortValueKind = `${BestEffortValueKindEnum}`;
-export type StreamType = `${StreamTypeEnum}`;
+export type {
+  ActivityType,
+  AverageMetric,
+  BestEffortGroup,
+  BestEffortValueKind,
+  DeployTarget,
+  ImportProgressStatus,
+  TakeoutImportItemKind,
+  TakeoutImportItemStatus,
+  UploadKind,
+} from 'src/enum';
+
+export type TakeoutImportItemTerminalStatus =
+  TakeoutImportItemStatus.Completed | TakeoutImportItemStatus.Failed | TakeoutImportItemStatus.Duplicate;
 
 export type KondisDatabase = Kysely<DB>;
 export type KondisTransaction = Transaction<DB>;
@@ -267,14 +272,13 @@ export type ActivityTagSettings = {
 };
 
 export type ActivityTypeSettings = {
-  type: string;
+  type: ActivityType;
   aliases: readonly string[];
   averageMetric: AverageMetric;
   showAveragePower: boolean;
   bestEffortGroup: BestEffortGroup;
 };
 
-export type ActivityType = `${ActivityTypeEnum}`;
 export type RunBestEffortType = (typeof import('src/constants').RUNNING_BEST_EFFORTS)[number]['type'];
 export type CyclingBestEffortType = (typeof import('src/constants').CYCLING_BEST_EFFORTS)[number]['type'];
 export type BestEffortType = RunBestEffortType | CyclingBestEffortType;

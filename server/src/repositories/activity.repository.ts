@@ -13,6 +13,7 @@ import {
   UNRANKED,
 } from 'src/constants';
 import { Activity, ActivityMetric, ActivityStream } from 'src/db/schema';
+import { ActivityType, BestEffortGroup, StreamType } from 'src/enum';
 import { getColumns } from 'src/schema/decorators';
 import { ActivityMetricTable } from 'src/schema/tables/activity-metric.table';
 import { ActivityTable } from 'src/schema/tables/activity.table';
@@ -21,14 +22,12 @@ import type {
   ActivityRecord,
   ActivityStreamInput,
   ActivityTag,
-  ActivityType,
   BestEffortType,
   CreateActivityInput,
   KondisDatabase,
   KondisExecutor,
   UpdateActivityInput,
 } from 'src/types';
-import { BestEffortGroup } from 'src/enum';
 import { getActivityTypeSettings } from 'src/utils/activity';
 import {
   computeBiggestClimb,
@@ -98,8 +97,8 @@ export class ActivityRepository {
   constructor(private readonly db: KondisDatabase) {}
 
   private trackCoordinates(streams: ActivityStreamInput[]): [number, number][] {
-    const latitude = streams.find((stream) => stream.type === 'latitude')?.data;
-    const longitude = streams.find((stream) => stream.type === 'longitude')?.data;
+    const latitude = streams.find((stream) => stream.type === StreamType.Latitude)?.data;
+    const longitude = streams.find((stream) => stream.type === StreamType.Longitude)?.data;
     if (!latitude || !longitude) {
       return [];
     }
@@ -769,8 +768,8 @@ export class ActivityRepository {
       return;
     }
 
-    const distance = streams.find((stream) => stream.type === 'distance')?.data ?? [];
-    const time = streams.find((stream) => stream.type === 'time')?.data ?? [];
+    const distance = streams.find((stream) => stream.type === StreamType.Distance)?.data ?? [];
+    const time = streams.find((stream) => stream.type === StreamType.Time)?.data ?? [];
     const efforts = bestEffortGroup === BestEffortGroup.Run ? computeRunningBestEfforts(distance, time) : [];
     if (bestEffortGroup === BestEffortGroup.Ride) {
       efforts.push(
@@ -780,9 +779,12 @@ export class ActivityRepository {
           elevationGain: metrics.elevation_gain ?? null,
           elapsedTime: metrics.elapsed_time,
         }),
-        ...computeCyclingPowerBestEfforts(streams.find((stream) => stream.type === 'power')?.data ?? [], time),
+        ...computeCyclingPowerBestEfforts(streams.find((stream) => stream.type === StreamType.Power)?.data ?? [], time),
       );
-      const biggestClimb = computeBiggestClimb(streams.find((stream) => stream.type === 'altitude')?.data ?? [], time);
+      const biggestClimb = computeBiggestClimb(
+        streams.find((stream) => stream.type === StreamType.Altitude)?.data ?? [],
+        time,
+      );
       if (biggestClimb) {
         efforts.push(biggestClimb);
       }
@@ -793,12 +795,12 @@ export class ActivityRepository {
 
     const heartRate = timedValues(
       time,
-      streams.find((stream) => stream.type === 'heartrate')?.data ?? [],
+      streams.find((stream) => stream.type === StreamType.Heartrate)?.data ?? [],
       (value) => value >= 1 && value <= 300,
     );
     const altitude = timedValues(
       time,
-      streams.find((stream) => stream.type === 'altitude')?.data ?? [],
+      streams.find((stream) => stream.type === StreamType.Altitude)?.data ?? [],
       (value) => value >= -1000 && value <= 10_000,
     );
 

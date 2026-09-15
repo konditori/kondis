@@ -1,5 +1,6 @@
+import type { BestEffortValueKind } from 'src/enum';
 import { Column, Generated, Table } from 'src/schema/decorators';
-import type { BestEffortType, BestEffortValueKind } from 'src/types';
+import type { BestEffortType } from 'src/types';
 
 @Table('activity_best_effort')
 export class ActivityBestEffortTable {

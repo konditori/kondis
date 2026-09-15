@@ -8,7 +8,13 @@ import {
   TakeoutManualItemDto,
   TakeoutPhotoMetadataDto,
 } from 'src/dtos/upload.dto';
-import { ActivityType as ActivityTypeEnum, JobName, JobStatus } from 'src/enum';
+import {
+  ActivityType as ActivityTypeEnum,
+  JobName,
+  JobStatus,
+  TakeoutImportItemKind,
+  TakeoutImportItemStatus,
+} from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
 import type { CryptoPort } from 'src/ports/crypto.port';
@@ -17,8 +23,8 @@ import type { RealtimePort } from 'src/ports/realtime.port';
 import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 import type { TakeoutImportItem } from 'src/types';
 import { JobOf } from 'src/types/jobs';
 import { UploadedFileData } from 'src/types/uploads';
@@ -34,7 +40,7 @@ export class UploadService {
     private readonly databaseRepository: DatabaseRepository,
     private readonly jobRepository: JobProducerPort,
     private readonly logger: ConsoleLogger,
-    private readonly importProgressStore: ImportProgressStore,
+    private readonly importProgressStore: TakeoutRepository,
     private readonly activityRepository?: ActivityRepository,
     private readonly eventRepository?: RealtimePort,
   ) {
@@ -87,7 +93,12 @@ export class UploadService {
       importId,
       userId,
       scan.items.map(
-        (item) => ({ itemKey: item.itemKey, kind: item.kind, metadata: item }) satisfies TakeoutImportItem,
+        (item) =>
+          ({
+            itemKey: item.itemKey,
+            kind: item.kind === 'activity' ? TakeoutImportItemKind.Activity : TakeoutImportItemKind.Manual,
+            metadata: item,
+          }) satisfies TakeoutImportItem,
       ),
     );
   }
@@ -115,7 +126,9 @@ export class UploadService {
     metadata: TakeoutActivityMetadataDto,
     file: UploadedFileData | undefined,
   ): Promise<boolean> {
-    if (!(await this.importProgressStore.beginItem(importId, userId, metadata.itemKey, 'activity'))) {
+    if (
+      !(await this.importProgressStore.beginItem(importId, userId, metadata.itemKey, TakeoutImportItemKind.Activity))
+    ) {
       return false;
     }
     try {
@@ -131,13 +144,18 @@ export class UploadService {
       await this.importProgressStore.markQueued(importId, metadata.itemKey);
       return true;
     } catch (error) {
-      await this.importProgressStore.completeItem(importId, metadata.itemKey, 'failed', errorMessage(error));
+      await this.importProgressStore.completeItem(
+        importId,
+        metadata.itemKey,
+        TakeoutImportItemStatus.Failed,
+        errorMessage(error),
+      );
       throw error;
     }
   }
 
   async submitTakeoutManual(importId: string, userId: string, item: TakeoutManualItemDto): Promise<boolean> {
-    if (!(await this.importProgressStore.beginItem(importId, userId, item.itemKey, 'manual'))) {
+    if (!(await this.importProgressStore.beginItem(importId, userId, item.itemKey, TakeoutImportItemKind.Manual))) {
       return false;
     }
     try {
@@ -170,7 +188,12 @@ export class UploadService {
       await this.importProgressStore.markQueued(importId, item.itemKey);
       return true;
     } catch (error) {
-      await this.importProgressStore.completeItem(importId, item.itemKey, 'failed', errorMessage(error));
+      await this.importProgressStore.completeItem(
+        importId,
+        item.itemKey,
+        TakeoutImportItemStatus.Failed,
+        errorMessage(error),
+      );
       throw error;
     }
   }
@@ -250,7 +273,7 @@ export class UploadService {
         });
       }
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore.completeItem(takeoutImportId, takeoutItemKey, 'duplicate');
+        await this.importProgressStore.completeItem(takeoutImportId, takeoutItemKey, TakeoutImportItemStatus.Duplicate);
       }
       return JobStatus.Skipped;
     }
@@ -292,7 +315,11 @@ export class UploadService {
       const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId && takeoutItemKey) {
-          await this.importProgressStore.completeItem(takeoutImportId, takeoutItemKey, 'duplicate');
+          await this.importProgressStore.completeItem(
+            takeoutImportId,
+            takeoutItemKey,
+            TakeoutImportItemStatus.Duplicate,
+          );
         }
         return JobStatus.Skipped;
       }

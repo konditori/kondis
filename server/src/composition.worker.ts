@@ -21,6 +21,7 @@ import { MediaRepository } from 'src/repositories/media.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -32,7 +33,6 @@ import { SocialService } from 'src/services/social.service';
 import { WorkerActivityImageService } from 'src/services/worker-activity-image.service';
 import { WorkerUploadService } from 'src/services/worker-upload.service';
 import { WorkerUserService } from 'src/services/worker-user.service';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 
 const workerCrypto = createCloudflareCryptoAdapter();
 
@@ -102,7 +102,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const activityRepository = new ActivityRepository(database);
   const uploadRepository = new UploadRepository(database);
   const socialRepository = new SocialRepository(database, env.KONDIS_DEMO_MEDIA_BASE_URL);
-  const importProgressStore = new ImportProgressStore(database);
+  const importProgressStore = new TakeoutRepository(database);
   const activityService = new ActivityService(
     uploadRepository,
     storage ?? ({} as never),

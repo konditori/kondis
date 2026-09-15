@@ -1,11 +1,11 @@
 import { createRoute, z, type OpenAPIHono } from '@hono/zod-openapi';
 
 import { requireAdmin, type ApiEnv } from 'src/api/auth';
-import type { UploadReader } from 'src/types';
 import { jsonBodyMiddleware } from 'src/api/validation';
-import { UserRole } from 'src/enum';
+import { UploadKind, UserRole } from 'src/enum';
 import type { AuthService } from 'src/services/auth.service';
 import type { UserService } from 'src/services/user.service';
+import type { UploadReader } from 'src/types';
 
 export type UserCreationService = Pick<AuthService, 'create'>;
 export type UserMutationService = Pick<UserService, 'clearAvatar' | 'updateProfile' | 'uploadAvatar'>;
@@ -111,7 +111,7 @@ export const registerUserProfileMutationRoutes = (
     ) as never;
   });
   app.openapi(avatarRoute, async (context) => {
-    const file = await uploads.read(context.req.raw, context.env, 'avatar');
+    const file = await uploads.read(context.req.raw, context.env, UploadKind.Avatar);
     return context.json(await users.uploadAvatar(context.get('user').id, file as never), 201) as never;
   });
   app.openapi(deleteAvatarRoute, async (context) => {

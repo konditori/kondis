@@ -5,7 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
-import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
+import { ActivityType, JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
@@ -125,7 +125,7 @@ describe(PgBossQueueAdapter.name, () => {
         data: {
           id: MISSING_UUID,
           userId: ownerId,
-          activitySport: 'run',
+          activitySport: ActivityType.Run,
           startedAt: '2024-01-01T00:00:00.000Z',
           elapsedTime: 60,
         },
