@@ -3,6 +3,7 @@ import type { Server } from 'node:http';
 import { createNodeApiApp, createNodeServer } from 'src/api/node';
 import { createApplicationComposition, type ApplicationComposition } from 'src/composition.node';
 import { Logger } from 'src/logger';
+import { createMcpApp } from 'src/mcp/app';
 import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
 
@@ -100,7 +101,19 @@ export async function bootstrapApi(): Promise<ApiRuntime> {
   await migrateDatabase(configRepository.database);
 
   const application = createApplicationComposition({ role: 'api', configRepository });
-  const server = createNodeServer(createNodeApiApp(application));
+  const server = createNodeServer(
+    createNodeApiApp(application),
+    createMcpApp({
+      database: application.database,
+      sessions: application.authCredentialRepository,
+      jobs: application.queueAdapter,
+      storage: application.storageRepository,
+      publicUrl: application.configRepository.mcpPublicUrl,
+      trustProxyHeaders: application.configRepository.trustProxyHeaders,
+      mutationsEnabled: true,
+      demo: application.configRepository.demoMode,
+    }),
+  );
   const runtime = createApiRuntime(application, server);
 
   try {

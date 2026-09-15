@@ -53,7 +53,10 @@ export const load: LayoutServerLoad = async ({
       const setup = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
       if (setup.ok && (await setup.json()).setupRequired)
         throw redirect(303, "/setup");
-      throw redirect(303, "/login");
+      const returnTo = url.pathname.startsWith("/settings/connections")
+        ? `?returnTo=${encodeURIComponent(url.pathname + url.search)}`
+        : "";
+      throw redirect(303, `/login${returnTo}`);
     }
     user = (await me.json()) as typeof user;
   }
