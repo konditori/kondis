@@ -40,7 +40,7 @@ export const load: LayoutServerLoad = async ({
     url?.pathname === "/setup" ||
     url?.pathname.startsWith("/setup/") ||
     url?.pathname === "/register";
-  const demoMode = platform?.env.KONDIS_DEMO_MODE === "true";
+  const demoMode = platform?.env?.KONDIS_DEMO_MODE === "true";
   if (demoMode && publicAuthPage) {
     throw redirect(303, "/");
   }

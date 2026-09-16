@@ -1,5 +1,5 @@
+import type { StreamType } from 'src/enum';
 import { Column, Table } from 'src/schema/decorators';
-import type { StreamType } from 'src/types';
 
 export interface ActivityStreamTable {
   activity_id: string;

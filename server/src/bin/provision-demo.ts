@@ -8,9 +8,10 @@ import { DEMO_ACTIVITIES } from 'src/demo/demo-data';
 import { provisionDemoData, type DemoImageMetadata } from 'src/demo/demo-provisioner';
 import { JobStatus, QueueName } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
+import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -47,7 +48,7 @@ const readDemoImageMetadata = async (): Promise<Readonly<Record<string, readonly
 
 const assertProvisioningCompleted = async (database: KondisDatabase): Promise<void> => {
   const [jobs, activities] = await Promise.all([
-    database.selectFrom('background_job').select(['name', 'state', 'output']).orderBy('created_on').execute(),
+    new PostgresJobRepository(database).getProcessingResults(),
     database
       .selectFrom('activity')
       .select(['id', 'metrics_computed_at', 'best_efforts_computed_at', 'route_matches_computed_at'])
@@ -76,7 +77,7 @@ const assertProvisioningCompleted = async (database: KondisDatabase): Promise<vo
 
 const main = async (): Promise<void> => {
   console.log(`Starting demo seed with media directory ${demoMediaDirectory}`);
-  const configRepository = new ConfigRepository({ ...process.env, KONDIS_DEMO_MODE: 'true' });
+  const configRepository = new EnvConfigRepository({ ...process.env, KONDIS_DEMO_MODE: 'true' });
   const config = configRepository.getEnv();
   console.log('Reading demo image metadata');
   const imageMetadata = await readDemoImageMetadata();

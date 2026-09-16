@@ -19,7 +19,7 @@ const createProtectedApp = (sessions: ApiSessionLookup, demoUser?: typeof TOKEN_
     '*',
     createApiAuthMiddleware(sessions, () => false, demoUser),
   );
-  app.get('/protected', (context) => context.json(context.get('user')));
+  app.get('/protected', (context) => context.json(context.get(UserRole.User)));
   return app;
 };
 

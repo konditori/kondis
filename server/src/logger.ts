@@ -23,6 +23,12 @@ export class ConsoleLogger {
     this.context = context;
   }
 
+  // Returns an independent copy with the given context, so a shared logger can
+  // act as a template without setContext calls stomping each other.
+  withContext(context: string): ConsoleLogger {
+    return new ConsoleLogger({ ...this.options, context });
+  }
+
   log(message: unknown, ...optionalParameters: unknown[]): void {
     this.write('log', console.log, message, optionalParameters);
   }

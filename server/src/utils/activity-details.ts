@@ -1,5 +1,7 @@
+import { StreamType } from 'src/enum';
+
 export type DetailStream = {
-  type: string;
+  type: StreamType;
   data: number[];
 };
 
@@ -34,7 +36,7 @@ const PROFILE_SAMPLE_LIMIT = 1200;
 const ROUTE_SAMPLE_LIMIT = 2400;
 const KILOMETER = 1000;
 
-const stream = (streams: DetailStream[], type: string): number[] =>
+const stream = (streams: DetailStream[], type: StreamType): number[] =>
   streams.find((candidate) => candidate.type === type)?.data ?? [];
 
 const downsample = <T>(points: T[], limit: number): T[] => {
@@ -144,16 +146,16 @@ const buildSplits = (time: number[], distance: number[], heartrate: number[], al
 };
 
 export const buildActivityAnalysis = (streams: DetailStream[]): ActivityAnalysis | null => {
-  const time = stream(streams, 'time');
-  const distance = stream(streams, 'distance');
+  const time = stream(streams, StreamType.Time);
+  const distance = stream(streams, StreamType.Distance);
   if (time.length === 0 || distance.length === 0) {
     return null;
   }
 
-  const altitude = stream(streams, 'altitude');
-  const heartrate = stream(streams, 'heartrate');
-  const latitude = stream(streams, 'latitude');
-  const longitude = stream(streams, 'longitude');
+  const altitude = stream(streams, StreamType.Altitude);
+  const heartrate = stream(streams, StreamType.Heartrate);
+  const latitude = stream(streams, StreamType.Latitude);
+  const longitude = stream(streams, StreamType.Longitude);
   const profile: ActivityProfilePoint[] = [];
   const route: ActivityRoutePoint[] = [];
   const length = Math.min(time.length, distance.length);

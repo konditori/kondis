@@ -1,28 +1,22 @@
+import type { ActivityCommentEvent } from 'src/contracts/realtime.repository';
 import { BadRequestException, NotFoundException } from 'src/errors';
-import type { ActivityCommentEvent, RealtimePort } from 'src/ports/realtime.port';
-import { SocialRepository } from 'src/repositories/social.repository';
+import { BaseService } from 'src/services/base.service';
 import { publicMediaUrl } from 'src/utils/media';
 
-export class SocialService {
-  constructor(
-    private readonly repository: SocialRepository,
-    private readonly eventRepository: RealtimePort,
-    private readonly mediaBaseUrl?: string,
-  ) {}
-
+export class SocialService extends BaseService {
   async people(viewerId: string, query?: string) {
-    const users = await this.repository.searchUsers(viewerId, query);
+    const users = await this.socialRepository.searchUsers(viewerId, query);
     return Promise.all(
-      users.map(async (user) => ({ user, relation: await this.repository.relation(viewerId, user.id) })),
+      users.map(async (user) => ({ user, relation: await this.socialRepository.relation(viewerId, user.id) })),
     );
   }
 
   async person(viewerId: string, id: string) {
-    const user = await this.repository.getUser(id);
+    const user = await this.socialRepository.getUser(id);
     if (!user) {
       throw new NotFoundException('Person does not exist');
     }
-    const relation = await this.repository.relation(viewerId, id);
+    const relation = await this.socialRepository.relation(viewerId, id);
     if (relation.blockedViewer) {
       throw new NotFoundException('Person does not exist');
     }
@@ -33,11 +27,11 @@ export class SocialService {
     if (viewerId === targetId) {
       throw new BadRequestException('You cannot follow yourself');
     }
-    if (!(await this.repository.getUser(targetId))) {
+    if (!(await this.socialRepository.getUser(targetId))) {
       throw new NotFoundException('Person does not exist');
     }
-    const before = await this.repository.relation(viewerId, targetId);
-    const relation = await this.repository.sendRequest(viewerId, targetId);
+    const before = await this.socialRepository.relation(viewerId, targetId);
+    const relation = await this.socialRepository.sendRequest(viewerId, targetId);
     if (relation.blockedByViewer || relation.blockedViewer) {
       throw new NotFoundException('Person does not exist');
     }
@@ -48,32 +42,32 @@ export class SocialService {
   }
 
   async acceptRequest(viewerId: string, requestId: string) {
-    if (!(await this.repository.acceptRequest(requestId, viewerId))) {
+    if (!(await this.socialRepository.acceptRequest(requestId, viewerId))) {
       throw new NotFoundException('Follow request does not exist');
     }
     return { accepted: true };
   }
 
   async ignoreRequest(viewerId: string, requestId: string) {
-    const result = await this.repository.ignoreRequest(requestId, viewerId);
+    const result = await this.socialRepository.ignoreRequest(requestId, viewerId);
     if (Number(result[0]?.numDeletedRows ?? 0) === 0) {
       throw new NotFoundException('Follow request does not exist');
     }
   }
 
   async cancelRequest(viewerId: string, targetId: string) {
-    const result = await this.repository.cancelRequest(viewerId, targetId);
+    const result = await this.socialRepository.cancelRequest(viewerId, targetId);
     if (Number(result[0]?.numDeletedRows ?? 0) === 0) {
       throw new NotFoundException('Follow request does not exist');
     }
   }
 
   async unfollow(viewerId: string, targetId: string) {
-    await this.repository.unfollow(viewerId, targetId);
+    await this.socialRepository.unfollow(viewerId, targetId);
   }
 
   async requests(viewerId: string, direction: 'incoming' | 'outgoing') {
-    const rows = await this.repository.listRequests(viewerId, direction);
+    const rows = await this.socialRepository.listRequests(viewerId, direction);
     return rows.map((row) => ({
       id: row.id,
       createdAt: new Date(row.created_at).toISOString(),
@@ -90,31 +84,31 @@ export class SocialService {
     if (viewerId === targetId) {
       throw new BadRequestException('You cannot block yourself');
     }
-    if (!(await this.repository.getUser(targetId))) {
+    if (!(await this.socialRepository.getUser(targetId))) {
       throw new NotFoundException('Person does not exist');
     }
-    await this.repository.block(viewerId, targetId);
+    await this.socialRepository.block(viewerId, targetId);
     return { blocked: true };
   }
 
   async unblock(viewerId: string, targetId: string) {
-    await this.repository.unblock(viewerId, targetId);
+    await this.socialRepository.unblock(viewerId, targetId);
   }
 
   async like(activityId: string, viewerId: string, liked: boolean) {
-    const activity = await this.repository.canViewActivity(activityId, viewerId);
+    const activity = await this.socialRepository.canViewActivity(activityId, viewerId);
     if (!activity) {
       throw new NotFoundException('Activity does not exist');
     }
     if (liked) {
-      const inserted = await this.repository.addLike(activityId, viewerId);
+      const inserted = await this.socialRepository.addLike(activityId, viewerId);
       if (inserted > 0) {
         await this.notify(activity.user_id, viewerId, 'activity_like', activityId);
       }
     } else {
-      await this.repository.removeLike(activityId, viewerId);
+      await this.socialRepository.removeLike(activityId, viewerId);
     }
-    const likeCount = await this.repository.countLikes(activityId);
+    const likeCount = await this.socialRepository.countLikes(activityId);
     await this.eventRepository.emit('ActivityLikeUpdated', {
       id: activityId,
       likeCount,
@@ -123,10 +117,10 @@ export class SocialService {
   }
 
   async comments(activityId: string, userId: string, cursor?: string, limit = 50) {
-    if (!(await this.repository.canViewActivity(activityId, userId))) {
+    if (!(await this.socialRepository.canViewActivity(activityId, userId))) {
       throw new NotFoundException('Activity does not exist');
     }
-    const rows = await this.repository.listComments(activityId, userId, cursor, limit);
+    const rows = await this.socialRepository.listComments(activityId, userId, cursor, limit);
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
     return {
@@ -147,15 +141,15 @@ export class SocialService {
   }
 
   async addComment(activityId: string, userId: string, body: string) {
-    const activity = await this.repository.canViewActivity(activityId, userId);
+    const activity = await this.socialRepository.canViewActivity(activityId, userId);
     if (!activity) {
       throw new NotFoundException('Activity does not exist');
     }
-    const user = await this.repository.getUser(userId);
+    const user = await this.socialRepository.getUser(userId);
     if (!user) {
       throw new NotFoundException('Person does not exist');
     }
-    const row = await this.repository.createComment({
+    const row = await this.socialRepository.createComment({
       activity_id: activityId,
       user_id: userId,
       body: body.trim(),
@@ -173,12 +167,12 @@ export class SocialService {
   }
 
   async updateComment(activityId: string, commentId: string, userId: string, body: string) {
-    const comment = await this.repository.getComment(activityId, commentId, userId);
+    const comment = await this.socialRepository.getComment(activityId, commentId, userId);
     if (!comment) {
       throw new NotFoundException('Comment does not exist');
     }
-    const row = await this.repository.updateComment(commentId, body.trim());
-    const user = await this.repository.getUser(userId);
+    const row = await this.socialRepository.updateComment(commentId, body.trim());
+    const user = await this.socialRepository.getUser(userId);
     if (!user) {
       throw new NotFoundException('Person does not exist');
     }
@@ -194,7 +188,7 @@ export class SocialService {
   }
 
   async deleteComment(activityId: string, commentId: string, userId: string) {
-    const row = await this.repository.deleteComment(activityId, commentId, userId);
+    const row = await this.socialRepository.deleteComment(activityId, commentId, userId);
     if (!row) {
       throw new NotFoundException('Comment does not exist');
     }
@@ -202,10 +196,10 @@ export class SocialService {
   }
 
   async likers(activityId: string, viewerId: string) {
-    if (!(await this.repository.canViewActivity(activityId, viewerId))) {
+    if (!(await this.socialRepository.canViewActivity(activityId, viewerId))) {
       throw new NotFoundException('Activity does not exist');
     }
-    const rows = await this.repository.listLikers(activityId);
+    const rows = await this.socialRepository.listLikers(activityId);
     return rows.map((user) => ({
       id: user.id,
       firstName: user.first_name,
@@ -216,8 +210,8 @@ export class SocialService {
 
   async notifications(viewerId: string, limit = 20) {
     const [rows, unreadCount] = await Promise.all([
-      this.repository.listNotifications(viewerId, Math.min(Math.max(limit, 1), 50)),
-      this.repository.countUnreadNotifications(viewerId),
+      this.socialRepository.listNotifications(viewerId, Math.min(Math.max(limit, 1), 50)),
+      this.socialRepository.countUnreadNotifications(viewerId),
     ]);
     return {
       notifications: rows.map((row) => ({
@@ -240,7 +234,7 @@ export class SocialService {
 
   async markNotificationsRead(viewerId: string) {
     const readAt = new Date();
-    await this.repository.markNotificationsRead(viewerId, readAt);
+    await this.socialRepository.markNotificationsRead(viewerId, readAt);
     await this.eventRepository.emit('NotificationsRead', { userId: viewerId, readAt: readAt.toISOString() });
     return { markedRead: true };
   }
@@ -254,7 +248,7 @@ export class SocialService {
     if (!recipientId || recipientId === actorId) {
       return;
     }
-    const row = await this.repository.createNotification({
+    const row = await this.socialRepository.createNotification({
       user_id: recipientId,
       actor_id: actorId,
       type,

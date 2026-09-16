@@ -1,5 +1,5 @@
+import type { StorageFile } from 'src/contracts/storage.repository';
 import { NotFoundException } from 'src/errors';
-import type { StorageFile } from 'src/ports/storage.port';
 
 export type FileRange = { start: number; end: number };
 export type OpenFile = StorageFile;

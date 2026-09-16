@@ -12,10 +12,11 @@ import multer, { diskStorage, memoryStorage } from 'multer';
 import { API_PREFIX, createApiApp, type KondisApiApp } from 'src/api/app';
 import type { ApiBindings, ApiEnv } from 'src/api/auth';
 import type { FileRange, OpenFile } from 'src/api/file-response';
-import type { ImageUpload, TakeoutActivityUpload, UploadKind, UploadReader } from 'src/api/uploads';
 import type { ApplicationComposition } from 'src/composition.node';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import { UploadKind } from 'src/enum';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
+import type { ImageUpload, TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
 
 const openNodeFile = async (path: string): Promise<OpenFile> => {
@@ -54,7 +55,6 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
   }).single('file'),
   takeoutActivity: multer({
     storage: uploadStorage,
-    // Keep text fields bounded while accepting takeout metadata and its activity file.
     limits: {
       fileSize: UPLOAD_LIMITS.activityFileBytes,
       fieldSize: 16 * 1024,
@@ -62,6 +62,10 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
       fields: 2,
       parts: 4,
     },
+  }).single('file'),
+  takeoutPhoto: multer({
+    storage: memoryStorage(),
+    limits: { fileSize: UPLOAD_LIMITS.imageFileBytes, files: 1, fields: 1, fieldSize: 16 * 1024, parts: 3 },
   }).single('file'),
   avatar: multer({
     storage: memoryStorage(),
@@ -114,24 +118,27 @@ function readNodeUpload(
       const metadata = typeof incoming.body?.metadata === 'string' ? incoming.body.metadata : undefined;
       if (!incoming.file) {
         resolve(
-          kind === 'image'
+          kind === UploadKind.Image
             ? { file: undefined, caption }
-            : kind === 'takeoutActivity'
+            : kind === UploadKind.TakeoutActivity || kind === UploadKind.TakeoutPhoto
               ? { file: undefined, metadata }
               : undefined,
         );
         return;
       }
       const { buffer, originalname, path, size } = incoming.file;
-      if (kind === 'image') {
+      if (kind === UploadKind.Image) {
         resolve({ file: { originalname, size, buffer }, caption });
         return;
       }
       resolve(
-        kind === 'avatar'
+        kind === UploadKind.Avatar
           ? { originalname, size, buffer }
-          : kind === 'takeoutActivity'
-            ? ({ file: { originalname, size, path }, metadata } satisfies TakeoutActivityUpload)
+          : kind === UploadKind.TakeoutActivity || kind === UploadKind.TakeoutPhoto
+            ? ({
+                file: kind === UploadKind.TakeoutPhoto ? { originalname, size, buffer } : { originalname, size, path },
+                metadata,
+              } satisfies TakeoutActivityUpload)
             : { originalname, size, path },
       );
     });
@@ -148,7 +155,7 @@ type NodeApiDependencies = Pick<
   | 'authCredentialRepository'
   | 'configRepository'
   | 'jobService'
-  | 'liveWorkoutService'
+  | 'liveActivityService'
   | 'serverService'
   | 'socialService'
   | 'uploadService'
@@ -164,7 +171,7 @@ export const createNodeApiApp = (dependencies: NodeApiDependencies): KondisApiAp
     config: dependencies.configRepository,
     files: nodeFileReader,
     jobs: dependencies.jobService,
-    liveWorkouts: dependencies.liveWorkoutService,
+    liveActivities: dependencies.liveActivityService,
     server: dependencies.serverService,
     sessions: dependencies.authCredentialRepository,
     social: dependencies.socialService,

@@ -4,8 +4,8 @@ import { createNodeApiApp, createNodeServer } from 'src/api/node';
 import { createApplicationComposition, type ApplicationComposition } from 'src/composition.node';
 import { Logger } from 'src/logger';
 import { createMcpApp } from 'src/mcp/app';
-import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 
 export type ApiRuntime = {
   application: ApplicationComposition;
@@ -95,7 +95,7 @@ const installApiShutdown = (runtime: ApiRuntime, logger: Logger): void => {
 
 export async function bootstrapApi(): Promise<ApiRuntime> {
   const logger = new Logger('Bootstrap');
-  const configRepository = new ConfigRepository();
+  const configRepository = new EnvConfigRepository();
   configRepository.logStartupSummary();
 
   await migrateDatabase(configRepository.database);

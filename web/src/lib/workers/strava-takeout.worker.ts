@@ -4,29 +4,56 @@ import {
   type FileEntry,
   ZipReader,
 } from "@zip.js/zip.js";
+import type { CapabilitiesDtoOutput } from "@kondis/sdk";
 
-const LIMITS = {
-  activityBytes: 64 * 1024 * 1024,
-  entries: 20_000,
-  entryBytes: 64 * 1024 * 1024,
-  expandedBytes: 512 * 1024 * 1024,
-  ratio: 200,
-  manifestBytes: 16 * 1024 * 1024,
-  manifestRows: 100_000,
-} as const;
-const ACTIVITY_EXTENSIONS = new Set([".fit", ".gpx", ".tcx"]);
-const IMAGE_EXTENSIONS = new Set([
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".webp",
-  ".heic",
-  ".heif",
-  ".avif",
-]);
-const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".avi", ".m4v", ".webm"]);
+export type TakeoutLimits = {
+  activityBytes: number;
+  entries: number;
+  entryBytes: number;
+  expandedBytes: number;
+  ratio: number;
+  manifestBytes: number;
+  manifestRows: number;
+  imageBytes: number;
+  avatarBytes: number;
+};
 
+export type TakeoutConfig = {
+  limits: TakeoutLimits;
+  activityExtensions: ReadonlySet<string>;
+  imageExtensions: ReadonlySet<string>;
+  videoExtensions: ReadonlySet<string>;
+};
+
+// Server-side validation stays authoritative; the supplied configuration only
+// drives client-side parsing and UX.
+export function takeoutConfigFromCapabilities(
+  capabilities: CapabilitiesDtoOutput,
+): TakeoutConfig {
+  const { uploads } = capabilities;
+  return {
+    limits: {
+      activityBytes: uploads.limits.activityFileBytes,
+      entries: uploads.limits.zipEntries,
+      entryBytes: uploads.limits.zipEntryBytes,
+      expandedBytes: uploads.limits.zipExpandedBytes,
+      ratio: uploads.limits.zipCompressionRatio,
+      manifestBytes: uploads.limits.manifestBytes,
+      manifestRows: uploads.limits.manifestRows,
+      imageBytes: uploads.limits.imageFileBytes,
+      avatarBytes: uploads.limits.avatarFileBytes,
+    },
+    activityExtensions: new Set(uploads.activityExtensions),
+    imageExtensions: new Set(uploads.imageExtensions),
+    videoExtensions: new Set(uploads.videoExtensions),
+  };
+}
+
+const mebibytes = (bytes: number): number => Math.round(bytes / (1024 * 1024));
+
+type PhotoItem = { entryName: string; caption: string; sortOrder: number };
 type ActivityItem = {
+  photos: PhotoItem[];
   itemKey: string;
   kind: "activity";
   originalName: string;
@@ -38,6 +65,7 @@ type ActivityItem = {
   gzip: boolean;
 };
 type ManualItem = {
+  photos: PhotoItem[];
   itemKey: string;
   kind: "manual";
   sourceId: string;
@@ -63,6 +91,7 @@ type StartMessage = {
   file: File;
   importId: string;
   apiBase: string;
+  capabilities: CapabilitiesDtoOutput;
 };
 type CancelMessage = { type: "cancel" };
 
@@ -85,7 +114,9 @@ async function extract({
   file,
   importId,
   apiBase,
+  capabilities,
 }: StartMessage): Promise<void> {
+  const config = takeoutConfigFromCapabilities(capabilities);
   post("phase", { phase: "scanning" });
   const reader = new ZipReader(new BlobReader(file), {
     strictness: "strict",
@@ -96,7 +127,7 @@ async function extract({
       strictness: "strict",
       filenameValidation: "strict",
     });
-    validateZipEntries(entries);
+    validateZipEntries(entries, config.limits);
     const entryByName = new Map(
       entries
         .filter((entry): entry is FileEntry => !entry.directory)
@@ -115,22 +146,24 @@ async function extract({
     const manifestName = manifestNames[0];
     const archiveRoot = manifestName.slice(0, -"activities.csv".length);
     const activityRows = parseCsv(
-      await readText(entryByName.get(manifestName)!, LIMITS.manifestBytes),
+      await readText(
+        entryByName.get(manifestName)!,
+        config.limits.manifestBytes,
+      ),
     );
     const headers = activityRows.shift();
     if (!headers) throw new Error("activities.csv is empty");
-    if (activityRows.length > LIMITS.manifestRows)
+    if (activityRows.length > config.limits.manifestRows)
       throw new Error("activities.csv contains too many rows");
     if (!headers.includes("Filename"))
       throw new Error("activities.csv does not contain a Filename column");
 
-    // media.csv is intentionally read now so its validity is checked without
-    // materialising photo/video payloads. Media transfer is a later R2-direct feature.
+    // Read metadata first; photo payloads are extracted individually just before upload.
     const mediaEntry = entryByName.get(`${archiveRoot}media.csv`);
     const mediaRows = mediaEntry
-      ? parseCsv(await readText(mediaEntry, LIMITS.manifestBytes))
+      ? parseCsv(await readText(mediaEntry, config.limits.manifestBytes))
       : [];
-    if (mediaRows.length > LIMITS.manifestRows + 1)
+    if (mediaRows.length > config.limits.manifestRows + 1)
       throw new Error("media.csv contains too many rows");
 
     const { items, extractionErrors } = scanActivities(
@@ -138,6 +171,8 @@ async function extract({
       headers,
       archiveRoot,
       entryByName,
+      mediaRows,
+      config,
     );
     const scan = await request<{ pendingItemKeys: string[] }>(
       `${apiBase}/upload/strava/imports/${importId}/scan`,
@@ -148,7 +183,11 @@ async function extract({
       },
     );
     const pending = new Set(scan.pendingItemKeys);
-    const skipped = countSkippedMedia(entryByName, mediaRows, archiveRoot);
+    const skipped = {
+      videos: [...entryByName.keys()].filter((name) =>
+        config.videoExtensions.has(extension(name)),
+      ).length,
+    };
     post("scanned", {
       total: items.length,
       pending: pending.size,
@@ -158,25 +197,25 @@ async function extract({
     assertNotCancelled();
 
     post("phase", { phase: "uploading" });
+    await importProfile(entryByName, archiveRoot, apiBase, config);
     let uploaded = 0;
-    let failures = extractionErrors;
     for (const item of items.filter(
       (item): item is ManualItem =>
         item.kind === "manual" && pending.has(item.itemKey),
     )) {
       try {
+        await uploadPhotos(item, entryByName, importId, apiBase, config);
         await request(
           `${apiBase}/upload/strava/imports/${importId}/manual-activities`,
           {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(item),
+            body: JSON.stringify(withoutEntryName(item)),
           },
         );
         uploaded += 1;
         post("uploaded", { uploaded, total: pending.size });
       } catch (error) {
-        failures += 1;
         await reportItemFailure(
           apiBase,
           importId,
@@ -197,23 +236,27 @@ async function extract({
       (item) => {
         const entry = entryByName.get(item.entryName);
         return item.gzip ||
-          (entry?.uncompressedSize ?? LIMITS.activityBytes) > 24 * 1024 * 1024
+          (entry?.uncompressedSize ?? config.limits.activityBytes) >
+            24 * 1024 * 1024
           ? 3
           : 1;
       },
       async (item) => {
         try {
+          await uploadPhotos(item, entryByName, importId, apiBase, config);
           const entry = entryByName.get(item.entryName);
           if (!entry)
             throw new Error("Activity file is missing from the ZIP archive");
           const activity = item.gzip
-            ? await gunzipEntry(entry)
+            ? await gunzipEntry(entry, config.limits)
             : await entry.getData(new BlobWriter(), {
                 checkCrc32: true,
                 strictness: "strict",
               });
-          if (activity.size > LIMITS.activityBytes)
-            throw new Error("Activity exceeds the 64 MiB expanded size limit");
+          if (activity.size > config.limits.activityBytes)
+            throw new Error(
+              `Activity exceeds the ${mebibytes(config.limits.activityBytes)} MiB expanded size limit`,
+            );
           const body = new FormData();
           body.append("metadata", JSON.stringify(withoutEntryName(item)));
           body.append(
@@ -230,7 +273,6 @@ async function extract({
           uploaded += 1;
           post("uploaded", { uploaded, total: pending.size });
         } catch (error) {
-          failures += 1;
           await reportItemFailure(
             apiBase,
             importId,
@@ -247,11 +289,11 @@ async function extract({
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ extractionErrors: failures }),
+        body: JSON.stringify({ extractionErrors }),
       },
     );
     post("phase", { phase: "processing" });
-    post("complete", { status: final, extractionErrors: failures, skipped });
+    post("complete", { status: final, extractionErrors, skipped });
   } finally {
     await reader.close();
   }
@@ -259,10 +301,11 @@ async function extract({
 
 export function validateZipEntries(
   entries: Awaited<ReturnType<ZipReader<Blob>["getEntries"]>>,
+  limits: TakeoutLimits,
 ): void {
-  if (entries.length > LIMITS.entries)
+  if (entries.length > limits.entries)
     throw new Error(
-      `ZIP archive contains too many entries (maximum ${LIMITS.entries})`,
+      `ZIP archive contains too many entries (maximum ${limits.entries})`,
     );
   const names = new Set<string>();
   let expanded = 0;
@@ -284,9 +327,9 @@ export function validateZipEntries(
     ) {
       throw new Error(`ZIP entry has an invalid size: ${name}`);
     }
-    if (entry.uncompressedSize > LIMITS.entryBytes)
+    if (entry.uncompressedSize > limits.entryBytes)
       throw new Error(
-        `ZIP entry exceeds the 64 MiB expanded size limit: ${name}`,
+        `ZIP entry exceeds the ${mebibytes(limits.entryBytes)} MiB expanded size limit: ${name}`,
       );
     const ratio =
       entry.compressedSize === 0
@@ -294,13 +337,15 @@ export function validateZipEntries(
           ? 1
           : Infinity
         : entry.uncompressedSize / entry.compressedSize;
-    if (ratio > LIMITS.ratio)
+    if (ratio > limits.ratio)
       throw new Error(
-        `ZIP entry exceeds the ${LIMITS.ratio}:1 compression ratio limit: ${name}`,
+        `ZIP entry exceeds the ${limits.ratio}:1 compression ratio limit: ${name}`,
       );
     expanded += entry.uncompressedSize;
-    if (expanded > LIMITS.expandedBytes)
-      throw new Error("ZIP archive exceeds the 512 MiB expanded size limit");
+    if (expanded > limits.expandedBytes)
+      throw new Error(
+        `ZIP archive exceeds the ${mebibytes(limits.expandedBytes)} MiB expanded size limit`,
+      );
   }
 }
 
@@ -334,11 +379,13 @@ async function readText(entry: FileEntry, maximum: number): Promise<string> {
   return decodeCsvText(new Uint8Array(await blob.arrayBuffer()));
 }
 
-function scanActivities(
+export function scanActivities(
   rows: string[][],
   headers: string[],
   root: string,
   entries: Map<string, FileEntry>,
+  mediaRows: string[][],
+  config: TakeoutConfig,
 ) {
   const column = (name: string, occurrence = 0): number => {
     let found = 0;
@@ -353,13 +400,25 @@ function scanActivities(
     name: string,
     occurrence = 0,
   ): number | null => {
-    const parsed = Number(value(row, name, occurrence));
+    const raw = value(row, name, occurrence);
+    if (!raw) return null;
+    const parsed = Number(raw);
     return Number.isFinite(parsed) ? parsed : null;
   };
+  const captionHeaders = mediaRows[0] ?? [];
+  const captions = new Map(
+    mediaRows
+      .slice(1)
+      .map((row) => [
+        row[captionHeaders.indexOf("Media Filename")],
+        row[captionHeaders.indexOf("Media Caption")] ?? "",
+      ]),
+  );
   const items: ScanItem[] = [];
   const referenced = new Set<string>();
   let extractionErrors = 0;
   for (const [index, row] of rows.entries()) {
+    if (row.every((field) => !field.trim())) continue;
     const rowNumber = index + 2;
     const filename = value(row, "Filename");
     const name = value(row, "Activity Name") || null;
@@ -370,6 +429,28 @@ function scanActivities(
     )
       ? ["commute"]
       : [];
+    const photos: PhotoItem[] = [];
+    for (const path of new Set(
+      value(row, "Media")
+        .split("|")
+        .map((path) => path.trim())
+        .filter(Boolean),
+    )) {
+      if (!config.imageExtensions.has(extension(path))) continue;
+      if (
+        !isSafePath(path) ||
+        !entries.has(root + path) ||
+        photos.length >= 100
+      ) {
+        extractionErrors += 1;
+        continue;
+      }
+      photos.push({
+        entryName: root + path,
+        caption: captions.get(path) ?? "",
+        sortOrder: photos.length,
+      });
+    }
     if (!filename) {
       const startedAt = new Date(value(row, "Activity Date"));
       const elapsedTime = number(row, "Elapsed Time");
@@ -379,6 +460,7 @@ function scanActivities(
       }
       const sourceId = value(row, "Activity ID") || `row:${rowNumber}`;
       items.push({
+        photos,
         itemKey: `manual:${sourceId}`,
         kind: "manual",
         sourceId,
@@ -406,7 +488,7 @@ function scanActivities(
     }
     const gzip = filename.toLowerCase().endsWith(".gz");
     const originalName = filename.split("/").at(-1)!.replace(/\.gz$/i, "");
-    if (!ACTIVITY_EXTENSIONS.has(extension(originalName))) continue;
+    if (!config.activityExtensions.has(extension(originalName))) continue;
     const entryName = `${root}${filename}`;
     if (!entries.has(entryName) || referenced.has(entryName)) {
       extractionErrors += 1;
@@ -414,6 +496,7 @@ function scanActivities(
     }
     referenced.add(entryName);
     items.push({
+      photos,
       itemKey: `activity:${entryName}`,
       kind: "activity",
       originalName,
@@ -428,7 +511,7 @@ function scanActivities(
   return { items, extractionErrors };
 }
 
-function parseCsv(input: string): string[][] {
+export function parseCsv(input: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -461,41 +544,118 @@ function parseCsv(input: string): string[][] {
   return rows;
 }
 
-const withoutEntryName = (
-  item: ScanItem,
-): Omit<ActivityItem, "entryName" | "gzip"> | ManualItem => {
-  if (item.kind === "manual") return item;
-  const { entryName: _entryName, gzip: _gzip, ...metadata } = item;
+const withoutEntryName = (item: ScanItem) => {
+  if (item.kind === "manual") {
+    const { photos: _photos, ...metadata } = item;
+    return metadata;
+  }
+  const {
+    entryName: _entryName,
+    gzip: _gzip,
+    photos: _photos,
+    ...metadata
+  } = item;
   return metadata;
 };
 
-function countSkippedMedia(
-  entries: Map<string, FileEntry>,
-  mediaRows: string[][],
-  root: string,
-) {
-  let photos = 0;
-  let videos = 0;
-  let profileImages = 0;
-  for (const name of entries.keys()) {
-    const suffix = extension(name);
-    if (
-      name.startsWith(root) &&
-      /(^|\/)profile\./i.test(name) &&
-      IMAGE_EXTENSIONS.has(suffix)
-    )
-      profileImages += 1;
-    else if (IMAGE_EXTENSIONS.has(suffix)) photos += 1;
-    else if (VIDEO_EXTENSIONS.has(suffix)) videos += 1;
-  }
-  return {
-    photos: Math.max(photos, Math.max(0, mediaRows.length - 1)),
-    videos,
-    profileImages,
-  };
+async function photoBlob(entry: FileEntry, maximum: number) {
+  if (entry.uncompressedSize > maximum)
+    throw new Error("Photo exceeds its expanded size limit");
+  const blob = await entry.getData(new BlobWriter(), {
+    checkCrc32: true,
+    strictness: "strict",
+  });
+  if (blob.size > maximum)
+    throw new Error("Photo exceeds its expanded size limit");
+  return blob;
 }
 
-async function gunzipEntry(entry: FileEntry): Promise<Blob> {
+async function uploadPhotos(
+  item: ScanItem,
+  entries: Map<string, FileEntry>,
+  importId: string,
+  apiBase: string,
+  config: TakeoutConfig,
+) {
+  for (const photo of item.photos) {
+    assertNotCancelled();
+    const body = new FormData();
+    body.append(
+      "metadata",
+      JSON.stringify({
+        itemKey: item.itemKey,
+        photoKey: photo.entryName,
+        caption: photo.caption,
+        sortOrder: photo.sortOrder,
+      }),
+    );
+    body.append(
+      "file",
+      new File(
+        [
+          await photoBlob(
+            entries.get(photo.entryName)!,
+            config.limits.imageBytes,
+          ),
+        ],
+        photo.entryName.split("/").at(-1)!,
+      ),
+    );
+    const result = await request<{ accepted: boolean }>(
+      `${apiBase}/upload/strava/imports/${importId}/photos`,
+      { method: "POST", body },
+    );
+    if (!result.accepted)
+      throw new Error("Import no longer accepts photos for this activity");
+  }
+}
+
+async function importProfile(
+  entries: Map<string, FileEntry>,
+  root: string,
+  apiBase: string,
+  config: TakeoutConfig,
+) {
+  const profile = entries.get(`${root}profile.csv`);
+  if (profile) {
+    const [headers, row] = parseCsv(
+      await readText(profile, config.limits.manifestBytes),
+    );
+    const firstName = row?.[headers?.indexOf("First Name")]?.trim();
+    const lastName = row?.[headers?.indexOf("Last Name")]?.trim();
+    if (firstName && lastName) {
+      assertNotCancelled();
+      await request(`${apiBase}/users/me`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ firstName, lastName }),
+      });
+    }
+  }
+  const avatar = [...entries.values()].find(
+    (entry) =>
+      entry.filename.startsWith(root) &&
+      /^profile\.[^/]+$/i.test(entry.filename.slice(root.length)) &&
+      config.imageExtensions.has(extension(entry.filename)),
+  );
+  if (avatar) {
+    assertNotCancelled();
+    const body = new FormData();
+    body.append(
+      "file",
+      new File(
+        [await photoBlob(avatar, config.limits.avatarBytes)],
+        avatar.filename.split("/").at(-1)!,
+      ),
+    );
+    await request(`${apiBase}/users/me/avatar`, { method: "POST", body });
+  }
+}
+
+export async function gunzipEntry(
+  entry: FileEntry,
+  limits: TakeoutLimits,
+): Promise<Blob> {
   if (!("DecompressionStream" in self))
     throw new Error("This browser does not support gzip takeout activities");
   let compressedBytes = 0;
@@ -517,23 +677,25 @@ async function gunzipEntry(entry: FileEntry): Promise<Blob> {
       new TransformStream<Uint8Array, Uint8Array>({
         transform(chunk, controller) {
           expandedBytes += chunk.byteLength;
-          if (expandedBytes > LIMITS.activityBytes)
+          if (expandedBytes > limits.activityBytes)
             throw new Error(
-              "GZIP activity exceeds the 64 MiB expanded size limit",
+              `GZIP activity exceeds the ${mebibytes(limits.activityBytes)} MiB expanded size limit`,
             );
           controller.enqueue(chunk);
         },
       }),
     );
   const blobPromise = new Response(expanded).blob();
-  await entry.getData(compressed.writable, {
-    checkCrc32: true,
-    strictness: "strict",
-  });
-  const blob = await blobPromise;
-  if (compressedBytes === 0 || expandedBytes / compressedBytes > LIMITS.ratio) {
+  const [, blob] = await Promise.all([
+    entry.getData(compressed.writable, {
+      checkCrc32: true,
+      strictness: "strict",
+    }),
+    blobPromise,
+  ]);
+  if (compressedBytes === 0 || expandedBytes / compressedBytes > limits.ratio) {
     throw new Error(
-      `GZIP activity exceeds the ${LIMITS.ratio}:1 compression ratio limit`,
+      `GZIP activity exceeds the ${limits.ratio}:1 compression ratio limit`,
     );
   }
   return blob;

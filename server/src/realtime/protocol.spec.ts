@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { LiveActivityProgressEventStatus } from 'src/enum';
 import { isWebsocketEvent, serializeRealtimeEvent } from 'src/realtime/protocol';
 
 describe('realtime wire protocol', () => {
@@ -7,18 +8,18 @@ describe('realtime wire protocol', () => {
     expect(serializeRealtimeEvent('JobUpdated')).toEqual({ type: 'job.updated' });
   });
 
-  it('serializes live workout updates for the owning user', () => {
+  it('serializes live activity updates for the owning user', () => {
     expect(
-      serializeRealtimeEvent('LiveWorkoutUpdated', 'user-id', {
-        id: 'workout-id',
-        status: 'recording',
+      serializeRealtimeEvent('LiveActivityUpdated', 'user-id', {
+        id: 'activity-id',
+        status: LiveActivityProgressEventStatus.Recording,
         elapsedSeconds: 1,
         distanceMeters: 4.7,
         lastSequence: 1,
         recordedAt: '2026-09-08T12:00:01.000Z',
         position: [18.07, 59.33],
       }),
-    ).toMatchObject({ type: 'live-workout.updated', userId: 'user-id' });
+    ).toMatchObject({ type: 'live-activity.updated', userId: 'user-id' });
   });
 
   it('rejects malformed publications', () => {

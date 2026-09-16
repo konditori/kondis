@@ -149,7 +149,7 @@ export type BestEffortHistory = {
   }[];
 };
 
-export type LiveWorkout = {
+export type LiveActivity = {
   id: string;
   sport: ActivityType;
   startedAt: string;

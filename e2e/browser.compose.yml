@@ -1,0 +1,20 @@
+services:
+  database:
+    image: ${KONDIS_E2E_POSTGRES_IMAGE:-kondis-browser-postgres:latest}
+    build:
+      context: ../packages/postgres
+      args:
+        PG_MAJOR: 17
+        VECTORCHORD_TAG: 1.1.1
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: kondis_browser
+    ports:
+      - '127.0.0.1::5432'
+    shm_size: 128mb
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d kondis_browser']
+      interval: 1s
+      timeout: 5s
+      retries: 60

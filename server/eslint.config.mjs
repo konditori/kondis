@@ -16,10 +16,11 @@ const noRelativeImports = {
   message: 'Relative imports are not allowed.',
 };
 
-const noServiceToServiceImports = {
-  group: ['src/services/*'],
-  message: 'Services must not import other services. Depend on a repository or a lower-level module instead.',
-};
+const workerRepositoryFiles = [
+  'src/repositories/cloudflare/**/*.ts',
+  'src/contracts/**/*.ts',
+  'src/repositories/{postgres-job,postgres-transaction,noop-realtime,http-realtime}.repository.ts',
+];
 
 const noWorkerRuntimeImports = {
   group: [
@@ -29,7 +30,8 @@ const noWorkerRuntimeImports = {
     'multer',
     'node:*',
     'sharp',
-    'src/adapters/node/*',
+    'src/repositories/node/*',
+    'src/repositories/database.repository',
     'src/api/node',
     'src/composition.node',
     'src/imports/*',
@@ -114,17 +116,40 @@ export default typescriptEslint.config([
     },
   },
   {
-    files: ['src/services/**/*.ts'],
-    ignores: ['src/services/**/*.spec.ts'],
-    rules: {
-      'no-restricted-imports': ['error', { patterns: [noRelativeImports, noServiceToServiceImports] }],
-    },
-  },
-  {
-    files: ['src/adapters/cloudflare/**/*.ts', 'src/cloudflare/**/*.ts', 'src/composition.worker.ts'],
+    files: [
+      ...workerRepositoryFiles,
+      'src/cloudflare/**/*.ts',
+      'src/composition.worker.ts',
+      'src/job-handler.registry.worker.ts',
+      'src/jobs/**/*.ts',
+    ],
     ignores: ['src/**/*.spec.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [noRelativeImports, noWorkerRuntimeImports] }],
+    },
+  },
+  {
+    files: ['src/services/job.service.ts', 'src/services/postgres-job.service.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [noRelativeImports, noWorkerRuntimeImports] }],
+    },
+  },
+  {
+    files: ['src/repositories/**/*.ts'],
+    ignores: ['src/**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            noRelativeImports,
+            {
+              group: ['src/services/*'],
+              message: 'Repositories must not depend on services. Wire callbacks in composition.',
+            },
+          ],
+        },
+      ],
     },
   },
 ]);

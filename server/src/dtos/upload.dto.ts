@@ -27,6 +27,13 @@ export const TakeoutActivityMetadataSchema = z.object({
 });
 
 const NullableMetricSchema = z.number().finite().nullable();
+export const TakeoutPhotoMetadataSchema = z.object({
+  itemKey: z.string().min(1).max(1024),
+  photoKey: z.string().min(1).max(1024),
+  caption: z.string().max(10_000).optional(),
+  sortOrder: z.number().int().min(0).max(99),
+});
+export type TakeoutPhotoMetadataDto = z.output<typeof TakeoutPhotoMetadataSchema>;
 export const TakeoutManualItemSchema = z.object({
   itemKey: z.string().min(1).max(1024),
   kind: z.literal('manual'),

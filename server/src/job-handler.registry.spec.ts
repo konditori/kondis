@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
+import { createJobHandlers } from 'src/jobs/job-handler';
 import { CLOUD_JOB_CONSUMER, JOB_QUEUE } from 'src/jobs/job-semantics';
-import { createPollingJobHandlers } from 'src/jobs/polling-job.consumer';
 import type { ActivityImageService } from 'src/services/activity-image.service';
 import type { ActivityService } from 'src/services/activity.service';
 import type { AuthService } from 'src/services/auth.service';
@@ -109,7 +109,7 @@ describe('createJobHandlerRegistry', () => {
 
   it('builds a Node cloud registry without Worker-owned handlers', () => {
     const { handlers } = setup();
-    const pollingHandlers = createPollingJobHandlers(handlers);
+    const pollingHandlers = createJobHandlers(handlers, ['node']);
 
     for (const jobName of WORKER_JOB_NAMES) {
       expect(pollingHandlers[jobName]).toBeUndefined();
@@ -123,7 +123,7 @@ describe('createJobHandlerRegistry', () => {
 
   it('builds a demo polling registry with both cloud consumer classes', () => {
     const { handlers } = setup();
-    const pollingHandlers = createPollingJobHandlers(handlers, ['node', 'worker']);
+    const pollingHandlers = createJobHandlers(handlers, ['node', 'worker']);
 
     expect(Object.keys(pollingHandlers).sort()).toEqual(Object.values(JobName).sort());
   });

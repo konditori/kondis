@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp, createOpenApiDocument } from 'src/api/app';
 import type { ActivityDto } from 'src/dtos/activity.dto';
-import { ActivityType } from 'src/enum';
+import { ActivityType, StreamType } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const ACTIVITY_ID = '00000000-0000-4000-8000-000000000002';
@@ -84,7 +84,7 @@ describe('API activity routes', () => {
         normalizedPower: null,
         calories: 20,
       },
-      streams: [{ type: 'time', data: [0, 60] }],
+      streams: [{ type: StreamType.Time, data: [0, 60] }],
       laps: [],
     };
     const response = await app.request('/activities', {

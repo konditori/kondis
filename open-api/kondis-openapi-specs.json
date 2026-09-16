@@ -23,6 +23,28 @@
         ]
       }
     },
+    "/capabilities": {
+      "get": {
+        "operationId": "CapabilitiesController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Upload formats and limits supported by the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Server capabilities for client-side parsing and UX",
+        "tags": [
+          "server"
+        ]
+      }
+    },
     "/upload/activity": {
       "post": {
         "operationId": "UploadController_uploadActivity",
@@ -1009,59 +1031,59 @@
         ]
       }
     },
-    "/live-workouts": {
+    "/live-activities": {
       "get": {
-        "operationId": "LiveWorkoutController_list",
+        "operationId": "LiveActivityController_list",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Active workouts for the signed-in user",
+            "description": "Active activities for the signed-in user",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutListDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityListDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       },
       "post": {
-        "operationId": "LiveWorkoutController_create",
+        "operationId": "LiveActivityController_create",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LiveWorkoutCreateDto"
+                "$ref": "#/components/schemas/LiveActivityCreateDto"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Created or resumed live workout",
+            "description": "Created or resumed live activity",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       }
     },
-    "/live-workouts/shared/{token}": {
+    "/live-activities/shared/{token}": {
       "get": {
-        "operationId": "LiveWorkoutController_getShared",
+        "operationId": "LiveActivityController_getShared",
         "parameters": [
           {
             "name": "token",
@@ -1074,24 +1096,24 @@
         ],
         "responses": {
           "200": {
-            "description": "Live workout visible through a share link",
+            "description": "Live activity visible through a share link",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       }
     },
-    "/live-workouts/{id}": {
+    "/live-activities/{id}": {
       "get": {
-        "operationId": "LiveWorkoutController_get",
+        "operationId": "LiveActivityController_get",
         "parameters": [
           {
             "name": "id",
@@ -1104,22 +1126,22 @@
         ],
         "responses": {
           "200": {
-            "description": "Live workout for its owner",
+            "description": "Live activity for its owner",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       },
       "patch": {
-        "operationId": "LiveWorkoutController_update",
+        "operationId": "LiveActivityController_update",
         "parameters": [
           {
             "name": "id",
@@ -1135,29 +1157,29 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LiveWorkoutStateDto"
+                "$ref": "#/components/schemas/LiveActivityStateDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Updated live workout state",
+            "description": "Updated live activity state",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       },
       "delete": {
-        "operationId": "LiveWorkoutController_discard",
+        "operationId": "LiveActivityController_discard",
         "parameters": [
           {
             "name": "id",
@@ -1174,13 +1196,13 @@
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       }
     },
-    "/live-workouts/{id}/points": {
+    "/live-activities/{id}/points": {
       "post": {
-        "operationId": "LiveWorkoutController_points",
+        "operationId": "LiveActivityController_points",
         "parameters": [
           {
             "name": "id",
@@ -1196,7 +1218,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LiveWorkoutPointsDto"
+                "$ref": "#/components/schemas/LiveActivityPointsDto"
               }
             }
           }
@@ -1207,20 +1229,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutAckDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityAckDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       }
     },
-    "/live-workouts/{id}/share": {
+    "/live-activities/{id}/share": {
       "post": {
-        "operationId": "LiveWorkoutController_share",
+        "operationId": "LiveActivityController_share",
         "parameters": [
           {
             "name": "id",
@@ -1237,18 +1259,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveWorkoutShareDto_Output"
+                  "$ref": "#/components/schemas/LiveActivityShareDto_Output"
                 }
               }
             }
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       },
       "delete": {
-        "operationId": "LiveWorkoutController_revokeShare",
+        "operationId": "LiveActivityController_revokeShare",
         "parameters": [
           {
             "name": "id",
@@ -1265,7 +1287,7 @@
           }
         },
         "tags": [
-          "live workouts"
+          "live activities"
         ]
       }
     },
@@ -2960,6 +2982,64 @@
           "Social"
         ]
       }
+    },
+    "/upload/strava/imports/{id}/photos": {
+      "post": {
+        "operationId": "TakeoutImportController_uploadPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "metadata"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "One takeout photo image associated with an activity"
+                  },
+                  "metadata": {
+                    "type": "string",
+                    "maxLength": 16384
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Photo staged for its activity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TakeoutItemSubmissionResponseDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Stage one takeout photo before submitting its activity",
+        "tags": [
+          "uploads"
+        ]
+      }
     }
   },
   "info": {
@@ -2986,6 +3066,120 @@
         },
         "required": [
           "status"
+        ],
+        "additionalProperties": false
+      },
+      "CapabilitiesDto_Output": {
+        "type": "object",
+        "properties": {
+          "uploads": {
+            "type": "object",
+            "properties": {
+              "activityExtensions": {
+                "description": "Accepted activity file extensions",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "imageExtensions": {
+                "description": "Accepted activity image file extensions",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "videoExtensions": {
+                "description": "Video file extensions recognized in takeout archives",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "activityFileBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted activity file size in bytes"
+                  },
+                  "imageFileBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted activity image size in bytes"
+                  },
+                  "avatarFileBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted avatar image size in bytes"
+                  },
+                  "zipEntries": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum entry count in an uploaded ZIP archive"
+                  },
+                  "zipEntryBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum expanded size of one ZIP entry in bytes"
+                  },
+                  "zipExpandedBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum total expanded size of a ZIP archive in bytes"
+                  },
+                  "zipCompressionRatio": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted ZIP compression ratio"
+                  },
+                  "manifestBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum takeout manifest size in bytes"
+                  },
+                  "manifestRows": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum takeout manifest row count"
+                  }
+                },
+                "required": [
+                  "activityFileBytes",
+                  "imageFileBytes",
+                  "avatarFileBytes",
+                  "zipEntries",
+                  "zipEntryBytes",
+                  "zipExpandedBytes",
+                  "zipCompressionRatio",
+                  "manifestBytes",
+                  "manifestRows"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "activityExtensions",
+              "imageExtensions",
+              "videoExtensions",
+              "limits"
+            ],
+            "additionalProperties": false,
+            "description": "Upload formats and limits for client-side parsing and UX"
+          }
+        },
+        "required": [
+          "uploads"
         ],
         "additionalProperties": false
       },
@@ -3518,7 +3712,7 @@
         ],
         "description": "Activity sport type"
       },
-      "LiveWorkoutListDto_Output": {
+      "LiveActivityListDto_Output": {
         "type": "array",
         "items": {
           "type": "object",
@@ -3665,7 +3859,7 @@
         ],
         "description": "Activity sport type"
       },
-      "LiveWorkoutCreateDto": {
+      "LiveActivityCreateDto": {
         "type": "object",
         "properties": {
           "clientSessionId": {
@@ -3688,7 +3882,7 @@
           "startedAt"
         ]
       },
-      "LiveWorkoutDto_Output": {
+      "LiveActivityDto_Output": {
         "type": "object",
         "properties": {
           "id": {
@@ -3769,7 +3963,7 @@
         ],
         "additionalProperties": false
       },
-      "LiveWorkoutPointsDto": {
+      "LiveActivityPointsDto": {
         "type": "object",
         "properties": {
           "points": {
@@ -3834,7 +4028,7 @@
           "distanceMeters"
         ]
       },
-      "LiveWorkoutAckDto_Output": {
+      "LiveActivityAckDto_Output": {
         "type": "object",
         "properties": {
           "id": {
@@ -3854,7 +4048,7 @@
         ],
         "additionalProperties": false
       },
-      "LiveWorkoutStateDto": {
+      "LiveActivityStateDto": {
         "type": "object",
         "properties": {
           "status": {
@@ -3881,7 +4075,7 @@
           "distanceMeters"
         ]
       },
-      "LiveWorkoutShareDto_Output": {
+      "LiveActivityShareDto_Output": {
         "type": "object",
         "properties": {
           "token": {

@@ -16,26 +16,6 @@ Migrations live in `server/src/schema/migrations` and are discovered automatical
 mise //server:migrations create ShinyNewFeature
 ```
 
-### Testing
-
-There are several test suites: unit tests, medium tests, e2e tests.
-
-The CI-equivalent server integration suite is a root-level Mise task. Run it from any directory in the repository with:
-
-Medium tests:
-
-```bash
-mise server:test-medium
-```
-
-Medium tests usually strike a good balance between interoperability testing and the ability to use mocks and introspection, so use them whenever possible.
-
-End-to-end tests:
-
-```bash
-mise e2e
-```
-
 ### Android
 
 The Android client uses the Gradle wrapper and requires JDK 17 or newer. From `android/`, run the full local verification with:

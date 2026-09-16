@@ -53,7 +53,7 @@ export const newApiDependencies = (overrides: ApiDependencyOverrides = {}): ApiD
     config: { registrationEnabled: false, trustProxyHeaders: false, ...overrides.config },
     files: { ...overrides.files },
     jobs: { ...overrides.jobs },
-    liveWorkouts: { ...overrides.liveWorkouts },
+    liveActivities: { ...overrides.liveActivities },
     server: { ...overrides.server },
     sessions: { ...newApiSessions(), ...overrides.sessions },
     social: { ...overrides.social },

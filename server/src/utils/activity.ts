@@ -1,11 +1,14 @@
 import { ACTIVITY_TYPES } from 'src/constants';
-import type { ActivityType, ActivityTypeSettings } from 'src/types';
+import { ActivityType } from 'src/enum';
+import type { ActivityTypeSettings } from 'src/types';
 
 const ACTIVITY_TYPE_BY_ID = new Map<ActivityType, ActivityTypeSettings>(
   ACTIVITY_TYPES.map((settings) => [settings.type, settings]),
 );
 const ACTIVITY_TYPE_BY_NAME = new Map<string, ActivityType>(
-  ACTIVITY_TYPES.flatMap(({ type, aliases }) => [type, ...aliases].map((name) => [name, type] as const)),
+  ACTIVITY_TYPES.flatMap(({ type, aliases }) =>
+    [type, ...aliases].map((name) => [name, type] as [string, ActivityType]),
+  ),
 );
 
 export const getActivityTypeSettings = (type: ActivityType): ActivityTypeSettings => {
@@ -31,13 +34,13 @@ export const toActivityType = (sport?: string | null, subSport?: string | null):
 
   if (normalizedSubSport === 'virtual_activity') {
     if (['cycling', 'ride', 'biking', 'bike'].includes(normalizedSport)) {
-      return 'virtual_ride';
+      return ActivityType.VirtualRide;
     }
     if (['running', 'run'].includes(normalizedSport)) {
-      return 'virtual_run';
+      return ActivityType.VirtualRun;
     }
     if (['rowing', 'row'].includes(normalizedSport)) {
-      return 'virtual_row';
+      return ActivityType.VirtualRow;
     }
   }
 
@@ -46,8 +49,8 @@ export const toActivityType = (sport?: string | null, subSport?: string | null):
     normalizedSport === 'trail_running' ||
     (['run', 'running'].includes(normalizedSport) && normalizedSubSport.includes('trail'))
   ) {
-    return 'trail_run';
+    return ActivityType.TrailRun;
   }
 
-  return ACTIVITY_TYPE_BY_NAME.get(normalizedSport) ?? 'other';
+  return ACTIVITY_TYPE_BY_NAME.get(normalizedSport) ?? ActivityType.Other;
 };

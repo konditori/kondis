@@ -274,7 +274,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     FOR EACH ROW EXECUTE FUNCTION kondis_set_updated_at()`.execute(db);
 
   await sql`
-    CREATE TABLE live_workout (
+    CREATE TABLE live_activity (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id uuid NOT NULL REFERENCES "user" (id) ON DELETE CASCADE,
       client_session_id uuid NOT NULL,
@@ -294,19 +294,19 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       CHECK ((share_token_hash IS NULL) = (share_expires_at IS NULL))
     )
   `.execute(db);
-  await sql`CREATE TRIGGER live_workout_set_updated_at BEFORE UPDATE ON live_workout
+  await sql`CREATE TRIGGER live_activity_set_updated_at BEFORE UPDATE ON live_activity
     FOR EACH ROW EXECUTE FUNCTION kondis_set_updated_at()`.execute(db);
-  await sql`CREATE INDEX live_workout_user_status_idx ON live_workout (user_id, status, started_at DESC)`.execute(db);
+  await sql`CREATE INDEX live_activity_user_status_idx ON live_activity (user_id, status, started_at DESC)`.execute(db);
   await sql`
-    CREATE TABLE live_workout_point (
-      live_workout_id uuid NOT NULL REFERENCES live_workout (id) ON DELETE CASCADE,
+    CREATE TABLE live_activity_point (
+      live_activity_id uuid NOT NULL REFERENCES live_activity (id) ON DELETE CASCADE,
       sequence bigint NOT NULL CHECK (sequence > 0),
       recorded_at timestamptz NOT NULL,
       latitude double precision NOT NULL CHECK (latitude BETWEEN -90 AND 90),
       longitude double precision NOT NULL CHECK (longitude BETWEEN -180 AND 180),
       altitude double precision,
       accuracy_meters real NOT NULL CHECK (accuracy_meters >= 0),
-      PRIMARY KEY (live_workout_id, sequence)
+      PRIMARY KEY (live_activity_id, sequence)
     )
   `.execute(db);
 
@@ -377,8 +377,8 @@ export async function down(db: Kysely<unknown>): Promise<void> {
   await sql`DROP TABLE IF EXISTS user_block`.execute(db);
   await sql`DROP TABLE IF EXISTS user_follow`.execute(db);
   await sql`DROP TABLE IF EXISTS follow_request`.execute(db);
-  await sql`DROP TABLE IF EXISTS live_workout_point`.execute(db);
-  await sql`DROP TABLE IF EXISTS live_workout`.execute(db);
+  await sql`DROP TABLE IF EXISTS live_activity_point`.execute(db);
+  await sql`DROP TABLE IF EXISTS live_activity`.execute(db);
   await sql`DROP TABLE IF EXISTS activity_image_file`.execute(db);
   await sql`DROP TABLE IF EXISTS activity_image`.execute(db);
   await sql`DROP TABLE IF EXISTS activity_route_match`.execute(db);

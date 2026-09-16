@@ -17,7 +17,7 @@ export const createTestApp = async (): Promise<TestApp> => {
   const database = getTestDatabaseConfig();
   const storageDir = await mkdtemp(join(tmpdir(), 'kondis-medium-app-'));
 
-  // ConfigRepository reads the environment on first access, so this must happen before composition.
+  // EnvConfigRepository reads the environment on first access, so this must happen before composition.
   Object.assign(process.env, {
     KONDIS_DB_HOSTNAME: database.host,
     KONDIS_DB_PORT: String(database.port),

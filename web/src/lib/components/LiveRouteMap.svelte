@@ -73,5 +73,5 @@
 <div
   class="live-route-map"
   bind:this={container}
-  aria-label={t("live_workout_route")}
+  aria-label={t("live_activity_route")}
 ></div>
