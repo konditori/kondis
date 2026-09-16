@@ -1,0 +1,197 @@
+server/eslint.config.mjs
+  s_5d50d6848c46b8::t_a0f4945979d561 24-29,38-39,131-137,143-179
+server/src/api/file-response.ts
+  s_5d50d6848c46b8::t_81527ffc43b979 2
+server/src/api/node.ts
+  s_5d50d6848c46b8::t_b104c035f78009 17,121,123,130,135,137,139
+server/src/api/route-groups.ts
+  s_5d50d6848c46b8::t_2621ef47cabc06 53,60
+server/src/api/routes/auth.ts
+  s_5d50d6848c46b8::t_484da99e5eea4c 21,270
+server/src/bin/migrations.ts
+  s_5d50d6848c46b8::t_aa2c02bc3227e1 5,48,52
+server/src/bin/provision-demo.ts
+  s_5d50d6848c46b8::t_0b9f53e65e00cf 12,14,51,80
+server/src/bin/reset-development-data.ts
+  s_5d50d6848c46b8::t_c72038a1885f99 6,17
+server/src/bin/start.ts
+  s_5d50d6848c46b8::t_489744bb28320b 9,76
+server/src/cloudflare/entrypoint.ts
+  s_5d50d6848c46b8::t_4591a90313b78f 15,21,33-35,218-219,235,248,281-282,365,367,369
+server/src/cloudflare/job-delivery.spec.ts
+  s_5d50d6848c46b8::t_6b1f16b0200e23 3-5,7-10,21,38,60-64,72-159
+server/src/cloudflare/job-delivery.ts
+  s_5d50d6848c46b8::t_0c2c7fd16066c0 1-34
+server/src/cloudflare/queue-executor.ts
+  s_5d50d6848c46b8::t_cabcef08abd7ff 1,29,43
+server/src/cloudflare/realtime-durable-object.spec.ts
+  s_5d50d6848c46b8::t_3a21d615501273 3-4,27,38,54
+server/src/cloudflare/realtime-durable-object.ts
+  s_5d50d6848c46b8::t_03fe7160b71ebe 4
+server/src/composition.cloud-node.ts
+  s_5d50d6848c46b8::t_741d155b3908a4 3,7,10,12-15,17,28,34,36,40,46-47,56,70,85,98,104,120-122,125-126,134-136,140,143,156,159,163-164
+server/src/composition.node.spec.ts
+  s_5d50d6848c46b8::t_bdce13ab6b8b59 4-5,20,24-25,27,40
+server/src/composition.node.ts
+  s_5d50d6848c46b8::t_8b8c1285dafd7f 3,7,12-15,39,43,46,55,62,66-72,82,97,113,119,127-140,156,177,181,183,186,190,220-222,228
+server/src/composition.worker.ts
+  s_5d50d6848c46b8::t_c75c4f4654258b 3,6-16,21-23,35,41,69-71,73,76,114,131,139,148,152-174,188,201-202
+server/src/contracts/config.repository.ts
+  s_5d50d6848c46b8::t_4199b1bb2f3e2b 3-13
+server/src/contracts/crypto.repository.ts
+  s_5d50d6848c46b8::t_d1c4f4d96095ac 1-8
+server/src/contracts/job.repository.ts
+  s_5d50d6848c46b8::t_18816a6d411749 1,7-23
+server/src/contracts/queue.repository.ts
+  s_5d50d6848c46b8::t_f1191529ba8d80 11-13
+server/src/contracts/realtime.repository.ts
+  s_5d50d6848c46b8::t_662aa1bc486805 58-60
+server/src/contracts/storage.repository.ts
+  s_5d50d6848c46b8::t_67a83e7328db86 11-25,28
+server/src/contracts/transaction.repository.ts
+  s_5d50d6848c46b8::t_f20fbe2fa3f0c1 3-4
+server/src/demo/demo-provisioner.ts
+  s_5d50d6848c46b8::t_7e576483f48219 17,236-242
+server/src/job-handler.registry.spec.ts
+  s_5d50d6848c46b8::t_81699124a1b747 5,112,126
+server/src/job-handler.registry.worker.ts
+  s_5d50d6848c46b8::t_3792bf7876d5f3 1-3,5,10-11,24-32,34,36,38,40,42,44-53
+server/src/jobs/job-handler.ts
+  s_5d50d6848c46b8::t_f0588c9d5aa6f9 1-4,17-60
+server/src/main.ts
+  s_5d50d6848c46b8::t_5317e1cd40420e 7,97
+server/src/realtime/protocol.ts
+  s_5d50d6848c46b8::t_5f1789990fd2f3 8,94
+server/src/repositories/cloudflare/cloudflare-queue.repository.spec.ts
+  s_5d50d6848c46b8::t_592f10efdba8fb 3,5-6,14,18,31,47
+server/src/repositories/cloudflare/cloudflare-queue.repository.ts
+  s_5d50d6848c46b8::t_1f7fce33771836 2,21-24
+server/src/repositories/cloudflare/durable-object-realtime.repository.ts
+  s_5d50d6848c46b8::t_2aea5e1ca98cf1 1-32
+server/src/repositories/cloudflare/r2-storage.repository.spec.ts
+  s_5d50d6848c46b8::t_16f1230c852ccc 3,47,50,65
+server/src/repositories/cloudflare/r2-storage.repository.ts
+  s_5d50d6848c46b8::t_ba67ea344cefc1 2,30,34-36,142
+server/src/repositories/cloudflare/worker-crypto.repository.spec.ts
+  s_5d50d6848c46b8::t_a64feedc8a6077 4,7
+server/src/repositories/cloudflare/worker-crypto.repository.ts
+  s_5d50d6848c46b8::t_d6e3511890b3f1 3,14-31,34-39
+server/src/repositories/database.repository.ts
+  s_5d50d6848c46b8::t_ce08f90dfec96d 7,12,15-17
+server/src/repositories/env-config.repository.spec.ts
+  s_5d50d6848c46b8::t_d74fc0952f342f 3,5,23,35,41,47,53,59,65,71,77,81,85,91,95,101-102,108
+server/src/repositories/env-config.repository.ts
+  s_5d50d6848c46b8::t_1af4056be98efe 3,85-86,91
+server/src/repositories/http-realtime.repository.spec.ts
+  s_5d50d6848c46b8::t_ab23ee6b17be67 3,5,8
+server/src/repositories/http-realtime.repository.ts
+  s_5d50d6848c46b8::t_272d8d16a17908 2,7,12-14
+server/src/repositories/node/filesystem-storage.repository.spec.ts
+  s_5d50d6848c46b8::t_c97207f0113b3e 6-8,10,12,16
+server/src/repositories/node/filesystem-storage.repository.ts
+  s_5d50d6848c46b8::t_6ca9ac26845b6e 5-7,9,11-15,60,72,136,138
+server/src/repositories/node/node-crypto.repository.spec.ts
+  s_5d50d6848c46b8::t_65b7ef42ffbd9f 3,5-6
+server/src/repositories/node/node-crypto.repository.ts
+  s_5d50d6848c46b8::t_8d52dca3ed2229 4,6
+server/src/repositories/node/pgboss-job.repository.spec.ts
+  s_5d50d6848c46b8::t_40fa4acfe53221 4,6-7,15,29,33,41,47
+server/src/repositories/node/pgboss-job.repository.ts
+  s_5d50d6848c46b8::t_9896b962121e93 21-22,24-25,54,62,64-66,390,395
+server/src/repositories/node/postgres-realtime.repository.spec.ts
+  s_5d50d6848c46b8::t_d09d84f17c9a82 7-8,42,44,73,76,78
+server/src/repositories/node/postgres-realtime.repository.ts
+  s_5d50d6848c46b8::t_cbe6836088a374 10-11,16,36-37,60,63-65
+server/src/repositories/noop-realtime.repository.ts
+  s_5d50d6848c46b8::t_6b8779ec95273c 1-7
+server/src/repositories/postgres-job.repository.ts
+  s_5d50d6848c46b8::t_69294a2c674f51 5-16,35-55,67-265,282-285
+server/src/repositories/postgres-transaction.repository.ts
+  s_5d50d6848c46b8::t_74a95d12d64eb6 1-12
+server/src/services/activity-image.service.ts
+  s_5d50d6848c46b8::t_33a50e2ae34f90 17,19,22,31,34
+server/src/services/activity.service.spec.ts
+  s_5d50d6848c46b8::t_5f0f55605bf936 10-12,65,82-83
+server/src/services/activity.service.ts
+  s_5d50d6848c46b8::t_8c5363d3f03e41 19,21,23,26,85,87-89
+server/src/services/auth.service.spec.ts
+  s_5d50d6848c46b8::t_2e85eacd705f3f 7,10,55,57-65
+server/src/services/auth.service.ts
+  s_5d50d6848c46b8::t_a49760b252d0c7 4-5,7,9,27,29,31-32
+server/src/services/job.service.spec.ts
+  s_5d50d6848c46b8::t_cd3fb5649746bb 5-6,12,45,48-62,67-68,94,100-112
+server/src/services/job.service.ts
+  s_5d50d6848c46b8::t_98be137952cdba 3,5-6,24-25,27,32-33,37,42,47,50,57,62,67,72,88-89,93-96,101-103,105,110-112
+server/src/services/live-workout.service.spec.ts
+  s_5d50d6848c46b8::t_8875d27beb2855 6,56
+server/src/services/live-workout.service.ts
+  s_5d50d6848c46b8::t_6abcd6fa30852f 3,5,21-22
+server/src/services/postgres-job.service.ts
+  s_5d50d6848c46b8::t_a01f6e7d4bf1d2 2,4,7-8,10-17,19,21-26,28-33,41-56,58-64,66-70,72-75,77-83,85-98,100,103-110,112,115-123,125-142,144-169,171-182,184-188,193,215,222,231,235,238,240,244,247,252-253,257,259-268,271-272,274-275,278,283,290-294,298-300,303-309
+server/src/services/social.service.spec.ts
+  s_5d50d6848c46b8::t_a51aeb69a82402 4,10
+server/src/services/social.service.ts
+  s_5d50d6848c46b8::t_ad043950bce086 2,9
+server/src/services/storage.service.ts
+  s_5d50d6848c46b8::t_058164b5437347 3-4,11-12
+server/src/services/upload.service.ts
+  s_5d50d6848c46b8::t_7a9aaaab5e4c49 21,23-25,38-39,41,45
+server/src/services/user.service.spec.ts
+  s_5d50d6848c46b8::t_b99521db15cb5b 5,31
+server/src/services/user.service.ts
+  s_5d50d6848c46b8::t_ed93fed58548a4 7,19
+server/src/services/worker-activity-image.service.ts
+  s_5d50d6848c46b8::t_53f74187b7d6a0 8-9,12-13,26-29
+server/src/services/worker-upload.service.spec.ts
+  s_5d50d6848c46b8::t_7a4e1e10384d9c 6-9,11,44-46,50-51
+server/src/services/worker-upload.service.ts
+  s_5d50d6848c46b8::t_8ab14f5b91e532 18-21,23,38-40,44-45,316
+server/src/services/worker-user.service.ts
+  s_5d50d6848c46b8::t_5466b19dfb87c9 4,6,14-15
+server/src/utils/takeout-photo.spec.ts
+  s_5d50d6848c46b8::t_536a7725b45b65 5-6,28-29
+server/src/utils/takeout-photo.ts
+  s_5d50d6848c46b8::t_a4d1a51709b17e 4-5,12-13
+server/test/medium/specs/repositories/event.repository.spec.ts
+  s_5d50d6848c46b8::t_e19c62d28a4020 4,11,23
+server/test/medium/specs/repositories/pgboss-job.repository.spec.ts
+  s_5d50d6848c46b8::t_89307dd0b98a21 10-12,29,33,40,47,54,79,143,227
+server/test/medium/specs/repositories/postgres-job.repository.spec.ts
+  s_5d50d6848c46b8::t_34c191067fc4c8 3,6-14,29,31-42,46,98,111,123,129-131,141-148,159,175,177,185-244,257,273-274,284,304,341-342,360-361,385,399-400,429-431,445
+server/test/medium/specs/repositories/storage.repository.spec.ts
+  s_5d50d6848c46b8::t_72c3652d2dc507 6-8,12,26-28
+server/test/medium/specs/service/activity.service.spec.ts
+  s_5d50d6848c46b8::t_8906c0124d1998 6,23,34
+server/test/medium/specs/service/auth.service.spec.ts
+  s_5d50d6848c46b8::t_6b6f56ceecf2ca 6,29
+server/test/medium/specs/service/job.service.spec.ts
+  s_5d50d6848c46b8::t_2607c6930a14f8 5,26,29
+server/test/medium/specs/service/social.service.spec.ts
+  s_5d50d6848c46b8::t_397f4a5a3ea979 3,15,21
+server/test/medium/specs/service/storage.service.spec.ts
+  s_5d50d6848c46b8::t_1de4fd76265fc8 5-8,32-36
+server/test/medium/specs/service/user.service.spec.ts
+  s_5d50d6848c46b8::t_a63b82a84cf7e8 4,21,28
+server/test/medium/test-app.ts
+  s_5d50d6848c46b8::t_daef389e7960a4 20
+server/test/medium/test-db.ts
+  s_5d50d6848c46b8::t_56e3ad2a01d026 5,57
+server/test/worker/entrypoint.spec.ts
+  s_5d50d6848c46b8::t_bb835f366d8c57 8,32,41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c2ae66e5516a3cf8677c6a5b0202cad98d43ef52",
+  "prompts": {},
+  "sessions": {
+    "s_5d50d6848c46b8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "17892deb-fe34-4e8d-bfca-5903598fa753",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
