@@ -1,11 +1,11 @@
-import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 import type {
   ActivityCommentEvent,
   ArgsOf,
   EmitEvent,
   LiveWorkoutProgressEvent,
   NotificationCreatedEvent,
-} from 'src/ports/realtime.port';
+} from 'src/contracts/realtime.repository';
+import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
 
 export type WebsocketEvent =
   | { type: 'session.revoked'; sessionId: string }
@@ -91,4 +91,4 @@ export const isWebsocketEvent = (value: unknown): value is WebsocketEvent => {
   );
 };
 
-export { type NotificationsReadEvent } from 'src/ports/realtime.port';
+export { type NotificationsReadEvent } from 'src/contracts/realtime.repository';

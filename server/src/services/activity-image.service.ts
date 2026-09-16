@@ -9,14 +9,14 @@ import {
   IMAGE_SUPPORTED_FORMATS,
   IMAGE_THUMBNAIL_SIZE,
 } from 'src/constants';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import { ActivityImage, ActivityImageFile } from 'src/db/schema';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -28,10 +28,10 @@ export class ActivityImageService {
   constructor(
     private readonly images: MediaRepository,
     private readonly activities: ActivityRepository,
-    private readonly storage: StoragePort,
+    private readonly storage: StorageRepository,
     private readonly crypto: CryptoRepository,
     private readonly database: DatabaseRepository,
-    private readonly jobs: JobProducerPort,
+    private readonly jobs: JobRepository,
     private readonly logger: ConsoleLogger,
     private readonly socialRepository: SocialRepository,
   ) {

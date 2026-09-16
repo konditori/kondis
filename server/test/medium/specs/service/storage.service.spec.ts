@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import type { JobRepository } from 'src/contracts/job.repository';
 import { JobStatus } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
-import type { JobAdminPort } from 'src/ports/queue.port';
-import type { ConfigRepository } from 'src/repositories/config.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
+import type { EnvConfigRepository } from 'src/repositories/env-config.repository';
+import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { StorageService } from 'src/services/storage.service';
 
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -29,8 +29,11 @@ describe(StorageService.name, () => {
   });
 
   const setup = () => {
-    const repository = new StorageRepository({ storageDir } as ConfigRepository, new CryptoRepository());
-    const jobs = { getReferencedTemporaryPaths: () => new Set<string>() } as unknown as JobAdminPort;
+    const repository = new FileSystemStorageRepository(
+      { storageDir } as EnvConfigRepository,
+      new NodeCryptoRepository(),
+    );
+    const jobs = { getReferencedTemporaryPaths: () => new Set<string>() } as unknown as JobRepository;
     return { sut: new StorageService(repository, jobs, new ConsoleLogger()), repository };
   };
 

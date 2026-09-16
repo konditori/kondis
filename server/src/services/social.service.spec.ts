@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { NotFoundException } from 'src/errors';
-import type { EventRepository } from 'src/repositories/event.repository';
+import type { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { SocialService } from 'src/services/social.service';
 const makeService = () => {
   const social = {
     canViewActivity: vi.fn(),
   };
-  const service = new SocialService(social as never, {} as EventRepository);
+  const service = new SocialService(social as never, {} as PostgresRealtimeRepository);
   return { service, social };
 };
 

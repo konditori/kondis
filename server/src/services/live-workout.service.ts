@@ -1,7 +1,7 @@
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
 import type { ActivityType } from 'src/enum';
 import { NotFoundException } from 'src/errors';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { LiveWorkoutStatus } from 'src/schema/tables/live-workout.table';
 
@@ -18,8 +18,8 @@ const SHARE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 export class LiveWorkoutService {
   constructor(
     private readonly repository: LiveWorkoutRepository,
-    private readonly crypto: CryptoPort,
-    private readonly realtime: RealtimePort,
+    private readonly crypto: CryptoRepository,
+    private readonly realtime: RealtimeRepository,
   ) {}
 
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {

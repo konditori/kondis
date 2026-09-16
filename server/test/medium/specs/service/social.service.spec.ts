@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EventRepository } from 'src/repositories/event.repository';
+import { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { SocialService } from 'src/services/social.service';
 
 import { createMediumFactory } from 'test/medium.factory';
@@ -12,13 +12,13 @@ describe(SocialService.name, () => {
   let testApp: TestApp;
   let sut: SocialService;
   let factory: ReturnType<typeof createMediumFactory>;
-  let eventRepository: EventRepository;
+  let eventRepository: PostgresRealtimeRepository;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
     testApp = await createTestApp();
     sut = testApp.get(SocialService);
-    eventRepository = testApp.get(EventRepository);
+    eventRepository = testApp.get(PostgresRealtimeRepository);
     factory = createMediumFactory(db);
   });
 

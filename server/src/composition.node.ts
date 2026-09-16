@@ -1,20 +1,21 @@
-import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
+import { createJobHandlers } from 'src/jobs/job-handler';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { ConfigRepository } from 'src/repositories/config.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { EventRepository } from 'src/repositories/event.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
+import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
+import { PgBossJobRepository } from 'src/repositories/node/pgboss-job.repository';
+import { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
 import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -35,14 +36,14 @@ type Class<T> = new (...args: never[]) => T;
 
 export type CompositionOptions = {
   role: ApplicationRole;
-  configRepository?: ConfigRepository;
+  configRepository?: EnvConfigRepository;
   logLevels?: LogLevel[];
 };
 
-// Node composition intentionally owns every native and self-hosted adapter.
+// Node composition owns the native and self-hosted repository implementations.
 export const createApplicationComposition = ({
   role,
-  configRepository = new ConfigRepository(),
+  configRepository = new EnvConfigRepository(),
   logLevels,
 }: CompositionOptions) => {
   const consumeJobs = role === 'worker';
@@ -51,19 +52,24 @@ export const createApplicationComposition = ({
   const activityRepository = new ActivityRepository(database);
   const mediaRepository = new MediaRepository(database);
   const authCredentialRepository = new SessionRepository(database);
-  const cryptoRepository = new CryptoRepository();
+  const cryptoRepository = new NodeCryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
   const gpxRepository = new GpxRepository(newLogger());
   const liveWorkoutRepository = new LiveWorkoutRepository(database);
   const rateLimitingRepository = new RateLimitingRepository(database);
   const socialRepository = new SocialRepository(database);
-  const storageRepository = new StorageRepository(configRepository, cryptoRepository);
+  const storageRepository = new FileSystemStorageRepository(configRepository, cryptoRepository);
   const tcxRepository = new TcxRepository(newLogger());
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
-  const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
-  const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
+  const eventRepository = new PostgresRealtimeRepository(
+    database,
+    configRepository,
+    socialRepository,
+    authCredentialRepository,
+  );
+  const jobRepository = new PgBossJobRepository(configRepository, consumeJobs, newLogger());
 
   const importProgressStore = new TakeoutRepository(database);
 
@@ -73,7 +79,7 @@ export const createApplicationComposition = ({
     activityRepository,
     databaseRepository,
     eventRepository,
-    queueAdapter,
+    jobRepository,
     fitRepository,
     gpxRepository,
     tcxRepository,
@@ -88,7 +94,7 @@ export const createApplicationComposition = ({
     storageRepository,
     cryptoRepository,
     databaseRepository,
-    queueAdapter,
+    jobRepository,
     newLogger(),
     socialRepository,
   );
@@ -101,21 +107,16 @@ export const createApplicationComposition = ({
     eventRepository,
     databaseRepository,
   );
-  const jobService = new JobService(
-    { admin: queueAdapter, consumer: queueAdapter, producer: queueAdapter },
-    eventRepository,
-    newLogger(),
-  );
   const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository, eventRepository);
   const serverService = new ServerService();
   const socialService = new SocialService(socialRepository, eventRepository);
-  const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
+  const storageService = new StorageService(storageRepository, jobRepository, newLogger());
   const uploadService = new UploadService(
     uploadRepository,
     storageRepository,
     cryptoRepository,
     databaseRepository,
-    queueAdapter,
+    jobRepository,
     newLogger(),
     importProgressStore,
     activityRepository,
@@ -123,15 +124,20 @@ export const createApplicationComposition = ({
   );
   const userService = new UserService(userRepository, socialRepository, storageRepository);
 
-  queueAdapter.setup(
-    createJobHandlerRegistry({
-      activityService,
-      activityImageService,
-      authService,
-      storageService,
-      uploadService,
-      userService,
-    }),
+  const jobService = new JobService(
+    jobRepository,
+    eventRepository,
+    newLogger(),
+    createJobHandlers(
+      createJobHandlerRegistry({
+        activityService,
+        activityImageService,
+        authService,
+        storageService,
+        uploadService,
+        userService,
+      }),
+    ),
   );
 
   const namedInstances = {
@@ -147,7 +153,7 @@ export const createApplicationComposition = ({
     eventRepository,
     fitRepository,
     gpxRepository,
-    queueAdapter,
+    jobRepository,
     liveWorkoutRepository,
     rateLimitingRepository,
     socialRepository,
@@ -168,20 +174,20 @@ export const createApplicationComposition = ({
     userService,
   };
   const instances = new Map<Class<unknown>, unknown>([
-    [ConfigRepository, configRepository],
+    [EnvConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
     [MediaRepository, mediaRepository],
     [SessionRepository, authCredentialRepository],
-    [CryptoRepository, cryptoRepository],
+    [NodeCryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],
-    [EventRepository, eventRepository],
+    [PostgresRealtimeRepository, eventRepository],
     [FitRepository, fitRepository],
     [GpxRepository, gpxRepository],
-    [PgBossQueueAdapter, queueAdapter],
+    [PgBossJobRepository, jobRepository],
     [LiveWorkoutRepository, liveWorkoutRepository],
     [RateLimitingRepository, rateLimitingRepository],
     [SocialRepository, socialRepository],
-    [StorageRepository, storageRepository],
+    [FileSystemStorageRepository, storageRepository],
     [TcxRepository, tcxRepository],
     [UploadRepository, uploadRepository],
     [UserRepository, userRepository],
@@ -211,13 +217,15 @@ export const createApplicationComposition = ({
       return instance as T;
     },
     initialize(): Promise<void> {
-      initialization ??= jobService.init(consumeJobs);
+      initialization ??= consumeJobs
+        ? jobRepository.startWorkers(jobService.execute.bind(jobService))
+        : Promise.resolve();
       return initialization;
     },
     close(): Promise<void> {
       shutdown ??= (async () => {
         try {
-          await queueAdapter.stop();
+          await jobRepository.stop();
         } finally {
           try {
             await eventRepository.stop();

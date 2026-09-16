@@ -1,11 +1,11 @@
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
-import type { TransactionPort } from 'src/ports/transaction.port';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { SessionRepository } from 'src/repositories/session.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
@@ -52,13 +52,17 @@ describe(AuthService.name, () => {
   } as unknown as SessionRepository;
   const rateLimiting = { consume: consumeRateLimit } as unknown as RateLimitingRepository;
   const events = { emit } as never;
-  const database = { withTransaction } as unknown as TransactionPort;
+  const database = { withTransaction } as unknown as TransactionRepository;
   const setup = () =>
-    newTestService(AuthService, [users, config, rateLimiting, new CryptoRepository(), credentials, events, database], {
-      users,
-      config,
-      credentials,
-    });
+    newTestService(
+      AuthService,
+      [users, config, rateLimiting, new NodeCryptoRepository(), credentials, events, database],
+      {
+        users,
+        config,
+        credentials,
+      },
+    );
   beforeEach(() => {
     vi.clearAllMocks();
     config.registrationEnabled = false;

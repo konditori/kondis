@@ -3,13 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import type { ConfigRepository } from 'src/repositories/config.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
+import type { EnvConfigRepository } from 'src/repositories/env-config.repository';
+import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
-describe(StorageRepository.name, () => {
+describe(FileSystemStorageRepository.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
   let storageDir: string;
 
@@ -23,7 +23,9 @@ describe(StorageRepository.name, () => {
     await rm(storageDir, { recursive: true, force: true });
   });
 
-  const setup = () => ({ sut: new StorageRepository({ storageDir } as ConfigRepository, new CryptoRepository()) });
+  const setup = () => ({
+    sut: new FileSystemStorageRepository({ storageDir } as EnvConfigRepository, new NodeCryptoRepository()),
+  });
 
   it('writes, reads, and deletes files in the configured storage directory', async () => {
     const { sut } = setup();

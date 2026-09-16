@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { DurableObjectRealtimeAdapter, RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
+import { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
+import { DurableObjectRealtimeRepository } from 'src/repositories/cloudflare/durable-object-realtime.repository';
 
 const attachment = (kind: 'user' | 'admin', sessionId = 'session-id') => ({
   kind,
@@ -23,7 +24,7 @@ const socket = (value: ReturnType<typeof attachment>) => {
   } as unknown as WebSocket & { deserializeAttachment: () => typeof current };
 };
 
-describe('DurableObjectRealtimeAdapter', () => {
+describe('DurableObjectRealtimeRepository', () => {
   it('publishes events through the namespace', async () => {
     let published: Request | undefined;
     const fetch = vi.fn((request: Request | string, init?: RequestInit) => {
@@ -34,7 +35,7 @@ describe('DurableObjectRealtimeAdapter', () => {
       idFromName: vi.fn(() => 'global-id'),
       get: vi.fn(() => ({ fetch })),
     };
-    const adapter = new DurableObjectRealtimeAdapter(namespace);
+    const adapter = new DurableObjectRealtimeRepository(namespace);
 
     await adapter.emit('JobUpdated');
 
@@ -50,7 +51,7 @@ describe('DurableObjectRealtimeAdapter', () => {
     };
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    await expect(new DurableObjectRealtimeAdapter(namespace).emit('JobUpdated')).resolves.toBeUndefined();
+    await expect(new DurableObjectRealtimeRepository(namespace).emit('JobUpdated')).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalledOnce();
   });
 });

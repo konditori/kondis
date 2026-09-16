@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import type { JobRepository } from 'src/contracts/job.repository';
 import { QueueCommand, QueueName } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
-import type { JobAdminPort, JobConsumerPort, JobProducerPort } from 'src/ports/queue.port';
 import { JobService } from 'src/services/job.service';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
@@ -23,10 +23,10 @@ const makeJobService = () => {
     isPaused: (queue: QueueName) => paused.has(queue),
     pause: (queue: QueueName) => void paused.add(queue),
     resume: (queue: QueueName) => void paused.delete(queue),
-  } as unknown as JobProducerPort & JobAdminPort & JobConsumerPort;
+  } as unknown as JobRepository;
   const events = { emit: () => {} } as never;
   return {
-    sut: new JobService({ admin: jobs, consumer: jobs, producer: jobs }, events, new ConsoleLogger()),
+    sut: new JobService(jobs, events, new ConsoleLogger()),
   };
 };
 

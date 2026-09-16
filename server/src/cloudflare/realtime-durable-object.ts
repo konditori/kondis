@@ -1,21 +1,14 @@
 import { sql } from 'kysely';
 
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
-import type { ArgsOf, EmitEvent, RealtimePort } from 'src/ports/realtime.port';
-import { isWebsocketEvent, serializeRealtimeEvent, type WebsocketEvent } from 'src/realtime/protocol';
+import { isWebsocketEvent, type WebsocketEvent } from 'src/realtime/protocol';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
-export const REALTIME_DURABLE_OBJECT_NAME = 'global';
 export const MAX_WEBSOCKET_PAYLOAD_BYTES = 1024;
 export const MAX_ACTIVITY_SUBSCRIPTIONS_PER_SOCKET = 100;
 export const MAX_ACTIVITY_AUTHORIZATION_ATTEMPTS_PER_SOCKET = 100;
 export const MAX_CONCURRENT_ACTIVITY_AUTHORIZATIONS = 8;
-
-export type DurableObjectNamespaceBinding = {
-  idFromName: (name: string) => unknown;
-  get: (id: unknown) => { fetch: (request: Request | string, init?: RequestInit) => Promise<Response> };
-};
 
 type DurableObjectStateLike = {
   acceptWebSocket: (socket: HibernatableWebSocket) => void;
@@ -288,25 +281,3 @@ export class RealtimeDurableObject {
     }
   }
 }
-
-export class DurableObjectRealtimeAdapter implements RealtimePort {
-  constructor(private readonly namespace: DurableObjectNamespaceBinding) {}
-  async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
-    try {
-      const response = await this.namespace
-        .get(this.namespace.idFromName(REALTIME_DURABLE_OBJECT_NAME))
-        .fetch('https://realtime.internal/publish', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(serializeRealtimeEvent(event, ...args)),
-        });
-      if (!response.ok) {
-        throw new Error(`Realtime Durable Object returned ${response.status}`);
-      }
-    } catch (error) {
-      console.warn(`Realtime event ${event} was not delivered`, error);
-    }
-  }
-}
-
-export const noopRealtime: RealtimePort = { emit: async () => {} };

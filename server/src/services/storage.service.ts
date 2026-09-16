@@ -1,15 +1,15 @@
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import { JobName, JobStatus } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
-import type { JobAdminPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import { JobOf } from 'src/types/jobs';
 
 const TEMPORARY_FILE_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 export class StorageService {
   constructor(
-    private readonly storageRepository: Pick<StoragePort, 'delete' | 'deleteTemporaryFilesOlderThan'>,
-    private readonly jobRepository: Pick<JobAdminPort, 'getReferencedTemporaryPaths'>,
+    private readonly storageRepository: Pick<StorageRepository, 'delete' | 'deleteTemporaryFilesOlderThan'>,
+    private readonly jobRepository: Pick<JobRepository, 'getReferencedTemporaryPaths'>,
     private readonly logger: ConsoleLogger,
   ) {
     this.logger.setContext(StorageService.name);

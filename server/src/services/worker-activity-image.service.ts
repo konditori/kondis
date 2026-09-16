@@ -1,13 +1,13 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { IMAGE_PROCESSING_VERSION } from 'src/constants';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { ActivityImage, ActivityImageFile } from 'src/db/schema';
 import { ActivityImageSchema, type ActivityImageUpdateDto } from 'src/dtos/activity-image.dto';
 import { JobName } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
@@ -23,10 +23,10 @@ export class WorkerActivityImageService {
   constructor(
     private readonly images: MediaRepository,
     private readonly activities: ActivityRepository,
-    private readonly storage: StoragePort,
-    private readonly crypto: CryptoPort,
-    private readonly database: TransactionPort,
-    private readonly jobs: JobProducerPort,
+    private readonly storage: StorageRepository,
+    private readonly crypto: CryptoRepository,
+    private readonly database: TransactionRepository,
+    private readonly jobs: JobRepository,
     private readonly social: SocialRepository,
   ) {}
 

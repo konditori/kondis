@@ -1,6 +1,10 @@
 import { extname } from 'node:path';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import {
   FitUploadResponseDto,
   TakeoutActivityMetadataDto,
@@ -17,10 +21,6 @@ import {
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { TakeoutRepository } from 'src/repositories/takeout.repository';
@@ -35,14 +35,14 @@ const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
 export class UploadService {
   constructor(
     private readonly uploadRepository: UploadRepository,
-    private readonly storageRepository: StoragePort,
-    private readonly cryptoRepository: CryptoPort,
+    private readonly storageRepository: StorageRepository,
+    private readonly cryptoRepository: CryptoRepository,
     private readonly databaseRepository: DatabaseRepository,
-    private readonly jobRepository: JobProducerPort,
+    private readonly jobRepository: JobRepository,
     private readonly logger: ConsoleLogger,
     private readonly importProgressStore: TakeoutRepository,
     private readonly activityRepository?: ActivityRepository,
-    private readonly eventRepository?: RealtimePort,
+    private readonly eventRepository?: RealtimeRepository,
   ) {
     this.logger.setContext(UploadService.name);
   }

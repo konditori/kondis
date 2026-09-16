@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { JobRepository } from 'src/contracts/job.repository';
 import { ActivityType, JobName, JobStatus, StreamType } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
-import type { JobProducerPort } from 'src/ports/queue.port';
 import { type ActivityRepository } from 'src/repositories/activity.repository';
 import { type DatabaseRepository } from 'src/repositories/database.repository';
-import { type EventRepository } from 'src/repositories/event.repository';
 import { FitDecodeError, type FitRepository } from 'src/repositories/fit.repository';
 import { type GpxRepository } from 'src/repositories/gpx.repository';
-import { type StorageRepository } from 'src/repositories/storage.repository';
+import { type FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { type PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { type TcxRepository } from 'src/repositories/tcx.repository';
 import { type UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
@@ -62,7 +62,7 @@ describe('ActivityService', () => {
     getIdsToParse,
   } as unknown as UploadRepository;
 
-  const storageRepository = { readLimited } as unknown as StorageRepository;
+  const storageRepository = { readLimited } as unknown as FileSystemStorageRepository;
 
   const activityRepository = {
     getById: getActivityById,
@@ -79,8 +79,8 @@ describe('ActivityService', () => {
   } as unknown as ActivityRepository;
 
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
-  const eventRepository = { emit: emitEvent } as unknown as EventRepository;
-  const jobRepository = { queue, queueAll, discardQueuedDuplicates } as unknown as JobProducerPort;
+  const eventRepository = { emit: emitEvent } as unknown as PostgresRealtimeRepository;
+  const jobRepository = { queue, queueAll, discardQueuedDuplicates } as unknown as JobRepository;
   const fitRepository = { decode } as unknown as FitRepository;
   const gpxRepository = { decode: decodeGpx } as unknown as GpxRepository;
   const tcxRepository = { decode: decodeTcx } as unknown as TcxRepository;

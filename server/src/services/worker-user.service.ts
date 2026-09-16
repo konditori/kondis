@@ -1,8 +1,8 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import { JobName } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
@@ -11,8 +11,8 @@ export class WorkerUserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
-    private readonly storage: StoragePort,
-    private readonly jobs: JobProducerPort,
+    private readonly storage: StorageRepository,
+    private readonly jobs: JobRepository,
   ) {}
 
   async updateProfile(userId: string, firstName: string, lastName: string) {

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { ActivityType, JobName, JobStatus } from 'src/enum';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
-import type { StoragePort } from 'src/ports/storage.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import type { ActivityRepository } from 'src/repositories/activity.repository';
 import type { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
@@ -41,14 +41,14 @@ describe(WorkerUploadService.name, () => {
 
   const setup = () =>
     new WorkerUploadService(
-      { readLimited, buildPath, write, delete: deleteFile } as unknown as StoragePort,
-      { sha256 } as unknown as CryptoPort,
-      { queue } as unknown as JobProducerPort,
+      { readLimited, buildPath, write, delete: deleteFile } as unknown as StorageRepository,
+      { sha256 } as unknown as CryptoRepository,
+      { queue } as unknown as JobRepository,
       { completeItem } as unknown as TakeoutRepository,
       { getByChecksum, create } as unknown as UploadRepository,
       { getByUploadId } as unknown as ActivityRepository,
-      { withTransaction } as TransactionPort,
-      { emit } as RealtimePort,
+      { withTransaction } as TransactionRepository,
+      { emit } as RealtimeRepository,
     );
 
   beforeEach(() => {

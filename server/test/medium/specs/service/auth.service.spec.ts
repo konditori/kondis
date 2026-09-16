@@ -2,8 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { UserRole } from 'src/enum';
 import { ConflictException, UnauthorizedException } from 'src/errors';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -26,7 +26,7 @@ describe(AuthService.name, () => {
       users,
       {} as never,
       new RateLimitingRepository(db),
-      new CryptoRepository(),
+      new NodeCryptoRepository(),
       credentials,
       { emit: () => Promise.resolve() } as never,
       new DatabaseRepository(db),

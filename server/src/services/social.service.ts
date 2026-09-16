@@ -1,12 +1,12 @@
+import type { ActivityCommentEvent, RealtimeRepository } from 'src/contracts/realtime.repository';
 import { BadRequestException, NotFoundException } from 'src/errors';
-import type { ActivityCommentEvent, RealtimePort } from 'src/ports/realtime.port';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { publicMediaUrl } from 'src/utils/media';
 
 export class SocialService {
   constructor(
     private readonly repository: SocialRepository,
-    private readonly eventRepository: RealtimePort,
+    private readonly eventRepository: RealtimeRepository,
     private readonly mediaBaseUrl?: string,
   ) {}
 

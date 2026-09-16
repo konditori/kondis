@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import type { TakeoutPhotoMetadataDto } from 'src/dtos/upload.dto';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import type { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
@@ -25,8 +25,8 @@ describe('stageTakeoutPhoto', () => {
   const get = vi.fn();
   const stagePhoto = vi.fn();
 
-  const storage = { buildTemporaryPath, write, delete: deleteFile } as unknown as StoragePort;
-  const crypto = { sha256 } as unknown as CryptoPort;
+  const storage = { buildTemporaryPath, write, delete: deleteFile } as unknown as StorageRepository;
+  const crypto = { sha256 } as unknown as CryptoRepository;
   const progress = { get, stagePhoto } as unknown as TakeoutRepository;
 
   const stage = (photoMetadata: typeof metadata, photoFile: typeof file | undefined) =>

@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import type { AuthenticatedUser } from 'src/auth';
 import { ActivityType, JobStatus, QueueName, StreamType } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { PgBossJobRepository } from 'src/repositories/node/pgboss-job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import type { ActivityStreamInput, KondisDatabase } from 'src/types';
@@ -20,7 +20,7 @@ describe(ActivityService.name, () => {
   let activities: ActivityRepository;
   let uploads: UploadRepository;
   let sut: ActivityService;
-  let jobs: PgBossQueueAdapter;
+  let jobs: PgBossJobRepository;
   let factory: ReturnType<typeof createMediumFactory>;
   let testUser: AuthenticatedUser;
 
@@ -31,7 +31,7 @@ describe(ActivityService.name, () => {
     activities = testApp.get(ActivityRepository);
     uploads = testApp.get(UploadRepository);
     sut = testApp.get(ActivityService);
-    jobs = testApp.get(PgBossQueueAdapter);
+    jobs = testApp.get(PgBossJobRepository);
     factory = createMediumFactory(db);
   });
 

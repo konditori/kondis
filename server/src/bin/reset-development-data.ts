@@ -3,7 +3,7 @@ import { rm } from 'node:fs/promises';
 import { sql } from 'kysely';
 import { JOB_SCHEMA } from 'src/constants';
 import { createDatabase } from 'src/db/database';
-import { ConfigRepository } from 'src/repositories/config.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 
 const CONFIRMATION_FLAG = '--confirm';
 
@@ -14,7 +14,7 @@ async function resetDevelopmentData(): Promise<void> {
     throw new Error(`Refusing to reset data without ${CONFIRMATION_FLAG}.`);
   }
 
-  const config = new ConfigRepository().getEnv();
+  const config = new EnvConfigRepository().getEnv();
   const db = createDatabase(config.database);
 
   try {

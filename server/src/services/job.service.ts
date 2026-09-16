@@ -1,8 +1,9 @@
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { BadRequestException } from 'src/errors';
+import type { JobHandlers } from 'src/jobs/job-handler';
 import { ConsoleLogger } from 'src/logger';
-import type { JobAdminPort, JobConsumerPort, JobProducerPort } from 'src/ports/queue.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
 
@@ -18,74 +19,57 @@ const asJobItem = (name: ManualJobName): JobItem => {
   }
 };
 
-export type JobQueuePorts = {
-  admin: JobAdminPort;
-  consumer?: JobConsumerPort;
-  producer: JobProducerPort;
-};
-
 export class JobService {
   constructor(
-    private readonly queues: JobQueuePorts,
-    private readonly events: RealtimePort,
+    private readonly jobs: JobRepository,
+    private readonly events: RealtimeRepository,
     private readonly logger: ConsoleLogger,
+    private readonly handlers: JobHandlers = {},
   ) {
     this.logger.setContext(JobService.name);
   }
 
-  async init(consumeJobs: boolean): Promise<void> {
-    if (!consumeJobs) {
-      this.logger.log("Role 'worker' is disabled; not consuming jobs in this process");
-      return;
-    }
-    if (!this.queues.consumer) {
-      throw new Error('This composition has no job consumer');
-    }
-
-    await this.queues.consumer.startWorkers((item) => this.onJobRun(item));
-    this.logger.log(`Consuming queues: ${Object.values(QueueName).join(', ')}`);
+  hasHandler(name: JobName): boolean {
+    return Boolean(this.handlers[name]);
   }
 
   async create(name: ManualJobName): Promise<void> {
-    await this.queues.producer.queue(asJobItem(name));
+    await this.jobs.queue(asJobItem(name));
     await this.events.emit('JobUpdated');
   }
 
   async getJobHistory(limit: number, offset = 0) {
-    return this.queues.admin.getJobHistory(limit, offset);
+    return this.jobs.getJobHistory(limit, offset);
   }
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
     const queues = Object.values(QueueName);
-    const counts = await this.queues.admin.getAllJobCounts();
+    const counts = await this.jobs.getAllJobCounts();
 
     return Object.fromEntries(
-      queues.map((queue) => [
-        queue,
-        { jobCounts: counts[queue], queueStatus: { paused: this.queues.admin.isPaused(queue) } },
-      ]),
+      queues.map((queue) => [queue, { jobCounts: counts[queue], queueStatus: { paused: this.jobs.isPaused(queue) } }]),
     ) as AllJobStatusResponse;
   }
 
   async handleCommand(queue: QueueName, command: QueueCommand): Promise<QueueStatusReport> {
     switch (command) {
       case QueueCommand.Pause: {
-        await this.queues.admin.pause(queue);
+        await this.jobs.pause(queue);
         break;
       }
 
       case QueueCommand.Resume: {
-        await this.queues.admin.resume(queue);
+        await this.jobs.resume(queue);
         break;
       }
 
       case QueueCommand.Empty: {
-        await this.queues.admin.empty(queue);
+        await this.jobs.empty(queue);
         break;
       }
 
       case QueueCommand.ClearFailed: {
-        await this.queues.admin.clearFailed(queue);
+        await this.jobs.clearFailed(queue);
         break;
       }
 
@@ -101,26 +85,31 @@ export class JobService {
 
   private async getJobStatus(queue: QueueName): Promise<QueueStatusReport> {
     return {
-      jobCounts: await this.queues.admin.getJobCounts(queue),
-      queueStatus: { paused: this.queues.admin.isPaused(queue) },
+      jobCounts: await this.jobs.getJobCounts(queue),
+      queueStatus: { paused: this.jobs.isPaused(queue) },
     };
   }
 
-  private async onJobRun(item: JobItem): Promise<JobStatus> {
-    await this.events.emit('JobUpdated');
+  async execute(item: JobItem, { notify = true }: { notify?: boolean } = {}): Promise<JobStatus> {
+    if (notify) {
+      await this.events.emit('JobUpdated');
+    }
     const startedAt = Date.now();
 
     let status: JobStatus;
     try {
-      if (!this.queues.consumer) {
-        throw new Error('This composition has no job consumer');
+      const handler = this.handlers[item.name];
+      if (!handler) {
+        throw new Error(`No handler registered for job ${item.name}`);
       }
-      status = await this.queues.consumer.run(item);
+      status = await handler(item.data as never);
     } catch (error) {
       this.logger.error(`Job ${item.name} threw after ${Date.now() - startedAt}ms: ${asErrorMessage(error)}`);
       throw error;
     } finally {
-      await this.events.emit('JobUpdated');
+      if (notify) {
+        await this.events.emit('JobUpdated');
+      }
     }
 
     const duration = Date.now() - startedAt;

@@ -1,6 +1,5 @@
 import { sql } from 'kysely';
 
-import { insertBackgroundJobs } from 'src/cloudflare/background-job';
 import {
   DEMO_ACTIVITIES,
   DEMO_ACTIVITY_IMAGE_IDS,
@@ -15,6 +14,7 @@ import {
 import { JobName, type UserRole } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
+import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
@@ -233,10 +233,13 @@ class DemoProvisioner {
       },
       executor,
     );
-    await insertBackgroundJobs(executor, [
-      { name: JobName.ActivityMetricCompute, data: { id: activityId } },
-      { name: JobName.ActivityRouteMatchCompute, data: { id: activityId } },
-    ]);
+    await new PostgresJobRepository(this.database).insert(
+      [
+        { name: JobName.ActivityMetricCompute, data: { id: activityId } },
+        { name: JobName.ActivityRouteMatchCompute, data: { id: activityId } },
+      ],
+      executor,
+    );
     for (const [commentIndex, comment] of spec.comments.entries()) {
       const actor = usersById.get(comment.userId);
       if (!actor) {

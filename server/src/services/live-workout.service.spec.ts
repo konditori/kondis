@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ActivityType } from 'src/enum';
 import { NotFoundException } from 'src/errors';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { type LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { LiveWorkoutService } from 'src/services/live-workout.service';
 import { newTestService } from 'test/utils';
 
@@ -53,7 +53,7 @@ describe(LiveWorkoutService.name, () => {
     listPoints,
   } as unknown as LiveWorkoutRepository;
   const setup = () =>
-    newTestService(LiveWorkoutService, [repository, new CryptoRepository(), { emit }], { repository, emit });
+    newTestService(LiveWorkoutService, [repository, new NodeCryptoRepository(), { emit }], { repository, emit });
 
   beforeEach(() => {
     vi.clearAllMocks();

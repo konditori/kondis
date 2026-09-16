@@ -1,5 +1,9 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
+import { FileSizeLimitError, type StorageRepository } from 'src/contracts/storage.repository';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
@@ -13,10 +17,6 @@ import {
 } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
 import { ConsoleLogger } from 'src/logger';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
-import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
@@ -82,11 +82,11 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
 export class ActivityService {
   constructor(
     private readonly uploadRepository: UploadRepository,
-    private readonly storageRepository: StoragePort,
+    private readonly storageRepository: StorageRepository,
     private readonly activityRepository: ActivityRepository,
-    private readonly databaseRepository: TransactionPort,
-    private readonly eventRepository: RealtimePort,
-    private readonly jobRepository: JobProducerPort,
+    private readonly databaseRepository: TransactionRepository,
+    private readonly eventRepository: RealtimeRepository,
+    private readonly jobRepository: JobRepository,
     private readonly fitRepository: FitRepository,
     private readonly gpxRepository: GpxRepository,
     private readonly tcxRepository: TcxRepository,

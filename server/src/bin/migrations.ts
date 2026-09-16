@@ -1,8 +1,8 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { ConfigRepository } from 'src/repositories/config.repository';
 import { migrateDatabase } from 'src/repositories/database.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 
 const usage = 'Usage: migrations <create NAME | run | revert>';
 
@@ -45,11 +45,11 @@ const main = async (): Promise<void> => {
       break;
     }
     case 'run': {
-      await migrateDatabase(new ConfigRepository().getEnv().database);
+      await migrateDatabase(new EnvConfigRepository().getEnv().database);
       break;
     }
     case 'revert': {
-      await migrateDatabase(new ConfigRepository().getEnv().database, 'down');
+      await migrateDatabase(new EnvConfigRepository().getEnv().database, 'down');
       break;
     }
     default: {

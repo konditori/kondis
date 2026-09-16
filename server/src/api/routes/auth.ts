@@ -2,6 +2,7 @@ import { createRoute, type OpenAPIHono } from '@hono/zod-openapi';
 
 import type { ApiEnv, ApiUserLookup } from 'src/api/auth';
 import { jsonBodyMiddleware } from 'src/api/validation';
+import type { ConfigRepository } from 'src/contracts/config.repository';
 import {
   ActivityEventsTicketSchema,
   AuthCapabilitiesSchema,
@@ -18,7 +19,6 @@ import {
 } from 'src/dtos/auth.dto';
 import { UserRole } from 'src/enum';
 import { ForbiddenException, UnauthorizedException } from 'src/errors';
-import type { ConfigPort } from 'src/ports/config.port';
 import type { AuthService } from 'src/services/auth.service';
 import { publicMediaUrl } from 'src/utils/media';
 
@@ -267,7 +267,7 @@ export const registerAuthRoutes = (
   app: OpenAPIHono<ApiEnv>,
   service: AuthRouteService,
   users: ApiUserLookup,
-  config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>,
+  config: Pick<ConfigRepository, 'registrationEnabled' | 'trustProxyHeaders'>,
   options: { includeEventTickets?: boolean; mediaBaseUrl?: string; demoMode?: boolean } = {},
 ): void => {
   registerAuthSessionRoutes(app, service, users, options.mediaBaseUrl);

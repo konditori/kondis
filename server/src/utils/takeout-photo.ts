@@ -1,16 +1,16 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import type { TakeoutPhotoMetadataDto } from 'src/dtos/upload.dto';
 import { BadRequestException, PayloadTooLargeException } from 'src/errors';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import type { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { UploadedFileData } from 'src/types/uploads';
 
 // Stage one bounded photo at a time. Only server-generated storage paths reach jobs.
 export async function stageTakeoutPhoto(
   progress: TakeoutRepository,
-  storage: StoragePort,
-  crypto: CryptoPort,
+  storage: StorageRepository,
+  crypto: CryptoRepository,
   importId: string,
   userId: string,
   metadata: TakeoutPhotoMetadataDto,

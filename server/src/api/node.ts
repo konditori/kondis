@@ -14,7 +14,7 @@ import type { ApiBindings, ApiEnv } from 'src/api/auth';
 import type { FileRange, OpenFile } from 'src/api/file-response';
 import type { ApplicationComposition } from 'src/composition.node';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { UploadKind } from 'src/enum';
+import { UploadKind } from 'src/enum';
 import { BadRequestException, HttpException, PayloadTooLargeException } from 'src/errors';
 import type { ImageUpload, TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
@@ -55,7 +55,6 @@ const uploadHandlers: Record<UploadKind, RequestHandler> = {
   }).single('file'),
   takeoutActivity: multer({
     storage: uploadStorage,
-    // Keep text fields bounded while accepting takeout metadata and its activity file.
     limits: {
       fileSize: UPLOAD_LIMITS.activityFileBytes,
       fieldSize: 16 * 1024,
@@ -119,25 +118,25 @@ function readNodeUpload(
       const metadata = typeof incoming.body?.metadata === 'string' ? incoming.body.metadata : undefined;
       if (!incoming.file) {
         resolve(
-          kind === 'image'
+          kind === UploadKind.Image
             ? { file: undefined, caption }
-            : kind === 'takeoutActivity' || kind === 'takeoutPhoto'
+            : kind === UploadKind.TakeoutActivity || kind === UploadKind.TakeoutPhoto
               ? { file: undefined, metadata }
               : undefined,
         );
         return;
       }
       const { buffer, originalname, path, size } = incoming.file;
-      if (kind === 'image') {
+      if (kind === UploadKind.Image) {
         resolve({ file: { originalname, size, buffer }, caption });
         return;
       }
       resolve(
-        kind === 'avatar'
+        kind === UploadKind.Avatar
           ? { originalname, size, buffer }
-          : kind === 'takeoutActivity' || kind === 'takeoutPhoto'
+          : kind === UploadKind.TakeoutActivity || kind === UploadKind.TakeoutPhoto
             ? ({
-                file: kind === 'takeoutPhoto' ? { originalname, size, buffer } : { originalname, size, path },
+                file: kind === UploadKind.TakeoutPhoto ? { originalname, size, buffer } : { originalname, size, path },
                 metadata,
               } satisfies TakeoutActivityUpload)
             : { originalname, size, path },

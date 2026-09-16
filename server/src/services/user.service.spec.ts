@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { JobStatus } from 'src/enum';
 import { NotFoundException } from 'src/errors';
+import type { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import type { SocialRepository } from 'src/repositories/social.repository';
-import type { StorageRepository } from 'src/repositories/storage.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { UserService } from 'src/services/user.service';
 import { newTestService } from 'test/utils';
@@ -28,7 +28,7 @@ const setup = () => {
       read: vi.fn(),
       delete: vi.fn(),
       absolutePath: vi.fn((path: string) => `/storage/${path}`),
-    } as unknown as StorageRepository,
+    } as unknown as FileSystemStorageRepository,
   };
   return newTestService(UserService, [mocks.users, mocks.social, mocks.storage], mocks);
 };

@@ -8,7 +8,6 @@ import type {
   ImportProgressStatus,
   StreamType,
   TakeoutImportItemKind,
-  TakeoutImportItemStatus,
   UploadKind,
 } from 'src/enum';
 

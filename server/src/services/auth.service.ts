@@ -1,10 +1,10 @@
+import type { ConfigRepository } from 'src/contracts/config.repository';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { JobStatus, UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
 import { Logger } from 'src/logger';
-import type { ConfigPort } from 'src/ports/config.port';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository, type SessionRecord } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -24,12 +24,12 @@ export class AuthService {
 
   constructor(
     private readonly users: UserRepository,
-    private readonly config: Pick<ConfigPort, 'registrationEnabled' | 'setupToken'>,
+    private readonly config: Pick<ConfigRepository, 'registrationEnabled' | 'setupToken'>,
     private readonly rateLimitingRepository: RateLimitingRepository,
-    private readonly crypto: CryptoPort,
+    private readonly crypto: CryptoRepository,
     private readonly credentials: SessionRepository,
-    private readonly events: RealtimePort,
-    private readonly database: TransactionPort,
+    private readonly events: RealtimeRepository,
+    private readonly database: TransactionRepository,
     private readonly mediaBaseUrl?: string,
   ) {}
   get registrationEnabled() {

@@ -1,4 +1,9 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { CryptoRepository } from 'src/contracts/crypto.repository';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import {
   FitUploadResponseDto,
   TakeoutActivityMetadataDto,
@@ -14,11 +19,6 @@ import {
   TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
-import type { StoragePort } from 'src/ports/storage.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import type { ActivityRepository } from 'src/repositories/activity.repository';
 import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import type { UploadRepository } from 'src/repositories/upload.repository';
@@ -35,14 +35,14 @@ const extensionOf = (name: string): string => {
 
 export class WorkerUploadService {
   constructor(
-    private readonly storage: StoragePort,
-    private readonly crypto: CryptoPort,
-    private readonly jobs: JobProducerPort,
+    private readonly storage: StorageRepository,
+    private readonly crypto: CryptoRepository,
+    private readonly jobs: JobRepository,
     private readonly progress: TakeoutRepository,
     private readonly uploads: UploadRepository,
     private readonly activities: ActivityRepository,
-    private readonly database: TransactionPort,
-    private readonly realtime: RealtimePort,
+    private readonly database: TransactionRepository,
+    private readonly realtime: RealtimeRepository,
   ) {}
 
   async uploadActivity(
@@ -313,11 +313,7 @@ export class WorkerUploadService {
       const raced = await this.uploads.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId && takeoutItemKey) {
-          await this.progress.completeItem(
-            takeoutImportId,
-            takeoutItemKey,
-            TakeoutImportItemTerminalStatus.Duplicate,
-          );
+          await this.progress.completeItem(takeoutImportId, takeoutItemKey, TakeoutImportItemTerminalStatus.Duplicate);
         }
         await this.storage.delete(storagePath);
         return JobStatus.Skipped;

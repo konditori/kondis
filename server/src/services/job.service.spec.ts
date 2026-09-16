@@ -1,19 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { JobRepository } from 'src/contracts/job.repository';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
-import type { JobAdminPort, JobConsumerPort, JobProducerPort } from 'src/ports/queue.port';
-import { type EventRepository } from 'src/repositories/event.repository';
+import { type PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
 import { newTestService } from 'test/utils';
 
 describe('JobService', () => {
-  const run = vi.fn<(item: JobItem) => Promise<JobStatus>>();
+  const run = vi.fn<() => Promise<JobStatus>>();
   const queue = vi.fn(async () => {});
-  const startWorkers = vi.fn<(onJobRun: (item: JobItem) => Promise<JobStatus>) => Promise<void>>(() =>
-    Promise.resolve(),
-  );
   const getJobCounts = vi.fn(() =>
     Promise.resolve({ active: 0, queued: 0, deferred: 0, ready: 0, failed: 0, total: 0 }),
   );
@@ -36,9 +33,7 @@ describe('JobService', () => {
   const emit = vi.fn(async () => {});
 
   const jobRepository = {
-    run,
     queue,
-    startWorkers,
     getJobCounts,
     getAllJobCounts,
     isPaused,
@@ -47,40 +42,36 @@ describe('JobService', () => {
     empty,
     clearFailed,
     getJobHistory,
-  } as unknown as JobProducerPort & JobAdminPort & JobConsumerPort;
-  const queues = { admin: jobRepository, consumer: jobRepository, producer: jobRepository };
+  } as unknown as JobRepository;
 
   const setup = () =>
-    newTestService(JobService, [queues, { emit } as unknown as EventRepository, new ConsoleLogger({ logLevels: [] })], {
-      jobRepository,
-      queues,
-    });
+    newTestService(
+      JobService,
+      [
+        jobRepository,
+        { emit } as unknown as PostgresRealtimeRepository,
+        new ConsoleLogger({ logLevels: [] }),
+        {
+          [JobName.FileDelete]: run,
+          [JobName.ActivityParse]: run,
+        },
+      ],
+      {
+        jobRepository,
+      },
+    );
 
   const makeService = () => setup().sut;
 
   const captureRunner = (): ((item: JobItem) => Promise<JobStatus>) => {
-    const service = makeService() as unknown as {
-      onJobRun: (item: JobItem) => Promise<JobStatus>;
-    };
-    return service.onJobRun.bind(service);
+    const service = makeService();
+    return service.execute.bind(service);
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     run.mockResolvedValue(JobStatus.Success);
     isPaused.mockReturnValue(false);
-  });
-
-  describe('init', () => {
-    it('does not consume jobs in the API process', async () => {
-      await makeService().init(false);
-      expect(startWorkers).not.toHaveBeenCalled();
-    });
-
-    it('starts workers when job consumption is enabled', async () => {
-      await makeService().init(true);
-      expect(startWorkers).toHaveBeenCalledOnce();
-    });
   });
 
   describe('running a job', () => {
@@ -100,13 +91,25 @@ describe('JobService', () => {
       await expect(runner({ name: JobName.FileDelete, data: { paths: [] } })).resolves.toBe(JobStatus.Failed);
     });
 
-    it('passes the job straight through to the repository', async () => {
+    it('executes the registered domain handler with the job data', async () => {
       const runner = captureRunner();
       const item: JobItem = { name: JobName.ActivityParse, data: { id: 'abc' } };
 
       await runner(item);
 
-      expect(run).toHaveBeenCalledWith(item);
+      expect(run).toHaveBeenCalledWith(item.data);
+    });
+
+    it('rejects an unregistered job', async () => {
+      await expect(makeService().execute({ name: JobName.AuthCredentialCleanup, data: {} })).rejects.toThrow(
+        'No handler registered for job AuthCredentialCleanup',
+      );
+    });
+
+    it('lets the batch boundary report updates once for Queue deliveries', async () => {
+      await makeService().execute({ name: JobName.FileDelete, data: { paths: [] } }, { notify: false });
+      expect(run).toHaveBeenCalledOnce();
+      expect(emit).not.toHaveBeenCalled();
     });
   });
 

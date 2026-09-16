@@ -1,9 +1,9 @@
 import sharp from 'sharp';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import { JobName, JobStatus } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import type { StoragePort } from 'src/ports/storage.port';
 import { SocialRepository } from 'src/repositories/social.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import type { JobOf } from 'src/types/jobs';
@@ -16,7 +16,7 @@ export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly social: SocialRepository,
-    private readonly storage: StoragePort,
+    private readonly storage: StorageRepository,
   ) {}
 
   async updateProfile(userId: string, firstName: string, lastName: string) {

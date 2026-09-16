@@ -50,14 +50,14 @@ import {
   type UserCreationService,
   type UserMutationService,
 } from 'src/api/routes/user-mutations';
-import type { ConfigPort } from 'src/ports/config.port';
+import type { ConfigRepository } from 'src/contracts/config.repository';
 import type { UploadReader } from 'src/types';
 
 export type ApiRouteGroups = {
   activities: ActivityReadService & SocialActivityReadService;
   activityImages: ActivityImageRouteService;
   auth: AuthRouteService & UserCreationService;
-  config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>;
+  config: Pick<ConfigRepository, 'registrationEnabled' | 'trustProxyHeaders'>;
   files: FileReader;
   jobs: JobRouteService;
   liveWorkouts: LiveWorkoutRouteService;
