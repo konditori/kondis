@@ -89,7 +89,8 @@
           }))
           .filter(({ distance }) => distance <= 5 * 60 * 1000)
           .sort((a, b) => a.distance - b.distance)[0]?.candidate;
-        if (matchingActivity) window.location.replace(`/activity/${matchingActivity.id}`);
+        if (matchingActivity)
+          window.location.replace(`/activity/${matchingActivity.id}`);
       } finally {
         resolvingFinishedActivity = false;
       }

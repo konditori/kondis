@@ -124,12 +124,7 @@ export class LiveActivityRepository {
     });
   }
 
-  updateProgress(
-    id: string,
-    status: LiveActivityTable['status'],
-    elapsedSeconds: number,
-    distanceMeters: number,
-  ) {
+  updateProgress(id: string, status: LiveActivityTable['status'], elapsedSeconds: number, distanceMeters: number) {
     return this.db
       .updateTable('live_activity')
       .set({ status, elapsed_seconds: elapsedSeconds, distance_meters: distanceMeters, last_received_at: new Date() })

@@ -24,8 +24,8 @@ import { getDemoUser } from 'src/demo/demo-provisioner';
 import {
   activateDemoLiveTracker,
   ingestDemoLiveTrackerPoint,
-  isDemoLiveTrackerIngestionRequest,
   isDemoLiveActivityRequest,
+  isDemoLiveTrackerIngestionRequest,
 } from 'src/demo/live-entrypoint';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';

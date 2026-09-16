@@ -42,7 +42,9 @@
   // the CDN cache, so the client reconciles live activities itself.
   let liveActivitiesOverride = $state<LiveActivity[] | null>(null);
   let now = $state(Date.now());
-  const liveActivities = $derived(liveActivitiesOverride ?? data.liveActivities);
+  const liveActivities = $derived(
+    liveActivitiesOverride ?? data.liveActivities,
+  );
   const activities = $derived.by(() => {
     const byActivity = new Map(
       data.activities.map((activity) => [activity.id, activity]),
@@ -391,7 +393,9 @@
                 <h3>{activityTypeLabel(data.activityTypes, activity.sport)}</h3>
               </div>
               <p>
-                {localDate(activity.startedAt)} · {localTime(activity.startedAt)} ·
+                {localDate(activity.startedAt)} · {localTime(
+                  activity.startedAt,
+                )} ·
                 {activity.status === "paused" ? t("paused") : t("live")}
               </p>
               <span class="live-updated"

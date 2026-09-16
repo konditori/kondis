@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LiveActivityStatus } from 'src/enum';
-import { ActivityType } from 'src/enum';
+import { ActivityType, LiveActivityStatus } from 'src/enum';
 import { NotFoundException } from 'src/errors';
 import { type LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
-import { LiveService as LiveService } from 'src/services/live-activity.service';
+import { LiveService } from 'src/services/live-activity.service';
 import { newTestService } from 'test/utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const WORKOUT_ID = '00000000-0000-4000-8000-000000000001';
 const USER_ID = '00000000-0000-4000-8000-000000000002';

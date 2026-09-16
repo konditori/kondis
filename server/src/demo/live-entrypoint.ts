@@ -8,7 +8,7 @@ import {
   DEMO_LIVE_TRACKER_NAME,
   type DemoLiveTrackerNamespaceBinding,
 } from 'src/demo/live-durable-object';
-import { LivePointSchema, LiveActivityCreateSchema, LiveActivityPointsSchema } from 'src/dtos/live-activity.dto';
+import { LiveActivityCreateSchema, LiveActivityPointsSchema, LivePointSchema } from 'src/dtos/live-activity.dto';
 
 const DemoLiveActivityPointsSchema = LiveActivityPointsSchema.safeExtend({
   // The simulator may need to repair a activity after its PostgreSQL row was

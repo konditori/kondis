@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp } from 'src/api/app';
-import { ActivityType, LiveActivityStatus as LiveActivityStatus } from 'src/enum';
+import { ActivityType, LiveActivityStatus } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const WORKOUT_ID = '00000000-0000-4000-8000-000000000002';

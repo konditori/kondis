@@ -115,7 +115,12 @@ export class LiveService {
     if (activity.status === LiveActivityStatus.Discarded) {
       return this.toDto(activity, userId);
     }
-    const updated = await this.liveRepository.updateProgress(id, input.status, input.elapsedSeconds, input.distanceMeters);
+    const updated = await this.liveRepository.updateProgress(
+      id,
+      input.status,
+      input.elapsedSeconds,
+      input.distanceMeters,
+    );
     return this.toDto(updated ?? activity, userId);
   }
 
@@ -144,7 +149,12 @@ export class LiveService {
       throw new NotFoundException('Live activity not found');
     }
     await this.liveRepository.clearShareToken(id);
-    await this.liveRepository.updateProgress(id, LiveActivityStatus.Discarded, activity.elapsed_seconds, activity.distance_meters);
+    await this.liveRepository.updateProgress(
+      id,
+      LiveActivityStatus.Discarded,
+      activity.elapsed_seconds,
+      activity.distance_meters,
+    );
   }
 
   // The public demo has one simulated device. This cleanup is deliberately
