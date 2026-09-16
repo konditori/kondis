@@ -1,0 +1,63 @@
+open-api/kondis-openapi-specs.json
+  s_7544286b2acb04::t_57e208efa096bc 26-47,3072-3185
+packages/sdk/src/fetch-client.ts
+  s_7544286b2acb04::t_30199615a06ad1 21-51,782-794
+server/src/services/activity-image.service.ts
+  s_f7c7cc1e975e9d::t_82db1fe64c2312 15,20,34,38-39,41,44-47,69,76,78,93,110,114,118,122,132,136,140,144,148,152,156-158,160,174,178,182,187,196,201-202,212-215,227,239,246,255,264,268,274,285-286,288-289,291-292,304,316,320-323,329,331
+server/src/services/activity.service.ts
+  s_7544286b2acb04::t_2481a8374dd464 3,18,72,110,168,180,215,295,582-583,679,690,700,761,764,774,777,790,809
+server/src/services/auth.service.ts
+  s_f7c7cc1e975e9d::t_60fe46b298f087 3-4,16,18,21,27,53-54,56,60,64,72,76-78,81,84-85,110-114,121,128-130,133,148,152,155,157,165,170,173,175,184,200
+server/src/services/job.service.ts
+  s_f7c7cc1e975e9d::t_4049fc35677267 4,20,22,25,33-34,38,43,46-49,56,61,66,71,81,87-88,94,110
+server/src/services/storage.service.ts
+  s_f7c7cc1e975e9d::t_b25fb79f76137f 2,7
+server/src/services/upload.service.ts
+  s_f7c7cc1e975e9d::t_57a418af2992ba 3,20,26,48,64,69,90,106,117,119,122,133,160,163,166,177,181,185,189,222,236-237,251,297
+server/src/services/user.service.ts
+  s_7544286b2acb04::t_3b04e56b91c69f 6,13,15-16,49-52,54,60,64,68,73,77-78,82,85,93
+server/src/services/worker-upload.service.ts
+  s_f7c7cc1e975e9d::t_a623e8f62e8c55 1,18,29,51,58-59,61,67,72,80,85,105-113,122,133,135,138,149,153,176,179,182,193,197,201,205,238,242,252-253,258,268,271,274-275,285,303,306-310,312,318,328,330,337,343,349
+server/test/medium/specs/repositories/postgres-job.repository.spec.ts
+  s_f7c7cc1e975e9d::t_1fee031b14ce8d 18,35
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_7544286b2acb04::t_89b855507802e5 6,10,34,67,203-205,213-219,284
+web/src/lib/workers/strava-takeout.worker.spec.ts
+  s_7544286b2acb04::t_c4e42dc053d644 17,19-20,22-169,215,226-228,288,341-342,397,442-443,460,466-469,472-475,478-481
+web/src/lib/workers/strava-takeout.worker.ts
+  s_f7c7cc1e975e9d::t_b82ca9c2c97be9 7,9-52,94,117,119,130,149-152,156,164,166,175,188,200,207,239-240,246,251,256-259,304,306,308,330,332,340,342,345-348,387-388,439,491,578,595-600,617,622,639,647,655-658,680,682,696,698
+server/src/services/base.service.ts
+  s_f16d490b232491::t_ffdd30f5280ad4 1-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ee3a2bb5fc6711320a4ab4223eab8718c7a3556e",
+  "prompts": {},
+  "sessions": {
+    "s_7544286b2acb04": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f558c67edffe7JX1MnnvBZ0vW8",
+        "model": "@cf/moonshotai/kimi-k3"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_f16d490b232491": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "611bf87f-9c92-4cff-9e49-607062588794",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_f7c7cc1e975e9d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f559fc6cdffe3re8QS6CVNWk25",
+        "model": "@cf/moonshotai/kimi-k3"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
