@@ -2,7 +2,7 @@ import { z } from '@hono/zod-openapi';
 
 import { ActivityTypeSchema } from 'src/dtos/activity.dto';
 
-const LiveWorkoutStatusSchema = z.enum(['recording', 'paused', 'ended', 'discarded']);
+const LiveActivityStatusSchema = z.enum(['recording', 'paused', 'ended', 'discarded']);
 export const LivePointSchema = z.object({
   sequence: z.number().int().positive(),
   recordedAt: z.string().datetime(),
@@ -12,11 +12,11 @@ export const LivePointSchema = z.object({
   accuracyMeters: z.number().finite().nonnegative(),
 });
 
-export const LiveWorkoutSchema = z.object({
+export const LiveActivitySchema = z.object({
   id: z.string().uuid(),
   sport: ActivityTypeSchema,
   startedAt: z.string().datetime(),
-  status: LiveWorkoutStatusSchema,
+  status: LiveActivityStatusSchema,
   canShare: z.boolean(),
   elapsedSeconds: z.number().int().nonnegative(),
   distanceMeters: z.number().nonnegative(),
@@ -26,15 +26,15 @@ export const LiveWorkoutSchema = z.object({
   route: z.array(z.tuple([z.number(), z.number()])),
 });
 
-export const LiveWorkoutCreateSchema = z.object({
+export const LiveActivityCreateSchema = z.object({
   clientSessionId: z.string().uuid(),
   sport: ActivityTypeSchema,
   startedAt: z.string().datetime(),
 });
 
-export const LiveWorkoutListSchema = z.array(LiveWorkoutSchema);
+export const LiveActivityListSchema = z.array(LiveActivitySchema);
 
-export const LiveWorkoutPointsSchema = z
+export const LiveActivityPointsSchema = z
   .object({
     points: z.array(LivePointSchema).min(1).max(100),
     elapsedSeconds: z.number().int().nonnegative(),
@@ -44,26 +44,26 @@ export const LiveWorkoutPointsSchema = z
     message: 'Every point sequence must be unique within a batch',
   });
 
-export const LiveWorkoutStateSchema = z.object({
-  status: LiveWorkoutStatusSchema.exclude(['discarded']),
+export const LiveActivityStateSchema = z.object({
+  status: LiveActivityStatusSchema.exclude(['discarded']),
   elapsedSeconds: z.number().int().nonnegative(),
   distanceMeters: z.number().nonnegative(),
 });
 
-export const LiveWorkoutShareSchema = z.object({
+export const LiveActivityShareSchema = z.object({
   token: z.string().min(20),
   expiresAt: z.string().datetime(),
 });
 
-export const LiveWorkoutAckSchema = z.object({
+export const LiveActivityAckSchema = z.object({
   id: z.string().uuid(),
   lastSequence: z.number().int().nonnegative(),
 });
 
-export type LiveWorkoutDto = z.output<typeof LiveWorkoutSchema>;
-export type LiveWorkoutCreateDto = z.output<typeof LiveWorkoutCreateSchema>;
-export type LiveWorkoutListDto = z.output<typeof LiveWorkoutListSchema>;
-export type LiveWorkoutPointsDto = z.output<typeof LiveWorkoutPointsSchema>;
-export type LiveWorkoutStateDto = z.output<typeof LiveWorkoutStateSchema>;
-export type LiveWorkoutShareDto = z.output<typeof LiveWorkoutShareSchema>;
-export type LiveWorkoutAckDto = z.output<typeof LiveWorkoutAckSchema>;
+export type LiveActivityDto = z.output<typeof LiveActivitySchema>;
+export type LiveActivityCreateDto = z.output<typeof LiveActivityCreateSchema>;
+export type LiveActivityListDto = z.output<typeof LiveActivityListSchema>;
+export type LiveActivityPointsDto = z.output<typeof LiveActivityPointsSchema>;
+export type LiveActivityStateDto = z.output<typeof LiveActivityStateSchema>;
+export type LiveActivityShareDto = z.output<typeof LiveActivityShareSchema>;
+export type LiveActivityAckDto = z.output<typeof LiveActivityAckSchema>;

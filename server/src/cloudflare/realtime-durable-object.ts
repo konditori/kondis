@@ -215,7 +215,7 @@ export class RealtimeDurableObject {
     if (event.type === 'notifications.read') {
       return event.userId === connection.userId;
     }
-    if (event.type === 'live-workout.updated') {
+    if (event.type === 'live-activity.updated') {
       return event.userId === connection.userId;
     }
     const id = activityId(event);
@@ -253,7 +253,7 @@ export class RealtimeDurableObject {
   private attachment(socket: HibernatableWebSocket): SocketAttachment | undefined {
     const value = socket.deserializeAttachment();
     return isObject(value) &&
-      (value.kind === 'user' || value.kind === 'admin') &&
+      (value.role === UserRole.User || value.role === UserRole.Admin) &&
       typeof value.sessionId === 'string' &&
       typeof value.sessionExpiresAt === 'number' &&
       Array.isArray(value.activityIds)

@@ -9,8 +9,8 @@
 <main class="public-live-page">
   <a class="public-live-brand" href="/">⚡ Kondis</a>
   <LiveActivityView
-    workout={data.workout}
-    endpoint={`/api/v1/live-workouts/shared/${data.token}`}
+    activity={data.activity}
+    endpoint={`/api/v1/live-activities/shared/${data.token}`}
     activityTypes={data.activityTypes}
     unitSystem={data.unitSystem}
   />

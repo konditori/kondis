@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {
-  parseLiveWorkoutEvent,
+  parseLiveActivityEvent,
   parseNotificationEvent,
   subscribeToActivityEvents,
 } from "$lib/realtime";
@@ -86,15 +86,15 @@ describe("parseNotificationEvent", () => {
   });
 });
 
-describe("parseLiveWorkoutEvent", () => {
-  it("recognizes a live workout updated event", () => {
+describe("parseLiveActivityEvent", () => {
+  it("recognizes a live activity updated event", () => {
     expect(
-      parseLiveWorkoutEvent(
+      parseLiveActivityEvent(
         JSON.stringify({
-          type: "live-workout.updated",
+          type: "live-activity.updated",
           userId: "user-id",
-          workout: {
-            id: "workout-id",
+          activity: {
+            id: "activity-id",
             status: "recording",
             elapsedSeconds: 120,
             distanceMeters: 500,
@@ -105,17 +105,17 @@ describe("parseLiveWorkoutEvent", () => {
         }),
       ),
     ).toMatchObject({
-      type: "live-workout.updated",
+      type: "live-activity.updated",
       userId: "user-id",
-      workout: { id: "workout-id", distanceMeters: 500 },
+      activity: { id: "activity-id", distanceMeters: 500 },
     });
   });
 
-  it("ignores malformed live workout messages", () => {
-    expect(parseLiveWorkoutEvent("not json")).toBeNull();
+  it("ignores malformed live activity messages", () => {
+    expect(parseLiveActivityEvent("not json")).toBeNull();
     expect(
-      parseLiveWorkoutEvent(
-        JSON.stringify({ type: "live-workout.updated", workout: {} }),
+      parseLiveActivityEvent(
+        JSON.stringify({ type: "live-activity.updated", activity: {} }),
       ),
     ).toBeNull();
   });
@@ -162,7 +162,7 @@ describe("subscribeToActivityEvents", () => {
     expect(TestWebSocket.sockets[0]!.readyState).toBe(3);
   });
 
-  it("forwards live workout events to the onLiveWorkout listener", async () => {
+  it("forwards live activity events to the onLiveActivity listener", async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve(
         new Response(JSON.stringify({ token: "c".repeat(64) }), {
@@ -171,25 +171,25 @@ describe("subscribeToActivityEvents", () => {
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
-    const onLiveWorkout = vi.fn();
+    const onLiveActivity = vi.fn();
 
     const unsubscribe = subscribeToActivityEvents(
       "wss://example.test/events",
       vi.fn(),
       vi.fn(),
-      { onLiveWorkout },
+      { onLiveActivity },
     );
 
     await vi.waitFor(() => expect(TestWebSocket.sockets).toHaveLength(1));
     TestWebSocket.sockets[0]!.open();
     TestWebSocket.sockets[0]!.message(
       JSON.stringify({
-        type: "live-workout.updated",
+        type: "live-activity.updated",
         userId: "user-id",
-        workout: { id: "workout-id" },
+        activity: { id: "activity-id" },
       }),
     );
-    expect(onLiveWorkout).toHaveBeenCalledOnce();
+    expect(onLiveActivity).toHaveBeenCalledOnce();
 
     unsubscribe();
   });

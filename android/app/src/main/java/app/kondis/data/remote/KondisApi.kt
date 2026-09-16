@@ -52,7 +52,7 @@ import retrofit2.http.Url
     val role: String,
 )
 
-@Serializable data class LiveWorkoutCreateRequest(
+@Serializable data class LiveActivityCreateRequest(
     val clientSessionId: String,
     val sport: String,
     val startedAt: String,
@@ -67,24 +67,24 @@ import retrofit2.http.Url
     val accuracyMeters: Float,
 )
 
-@Serializable data class LiveWorkoutPointsRequest(
+@Serializable data class LiveActivityPointsRequest(
     val points: List<LivePointRequest>,
     val elapsedSeconds: Long,
     val distanceMeters: Double,
 )
 
-@Serializable data class LiveWorkoutStateRequest(
+@Serializable data class LiveActivityStateRequest(
     val status: String,
     val elapsedSeconds: Long,
     val distanceMeters: Double,
 )
 
-@Serializable data class LiveWorkoutResponse(
+@Serializable data class LiveActivityResponse(
     val id: String,
     val lastSequence: Int,
 )
 
-@Serializable data class LiveWorkoutShareResponse(
+@Serializable data class LiveActivityShareResponse(
     val token: String,
     val expiresAt: String? = null,
 )
@@ -172,30 +172,30 @@ interface KondisApi {
         @Body request: QueueCommandRequest,
     ): QueueStatusResponse
 
-    @POST("live-workouts")
-    suspend fun createLiveWorkout(
-        @Body request: LiveWorkoutCreateRequest,
-    ): LiveWorkoutResponse
+    @POST("live-activities")
+    suspend fun createLiveActivity(
+        @Body request: LiveActivityCreateRequest,
+    ): LiveActivityResponse
 
-    @POST("live-workouts/{id}/points")
+    @POST("live-activities/{id}/points")
     suspend fun uploadLivePoints(
         @Path("id") id: String,
-        @Body request: LiveWorkoutPointsRequest,
-    ): LiveWorkoutResponse
+        @Body request: LiveActivityPointsRequest,
+    ): LiveActivityResponse
 
-    @PATCH("live-workouts/{id}")
-    suspend fun updateLiveWorkout(
+    @PATCH("live-activities/{id}")
+    suspend fun updateLiveActivity(
         @Path("id") id: String,
-        @Body request: LiveWorkoutStateRequest,
-    ): LiveWorkoutResponse
+        @Body request: LiveActivityStateRequest,
+    ): LiveActivityResponse
 
-    @POST("live-workouts/{id}/share")
-    suspend fun createLiveWorkoutShare(
+    @POST("live-activities/{id}/share")
+    suspend fun createLiveActivityShare(
         @Path("id") id: String,
-    ): LiveWorkoutShareResponse
+    ): LiveActivityShareResponse
 
-    @DELETE("live-workouts/{id}")
-    suspend fun discardLiveWorkout(
+    @DELETE("live-activities/{id}")
+    suspend fun discardLiveActivity(
         @Path("id") id: String,
     )
 

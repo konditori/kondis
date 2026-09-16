@@ -38,7 +38,7 @@ async function resetDevelopmentData(): Promise<void> {
           follow_request,
           user_follow,
           user_block,
-          live_workout,
+          live_activity,
           upload
         RESTART IDENTITY CASCADE
       `.execute(trx);

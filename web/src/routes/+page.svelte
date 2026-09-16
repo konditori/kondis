@@ -12,7 +12,7 @@
   import RouteMap from "$lib/components/RouteMap.svelte";
   import { socialControllerFeed, getSdkRequestOptions } from "$lib/api";
   import { subscribeToActivityEvents } from "$lib/realtime";
-  import type { Activity, ActivityPage, LiveWorkout } from "$lib/types";
+  import type { Activity, ActivityPage, LiveActivity } from "$lib/types";
   import { activityTypeLabel, sportIcon } from "$lib/activity-types";
   import {
     distance,
@@ -39,10 +39,10 @@
   let loading = $state(false);
   let loadError = $state(false);
   // The server-rendered list is only a snapshot: the page HTML may come from
-  // the CDN cache, so the client reconciles live workouts itself.
-  let liveWorkoutsOverride = $state<LiveWorkout[] | null>(null);
+  // the CDN cache, so the client reconciles live activities itself.
+  let liveActivitiesOverride = $state<LiveActivity[] | null>(null);
   let now = $state(Date.now());
-  const liveWorkouts = $derived(liveWorkoutsOverride ?? data.liveWorkouts);
+  const liveActivities = $derived(liveActivitiesOverride ?? data.liveActivities);
   const activities = $derived.by(() => {
     const byActivity = new Map(
       data.activities.map((activity) => [activity.id, activity]),
@@ -142,7 +142,7 @@
   });
 
   $effect(() => {
-    void refreshLiveWorkouts();
+    void refreshLiveActivities();
     return subscribeToActivityEvents(
       data.eventsUrl,
       (event) => {
@@ -177,38 +177,38 @@
         ];
         void refreshRecent();
       },
-      () => void refreshLiveWorkouts(),
+      () => void refreshLiveActivities(),
       {
-        onLiveWorkout: (event) => {
-          const current = liveWorkoutsOverride ?? data.liveWorkouts;
-          const known = current.some(({ id }) => id === event.workout.id);
-          if (!known || event.workout.status === "ended") {
-            void refreshLiveWorkouts();
+        onLiveActivity: (event) => {
+          const current = liveActivitiesOverride ?? data.liveActivities;
+          const known = current.some(({ id }) => id === event.activity.id);
+          if (!known || event.activity.status === "ended") {
+            void refreshLiveActivities();
             return;
           }
-          const currentWorkout = current.find(
-            ({ id }) => id === event.workout.id,
+          const currentActivity = current.find(
+            ({ id }) => id === event.activity.id,
           )!;
           const sequenceGap =
-            event.workout.lastSequence > currentWorkout.lastSequence + 1;
+            event.activity.lastSequence > currentActivity.lastSequence + 1;
           if (sequenceGap) {
-            void refreshLiveWorkouts();
+            void refreshLiveActivities();
           }
-          liveWorkoutsOverride = current.map((workout) =>
-            workout.id === event.workout.id
+          liveActivitiesOverride = current.map((activity) =>
+            activity.id === event.activity.id
               ? {
-                  ...workout,
-                  status: event.workout.status,
-                  elapsedSeconds: event.workout.elapsedSeconds,
-                  distanceMeters: event.workout.distanceMeters,
-                  lastSequence: event.workout.lastSequence,
+                  ...activity,
+                  status: event.activity.status,
+                  elapsedSeconds: event.activity.elapsedSeconds,
+                  distanceMeters: event.activity.distanceMeters,
+                  lastSequence: event.activity.lastSequence,
                   lastReceivedAt: new Date().toISOString(),
                   route:
-                    event.workout.lastSequence === workout.lastSequence + 1
-                      ? [...workout.route, event.workout.position]
-                      : workout.route,
+                    event.activity.lastSequence === activity.lastSequence + 1
+                      ? [...activity.route, event.activity.position]
+                      : activity.route,
                 }
-              : workout,
+              : activity,
           );
         },
       },
@@ -228,13 +228,13 @@
     };
   });
 
-  async function refreshLiveWorkouts() {
+  async function refreshLiveActivities() {
     try {
-      const response = await fetch("/api/v1/live-workouts", {
+      const response = await fetch("/api/v1/live-activities", {
         cache: "no-store",
       });
       if (!response.ok) return;
-      liveWorkoutsOverride = (await response.json()) as LiveWorkout[];
+      liveActivitiesOverride = (await response.json()) as LiveActivity[];
     } catch {
       // The socket will retry and reconcile again after reconnecting.
     }
@@ -361,38 +361,38 @@
     </div>
   {/if}
 
-  {#if liveWorkouts.length}
-    <section class="live-workout-list" aria-label={t("live_activities")}>
-      {#each liveWorkouts as workout (workout.id)}
-        {@const Icon = sportIcon(workout.sport)}
-        {@const ageSeconds = workout.lastReceivedAt
+  {#if liveActivities.length}
+    <section class="live-activity-list" aria-label={t("live_activities")}>
+      {#each liveActivities as activity (activity.id)}
+        {@const Icon = sportIcon(activity.sport)}
+        {@const ageSeconds = activity.lastReceivedAt
           ? Math.max(
               0,
-              Math.floor((now - Date.parse(workout.lastReceivedAt)) / 1000),
+              Math.floor((now - Date.parse(activity.lastReceivedAt)) / 1000),
             )
           : null}
         {@const averageSpeed =
-          workout.elapsedSeconds > 0
-            ? workout.distanceMeters / workout.elapsedSeconds
+          activity.elapsedSeconds > 0
+            ? activity.distanceMeters / activity.elapsedSeconds
             : null}
         <article class="activity-card live-activity-card">
-          <a class="activity-card-summary" href={`/activity/${workout.id}`}>
+          <a class="activity-card-summary" href={`/activity/${activity.id}`}>
             <div class="sport-badge">
               <Icon size={24} strokeWidth={1.8} />
               <span class="live-label">{t("live").toUpperCase()}</span>
               <span
-                class:paused={workout.status === "paused"}
+                class:paused={activity.status === "paused"}
                 class="live-beacon"
                 aria-label={t("live_recording")}
               ></span>
             </div>
             <div class="activity-primary">
               <div class="activity-title">
-                <h3>{activityTypeLabel(data.activityTypes, workout.sport)}</h3>
+                <h3>{activityTypeLabel(data.activityTypes, activity.sport)}</h3>
               </div>
               <p>
-                {localDate(workout.startedAt)} · {localTime(workout.startedAt)} ·
-                {workout.status === "paused" ? t("paused") : t("live")}
+                {localDate(activity.startedAt)} · {localTime(activity.startedAt)} ·
+                {activity.status === "paused" ? t("paused") : t("live")}
               </p>
               <span class="live-updated"
                 >{ageSeconds === null
@@ -403,7 +403,7 @@
             <div class="activity-feed-stats">
               <div class="activity-stat">
                 <strong
-                  >{distance(workout.distanceMeters, data.unitSystem)}</strong
+                  >{distance(activity.distanceMeters, data.unitSystem)}</strong
                 ><small>{t("distance")}</small>
               </div>
               <div class="activity-stat">
@@ -412,7 +412,7 @@
                 >
               </div>
               <div class="activity-stat">
-                <strong>{duration(workout.elapsedSeconds)}</strong><small
+                <strong>{duration(activity.elapsedSeconds)}</strong><small
                   >{t("moving_time")}</small
                 >
               </div>
@@ -423,15 +423,15 @@
               </div>
             </div>
           </a>
-          {#if workout.route.length >= 2}
+          {#if activity.route.length >= 2}
             <a
               class="activity-card-media-link"
-              href={`/activity/${workout.id}`}
+              href={`/activity/${activity.id}`}
             >
               <div class="activity-card-media">
                 <div class="activity-card-map live-list-map">
                   <RouteMap
-                    coordinates={workout.route}
+                    coordinates={activity.route}
                     compact
                     showEndpoints={false}
                   />

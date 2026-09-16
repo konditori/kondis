@@ -25,7 +25,7 @@ import {
   activateDemoLiveTracker,
   ingestDemoLiveTrackerPoint,
   isDemoLiveTrackerIngestionRequest,
-  isDemoLiveWorkoutRequest,
+  isDemoLiveActivityRequest,
 } from 'src/demo/live-entrypoint';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
@@ -68,7 +68,7 @@ const createRequestApp = (
   registerWorkerPortableRouteGroups(requestApp, {
     activities: composition.activityService,
     jobs: composition.jobService,
-    liveWorkouts: composition.liveWorkoutService,
+    liveActivities: composition.liveActivityService,
     social: composition.socialService,
     users: composition.userRepository,
   });
@@ -139,7 +139,7 @@ const createRequestApp = (
 
 export default {
   async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
-    if (isDemoLiveWorkoutRequest(request, env)) {
+    if (isDemoLiveActivityRequest(request, env)) {
       const activationFailure = await activateDemoLiveTracker(env);
       if (activationFailure) {
         return activationFailure;
@@ -262,7 +262,7 @@ const isDemoCacheable = (request: Request, response: Response): boolean => {
     request.method === 'GET' &&
     response.ok &&
     !path.includes('/events') &&
-    !path.includes('/live-workouts') &&
+    !path.includes('/live-activities') &&
     !path.endsWith('/auth/activity-events-ticket') &&
     !path.includes('/_internal/')
   );

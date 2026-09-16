@@ -4,9 +4,6 @@ import type { JobCounts, JobHistoryEntry, JobItem } from 'src/types/jobs';
 
 export type QueueJobOptions = { transaction?: KondisTransaction };
 
-/**
- * Application-facing operations shared by pg-boss and the custom job table.
- */
 export abstract class JobRepository {
   abstract queue(item: JobItem, options?: QueueJobOptions): Promise<void>;
   abstract queueAll(items: JobItem[], options?: QueueJobOptions): Promise<void>;

@@ -9,10 +9,10 @@ import {
   UpdateDateColumn,
 } from 'src/schema/decorators';
 
-export type LiveWorkoutStatus = 'recording' | 'paused' | 'ended' | 'discarded';
+export type LiveActivityStatus = 'recording' | 'paused' | 'ended' | 'discarded';
 
-@Table('live_workout')
-export class LiveWorkoutTable {
+@Table('live_activity')
+export class LiveActivityTable {
   @PrimaryGeneratedColumn()
   id!: Generated<string>;
 
@@ -29,7 +29,7 @@ export class LiveWorkoutTable {
   started_at!: Timestamp;
 
   @Column({ type: 'text' })
-  status!: LiveWorkoutStatus;
+  status!: LiveActivityStatus;
 
   @Column({ type: 'integer' })
   elapsed_seconds!: number;

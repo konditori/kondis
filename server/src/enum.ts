@@ -138,6 +138,19 @@ export enum UserRole {
   User = 'user',
 }
 
+export enum LiveActivityStatus {
+  Recording = 'recording',
+  Paused = 'paused',
+  Ended = 'ended',
+  Discarded = 'discarded',
+}
+
+export enum LiveActivityProgressEventStatus {
+  Recording = 'recording',
+  Paused = 'paused',
+  Ended = 'ended',
+}
+
 export enum WorkerType {
   API = 'api',
   WORKER = 'worker',

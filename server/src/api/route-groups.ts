@@ -20,10 +20,10 @@ import {
   type JobRouteService,
 } from 'src/api/routes/job';
 import {
-  registerLiveWorkoutReadRoutes,
-  registerLiveWorkoutRoutes,
-  type LiveWorkoutRouteService,
-} from 'src/api/routes/live-workout';
+  registerLiveActivityReadRoutes,
+  registerLiveActivityRoutes,
+  type LiveActivityRouteService,
+} from 'src/api/routes/live-activity';
 import {
   registerSocialReadRoutes,
   type SocialActivityReadService,
@@ -60,7 +60,7 @@ export type ApiRouteGroups = {
   config: Pick<ConfigRepository, 'registrationEnabled' | 'trustProxyHeaders'>;
   files: FileReader;
   jobs: JobRouteService;
-  liveWorkouts: LiveWorkoutRouteService;
+  liveActivities: LiveActivityRouteService;
   sessions: import('src/api/auth').ApiSessionLookup;
   social: SocialReadService & SocialMutationService;
   uploads: UploadReader;
@@ -74,7 +74,7 @@ export type ApiRouteGroup = (app: OpenAPIHono<ApiEnv>, dependencies: ApiRouteGro
 export type WorkerPortableRouteDependencies = {
   activities: ActivityReadService & SocialActivityReadService;
   jobs: Pick<JobRouteService, 'getAllJobStatus' | 'getJobHistory'>;
-  liveWorkouts: Pick<LiveWorkoutRouteService, 'get' | 'getShared' | 'list'>;
+  liveActivities: Pick<LiveActivityRouteService, 'get' | 'getShared' | 'list'>;
   social: SocialReadService;
   users: UserReadRepository;
 };
@@ -99,7 +99,7 @@ export const registerWorkerPortableRouteGroups = (
   registerUserListRoutes(app, dependencies.users);
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
   registerJobReadRoutes(app, dependencies.jobs);
-  registerLiveWorkoutReadRoutes(app, dependencies.liveWorkouts);
+  registerLiveActivityReadRoutes(app, dependencies.liveActivities);
 };
 
 export const registerWorkerQueueMutationRoutes = (
@@ -154,7 +154,7 @@ export const registerPortableRouteGroups: ApiRouteGroup = (app, dependencies) =>
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
   registerAuthRoutes(app, dependencies.auth, dependencies.users, dependencies.config);
   registerJobRoutes(app, dependencies.jobs);
-  registerLiveWorkoutRoutes(app, dependencies.liveWorkouts);
+  registerLiveActivityRoutes(app, dependencies.liveActivities);
 };
 
 export const registerAllRouteGroups: ApiRouteGroup = (app, dependencies) => {

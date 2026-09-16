@@ -1,22 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
+import { LiveActivityStatus } from 'src/enum';
 import { ActivityType } from 'src/enum';
 import { NotFoundException } from 'src/errors';
-import { type LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { type LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
-import { LiveWorkoutService } from 'src/services/live-workout.service';
+import { LiveService as LiveService } from 'src/services/live-activity.service';
 import { newTestService } from 'test/utils';
 
 const WORKOUT_ID = '00000000-0000-4000-8000-000000000001';
 const USER_ID = '00000000-0000-4000-8000-000000000002';
 
-const workout = (overrides: Record<string, unknown> = {}) => ({
+const liveActivity = (overrides: Record<string, unknown> = {}) => ({
   id: WORKOUT_ID,
   user_id: USER_ID,
   client_session_id: '00000000-0000-4000-8000-000000000003',
   sport: ActivityType.Run,
   started_at: new Date('2026-08-17T08:00:00.000Z'),
-  status: 'recording',
+  status: LiveActivityStatus.Recording,
   elapsed_seconds: 20,
   distance_meters: 100,
   last_sequence: 2,
@@ -29,7 +29,7 @@ const workout = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-describe(LiveWorkoutService.name, () => {
+describe(LiveService.name, () => {
   const getById = vi.fn();
   const getByClientSessionId = vi.fn();
   const create = vi.fn();
@@ -51,16 +51,16 @@ describe(LiveWorkoutService.name, () => {
     updateProgress,
     setShareToken,
     listPoints,
-  } as unknown as LiveWorkoutRepository;
+  } as unknown as LiveActivityRepository;
   const setup = () =>
-    newTestService(LiveWorkoutService, [repository, new NodeCryptoRepository(), { emit }], { repository, emit });
+    newTestService(LiveService, [repository, new NodeCryptoRepository(), { emit }], { repository, emit });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    getById.mockResolvedValue(workout());
+    getById.mockResolvedValue(liveActivity());
     getByClientSessionId.mockResolvedValue(undefined);
-    create.mockResolvedValue(workout());
-    updateProgress.mockResolvedValue(workout({ last_sequence: 3 }));
+    create.mockResolvedValue(liveActivity());
+    updateProgress.mockResolvedValue(liveActivity({ last_sequence: 3 }));
   });
 
   it('creates a session idempotently from the Android client identifier', async () => {
@@ -75,7 +75,7 @@ describe(LiveWorkoutService.name, () => {
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ userId: USER_ID, sport: ActivityType.Run }));
   });
 
-  it('deletes an ended demo workout and its stale predecessor sessions', async () => {
+  it('deletes an ended demo activity and its stale predecessor sessions', async () => {
     const { sut } = setup();
 
     await sut.deleteOtherSessions(USER_ID, '00000000-0000-4000-8000-000000000003');
@@ -106,7 +106,7 @@ describe(LiveWorkoutService.name, () => {
     expect(appendPoints).toHaveBeenCalledOnce();
     expect(listPoints).not.toHaveBeenCalled();
     expect(emit).toHaveBeenCalledWith(
-      'LiveWorkoutUpdated',
+      'LiveActivityUpdated',
       USER_ID,
       expect.objectContaining({
         id: WORKOUT_ID,
@@ -116,7 +116,7 @@ describe(LiveWorkoutService.name, () => {
     );
   });
 
-  it('does not mint a public link for a workout outside the caller account', async () => {
+  it('does not mint a public link for a activity outside the caller account', async () => {
     const { sut } = setup();
     getById.mockResolvedValue(undefined);
 

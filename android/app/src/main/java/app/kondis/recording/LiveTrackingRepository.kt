@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.Intent
 import app.kondis.data.remote.KondisApiFactory
 import app.kondis.data.remote.LivePointRequest
-import app.kondis.data.remote.LiveWorkoutCreateRequest
-import app.kondis.data.remote.LiveWorkoutPointsRequest
-import app.kondis.data.remote.LiveWorkoutStateRequest
+import app.kondis.data.remote.LiveActivityCreateRequest
+import app.kondis.data.remote.LiveActivityPointsRequest
+import app.kondis.data.remote.LiveActivityStateRequest
 import app.kondis.data.settings.SettingsRepository
 import app.kondis.ui.i18n.tr
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -35,8 +35,8 @@ class LiveTrackingRepository
             val response =
                 apiFactory
                     .create(settings)
-                    .createLiveWorkout(
-                        LiveWorkoutCreateRequest(
+                    .createLiveActivity(
+                        LiveActivityCreateRequest(
                             clientSessionId = UUID.randomUUID().toString(),
                             sport = sport,
                             startedAt = startedAt.toString(),
@@ -59,7 +59,7 @@ class LiveTrackingRepository
                     .create(settings)
                     .uploadLivePoints(
                         current.id,
-                        LiveWorkoutPointsRequest(
+                        LiveActivityPointsRequest(
                             points =
                                 pending.mapIndexed { index, point ->
                                     LivePointRequest(
@@ -87,16 +87,16 @@ class LiveTrackingRepository
             val settings = settingsRepository.settings.first()
             apiFactory
                 .create(settings)
-                .updateLiveWorkout(
+                .updateLiveActivity(
                     current.id,
-                    LiveWorkoutStateRequest(status, recording.elapsedSeconds, recording.distanceMeters),
+                    LiveActivityStateRequest(status, recording.elapsedSeconds, recording.distanceMeters),
                 )
         }
 
         suspend fun share(): Boolean {
             val current = session ?: return false
             val settings = settingsRepository.settings.first()
-            val response = apiFactory.create(settings).createLiveWorkoutShare(current.id)
+            val response = apiFactory.create(settings).createLiveActivityShare(current.id)
             val appUrl = settings.serverUrl.substringBefore("/api/v1").trimEnd('/')
             val shareIntent =
                 Intent(Intent.ACTION_SEND)
@@ -116,7 +116,7 @@ class LiveTrackingRepository
         suspend fun discard() {
             val current = session ?: return
             val settings = settingsRepository.settings.first()
-            apiFactory.create(settings).discardLiveWorkout(current.id)
+            apiFactory.create(settings).discardLiveActivity(current.id)
             session = null
             pendingStart = null
         }

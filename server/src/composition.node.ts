@@ -7,7 +7,7 @@ import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
-import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
@@ -24,7 +24,7 @@ import { ActivityImageService } from 'src/services/activity-image.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
 import { JobService } from 'src/services/job.service';
-import { LiveWorkoutService } from 'src/services/live-workout.service';
+import { LiveService } from 'src/services/live-activity.service';
 import { ServerService } from 'src/services/server.service';
 import { SocialService } from 'src/services/social.service';
 import { StorageService } from 'src/services/storage.service';
@@ -56,7 +56,7 @@ export const createApplicationComposition = ({
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
   const gpxRepository = new GpxRepository(newLogger());
-  const liveWorkoutRepository = new LiveWorkoutRepository(database);
+  const liveActivityRepository = new LiveActivityRepository(database);
   const rateLimitingRepository = new RateLimitingRepository(database);
   const socialRepository = new SocialRepository(database);
   const storageRepository = new FileSystemStorageRepository(configRepository, cryptoRepository);
@@ -107,7 +107,7 @@ export const createApplicationComposition = ({
     eventRepository,
     databaseRepository,
   );
-  const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository, eventRepository);
+  const liveActivityService = new LiveService(liveActivityRepository, cryptoRepository, eventRepository);
   const serverService = new ServerService();
   const socialService = new SocialService(socialRepository, eventRepository);
   const storageService = new StorageService(storageRepository, jobRepository, newLogger());
@@ -154,7 +154,7 @@ export const createApplicationComposition = ({
     fitRepository,
     gpxRepository,
     jobRepository,
-    liveWorkoutRepository,
+    liveActivityRepository,
     rateLimitingRepository,
     socialRepository,
     storageRepository,
@@ -166,7 +166,7 @@ export const createApplicationComposition = ({
     activityImageService,
     authService,
     jobService,
-    liveWorkoutService,
+    liveActivityService,
     serverService,
     socialService,
     storageService,
@@ -184,7 +184,7 @@ export const createApplicationComposition = ({
     [FitRepository, fitRepository],
     [GpxRepository, gpxRepository],
     [PgBossJobRepository, jobRepository],
-    [LiveWorkoutRepository, liveWorkoutRepository],
+    [LiveActivityRepository, liveActivityRepository],
     [RateLimitingRepository, rateLimitingRepository],
     [SocialRepository, socialRepository],
     [FileSystemStorageRepository, storageRepository],
@@ -196,7 +196,7 @@ export const createApplicationComposition = ({
     [ActivityImageService, activityImageService],
     [AuthService, authService],
     [JobService, jobService],
-    [LiveWorkoutService, liveWorkoutService],
+    [LiveService, liveActivityService],
     [ServerService, serverService],
     [SocialService, socialService],
     [StorageService, storageService],

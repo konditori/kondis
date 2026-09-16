@@ -1,9 +1,9 @@
 import { Column, Table, Timestamp } from 'src/schema/decorators';
 
-@Table('live_workout_point')
-export class LiveWorkoutPointTable {
+@Table('live_activity_point')
+export class LiveActivityPointTable {
   @Column({ type: 'text' })
-  live_workout_id!: string;
+  live_activity_id!: string;
 
   @Column({ type: 'integer' })
   sequence!: number;

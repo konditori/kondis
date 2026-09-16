@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { ActivityType } from 'src/enum';
-import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 
 import { createMediumFactory } from 'test/medium.factory';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
 
-describe(LiveWorkoutRepository.name, () => {
+describe(LiveActivityRepository.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
 
   beforeAll(() => {
@@ -20,7 +20,7 @@ describe(LiveWorkoutRepository.name, () => {
   it('stores idempotent points and only resolves an active, unexpired public token', async () => {
     const factory = createMediumFactory(db);
     const user = await factory.newUser();
-    const sut = new LiveWorkoutRepository(db);
+    const sut = new LiveActivityRepository(db);
     const workout = await sut.create({
       userId: user.id,
       clientSessionId: crypto.randomUUID(),

@@ -155,7 +155,7 @@ type NodeApiDependencies = Pick<
   | 'authCredentialRepository'
   | 'configRepository'
   | 'jobService'
-  | 'liveWorkoutService'
+  | 'liveActivityService'
   | 'serverService'
   | 'socialService'
   | 'uploadService'
@@ -171,7 +171,7 @@ export const createNodeApiApp = (dependencies: NodeApiDependencies): KondisApiAp
     config: dependencies.configRepository,
     files: nodeFileReader,
     jobs: dependencies.jobService,
-    liveWorkouts: dependencies.liveWorkoutService,
+    liveActivities: dependencies.liveActivityService,
     server: dependencies.serverService,
     sessions: dependencies.authCredentialRepository,
     social: dependencies.socialService,

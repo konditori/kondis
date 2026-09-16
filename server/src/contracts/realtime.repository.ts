@@ -1,8 +1,9 @@
 import type { ActivityDetailDto, ActivityDto } from 'src/dtos/activity.dto';
+import { LiveActivityProgressEventStatus } from 'src/enum';
 
-export type LiveWorkoutProgressEvent = {
+export type LiveActivityProgressEvent = {
   id: string;
-  status: 'recording' | 'paused' | 'ended';
+  status: LiveActivityProgressEventStatus;
   elapsedSeconds: number;
   distanceMeters: number;
   lastSequence: number;
@@ -49,7 +50,7 @@ export type EventMap = {
   ActivityBestEffortsAvailable: [activity: Pick<ActivityDetailDto, 'id' | 'bestEfforts'>];
   NotificationCreated: [notification: NotificationCreatedEvent];
   NotificationsRead: [notification: NotificationsReadEvent];
-  LiveWorkoutUpdated: [userId: string, workout: LiveWorkoutProgressEvent];
+  LiveActivityUpdated: [userId: string, activity: LiveActivityProgressEvent];
 };
 
 export type EmitEvent = keyof EventMap;

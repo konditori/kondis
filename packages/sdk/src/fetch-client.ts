@@ -116,7 +116,7 @@ export type QueueStatusReportDtoOutput = {
   jobCounts: JobCountsDtoOutput;
   queueStatus: QueueStatusDtoOutput;
 };
-export type LiveWorkoutListDtoOutput = {
+export type LiveActivityListDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
@@ -129,12 +129,12 @@ export type LiveWorkoutListDtoOutput = {
   lastReceivedAt: string | null;
   route: number[][];
 }[];
-export type LiveWorkoutCreateDto = {
+export type LiveActivityCreateDto = {
   clientSessionId: string;
   sport: ActivityType;
   startedAt: string;
 };
-export type LiveWorkoutDtoOutput = {
+export type LiveActivityDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
@@ -147,12 +147,12 @@ export type LiveWorkoutDtoOutput = {
   lastReceivedAt: string | null;
   route: number[][];
 };
-export type LiveWorkoutStateDto = {
+export type LiveActivityStateDto = {
   status: Status5;
   elapsedSeconds: number;
   distanceMeters: number;
 };
-export type LiveWorkoutPointsDto = {
+export type LiveActivityPointsDto = {
   points: {
     sequence: number;
     recordedAt: string;
@@ -164,11 +164,11 @@ export type LiveWorkoutPointsDto = {
   elapsedSeconds: number;
   distanceMeters: number;
 };
-export type LiveWorkoutAckDtoOutput = {
+export type LiveActivityAckDtoOutput = {
   id: string;
   lastSequence: number;
 };
-export type LiveWorkoutShareDtoOutput = {
+export type LiveActivityShareDtoOutput = {
   token: string;
   expiresAt: string;
 };
@@ -1115,39 +1115,39 @@ export function jobControllerRunQueueCommand(
     ),
   );
 }
-export function liveWorkoutControllerList(opts?: Oazapfts.RequestOpts) {
+export function liveActivityControllerList(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutListDtoOutput;
-    }>('/live-workouts', {
+      data: LiveActivityListDtoOutput;
+    }>('/live-activities', {
       ...opts,
     }),
   );
 }
-export function liveWorkoutControllerCreate(
+export function liveActivityControllerCreate(
   {
-    liveWorkoutCreateDto,
+    liveActivityCreateDto,
   }: {
-    liveWorkoutCreateDto: LiveWorkoutCreateDto;
+    liveActivityCreateDto: LiveActivityCreateDto;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: LiveWorkoutDtoOutput;
+      data: LiveActivityDtoOutput;
     }>(
-      '/live-workouts',
+      '/live-activities',
       oazapfts.json({
         ...opts,
         method: 'POST',
-        body: liveWorkoutCreateDto,
+        body: liveActivityCreateDto,
       }),
     ),
   );
 }
-export function liveWorkoutControllerGetShared(
+export function liveActivityControllerGetShared(
   {
     token,
   }: {
@@ -1158,13 +1158,13 @@ export function liveWorkoutControllerGetShared(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(`/live-workouts/shared/${encodeURIComponent(token)}`, {
+      data: LiveActivityDtoOutput;
+    }>(`/live-activities/shared/${encodeURIComponent(token)}`, {
       ...opts,
     }),
   );
 }
-export function liveWorkoutControllerGet(
+export function liveActivityControllerGet(
   {
     id,
   }: {
@@ -1175,37 +1175,37 @@ export function liveWorkoutControllerGet(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(`/live-workouts/${encodeURIComponent(id)}`, {
+      data: LiveActivityDtoOutput;
+    }>(`/live-activities/${encodeURIComponent(id)}`, {
       ...opts,
     }),
   );
 }
-export function liveWorkoutControllerUpdate(
+export function liveActivityControllerUpdate(
   {
     id,
-    liveWorkoutStateDto,
+    liveActivityStateDto,
   }: {
     id: string;
-    liveWorkoutStateDto: LiveWorkoutStateDto;
+    liveActivityStateDto: LiveActivityStateDto;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutDtoOutput;
+      data: LiveActivityDtoOutput;
     }>(
-      `/live-workouts/${encodeURIComponent(id)}`,
+      `/live-activities/${encodeURIComponent(id)}`,
       oazapfts.json({
         ...opts,
         method: 'PATCH',
-        body: liveWorkoutStateDto,
+        body: liveActivityStateDto,
       }),
     ),
   );
 }
-export function liveWorkoutControllerDiscard(
+export function liveActivityControllerDiscard(
   {
     id,
   }: {
@@ -1214,37 +1214,37 @@ export function liveWorkoutControllerDiscard(
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
-    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}`, {
+    oazapfts.fetchText(`/live-activities/${encodeURIComponent(id)}`, {
       ...opts,
       method: 'DELETE',
     }),
   );
 }
-export function liveWorkoutControllerPoints(
+export function liveActivityControllerPoints(
   {
     id,
-    liveWorkoutPointsDto,
+    liveActivityPointsDto,
   }: {
     id: string;
-    liveWorkoutPointsDto: LiveWorkoutPointsDto;
+    liveActivityPointsDto: LiveActivityPointsDto;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: LiveWorkoutAckDtoOutput;
+      data: LiveActivityAckDtoOutput;
     }>(
-      `/live-workouts/${encodeURIComponent(id)}/points`,
+      `/live-activities/${encodeURIComponent(id)}/points`,
       oazapfts.json({
         ...opts,
         method: 'POST',
-        body: liveWorkoutPointsDto,
+        body: liveActivityPointsDto,
       }),
     ),
   );
 }
-export function liveWorkoutControllerShare(
+export function liveActivityControllerShare(
   {
     id,
   }: {
@@ -1255,14 +1255,14 @@ export function liveWorkoutControllerShare(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: LiveWorkoutShareDtoOutput;
-    }>(`/live-workouts/${encodeURIComponent(id)}/share`, {
+      data: LiveActivityShareDtoOutput;
+    }>(`/live-activities/${encodeURIComponent(id)}/share`, {
       ...opts,
       method: 'POST',
     }),
   );
 }
-export function liveWorkoutControllerRevokeShare(
+export function liveActivityControllerRevokeShare(
   {
     id,
   }: {
@@ -1271,7 +1271,7 @@ export function liveWorkoutControllerRevokeShare(
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
-    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}/share`, {
+    oazapfts.fetchText(`/live-activities/${encodeURIComponent(id)}/share`, {
       ...opts,
       method: 'DELETE',
     }),

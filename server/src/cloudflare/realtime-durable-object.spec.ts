@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
-import { UserRole } from 'src/enum';
+import { LiveActivityProgressEventStatus, UserRole } from 'src/enum';
 import { DurableObjectRealtimeRepository } from 'src/repositories/cloudflare/durable-object-realtime.repository';
 
 const attachment = (role: UserRole.User | UserRole.Admin, sessionId = 'session-id') => ({
@@ -123,7 +123,7 @@ describe(RealtimeDurableObject.name, () => {
     ).resolves.toMatchObject({ status: 400 });
   });
 
-  it('routes live workout updates only to the workout owner', async () => {
+  it('routes live activity updates only to the activity owner', async () => {
     const owner = socket(attachment(UserRole.User));
     const otherUser = socket({ ...attachment(UserRole.User), userId: 'other-user-id' });
     const state = {
@@ -133,11 +133,11 @@ describe(RealtimeDurableObject.name, () => {
     };
     const hub = new RealtimeDurableObject(state as never, {});
     const event = {
-      type: 'live-workout.updated',
+      type: 'live-activity.updated',
       userId: 'user-id',
-      workout: {
-        id: 'workout-id',
-        status: 'recording',
+      activity: {
+        id: 'activity-id',
+        status: LiveActivityProgressEventStatus.Recording,
         elapsedSeconds: 1,
         distanceMeters: 4.7,
         lastSequence: 1,

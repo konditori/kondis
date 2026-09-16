@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiApp } from 'src/api/app';
-import { ActivityType } from 'src/enum';
+import { ActivityType, LiveActivityStatus as LiveActivityStatus } from 'src/enum';
 import { apiAuthHeaders, newApiDependencies, newApiUsers, TEST_API_USER } from 'test/api';
 
 const WORKOUT_ID = '00000000-0000-4000-8000-000000000002';
-const workout = {
+const liveActivity = {
   id: WORKOUT_ID,
   sport: ActivityType.Run,
   startedAt: '2026-09-04T08:00:00.000Z',
-  status: 'recording' as const,
+  status: LiveActivityStatus.Recording,
   canShare: true,
   elapsedSeconds: 10,
   distanceMeters: 20,
@@ -19,32 +19,32 @@ const workout = {
   route: [],
 };
 
-describe('API live workout routes', () => {
+describe('API live activity routes', () => {
   it('keeps shared lookups public and delegates owner routes', async () => {
     const service = {
-      list: vi.fn(() => Promise.resolve([workout])),
-      create: vi.fn(() => Promise.resolve(workout)),
-      getShared: vi.fn(() => Promise.resolve({ ...workout, canShare: false })),
-      get: vi.fn(() => Promise.resolve(workout)),
+      list: vi.fn(() => Promise.resolve([liveActivity])),
+      create: vi.fn(() => Promise.resolve(liveActivity)),
+      getShared: vi.fn(() => Promise.resolve({ ...liveActivity, canShare: false })),
+      get: vi.fn(() => Promise.resolve(liveActivity)),
       appendPoints: vi.fn(() => Promise.resolve({ id: WORKOUT_ID, lastSequence: 2 })),
-      updateState: vi.fn(() => Promise.resolve({ ...workout, status: 'paused' as const })),
+      updateState: vi.fn(() => Promise.resolve({ ...liveActivity, status: 'paused' as const })),
       createShare: vi.fn(() =>
         Promise.resolve({ token: 'a-public-share-token-value', expiresAt: '2026-09-05T08:00:00.000Z' }),
       ),
       revokeShare: vi.fn(() => Promise.resolve()),
       discard: vi.fn(() => Promise.resolve()),
     };
-    const app = createApiApp(newApiDependencies({ liveWorkouts: service, users: newApiUsers() }));
+    const app = createApiApp(newApiDependencies({ liveActivities: service, users: newApiUsers() }));
 
-    const shared = await app.request('/live-workouts/shared/share-token');
+    const shared = await app.request('/live-activities/shared/share-token');
     expect(shared.status).toBe(200);
     expect(service.getShared).toHaveBeenCalledWith('share-token');
 
-    const list = await app.request('/live-workouts', { headers: apiAuthHeaders() });
+    const list = await app.request('/live-activities', { headers: apiAuthHeaders() });
     expect(list.status).toBe(200);
     expect(service.list).toHaveBeenCalledWith(TEST_API_USER.id);
 
-    const created = await app.request('/live-workouts', {
+    const created = await app.request('/live-activities', {
       method: 'POST',
       headers: { ...apiAuthHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -56,7 +56,7 @@ describe('API live workout routes', () => {
     expect(created.status).toBe(201);
     expect(service.create).toHaveBeenCalledWith(TEST_API_USER.id, expect.objectContaining({ sport: 'run' }));
 
-    const discarded = await app.request(`/live-workouts/${WORKOUT_ID}`, {
+    const discarded = await app.request(`/live-activities/${WORKOUT_ID}`, {
       method: 'DELETE',
       headers: apiAuthHeaders(),
     });

@@ -8,10 +8,10 @@ import {
   DEMO_LIVE_TRACKER_NAME,
   type DemoLiveTrackerNamespaceBinding,
 } from 'src/demo/live-durable-object';
-import { LivePointSchema, LiveWorkoutCreateSchema, LiveWorkoutPointsSchema } from 'src/dtos/live-workout.dto';
+import { LivePointSchema, LiveActivityCreateSchema, LiveActivityPointsSchema } from 'src/dtos/live-activity.dto';
 
-const DemoLiveWorkoutPointsSchema = LiveWorkoutPointsSchema.safeExtend({
-  // The simulator may need to repair a workout after its PostgreSQL row was
+const DemoLiveActivityPointsSchema = LiveActivityPointsSchema.safeExtend({
+  // The simulator may need to repair a activity after its PostgreSQL row was
   // recreated while the Durable Object retained its route position.
   points: z.array(LivePointSchema).min(1).max(aargau.length),
   finished: z.boolean().optional(),
@@ -22,13 +22,13 @@ type DemoLiveEnvironment = {
   DEMO_LIVE_TRACKER?: DemoLiveTrackerNamespaceBinding;
 };
 
-export const isDemoLiveWorkoutRequest = (request: Request, env: DemoLiveEnvironment): boolean => {
+export const isDemoLiveActivityRequest = (request: Request, env: DemoLiveEnvironment): boolean => {
   if (!isEnabled(env.KONDIS_DEMO_MODE) || request.method !== 'GET') {
     return false;
   }
   const path = new URL(request.url).pathname;
   const apiPath = path.startsWith('/api/v1/') ? path.slice('/api/v1'.length) : path;
-  return apiPath === '/live-workouts' || /^\/live-workouts\/[^/]+$/.test(apiPath);
+  return apiPath === '/live-activities' || /^\/live-activities\/[^/]+$/.test(apiPath);
 };
 
 export const activateDemoLiveTracker = async (env: DemoLiveEnvironment): Promise<Response | undefined> => {
@@ -72,20 +72,20 @@ export const ingestDemoLiveTrackerPoint = async (
   } catch {
     return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
   }
-  const session = LiveWorkoutCreateSchema.safeParse(body);
-  const points = DemoLiveWorkoutPointsSchema.safeParse(body);
+  const session = LiveActivityCreateSchema.safeParse(body);
+  const points = DemoLiveActivityPointsSchema.safeParse(body);
   if (!session.success || !points.success) {
     return Response.json({ statusCode: 400, message: 'Bad Request' }, { status: 400 });
   }
   // A Durable Object can outlive a demo database reset or a failed earlier
-  // completion. Keep the public demo to its single simulated live workout.
-  await composition.liveWorkoutService.deleteOtherSessions(demoUser.id, session.data.clientSessionId);
-  const workout = await composition.liveWorkoutService.create(demoUser.id, session.data);
-  const acknowledgement = await composition.liveWorkoutService.appendPoints(workout.id, demoUser.id, points.data);
+  // completion. Keep the public demo to its single simulated live activity.
+  await composition.liveActivityService.deleteOtherSessions(demoUser.id, session.data.clientSessionId);
+  const activity = await composition.liveActivityService.create(demoUser.id, session.data);
+  const acknowledgement = await composition.liveActivityService.appendPoints(activity.id, demoUser.id, points.data);
   if (points.data.finished) {
     // No finished rides are retained in the demo database. Deleting the row
     // also cascades to its GPS points.
-    await composition.liveWorkoutService.delete(workout.id, demoUser.id);
+    await composition.liveActivityService.delete(activity.id, demoUser.id);
   }
   return Response.json(acknowledgement, { status: 201 });
 };

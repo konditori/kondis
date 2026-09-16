@@ -16,7 +16,7 @@ import { WorkerCryptoRepository } from 'src/repositories/cloudflare/worker-crypt
 import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
-import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { NoopRealtimeRepository } from 'src/repositories/noop-realtime.repository';
 import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
@@ -31,7 +31,7 @@ import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
 import { JobService } from 'src/services/job.service';
-import { LiveWorkoutService } from 'src/services/live-workout.service';
+import { LiveService } from 'src/services/live-activity.service';
 import { PostgresJobService } from 'src/services/postgres-job.service';
 import { SocialService } from 'src/services/social.service';
 import { WorkerActivityImageService } from 'src/services/worker-activity-image.service';
@@ -148,7 +148,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     ? new WorkerUserService(userRepository, socialRepository, storage, jobRepository)
     : undefined;
   const socialService = new SocialService(socialRepository, workerEvents, env.KONDIS_DEMO_MEDIA_BASE_URL);
-  const liveWorkoutService = new LiveWorkoutService(new LiveWorkoutRepository(database), workerCrypto, workerEvents);
+  const liveActivityService = new LiveService(new LiveActivityRepository(database), workerCrypto, workerEvents);
   const jobService = new JobService(
     jobRepository,
     workerEvents,
@@ -183,7 +183,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     uploadRepository,
     fitRepository,
     socialService,
-    liveWorkoutService,
+    liveActivityService,
     jobService,
     postgresJobService,
     userRepository,

@@ -4,7 +4,7 @@ import {
   apiUrl,
   getServerSdkRequestOptions,
 } from "$lib/server/api";
-import type { ActivityPage, LiveWorkout } from "$lib/types";
+import type { ActivityPage, LiveActivity } from "$lib/types";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
@@ -22,17 +22,17 @@ export const load: PageServerLoad = async ({
   );
   try {
     const [liveResponse, body] = await Promise.all([
-      locals.kondisFetch(apiUrl("api/v1/live-workouts")),
+      locals.kondisFetch(apiUrl("api/v1/live-activities")),
       socialControllerFeed({}, getServerSdkRequestOptions(locals.kondisFetch)),
     ]);
-    const liveWorkouts = liveResponse.ok
-      ? ((await liveResponse.json()) as LiveWorkout[])
+    const liveActivities = liveResponse.ok
+      ? ((await liveResponse.json()) as LiveActivity[])
       : [];
     return {
       ...(body as ActivityPage),
       unavailable: false,
       eventsUrl,
-      liveWorkouts,
+      liveActivities,
     };
   } catch {
     // Don't cache this error page, next reload should come from origin
@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({
       total: 0,
       unavailable: true,
       eventsUrl,
-      liveWorkouts: [],
+      liveActivities: [],
     };
   }
 };
