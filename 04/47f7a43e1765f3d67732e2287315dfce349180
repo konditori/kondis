@@ -1,0 +1,21 @@
+server/scripts/generate-cloudflare-config.spec.ts
+  s_9323c0d8bff2fa::t_1aa1f406032811 38
+server/vitest.config.ts
+  s_9323c0d8bff2fa::t_e6b193635b1b17 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0447f7a43e1765f3d67732e2287315dfce349180",
+  "prompts": {},
+  "sessions": {
+    "s_9323c0d8bff2fa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "668f56e8-2910-4b2b-b7bf-38b7353da170",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
