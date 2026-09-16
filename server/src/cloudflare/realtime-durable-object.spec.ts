@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
-import { DurableObjectRealtimeRepository } from 'src/repositories/cloudflare/durable-object-realtime.repository';
 import { UserRole } from 'src/enum';
+import { DurableObjectRealtimeRepository } from 'src/repositories/cloudflare/durable-object-realtime.repository';
 
 const attachment = (role: UserRole.User | UserRole.Admin, sessionId = 'session-id') => ({
   role,
@@ -59,7 +59,7 @@ describe('DurableObjectRealtimeRepository', () => {
 
 describe(RealtimeDurableObject.name, () => {
   it('accepts authenticated WebSocket upgrades through the Durable Object', async () => {
-    const serverSocket = socket(attachment('user'));
+    const serverSocket = socket(attachment(UserRole.User));
     const clientSocket = {} as WebSocket;
     const state = {
       acceptWebSocket: vi.fn(),
