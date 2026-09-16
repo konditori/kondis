@@ -41,9 +41,6 @@ export type BaseServiceDeps = {
   userRepository: UserRepository;
 };
 
-// Imports every repository once so concrete services only declare the
-// dependencies they actually use. The injected logger is treated as a
-// template; each service instance logs with its own class name as context.
 export class BaseService {
   protected readonly activityRepository: ActivityRepository;
   protected readonly configRepository: ConfigRepository;

@@ -179,7 +179,12 @@ export function createMcpApp(deps: McpDependencies) {
     }
     const principal = c.get('principal');
     if (parsedBody?.method === 'tools/call' && typeof parsedBody.params?.name === 'string') {
-      const required = TOOL_SCOPES[parsedBody.params.name];
+      const operationId = z.string().uuid().safeParse(parsedBody.params.arguments?.id).data;
+      const required =
+        TOOL_SCOPES[parsedBody.params.name] ??
+        (parsedBody.params.name === 'get_operation' && operationId
+          ? await operations.scopeFor(principal, operationId)
+          : undefined);
       const location =
         parsedBody.params.name === 'get_activity_streams' &&
         Array.isArray(parsedBody.params.arguments?.types) &&
@@ -188,9 +193,10 @@ export function createMcpApp(deps: McpDependencies) {
         (scope) => scope && !principal.scopes.has(scope),
       );
       if (missing.length > 0) {
+        const requestedScopes = SCOPES.filter((scope) => principal.scopes.has(scope) || missing.includes(scope));
         c.header(
           'WWW-Authenticate',
-          `Bearer error="insufficient_scope", scope="${missing.join(' ')}", resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`,
+          `Bearer error="insufficient_scope", scope="${requestedScopes.join(' ')}", resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`,
         );
         return c.json({ message: 'Additional permission is required', scopes: missing }, 403);
       }

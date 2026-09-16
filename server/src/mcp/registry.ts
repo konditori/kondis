@@ -54,11 +54,11 @@ export function createMcpServer(principal: Principal, services: McpServices) {
     name: string,
     description: string,
     inputSchema: T,
-    scope: Scope,
+    scope: Scope | undefined,
     handler: (input: z.output<T>) => Promise<unknown>,
     expensive = false,
   ) => {
-    if (!principal.scopes.has(scope) || (principal.demo && ['activities:write', 'activities:import'].includes(scope))) {
+    if (scope && principal.demo && ['activities:write', 'activities:import'].includes(scope)) {
       return;
     }
     server.registerTool(
@@ -68,7 +68,7 @@ export function createMcpServer(principal: Principal, services: McpServices) {
         inputSchema: inputSchema as unknown as z.ZodObject<z.ZodRawShape>,
         outputSchema: resultSchema,
         annotations: {
-          readOnlyHint: !['activities:write', 'activities:import'].includes(scope) || name === 'get_operation',
+          readOnlyHint: !scope || !['activities:write', 'activities:import'].includes(scope),
           destructiveHint: false,
           idempotentHint: true,
           openWorldHint: false,
@@ -77,7 +77,9 @@ export function createMcpServer(principal: Principal, services: McpServices) {
       async (input: unknown) => {
         const started = Date.now();
         try {
-          requireScope(principal, scope);
+          if (scope) {
+            requireScope(principal, scope);
+          }
           if (expensive) {
             await services.consumeAnalysis();
           }
@@ -219,12 +221,11 @@ export function createMcpServer(principal: Principal, services: McpServices) {
     (v) => q.bestEfforts(principal, v),
   );
   if (services.operations) {
-    const operationScope = principal.scopes.has('activities:import') ? 'activities:import' : 'activities:write';
     register(
       'get_operation',
       'Inspect one of your durable mutation or import operations.',
       z.object({ id }),
-      operationScope,
+      undefined,
       (v) => services.operations!.get(principal, v.id),
     );
   }

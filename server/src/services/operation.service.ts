@@ -4,7 +4,7 @@ import type { JobRepository } from 'src/contracts/job.repository';
 import type { StorageRepository } from 'src/contracts/storage.repository';
 import { ActivityType, JobName } from 'src/enum';
 import { BadRequestException, ConflictException, NotFoundException } from 'src/errors';
-import { hash, requireScope, type Principal } from 'src/mcp/context';
+import { hash, requireScope, type Principal, type Scope } from 'src/mcp/context';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import type { KondisDatabase, KondisTransaction } from 'src/types';
 import { z } from 'zod';
@@ -303,6 +303,16 @@ export class OperationService {
       }
       return { uploadId, status: 'queued' };
     });
+  }
+
+  async scopeFor(principal: Principal, id: string): Promise<Scope | undefined> {
+    const operation = await sql<{
+      kind: string;
+    }>`SELECT kind FROM mcp_operation WHERE id = ${id}::uuid AND user_id = ${principal.userId}`.execute(this.db);
+    if (!operation.rows[0]) {
+      return undefined;
+    }
+    return operation.rows[0].kind === 'start_activity_import' ? 'activities:import' : 'activities:write';
   }
 
   async get(principal: Principal, id: string) {

@@ -5,6 +5,7 @@ import { requireScope, type Principal } from 'src/mcp/context';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ApiKeyService } from 'src/services/api-key.service';
+import { OperationService } from 'src/services/operation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const principal: Principal = {
@@ -44,7 +45,7 @@ describe('MCP HTTP boundary', () => {
     try {
       const tools = await client.listTools();
       expect(tools.tools.map((tool) => tool.name)).toContain('summarize_training');
-      expect(tools.tools.map((tool) => tool.name)).not.toContain('update_activity');
+      expect(tools.tools.map((tool) => tool.name)).toContain('update_activity');
       const result = await client.callTool({ name: 'search_activities', arguments: { limit: 5 } });
       expect(result.isError).not.toBe(true);
       expect(result.structuredContent).toMatchObject({ data: { activities: [] }, calculationVersion: '1' });
@@ -59,6 +60,46 @@ describe('MCP HTTP boundary', () => {
     } finally {
       await client.close();
     }
+  });
+
+  it('discovers unavailable tools and challenges clients for incremental permissions', async () => {
+    const app = createMcpApp(dependencies());
+    const request = (name: string, arguments_: Record<string, unknown>) =>
+      app.request('https://fitness.example/mcp', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer valid',
+          'Content-Type': 'application/json',
+          Accept: 'application/json, text/event-stream',
+        },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: arguments_ } }),
+      });
+
+    const tools = await app.request('https://fitness.example/mcp', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer valid',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+    });
+    const catalog = await tools.json();
+    expect(catalog.result.tools.map((tool: { name: string }) => tool.name)).toContain('update_activity');
+
+    const write = await request('update_activity', {});
+    expect(write.status).toBe(403);
+    expect(write.headers.get('WWW-Authenticate')).toContain('scope="activities:read activities:write"');
+    expect(await write.json()).toMatchObject({ scopes: ['activities:write'] });
+
+    const location = await request('get_activity_streams', { types: ['latitude'] });
+    expect(location.status).toBe(403);
+    expect(location.headers.get('WWW-Authenticate')).toContain('scope="activities:read location:read"');
+
+    vi.spyOn(OperationService.prototype, 'scopeFor').mockResolvedValue('activities:import');
+    const operation = await request('get_operation', { id: '00000000-0000-4000-8000-000000000003' });
+    expect(operation.status).toBe(403);
+    expect(operation.headers.get('WWW-Authenticate')).toContain('scope="activities:read activities:import"');
   });
 
   it('rejects invalid credentials and advertises OAuth discovery', async () => {

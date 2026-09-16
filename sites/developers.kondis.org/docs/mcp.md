@@ -5,21 +5,24 @@ title: MCP server
 
 # MCP server
 
-Kondis exposes an MCP endpoint at `/mcp` for assistants that support Streamable HTTP.
-
-## Connect
-
-1. Sign in to Kondis and open **Settings > Connected apps**.
-2. Create a credential with only the scopes the client needs.
-3. Configure the client with the MCP endpoint shown in Connected apps and use the generated bearer token.
-
-OAuth-capable clients can use the same endpoint and complete the browser consent flow instead of managing a token.
+Kondis exposes an MCP endpoint at `/mcp` for you to play with.
 
 ## Capabilities
 
-The server provides owner-scoped activity search and detail, bounded sensor streams, training summaries, comparisons, route efforts, best efforts, and athlete context. Clients with write permissions can create or update activities. Import clients first upload a FIT, GPX, or TCX file to `POST /mcp/uploads`, then pass the returned upload ID to `start_activity_import`.
+### Tools
 
-Coordinates and routes additionally require `location:read`. Mutations require an idempotency key; edits require the current activity revision.
+- `compare_activities` - Compare 2-10 activities and show differences relative to the first.
+- `compare_route_efforts` - Retrieve previous efforts on a matched route and their metrics.
+- `create_manual_activity` - Record a completed workout.
+- `get_activity` - Read an activity summary, revision, metrics, and laps.
+- `get_activity_streams` - Read aligned sensor samples such as speed, heart rate, cadence, and power.
+- `get_athlete_context` - Read athlete preferences, supported sports, and granted scopes.
+- `get_best_efforts` - Read personal best efforts and rankings by effort type, sport, and year.
+- `get_operation` - Inspect a durable mutation or import operation.
+- `search_activities` - Search activities by date, metrics, and tags.
+- `start_activity_import` - Process an upload staged through the MCP upload endpoint.
+- `summarize_training` - Calculate weekly or monthly training volume and intensity.
+- `update_activity` - Edit an activity using its current revision.
 
 ## Self-hosting
 
