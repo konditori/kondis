@@ -1,0 +1,33 @@
+android/app/src/main/res/values-b+sv/strings.xml
+  s_f7c7cc1e975e9d::t_a3c5a163df1e1d 66,272
+android/app/src/main/res/values/strings.xml
+  s_f7c7cc1e975e9d::t_7e6afd49bc2645 272
+web/src/lib/components/StravaTakeoutImport.svelte
+  s_f16d490b232491::t_abff3e0a907b1e 5-8,11-28,30-34,47,80,83-85,90,92,110-113,115-118,120-121,123,134,140,152,158,170-172,176,183,186-189,203,218,223,227,236,240-241,243,249-250,266,270-272,274-277,332,341-342,359,362,367
+web/svelte.config.js
+  s_f16d490b232491::t_7520c5adccc1b4 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "22bfb3f4fb0d55400b3afc74421d066845a79e34",
+  "prompts": {},
+  "sessions": {
+    "s_f16d490b232491": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "611bf87f-9c92-4cff-9e49-607062588794",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_f7c7cc1e975e9d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f559fc6cdffe3re8QS6CVNWk25",
+        "model": "@cf/moonshotai/kimi-k3"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
