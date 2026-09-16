@@ -6,7 +6,7 @@ import { ConsoleLogger } from 'src/logger';
 import { type PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { JobService } from 'src/services/job.service';
 import { JobItem } from 'src/types/jobs';
-import { newTestService } from 'test/utils';
+import { newServiceDeps, newTestService } from 'test/utils';
 
 describe('JobService', () => {
   const run = vi.fn<() => Promise<JobStatus>>();
@@ -48,9 +48,11 @@ describe('JobService', () => {
     newTestService(
       JobService,
       [
-        jobRepository,
-        { emit } as unknown as PostgresRealtimeRepository,
-        new ConsoleLogger({ logLevels: [] }),
+        newServiceDeps({
+          jobRepository,
+          eventRepository: { emit } as unknown as PostgresRealtimeRepository,
+          logger: new ConsoleLogger({ logLevels: [] }),
+        }),
         {
           [JobName.FileDelete]: run,
           [JobName.ActivityParse]: run,

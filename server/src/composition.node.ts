@@ -23,6 +23,7 @@ import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
 import { LiveService } from 'src/services/live-activity.service';
 import { ServerService } from 'src/services/server.service';
@@ -73,61 +74,40 @@ export const createApplicationComposition = ({
 
   const importProgressStore = new TakeoutRepository(database);
 
-  const activityService = new ActivityService(
-    uploadRepository,
-    storageRepository,
+  const serviceDeps: BaseServiceDeps = {
     activityRepository,
+    configRepository,
+    cryptoRepository,
     databaseRepository,
     eventRepository,
-    jobRepository,
     fitRepository,
     gpxRepository,
-    tcxRepository,
-    newLogger(),
-    importProgressStore,
-    mediaRepository,
-    socialRepository,
-  );
-  const activityImageService = new ActivityImageService(
-    mediaRepository,
-    activityRepository,
-    storageRepository,
-    cryptoRepository,
-    databaseRepository,
     jobRepository,
-    newLogger(),
-    socialRepository,
-  );
-  const authService = new AuthService(
-    userRepository,
-    configRepository,
+    liveActivityRepository,
+    logger: newLogger(),
+    mediaRepository,
     rateLimitingRepository,
-    cryptoRepository,
-    authCredentialRepository,
-    eventRepository,
-    databaseRepository,
-  );
-  const liveActivityService = new LiveService(liveActivityRepository, cryptoRepository, eventRepository);
-  const serverService = new ServerService();
-  const socialService = new SocialService(socialRepository, eventRepository);
-  const storageService = new StorageService(storageRepository, jobRepository, newLogger());
-  const uploadService = new UploadService(
-    uploadRepository,
+    sessionRepository: authCredentialRepository,
+    socialRepository,
     storageRepository,
-    cryptoRepository,
-    databaseRepository,
-    jobRepository,
-    newLogger(),
-    importProgressStore,
-    activityRepository,
-    eventRepository,
-  );
-  const userService = new UserService(userRepository, socialRepository, storageRepository);
+    takeoutRepository: importProgressStore,
+    tcxRepository,
+    uploadRepository,
+    userRepository,
+  };
+
+  const activityService = new ActivityService(serviceDeps);
+  const activityImageService = new ActivityImageService(serviceDeps);
+  const authService = new AuthService(serviceDeps);
+  const liveActivityService = new LiveService(serviceDeps);
+  const serverService = new ServerService();
+  const socialService = new SocialService(serviceDeps);
+  const storageService = new StorageService(serviceDeps);
+  const uploadService = new UploadService(serviceDeps);
+  const userService = new UserService(serviceDeps);
 
   const jobService = new JobService(
-    jobRepository,
-    eventRepository,
-    newLogger(),
+    serviceDeps,
     createJobHandlers(
       createJobHandlerRegistry({
         activityService,

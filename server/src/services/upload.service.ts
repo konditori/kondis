@@ -1,10 +1,7 @@
 import { extname } from 'node:path';
 
+import { ACTIVITY_FILE_EXTENSIONS } from 'src/config/upload-formats';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { CryptoRepository } from 'src/contracts/crypto.repository';
-import type { JobRepository } from 'src/contracts/job.repository';
-import type { RealtimeRepository } from 'src/contracts/realtime.repository';
-import type { StorageRepository } from 'src/contracts/storage.repository';
 import {
   FitUploadResponseDto,
   TakeoutActivityMetadataDto,
@@ -20,33 +17,13 @@ import {
   TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import { ConsoleLogger } from 'src/logger';
-import { ActivityRepository } from 'src/repositories/activity.repository';
-import { DatabaseRepository } from 'src/repositories/database.repository';
-import { TakeoutRepository } from 'src/repositories/takeout.repository';
-import { UploadRepository } from 'src/repositories/upload.repository';
+import { BaseService } from 'src/services/base.service';
 import type { TakeoutImportItem } from 'src/types';
 import { JobOf } from 'src/types/jobs';
 import { UploadedFileData } from 'src/types/uploads';
 import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
-const SUPPORTED_ACTIVITY_EXTENSIONS = new Set(['.fit', '.tcx', '.gpx']);
-
-export class UploadService {
-  constructor(
-    private readonly uploadRepository: UploadRepository,
-    private readonly storageRepository: StorageRepository,
-    private readonly cryptoRepository: CryptoRepository,
-    private readonly databaseRepository: DatabaseRepository,
-    private readonly jobRepository: JobRepository,
-    private readonly logger: ConsoleLogger,
-    private readonly importProgressStore: TakeoutRepository,
-    private readonly activityRepository?: ActivityRepository,
-    private readonly eventRepository?: RealtimeRepository,
-  ) {
-    this.logger.setContext(UploadService.name);
-  }
-
+export class UploadService extends BaseService {
   async uploadActivity(
     file: UploadedFileData | undefined,
     userId: string,
@@ -68,7 +45,7 @@ export class UploadService {
     }
 
     const extension = extname(file.originalname).toLowerCase();
-    if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
+    if (!ACTIVITY_FILE_EXTENSIONS.has(extension)) {
       await this.discardUploadedFile(file);
       throw new BadRequestException('Only .fit, .tcx and .gpx files are accepted');
     }
@@ -84,12 +61,12 @@ export class UploadService {
 
   async createTakeoutImport(userId: string) {
     const importId = crypto.randomUUID();
-    await this.importProgressStore.create(importId, userId);
+    await this.takeoutRepository.create(importId, userId);
     return { importId, status: 'scanning' as const };
   }
 
   scanTakeoutImport(importId: string, userId: string, scan: TakeoutImportScanDto): Promise<string[]> {
-    return this.importProgressStore.registerItems(
+    return this.takeoutRepository.registerItems(
       importId,
       userId,
       scan.items.map(
@@ -110,7 +87,7 @@ export class UploadService {
     file: UploadedFileData | undefined,
   ): Promise<boolean> {
     return stageTakeoutPhoto(
-      this.importProgressStore,
+      this.takeoutRepository,
       this.storageRepository,
       this.cryptoRepository,
       importId,
@@ -126,9 +103,7 @@ export class UploadService {
     metadata: TakeoutActivityMetadataDto,
     file: UploadedFileData | undefined,
   ): Promise<boolean> {
-    if (
-      !(await this.importProgressStore.beginItem(importId, userId, metadata.itemKey, TakeoutImportItemKind.Activity))
-    ) {
+    if (!(await this.takeoutRepository.beginItem(importId, userId, metadata.itemKey, TakeoutImportItemKind.Activity))) {
       return false;
     }
     try {
@@ -139,12 +114,12 @@ export class UploadService {
         activityTags: metadata.tags,
         takeoutImportId: importId,
         takeoutItemKey: metadata.itemKey,
-        images: await this.importProgressStore.getStagedPhotos(importId, userId, metadata.itemKey),
+        images: await this.takeoutRepository.getStagedPhotos(importId, userId, metadata.itemKey),
       });
-      await this.importProgressStore.markQueued(importId, metadata.itemKey);
+      await this.takeoutRepository.markQueued(importId, metadata.itemKey);
       return true;
     } catch (error) {
-      await this.importProgressStore.completeItem(
+      await this.takeoutRepository.completeItem(
         importId,
         metadata.itemKey,
         TakeoutImportItemTerminalStatus.Failed,
@@ -155,7 +130,7 @@ export class UploadService {
   }
 
   async submitTakeoutManual(importId: string, userId: string, item: TakeoutManualItemDto): Promise<boolean> {
-    if (!(await this.importProgressStore.beginItem(importId, userId, item.itemKey, TakeoutImportItemKind.Manual))) {
+    if (!(await this.takeoutRepository.beginItem(importId, userId, item.itemKey, TakeoutImportItemKind.Manual))) {
       return false;
     }
     try {
@@ -182,13 +157,13 @@ export class UploadService {
           calories: item.calories,
           takeoutImportId: importId,
           takeoutItemKey: item.itemKey,
-          images: await this.importProgressStore.getStagedPhotos(importId, userId, item.itemKey),
+          images: await this.takeoutRepository.getStagedPhotos(importId, userId, item.itemKey),
         },
       });
-      await this.importProgressStore.markQueued(importId, item.itemKey);
+      await this.takeoutRepository.markQueued(importId, item.itemKey);
       return true;
     } catch (error) {
-      await this.importProgressStore.completeItem(
+      await this.takeoutRepository.completeItem(
         importId,
         item.itemKey,
         TakeoutImportItemTerminalStatus.Failed,
@@ -199,19 +174,19 @@ export class UploadService {
   }
 
   finalizeTakeoutImport(importId: string, userId: string, extractionErrors: number) {
-    return this.importProgressStore.finalize(importId, userId, extractionErrors);
+    return this.takeoutRepository.finalize(importId, userId, extractionErrors);
   }
 
   cancelTakeoutImport(importId: string, userId: string): Promise<boolean> {
-    return this.importProgressStore.cancel(importId, userId);
+    return this.takeoutRepository.cancel(importId, userId);
   }
 
   failTakeoutItem(importId: string, userId: string, itemKey: string, error: string): Promise<boolean> {
-    return this.importProgressStore.failItem(importId, userId, itemKey, error);
+    return this.takeoutRepository.failItem(importId, userId, itemKey, error);
   }
 
   async getTakeoutImportStatus(id: string, userId: string) {
-    const record = await this.importProgressStore.get(id, userId);
+    const record = await this.takeoutRepository.get(id, userId);
     if (!record) {
       throw new NotFoundException('Takeout import not found');
     }
@@ -244,7 +219,7 @@ export class UploadService {
       throw new Error('Activity upload job has no owner');
     }
     const extension = extname(originalName).toLowerCase();
-    if (!SUPPORTED_ACTIVITY_EXTENSIONS.has(extension)) {
+    if (!ACTIVITY_FILE_EXTENSIONS.has(extension)) {
       throw new Error(`Unsupported activity upload extension: ${extension || 'none'}`);
     }
 
@@ -258,8 +233,8 @@ export class UploadService {
     const existing = await this.uploadRepository.getByChecksum(checksum, userId);
     if (existing) {
       this.logger.log(`Upload ${checksum} already exists as ${existing.id}`);
-      const activity = await this.activityRepository?.getByUploadId(existing.id);
-      if (activity && this.eventRepository) {
+      const activity = await this.activityRepository.getByUploadId(existing.id);
+      if (activity) {
         await this.eventRepository.emit(
           'ActivityUploadSkipped',
           { id: activity.id, name: activity.name, sport: activity.sport as ActivityTypeEnum },
@@ -273,7 +248,7 @@ export class UploadService {
         });
       }
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore.completeItem(
+        await this.takeoutRepository.completeItem(
           takeoutImportId,
           takeoutItemKey,
           TakeoutImportItemTerminalStatus.Duplicate,
@@ -319,7 +294,7 @@ export class UploadService {
       const raced = await this.uploadRepository.getByChecksum(checksum, userId);
       if (raced) {
         if (takeoutImportId && takeoutItemKey) {
-          await this.importProgressStore.completeItem(
+          await this.takeoutRepository.completeItem(
             takeoutImportId,
             takeoutItemKey,
             TakeoutImportItemTerminalStatus.Duplicate,

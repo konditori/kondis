@@ -18,6 +18,37 @@ export type PingResponseDtoOutput = {
   /** Health status of the API */
   status: string;
 };
+export type CapabilitiesDtoOutput = {
+  /** Upload formats and limits for client-side parsing and UX */
+  uploads: {
+    /** Accepted activity file extensions */
+    activityExtensions: string[];
+    /** Accepted activity image file extensions */
+    imageExtensions: string[];
+    /** Video file extensions recognized in takeout archives */
+    videoExtensions: string[];
+    limits: {
+      /** Maximum accepted activity file size in bytes */
+      activityFileBytes: number;
+      /** Maximum accepted activity image size in bytes */
+      imageFileBytes: number;
+      /** Maximum accepted avatar image size in bytes */
+      avatarFileBytes: number;
+      /** Maximum entry count in an uploaded ZIP archive */
+      zipEntries: number;
+      /** Maximum expanded size of one ZIP entry in bytes */
+      zipEntryBytes: number;
+      /** Maximum total expanded size of a ZIP archive in bytes */
+      zipExpandedBytes: number;
+      /** Maximum accepted ZIP compression ratio */
+      zipCompressionRatio: number;
+      /** Maximum takeout manifest size in bytes */
+      manifestBytes: number;
+      /** Maximum takeout manifest row count */
+      manifestRows: number;
+    };
+  };
+};
 export type FitUploadResponseDtoOutput = {
   /** Uploaded activity file size in bytes */
   byteSize: number;
@@ -744,6 +775,19 @@ export function serverControllerPing(opts?: Oazapfts.RequestOpts) {
       status: 200;
       data: PingResponseDtoOutput;
     }>('/ping', {
+      ...opts,
+    }),
+  );
+}
+/**
+ * Server capabilities for client-side parsing and UX
+ */
+export function capabilitiesControllerGet(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: CapabilitiesDtoOutput;
+    }>('/capabilities', {
       ...opts,
     }),
   );

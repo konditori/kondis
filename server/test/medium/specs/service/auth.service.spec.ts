@@ -11,6 +11,7 @@ import { AuthService } from 'src/services/auth.service';
 import type { KondisDatabase } from 'src/types';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+import { newServiceDeps } from 'test/utils';
 
 describe(AuthService.name, () => {
   let db: KondisDatabase;
@@ -23,13 +24,14 @@ describe(AuthService.name, () => {
     credentials = new SessionRepository(db);
     users = new UserRepository(db);
     sut = new AuthService(
-      users,
-      {} as never,
-      new RateLimitingRepository(db),
-      new NodeCryptoRepository(),
-      credentials,
-      { emit: () => Promise.resolve() } as never,
-      new DatabaseRepository(db),
+      newServiceDeps({
+        userRepository: users,
+        rateLimitingRepository: new RateLimitingRepository(db),
+        cryptoRepository: new NodeCryptoRepository(),
+        sessionRepository: credentials,
+        eventRepository: { emit: () => Promise.resolve() } as never,
+        databaseRepository: new DatabaseRepository(db),
+      }),
     );
   });
 

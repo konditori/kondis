@@ -3,9 +3,11 @@
   import { onDestroy } from "svelte";
   import { Archive, ArrowLeft, Check, LoaderCircle } from "@lucide/svelte";
   import {
+    capabilitiesControllerGet,
     Status2,
     type TakeoutImportStatusDtoOutput,
   } from "@kondis/sdk";
+  import { API_BASE, getSdkRequestOptions } from "$lib/api";
   import { t } from "$lib/i18n";
 
   enum ImportPhase {
@@ -29,9 +31,7 @@
   type WorkerEvent = {
     type: WorkerEventType;
     phase?:
-      | ImportPhase.Scanning
-      | ImportPhase.Uploading
-      | ImportPhase.Processing;
+      ImportPhase.Scanning | ImportPhase.Uploading | ImportPhase.Processing;
     total?: number;
     uploaded?: number;
     extractionErrors?: number;
@@ -39,7 +39,6 @@
     message?: string;
   };
 
-  const apiBase = "/api/v1";
   let input = $state<HTMLInputElement>();
   let file = $state<File>();
   let dragging = $state(false);
@@ -65,7 +64,7 @@
     `kondis:strava-import:${selected.name}:${selected.size}:${selected.lastModified}`;
 
   async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${apiBase}${path}`, {
+    const response = await fetch(`${API_BASE}${path}`, {
       ...init,
       credentials: "same-origin",
     });
@@ -201,6 +200,9 @@
         localStorage.setItem(importKey(file), importId);
       }
       phase = ImportPhase.Scanning;
+      const capabilities = await capabilitiesControllerGet(
+        getSdkRequestOptions(),
+      );
       worker = new Worker(
         new URL("../workers/strava-takeout.worker.ts", import.meta.url),
         { type: "module" },
@@ -208,7 +210,13 @@
       worker.onmessage = (event: MessageEvent<WorkerEvent>) =>
         void handleWorkerEvent(event.data).catch(showError);
       worker.onerror = () => showError(new Error(t("strava_import_failed")));
-      worker.postMessage({ type: "start", file, importId, apiBase });
+      worker.postMessage({
+        type: "start",
+        file,
+        importId,
+        apiBase: API_BASE,
+        capabilities,
+      });
     } catch (error) {
       showError(error);
     }
@@ -273,8 +281,7 @@
   const phaseText = () => {
     if (phase === ImportPhase.Scanning) return t("strava_scanning");
     if (phase === ImportPhase.Uploading) return t("strava_uploading");
-    if (phase === ImportPhase.Processing)
-      return t("strava_server_processing");
+    if (phase === ImportPhase.Processing) return t("strava_server_processing");
     return "";
   };
 </script>

@@ -16,11 +16,6 @@ const noRelativeImports = {
   message: 'Relative imports are not allowed.',
 };
 
-const noServiceToServiceImports = {
-  group: ['src/services/*'],
-  message: 'Services must not import other services. Depend on a repository or a lower-level module instead.',
-};
-
 const workerRepositoryFiles = [
   'src/repositories/cloudflare/**/*.ts',
   'src/contracts/**/*.ts',
@@ -121,13 +116,6 @@ export default typescriptEslint.config([
     },
   },
   {
-    files: ['src/services/**/*.ts'],
-    ignores: ['src/services/**/*.spec.ts'],
-    rules: {
-      'no-restricted-imports': ['error', { patterns: [noRelativeImports, noServiceToServiceImports] }],
-    },
-  },
-  {
     files: [
       ...workerRepositoryFiles,
       'src/cloudflare/**/*.ts',
@@ -143,10 +131,7 @@ export default typescriptEslint.config([
   {
     files: ['src/services/job.service.ts', 'src/services/postgres-job.service.ts'],
     rules: {
-      'no-restricted-imports': [
-        'error',
-        { patterns: [noRelativeImports, noServiceToServiceImports, noWorkerRuntimeImports] },
-      ],
+      'no-restricted-imports': ['error', { patterns: [noRelativeImports, noWorkerRuntimeImports] }],
     },
   },
   {
@@ -164,16 +149,6 @@ export default typescriptEslint.config([
             },
           ],
         },
-      ],
-    },
-  },
-  {
-    files: workerRepositoryFiles,
-    ignores: ['src/**/*.spec.ts'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        { patterns: [noRelativeImports, noServiceToServiceImports, noWorkerRuntimeImports] },
       ],
     },
   },

@@ -1,9 +1,8 @@
-import type { CryptoRepository } from 'src/contracts/crypto.repository';
-import type { RealtimeRepository } from 'src/contracts/realtime.repository';
 import { LiveActivityProgressEventStatus, LiveActivityStatus, type ActivityType } from 'src/enum';
 import { NotFoundException } from 'src/errors';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import type { LiveActivityStatus as StoredLiveActivityStatus } from 'src/schema/tables/live-activity.table';
+import { BaseService } from 'src/services/base.service';
 
 type PointInput = {
   sequence: number;
@@ -15,18 +14,12 @@ type PointInput = {
 };
 const SHARE_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
-export class LiveService {
-  constructor(
-    private readonly liveRepository: LiveActivityRepository,
-    private readonly cryptoRepository: CryptoRepository,
-    private readonly realtimeRepository: RealtimeRepository,
-  ) {}
-
+export class LiveService extends BaseService {
   async create(userId: string, input: { clientSessionId: string; sport: ActivityType; startedAt: string }) {
-    const existing = await this.liveRepository.getByClientSessionId(userId, input.clientSessionId);
+    const existing = await this.liveActivityRepository.getByClientSessionId(userId, input.clientSessionId);
     const activity =
       existing ??
-      (await this.liveRepository.create({
+      (await this.liveActivityRepository.create({
         userId,
         clientSessionId: input.clientSessionId,
         sport: input.sport,
@@ -36,12 +29,12 @@ export class LiveService {
   }
 
   async list(userId: string) {
-    const activities = await this.liveRepository.listActiveVisible(userId);
+    const activities = await this.liveActivityRepository.listActiveVisible(userId);
     return Promise.all(activities.map((activity) => this.toDto(activity, userId)));
   }
 
   async get(id: string, userId: string) {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
@@ -49,7 +42,7 @@ export class LiveService {
   }
 
   async getShared(token: string) {
-    const activity = await this.liveRepository.getByShareTokenHash(await this.hashToken(token));
+    const activity = await this.liveActivityRepository.getByShareTokenHash(await this.hashToken(token));
     if (!activity) {
       throw new NotFoundException('This live tracking link has expired or was revoked');
     }
@@ -61,14 +54,14 @@ export class LiveService {
     userId: string,
     input: { points: PointInput[]; elapsedSeconds: number; distanceMeters: number },
   ) {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
     if (activity.status === LiveActivityStatus.Ended || activity.status === LiveActivityStatus.Discarded) {
       return { id: activity.id, lastSequence: activity.last_sequence };
     }
-    await this.liveRepository.appendPoints(
+    await this.liveActivityRepository.appendPoints(
       id,
       input.points.map((point) => ({
         ...point,
@@ -76,7 +69,7 @@ export class LiveService {
         recordedAt: new Date(point.recordedAt),
       })),
     );
-    const updated = await this.liveRepository.updateProgress(
+    const updated = await this.liveActivityRepository.updateProgress(
       id,
       activity.status,
       input.elapsedSeconds,
@@ -90,7 +83,7 @@ export class LiveService {
       }
     }
     if (acknowledged.status !== LiveActivityStatus.Discarded) {
-      await this.realtimeRepository.emit('LiveActivityUpdated', userId, {
+      await this.eventRepository.emit('LiveActivityUpdated', userId, {
         id: acknowledged.id,
         status: acknowledged.status as LiveActivityProgressEventStatus,
         elapsedSeconds: acknowledged.elapsed_seconds,
@@ -108,14 +101,14 @@ export class LiveService {
     userId: string,
     input: { status: Exclude<StoredLiveActivityStatus, 'discarded'>; elapsedSeconds: number; distanceMeters: number },
   ) {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
     if (activity.status === LiveActivityStatus.Discarded) {
       return this.toDto(activity, userId);
     }
-    const updated = await this.liveRepository.updateProgress(
+    const updated = await this.liveActivityRepository.updateProgress(
       id,
       input.status,
       input.elapsedSeconds,
@@ -125,31 +118,31 @@ export class LiveService {
   }
 
   async createShare(id: string, userId: string) {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
     const token = this.cryptoRepository.randomToken(24);
     const expiresAt = new Date(Date.now() + SHARE_LIFETIME_MS);
-    await this.liveRepository.setShareToken(id, await this.hashToken(token), expiresAt);
+    await this.liveActivityRepository.setShareToken(id, await this.hashToken(token), expiresAt);
     return { token, expiresAt: expiresAt.toISOString() };
   }
 
   async revokeShare(id: string, userId: string): Promise<void> {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
-    await this.liveRepository.clearShareToken(id);
+    await this.liveActivityRepository.clearShareToken(id);
   }
 
   async discard(id: string, userId: string): Promise<void> {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
-    await this.liveRepository.clearShareToken(id);
-    await this.liveRepository.updateProgress(
+    await this.liveActivityRepository.clearShareToken(id);
+    await this.liveActivityRepository.updateProgress(
       id,
       LiveActivityStatus.Discarded,
       activity.elapsed_seconds,
@@ -160,22 +153,22 @@ export class LiveService {
   // The public demo has one simulated device. This cleanup is deliberately
   // separate from discard(), which preserves a user's own activity history.
   async deleteOtherSessions(userId: string, clientSessionId: string): Promise<void> {
-    await this.liveRepository.deleteOtherSessions(userId, clientSessionId);
+    await this.liveActivityRepository.deleteOtherSessions(userId, clientSessionId);
   }
 
   async delete(id: string, userId: string): Promise<void> {
-    const activity = await this.liveRepository.getById(id, userId);
+    const activity = await this.liveActivityRepository.getById(id, userId);
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
-    await this.liveRepository.deleteById(id, userId);
+    await this.liveActivityRepository.deleteById(id, userId);
   }
 
   private async toDto(activity: Awaited<ReturnType<LiveActivityRepository['getById']>> & {}, viewerId?: string) {
     if (!activity) {
       throw new NotFoundException('Live activity not found');
     }
-    const points = await this.liveRepository.listPoints(activity.id);
+    const points = await this.liveActivityRepository.listPoints(activity.id);
     return {
       id: activity.id,
       sport: activity.sport,

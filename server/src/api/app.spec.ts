@@ -9,6 +9,7 @@ const listNoUsers = () => Promise.resolve([]);
 const operationMethods = new Set(['delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'trace']);
 const expectedOperations = [
   'GET /ping ServerController_ping',
+  'GET /capabilities CapabilitiesController_get',
   'POST /upload/activity UploadController_uploadActivity',
   'POST /upload/strava/imports TakeoutImportController_create',
   'POST /upload/strava/imports/{id}/scan TakeoutImportController_scan',

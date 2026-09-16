@@ -1,23 +1,13 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import type { JobRepository } from 'src/contracts/job.repository';
-import type { StorageRepository } from 'src/contracts/storage.repository';
 import { JobName } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import { SocialRepository } from 'src/repositories/social.repository';
-import { UserRepository } from 'src/repositories/user.repository';
+import { BaseService } from 'src/services/base.service';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
 
-export class WorkerUserService {
-  constructor(
-    private readonly users: UserRepository,
-    private readonly social: SocialRepository,
-    private readonly storage: StorageRepository,
-    private readonly jobs: JobRepository,
-  ) {}
-
+export class WorkerUserService extends BaseService {
   async updateProfile(userId: string, firstName: string, lastName: string) {
-    await this.users.setNameParts(userId, firstName, lastName);
-    const updated = await this.users.findById(userId);
+    await this.userRepository.setNameParts(userId, firstName, lastName);
+    const updated = await this.userRepository.findById(userId);
     if (!updated) {
       throw new NotFoundException('User does not exist');
     }
@@ -38,31 +28,31 @@ export class WorkerUserService {
     if (file.buffer.length > UPLOAD_LIMITS.avatarFileBytes) {
       throw new PayloadTooLargeException(`Profile picture exceeds ${UPLOAD_LIMITS.avatarFileBytes} bytes`);
     }
-    const storagePath = this.storage.buildTemporaryPath('.jpg');
-    await this.storage.write(storagePath, file.buffer);
+    const storagePath = this.storageRepository.buildTemporaryPath('.jpg');
+    await this.storageRepository.write(storagePath, file.buffer);
     try {
-      await this.jobs.queue({ name: JobName.UserAvatarUpload, data: { userId, storagePath } });
+      await this.jobRepository.queue({ name: JobName.UserAvatarUpload, data: { userId, storagePath } });
     } catch (error) {
-      await this.storage.delete(storagePath).catch(() => {});
+      await this.storageRepository.delete(storagePath).catch(() => {});
       throw error;
     }
     return { avatarUrl: `/api/v1/users/${userId}/avatar`, queued: true };
   }
 
   async clearAvatar(userId: string): Promise<void> {
-    const previous = await this.users.getAvatar(userId);
+    const previous = await this.userRepository.getAvatar(userId);
     if (!previous?.avatar_path) {
       return;
     }
-    await this.users.clearAvatar(userId);
-    await this.storage.delete(previous.avatar_path);
+    await this.userRepository.clearAvatar(userId);
+    await this.storageRepository.delete(previous.avatar_path);
   }
 
   async avatarFile(userId: string, viewerId: string) {
-    if (!(await this.social.canSeeProfile(viewerId, userId))) {
+    if (!(await this.socialRepository.canSeeProfile(viewerId, userId))) {
       throw new NotFoundException('Profile picture does not exist');
     }
-    const avatar = await this.users.getAvatar(userId);
+    const avatar = await this.userRepository.getAvatar(userId);
     if (!avatar?.avatar_path || !avatar.avatar_mime_type || !avatar.avatar_size) {
       throw new NotFoundException('Profile picture does not exist');
     }
@@ -70,6 +60,6 @@ export class WorkerUserService {
   }
 
   avatarAbsolutePath(path: string): string {
-    return this.storage.reference(path);
+    return this.storageRepository.reference(path);
   }
 }

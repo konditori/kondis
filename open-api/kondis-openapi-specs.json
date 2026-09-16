@@ -23,6 +23,28 @@
         ]
       }
     },
+    "/capabilities": {
+      "get": {
+        "operationId": "CapabilitiesController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Upload formats and limits supported by the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Server capabilities for client-side parsing and UX",
+        "tags": [
+          "server"
+        ]
+      }
+    },
     "/upload/activity": {
       "post": {
         "operationId": "UploadController_uploadActivity",
@@ -3044,6 +3066,120 @@
         },
         "required": [
           "status"
+        ],
+        "additionalProperties": false
+      },
+      "CapabilitiesDto_Output": {
+        "type": "object",
+        "properties": {
+          "uploads": {
+            "type": "object",
+            "properties": {
+              "activityExtensions": {
+                "description": "Accepted activity file extensions",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "imageExtensions": {
+                "description": "Accepted activity image file extensions",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "videoExtensions": {
+                "description": "Video file extensions recognized in takeout archives",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "activityFileBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted activity file size in bytes"
+                  },
+                  "imageFileBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted activity image size in bytes"
+                  },
+                  "avatarFileBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted avatar image size in bytes"
+                  },
+                  "zipEntries": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum entry count in an uploaded ZIP archive"
+                  },
+                  "zipEntryBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum expanded size of one ZIP entry in bytes"
+                  },
+                  "zipExpandedBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum total expanded size of a ZIP archive in bytes"
+                  },
+                  "zipCompressionRatio": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum accepted ZIP compression ratio"
+                  },
+                  "manifestBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum takeout manifest size in bytes"
+                  },
+                  "manifestRows": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Maximum takeout manifest row count"
+                  }
+                },
+                "required": [
+                  "activityFileBytes",
+                  "imageFileBytes",
+                  "avatarFileBytes",
+                  "zipEntries",
+                  "zipEntryBytes",
+                  "zipExpandedBytes",
+                  "zipCompressionRatio",
+                  "manifestBytes",
+                  "manifestRows"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "activityExtensions",
+              "imageExtensions",
+              "videoExtensions",
+              "limits"
+            ],
+            "additionalProperties": false,
+            "description": "Upload formats and limits for client-side parsing and UX"
+          }
+        },
+        "required": [
+          "uploads"
         ],
         "additionalProperties": false
       },

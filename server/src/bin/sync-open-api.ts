@@ -30,6 +30,7 @@ const dualOutputSchemaNames = new Map([
 
 const legacyPathOrder = [
   '/ping',
+  '/capabilities',
   '/upload/activity',
   '/upload/strava/imports',
   '/upload/strava/imports/{id}/scan',
@@ -90,6 +91,7 @@ const legacyPathOrder = [
 
 const legacySchemaOrder = [
   'PingResponseDto_Output',
+  'CapabilitiesDto_Output',
   'FitUploadResponseDto_Output',
   'TakeoutImportCreateResponseDto_Output',
   'TakeoutImportScanResponseDto_Output',

@@ -1,17 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import { JobStatus } from 'src/enum';
 import { ConsoleLogger } from 'src/logger';
 import { StorageService } from 'src/services/storage.service';
-import { newTestService } from 'test/utils';
+import { newServiceDeps, newTestService } from 'test/utils';
 
 const setup = () => {
   const mocks = {
-    storageRepository: { deleteTemporaryFilesOlderThan: vi.fn(() => Promise.resolve(['temporary/stale.fit'])) },
-    jobRepository: { getReferencedTemporaryPaths: vi.fn(() => Promise.resolve(new Set(['temporary/pending.fit']))) },
+    storageRepository: {
+      deleteTemporaryFilesOlderThan: vi.fn(() => Promise.resolve(['temporary/stale.fit'])),
+    } as unknown as StorageRepository,
+    jobRepository: {
+      getReferencedTemporaryPaths: vi.fn(() => Promise.resolve(new Set(['temporary/pending.fit']))),
+    } as unknown as JobRepository,
     logger: new ConsoleLogger({ logLevels: [] }),
   };
-  return newTestService(StorageService, [mocks.storageRepository, mocks.jobRepository, mocks.logger], mocks);
+  return newTestService(
+    StorageService,
+    [newServiceDeps({ storageRepository: mocks.storageRepository, jobRepository: mocks.jobRepository })],
+    mocks,
+  );
 };
 
 describe('StorageService', () => {

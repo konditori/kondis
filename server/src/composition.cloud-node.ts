@@ -9,6 +9,7 @@ import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { HttpRealtimeRepository } from 'src/repositories/http-realtime.repository';
+import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
@@ -24,6 +25,7 @@ import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
 import { PostgresJobService } from 'src/services/postgres-job.service';
 import { StorageService } from 'src/services/storage.service';
@@ -61,53 +63,34 @@ export const createCloudNodeProcessorComposition = ({
     realtime ?? createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
   const importProgressStore = new TakeoutRepository(database);
 
-  const activityService = new ActivityService(
-    uploadRepository,
-    storageRepository,
+  const serviceDeps: BaseServiceDeps = {
     activityRepository,
+    configRepository,
+    cryptoRepository,
     databaseRepository,
     eventRepository,
-    jobRepository,
     fitRepository,
     gpxRepository,
-    tcxRepository,
-    logger,
-    importProgressStore,
-    mediaRepository,
-    socialRepository,
-  );
-  const activityImageService = new ActivityImageService(
-    mediaRepository,
-    activityRepository,
-    storageRepository,
-    cryptoRepository,
-    databaseRepository,
     jobRepository,
+    liveActivityRepository: new LiveActivityRepository(database),
     logger,
-    socialRepository,
-  );
-  const authService = new AuthService(
-    userRepository,
-    configRepository,
+    mediaRepository,
     rateLimitingRepository,
-    cryptoRepository,
     sessionRepository,
-    eventRepository,
-    databaseRepository,
-  );
-  const storageService = new StorageService(storageRepository, jobRepository, logger);
-  const uploadService = new UploadService(
-    uploadRepository,
+    socialRepository,
     storageRepository,
-    cryptoRepository,
-    databaseRepository,
-    jobRepository,
-    logger,
-    importProgressStore,
-    activityRepository,
-    eventRepository,
-  );
-  const userService = new UserService(userRepository, socialRepository, storageRepository);
+    takeoutRepository: importProgressStore,
+    tcxRepository,
+    uploadRepository,
+    userRepository,
+  };
+
+  const activityService = new ActivityService(serviceDeps);
+  const activityImageService = new ActivityImageService(serviceDeps);
+  const authService = new AuthService(serviceDeps);
+  const storageService = new StorageService(serviceDeps);
+  const uploadService = new UploadService(serviceDeps);
+  const userService = new UserService(serviceDeps);
   const descriptors = createJobHandlerRegistry({
     activityService,
     activityImageService,
@@ -117,7 +100,7 @@ export const createCloudNodeProcessorComposition = ({
     userService,
   });
   const consumers = configRepository.demoMode ? (['node', 'worker'] as const) : (['node'] as const);
-  const jobService = new JobService(jobRepository, eventRepository, logger, createJobHandlers(descriptors, consumers));
+  const jobService = new JobService(serviceDeps, createJobHandlers(descriptors, consumers));
   const postgresJobService = new PostgresJobService(jobRepository, jobService.execute.bind(jobService), {
     hasHandler: jobService.hasHandler.bind(jobService),
     consumers,

@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { NotFoundException } from 'src/errors';
 import type { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { SocialService } from 'src/services/social.service';
+import { newServiceDeps } from 'test/utils';
 const makeService = () => {
   const social = {
     canViewActivity: vi.fn(),
   };
-  const service = new SocialService(social as never, {} as PostgresRealtimeRepository);
+  const service = new SocialService(
+    newServiceDeps({ socialRepository: social as never, eventRepository: {} as PostgresRealtimeRepository }),
+  );
   return { service, social };
 };
 
@@ -41,7 +44,9 @@ describe(SocialService.name, () => {
         });
       }),
     };
-    const service = new SocialService(social as never, eventRepository as never);
+    const service = new SocialService(
+      newServiceDeps({ socialRepository: social as never, eventRepository: eventRepository as never }),
+    );
 
     await (
       service as unknown as {

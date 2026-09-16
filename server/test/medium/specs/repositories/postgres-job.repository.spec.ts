@@ -5,7 +5,6 @@ import { JOB_DELIVERY_MESSAGE_VERSION, type JobDeliveryEnvelope } from 'src/cont
 import { JobName, JobStatus, QueueName } from 'src/enum';
 import { HttpStatus, UnsupportedOperationError } from 'src/errors';
 import type { JobHandlers } from 'src/jobs/job-handler';
-import { ConsoleLogger } from 'src/logger';
 import { CloudflareQueueRepository } from 'src/repositories/cloudflare/cloudflare-queue.repository';
 import { NoopRealtimeRepository } from 'src/repositories/noop-realtime.repository';
 import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
@@ -16,6 +15,7 @@ import type { KondisDatabase } from 'src/types';
 import type { JobItem } from 'src/types/jobs';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+import { newServiceDeps } from 'test/utils';
 
 const upload = (storagePath = 'temporary/activity.gpx'): JobItem => ({
   name: JobName.ActivityUpload,
@@ -32,7 +32,7 @@ describe(PostgresJobRepository.name, () => {
 
   const createService = (handlers: JobHandlers = {}, options: Partial<PostgresJobServiceOptions> = {}) => {
     const realtime = new NoopRealtimeRepository();
-    const service = new JobService(jobs, realtime, new ConsoleLogger({ logLevels: [] }), handlers);
+    const service = new JobService(newServiceDeps({ jobRepository: jobs, eventRepository: realtime }), handlers);
     return new PostgresJobService(jobs, service.execute.bind(service), {
       hasHandler: service.hasHandler.bind(service),
       realtime,

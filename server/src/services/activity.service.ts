@@ -1,9 +1,6 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
-import type { JobRepository } from 'src/contracts/job.repository';
-import type { RealtimeRepository } from 'src/contracts/realtime.repository';
-import { FileSizeLimitError, type StorageRepository } from 'src/contracts/storage.repository';
-import type { TransactionRepository } from 'src/contracts/transaction.repository';
+import { FileSizeLimitError } from 'src/contracts/storage.repository';
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
@@ -16,16 +13,9 @@ import {
   TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
-import { ConsoleLogger } from 'src/logger';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { FitRepository } from 'src/repositories/fit.repository';
-import { GpxRepository } from 'src/repositories/gpx.repository';
-import { MediaRepository } from 'src/repositories/media.repository';
-import { SocialRepository } from 'src/repositories/social.repository';
-import { TakeoutRepository } from 'src/repositories/takeout.repository';
-import { TcxRepository } from 'src/repositories/tcx.repository';
-import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
+import { BaseService } from 'src/services/base.service';
 import {
   ActivityListRecord,
   ActivityMetrics,
@@ -79,26 +69,7 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
     definition.type.startsWith('power_'),
 );
 
-export class ActivityService {
-  constructor(
-    private readonly uploadRepository: UploadRepository,
-    private readonly storageRepository: StorageRepository,
-    private readonly activityRepository: ActivityRepository,
-    private readonly databaseRepository: TransactionRepository,
-    private readonly eventRepository: RealtimeRepository,
-    private readonly jobRepository: JobRepository,
-    private readonly fitRepository: FitRepository,
-    private readonly gpxRepository: GpxRepository,
-    private readonly tcxRepository: TcxRepository,
-    private readonly logger: ConsoleLogger,
-    private readonly importProgressStore?: TakeoutRepository,
-    private readonly mediaRepository?: MediaRepository,
-    private readonly socialRepository?: SocialRepository,
-    private readonly mediaBaseUrl?: string,
-  ) {
-    this.logger.setContext(ActivityService.name);
-  }
-
+export class ActivityService extends BaseService {
   async handleActivityParse({
     id,
     force,
@@ -136,7 +107,7 @@ export class ActivityService {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
         if (takeoutImportId && takeoutItemKey) {
-          await this.importProgressStore?.completeItem(
+          await this.takeoutRepository.completeItem(
             takeoutImportId,
             takeoutItemKey,
             TakeoutImportItemTerminalStatus.Completed,
@@ -194,7 +165,7 @@ export class ActivityService {
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore?.completeItem(
+        await this.takeoutRepository.completeItem(
           takeoutImportId,
           takeoutItemKey,
           TakeoutImportItemTerminalStatus.Completed,
@@ -206,7 +177,7 @@ export class ActivityService {
 
       await this.uploadRepository.setStatus(id, 'failed', message);
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore?.completeItem(
+        await this.takeoutRepository.completeItem(
           takeoutImportId,
           takeoutItemKey,
           TakeoutImportItemTerminalStatus.Failed,
@@ -241,7 +212,7 @@ export class ActivityService {
         });
       }
       if (job.takeoutImportId && job.takeoutItemKey) {
-        await this.importProgressStore?.completeItem(
+        await this.takeoutRepository.completeItem(
           job.takeoutImportId,
           job.takeoutItemKey,
           TakeoutImportItemTerminalStatus.Duplicate,
@@ -321,7 +292,7 @@ export class ActivityService {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
     if (job.takeoutImportId && job.takeoutItemKey) {
-      await this.importProgressStore?.completeItem(
+      await this.takeoutRepository.completeItem(
         job.takeoutImportId,
         job.takeoutItemKey,
         TakeoutImportItemTerminalStatus.Completed,
@@ -608,10 +579,8 @@ export class ActivityService {
     }
 
     const upload = await this.uploadRepository.getById(activity.upload_id);
-    const activityImages = this.mediaRepository ? await this.mediaRepository.listForActivity(activity.id) : [];
-    const imageFiles = this.mediaRepository
-      ? await Promise.all(activityImages.map((image) => this.mediaRepository!.getFiles(image.id)))
-      : [];
+    const activityImages = await this.mediaRepository.listForActivity(activity.id);
+    const imageFiles = await Promise.all(activityImages.map((image) => this.mediaRepository.getFiles(image.id)));
 
     await this.databaseRepository.withTransaction(async (trx) => {
       // Cascades to the activity, its streams and its laps.
@@ -707,7 +676,7 @@ export class ActivityService {
     targetId: string,
     query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
   ) {
-    if (!this.socialRepository || !(await this.socialRepository.canViewUser(viewerId, targetId))) {
+    if (!(await this.socialRepository.canViewUser(viewerId, targetId))) {
       throw new NotFoundException('Person does not exist');
     }
     return this.decorateSocialActivities(await this.listRecent(query, targetId), viewerId, targetId);
@@ -718,7 +687,7 @@ export class ActivityService {
     viewerId: string,
     targetId?: string,
   ) {
-    if (!this.socialRepository || page.activities.length === 0) {
+    if (page.activities.length === 0) {
       return page;
     }
     const ids = page.activities.map((activity) => activity.id);
@@ -728,7 +697,7 @@ export class ActivityService {
         ? Promise.resolve([await this.socialRepository.getUser(targetId)])
         : Promise.all(
             [...new Set(page.activities.map((activity) => activity.userId).filter((id): id is string => !!id))].map(
-              (id) => this.socialRepository!.getUser(id),
+              (id) => this.socialRepository.getUser(id),
             ),
           ),
     ]);
@@ -789,10 +758,10 @@ export class ActivityService {
   }
 
   async getById(id: string, userId?: string) {
-    if (userId && this.socialRepository && !(await this.socialRepository.canViewActivity(id, userId))) {
+    if (userId && !(await this.socialRepository.canViewActivity(id, userId))) {
       return;
     }
-    const row = await this.activityRepository.getDetailById(id, this.socialRepository ? undefined : userId);
+    const row = await this.activityRepository.getDetailById(id);
     if (!row) {
       return;
     }
@@ -802,10 +771,10 @@ export class ActivityService {
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
-      this.mediaRepository?.listForActivity(row.id) ?? Promise.resolve([]),
+      this.mediaRepository.listForActivity(row.id),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
-    const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
+    const athlete = row.user_id ? await this.socialRepository.getUser(row.user_id) : undefined;
 
     const detail = {
       ...this.toActivityDto(row),
@@ -818,7 +787,7 @@ export class ActivityService {
         images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)),
       ),
     };
-    if (!this.socialRepository || !userId) {
+    if (!userId) {
       return detail;
     }
     const engagements = await this.socialRepository.activityEngagement([id], userId);
@@ -832,15 +801,12 @@ export class ActivityService {
   }
 
   private async listImageDtos(activityId: string, userId?: string) {
-    if (!this.mediaRepository) {
-      return [];
-    }
     const images = await this.mediaRepository.listForActivity(activityId, userId);
     return Promise.all(images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)));
   }
 
   private async toImageDto(image: ActivityImage) {
-    const files = (await this.mediaRepository?.getFiles(image.id)) ?? [];
+    const files = await this.mediaRepository.getFiles(image.id);
     const fileUrl = (variant: 'thumbnail' | 'preview' | 'original'): string | null => {
       const file = files.find((candidate) => candidate.variant === variant);
       return file

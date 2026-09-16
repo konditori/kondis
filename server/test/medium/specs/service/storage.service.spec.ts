@@ -2,7 +2,6 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { JobRepository } from 'src/contracts/job.repository';
 import { JobStatus } from 'src/enum';
-import { ConsoleLogger } from 'src/logger';
 import type { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
@@ -12,6 +11,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+import { newServiceDeps } from 'test/utils';
 
 describe(StorageService.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
@@ -34,7 +34,10 @@ describe(StorageService.name, () => {
       new NodeCryptoRepository(),
     );
     const jobs = { getReferencedTemporaryPaths: () => new Set<string>() } as unknown as JobRepository;
-    return { sut: new StorageService(repository, jobs, new ConsoleLogger()), repository };
+    return {
+      sut: new StorageService(newServiceDeps({ storageRepository: repository, jobRepository: jobs })),
+      repository,
+    };
   };
 
   it('deletes files through the configured storage repository', async () => {

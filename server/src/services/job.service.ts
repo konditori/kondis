@@ -1,9 +1,7 @@
-import type { JobRepository } from 'src/contracts/job.repository';
-import type { RealtimeRepository } from 'src/contracts/realtime.repository';
 import { JobName, JobStatus, ManualJobName, QueueCommand, QueueName } from 'src/enum';
 import { BadRequestException } from 'src/errors';
 import type { JobHandlers } from 'src/jobs/job-handler';
-import { ConsoleLogger } from 'src/logger';
+import { BaseService, type BaseServiceDeps } from 'src/services/base.service';
 import { AllJobStatusResponse, JobItem, QueueStatusReport } from 'src/types/jobs';
 import { asErrorMessage } from 'src/utils/misc';
 
@@ -19,14 +17,12 @@ const asJobItem = (name: ManualJobName): JobItem => {
   }
 };
 
-export class JobService {
+export class JobService extends BaseService {
   constructor(
-    private readonly jobs: JobRepository,
-    private readonly events: RealtimeRepository,
-    private readonly logger: ConsoleLogger,
+    deps: BaseServiceDeps,
     private readonly handlers: JobHandlers = {},
   ) {
-    this.logger.setContext(JobService.name);
+    super(deps);
   }
 
   hasHandler(name: JobName): boolean {
@@ -34,42 +30,45 @@ export class JobService {
   }
 
   async create(name: ManualJobName): Promise<void> {
-    await this.jobs.queue(asJobItem(name));
-    await this.events.emit('JobUpdated');
+    await this.jobRepository.queue(asJobItem(name));
+    await this.eventRepository.emit('JobUpdated');
   }
 
   async getJobHistory(limit: number, offset = 0) {
-    return this.jobs.getJobHistory(limit, offset);
+    return this.jobRepository.getJobHistory(limit, offset);
   }
 
   async getAllJobStatus(): Promise<AllJobStatusResponse> {
     const queues = Object.values(QueueName);
-    const counts = await this.jobs.getAllJobCounts();
+    const counts = await this.jobRepository.getAllJobCounts();
 
     return Object.fromEntries(
-      queues.map((queue) => [queue, { jobCounts: counts[queue], queueStatus: { paused: this.jobs.isPaused(queue) } }]),
+      queues.map((queue) => [
+        queue,
+        { jobCounts: counts[queue], queueStatus: { paused: this.jobRepository.isPaused(queue) } },
+      ]),
     ) as AllJobStatusResponse;
   }
 
   async handleCommand(queue: QueueName, command: QueueCommand): Promise<QueueStatusReport> {
     switch (command) {
       case QueueCommand.Pause: {
-        await this.jobs.pause(queue);
+        await this.jobRepository.pause(queue);
         break;
       }
 
       case QueueCommand.Resume: {
-        await this.jobs.resume(queue);
+        await this.jobRepository.resume(queue);
         break;
       }
 
       case QueueCommand.Empty: {
-        await this.jobs.empty(queue);
+        await this.jobRepository.empty(queue);
         break;
       }
 
       case QueueCommand.ClearFailed: {
-        await this.jobs.clearFailed(queue);
+        await this.jobRepository.clearFailed(queue);
         break;
       }
 
@@ -79,20 +78,20 @@ export class JobService {
     }
 
     const status = await this.getJobStatus(queue);
-    await this.events.emit('JobUpdated');
+    await this.eventRepository.emit('JobUpdated');
     return status;
   }
 
   private async getJobStatus(queue: QueueName): Promise<QueueStatusReport> {
     return {
-      jobCounts: await this.jobs.getJobCounts(queue),
-      queueStatus: { paused: this.jobs.isPaused(queue) },
+      jobCounts: await this.jobRepository.getJobCounts(queue),
+      queueStatus: { paused: this.jobRepository.isPaused(queue) },
     };
   }
 
   async execute(item: JobItem, { notify = true }: { notify?: boolean } = {}): Promise<JobStatus> {
     if (notify) {
-      await this.events.emit('JobUpdated');
+      await this.eventRepository.emit('JobUpdated');
     }
     const startedAt = Date.now();
 
@@ -108,7 +107,7 @@ export class JobService {
       throw error;
     } finally {
       if (notify) {
-        await this.events.emit('JobUpdated');
+        await this.eventRepository.emit('JobUpdated');
       }
     }
 

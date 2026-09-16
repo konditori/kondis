@@ -13,6 +13,7 @@ import {
   type ActivityImageRouteService,
 } from 'src/api/routes/activity-image';
 import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
+import { registerCapabilitiesRoutes } from 'src/api/routes/capabilities';
 import {
   registerJobCreateRoute,
   registerJobReadRoutes,
@@ -95,6 +96,7 @@ export const registerWorkerPortableRouteGroups = (
   app: OpenAPIHono<ApiEnv>,
   dependencies: WorkerPortableRouteDependencies,
 ): void => {
+  registerCapabilitiesRoutes(app);
   registerActivityReadOnlyRoutes(app, dependencies.activities);
   registerUserListRoutes(app, dependencies.users);
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
@@ -149,6 +151,7 @@ export const registerWorkerStorageRouteGroups = (
 };
 
 export const registerPortableRouteGroups: ApiRouteGroup = (app, dependencies) => {
+  registerCapabilitiesRoutes(app);
   registerActivityReadRoutes(app, dependencies.activities);
   registerUserReadRoutes(app, dependencies.users, dependencies.userService, dependencies.files);
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);

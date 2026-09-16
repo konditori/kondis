@@ -1,3 +1,4 @@
+import { IMAGE_FILE_EXTENSIONS } from 'src/config/upload-formats';
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import type { CryptoRepository } from 'src/contracts/crypto.repository';
 import type { StorageRepository } from 'src/contracts/storage.repository';
@@ -22,8 +23,8 @@ export async function stageTakeoutPhoto(
   if (file.buffer.length > UPLOAD_LIMITS.imageFileBytes) {
     throw new PayloadTooLargeException('Photo exceeds the image size limit');
   }
-  const extension = /\.(jpg|jpeg|png|webp|heic|heif|avif)$/i.exec(file.originalname)?.[0].toLowerCase();
-  if (!extension) {
+  const extension = /\.[^./]+$/.exec(file.originalname)?.[0].toLowerCase();
+  if (!extension || !IMAGE_FILE_EXTENSIONS.has(extension)) {
     throw new BadRequestException('Unsupported photo format');
   }
   const owner = await progress.get(importId, userId);

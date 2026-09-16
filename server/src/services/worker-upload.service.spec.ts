@@ -13,6 +13,7 @@ import type { UploadRepository } from 'src/repositories/upload.repository';
 import { WorkerUploadService } from 'src/services/worker-upload.service';
 import type { KondisTransaction } from 'src/types';
 import type { JobOf } from 'src/types/jobs';
+import { newServiceDeps } from 'test/utils';
 
 describe(WorkerUploadService.name, () => {
   const checksum = 'a'.repeat(64);
@@ -41,14 +42,16 @@ describe(WorkerUploadService.name, () => {
 
   const setup = () =>
     new WorkerUploadService(
-      { readLimited, buildPath, write, delete: deleteFile } as unknown as StorageRepository,
-      { sha256 } as unknown as CryptoRepository,
-      { queue } as unknown as JobRepository,
-      { completeItem } as unknown as TakeoutRepository,
-      { getByChecksum, create } as unknown as UploadRepository,
-      { getByUploadId } as unknown as ActivityRepository,
-      { withTransaction } as TransactionRepository,
-      { emit } as RealtimeRepository,
+      newServiceDeps({
+        storageRepository: { readLimited, buildPath, write, delete: deleteFile } as unknown as StorageRepository,
+        cryptoRepository: { sha256 } as unknown as CryptoRepository,
+        jobRepository: { queue } as unknown as JobRepository,
+        takeoutRepository: { completeItem } as unknown as TakeoutRepository,
+        uploadRepository: { getByChecksum, create } as unknown as UploadRepository,
+        activityRepository: { getByUploadId } as unknown as ActivityRepository,
+        databaseRepository: { withTransaction } as TransactionRepository,
+        eventRepository: { emit } as RealtimeRepository,
+      }),
     );
 
   beforeEach(() => {

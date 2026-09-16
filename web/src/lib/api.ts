@@ -43,9 +43,11 @@ import {
   type QueueName as JobQueueName,
 } from "@kondis/sdk";
 
+export const API_BASE = "/api/v1";
+
 export function getSdkRequestOptions(fetchImpl?: typeof fetch) {
   return {
-    baseUrl: "/api/v1",
+    baseUrl: API_BASE,
     fetch: fetchImpl,
   };
 }
@@ -58,7 +60,7 @@ export async function activityImageUpload(
   const body = new FormData();
   body.append("file", file);
   if (caption?.trim()) body.append("caption", caption.trim());
-  const response = await fetch(`/api/v1/activities/${activityId}/images`, {
+  const response = await fetch(`${API_BASE}/activities/${activityId}/images`, {
     method: "POST",
     body,
   });
@@ -71,7 +73,7 @@ export async function activityImageDelete(
   imageId: string,
 ): Promise<void> {
   const response = await fetch(
-    `/api/v1/activities/${activityId}/images/${imageId}`,
+    `${API_BASE}/activities/${activityId}/images/${imageId}`,
     { method: "DELETE" },
   );
   if (!response.ok) throw new Error(`Image delete failed (${response.status})`);

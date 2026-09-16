@@ -6,7 +6,7 @@ import type { FileSystemStorageRepository } from 'src/repositories/node/filesyst
 import type { SocialRepository } from 'src/repositories/social.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { UserService } from 'src/services/user.service';
-import { newTestService } from 'test/utils';
+import { newServiceDeps, newTestService } from 'test/utils';
 
 const image = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
@@ -30,7 +30,17 @@ const setup = () => {
       absolutePath: vi.fn((path: string) => `/storage/${path}`),
     } as unknown as FileSystemStorageRepository,
   };
-  return newTestService(UserService, [mocks.users, mocks.social, mocks.storage], mocks);
+  return newTestService(
+    UserService,
+    [
+      newServiceDeps({
+        userRepository: mocks.users,
+        socialRepository: mocks.social,
+        storageRepository: mocks.storage,
+      }),
+    ],
+    mocks,
+  );
 };
 
 describe(UserService.name, () => {

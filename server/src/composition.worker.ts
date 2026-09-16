@@ -30,6 +30,7 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
 import { LiveService } from 'src/services/live-activity.service';
 import { PostgresJobService } from 'src/services/postgres-job.service';
@@ -91,68 +92,43 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   );
   const rateLimitingRepository = new RateLimitingRepository(database);
   const fitRepository = new FitRepository(new ConsoleLogger());
-  const authService = new AuthService(
-    userRepository,
-    config,
-    rateLimitingRepository,
-    workerCrypto,
-    authCredentialRepository,
-    workerEvents,
-    transactions,
-    env.KONDIS_DEMO_MEDIA_BASE_URL,
-  );
   const activityRepository = new ActivityRepository(database);
   const uploadRepository = new UploadRepository(database);
   const socialRepository = new SocialRepository(database, env.KONDIS_DEMO_MEDIA_BASE_URL);
   const importProgressStore = new TakeoutRepository(database);
-  const activityService = new ActivityService(
-    uploadRepository,
-    storage ?? ({} as never),
+
+  const serviceDeps: BaseServiceDeps = {
     activityRepository,
-    transactions,
-    workerEvents,
-    jobRepository,
+    configRepository: config,
+    cryptoRepository: workerCrypto,
+    databaseRepository: transactions,
+    eventRepository: workerEvents,
     fitRepository,
-    new GpxRepository(new ConsoleLogger()),
-    new TcxRepository(new ConsoleLogger()),
-    new ConsoleLogger(),
-    importProgressStore,
-    mediaRepository,
-    socialRepository,
-    env.KONDIS_DEMO_MEDIA_BASE_URL,
-  );
-  const workerActivityImageService = storage
-    ? new WorkerActivityImageService(
-        mediaRepository,
-        activityRepository,
-        storage,
-        workerCrypto,
-        transactions,
-        jobRepository,
-        socialRepository,
-      )
-    : undefined;
-  const workerUploadService = storage
-    ? new WorkerUploadService(
-        storage,
-        workerCrypto,
-        jobRepository,
-        importProgressStore,
-        uploadRepository,
-        activityRepository,
-        transactions,
-        workerEvents,
-      )
-    : undefined;
-  const workerUserService = storage
-    ? new WorkerUserService(userRepository, socialRepository, storage, jobRepository)
-    : undefined;
-  const socialService = new SocialService(socialRepository, workerEvents, env.KONDIS_DEMO_MEDIA_BASE_URL);
-  const liveActivityService = new LiveService(new LiveActivityRepository(database), workerCrypto, workerEvents);
-  const jobService = new JobService(
+    gpxRepository: new GpxRepository(new ConsoleLogger()),
     jobRepository,
-    workerEvents,
-    new ConsoleLogger(),
+    liveActivityRepository: new LiveActivityRepository(database),
+    logger: new ConsoleLogger(),
+    mediaRepository,
+    mediaBaseUrl: env.KONDIS_DEMO_MEDIA_BASE_URL,
+    rateLimitingRepository,
+    sessionRepository: authCredentialRepository,
+    socialRepository,
+    storageRepository: storage ?? ({} as never),
+    takeoutRepository: importProgressStore,
+    tcxRepository: new TcxRepository(new ConsoleLogger()),
+    uploadRepository,
+    userRepository,
+  };
+
+  const authService = new AuthService(serviceDeps);
+  const activityService = new ActivityService(serviceDeps);
+  const workerActivityImageService = storage ? new WorkerActivityImageService(serviceDeps) : undefined;
+  const workerUploadService = storage ? new WorkerUploadService(serviceDeps) : undefined;
+  const workerUserService = storage ? new WorkerUserService(serviceDeps) : undefined;
+  const socialService = new SocialService(serviceDeps);
+  const liveActivityService = new LiveService(serviceDeps);
+  const jobService = new JobService(
+    serviceDeps,
     createWorkerJobHandlers({
       authService,
       activityService,

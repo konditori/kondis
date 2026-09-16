@@ -3,7 +3,7 @@ import { NotFoundException } from 'src/errors';
 import { type LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { LiveService } from 'src/services/live-activity.service';
-import { newTestService } from 'test/utils';
+import { newServiceDeps, newTestService } from 'test/utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const WORKOUT_ID = '00000000-0000-4000-8000-000000000001';
@@ -52,7 +52,17 @@ describe(LiveService.name, () => {
     listPoints,
   } as unknown as LiveActivityRepository;
   const setup = () =>
-    newTestService(LiveService, [repository, new NodeCryptoRepository(), { emit }], { repository, emit });
+    newTestService(
+      LiveService,
+      [
+        newServiceDeps({
+          liveActivityRepository: repository,
+          cryptoRepository: new NodeCryptoRepository(),
+          eventRepository: { emit } as never,
+        }),
+      ],
+      { repository, emit },
+    );
 
   beforeEach(() => {
     vi.clearAllMocks();
