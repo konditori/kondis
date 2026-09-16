@@ -1,0 +1,25 @@
+server/src/mcp/app.spec.ts
+  s_85df3e8a77ec6b::t_ef6dbeada0c555 8,48,65-104
+server/src/mcp/app.ts
+  s_85df3e8a77ec6b::t_3f9f992f7f7b0f 182-187,196,199
+server/src/mcp/registry.ts
+  s_85df3e8a77ec6b::t_207a8b61baec08 57,61,71,80-82,228
+server/src/services/operation.service.ts
+  s_85df3e8a77ec6b::t_1903a88653c0c1 7,308-317
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4f00025c7c94edfdf8fb98d74c79156a0b63af03",
+  "prompts": {},
+  "sessions": {
+    "s_85df3e8a77ec6b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0aae0-4fd8-7693-89f0-66a9c8db42a1",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
