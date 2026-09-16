@@ -1,48 +1,50 @@
-import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import { createDatabase } from 'src/db/database';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
+import { createJobHandlers } from 'src/jobs/job-handler';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { ConfigRepository } from 'src/repositories/config.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { EventRepository } from 'src/repositories/event.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
-import { LiveWorkoutRepository } from 'src/repositories/live-workout.repository';
+import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
+import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
+import { PgBossJobRepository } from 'src/repositories/node/pgboss-job.repository';
+import { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
-import { LiveWorkoutService } from 'src/services/live-workout.service';
+import { LiveService } from 'src/services/live-activity.service';
 import { ServerService } from 'src/services/server.service';
 import { SocialService } from 'src/services/social.service';
 import { StorageService } from 'src/services/storage.service';
 import { UploadService } from 'src/services/upload.service';
 import { UserService } from 'src/services/user.service';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 
 export type ApplicationRole = 'api' | 'worker';
 type Class<T> = new (...args: never[]) => T;
 
 export type CompositionOptions = {
   role: ApplicationRole;
-  configRepository?: ConfigRepository;
+  configRepository?: EnvConfigRepository;
   logLevels?: LogLevel[];
 };
 
-// Node composition intentionally owns every native and self-hosted adapter.
+// Node composition owns the native and self-hosted repository implementations.
 export const createApplicationComposition = ({
   role,
-  configRepository = new ConfigRepository(),
+  configRepository = new EnvConfigRepository(),
   logLevels,
 }: CompositionOptions) => {
   const consumeJobs = role === 'worker';
@@ -51,87 +53,71 @@ export const createApplicationComposition = ({
   const activityRepository = new ActivityRepository(database);
   const mediaRepository = new MediaRepository(database);
   const authCredentialRepository = new SessionRepository(database);
-  const cryptoRepository = new CryptoRepository();
+  const cryptoRepository = new NodeCryptoRepository();
   const databaseRepository = new DatabaseRepository(database);
   const fitRepository = new FitRepository(newLogger());
   const gpxRepository = new GpxRepository(newLogger());
-  const liveWorkoutRepository = new LiveWorkoutRepository(database);
+  const liveActivityRepository = new LiveActivityRepository(database);
   const rateLimitingRepository = new RateLimitingRepository(database);
   const socialRepository = new SocialRepository(database);
-  const storageRepository = new StorageRepository(configRepository, cryptoRepository);
+  const storageRepository = new FileSystemStorageRepository(configRepository, cryptoRepository);
   const tcxRepository = new TcxRepository(newLogger());
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
-  const eventRepository = new EventRepository(database, configRepository, socialRepository, authCredentialRepository);
-  const queueAdapter = new PgBossQueueAdapter(configRepository, consumeJobs, newLogger());
+  const eventRepository = new PostgresRealtimeRepository(
+    database,
+    configRepository,
+    socialRepository,
+    authCredentialRepository,
+  );
+  const jobRepository = new PgBossJobRepository(configRepository, consumeJobs, newLogger());
 
-  const importProgressStore = new ImportProgressStore(database);
+  const importProgressStore = new TakeoutRepository(database);
 
-  const activityService = new ActivityService(
-    uploadRepository,
-    storageRepository,
+  const serviceDeps: BaseServiceDeps = {
     activityRepository,
+    configRepository,
+    cryptoRepository,
     databaseRepository,
     eventRepository,
-    queueAdapter,
     fitRepository,
     gpxRepository,
-    tcxRepository,
-    newLogger(),
-    importProgressStore,
+    jobRepository,
+    liveActivityRepository,
+    logger: newLogger(),
     mediaRepository,
-    socialRepository,
-  );
-  const activityImageService = new ActivityImageService(
-    mediaRepository,
-    activityRepository,
-    storageRepository,
-    cryptoRepository,
-    databaseRepository,
-    queueAdapter,
-    newLogger(),
-    socialRepository,
-  );
-  const authService = new AuthService(
-    userRepository,
-    configRepository,
     rateLimitingRepository,
-    cryptoRepository,
-    authCredentialRepository,
-    eventRepository,
-    databaseRepository,
-  );
-  const jobService = new JobService(
-    { admin: queueAdapter, consumer: queueAdapter, producer: queueAdapter },
-    eventRepository,
-    newLogger(),
-  );
-  const liveWorkoutService = new LiveWorkoutService(liveWorkoutRepository, cryptoRepository, eventRepository);
-  const serverService = new ServerService();
-  const socialService = new SocialService(socialRepository, eventRepository);
-  const storageService = new StorageService(storageRepository, queueAdapter, newLogger());
-  const uploadService = new UploadService(
-    uploadRepository,
+    sessionRepository: authCredentialRepository,
+    socialRepository,
     storageRepository,
-    cryptoRepository,
-    databaseRepository,
-    queueAdapter,
-    newLogger(),
-    importProgressStore,
-    activityRepository,
-    eventRepository,
-  );
-  const userService = new UserService(userRepository, socialRepository, storageRepository);
+    takeoutRepository: importProgressStore,
+    tcxRepository,
+    uploadRepository,
+    userRepository,
+  };
 
-  queueAdapter.setup(
-    createJobHandlerRegistry({
-      activityService,
-      activityImageService,
-      authService,
-      storageService,
-      uploadService,
-      userService,
-    }),
+  const activityService = new ActivityService(serviceDeps);
+  const activityImageService = new ActivityImageService(serviceDeps);
+  const authService = new AuthService(serviceDeps);
+  const liveActivityService = new LiveService(serviceDeps);
+  const serverService = new ServerService();
+  const socialService = new SocialService(serviceDeps);
+  const storageService = new StorageService(serviceDeps);
+  const uploadService = new UploadService(serviceDeps);
+  const userService = new UserService(serviceDeps);
+
+  const jobService = new JobService(
+    serviceDeps,
+    createJobHandlers(
+      createJobHandlerRegistry({
+        activityService,
+        activityImageService,
+        authService,
+        storageService,
+        uploadService,
+        userService,
+      }),
+    ),
   );
 
   const namedInstances = {
@@ -147,8 +133,8 @@ export const createApplicationComposition = ({
     eventRepository,
     fitRepository,
     gpxRepository,
-    queueAdapter,
-    liveWorkoutRepository,
+    jobRepository,
+    liveActivityRepository,
     rateLimitingRepository,
     socialRepository,
     storageRepository,
@@ -160,7 +146,7 @@ export const createApplicationComposition = ({
     activityImageService,
     authService,
     jobService,
-    liveWorkoutService,
+    liveActivityService,
     serverService,
     socialService,
     storageService,
@@ -168,29 +154,29 @@ export const createApplicationComposition = ({
     userService,
   };
   const instances = new Map<Class<unknown>, unknown>([
-    [ConfigRepository, configRepository],
+    [EnvConfigRepository, configRepository],
     [ActivityRepository, activityRepository],
     [MediaRepository, mediaRepository],
     [SessionRepository, authCredentialRepository],
-    [CryptoRepository, cryptoRepository],
+    [NodeCryptoRepository, cryptoRepository],
     [DatabaseRepository, databaseRepository],
-    [EventRepository, eventRepository],
+    [PostgresRealtimeRepository, eventRepository],
     [FitRepository, fitRepository],
     [GpxRepository, gpxRepository],
-    [PgBossQueueAdapter, queueAdapter],
-    [LiveWorkoutRepository, liveWorkoutRepository],
+    [PgBossJobRepository, jobRepository],
+    [LiveActivityRepository, liveActivityRepository],
     [RateLimitingRepository, rateLimitingRepository],
     [SocialRepository, socialRepository],
-    [StorageRepository, storageRepository],
+    [FileSystemStorageRepository, storageRepository],
     [TcxRepository, tcxRepository],
     [UploadRepository, uploadRepository],
     [UserRepository, userRepository],
-    [ImportProgressStore, importProgressStore],
+    [TakeoutRepository, importProgressStore],
     [ActivityService, activityService],
     [ActivityImageService, activityImageService],
     [AuthService, authService],
     [JobService, jobService],
-    [LiveWorkoutService, liveWorkoutService],
+    [LiveService, liveActivityService],
     [ServerService, serverService],
     [SocialService, socialService],
     [StorageService, storageService],
@@ -211,13 +197,15 @@ export const createApplicationComposition = ({
       return instance as T;
     },
     initialize(): Promise<void> {
-      initialization ??= jobService.init(consumeJobs);
+      initialization ??= consumeJobs
+        ? jobRepository.startWorkers(jobService.execute.bind(jobService))
+        : Promise.resolve();
       return initialization;
     },
     close(): Promise<void> {
       shutdown ??= (async () => {
         try {
-          await queueAdapter.stop();
+          await jobRepository.stop();
         } finally {
           try {
             await eventRepository.stop();

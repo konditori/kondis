@@ -8,7 +8,7 @@ const adapter =
     : nodeAdapter;
 
 export default {
-  preprocess: vitePreprocess(),
+  preprocess: vitePreprocess({ script: true }),
   kit: {
     adapter: adapter(),
     alias: {

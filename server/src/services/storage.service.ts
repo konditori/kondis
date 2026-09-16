@@ -1,20 +1,10 @@
 import { JobName, JobStatus } from 'src/enum';
-import { ConsoleLogger } from 'src/logger';
-import type { JobAdminPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
+import { BaseService } from 'src/services/base.service';
 import { JobOf } from 'src/types/jobs';
 
 const TEMPORARY_FILE_RETENTION_MS = 24 * 60 * 60 * 1000;
 
-export class StorageService {
-  constructor(
-    private readonly storageRepository: Pick<StoragePort, 'delete' | 'deleteTemporaryFilesOlderThan'>,
-    private readonly jobRepository: Pick<JobAdminPort, 'getReferencedTemporaryPaths'>,
-    private readonly logger: ConsoleLogger,
-  ) {
-    this.logger.setContext(StorageService.name);
-  }
-
+export class StorageService extends BaseService {
   async handleFileDelete({ paths }: JobOf<JobName.FileDelete>): Promise<JobStatus> {
     for (const path of paths) {
       await this.storageRepository.delete(path);

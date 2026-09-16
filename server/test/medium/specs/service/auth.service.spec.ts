@@ -2,8 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { UserRole } from 'src/enum';
 import { ConflictException, UnauthorizedException } from 'src/errors';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { UserRepository } from 'src/repositories/user.repository';
@@ -11,6 +11,7 @@ import { AuthService } from 'src/services/auth.service';
 import type { KondisDatabase } from 'src/types';
 
 import { createMediumTestDatabase, resetMediumTestDatabase } from 'test/medium/test-db';
+import { newServiceDeps } from 'test/utils';
 
 describe(AuthService.name, () => {
   let db: KondisDatabase;
@@ -23,13 +24,14 @@ describe(AuthService.name, () => {
     credentials = new SessionRepository(db);
     users = new UserRepository(db);
     sut = new AuthService(
-      users,
-      {} as never,
-      new RateLimitingRepository(db),
-      new CryptoRepository(),
-      credentials,
-      { emit: () => Promise.resolve() } as never,
-      new DatabaseRepository(db),
+      newServiceDeps({
+        userRepository: users,
+        rateLimitingRepository: new RateLimitingRepository(db),
+        cryptoRepository: new NodeCryptoRepository(),
+        sessionRepository: credentials,
+        eventRepository: { emit: () => Promise.resolve() } as never,
+        databaseRepository: new DatabaseRepository(db),
+      }),
     );
   });
 

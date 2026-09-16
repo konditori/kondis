@@ -96,6 +96,87 @@ describe('API browser takeout import routes', () => {
     );
   });
 
+  it('stages one photo for its activity through the multipart photos route', async () => {
+    const photoFile = { originalname: '1.jpg', size: 5, path: '/tmp/photo' };
+    const read = vi.fn(() =>
+      Promise.resolve({
+        file: photoFile,
+        metadata: JSON.stringify({
+          itemKey: 'activity:activities/run.gpx',
+          photoKey: 'photo:media/1.jpg',
+          caption: 'Finish line',
+          sortOrder: 0,
+        }),
+      }),
+    );
+    const submitTakeoutPhoto = vi.fn(() => Promise.resolve(true));
+    const app = createApiApp(
+      newApiDependencies({
+        uploads: { read },
+        uploadService: { submitTakeoutPhoto },
+        users: newApiUsers(),
+      }),
+    );
+
+    const body = new FormData();
+    body.append(
+      'metadata',
+      JSON.stringify({
+        itemKey: 'activity:activities/run.gpx',
+        photoKey: 'photo:media/1.jpg',
+        caption: 'Finish line',
+        sortOrder: 0,
+      }),
+    );
+    body.append('file', new File(['photo'], '1.jpg'));
+    const staged = await app.request(`/upload/strava/imports/${importId}/photos`, {
+      method: 'POST',
+      headers: apiAuthHeaders(),
+      body,
+    });
+
+    expect(staged.status).toBe(202);
+    expect(await staged.json()).toEqual({ accepted: true });
+    expect(read).toHaveBeenLastCalledWith(expect.any(Request), undefined, 'takeoutPhoto');
+    expect(submitTakeoutPhoto).toHaveBeenCalledWith(
+      importId,
+      TEST_API_USER.id,
+      {
+        itemKey: 'activity:activities/run.gpx',
+        photoKey: 'photo:media/1.jpg',
+        caption: 'Finish line',
+        sortOrder: 0,
+      },
+      photoFile,
+    );
+  });
+
+  it('rejects a photo with invalid metadata', async () => {
+    const read = vi.fn(() =>
+      Promise.resolve({ file: { originalname: '1.jpg', size: 5, path: '/tmp/photo' }, metadata: '{invalid' }),
+    );
+    const submitTakeoutPhoto = vi.fn();
+    const app = createApiApp(
+      newApiDependencies({
+        uploads: { read },
+        uploadService: { submitTakeoutPhoto },
+        users: newApiUsers(),
+      }),
+    );
+
+    const body = new FormData();
+    body.append('metadata', '{invalid');
+    body.append('file', new File(['photo'], '1.jpg'));
+    const staged = await app.request(`/upload/strava/imports/${importId}/photos`, {
+      method: 'POST',
+      headers: apiAuthHeaders(),
+      body,
+    });
+
+    expect(staged.status).toBe(400);
+    expect(submitTakeoutPhoto).not.toHaveBeenCalled();
+  });
+
   it('reports processing progress through the new status route', async () => {
     const getTakeoutImportStatus = vi.fn(() => Promise.resolve(status));
     const app = createApiApp(newApiDependencies({ uploadService: { getTakeoutImportStatus }, users: newApiUsers() }));

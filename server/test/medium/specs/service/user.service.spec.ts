@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { JobStatus } from 'src/enum';
-import { StorageRepository } from 'src/repositories/storage.repository';
+import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { UserService } from 'src/services/user.service';
 
@@ -18,14 +18,14 @@ describe(UserService.name, () => {
   let db: ReturnType<typeof createMediumTestDatabase>;
   let testApp: TestApp;
   let users: UserRepository;
-  let storage: StorageRepository;
+  let storage: FileSystemStorageRepository;
   let sut: UserService;
 
   beforeAll(async () => {
     db = createMediumTestDatabase();
     testApp = await createTestApp();
     users = testApp.get(UserRepository);
-    storage = testApp.get(StorageRepository);
+    storage = testApp.get(FileSystemStorageRepository);
     sut = testApp.get(UserService);
   });
 

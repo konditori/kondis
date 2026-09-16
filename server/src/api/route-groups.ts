@@ -13,6 +13,7 @@ import {
   type ActivityImageRouteService,
 } from 'src/api/routes/activity-image';
 import { registerAuthRoutes, type AuthRouteService } from 'src/api/routes/auth';
+import { registerCapabilitiesRoutes } from 'src/api/routes/capabilities';
 import {
   registerJobCreateRoute,
   registerJobReadRoutes,
@@ -20,10 +21,10 @@ import {
   type JobRouteService,
 } from 'src/api/routes/job';
 import {
-  registerLiveWorkoutReadRoutes,
-  registerLiveWorkoutRoutes,
-  type LiveWorkoutRouteService,
-} from 'src/api/routes/live-workout';
+  registerLiveActivityReadRoutes,
+  registerLiveActivityRoutes,
+  type LiveActivityRouteService,
+} from 'src/api/routes/live-activity';
 import {
   registerSocialReadRoutes,
   type SocialActivityReadService,
@@ -50,17 +51,17 @@ import {
   type UserCreationService,
   type UserMutationService,
 } from 'src/api/routes/user-mutations';
-import type { UploadReader } from 'src/api/uploads';
-import type { ConfigPort } from 'src/ports/config.port';
+import type { ConfigRepository } from 'src/contracts/config.repository';
+import type { UploadReader } from 'src/types';
 
 export type ApiRouteGroups = {
   activities: ActivityReadService & SocialActivityReadService;
   activityImages: ActivityImageRouteService;
   auth: AuthRouteService & UserCreationService;
-  config: Pick<ConfigPort, 'registrationEnabled' | 'trustProxyHeaders'>;
+  config: Pick<ConfigRepository, 'registrationEnabled' | 'trustProxyHeaders'>;
   files: FileReader;
   jobs: JobRouteService;
-  liveWorkouts: LiveWorkoutRouteService;
+  liveActivities: LiveActivityRouteService;
   sessions: import('src/api/auth').ApiSessionLookup;
   social: SocialReadService & SocialMutationService;
   uploads: UploadReader;
@@ -74,7 +75,7 @@ export type ApiRouteGroup = (app: OpenAPIHono<ApiEnv>, dependencies: ApiRouteGro
 export type WorkerPortableRouteDependencies = {
   activities: ActivityReadService & SocialActivityReadService;
   jobs: Pick<JobRouteService, 'getAllJobStatus' | 'getJobHistory'>;
-  liveWorkouts: Pick<LiveWorkoutRouteService, 'get' | 'getShared' | 'list'>;
+  liveActivities: Pick<LiveActivityRouteService, 'get' | 'getShared' | 'list'>;
   social: SocialReadService;
   users: UserReadRepository;
 };
@@ -95,11 +96,12 @@ export const registerWorkerPortableRouteGroups = (
   app: OpenAPIHono<ApiEnv>,
   dependencies: WorkerPortableRouteDependencies,
 ): void => {
+  registerCapabilitiesRoutes(app);
   registerActivityReadOnlyRoutes(app, dependencies.activities);
   registerUserListRoutes(app, dependencies.users);
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
   registerJobReadRoutes(app, dependencies.jobs);
-  registerLiveWorkoutReadRoutes(app, dependencies.liveWorkouts);
+  registerLiveActivityReadRoutes(app, dependencies.liveActivities);
 };
 
 export const registerWorkerQueueMutationRoutes = (
@@ -149,12 +151,13 @@ export const registerWorkerStorageRouteGroups = (
 };
 
 export const registerPortableRouteGroups: ApiRouteGroup = (app, dependencies) => {
+  registerCapabilitiesRoutes(app);
   registerActivityReadRoutes(app, dependencies.activities);
   registerUserReadRoutes(app, dependencies.users, dependencies.userService, dependencies.files);
   registerSocialReadRoutes(app, dependencies.social, dependencies.activities);
   registerAuthRoutes(app, dependencies.auth, dependencies.users, dependencies.config);
   registerJobRoutes(app, dependencies.jobs);
-  registerLiveWorkoutRoutes(app, dependencies.liveWorkouts);
+  registerLiveActivityRoutes(app, dependencies.liveActivities);
 };
 
 export const registerAllRouteGroups: ApiRouteGroup = (app, dependencies) => {

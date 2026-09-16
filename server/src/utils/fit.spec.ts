@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { FitBaseType } from 'fit-file-parser';
-import { ActivityType } from 'src/enum';
-import type { FitMessages } from 'src/types';
+import { ActivityType, StreamType } from 'src/enum';
+import type { FitMessages, ParsedActivity } from 'src/types';
 import { computeRunningBestEfforts } from 'src/utils/best-effort';
 import {
-  findStream,
   fitField,
   FitParseError,
   fitScaledField,
@@ -21,6 +20,9 @@ const at = (offsetS: number) => new Date(START.getTime() + offsetS * 1000);
 // ~58.67N, ~11.73E in semicircles, which is how FIT stores position.
 const LAT_SEMICIRCLES = 700_000_000;
 const LON_SEMICIRCLES = 140_000_000;
+
+const findStream = (activity: ParsedActivity, type: StreamType): number[] | undefined =>
+  activity.streams.find((stream) => stream.type === type)?.data;
 
 describe('fitSport', () => {
   it.each([
@@ -117,8 +119,8 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    expect(findStream(parsed, 'latitude')?.[0]).toBeCloseTo(58.673, 2);
-    expect(findStream(parsed, 'longitude')?.[0]).toBeCloseTo(11.735, 2);
+    expect(findStream(parsed, StreamType.Latitude)?.[0]).toBeCloseTo(58.673, 2);
+    expect(findStream(parsed, StreamType.Longitude)?.[0]).toBeCloseTo(11.735, 2);
   });
 
   it('leaves already-converted degrees untouched', () => {
@@ -129,7 +131,7 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    expect(findStream(parsed, 'latitude')?.[0]).toBeCloseTo(58.673, 3);
+    expect(findStream(parsed, StreamType.Latitude)?.[0]).toBeCloseTo(58.673, 3);
   });
 
   it('derives a cumulative distance stream from positions when FIT records omit distance', () => {
@@ -142,12 +144,12 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    const distance = findStream(parsed, 'distance');
+    const distance = findStream(parsed, StreamType.Distance);
     expect(distance).toHaveLength(3);
     expect(distance?.[0]).toBe(0);
     expect(distance?.[1]).toBeCloseTo(500, 5);
     expect(distance?.[2]).toBeCloseTo(1000, 5);
-    expect(computeRunningBestEfforts(distance!, findStream(parsed, 'time')!).map(({ type }) => type)).toEqual([
+    expect(computeRunningBestEfforts(distance!, findStream(parsed, StreamType.Time)!).map(({ type }) => type)).toEqual([
       '400m',
       '1k',
       'half_mile',
@@ -163,7 +165,7 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    expect(findStream(parsed, 'distance')).toEqual([0, 200]);
+    expect(findStream(parsed, StreamType.Distance)).toEqual([0, 200]);
   });
 
   it('derives summary values from streams when there is no session message', () => {
@@ -194,7 +196,7 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    expect(findStream(parsed, 'heartrate')).toBeUndefined();
+    expect(findStream(parsed, StreamType.Heartrate)).toBeUndefined();
     expect(parsed.avgHr).toBeNull();
     expect(parsed.maxHr).toBeNull();
   });
@@ -213,7 +215,7 @@ describe('parseFitMessages', () => {
       recordMesgs: [{ timestamp: at(0) }, { timestamp: at(1) }, { timestamp: at(10) }],
     });
 
-    expect(findStream(parsed, 'time')).toEqual([0, 1, 10]);
+    expect(findStream(parsed, StreamType.Time)).toEqual([0, 1, 10]);
   });
 
   it('keeps streams index-aligned by padding gaps with NaN', () => {
@@ -225,8 +227,8 @@ describe('parseFitMessages', () => {
       ],
     });
 
-    const power = findStream(parsed, 'power');
-    const heartrate = findStream(parsed, 'heartrate');
+    const power = findStream(parsed, StreamType.Power);
+    const heartrate = findStream(parsed, StreamType.Heartrate);
 
     expect(power).toHaveLength(3);
     expect(heartrate).toHaveLength(3);
@@ -240,9 +242,9 @@ describe('parseFitMessages', () => {
       recordMesgs: [{ timestamp: at(0), heartRate: 120 }],
     });
 
-    expect(findStream(parsed, 'heartrate')).toBeDefined();
-    expect(findStream(parsed, 'power')).toBeUndefined();
-    expect(findStream(parsed, 'latitude')).toBeUndefined();
+    expect(findStream(parsed, StreamType.Heartrate)).toBeDefined();
+    expect(findStream(parsed, StreamType.Power)).toBeUndefined();
+    expect(findStream(parsed, StreamType.Latitude)).toBeUndefined();
   });
 
   it('accepts raw FIT epoch seconds as well as Date objects', () => {

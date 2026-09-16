@@ -1,4 +1,5 @@
 import { CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
+import { BestEffortValueKind } from 'src/enum';
 import type { BestEffort, BestEffortType, DistanceBestEffortDefinition } from 'src/types';
 
 type DistanceTimePoint = { distance: number; time: number };
@@ -70,7 +71,7 @@ const fastestEffort = (
       startTime,
       endTime,
       value: elapsedTime,
-      valueKind: 'duration',
+      valueKind: BestEffortValueKind.Duration,
     };
   };
 
@@ -149,7 +150,7 @@ export const computeCyclingSummaryBestEfforts = (summary: {
       startTime: 0,
       endTime: summary.elapsedTime,
       value: summary.distance,
-      valueKind: 'distance',
+      valueKind: BestEffortValueKind.Distance,
     });
   }
   if (summary.elevationGain && summary.elevationGain > 0 && summary.elapsedTime > 0) {
@@ -160,7 +161,7 @@ export const computeCyclingSummaryBestEfforts = (summary: {
       startTime: 0,
       endTime: summary.elapsedTime,
       value: summary.elevationGain,
-      valueKind: 'elevation',
+      valueKind: BestEffortValueKind.Elevation,
     });
   }
   return efforts;
@@ -192,7 +193,7 @@ export const computeBiggestClimb = (altitude: number[], time: number[]): BestEff
         startTime: minimumTime,
         endTime: currentTime,
         value: gain,
-        valueKind: 'elevation',
+        valueKind: BestEffortValueKind.Elevation,
       };
     }
   }
@@ -269,7 +270,7 @@ export const computeCyclingPowerBestEfforts = (power: number[], time: number[]):
           startTime,
           endTime,
           value: averagePower,
-          valueKind: 'power',
+          valueKind: BestEffortValueKind.Power,
         };
       }
     }

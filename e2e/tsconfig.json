@@ -21,6 +21,6 @@
     },
     "esModuleInterop": true
   },
-  "include": ["src/**/*.ts", "vitest*.config.ts"],
+  "include": ["src/**/*.ts", "vitest*.config.ts", "playwright.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

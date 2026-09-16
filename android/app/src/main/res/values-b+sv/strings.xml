@@ -33,7 +33,7 @@
     <string name="i18n_pace_label">Tempo:</string>
     <string name="i18n_heart_rate_short_label">Puls:</string>
     <string name="i18n_activity_tags">Aktivitetstaggar</string>
-    <string name="i18n_live_workout_route">Rutt för pågående träningspass</string>
+    <string name="i18n_live_activity_route">Rutt för pågående träningspass</string>
     <string name="i18n_lifetime">Alla tider</string>
     <string name="i18n_medal_title">%1$s-medalj</string>
     <string name="i18n_activity_density_map">Aktivitetsdensitetskarta</string>
@@ -46,7 +46,7 @@
     <string name="i18n_return_to_activities">Tillbaka till aktiviteter</string>
     <string name="i18n_app_description">Ditt egenhostade aktivitetsarkiv</string>
     <string name="i18n_live_tracking">Livespårning</string>
-    <string name="i18n_live_workout">Pågående träningspass</string>
+    <string name="i18n_live_activity">Pågående träningspass</string>
     <string name="i18n_requests">Förfrågningar</string>
     <string name="i18n_follow_requests">Följförfrågningar</string>
     <string name="i18n_no_pending_requests">Inga väntande förfrågningar.</string>
@@ -63,7 +63,7 @@
     <string name="i18n_password">Lösenord</string>
     <string name="i18n_account">Konto</string>
     <string name="i18n_activities">Aktiviteter</string>
-    <string name="i18n_activity">Träningspass</string>
+    <string name="i18n_activity">Träning</string>
     <string name="i18n_activity_upload">Ladda upp aktivitet</string>
     <string name="i18n_activity_upload_description">Ladda upp en aktivitet via fil.</string>
     <string name="i18n_activity_import_strava">Importera Strava-fil</string>
@@ -109,6 +109,7 @@
     <string name="i18n_strava_scanning">ZIP-filen granskas på den här enheten…</string>
     <string name="i18n_strava_uploading">Extraherade aktiviteter laddas upp…</string>
     <string name="i18n_strava_server_processing">Servern bearbetar aktiviteter…</string>
+    <string name="i18n_strava_skipped_videos">Hoppade över %1$s videor. Foton och profilinformation importeras.</string>
     <string name="i18n_strava_skipped_media">Hoppas över tills vidare: %1$s foton, %2$s videor och %3$s profilbilder.</string>
     <string name="i18n_strava_cancel">Avbryt import</string>
     <string name="i18n_strava_drop_takeout">Släpp Strava-exportfilen här</string>
@@ -124,8 +125,8 @@
     <string name="i18n_finished">Avslutat</string>
     <string name="i18n_connection_lost">Anslutningen förlorad</string>
     <string name="i18n_catching_up">Hämtar ikapp</string>
-    <string name="i18n_live_workout_finished">%1$s avslutat</string>
-    <string name="i18n_live_workout_in_progress">%1$s pågår</string>
+    <string name="i18n_live_activity_finished">%1$s avslutat</string>
+    <string name="i18n_live_activity_in_progress">%1$s pågår</string>
     <string name="i18n_waiting_for_gps">Väntar på GPS</string>
     <string name="i18n_updated_seconds_ago">Uppdaterad för %1$s sekunder sedan</string>
     <string name="i18n_could_not_create_share_link">Kunde inte skapa en delningslänk</string>
@@ -192,8 +193,7 @@
     <string name="i18n_activities_upload_progress">%1$s / %2$s uppladdade</string>
     <string name="i18n_upload_queued">Köad</string>
     <string name="i18n_upload_skipped">Överhoppad</string>
-    <string name="i18n_upload_workout">Ladda upp träningspass</string>
-    <string name="i18n_upload_workouts">Ladda upp träningspass</string>
+    <string name="i18n_upload_activities">Ladda upp träningspass</string>
     <string name="i18n_upload_failed">Uppladdningen misslyckades.</string>
     <string name="i18n_processing_taking_long">Bearbetningen av aktiviteten tar längre tid än väntat</string>
     <string name="i18n_dont_have_account">Har du inget konto?</string>
@@ -269,7 +269,7 @@
     <string name="i18n_tags">Taggar</string>
     <string name="i18n_race">Tävling</string>
     <string name="i18n_commute">Pendling</string>
-    <string name="i18n_workout">Träning</string>
+    <string name="i18n_workout">Träningspass</string>
     <string name="i18n_recovery">Återhämtning</string>
     <string name="i18n_with_kid">Med barn</string>
     <string name="i18n_with_pet">Med husdjur</string>

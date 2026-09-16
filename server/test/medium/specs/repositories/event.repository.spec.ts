@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ActivityDto } from 'src/dtos/activity.dto';
-import { EventRepository } from 'src/repositories/event.repository';
+import { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
 import { createMediumTestDatabase, getTestDatabaseConfig, resetMediumTestDatabase } from 'test/medium/test-db';
 
-describe(EventRepository.name, () => {
+describe(PostgresRealtimeRepository.name, () => {
   let db: KondisDatabase;
 
   beforeAll(() => {
@@ -20,7 +20,7 @@ describe(EventRepository.name, () => {
   });
 
   const setup = () => ({
-    sut: new EventRepository(
+    sut: new PostgresRealtimeRepository(
       db,
       { database: getTestDatabaseConfig() } as never,
       new SocialRepository(db),

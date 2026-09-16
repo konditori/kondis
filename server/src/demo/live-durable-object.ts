@@ -135,8 +135,8 @@ export class DemoLiveTracker {
       throw new Error(`Demo live ingestion returned HTTP ${response.status}`);
     }
     if (finished) {
-      // The finished workout has been persisted by the ingestion service. Reset
-      // the simulator state so the next alarm starts a fresh virtual workout,
+      // The finished activity has been persisted by the ingestion service. Reset
+      // the simulator state so the next alarm starts a fresh virtual activity,
       // including a new client session id.
       await this.reset();
     } else {

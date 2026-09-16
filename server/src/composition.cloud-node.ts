@@ -1,49 +1,52 @@
-import { CloudflareQueueAdapter } from 'src/adapters/cloudflare/queue.adapter';
-import { HttpRealtimePublisherAdapter } from 'src/adapters/http/realtime-publisher.adapter';
+import type { RealtimeRepository } from 'src/contracts/realtime.repository';
 import { createDatabase } from 'src/db/database';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
-import { createPollingJobHandlers, PollingJobConsumer } from 'src/jobs/polling-job.consumer';
+import { createJobHandlers } from 'src/jobs/job-handler';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
-import type { RealtimePort } from 'src/ports/realtime.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { ConfigRepository } from 'src/repositories/config.repository';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
-import { EventRepository } from 'src/repositories/event.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
+import { HttpRealtimeRepository } from 'src/repositories/http-realtime.repository';
+import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
+import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
+import { PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
+import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { SessionRepository } from 'src/repositories/session.repository';
 import { SocialRepository } from 'src/repositories/social.repository';
-import { StorageRepository } from 'src/repositories/storage.repository';
+import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
+import { PostgresJobService } from 'src/services/postgres-job.service';
 import { StorageService } from 'src/services/storage.service';
 import { UploadService } from 'src/services/upload.service';
 import { UserService } from 'src/services/user.service';
-import { ImportProgressStore } from 'src/state/import-progress.store';
 
 export type CloudNodeProcessorOptions = {
-  configRepository?: ConfigRepository;
+  configRepository?: EnvConfigRepository;
   logLevels?: LogLevel[];
-  realtime?: RealtimePort;
+  realtime?: RealtimeRepository;
 };
 
 export const createCloudNodeProcessorComposition = ({
-  configRepository = new ConfigRepository(),
+  configRepository = new EnvConfigRepository(),
   logLevels,
   realtime,
 }: CloudNodeProcessorOptions = {}) => {
   const logger = new ConsoleLogger({ logLevels });
   const database = createDatabase(configRepository.database);
-  const queueAdapter = new CloudflareQueueAdapter(database);
-  const cryptoRepository = new CryptoRepository();
+  const jobRepository = new PostgresJobRepository(database);
+  const cryptoRepository = new NodeCryptoRepository();
   const activityRepository = new ActivityRepository(database);
   const mediaRepository = new MediaRepository(database);
   const sessionRepository = new SessionRepository(database);
@@ -52,61 +55,42 @@ export const createCloudNodeProcessorComposition = ({
   const gpxRepository = new GpxRepository(logger);
   const rateLimitingRepository = new RateLimitingRepository(database);
   const socialRepository = new SocialRepository(database);
-  const storageRepository = new StorageRepository(configRepository, cryptoRepository);
+  const storageRepository = new FileSystemStorageRepository(configRepository, cryptoRepository);
   const tcxRepository = new TcxRepository(logger);
   const uploadRepository = new UploadRepository(database);
   const userRepository = new UserRepository(database);
   const eventRepository =
     realtime ?? createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
-  const importProgressStore = new ImportProgressStore(database);
+  const importProgressStore = new TakeoutRepository(database);
 
-  const activityService = new ActivityService(
-    uploadRepository,
-    storageRepository,
+  const serviceDeps: BaseServiceDeps = {
     activityRepository,
+    configRepository,
+    cryptoRepository,
     databaseRepository,
     eventRepository,
-    queueAdapter,
     fitRepository,
     gpxRepository,
-    tcxRepository,
+    jobRepository,
+    liveActivityRepository: new LiveActivityRepository(database),
     logger,
-    importProgressStore,
     mediaRepository,
-    socialRepository,
-  );
-  const activityImageService = new ActivityImageService(
-    mediaRepository,
-    activityRepository,
-    storageRepository,
-    cryptoRepository,
-    databaseRepository,
-    queueAdapter,
-    logger,
-    socialRepository,
-  );
-  const authService = new AuthService(
-    userRepository,
-    configRepository,
     rateLimitingRepository,
-    cryptoRepository,
     sessionRepository,
-    eventRepository,
-    databaseRepository,
-  );
-  const storageService = new StorageService(storageRepository, queueAdapter, logger);
-  const uploadService = new UploadService(
-    uploadRepository,
+    socialRepository,
     storageRepository,
-    cryptoRepository,
-    databaseRepository,
-    queueAdapter,
-    logger,
-    importProgressStore,
-    activityRepository,
-    eventRepository,
-  );
-  const userService = new UserService(userRepository, socialRepository, storageRepository);
+    takeoutRepository: importProgressStore,
+    tcxRepository,
+    uploadRepository,
+    userRepository,
+  };
+
+  const activityService = new ActivityService(serviceDeps);
+  const activityImageService = new ActivityImageService(serviceDeps);
+  const authService = new AuthService(serviceDeps);
+  const storageService = new StorageService(serviceDeps);
+  const uploadService = new UploadService(serviceDeps);
+  const userService = new UserService(serviceDeps);
   const descriptors = createJobHandlerRegistry({
     activityService,
     activityImageService,
@@ -116,30 +100,30 @@ export const createCloudNodeProcessorComposition = ({
     userService,
   });
   const consumers = configRepository.demoMode ? (['node', 'worker'] as const) : (['node'] as const);
-  const pollingConsumer = new PollingJobConsumer(database, createPollingJobHandlers(descriptors, consumers), {
+  const jobService = new JobService(serviceDeps, createJobHandlers(descriptors, consumers));
+  const postgresJobService = new PostgresJobService(jobRepository, jobService.execute.bind(jobService), {
+    hasHandler: jobService.hasHandler.bind(jobService),
     consumers,
     logger,
+    realtime: eventRepository,
+    takeout: importProgressStore,
   });
-  const jobService = new JobService(
-    { admin: queueAdapter, consumer: pollingConsumer, producer: queueAdapter },
-    eventRepository,
-    logger,
-  );
   let closePromise: Promise<void> | undefined;
 
   return {
     database,
     jobService,
     realtime: eventRepository,
-    initialize: () => jobService.init(true),
-    drainJobs: (...queues: Parameters<PollingJobConsumer['drain']>) => pollingConsumer.drain(...queues),
+    postgresJobService,
+    initialize: () => postgresJobService.start(),
+    drainJobs: (...queues: Parameters<PostgresJobService['drain']>) => postgresJobService.drain(...queues),
     close: () => {
       closePromise ??= (async () => {
         try {
-          await pollingConsumer.stop();
+          await postgresJobService.stop();
         } finally {
           try {
-            await (eventRepository instanceof EventRepository ? eventRepository.stop() : undefined);
+            await (eventRepository instanceof PostgresRealtimeRepository ? eventRepository.stop() : undefined);
           } finally {
             await database.destroy();
           }
@@ -152,15 +136,15 @@ export const createCloudNodeProcessorComposition = ({
 
 const createCloudNodeRealtimePublisher = (
   database: ReturnType<typeof createDatabase>,
-  config: ConfigRepository,
+  config: EnvConfigRepository,
   social: SocialRepository,
   credentials: SessionRepository,
-): RealtimePort => {
+): RealtimeRepository => {
   const url = process.env.KONDIS_REALTIME_PUBLISH_URL;
   const token = process.env.KONDIS_REALTIME_PUBLISH_TOKEN;
   return url && token
-    ? new HttpRealtimePublisherAdapter(url, token)
-    : new EventRepository(database, config, social, credentials);
+    ? new HttpRealtimeRepository(url, token)
+    : new PostgresRealtimeRepository(database, config, social, credentials);
 };
 
 export type CloudNodeProcessorComposition = ReturnType<typeof createCloudNodeProcessorComposition>;

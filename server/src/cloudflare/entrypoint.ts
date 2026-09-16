@@ -1,13 +1,6 @@
 import { createRoute } from '@hono/zod-openapi';
 import type { ExecutionContext } from 'hono';
 
-import {
-  CloudflareQueueTransportAdapter,
-  type CloudflareQueueBatch,
-  type CloudflareQueueBinding,
-} from 'src/adapters/cloudflare/queue-transport.adapter';
-import { createWorkerFileReader } from 'src/adapters/cloudflare/storage.adapter';
-import { workerUploadReader } from 'src/adapters/cloudflare/upload.adapter';
 import { createApiShell } from 'src/api/app';
 import {
   registerWorkerActivityUploadRoute,
@@ -19,32 +12,27 @@ import {
 } from 'src/api/route-groups';
 import { registerAuthRoutes } from 'src/api/routes/auth';
 import type { AuthenticatedUser } from 'src/auth';
-import {
-  drainUnpublishedJobs,
-  purgeExpiredJobs,
-  reclaimStaleJobs,
-  recoverOrphanedPublishedJobs,
-  runScheduledCron,
-} from 'src/cloudflare/dispatcher';
+import { handleQueueBatch, toDeliveryBatch } from 'src/cloudflare/job-delivery';
 import {
   isQueueExecutorResponse,
   QUEUE_EXECUTOR_PATH,
   queueExecutorRequest,
 } from 'src/cloudflare/queue-executor.protocol';
-import { handleDeadLetterBatch, handleQueueBatch } from 'src/cloudflare/queue-handler';
-import { REALTIME_DURABLE_OBJECT_NAME } from 'src/cloudflare/realtime-durable-object';
+import { workerUploadReader } from 'src/cloudflare/upload-reader';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
-import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import { getDemoUser } from 'src/demo/demo-provisioner';
 import {
   activateDemoLiveTracker,
   ingestDemoLiveTrackerPoint,
+  isDemoLiveActivityRequest,
   isDemoLiveTrackerIngestionRequest,
-  isDemoLiveWorkoutRequest,
 } from 'src/demo/live-entrypoint';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
 import { isWebsocketEvent } from 'src/realtime/protocol';
+import type { CloudflareQueueBatch } from 'src/repositories/cloudflare/cloudflare-queue.repository';
+import { REALTIME_DURABLE_OBJECT_NAME } from 'src/repositories/cloudflare/durable-object-realtime.repository';
+import { createWorkerFileReader } from 'src/repositories/cloudflare/r2-storage.repository';
 
 export { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
 export { DemoLiveTracker } from 'src/demo/live-durable-object';
@@ -80,7 +68,7 @@ const createRequestApp = (
   registerWorkerPortableRouteGroups(requestApp, {
     activities: composition.activityService,
     jobs: composition.jobService,
-    liveWorkouts: composition.liveWorkoutService,
+    liveActivities: composition.liveActivityService,
     social: composition.socialService,
     users: composition.userRepository,
   });
@@ -151,7 +139,7 @@ const createRequestApp = (
 
 export default {
   async fetch(request: Request, env: WorkerEnv, _ctx: ExecutionContext): Promise<Response> {
-    if (isDemoLiveWorkoutRequest(request, env)) {
+    if (isDemoLiveActivityRequest(request, env)) {
       const activationFailure = await activateDemoLiveTracker(env);
       if (activationFailure) {
         return activationFailure;
@@ -227,16 +215,8 @@ export default {
     }
     const composition = createWorkerInvocationComposition(env);
     try {
-      const transport = createQueueTransport(env);
-      {
-        await handleDeadLetterBatch(
-          transport.toDeliveryBatch(batch),
-          composition.database,
-          queue.name,
-          composition.realtime,
-        );
-      }
-      await drainUnpublishedJobs(composition.database, transport);
+      await handleQueueBatch(composition.postgresJobService, toDeliveryBatch(batch), queue.name, true);
+      await composition.postgresJobService.drainUnpublishedJobs();
     } finally {
       await composition.close();
     }
@@ -252,7 +232,7 @@ export default {
         const composition = createWorkerInvocationComposition(env);
         try {
           if (composition.queueBindingsConfigured) {
-            await drainUnpublishedJobs(composition.database, createQueueTransport(env));
+            await composition.postgresJobService.drainUnpublishedJobs();
           }
         } finally {
           await composition.close();
@@ -264,20 +244,8 @@ export default {
       throw new Error('Hyperdrive is required for scheduled jobs');
     }
     const composition = createWorkerInvocationComposition(env);
-    const db = composition.database;
     try {
-      if (event.cron === '* * * * *') {
-        const reclaimed = await reclaimStaleJobs(db);
-        await recoverOrphanedPublishedJobs(db);
-        await purgeExpiredJobs(db);
-        const transport = createQueueTransport(env);
-        await drainUnpublishedJobs(db, transport);
-        if (reclaimed > 0) {
-          await composition.realtime.emit('JobUpdated');
-        }
-      } else {
-        await runScheduledCron(db, event.cron);
-      }
+      await composition.postgresJobService.runScheduledCron(event.cron);
     } finally {
       await composition.close();
     }
@@ -294,7 +262,7 @@ const isDemoCacheable = (request: Request, response: Response): boolean => {
     request.method === 'GET' &&
     response.ok &&
     !path.includes('/events') &&
-    !path.includes('/live-workouts') &&
+    !path.includes('/live-activities') &&
     !path.endsWith('/auth/activity-events-ticket') &&
     !path.includes('/_internal/')
   );
@@ -310,15 +278,8 @@ const executeQueueBatch = async (env: WorkerEnv, queue: QueueName, batch: Worker
   if (!env.QUEUE_EXECUTOR) {
     const composition = createWorkerInvocationComposition(env);
     try {
-      const transport = createQueueTransport(env);
-      await handleQueueBatch(
-        transport.toDeliveryBatch(batch),
-        composition.database,
-        composition.jobHandlers,
-        queue,
-        composition.realtime,
-      );
-      await drainUnpublishedJobs(composition.database, transport);
+      await handleQueueBatch(composition.postgresJobService, toDeliveryBatch(batch), queue);
+      await composition.postgresJobService.drainUnpublishedJobs();
     } finally {
       await composition.close();
     }
@@ -400,29 +361,12 @@ const handleRealtimeUpgrade = async (
   }
 };
 
-const requiredQueue = (queue: CloudflareQueueBinding | undefined, name: QueueName): CloudflareQueueBinding => {
-  if (!queue) {
-    throw new Error(`Missing Cloudflare Queue binding for ${name}`);
-  }
-  return queue;
-};
-
-const createQueueTransport = (env: WorkerEnv): CloudflareQueueTransportAdapter =>
-  new CloudflareQueueTransportAdapter({
-    [QueueName.ActivityParsing]: requiredQueue(env.ACTIVITY_PARSING_QUEUE, QueueName.ActivityParsing),
-    [QueueName.ActivityEnrichment]: requiredQueue(env.ACTIVITY_ENRICHMENT_QUEUE, QueueName.ActivityEnrichment),
-    [QueueName.ActivityRanking]: requiredQueue(env.ACTIVITY_RANKING_QUEUE, QueueName.ActivityRanking),
-    [QueueName.BackgroundTask]: requiredQueue(env.BACKGROUND_TASK_QUEUE, QueueName.BackgroundTask),
-    [QueueName.ImageProcessing]: requiredQueue(env.IMAGE_PROCESSING_QUEUE, QueueName.ImageProcessing),
-    [QueueName.Storage]: requiredQueue(env.STORAGE_QUEUE, QueueName.Storage),
-  });
-
 const dispatchWorkerJobs = async (env: WorkerEnv): Promise<void> => {
-  const { db, close } = createHyperdriveDatabase(env.HYPERDRIVE.connectionString);
+  const composition = createWorkerInvocationComposition(env);
   try {
-    await drainUnpublishedJobs(db, createQueueTransport(env));
+    await composition.postgresJobService.drainUnpublishedJobs();
   } finally {
-    await close();
+    await composition.close();
   }
 };
 

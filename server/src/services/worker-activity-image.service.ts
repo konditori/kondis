@@ -4,13 +4,7 @@ import { ActivityImage, ActivityImageFile } from 'src/db/schema';
 import { ActivityImageSchema, type ActivityImageUpdateDto } from 'src/dtos/activity-image.dto';
 import { JobName } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
-import type { CryptoPort } from 'src/ports/crypto.port';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
-import { ActivityRepository } from 'src/repositories/activity.repository';
-import { MediaRepository } from 'src/repositories/media.repository';
-import { SocialRepository } from 'src/repositories/social.repository';
+import { BaseService } from 'src/services/base.service';
 import type { KondisTransaction } from 'src/types';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
 
@@ -19,17 +13,7 @@ const extensionOf = (name: string): string => {
   return index === -1 ? '' : name.slice(index).toLowerCase();
 };
 
-export class WorkerActivityImageService {
-  constructor(
-    private readonly images: MediaRepository,
-    private readonly activities: ActivityRepository,
-    private readonly storage: StoragePort,
-    private readonly crypto: CryptoPort,
-    private readonly database: TransactionPort,
-    private readonly jobs: JobProducerPort,
-    private readonly social: SocialRepository,
-  ) {}
-
+export class WorkerActivityImageService extends BaseService {
   async upload(
     activityId: string,
     file: BufferedUploadedFileData | undefined,
@@ -42,20 +26,20 @@ export class WorkerActivityImageService {
     if (file.buffer.length > UPLOAD_LIMITS.imageFileBytes) {
       throw new PayloadTooLargeException(`Image exceeds ${UPLOAD_LIMITS.imageFileBytes} bytes`);
     }
-    const activity = await this.activities.getById(activityId, userId);
+    const activity = await this.activityRepository.getById(activityId, userId);
     if (!activity) {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
-    const checksum = await this.crypto.sha256(file.buffer);
-    const existing = await this.images.getByActivityChecksum(activity.id, checksum);
+    const checksum = await this.cryptoRepository.sha256(file.buffer);
+    const existing = await this.mediaRepository.getByActivityChecksum(activity.id, checksum);
     if (existing) {
-      return this.toDto(existing, await this.images.getFiles(existing.id));
+      return this.toDto(existing, await this.mediaRepository.getFiles(existing.id));
     }
-    const storagePath = this.storage.buildTemporaryPath(extensionOf(file.originalname) || '.bin');
-    await this.storage.write(storagePath, file.buffer);
+    const storagePath = this.storageRepository.buildTemporaryPath(extensionOf(file.originalname) || '.bin');
+    await this.storageRepository.write(storagePath, file.buffer);
     try {
-      const sortOrder = await this.images.nextSortOrder(activity.id);
-      const image = await this.database.withTransaction((trx) =>
+      const sortOrder = await this.mediaRepository.nextSortOrder(activity.id);
+      const image = await this.databaseRepository.withTransaction((trx) =>
         this.queueForActivity(
           activity.id,
           [
@@ -72,7 +56,7 @@ export class WorkerActivityImageService {
       );
       return this.toDto(image, []);
     } catch (error) {
-      await this.storage.delete(storagePath).catch(() => {});
+      await this.storageRepository.delete(storagePath).catch(() => {});
       throw error;
     }
   }
@@ -88,16 +72,16 @@ export class WorkerActivityImageService {
     }>,
     executor?: KondisTransaction,
   ) {
-    const activity = await this.activities.getById(activityId);
+    const activity = await this.activityRepository.getById(activityId);
     if (!activity) {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
     const run = async (trx: KondisTransaction) => {
       const result: ActivityImage[] = [];
       for (const stage of stages) {
-        let image = await this.images.getByActivityChecksum(activityId, stage.checksum, trx);
+        let image = await this.mediaRepository.getByActivityChecksum(activityId, stage.checksum, trx);
         if (!image) {
-          image = await this.images.create(
+          image = await this.mediaRepository.create(
             {
               activity_id: activityId,
               checksum: stage.checksum,
@@ -112,7 +96,7 @@ export class WorkerActivityImageService {
         }
         result.push(image);
         if (image.status !== 'ready') {
-          await this.jobs.queue(
+          await this.jobRepository.queue(
             {
               name: JobName.ActivityImageIngest,
               data: {
@@ -129,42 +113,42 @@ export class WorkerActivityImageService {
       }
       return result;
     };
-    return executor ? run(executor) : this.database.withTransaction(run);
+    return executor ? run(executor) : this.databaseRepository.withTransaction(run);
   }
 
   async list(activityId: string, userId: string) {
-    const activity = await this.activities.getById(activityId);
-    if (!activity || !(await this.social.canViewActivity(activityId, userId))) {
+    const activity = await this.activityRepository.getById(activityId);
+    if (!activity || !(await this.socialRepository.canViewActivity(activityId, userId))) {
       throw new NotFoundException(`Activity ${activityId} does not exist`);
     }
-    const images = await this.images.listForActivity(activity.id);
+    const images = await this.mediaRepository.listForActivity(activity.id);
     return images.map((image) => this.toDto(image, []));
   }
 
   async update(activityId: string, imageId: string, input: ActivityImageUpdateDto, userId: string) {
-    const activity = await this.activities.getById(activityId, userId);
-    const image = await this.images.getById(imageId, userId);
+    const activity = await this.activityRepository.getById(activityId, userId);
+    const image = await this.mediaRepository.getById(imageId, userId);
     if (!activity || !image || image.activity_id !== activity.id) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }
-    const updated = await this.images.update(imageId, {
+    const updated = await this.mediaRepository.update(imageId, {
       caption: input.caption === undefined ? undefined : input.caption?.trim() || null,
       sort_order: input.sortOrder,
     });
-    return this.toDto(updated ?? image, await this.images.getFiles(imageId));
+    return this.toDto(updated ?? image, await this.mediaRepository.getFiles(imageId));
   }
 
   async delete(activityId: string, imageId: string, userId: string): Promise<boolean> {
-    const activity = await this.activities.getById(activityId, userId);
-    const image = await this.images.getById(imageId, userId);
+    const activity = await this.activityRepository.getById(activityId, userId);
+    const image = await this.mediaRepository.getById(imageId, userId);
     if (!activity || !image || image.activity_id !== activity.id) {
       return false;
     }
-    const files = await this.images.getFiles(imageId);
-    await this.database.withTransaction(async (trx) => {
-      await this.images.delete(imageId, trx);
+    const files = await this.mediaRepository.getFiles(imageId);
+    await this.databaseRepository.withTransaction(async (trx) => {
+      await this.mediaRepository.delete(imageId, trx);
       if (files.length > 0) {
-        await this.jobs.queue(
+        await this.jobRepository.queue(
           { name: JobName.FileDelete, data: { paths: files.map((file) => file.storage_path) } },
           { transaction: trx },
         );
@@ -174,20 +158,20 @@ export class WorkerActivityImageService {
   }
 
   async getFile(imageId: string, variant: 'original' | 'thumbnail' | 'preview', userId: string) {
-    const image = await this.images.getById(imageId);
+    const image = await this.mediaRepository.getById(imageId);
     if (!image) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }
-    const activity = await this.activities.getById(image.activity_id);
-    if (!activity || !(await this.social.canViewActivity(activity.id, userId))) {
+    const activity = await this.activityRepository.getById(image.activity_id);
+    if (!activity || !(await this.socialRepository.canViewActivity(activity.id, userId))) {
       throw new NotFoundException(`Image ${imageId} does not exist`);
     }
-    const files = await this.images.getFiles(imageId);
+    const files = await this.mediaRepository.getFiles(imageId);
     const file = files.find((candidate) => candidate.variant === variant);
     if (!file) {
       throw new NotFoundException(`Image ${imageId} variant ${variant} is not ready`);
     }
-    return { ...file, absolutePath: this.storage.reference(file.storage_path) };
+    return { ...file, absolutePath: this.storageRepository.reference(file.storage_path) };
   }
 
   private toDto(image: ActivityImage, files: ActivityImageFile[]) {

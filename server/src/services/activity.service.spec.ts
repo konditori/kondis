@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
-import { JobName, JobStatus } from 'src/enum';
-import { ConsoleLogger } from 'src/logger';
-import type { JobProducerPort } from 'src/ports/queue.port';
+import type { JobRepository } from 'src/contracts/job.repository';
+import { ActivityType, JobName, JobStatus, StreamType } from 'src/enum';
 import { type ActivityRepository } from 'src/repositories/activity.repository';
 import { type DatabaseRepository } from 'src/repositories/database.repository';
-import { type EventRepository } from 'src/repositories/event.repository';
 import { FitDecodeError, type FitRepository } from 'src/repositories/fit.repository';
 import { type GpxRepository } from 'src/repositories/gpx.repository';
-import { type StorageRepository } from 'src/repositories/storage.repository';
+import { type MediaRepository } from 'src/repositories/media.repository';
+import { type FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
+import { type PostgresRealtimeRepository } from 'src/repositories/node/postgres-realtime.repository';
 import { type TcxRepository } from 'src/repositories/tcx.repository';
 import { type UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
-import { newTestService } from 'test/utils';
+import { newServiceDeps, newTestService } from 'test/utils';
 
 const UPLOAD_ID = '00000000-0000-4000-8000-000000000001';
 const ACTIVITY_ID = '00000000-0000-4000-8000-000000000002';
@@ -62,7 +62,7 @@ describe('ActivityService', () => {
     getIdsToParse,
   } as unknown as UploadRepository;
 
-  const storageRepository = { readLimited } as unknown as StorageRepository;
+  const storageRepository = { readLimited } as unknown as FileSystemStorageRepository;
 
   const activityRepository = {
     getById: getActivityById,
@@ -79,13 +79,17 @@ describe('ActivityService', () => {
   } as unknown as ActivityRepository;
 
   const databaseRepository = { withTransaction } as unknown as DatabaseRepository;
-  const eventRepository = { emit: emitEvent } as unknown as EventRepository;
-  const jobRepository = { queue, queueAll, discardQueuedDuplicates } as unknown as JobProducerPort;
+  const eventRepository = { emit: emitEvent } as unknown as PostgresRealtimeRepository;
+  const jobRepository = { queue, queueAll, discardQueuedDuplicates } as unknown as JobRepository;
   const fitRepository = { decode } as unknown as FitRepository;
   const gpxRepository = { decode: decodeGpx } as unknown as GpxRepository;
   const tcxRepository = { decode: decodeTcx } as unknown as TcxRepository;
+  const mediaRepository = {
+    listForActivity: vi.fn(() => Promise.resolve([])),
+    getFiles: vi.fn(() => Promise.resolve([])),
+  } as unknown as MediaRepository;
 
-  const serviceDependencies = [
+  const serviceDependencies = newServiceDeps({
     uploadRepository,
     storageRepository,
     activityRepository,
@@ -95,10 +99,10 @@ describe('ActivityService', () => {
     fitRepository,
     gpxRepository,
     tcxRepository,
-    new ConsoleLogger({ logLevels: [] }),
-  ] as const;
+    mediaRepository,
+  });
   const setup = () =>
-    newTestService(ActivityService, serviceDependencies, {
+    newTestService(ActivityService, [serviceDependencies], {
       uploadRepository,
       storageRepository,
       activityRepository,
@@ -247,7 +251,7 @@ describe('ActivityService', () => {
           id: UPLOAD_ID,
           activityName: 'Forest walk',
           activityDescription: 'A walk in the woods',
-          activitySport: 'roller_ski',
+          activitySport: ActivityType.RollerSki,
         }),
       ).resolves.toBe(JobStatus.Success);
 
@@ -256,7 +260,7 @@ describe('ActivityService', () => {
           activity: expect.objectContaining({
             name: 'Forest walk',
             description: 'A walk in the woods',
-            sport: 'roller_ski',
+            sport: ActivityType.RollerSki,
           }),
         }),
         'trx',
@@ -388,11 +392,11 @@ describe('ActivityService', () => {
         started_at: new Date('2024-03-01T06:00:00.000Z'),
       });
       getStreams.mockResolvedValueOnce([
-        { type: 'time', data: [0, 10, 20] },
-        { type: 'distance', data: [0, 100, 250] },
-        { type: 'speed', data: [10, 10, 15] },
-        { type: 'altitude', data: [10, 12, 11] },
-        { type: 'heartrate', data: [120, 130, 125] },
+        { type: StreamType.Time, data: [0, 10, 20] },
+        { type: StreamType.Distance, data: [0, 100, 250] },
+        { type: StreamType.Speed, data: [10, 10, 15] },
+        { type: StreamType.Altitude, data: [10, 12, 11] },
+        { type: StreamType.Heartrate, data: [120, 130, 125] },
       ]);
 
       await expect(makeService().handleActivityMetricCompute({ id: ACTIVITY_ID })).resolves.toBe(JobStatus.Success);

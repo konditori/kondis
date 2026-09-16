@@ -47,10 +47,10 @@ export type NotificationEvent =
     }
   | { type: "notifications.read"; readAt: string };
 
-export type LiveWorkoutEvent = {
-  type: "live-workout.updated";
+export type LiveActivityEvent = {
+  type: "live-activity.updated";
   userId: string;
-  workout: {
+  activity: {
     id: string;
     status: "recording" | "paused" | "ended";
     elapsedSeconds: number;
@@ -65,7 +65,7 @@ export type ActivityEventType = ActivityEvent["type"];
 
 type ActivityEventSubscriptionOptions = {
   onNotification?: (event: NotificationEvent) => void;
-  onLiveWorkout?: (event: LiveWorkoutEvent) => void;
+  onLiveActivity?: (event: LiveActivityEvent) => void;
   activityId?: string;
 };
 
@@ -88,19 +88,19 @@ export function parseNotificationEvent(data: string): NotificationEvent | null {
   return null;
 }
 
-export function parseLiveWorkoutEvent(data: string): LiveWorkoutEvent | null {
+export function parseLiveActivityEvent(data: string): LiveActivityEvent | null {
   try {
     const event = JSON.parse(data) as {
       type?: string;
       userId?: string;
-      workout?: { id?: string };
+      activity?: { id?: string };
     };
     if (
-      event.type === "live-workout.updated" &&
+      event.type === "live-activity.updated" &&
       typeof event.userId === "string" &&
-      typeof event.workout?.id === "string"
+      typeof event.activity?.id === "string"
     ) {
-      return event as LiveWorkoutEvent;
+      return event as LiveActivityEvent;
     }
   } catch {
     // Ignore malformed and forward-incompatible messages.
@@ -112,7 +112,7 @@ type ActivityEventListener = {
   onActivity: (event: ActivityEvent) => void;
   onConnected: () => void;
   onNotification?: (event: NotificationEvent) => void;
-  onLiveWorkout?: (event: LiveWorkoutEvent) => void;
+  onLiveActivity?: (event: LiveActivityEvent) => void;
   activityId?: string;
 };
 
@@ -230,10 +230,10 @@ const connectActivityConnection = (
             listener.onNotification?.(notificationEvent);
           return;
         }
-        const liveWorkoutEvent = parseLiveWorkoutEvent(String(data));
-        if (liveWorkoutEvent) {
+        const liveActivityEvent = parseLiveActivityEvent(String(data));
+        if (liveActivityEvent) {
           for (const listener of connection.listeners)
-            listener.onLiveWorkout?.(liveWorkoutEvent);
+            listener.onLiveActivity?.(liveActivityEvent);
           return;
         }
         try {

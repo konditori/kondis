@@ -1,32 +1,27 @@
 import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
+import { FileSizeLimitError } from 'src/contracts/storage.repository';
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
-import { JobName, JobStatus } from 'src/enum';
+import {
+  ActivityType,
+  BestEffortGroup,
+  JobName,
+  JobStatus,
+  StreamType,
+  TakeoutImportItemTerminalStatus,
+} from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
-import { ConsoleLogger } from 'src/logger';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { RealtimePort } from 'src/ports/realtime.port';
-import { FileSizeLimitError, type StoragePort } from 'src/ports/storage.port';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
-import { FitRepository } from 'src/repositories/fit.repository';
-import { GpxRepository } from 'src/repositories/gpx.repository';
-import { MediaRepository } from 'src/repositories/media.repository';
-import { SocialRepository } from 'src/repositories/social.repository';
-import { TcxRepository } from 'src/repositories/tcx.repository';
-import { UploadRepository } from 'src/repositories/upload.repository';
 import { Timestamp } from 'src/schema/decorators';
-import { ImportProgressStore } from 'src/state/import-progress.store';
+import { BaseService } from 'src/services/base.service';
 import {
   ActivityListRecord,
   ActivityMetrics,
   ActivityRecord,
   ActivityStreamInput,
   ActivityTag,
-  ActivityType,
-  BestEffortGroup,
   BestEffortType,
   CreateActivityInput,
   FitMessages,
@@ -48,15 +43,17 @@ const decodeCursor = (value: string): string => atob(value.replaceAll('-', '+').
 export type BestEffortSport = 'run' | 'ride';
 
 const BEST_EFFORT_SPORTS = {
-  run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(({ type }) => type),
+  run: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Run).map(
+    ({ type }) => type as ActivityType,
+  ),
   ride: ACTIVITY_TYPES.filter(({ bestEffortGroup }) => bestEffortGroup === BestEffortGroup.Ride).map(
-    ({ type }) => type,
+    ({ type }) => type as ActivityType,
   ),
 } satisfies Record<BestEffortSport, readonly ActivityType[]>;
 const CYCLING_ANALYSIS_SPORTS: ReadonlySet<ActivityType> = new Set([
   ...BEST_EFFORT_SPORTS.ride,
-  'e_bike_ride',
-  'e_mountain_bike_ride',
+  ActivityType.EBikeRide,
+  ActivityType.EMountainBikeRide,
 ]);
 const BEST_EFFORT_DEFINITIONS = new Map(
   [...RUNNING_BEST_EFFORTS, ...CYCLING_BEST_EFFORTS].map((definition) => [definition.type, definition]),
@@ -72,26 +69,7 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
     definition.type.startsWith('power_'),
 );
 
-export class ActivityService {
-  constructor(
-    private readonly uploadRepository: UploadRepository,
-    private readonly storageRepository: StoragePort,
-    private readonly activityRepository: ActivityRepository,
-    private readonly databaseRepository: TransactionPort,
-    private readonly eventRepository: RealtimePort,
-    private readonly jobRepository: JobProducerPort,
-    private readonly fitRepository: FitRepository,
-    private readonly gpxRepository: GpxRepository,
-    private readonly tcxRepository: TcxRepository,
-    private readonly logger: ConsoleLogger,
-    private readonly importProgressStore?: ImportProgressStore,
-    private readonly mediaRepository?: MediaRepository,
-    private readonly socialRepository?: SocialRepository,
-    private readonly mediaBaseUrl?: string,
-  ) {
-    this.logger.setContext(ActivityService.name);
-  }
-
+export class ActivityService extends BaseService {
   async handleActivityParse({
     id,
     force,
@@ -129,7 +107,11 @@ export class ActivityService {
           await this.jobRepository.queue({ name: JobName.ActivityImageAttach, data: { uploadId: upload.id, images } });
         }
         if (takeoutImportId && takeoutItemKey) {
-          await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
+          await this.takeoutRepository.completeItem(
+            takeoutImportId,
+            takeoutItemKey,
+            TakeoutImportItemTerminalStatus.Completed,
+          );
         }
         return JobStatus.Skipped;
       }
@@ -183,7 +165,11 @@ export class ActivityService {
       }
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity, upload.original_name));
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'completed');
+        await this.takeoutRepository.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemTerminalStatus.Completed,
+        );
       }
       this.logger.log(`Parsed upload ${id} into activity ${activityId} (${activitySport ?? parsed.sport})`);
     } catch (error) {
@@ -191,7 +177,12 @@ export class ActivityService {
 
       await this.uploadRepository.setStatus(id, 'failed', message);
       if (takeoutImportId && takeoutItemKey) {
-        await this.importProgressStore?.completeItem(takeoutImportId, takeoutItemKey, 'failed', message);
+        await this.takeoutRepository.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemTerminalStatus.Failed,
+          message,
+        );
       }
       throw error;
     }
@@ -221,7 +212,11 @@ export class ActivityService {
         });
       }
       if (job.takeoutImportId && job.takeoutItemKey) {
-        await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'duplicate');
+        await this.takeoutRepository.completeItem(
+          job.takeoutImportId,
+          job.takeoutItemKey,
+          TakeoutImportItemTerminalStatus.Duplicate,
+        );
       }
       return JobStatus.Skipped;
     }
@@ -297,7 +292,11 @@ export class ActivityService {
       await this.eventRepository.emit('ActivityCreate', this.toActivityDto(activity));
     }
     if (job.takeoutImportId && job.takeoutItemKey) {
-      await this.importProgressStore?.completeItem(job.takeoutImportId, job.takeoutItemKey, 'completed');
+      await this.takeoutRepository.completeItem(
+        job.takeoutImportId,
+        job.takeoutItemKey,
+        TakeoutImportItemTerminalStatus.Completed,
+      );
     }
     return JobStatus.Success;
   }
@@ -429,16 +428,16 @@ export class ActivityService {
     };
     const startedAtMs = new Date(startedAt).getTime();
     const records: FitRecordMesg[] = Array.from({ length: recordCount }, (_, index) => ({
-      timestamp: new Date(startedAtMs + (value('time', index) ?? index) * 1000),
-      positionLat: value('latitude', index),
-      positionLong: value('longitude', index),
-      altitude: value('altitude', index),
-      distance: value('distance', index),
-      speed: value('speed', index),
-      heartRate: value('heartrate', index),
-      cadence: value('cadence', index),
-      power: value('power', index),
-      temperature: value('temperature', index),
+      timestamp: new Date(startedAtMs + (value(StreamType.Time, index) ?? index) * 1000),
+      positionLat: value(StreamType.Latitude, index),
+      positionLong: value(StreamType.Longitude, index),
+      altitude: value(StreamType.Altitude, index),
+      distance: value(StreamType.Distance, index),
+      speed: value(StreamType.Speed, index),
+      heartRate: value(StreamType.Heartrate, index),
+      cadence: value(StreamType.Cadence, index),
+      power: value(StreamType.Power, index),
+      temperature: value(StreamType.Temperature, index),
     }));
     const messages: FitMessages = { recordMesgs: records };
     return parseFitMessages(messages);
@@ -580,10 +579,8 @@ export class ActivityService {
     }
 
     const upload = await this.uploadRepository.getById(activity.upload_id);
-    const activityImages = this.mediaRepository ? await this.mediaRepository.listForActivity(activity.id) : [];
-    const imageFiles = this.mediaRepository
-      ? await Promise.all(activityImages.map((image) => this.mediaRepository!.getFiles(image.id)))
-      : [];
+    const activityImages = await this.mediaRepository.listForActivity(activity.id);
+    const imageFiles = await Promise.all(activityImages.map((image) => this.mediaRepository.getFiles(image.id)));
 
     await this.databaseRepository.withTransaction(async (trx) => {
       // Cascades to the activity, its streams and its laps.
@@ -679,7 +676,7 @@ export class ActivityService {
     targetId: string,
     query: { cursor?: string; limit?: number; search?: string; tags?: string; tagMatch?: 'any' | 'all' },
   ) {
-    if (!this.socialRepository || !(await this.socialRepository.canViewUser(viewerId, targetId))) {
+    if (!(await this.socialRepository.canViewUser(viewerId, targetId))) {
       throw new NotFoundException('Person does not exist');
     }
     return this.decorateSocialActivities(await this.listRecent(query, targetId), viewerId, targetId);
@@ -690,7 +687,7 @@ export class ActivityService {
     viewerId: string,
     targetId?: string,
   ) {
-    if (!this.socialRepository || page.activities.length === 0) {
+    if (page.activities.length === 0) {
       return page;
     }
     const ids = page.activities.map((activity) => activity.id);
@@ -700,7 +697,7 @@ export class ActivityService {
         ? Promise.resolve([await this.socialRepository.getUser(targetId)])
         : Promise.all(
             [...new Set(page.activities.map((activity) => activity.userId).filter((id): id is string => !!id))].map(
-              (id) => this.socialRepository!.getUser(id),
+              (id) => this.socialRepository.getUser(id),
             ),
           ),
     ]);
@@ -761,10 +758,10 @@ export class ActivityService {
   }
 
   async getById(id: string, userId?: string) {
-    if (userId && this.socialRepository && !(await this.socialRepository.canViewActivity(id, userId))) {
+    if (userId && !(await this.socialRepository.canViewActivity(id, userId))) {
       return;
     }
-    const row = await this.activityRepository.getDetailById(id, this.socialRepository ? undefined : userId);
+    const row = await this.activityRepository.getDetailById(id);
     if (!row) {
       return;
     }
@@ -774,10 +771,10 @@ export class ActivityService {
     const [storedEfforts, streams, images] = await Promise.all([
       this.activityRepository.getBestEfforts(id),
       supportsActivityAnalysis ? this.activityRepository.getStreams(id) : Promise.resolve([]),
-      this.mediaRepository?.listForActivity(row.id) ?? Promise.resolve([]),
+      this.mediaRepository.listForActivity(row.id),
     ]);
     const track = this.toTrack(row.detail_track_geojson ?? row.track_geojson);
-    const athlete = row.user_id && this.socialRepository ? await this.socialRepository.getUser(row.user_id) : undefined;
+    const athlete = row.user_id ? await this.socialRepository.getUser(row.user_id) : undefined;
 
     const detail = {
       ...this.toActivityDto(row),
@@ -790,7 +787,7 @@ export class ActivityService {
         images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)),
       ),
     };
-    if (!this.socialRepository || !userId) {
+    if (!userId) {
       return detail;
     }
     const engagements = await this.socialRepository.activityEngagement([id], userId);
@@ -804,15 +801,12 @@ export class ActivityService {
   }
 
   private async listImageDtos(activityId: string, userId?: string) {
-    if (!this.mediaRepository) {
-      return [];
-    }
     const images = await this.mediaRepository.listForActivity(activityId, userId);
     return Promise.all(images.filter((image) => image.status === 'ready').map((image) => this.toImageDto(image)));
   }
 
   private async toImageDto(image: ActivityImage) {
-    const files = (await this.mediaRepository?.getFiles(image.id)) ?? [];
+    const files = await this.mediaRepository.getFiles(image.id);
     const fileUrl = (variant: 'thumbnail' | 'preview' | 'original'): string | null => {
       const file = files.find((candidate) => candidate.variant === variant);
       return file

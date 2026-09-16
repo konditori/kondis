@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
 import { WorkerType } from 'src/enum';
-import { ConfigRepository } from 'src/repositories/config.repository';
+import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 
 const apiEntry = resolve(import.meta.dirname, '..', 'workers', 'api.js');
 const workerEntry = resolve(import.meta.dirname, '..', 'workers', 'worker.js');
@@ -73,7 +73,7 @@ export const getApiPingUrl = (listenAddress: string, port: number): string => {
 };
 
 const waitForApi = async (api: ChildProcess): Promise<void> => {
-  const config = new ConfigRepository();
+  const config = new EnvConfigRepository();
   const url = getApiPingUrl(config.listenAddress, config.port);
 
   while (!stopping && api.exitCode === null && api.signalCode === null) {

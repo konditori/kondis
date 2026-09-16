@@ -1,5 +1,6 @@
 import type { ColumnType, RawBuilder } from 'kysely';
 
+import type { ActivityType } from 'src/enum';
 import {
   Column,
   CreateDateColumn,
@@ -9,7 +10,6 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from 'src/schema/decorators';
-import type { ActivityType } from 'src/types';
 
 type GeographyWrite = RawBuilder<unknown> | null | undefined;
 type Geography = ColumnType<string | null, GeographyWrite, GeographyWrite>;

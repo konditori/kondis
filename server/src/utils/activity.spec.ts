@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ACTIVITY_TYPE_IDS, ACTIVITY_TYPES } from 'src/constants';
-import { AverageMetric, BestEffortGroup } from 'src/types';
+import { ActivityType, AverageMetric, BestEffortGroup } from 'src/enum';
 import { getActivityTypeSettings, toActivityType } from 'src/utils/activity';
 
 describe('toActivityType', () => {
@@ -60,10 +60,10 @@ describe('toActivityType', () => {
   });
 
   it.each([
-    ['roller_ski', AverageMetric.Pace],
-    ['hike', AverageMetric.Pace],
-    ['ice_skate', AverageMetric.None],
-    ['swim', AverageMetric.SwimPace],
+    [ActivityType.RollerSki, AverageMetric.Pace],
+    [ActivityType.Hike, AverageMetric.Pace],
+    [ActivityType.IceSkate, AverageMetric.None],
+    [ActivityType.Swim, AverageMetric.SwimPace],
   ] as const)('defines the average metric for %s', (type, averageMetric) => {
     expect(getActivityTypeSettings(type).averageMetric).toBe(averageMetric);
   });

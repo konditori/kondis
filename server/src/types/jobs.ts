@@ -1,5 +1,6 @@
+import type { ActivityType } from 'src/enum';
 import { JobName, QueueName } from 'src/enum';
-import type { ActivityTag, ActivityType } from 'src/types';
+import type { ActivityTag } from 'src/types';
 
 export interface IBaseJob {
   force?: boolean;

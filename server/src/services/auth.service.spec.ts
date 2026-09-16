@@ -1,16 +1,17 @@
 import { hash } from 'bcrypt';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ConfigRepository } from 'src/contracts/config.repository';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
-import { Logger } from 'src/logger';
-import type { TransactionPort } from 'src/ports/transaction.port';
-import { CryptoRepository } from 'src/repositories/crypto.repository';
+import { ConsoleLogger } from 'src/logger';
+import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { SessionRepository } from 'src/repositories/session.repository';
 import type { UserRepository } from 'src/repositories/user.repository';
 import { AuthService } from 'src/services/auth.service';
-import { newTestService } from 'test/utils';
+import { newServiceDeps, newTestService } from 'test/utils';
 
 const SETUP_TOKEN = 'setup-token';
 
@@ -34,9 +35,9 @@ describe(AuthService.name, () => {
   const withTransaction = vi.fn();
 
   const users = { findByEmail, count, create, createInitialAdmin } as unknown as UserRepository;
-  const config = {
+  const config: { registrationEnabled: boolean; setupToken?: string } = {
     registrationEnabled: false,
-    setupToken: undefined as string | undefined,
+    setupToken: undefined,
   };
   const credentials = {
     createSession,
@@ -52,13 +53,27 @@ describe(AuthService.name, () => {
   } as unknown as SessionRepository;
   const rateLimiting = { consume: consumeRateLimit } as unknown as RateLimitingRepository;
   const events = { emit } as never;
-  const database = { withTransaction } as unknown as TransactionPort;
+  const database = { withTransaction } as unknown as TransactionRepository;
   const setup = () =>
-    newTestService(AuthService, [users, config, rateLimiting, new CryptoRepository(), credentials, events, database], {
-      users,
-      config,
-      credentials,
-    });
+    newTestService(
+      AuthService,
+      [
+        newServiceDeps({
+          userRepository: users,
+          configRepository: config as unknown as ConfigRepository,
+          rateLimitingRepository: rateLimiting,
+          cryptoRepository: new NodeCryptoRepository(),
+          sessionRepository: credentials,
+          eventRepository: events,
+          databaseRepository: database,
+        }),
+      ],
+      {
+        users,
+        config,
+        credentials,
+      },
+    );
   beforeEach(() => {
     vi.clearAllMocks();
     config.registrationEnabled = false;
@@ -181,7 +196,7 @@ describe(AuthService.name, () => {
 
   it('logs the setup token only while the installation has no administrator', async () => {
     const { sut } = setup();
-    const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+    const log = vi.spyOn(ConsoleLogger.prototype, 'log').mockImplementation(() => {});
 
     await sut.logSetupTokenIfRequired();
     expect(log).toHaveBeenCalledOnce();

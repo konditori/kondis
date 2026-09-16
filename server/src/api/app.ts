@@ -66,7 +66,7 @@ export const createApiShell = (sessions: ApiDependencies['sessions'], demoUser?:
         const normalizedPath = runtimePath.length > 1 ? runtimePath.replace(/\/+$/, '') : runtimePath;
         return (
           publicRoutes.has(`${normalizedMethod} ${normalizedPath}`) ||
-          (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-workouts/shared/'))
+          (normalizedMethod === 'GET' && normalizedPath.startsWith('/live-activities/shared/'))
         );
       },
       demoUser,
@@ -101,7 +101,7 @@ export const createApiApp = ({
   config,
   files,
   jobs,
-  liveWorkouts,
+  liveActivities,
   server,
   sessions,
   social,
@@ -119,7 +119,7 @@ export const createApiApp = ({
     config,
     files,
     jobs,
-    liveWorkouts,
+    liveActivities,
     sessions,
     social,
     uploads,

@@ -18,6 +18,37 @@ export type PingResponseDtoOutput = {
   /** Health status of the API */
   status: string;
 };
+export type CapabilitiesDtoOutput = {
+  /** Upload formats and limits for client-side parsing and UX */
+  uploads: {
+    /** Accepted activity file extensions */
+    activityExtensions: string[];
+    /** Accepted activity image file extensions */
+    imageExtensions: string[];
+    /** Video file extensions recognized in takeout archives */
+    videoExtensions: string[];
+    limits: {
+      /** Maximum accepted activity file size in bytes */
+      activityFileBytes: number;
+      /** Maximum accepted activity image size in bytes */
+      imageFileBytes: number;
+      /** Maximum accepted avatar image size in bytes */
+      avatarFileBytes: number;
+      /** Maximum entry count in an uploaded ZIP archive */
+      zipEntries: number;
+      /** Maximum expanded size of one ZIP entry in bytes */
+      zipEntryBytes: number;
+      /** Maximum total expanded size of a ZIP archive in bytes */
+      zipExpandedBytes: number;
+      /** Maximum accepted ZIP compression ratio */
+      zipCompressionRatio: number;
+      /** Maximum takeout manifest size in bytes */
+      manifestBytes: number;
+      /** Maximum takeout manifest row count */
+      manifestRows: number;
+    };
+  };
+};
 export type FitUploadResponseDtoOutput = {
   /** Uploaded activity file size in bytes */
   byteSize: number;
@@ -116,7 +147,7 @@ export type QueueStatusReportDtoOutput = {
   jobCounts: JobCountsDtoOutput;
   queueStatus: QueueStatusDtoOutput;
 };
-export type LiveWorkoutListDtoOutput = {
+export type LiveActivityListDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
@@ -129,12 +160,12 @@ export type LiveWorkoutListDtoOutput = {
   lastReceivedAt: string | null;
   route: number[][];
 }[];
-export type LiveWorkoutCreateDto = {
+export type LiveActivityCreateDto = {
   clientSessionId: string;
   sport: ActivityType;
   startedAt: string;
 };
-export type LiveWorkoutDtoOutput = {
+export type LiveActivityDtoOutput = {
   id: string;
   sport: ActivityType_Output;
   startedAt: string;
@@ -147,12 +178,12 @@ export type LiveWorkoutDtoOutput = {
   lastReceivedAt: string | null;
   route: number[][];
 };
-export type LiveWorkoutStateDto = {
+export type LiveActivityStateDto = {
   status: Status5;
   elapsedSeconds: number;
   distanceMeters: number;
 };
-export type LiveWorkoutPointsDto = {
+export type LiveActivityPointsDto = {
   points: {
     sequence: number;
     recordedAt: string;
@@ -164,11 +195,11 @@ export type LiveWorkoutPointsDto = {
   elapsedSeconds: number;
   distanceMeters: number;
 };
-export type LiveWorkoutAckDtoOutput = {
+export type LiveActivityAckDtoOutput = {
   id: string;
   lastSequence: number;
 };
-export type LiveWorkoutShareDtoOutput = {
+export type LiveActivityShareDtoOutput = {
   token: string;
   expiresAt: string;
 };
@@ -749,6 +780,19 @@ export function serverControllerPing(opts?: Oazapfts.RequestOpts) {
   );
 }
 /**
+ * Server capabilities for client-side parsing and UX
+ */
+export function capabilitiesControllerGet(opts?: Oazapfts.RequestOpts) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 200;
+      data: CapabilitiesDtoOutput;
+    }>('/capabilities', {
+      ...opts,
+    }),
+  );
+}
+/**
  * Upload a FIT, TCX, or GPX activity file
  */
 export function uploadControllerUploadActivity(
@@ -1115,39 +1159,39 @@ export function jobControllerRunQueueCommand(
     ),
   );
 }
-export function liveWorkoutControllerList(opts?: Oazapfts.RequestOpts) {
+export function liveActivityControllerList(opts?: Oazapfts.RequestOpts) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutListDtoOutput;
-    }>('/live-workouts', {
+      data: LiveActivityListDtoOutput;
+    }>('/live-activities', {
       ...opts,
     }),
   );
 }
-export function liveWorkoutControllerCreate(
+export function liveActivityControllerCreate(
   {
-    liveWorkoutCreateDto,
+    liveActivityCreateDto,
   }: {
-    liveWorkoutCreateDto: LiveWorkoutCreateDto;
+    liveActivityCreateDto: LiveActivityCreateDto;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: LiveWorkoutDtoOutput;
+      data: LiveActivityDtoOutput;
     }>(
-      '/live-workouts',
+      '/live-activities',
       oazapfts.json({
         ...opts,
         method: 'POST',
-        body: liveWorkoutCreateDto,
+        body: liveActivityCreateDto,
       }),
     ),
   );
 }
-export function liveWorkoutControllerGetShared(
+export function liveActivityControllerGetShared(
   {
     token,
   }: {
@@ -1158,13 +1202,13 @@ export function liveWorkoutControllerGetShared(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(`/live-workouts/shared/${encodeURIComponent(token)}`, {
+      data: LiveActivityDtoOutput;
+    }>(`/live-activities/shared/${encodeURIComponent(token)}`, {
       ...opts,
     }),
   );
 }
-export function liveWorkoutControllerGet(
+export function liveActivityControllerGet(
   {
     id,
   }: {
@@ -1175,37 +1219,37 @@ export function liveWorkoutControllerGet(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutDtoOutput;
-    }>(`/live-workouts/${encodeURIComponent(id)}`, {
+      data: LiveActivityDtoOutput;
+    }>(`/live-activities/${encodeURIComponent(id)}`, {
       ...opts,
     }),
   );
 }
-export function liveWorkoutControllerUpdate(
+export function liveActivityControllerUpdate(
   {
     id,
-    liveWorkoutStateDto,
+    liveActivityStateDto,
   }: {
     id: string;
-    liveWorkoutStateDto: LiveWorkoutStateDto;
+    liveActivityStateDto: LiveActivityStateDto;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 200;
-      data: LiveWorkoutDtoOutput;
+      data: LiveActivityDtoOutput;
     }>(
-      `/live-workouts/${encodeURIComponent(id)}`,
+      `/live-activities/${encodeURIComponent(id)}`,
       oazapfts.json({
         ...opts,
         method: 'PATCH',
-        body: liveWorkoutStateDto,
+        body: liveActivityStateDto,
       }),
     ),
   );
 }
-export function liveWorkoutControllerDiscard(
+export function liveActivityControllerDiscard(
   {
     id,
   }: {
@@ -1214,37 +1258,37 @@ export function liveWorkoutControllerDiscard(
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
-    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}`, {
+    oazapfts.fetchText(`/live-activities/${encodeURIComponent(id)}`, {
       ...opts,
       method: 'DELETE',
     }),
   );
 }
-export function liveWorkoutControllerPoints(
+export function liveActivityControllerPoints(
   {
     id,
-    liveWorkoutPointsDto,
+    liveActivityPointsDto,
   }: {
     id: string;
-    liveWorkoutPointsDto: LiveWorkoutPointsDto;
+    liveActivityPointsDto: LiveActivityPointsDto;
   },
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: LiveWorkoutAckDtoOutput;
+      data: LiveActivityAckDtoOutput;
     }>(
-      `/live-workouts/${encodeURIComponent(id)}/points`,
+      `/live-activities/${encodeURIComponent(id)}/points`,
       oazapfts.json({
         ...opts,
         method: 'POST',
-        body: liveWorkoutPointsDto,
+        body: liveActivityPointsDto,
       }),
     ),
   );
 }
-export function liveWorkoutControllerShare(
+export function liveActivityControllerShare(
   {
     id,
   }: {
@@ -1255,14 +1299,14 @@ export function liveWorkoutControllerShare(
   return oazapfts.ok(
     oazapfts.fetchJson<{
       status: 201;
-      data: LiveWorkoutShareDtoOutput;
-    }>(`/live-workouts/${encodeURIComponent(id)}/share`, {
+      data: LiveActivityShareDtoOutput;
+    }>(`/live-activities/${encodeURIComponent(id)}/share`, {
       ...opts,
       method: 'POST',
     }),
   );
 }
-export function liveWorkoutControllerRevokeShare(
+export function liveActivityControllerRevokeShare(
   {
     id,
   }: {
@@ -1271,7 +1315,7 @@ export function liveWorkoutControllerRevokeShare(
   opts?: Oazapfts.RequestOpts,
 ) {
   return oazapfts.ok(
-    oazapfts.fetchText(`/live-workouts/${encodeURIComponent(id)}/share`, {
+    oazapfts.fetchText(`/live-activities/${encodeURIComponent(id)}/share`, {
       ...opts,
       method: 'DELETE',
     }),
@@ -2306,6 +2350,37 @@ export function socialControllerDeleteComment(
       ...opts,
       method: 'DELETE',
     }),
+  );
+}
+/**
+ * Stage one takeout photo before submitting its activity
+ */
+export function takeoutImportControllerUploadPhoto(
+  {
+    id,
+    body,
+  }: {
+    id: string;
+    body: {
+      /** One takeout photo image associated with an activity */
+      file: Blob;
+      metadata: string;
+    };
+  },
+  opts?: Oazapfts.RequestOpts,
+) {
+  return oazapfts.ok(
+    oazapfts.fetchJson<{
+      status: 202;
+      data: TakeoutItemSubmissionResponseDtoOutput;
+    }>(
+      `/upload/strava/imports/${encodeURIComponent(id)}/photos`,
+      oazapfts.multipart({
+        ...opts,
+        method: 'POST',
+        body,
+      }),
+    ),
   );
 }
 export enum Status {

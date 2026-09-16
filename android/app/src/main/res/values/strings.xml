@@ -33,7 +33,7 @@
     <string name="i18n_pace_label">Pace:</string>
     <string name="i18n_heart_rate_short_label">HR:</string>
     <string name="i18n_activity_tags">Activity tags</string>
-    <string name="i18n_live_workout_route">Live workout route</string>
+    <string name="i18n_live_activity_route">Live activity route</string>
     <string name="i18n_lifetime">Lifetime</string>
     <string name="i18n_medal_title">%1$s medal</string>
     <string name="i18n_activity_density_map">Activity density map</string>
@@ -46,7 +46,7 @@
     <string name="i18n_return_to_activities">Return to activities</string>
     <string name="i18n_app_description">Your self-hosted activity archive</string>
     <string name="i18n_live_tracking">Live tracking</string>
-    <string name="i18n_live_workout">Live workout</string>
+    <string name="i18n_live_activity">Live activity</string>
     <string name="i18n_requests">Requests</string>
     <string name="i18n_follow_requests">Follow requests</string>
     <string name="i18n_no_pending_requests">No pending requests.</string>
@@ -100,7 +100,7 @@
     <string name="i18n_upload_files">Upload .fit, .tcx, or .gpx files.</string>
     <string name="i18n_strava_takeout">Strava takeout</string>
     <string name="i18n_upload_activity">Upload activity</string>
-    <string name="i18n_upload_activity_page_description">Choose how you want to add workouts to your archive.</string>
+    <string name="i18n_upload_activity_page_description">Choose how you want to add activities to your archive.</string>
     <string name="i18n_strava_imported_activities">Imported %1$s activities</string>
     <string name="i18n_strava_duplicate_activities">%1$s activities were duplicates</string>
     <string name="i18n_strava_failed_activities">%1$s failed</string>
@@ -109,6 +109,7 @@
     <string name="i18n_strava_scanning">Scanning the ZIP on this device…</string>
     <string name="i18n_strava_uploading">Uploading extracted activities…</string>
     <string name="i18n_strava_server_processing">Server is processing activities…</string>
+    <string name="i18n_strava_skipped_videos">Skipped %1$s videos. Photos and profile information are imported.</string>
     <string name="i18n_strava_skipped_media">Skipped for now: %1$s photos, %2$s videos, and %3$s profile images.</string>
     <string name="i18n_strava_cancel">Cancel import</string>
     <string name="i18n_strava_drop_takeout">Drop your Strava takeout here</string>
@@ -124,8 +125,8 @@
     <string name="i18n_finished">Finished</string>
     <string name="i18n_connection_lost">Connection lost</string>
     <string name="i18n_catching_up">Catching up</string>
-    <string name="i18n_live_workout_finished">%1$s finished</string>
-    <string name="i18n_live_workout_in_progress">%1$s in progress</string>
+    <string name="i18n_live_activity_finished">%1$s finished</string>
+    <string name="i18n_live_activity_in_progress">%1$s in progress</string>
     <string name="i18n_waiting_for_gps">Waiting for GPS</string>
     <string name="i18n_updated_seconds_ago">Updated %1$ss ago</string>
     <string name="i18n_could_not_create_share_link">Could not create a share link</string>
@@ -192,8 +193,7 @@
     <string name="i18n_activities_upload_progress">%1$s / %2$s uploaded</string>
     <string name="i18n_upload_queued">Queued</string>
     <string name="i18n_upload_skipped">Skipped</string>
-    <string name="i18n_upload_workout">Upload workout</string>
-    <string name="i18n_upload_workouts">Upload workouts</string>
+    <string name="i18n_upload_activities">Upload activities</string>
     <string name="i18n_upload_failed">Upload failed.</string>
     <string name="i18n_processing_taking_long">Activity processing is taking longer than expected</string>
     <string name="i18n_dont_have_account">Don\'t have an account?</string>
@@ -432,7 +432,7 @@
     <string name="i18n_job_queues_description">Monitor background processing and review recent job history.</string>
     <string name="i18n_job_queue_status">Job queue status</string>
     <string name="i18n_activity_processing">Activity processing</string>
-    <string name="i18n_activity_processing_description">Parse workouts, calculate metrics, best efforts, and route matches.</string>
+    <string name="i18n_activity_processing_description">Parse activities, calculate metrics, best efforts, and route matches.</string>
     <string name="i18n_activity_enrichment">Activity enrichment</string>
     <string name="i18n_activity_enrichment_description">Calculate metrics, best efforts, rankings, and route matches after parsing.</string>
     <string name="i18n_imports_and_tasks">Imports and background tasks</string>

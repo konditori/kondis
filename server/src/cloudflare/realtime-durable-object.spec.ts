@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { DurableObjectRealtimeAdapter, RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
+import { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
+import { LiveActivityProgressEventStatus, UserRole } from 'src/enum';
+import { DurableObjectRealtimeRepository } from 'src/repositories/cloudflare/durable-object-realtime.repository';
 
-const attachment = (kind: 'user' | 'admin', sessionId = 'session-id') => ({
-  kind,
+const attachment = (role: UserRole.User | UserRole.Admin, sessionId = 'session-id') => ({
+  role,
   sessionId,
-  userId: kind === 'user' ? 'user-id' : null,
+  userId: role === UserRole.User ? 'user-id' : null,
   sessionExpiresAt: Date.now() + 60_000,
   activityIds: [],
   authorizationAttempts: 0,
@@ -23,7 +25,7 @@ const socket = (value: ReturnType<typeof attachment>) => {
   } as unknown as WebSocket & { deserializeAttachment: () => typeof current };
 };
 
-describe('DurableObjectRealtimeAdapter', () => {
+describe('DurableObjectRealtimeRepository', () => {
   it('publishes events through the namespace', async () => {
     let published: Request | undefined;
     const fetch = vi.fn((request: Request | string, init?: RequestInit) => {
@@ -34,7 +36,7 @@ describe('DurableObjectRealtimeAdapter', () => {
       idFromName: vi.fn(() => 'global-id'),
       get: vi.fn(() => ({ fetch })),
     };
-    const adapter = new DurableObjectRealtimeAdapter(namespace);
+    const adapter = new DurableObjectRealtimeRepository(namespace);
 
     await adapter.emit('JobUpdated');
 
@@ -50,14 +52,14 @@ describe('DurableObjectRealtimeAdapter', () => {
     };
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    await expect(new DurableObjectRealtimeAdapter(namespace).emit('JobUpdated')).resolves.toBeUndefined();
+    await expect(new DurableObjectRealtimeRepository(namespace).emit('JobUpdated')).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalledOnce();
   });
 });
 
 describe(RealtimeDurableObject.name, () => {
   it('accepts authenticated WebSocket upgrades through the Durable Object', async () => {
-    const serverSocket = socket(attachment('user'));
+    const serverSocket = socket(attachment(UserRole.User));
     const clientSocket = {} as WebSocket;
     const state = {
       acceptWebSocket: vi.fn(),
@@ -96,8 +98,8 @@ describe(RealtimeDurableObject.name, () => {
   });
 
   it('routes job events only to admin sockets and rejects malformed publications', async () => {
-    const admin = socket(attachment('admin'));
-    const user = socket(attachment('user'));
+    const admin = socket(attachment(UserRole.Admin));
+    const user = socket(attachment(UserRole.User));
     const state = {
       acceptWebSocket: vi.fn(),
       getWebSockets: () => [admin, user],
@@ -121,9 +123,9 @@ describe(RealtimeDurableObject.name, () => {
     ).resolves.toMatchObject({ status: 400 });
   });
 
-  it('routes live workout updates only to the workout owner', async () => {
-    const owner = socket(attachment('user'));
-    const otherUser = socket({ ...attachment('user'), userId: 'other-user-id' });
+  it('routes live activity updates only to the activity owner', async () => {
+    const owner = socket(attachment(UserRole.User));
+    const otherUser = socket({ ...attachment(UserRole.User), userId: 'other-user-id' });
     const state = {
       acceptWebSocket: vi.fn(),
       getWebSockets: () => [owner, otherUser],
@@ -131,11 +133,11 @@ describe(RealtimeDurableObject.name, () => {
     };
     const hub = new RealtimeDurableObject(state as never, {});
     const event = {
-      type: 'live-workout.updated',
+      type: 'live-activity.updated',
       userId: 'user-id',
-      workout: {
-        id: 'workout-id',
-        status: 'recording',
+      activity: {
+        id: 'activity-id',
+        status: LiveActivityProgressEventStatus.Recording,
         elapsedSeconds: 1,
         distanceMeters: 4.7,
         lastSequence: 1,

@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PgBossQueueAdapter } from 'src/adapters/node/pgboss-queue.adapter';
 import type { AuthenticatedUser } from 'src/auth';
-import { JobStatus, QueueName } from 'src/enum';
+import { ActivityType, JobStatus, QueueName, StreamType } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { PgBossJobRepository } from 'src/repositories/node/pgboss-job.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { ActivityService } from 'src/services/activity.service';
 import type { ActivityStreamInput, KondisDatabase } from 'src/types';
@@ -20,7 +20,7 @@ describe(ActivityService.name, () => {
   let activities: ActivityRepository;
   let uploads: UploadRepository;
   let sut: ActivityService;
-  let jobs: PgBossQueueAdapter;
+  let jobs: PgBossJobRepository;
   let factory: ReturnType<typeof createMediumFactory>;
   let testUser: AuthenticatedUser;
 
@@ -31,7 +31,7 @@ describe(ActivityService.name, () => {
     activities = testApp.get(ActivityRepository);
     uploads = testApp.get(UploadRepository);
     sut = testApp.get(ActivityService);
-    jobs = testApp.get(PgBossQueueAdapter);
+    jobs = testApp.get(PgBossJobRepository);
     factory = createMediumFactory(db);
   });
 
@@ -44,7 +44,7 @@ describe(ActivityService.name, () => {
     startedAt: Date,
     name: string,
     streams: ActivityStreamInput[] = [],
-    sport: 'run' | 'ride' = 'run',
+    sport: ActivityType.Run | ActivityType.Ride = ActivityType.Run,
   ) => factory.newActivity(testUser.id, startedAt, name, streams, {}, sport);
 
   const serviceApi = {
@@ -72,7 +72,7 @@ describe(ActivityService.name, () => {
       payload: {
         name?: string;
         description?: string;
-        sport?: 'run' | 'ride' | 'trail_run';
+        sport?: ActivityType.Run | ActivityType.Ride | ActivityType.TrailRun;
         startedAt?: string;
         excludeFromRankings?: boolean;
         tags?: ('race' | 'long_run')[];
@@ -118,8 +118,8 @@ describe(ActivityService.name, () => {
 
     it('includes the simplified GPS route needed for activity feed maps', async () => {
       await createActivity(new Date('2024-01-01T09:00:00.000Z'), 'mapped run', [
-        { type: 'latitude', data: [58.4101, 58.4112, 58.4124] },
-        { type: 'longitude', data: [15.6211, 15.6222, 15.6234] },
+        { type: StreamType.Latitude, data: [58.4101, 58.4112, 58.4124] },
+        { type: StreamType.Longitude, data: [15.6211, 15.6222, 15.6234] },
       ]);
 
       const response = await serviceApi.listRecent({ limit: 50 });
@@ -150,20 +150,20 @@ describe(ActivityService.name, () => {
 
     it('includes up to three distinct achievement ranks for each activity', async () => {
       await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'fastest', [
-        { type: 'distance', data: [0, 400, 1000] },
-        { type: 'time', data: [0, 100, 250] },
+        { type: StreamType.Distance, data: [0, 400, 1000] },
+        { type: StreamType.Time, data: [0, 100, 250] },
       ]);
       const secondId = await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'second', [
-        { type: 'distance', data: [0, 400, 1000] },
-        { type: 'time', data: [0, 110, 270] },
+        { type: StreamType.Distance, data: [0, 400, 1000] },
+        { type: StreamType.Time, data: [0, 110, 270] },
       ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'third', [
-        { type: 'distance', data: [0, 400, 1000] },
-        { type: 'time', data: [0, 120, 290] },
+        { type: StreamType.Distance, data: [0, 400, 1000] },
+        { type: StreamType.Time, data: [0, 120, 290] },
       ]);
       await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'fourth', [
-        { type: 'distance', data: [0, 400, 1000] },
-        { type: 'time', data: [0, 130, 310] },
+        { type: StreamType.Distance, data: [0, 400, 1000] },
+        { type: StreamType.Time, data: [0, 130, 310] },
       ]);
 
       const response = await serviceApi.listRecent({ limit: 50 });
@@ -181,11 +181,11 @@ describe(ActivityService.name, () => {
         new Date('2024-05-01T08:00:00.000Z'),
         'ride with power medals',
         [
-          { type: 'distance', data: [0, 5000, 10_000] },
-          { type: 'time', data: [0, 600, 1200] },
-          { type: 'power', data: Array.from({ length: 31 }, (_, index) => (index >= 10 ? 300 : 100)) },
+          { type: StreamType.Distance, data: [0, 5000, 10_000] },
+          { type: StreamType.Time, data: [0, 600, 1200] },
+          { type: StreamType.Power, data: Array.from({ length: 31 }, (_, index) => (index >= 10 ? 300 : 100)) },
         ],
-        'ride',
+        ActivityType.Ride,
       );
 
       const recent = await serviceApi.listRecent({ limit: 50 });
@@ -216,20 +216,20 @@ describe(ActivityService.name, () => {
   describe('GET /activities/best-efforts', () => {
     it('assigns consecutive podium rankings to the three fastest efforts', async () => {
       await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'bronze', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1500] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1500] },
       ]);
       await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'gold', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1300] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1300] },
       ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'silver', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1400] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1400] },
       ]);
       await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'outside podium', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1600] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1600] },
       ]);
 
       const response = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
@@ -244,20 +244,20 @@ describe(ActivityService.name, () => {
 
     it('removes an excluded podium activity and reranks the remaining efforts', async () => {
       const goldId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'excluded gold', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1300] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1300] },
       ]);
       await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'silver becomes gold', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1400] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1400] },
       ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'bronze becomes silver', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1500] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1500] },
       ]);
       await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'fourth becomes bronze', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1600] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1600] },
       ]);
 
       await serviceApi.updateById({ id: goldId }, { excludeFromRankings: true });
@@ -281,16 +281,16 @@ describe(ActivityService.name, () => {
 
     it('ranks overall and yearly efforts while preserving chronological order', async () => {
       const first = await createActivity(new Date('2023-06-01T08:00:00.000Z'), 'first', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1500] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1500] },
       ]);
       const yearlyBest = await createActivity(new Date('2024-05-01T08:00:00.000Z'), 'yearly best', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1400] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1400] },
       ]);
       await createActivity(new Date('2024-08-01T08:00:00.000Z'), 'later', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1450] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1450] },
       ]);
 
       const response = await serviceApi.listBestEfforts({ sport: 'run', type: '5k' });
@@ -309,13 +309,13 @@ describe(ActivityService.name, () => {
 
     it('returns cycling efforts separately from running efforts', async () => {
       const rideId = await createActivity(new Date('2024-06-01T08:00:00.000Z'), 'fast ride', [
-        { type: 'distance', data: [0, 5000, 10_000, 20_000] },
-        { type: 'time', data: [0, 600, 1200, 2400] },
+        { type: StreamType.Distance, data: [0, 5000, 10_000, 20_000] },
+        { type: StreamType.Time, data: [0, 600, 1200, 2400] },
       ]);
-      await activities.update(rideId, { sport: 'ride' });
+      await activities.update(rideId, { sport: ActivityType.Ride });
       await sut.handleActivityBestEffortCompute({ id: rideId });
 
-      const response = await serviceApi.listBestEfforts({ sport: 'ride', type: '20k' });
+      const response = await serviceApi.listBestEfforts({ sport: ActivityType.Ride, type: '20k' });
 
       expect(response.sport).toBe('ride');
       expect(response.options.map(({ type }) => type)).toContain('longest_ride');
@@ -349,10 +349,10 @@ describe(ActivityService.name, () => {
 
     it('returns persisted running best efforts in standard-distance order', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'run', [
-        { type: 'distance', data: [0, 400, 1000, 1700] },
-        { type: 'time', data: [0, 100, 250, 425] },
-        { type: 'heartrate', data: [100, 120, 140, 160] },
-        { type: 'altitude', data: [10, 15, 7, 20] },
+        { type: StreamType.Distance, data: [0, 400, 1000, 1700] },
+        { type: StreamType.Time, data: [0, 100, 250, 425] },
+        { type: StreamType.Heartrate, data: [100, 120, 140, 160] },
+        { type: StreamType.Altitude, data: [10, 15, 7, 20] },
       ]);
 
       const activity = await serviceApi.getById({ id: activityId });
@@ -368,20 +368,20 @@ describe(ActivityService.name, () => {
 
     it('includes each effort ranking for the activity calendar year', async () => {
       await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'fastest', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 230] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 230] },
       ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'second', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 240] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 240] },
       ]);
       const activityId = await createActivity(new Date('2024-04-01T08:00:00.000Z'), 'third', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 250] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 250] },
       ]);
       await createActivity(new Date('2023-04-01T08:00:00.000Z'), 'another year', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 220] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 220] },
       ]);
 
       const activity = await serviceApi.getById({ id: activityId });
@@ -404,8 +404,8 @@ describe(ActivityService.name, () => {
 
     it('returns the persisted full-resolution detail track', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'mapped run', [
-        { type: 'latitude', data: [59, 59.000001, 59.000002] },
-        { type: 'longitude', data: [18, 18.000001, 18.000002] },
+        { type: StreamType.Latitude, data: [59, 59.000001, 59.000002] },
+        { type: StreamType.Longitude, data: [18, 18.000001, 18.000002] },
       ]);
 
       const activity = await serviceApi.getById({ id: activityId });
@@ -422,21 +422,21 @@ describe(ActivityService.name, () => {
 
     it('groups repeated GPS tracks while excluding nearby and reversed routes', async () => {
       const first = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first route effort', [
-        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
-        { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
+        { type: StreamType.Latitude, data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: StreamType.Longitude, data: [18.0686, 18.074, 18.07, 18.0686] },
       ]);
       // The same route with uneven, slightly noisy recording intervals. Comparing the raw
       // vertices produces a large discrete Frechet distance despite the lines overlapping.
       const second = await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'same direction with GPS drift', [
         {
-          type: 'latitude',
+          type: StreamType.Latitude,
           data: [
             59.32932, 59.330265, 59.33111, 59.332115, 59.33305, 59.33404, 59.33496, 59.33604, 59.33702, 59.335115,
             59.33311, 59.331265, 59.32931,
           ],
         },
         {
-          type: 'longitude',
+          type: StreamType.Longitude,
           data: [
             18.06861, 18.06995, 18.0713, 18.07265, 18.07403, 18.073, 18.072, 18.071, 18.07004, 18.06965, 18.0693,
             18.06895, 18.06859,
@@ -444,16 +444,16 @@ describe(ActivityService.name, () => {
         },
       ]);
       const lateStart = await createActivity(new Date('2024-02-10T08:00:00.000Z'), 'same route with a late start', [
-        { type: 'latitude', data: [59.32999, 59.333, 59.337, 59.3293] },
-        { type: 'longitude', data: [18.06963, 18.074, 18.07, 18.0686] },
+        { type: StreamType.Latitude, data: [59.32999, 59.333, 59.337, 59.3293] },
+        { type: StreamType.Longitude, data: [18.06963, 18.074, 18.07, 18.0686] },
       ]);
       await createActivity(new Date('2024-02-15T08:00:00.000Z'), 'same loop in reverse', [
-        { type: 'latitude', data: [59.3293, 59.337, 59.333, 59.3293] },
-        { type: 'longitude', data: [18.0686, 18.07, 18.074, 18.0686] },
+        { type: StreamType.Latitude, data: [59.3293, 59.337, 59.333, 59.3293] },
+        { type: StreamType.Longitude, data: [18.0686, 18.07, 18.074, 18.0686] },
       ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'different route', [
-        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
-        { type: 'longitude', data: [18.0686, 18.079, 18.075, 18.0686] },
+        { type: StreamType.Latitude, data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: StreamType.Longitude, data: [18.0686, 18.079, 18.075, 18.0686] },
       ]);
 
       const detail = await serviceApi.getById({ id: first });
@@ -469,8 +469,8 @@ describe(ActivityService.name, () => {
 
     it('recomputes overlapping route matches concurrently without deadlocking', async () => {
       const route: ActivityStreamInput[] = [
-        { type: 'latitude', data: [59.3293, 59.333, 59.337, 59.3293] },
-        { type: 'longitude', data: [18.0686, 18.074, 18.07, 18.0686] },
+        { type: StreamType.Latitude, data: [59.3293, 59.333, 59.337, 59.3293] },
+        { type: StreamType.Longitude, data: [18.0686, 18.074, 18.07, 18.0686] },
       ];
       const ids = await Promise.all([
         createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first overlapping route', route),
@@ -503,8 +503,8 @@ describe(ActivityService.name, () => {
 
     it('does not compute missing best efforts while reading an activity', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'older run', [
-        { type: 'distance', data: [0, 400, 1000] },
-        { type: 'time', data: [0, 100, 250] },
+        { type: StreamType.Distance, data: [0, 400, 1000] },
+        { type: StreamType.Time, data: [0, 100, 250] },
       ]);
       await db.deleteFrom('activity_best_effort').where('activity_id', '=', activityId).execute();
 
@@ -534,7 +534,7 @@ describe(ActivityService.name, () => {
       const updated = await serviceApi.updateById(
         { id: activityId },
         {
-          sport: 'trail_run',
+          sport: ActivityType.TrailRun,
           startedAt: '2024-01-01T10:15:00.000Z',
         },
       );
@@ -550,13 +550,13 @@ describe(ActivityService.name, () => {
 
     it('removes and recomputes running best efforts when the activity type changes', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'before', [
-        { type: 'distance', data: [0, 400, 1000] },
-        { type: 'time', data: [0, 100, 250] },
+        { type: StreamType.Distance, data: [0, 400, 1000] },
+        { type: StreamType.Time, data: [0, 100, 250] },
       ]);
       const initialActivity = await serviceApi.getById({ id: activityId });
       expect(initialActivity.bestEfforts).toHaveLength(3);
 
-      await serviceApi.updateById({ id: activityId }, { sport: 'ride' });
+      await serviceApi.updateById({ id: activityId }, { sport: ActivityType.Ride });
       await jobs.waitForQueueCompletion(
         QueueName.ActivityParsing,
         QueueName.ActivityEnrichment,
@@ -565,7 +565,7 @@ describe(ActivityService.name, () => {
       const rideActivity = await serviceApi.getById({ id: activityId });
       expect(rideActivity.bestEfforts?.map(({ type }) => type)).toEqual(['longest_ride', 'elevation_gain']);
 
-      await serviceApi.updateById({ id: activityId }, { sport: 'run' });
+      await serviceApi.updateById({ id: activityId }, { sport: ActivityType.Run });
       await jobs.waitForQueueCompletion(
         QueueName.ActivityParsing,
         QueueName.ActivityEnrichment,
@@ -577,16 +577,16 @@ describe(ActivityService.name, () => {
 
     it('queues ranking exclusion changes and refreshes the activity feed podium', async () => {
       const goldId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'gold', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1300] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1300] },
       ]);
       await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'silver', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1400] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1400] },
       ]);
       await createActivity(new Date('2024-03-01T08:00:00.000Z'), 'bronze', [
-        { type: 'distance', data: [0, 5000] },
-        { type: 'time', data: [0, 1500] },
+        { type: StreamType.Distance, data: [0, 5000] },
+        { type: StreamType.Time, data: [0, 1500] },
       ]);
 
       await serviceApi.updateById({ id: goldId }, { excludeFromRankings: true });
@@ -635,8 +635,8 @@ describe(ActivityService.name, () => {
 
     it('refreshes persisted ranking years after the activity date changes', async () => {
       const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'dated run', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 250] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 250] },
       ]);
 
       await serviceApi.updateById({ id: activityId }, { startedAt: '2025-01-01T08:00:00.000Z' });
@@ -671,7 +671,7 @@ describe(ActivityService.name, () => {
     });
 
     it('rejects incompatible long-run tags and deduplicates valid tags', async () => {
-      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'ride', [], 'ride');
+      const activityId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'ride', [], ActivityType.Ride);
 
       await expect(serviceApi.updateById({ id: activityId }, { tags: ['long_run'] })).rejects.toThrow(
         'Long Run is only available for run activities',
@@ -740,7 +740,7 @@ describe(ActivityService.name, () => {
       await expect(
         sut.handleActivityManualCreate({
           id: crypto.randomUUID(),
-          activitySport: 'run',
+          activitySport: ActivityType.Run,
           startedAt: '2024-01-01T08:00:00.000Z',
           elapsedTime: 0,
         }),
@@ -753,7 +753,7 @@ describe(ActivityService.name, () => {
         sut.handleActivityManualCreate({
           id: activityId,
           userId: testUser.id,
-          activitySport: 'run',
+          activitySport: ActivityType.Run,
           startedAt: '2024-01-01T08:00:00.000Z',
           elapsedTime: 0,
           movingTime: 0,
@@ -794,12 +794,12 @@ describe(ActivityService.name, () => {
 
     it('refreshes persisted rankings after deletion', async () => {
       const firstId = await createActivity(new Date('2024-01-01T08:00:00.000Z'), 'first', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 230] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 230] },
       ]);
       const secondId = await createActivity(new Date('2024-02-01T08:00:00.000Z'), 'second', [
-        { type: 'distance', data: [0, 1000] },
-        { type: 'time', data: [0, 240] },
+        { type: StreamType.Distance, data: [0, 1000] },
+        { type: StreamType.Time, data: [0, 240] },
       ]);
 
       await serviceApi.deleteById({ id: firstId });

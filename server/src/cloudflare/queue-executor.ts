@@ -1,11 +1,9 @@
-import { CloudflareQueueTransportAdapter } from 'src/adapters/cloudflare/queue-transport.adapter';
-import { drainUnpublishedJobs } from 'src/cloudflare/dispatcher';
+import { handleQueueBatch } from 'src/cloudflare/job-delivery';
 import {
   QUEUE_EXECUTOR_PATH,
   isQueueExecutorRequest,
   queueExecutorResponse,
 } from 'src/cloudflare/queue-executor.protocol';
-import { handleQueueBatch } from 'src/cloudflare/queue-handler';
 import { createWorkerInvocationComposition, type WorkerBindings } from 'src/composition.worker';
 
 export default {
@@ -28,6 +26,7 @@ export default {
     const outcomes: ('acknowledge' | 'retry')[] = body.deliveries.map(() => 'retry');
     try {
       await handleQueueBatch(
+        composition.postgresJobService,
         {
           deliveries: body.deliveries.map((payload, index) => ({
             payload,
@@ -39,32 +38,12 @@ export default {
             },
           })),
         },
-        composition.database,
-        composition.jobHandlers,
         body.queue,
-        composition.realtime,
       );
-      await drainUnpublishedJobs(composition.database, createQueueTransport(env));
+      await composition.postgresJobService.drainUnpublishedJobs();
       return Response.json(queueExecutorResponse(outcomes));
     } finally {
       await composition.close();
     }
   },
-};
-
-const createQueueTransport = (env: WorkerBindings): CloudflareQueueTransportAdapter =>
-  new CloudflareQueueTransportAdapter({
-    activityParsing: requiredQueue(env.ACTIVITY_PARSING_QUEUE),
-    activityEnrichment: requiredQueue(env.ACTIVITY_ENRICHMENT_QUEUE),
-    activityRanking: requiredQueue(env.ACTIVITY_RANKING_QUEUE),
-    backgroundTask: requiredQueue(env.BACKGROUND_TASK_QUEUE),
-    imageProcessing: requiredQueue(env.IMAGE_PROCESSING_QUEUE),
-    storage: requiredQueue(env.STORAGE_QUEUE),
-  });
-
-const requiredQueue = (queue: WorkerBindings['ACTIVITY_PARSING_QUEUE']) => {
-  if (!queue) {
-    throw new Error('Queue binding is required for queue processing');
-  }
-  return queue;
 };

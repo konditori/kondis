@@ -2,17 +2,19 @@ import { FileMigrationProvider, Migrator } from 'kysely/migration';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { TransactionRepository } from 'src/contracts/transaction.repository';
 import { createDatabase } from 'src/db/database';
 import { Logger } from 'src/logger';
-import type { TransactionPort } from 'src/ports/transaction.port';
 import type { DatabaseConfig, KondisDatabase, KondisTransaction } from 'src/types';
 
 const MIGRATION_FOLDER = join(import.meta.dirname, '..', 'schema', 'migrations');
 
-export class DatabaseRepository implements TransactionPort {
+export class DatabaseRepository extends TransactionRepository {
   private readonly logger = new Logger(DatabaseRepository.name);
 
-  constructor(private readonly db: KondisDatabase) {}
+  constructor(private readonly db: KondisDatabase) {
+    super();
+  }
 
   withTransaction<T>(fn: (trx: KondisTransaction) => Promise<T>): Promise<T> {
     return this.db.transaction().execute(fn);

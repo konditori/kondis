@@ -1,9 +1,9 @@
 import type { AuthenticatedUser } from 'src/auth';
-import { UserRole } from 'src/enum';
+import { ActivityType, UserRole } from 'src/enum';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
-import type { ActivityMetrics, ActivityStreamInput, ActivityType } from 'src/types';
+import type { ActivityMetrics, ActivityStreamInput } from 'src/types';
 import type { BufferedUploadedFileData } from 'src/types/uploads';
 
 import type { KondisDatabase } from 'src/types';
@@ -70,7 +70,7 @@ export const createMediumFactory = (db: KondisDatabase) => {
     name: string,
     streams: ActivityStreamInput[] = [],
     metrics: Partial<ActivityMetrics> | null = {},
-    sport: ActivityType = 'run',
+    sport: ActivityType = ActivityType.Run,
   ): Promise<string> => {
     const upload = await uploads.create({
       checksum: crypto.randomUUID().replaceAll('-', ''),

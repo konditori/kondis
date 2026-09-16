@@ -1,7 +1,6 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi';
 
 import type { ApiEnv } from 'src/api/auth';
-import type { TakeoutActivityUpload, UploadReader } from 'src/api/uploads';
 import {
   FitUploadResponseSchema,
   TakeoutActivityMetadataSchema,
@@ -13,8 +12,11 @@ import {
   TakeoutItemFailureSchema,
   TakeoutItemSubmissionResponseSchema,
   TakeoutManualItemSchema,
+  TakeoutPhotoMetadataSchema,
 } from 'src/dtos/upload.dto';
+import { UploadKind } from 'src/enum';
 import { BadRequestException, NotFoundException } from 'src/errors';
+import type { TakeoutActivityUpload, UploadReader } from 'src/types';
 import type { UploadedFileData } from 'src/types/uploads';
 
 export type ActivityUploadRouteService = {
@@ -28,6 +30,12 @@ export type TakeoutImportRouteService = {
     userId: string,
     scan: z.output<typeof TakeoutImportScanSchema>,
   ) => Promise<string[]>;
+  submitTakeoutPhoto: (
+    importId: string,
+    userId: string,
+    metadata: z.output<typeof TakeoutPhotoMetadataSchema>,
+    file: UploadedFileData | undefined,
+  ) => Promise<boolean>;
   submitTakeoutActivity: (
     importId: string,
     userId: string,
@@ -139,6 +147,38 @@ const uploadTakeoutActivityRoute = createRoute({
   summary: 'Upload one extracted Strava activity',
   tags: ['uploads'],
 });
+const photoRoute = createRoute({
+  method: 'post',
+  path: '/upload/strava/imports/{id}/photos',
+  operationId: 'TakeoutImportController_uploadPhoto',
+  request: {
+    params: idParams,
+    body: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            required: ['file', 'metadata'],
+            properties: {
+              file: {
+                type: 'string',
+                format: 'binary',
+                description: 'One takeout photo image associated with an activity',
+              },
+              metadata: { type: 'string', maxLength: 16 * 1024 },
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    202: { description: 'Photo staged for its activity', content: { 'application/json': { schema: itemResponse } } },
+  },
+  summary: 'Stage one takeout photo before submitting its activity',
+  tags: ['uploads'],
+});
 const submitManualRoute = createRoute({
   method: 'post',
   path: '/upload/strava/imports/{id}/manual-activities',
@@ -199,7 +239,8 @@ export const registerActivityUploadRoute = (
   uploads: UploadReader,
 ): void => {
   app.openapi(activityRoute, async (context) => {
-    const file = (await uploads.read(context.req.raw, context.env, 'activity')) as UploadedFileData | undefined;
+    const file = (await uploads.read(context.req.raw, context.env, UploadKind.Activity)) as
+      UploadedFileData | undefined;
     return context.json(activityResponse.parse(await service.uploadActivity(file, context.get('user').id)), 201);
   });
 };
@@ -225,7 +266,7 @@ export const registerTakeoutImportRoutes = (
     ),
   );
   app.openapi(uploadTakeoutActivityRoute, async (context) => {
-    const upload = (await uploads.read(context.req.raw, context.env, 'takeoutActivity')) as
+    const upload = (await uploads.read(context.req.raw, context.env, UploadKind.TakeoutActivity)) as
       TakeoutActivityUpload | undefined;
     const rawMetadata = upload?.metadata;
     let metadata: z.output<typeof TakeoutActivityMetadataSchema>;
@@ -245,6 +286,23 @@ export const registerTakeoutImportRoutes = (
       }),
       202,
     );
+  });
+  app.openapi(photoRoute, async (context) => {
+    const upload = (await uploads.read(context.req.raw, context.env, UploadKind.TakeoutPhoto)) as
+      TakeoutActivityUpload | undefined;
+    let metadata: z.output<typeof TakeoutPhotoMetadataSchema>;
+    try {
+      metadata = TakeoutPhotoMetadataSchema.parse(JSON.parse(upload?.metadata ?? ''));
+    } catch {
+      throw new BadRequestException('Invalid takeout photo metadata');
+    }
+    const accepted = await service.submitTakeoutPhoto(
+      context.req.valid('param').id,
+      context.get('user').id,
+      metadata,
+      upload?.file,
+    );
+    return context.json(itemResponse.parse({ accepted }), 202);
   });
   app.openapi(submitManualRoute, async (context) =>
     context.json(

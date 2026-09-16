@@ -1,21 +1,15 @@
 import { sql } from 'kysely';
 
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
-import type { ArgsOf, EmitEvent, RealtimePort } from 'src/ports/realtime.port';
-import { isWebsocketEvent, serializeRealtimeEvent, type WebsocketEvent } from 'src/realtime/protocol';
+import { UserRole } from 'src/enum';
+import { isWebsocketEvent, type WebsocketEvent } from 'src/realtime/protocol';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
 
-export const REALTIME_DURABLE_OBJECT_NAME = 'global';
 export const MAX_WEBSOCKET_PAYLOAD_BYTES = 1024;
 export const MAX_ACTIVITY_SUBSCRIPTIONS_PER_SOCKET = 100;
 export const MAX_ACTIVITY_AUTHORIZATION_ATTEMPTS_PER_SOCKET = 100;
 export const MAX_CONCURRENT_ACTIVITY_AUTHORIZATIONS = 8;
-
-export type DurableObjectNamespaceBinding = {
-  idFromName: (name: string) => unknown;
-  get: (id: unknown) => { fetch: (request: Request | string, init?: RequestInit) => Promise<Response> };
-};
 
 type DurableObjectStateLike = {
   acceptWebSocket: (socket: HibernatableWebSocket) => void;
@@ -27,7 +21,7 @@ type HibernatableWebSocket = WebSocket & {
   deserializeAttachment: () => unknown;
 };
 type SocketAttachment = {
-  kind: 'user' | 'admin';
+  role: UserRole;
   sessionId: string;
   userId: string | null;
   sessionExpiresAt: number;
@@ -38,9 +32,6 @@ type SocketAttachment = {
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 const activityId = (event: WebsocketEvent): string | undefined => ('activity' in event ? event.activity.id : undefined);
 
-/**
- * Global best-effort hub. Socket identity lives in attachments, not memory.
- */
 export class RealtimeDurableObject {
   private database?: KondisDatabase;
   private social?: SocialRepository;
@@ -74,13 +65,15 @@ export class RealtimeDurableObject {
   }
 
   private async connect(url: URL): Promise<Response> {
-    const kind = url.searchParams.get('scope') === 'job-events' ? 'admin' : 'user';
+    // TODO: is this safe?
+    const role = url.searchParams.get('scope') === 'job-events' ? UserRole.Admin : UserRole.User;
     const sessionId = url.searchParams.get('sessionId');
     const userId = url.searchParams.get('userId');
     const sessionExpiresAt = Number(url.searchParams.get('sessionExpiresAt'));
-    if (!sessionId || !Number.isFinite(sessionExpiresAt) || (kind === 'user' && !userId)) {
+    // TODO: consider validating sessionId format and userId format
+    if (!sessionId || !Number.isFinite(sessionExpiresAt) || (role === UserRole.User && !userId)) {
       console.warn('Realtime Durable Object rejected connection metadata', {
-        kind,
+        role,
         hasSessionId: Boolean(sessionId),
         hasUserId: Boolean(userId),
         hasSessionExpiry: Number.isFinite(sessionExpiresAt),
@@ -93,7 +86,7 @@ export class RealtimeDurableObject {
     const client = pair[0];
     const socket = pair[1];
     socket.serializeAttachment({
-      kind,
+      role,
       sessionId,
       userId: userId ?? null,
       sessionExpiresAt,
@@ -103,7 +96,7 @@ export class RealtimeDurableObject {
     this.state.acceptWebSocket(socket);
     await this.scheduleNextExpiry();
     this.send(socket, { type: 'connected' });
-    console.log('Realtime Durable Object accepted WebSocket', { kind });
+    console.log('Realtime Durable Object accepted WebSocket', { role });
     return new Response(null, { status: 101, webSocket: client } as ResponseInit & { webSocket: WebSocket });
   }
 
@@ -112,7 +105,7 @@ export class RealtimeDurableObject {
       return;
     }
     const attachment = this.attachment(socket);
-    if (!attachment || attachment.kind !== 'user' || !attachment.userId) {
+    if (!attachment || attachment.role !== UserRole.User || !attachment.userId) {
       return;
     }
     let value: unknown;
@@ -208,12 +201,12 @@ export class RealtimeDurableObject {
 
   private shouldReceive(connection: SocketAttachment, event: WebsocketEvent, recipients: Set<string>): boolean {
     if (event.type === 'job.updated') {
-      return connection.kind === 'admin';
+      return connection.role === 'admin';
     }
     if (event.type === 'session.revoked') {
       return connection.sessionId === event.sessionId;
     }
-    if (connection.kind !== 'user' || !connection.userId) {
+    if (connection.role !== 'user' || !connection.userId) {
       return false;
     }
     if (event.type === 'notification.created') {
@@ -222,7 +215,7 @@ export class RealtimeDurableObject {
     if (event.type === 'notifications.read') {
       return event.userId === connection.userId;
     }
-    if (event.type === 'live-workout.updated') {
+    if (event.type === 'live-activity.updated') {
       return event.userId === connection.userId;
     }
     const id = activityId(event);
@@ -260,7 +253,7 @@ export class RealtimeDurableObject {
   private attachment(socket: HibernatableWebSocket): SocketAttachment | undefined {
     const value = socket.deserializeAttachment();
     return isObject(value) &&
-      (value.kind === 'user' || value.kind === 'admin') &&
+      (value.role === UserRole.User || value.role === UserRole.Admin) &&
       typeof value.sessionId === 'string' &&
       typeof value.sessionExpiresAt === 'number' &&
       Array.isArray(value.activityIds)
@@ -288,25 +281,3 @@ export class RealtimeDurableObject {
     }
   }
 }
-
-export class DurableObjectRealtimeAdapter implements RealtimePort {
-  constructor(private readonly namespace: DurableObjectNamespaceBinding) {}
-  async emit<T extends EmitEvent>(event: T, ...args: ArgsOf<T>): Promise<void> {
-    try {
-      const response = await this.namespace
-        .get(this.namespace.idFromName(REALTIME_DURABLE_OBJECT_NAME))
-        .fetch('https://realtime.internal/publish', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(serializeRealtimeEvent(event, ...args)),
-        });
-      if (!response.ok) {
-        throw new Error(`Realtime Durable Object returned ${response.status}`);
-      }
-    } catch (error) {
-      console.warn(`Realtime event ${event} was not delivered`, error);
-    }
-  }
-}
-
-export const noopRealtime: RealtimePort = { emit: async () => {} };

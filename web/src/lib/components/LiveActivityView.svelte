@@ -12,19 +12,19 @@
   import LiveRouteMap from "$lib/components/LiveRouteMap.svelte";
   import { activityTypeLabel } from "$lib/activity-types";
   import type { ActivityTypeSettingsOutput } from "$lib/api";
-  import type { LiveWorkout } from "$lib/types";
+  import type { LiveActivity } from "$lib/types";
   import type { UnitSystem } from "$lib/units";
   import { distance, duration } from "$lib/format";
   import { t } from "$lib/i18n";
 
   let {
-    workout = $bindable(),
+    activity = $bindable(),
     endpoint,
     activityTypes,
     unitSystem,
     allowSharing = false,
   }: {
-    workout: LiveWorkout;
+    activity: LiveActivity;
     endpoint: string;
     activityTypes: ActivityTypeSettingsOutput[];
     unitSystem: UnitSystem;
@@ -33,20 +33,20 @@
   let shareUrl = $state<string | null>(null);
   let shareError = $state<string | null>(null);
   let sharing = $state(false);
-  let resolvingFinishedWorkout = $state(false);
+  let resolvingFinishedActivity = $state(false);
   let now = $state(Date.now());
   const ageSeconds = $derived(
-    workout.lastReceivedAt
+    activity.lastReceivedAt
       ? Math.max(
           0,
-          Math.floor((now - Date.parse(workout.lastReceivedAt)) / 1000),
+          Math.floor((now - Date.parse(activity.lastReceivedAt)) / 1000),
         )
       : null,
   );
   const connection = $derived(
-    workout.status === "paused"
+    activity.status === "paused"
       ? "Paused"
-      : workout.status === "ended"
+      : activity.status === "ended"
         ? "Finished"
         : ageSeconds === null || ageSeconds > 120
           ? "Connection lost"
@@ -64,14 +64,14 @@
   }
 
   onMount(() => {
-    const resolveFinishedWorkout = async () => {
+    const resolveFinishedActivity = async () => {
       if (
         !allowSharing ||
-        workout.status !== "ended" ||
-        resolvingFinishedWorkout
+        activity.status !== "ended" ||
+        resolvingFinishedActivity
       )
         return;
-      resolvingFinishedWorkout = true;
+      resolvingFinishedActivity = true;
       try {
         const response = await fetch("/api/v1/activities?limit=50", {
           cache: "no-store",
@@ -80,32 +80,33 @@
         const payload = (await response.json()) as {
           activities?: Array<{ id: string; sport: string; startedAt: string }>;
         };
-        const startedAt = Date.parse(workout.startedAt);
-        const activity = payload.activities
-          ?.filter((candidate) => candidate.sport === workout.sport)
+        const startedAt = Date.parse(activity.startedAt);
+        const matchingActivity = payload.activities
+          ?.filter((candidate) => candidate.sport === activity.sport)
           .map((candidate) => ({
             candidate,
             distance: Math.abs(Date.parse(candidate.startedAt) - startedAt),
           }))
           .filter(({ distance }) => distance <= 5 * 60 * 1000)
           .sort((a, b) => a.distance - b.distance)[0]?.candidate;
-        if (activity) window.location.replace(`/activity/${activity.id}`);
+        if (matchingActivity)
+          window.location.replace(`/activity/${matchingActivity.id}`);
       } finally {
-        resolvingFinishedWorkout = false;
+        resolvingFinishedActivity = false;
       }
     };
     const refresh = async () => {
       try {
         const response = await fetch(endpoint, { cache: "no-store" });
         if (response.ok) {
-          workout = (await response.json()) as LiveWorkout;
-          void resolveFinishedWorkout();
+          activity = (await response.json()) as LiveActivity;
+          void resolveFinishedActivity();
         }
       } catch {
         // The visible timestamp communicates a stale connection without hiding the route.
       }
     };
-    void resolveFinishedWorkout();
+    void resolveFinishedActivity();
     const poll = window.setInterval(() => void refresh(), 10_000);
     const clock = window.setInterval(() => (now = Date.now()), 1_000);
     return () => {
@@ -119,7 +120,7 @@
     shareError = null;
     try {
       const response = await fetch(
-        `/api/v1/live-workouts/${workout.id}/share`,
+        `/api/v1/live-activities/${activity.id}/share`,
         {
           method: "POST",
         },
@@ -139,13 +140,13 @@
   }
 </script>
 
-<section class="live-workout-view">
-  <header class="detail-header live-workout-header">
+<section class="live-activity-view">
+  <header class="detail-header live-activity-header">
     <a class="back-link" href="/" data-sveltekit-preload-data="hover">
       <ArrowLeft size={18} />
       {t("all_activities")}
     </a>
-    <div class="live-workout-heading">
+    <div class="live-activity-heading">
       <div>
         <p class:live={connection === "Live"} class="live-status">
           {#if connection === "Live"}<Radio
@@ -158,12 +159,12 @@
           {connectionLabel(connection)}
         </p>
         <h1>
-          {workout.status === "ended"
-            ? t("live_workout_finished", {
-                activity: activityTypeLabel(activityTypes, workout.sport),
+          {activity.status === "ended"
+            ? t("live_activity_finished", {
+                activity: activityTypeLabel(activityTypes, activity.sport),
               })
-            : t("live_workout_in_progress", {
-                activity: activityTypeLabel(activityTypes, workout.sport),
+            : t("live_activity_in_progress", {
+                activity: activityTypeLabel(activityTypes, activity.sport),
               })}
         </h1>
         <span
@@ -195,15 +196,15 @@
   {:else if shareError}
     <p class="form-error live-share-feedback">{shareError}</p>
   {/if}
-  <section class="activity-map-section" aria-label={t("live_workout_route")}>
+  <section class="activity-map-section" aria-label={t("live_activity_route")}>
     <section class="map-panel">
       <LiveRouteMap
-        coordinates={workout.route}
+        coordinates={activity.route}
         follow={connection === "Live"}
       />
     </section>
   </section>
-  {#if workout.route.length === 0}
+  {#if activity.route.length === 0}
     <div class="live-waiting">
       <Activity size={22} />
       {t("waiting_for_first_gps_position")}
@@ -214,19 +215,19 @@
       <article class="metric">
         <div>
           <small>{t("distance")}</small>
-          <strong>{distance(workout.distanceMeters, unitSystem)}</strong>
+          <strong>{distance(activity.distanceMeters, unitSystem)}</strong>
         </div>
       </article>
       <article class="metric">
         <div>
           <small>{t("elapsed")}</small>
-          <strong>{duration(workout.elapsedSeconds)}</strong>
+          <strong>{duration(activity.elapsedSeconds)}</strong>
         </div>
       </article>
       <article class="metric">
         <div>
           <small>{t("gps_points")}</small>
-          <strong>{workout.route.length}</strong>
+          <strong>{activity.route.length}</strong>
         </div>
       </article>
     </div>
