@@ -2,27 +2,36 @@
   import { goto, invalidateAll } from "$app/navigation";
   import { onDestroy } from "svelte";
   import { Archive, ArrowLeft, Check, LoaderCircle } from "@lucide/svelte";
+  import {
+    Status2,
+    type TakeoutImportStatusDtoOutput,
+  } from "@kondis/sdk";
   import { t } from "$lib/i18n";
 
-  type ImportStatus = {
-    importId: string;
-    status:
-      | "scanning"
-      | "uploading"
-      | "processing"
-      | "completed"
-      | "failed"
-      | "cancelled";
-    total: number | null;
-    uploaded: number;
-    processed: number;
-    failed: number;
-    duplicates: number;
-    error: string | null;
-  };
+  enum ImportPhase {
+    Idle = "idle",
+    Scanning = "scanning",
+    Uploading = "uploading",
+    Processing = "processing",
+    Done = "done",
+    Error = "error",
+    Cancelled = "cancelled",
+  }
+
+  enum WorkerEventType {
+    Phase = "phase",
+    Scanned = "scanned",
+    Uploaded = "uploaded",
+    Complete = "complete",
+    Error = "error",
+  }
+
   type WorkerEvent = {
-    type: "phase" | "scanned" | "uploaded" | "complete" | "error";
-    phase?: "scanning" | "uploading" | "processing";
+    type: WorkerEventType;
+    phase?:
+      | ImportPhase.Scanning
+      | ImportPhase.Uploading
+      | ImportPhase.Processing;
     total?: number;
     uploaded?: number;
     extractionErrors?: number;
@@ -35,15 +44,7 @@
   let file = $state<File>();
   let dragging = $state(false);
   let importId = $state<string>();
-  let phase = $state<
-    | "idle"
-    | "scanning"
-    | "uploading"
-    | "processing"
-    | "done"
-    | "error"
-    | "cancelled"
-  >("idle");
+  let phase = $state<ImportPhase>(ImportPhase.Idle);
   let message = $state("");
   let mediaMessage = $state("");
   let processed = $state(0);
@@ -76,17 +77,19 @@
   }
 
   async function pollImport(id: string): Promise<boolean> {
-    if (pollInFlight) return phase === "processing";
+    if (pollInFlight) return phase === ImportPhase.Processing;
     pollInFlight = true;
     try {
-      const status = await api<ImportStatus>(`/upload/strava/imports/${id}`);
+      const status = await api<TakeoutImportStatusDtoOutput>(
+        `/upload/strava/imports/${id}`,
+      );
       processed = status.processed;
       uploaded = status.uploaded;
       total = status.total;
       duplicates = status.duplicates;
-      if (status.status === "completed") {
+      if (status.status === Status2.Completed) {
         clearTimeout(progressTimer);
-        phase = "done";
+        phase = ImportPhase.Done;
         if (file) localStorage.removeItem(importKey(file));
         const imported = processed - status.duplicates - status.failed;
         const parts =
@@ -104,14 +107,20 @@
           .join(" ");
         await invalidateAll();
         return false;
-      } else if (status.status === "failed" || status.status === "cancelled") {
+      } else if (
+        status.status === Status2.Failed ||
+        status.status === Status2.Cancelled
+      ) {
         clearTimeout(progressTimer);
-        phase = status.status === "cancelled" ? "cancelled" : "error";
+        phase =
+          status.status === Status2.Cancelled
+            ? ImportPhase.Cancelled
+            : ImportPhase.Error;
         message = status.error ?? t("strava_import_failed");
-      } else if (status.status === "processing") {
-        phase = "processing";
+      } else if (status.status === Status2.Processing) {
+        phase = ImportPhase.Processing;
       }
-      return phase === "processing";
+      return phase === ImportPhase.Processing;
     } finally {
       pollInFlight = false;
     }
@@ -122,13 +131,13 @@
     progressTimer = setTimeout(() => {
       void pollImport(id)
         .then((keepPolling) => {
-          if (keepPolling && phase === "processing") {
+          if (keepPolling && phase === ImportPhase.Processing) {
             pollDelay = Math.min(5_000, pollDelay + 500);
             schedulePoll(id);
           }
         })
         .catch((error) => {
-          phase = "error";
+          phase = ImportPhase.Error;
           message = error instanceof Error ? error.message : String(error);
         });
     }, pollDelay);
@@ -140,13 +149,13 @@
     clearTimeout(progressTimer);
     if (!selected.name.toLowerCase().endsWith(".zip")) {
       file = undefined;
-      phase = "error";
+      phase = ImportPhase.Error;
       message = t("strava_choose_zip");
       return;
     }
     file = selected;
     importId = undefined;
-    phase = "idle";
+    phase = ImportPhase.Idle;
     message = "";
     mediaMessage = "";
     processed = 0;
@@ -158,23 +167,26 @@
   async function start() {
     if (
       !file ||
-      phase === "scanning" ||
-      phase === "uploading" ||
-      phase === "processing"
+      phase === ImportPhase.Scanning ||
+      phase === ImportPhase.Uploading ||
+      phase === ImportPhase.Processing
     )
       return;
     message = "";
-    phase = "scanning";
+    phase = ImportPhase.Scanning;
     worker?.terminate();
     importId = undefined;
     try {
       const saved = localStorage.getItem(importKey(file));
       try {
         if (saved) {
-          const status = await api<ImportStatus>(
+          const status = await api<TakeoutImportStatusDtoOutput>(
             `/upload/strava/imports/${saved}`,
           );
-          if (status.status !== "completed" && status.status !== "cancelled")
+          if (
+            status.status !== Status2.Completed &&
+            status.status !== Status2.Cancelled
+          )
             importId = saved;
         }
       } catch {
@@ -188,7 +200,7 @@
         importId = created.importId;
         localStorage.setItem(importKey(file), importId);
       }
-      phase = "scanning";
+      phase = ImportPhase.Scanning;
       worker = new Worker(
         new URL("../workers/strava-takeout.worker.ts", import.meta.url),
         { type: "module" },
@@ -203,16 +215,16 @@
   }
 
   function showError(error: unknown) {
-    phase = "error";
+    phase = ImportPhase.Error;
     message = error instanceof Error ? error.message : String(error);
   }
 
   async function handleWorkerEvent(event: WorkerEvent) {
-    if (event.type === "phase" && event.phase) {
+    if (event.type === WorkerEventType.Phase && event.phase) {
       phase = event.phase;
       return;
     }
-    if (event.type === "scanned") {
+    if (event.type === WorkerEventType.Scanned) {
       total = event.total ?? null;
       if (event.skipped) {
         mediaMessage = t("strava_skipped_videos", {
@@ -221,21 +233,21 @@
       }
       return;
     }
-    if (event.type === "uploaded") {
+    if (event.type === WorkerEventType.Uploaded) {
       uploaded = event.uploaded ?? uploaded;
       return;
     }
-    if (event.type === "complete" && importId) {
-      phase = "processing";
+    if (event.type === WorkerEventType.Complete && importId) {
+      phase = ImportPhase.Processing;
       await pollImport(importId);
-      if (phase === "processing") {
+      if (phase === ImportPhase.Processing) {
         pollDelay = 1_000;
         schedulePoll(importId);
       }
       return;
     }
-    if (event.type === "error") {
-      phase = "error";
+    if (event.type === WorkerEventType.Error) {
+      phase = ImportPhase.Error;
       message = event.message ?? t("strava_import_failed");
     }
   }
@@ -251,15 +263,18 @@
       });
     if (file) localStorage.removeItem(importKey(file));
     importId = undefined;
-    phase = "cancelled";
+    phase = ImportPhase.Cancelled;
   }
 
   const busy = () =>
-    phase === "scanning" || phase === "uploading" || phase === "processing";
+    phase === ImportPhase.Scanning ||
+    phase === ImportPhase.Uploading ||
+    phase === ImportPhase.Processing;
   const phaseText = () => {
-    if (phase === "scanning") return t("strava_scanning");
-    if (phase === "uploading") return t("strava_uploading");
-    if (phase === "processing") return t("strava_server_processing");
+    if (phase === ImportPhase.Scanning) return t("strava_scanning");
+    if (phase === ImportPhase.Uploading) return t("strava_uploading");
+    if (phase === ImportPhase.Processing)
+      return t("strava_server_processing");
     return "";
   };
 </script>
@@ -314,7 +329,7 @@
         ></span
       >
       {#if busy()}<LoaderCircle class="spin" size={19} />{/if}
-      {#if phase === "done"}<span class="processing"
+      {#if phase === ImportPhase.Done}<span class="processing"
           ><Check class="success" size={16} /> {t("done")}</span
         >{/if}
     </div>
@@ -323,8 +338,8 @@
     <p class="upload-message">{phaseText()}</p>
   {:else if message}
     <p
-      class:error={phase === "error"}
-      class:upload-success={phase === "done"}
+      class:error={phase === ImportPhase.Error}
+      class:upload-success={phase === ImportPhase.Done}
       class="upload-message"
       role="status"
     >
@@ -341,15 +356,15 @@
         role="progressbar"
         aria-valuemin="0"
         aria-valuemax={total}
-        aria-valuenow={phase === "processing" ? processed : uploaded}
+        aria-valuenow={phase === ImportPhase.Processing ? processed : uploaded}
       >
         <span
-          style={`width: ${total === 0 ? 100 : ((phase === "processing" ? processed : uploaded) / total) * 100}%`}
+          style={`width: ${total === 0 ? 100 : ((phase === ImportPhase.Processing ? processed : uploaded) / total) * 100}%`}
         ></span>
       </div>
       <small
         >{t("strava_activities_processed", {
-          processed: phase === "processing" ? processed : uploaded,
+          processed: phase === ImportPhase.Processing ? processed : uploaded,
           total,
         })}</small
       >
