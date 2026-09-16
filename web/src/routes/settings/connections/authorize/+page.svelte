@@ -9,10 +9,7 @@
   onMount(() => {
     void fetch(`/api/v1/connections/authorize${window.location.search}`)
       .then(async (response) => {
-        if (!response.ok)
-          throw new Error(
-            t("authorization_request_invalid"),
-          );
+        if (!response.ok) throw new Error(t("authorization_request_invalid"));
         const data = await response.json();
         clientName = data.clientName;
         scopes = data.scopes;
@@ -61,8 +58,12 @@
       {#each scopes as scope}<li>{labels[scope] ?? scope}</li>{/each}
     </ul>
     <p>{t("revoke_access_anytime")}</p>
-    <button disabled={busy} onclick={() => decide(true)}>{t("allow_access")}</button>
-    <button disabled={busy} onclick={() => decide(false)}>{t("common_cancel")}</button>
+    <button disabled={busy} onclick={() => decide(true)}
+      >{t("allow_access")}</button
+    >
+    <button disabled={busy} onclick={() => decide(false)}
+      >{t("common_cancel")}</button
+    >
   {:else if !error}<p>{t("loading_request")}</p>{/if}
 </main>
 

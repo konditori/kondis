@@ -135,7 +135,8 @@
         }}
       >
         <label
-          >{t("connection_name")} <input
+          >{t("connection_name")}
+          <input
             bind:value={name}
             required
             maxlength="80"
@@ -153,7 +154,8 @@
             >{/each}
         </fieldset>
         <label
-          >{t("expires_after_days")} <input
+          >{t("expires_after_days")}
+          <input
             type="number"
             bind:value={expiresInDays}
             min="1"
@@ -191,7 +193,8 @@
               .join(" · ")}
           </p>
           {#if connection.lastUsedAt}<p>
-              {t("last_used")} {new Date(connection.lastUsedAt).toLocaleString()}
+              {t("last_used")}
+              {new Date(connection.lastUsedAt).toLocaleString()}
             </p>{/if}
           {#if !connection.revokedAt}<button
               type="button"
@@ -209,16 +212,18 @@
         }}
       >
         <label
-          >{t("timezone")} <input
+          >{t("timezone")}
+          <input
             bind:value={timezone}
             required
             placeholder={t("timezone_placeholder")}
           /></label
         >
         <label
-          >{t("preferred_display_units")} <select bind:value={units}
-            ><option value="metric">{t("metric")}</option><option value="imperial"
-              >{t("imperial")}</option
+          >{t("preferred_display_units")}
+          <select bind:value={units}
+            ><option value="metric">{t("metric")}</option><option
+              value="imperial">{t("imperial")}</option
             ></select
           ></label
         >
