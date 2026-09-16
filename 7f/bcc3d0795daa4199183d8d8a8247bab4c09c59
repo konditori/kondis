@@ -1,0 +1,125 @@
+README.md
+  s_9323c0d8bff2fa::t_536a5fa83a1622 25,27-28,30,34,49
+android/app/src/main/java/app/kondis/data/remote/KondisApi.kt
+  s_9323c0d8bff2fa::t_92daa7e25ba925 55,70,76,82,87,175-178,180,183-184,186-187,189-190,192-193,195,197-198
+android/app/src/main/java/app/kondis/recording/LiveTrackingRepository.kt
+  s_9323c0d8bff2fa::t_dfadf7c9517236 7-9,38-39,62,90,92,99,119
+android/app/src/main/res/values-b+sv/strings.xml
+  s_9323c0d8bff2fa::t_e64b2a1a8d788d 36,49,128-129,196
+android/app/src/main/res/values/strings.xml
+  s_9323c0d8bff2fa::t_201455536cd7bc 36,49,103,128-129,196,434
+i18n/en.json
+  s_9323c0d8bff2fa::t_41ad5bd034c8b8 34,47,101,126-127,194-195,271,434
+i18n/sv.json
+  s_9323c0d8bff2fa::t_381638d1da1e7b 35,47,125-126,193-194,270
+open-api/kondis-openapi-specs.json
+  s_9323c0d8bff2fa::t_c95ba3b8325a6b 1012,1014,1018,1022,1029,1033,1040,1047,1051,1058,1062,1064,1077,1081,1088,1092,1094,1107,1111,1118,1122,1138,1145,1149,1156,1160,1177,1181,1183,1199,1210,1217,1221,1223,1240,1247,1251,1268,3579,3726,3749,3830,3895,3915,3942
+packages/sdk/src/fetch-client.ts
+  s_9323c0d8bff2fa::t_c81e8573af6506 119,132,137,150,155,167,171,1118,1122-1123,1128,1130,1132,1139,1141,1145,1150,1161-1162,1167,1178-1179,1184,1187,1190,1197,1199,1203,1208,1217,1223,1226,1229,1236,1238,1242,1247,1258-1259,1265,1274
+server/src/api/app.spec.ts
+  s_9323c0d8bff2fa::t_965d8f6f5126c0 26-34
+server/src/api/app.ts
+  s_9323c0d8bff2fa::t_a62733eafd4481 69,104,122
+server/src/api/node.ts
+  s_9323c0d8bff2fa::t_f8ec51a260b58e 158,174
+server/src/api/route-groups.ts
+  s_9323c0d8bff2fa::t_65657f4d36d943 23-26,63,77,102,157
+server/src/api/routes/live-activity.spec.ts
+  s_9323c0d8bff2fa::t_5143e618d28882 4,8,12,22,25-28,30,37,39,43,47,59
+server/src/api/routes/live-activity.ts
+  s_9323c0d8bff2fa::t_17b09cc1289f3d 6-14,16-17,23-29,33-34,38-39,42,44,46-47,55-56,59,63-64,68-69,72,76-77,81-82,85,89-90,98-99,102,106-107,110,114-115,124,127,131-132,137,140,144-145,148,151,153,156,159,162,166-169,173,185,193
+server/src/bin/reset-development-data.ts
+  s_9323c0d8bff2fa::t_0fb5f44e8cb720 41
+server/src/bin/sync-open-api.ts
+  s_9323c0d8bff2fa::t_36de13f1f6d1af 45-49,107,109-114
+server/src/cloudflare/entrypoint.ts
+  s_9323c0d8bff2fa::t_b147d44c184483 28,71,142,265
+server/src/cloudflare/realtime-durable-object.spec.ts
+  s_9323c0d8bff2fa::t_68cf49e23c1091 4,126,136,138-140
+server/src/cloudflare/realtime-durable-object.ts
+  s_9323c0d8bff2fa::t_2b13ac314ba2d2 218,256
+server/src/composition.node.ts
+  s_9323c0d8bff2fa::t_e7f2deeffaf9e9 10,27,59,110,157,169,187,199
+server/src/composition.worker.ts
+  s_9323c0d8bff2fa::t_f34c40f0718b28 19,34,151,186
+server/src/contracts/realtime.repository.ts
+  s_9323c0d8bff2fa::t_dfd201a98ac52b 2,4,6,53
+server/src/db/schema.ts
+  s_9323c0d8bff2fa::t_943889ec0a6eed 17-18,43-44,86-89
+server/src/demo/live-durable-object.ts
+  s_9323c0d8bff2fa::t_c185d30b282507 138-139
+server/src/demo/live-entrypoint.spec.ts
+  s_9323c0d8bff2fa::t_f459ca5d285c1f 23-24,36,43,51,66,99,109,113-114
+server/src/demo/live-entrypoint.ts
+  s_9323c0d8bff2fa::t_2c004c51e442ca 11,13-14,25,31,75-76,81-84,88
+server/src/dtos/live-activity.dto.ts
+  s_9323c0d8bff2fa::t_50e6be8b49d1b4 5,15,19,29,35,37,47-48,53,58,63-69
+server/src/enum.ts
+  s_9323c0d8bff2fa::t_b9fef0628349dc 141-153
+server/src/realtime/protocol.spec.ts
+  s_9323c0d8bff2fa::t_a3dce4d670f549 3,11,13-15,22
+server/src/realtime/protocol.ts
+  s_9323c0d8bff2fa::t_d944da9a06ea37 5,25,42,65,68-70
+server/src/repositories/live-activity.repository.ts
+  s_9323c0d8bff2fa::t_60db9d63969a9b 1-2,14,19,28,37,40,47,50,57,60,67,73,83,88,97,100,112,114,119,127-132,134,143,151,159,161
+server/src/schema/migrations/1786440063866-InitialMigration.ts
+  s_9323c0d8bff2fa::t_eda43963079eb9 277,297,299,301-302,309,380-381
+server/src/schema/tables/live-activity-point.table.ts
+  s_9323c0d8bff2fa::t_561f70827c726b 3-4,6
+server/src/schema/tables/live-activity.table.ts
+  s_9323c0d8bff2fa::t_6bac4a01433f66 12,14-15,32
+server/src/services/live-activity.service.spec.ts
+  s_9323c0d8bff2fa::t_e0eccd26ee0548 2,5,7,13,19,32,54,56,60,62-63,78,109,119
+server/src/services/live-activity.service.ts
+  s_9323c0d8bff2fa::t_2cd33af7590504 3,5-6,18,20-22,26-27,29,35,39-40,44-46,48,52-53,56,64-66,68-69,71,79,81,85,92-93,95,109,111-113,115-116,118-119,123-125,127,129,134-136,138,142-144,146-147,151,153,157-159,161,164-166,168,170-179,185
+server/test/api.ts
+  s_9323c0d8bff2fa::t_c705b93bdc6a85 56
+server/test/medium/specs/repositories/live-activity.repository.spec.ts
+  s_9323c0d8bff2fa::t_7e2e71af694253 4,9,23
+server/test/medium/test-db.ts
+  s_9323c0d8bff2fa::t_d5a08168d3a49d 39
+web/src/app.css
+  s_9323c0d8bff2fa::t_3677a1022466fc 982,988-989,1000,1007,1013,1018,1021,1089,1092,1097,1104,1110,4456,5030
+web/src/lib/components/LiveActivityView.svelte
+  s_9323c0d8bff2fa::t_c9983ee1374526 15,21,27,36,39,42,47,49,67,70-71,74,83-85,92,94,101-102,108,122,142-143,148,161-163,165-166,198,201,206,217,223,229
+web/src/lib/components/LiveRouteMap.svelte
+  s_9323c0d8bff2fa::t_0d80b16692c1a7 76
+web/src/lib/realtime.spec.ts
+  s_9323c0d8bff2fa::t_0f7c74c050fe7d 3,89-90,92,94,96-97,108,110,114-115,117-118,165,174,180,187,189,192
+web/src/lib/realtime.ts
+  s_9323c0d8bff2fa::t_0d449dc316e6fc 50-51,53,68,91,96,99,101,103,115,233-234,236
+web/src/lib/types.ts
+  s_9323c0d8bff2fa::t_95286124358473 152
+web/src/routes/+page.server.ts
+  s_9323c0d8bff2fa::t_f18990c4da08b7 7,25,28-29,35,46
+web/src/routes/+page.svelte
+  s_9323c0d8bff2fa::t_f638429df7e85d 15,42-43,45,145,180,182-186,189-190,193,195,197-198,200-204,207-209,211,231,233,237,364-368,371,375-376,379,384,391,394-395,406,415,426,429,434
+web/src/routes/activities/[id]/+page.server.ts
+  s_9323c0d8bff2fa::t_b10c5d8d20b1eb 4,20,23
+web/src/routes/activities/[id]/+page.svelte
+  s_9323c0d8bff2fa::t_0c00e543a5dbff 5,8,13,16-17,20
+web/src/routes/activity/[id]/+page.server.ts
+  s_9323c0d8bff2fa::t_7e3881c6e24bd2 4,20,23
+web/src/routes/activity/[id]/+page.svelte
+  s_9323c0d8bff2fa::t_0084275e6c84e1 5,8,13,16-17,20
+web/src/routes/live/[token]/+page.server.ts
+  s_9323c0d8bff2fa::t_b047fd0e44e101 2,8,13
+web/src/routes/live/[token]/+page.svelte
+  s_9323c0d8bff2fa::t_24e6d17dd5a721 12-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7fbcc3d0795daa4199183d8d8a8247bab4c09c59",
+  "prompts": {},
+  "sessions": {
+    "s_9323c0d8bff2fa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "668f56e8-2910-4b2b-b7bf-38b7353da170",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
