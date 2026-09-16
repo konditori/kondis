@@ -1,6 +1,7 @@
 import { sql } from 'kysely';
 
 import { createHyperdriveDatabase } from 'src/db/hyperdrive';
+import { UserRole } from 'src/enum';
 import { isWebsocketEvent, type WebsocketEvent } from 'src/realtime/protocol';
 import { SocialRepository } from 'src/repositories/social.repository';
 import type { KondisDatabase } from 'src/types';
@@ -20,7 +21,7 @@ type HibernatableWebSocket = WebSocket & {
   deserializeAttachment: () => unknown;
 };
 type SocketAttachment = {
-  kind: 'user' | 'admin';
+  role: UserRole;
   sessionId: string;
   userId: string | null;
   sessionExpiresAt: number;
@@ -31,9 +32,6 @@ type SocketAttachment = {
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 const activityId = (event: WebsocketEvent): string | undefined => ('activity' in event ? event.activity.id : undefined);
 
-/**
- * Global best-effort hub. Socket identity lives in attachments, not memory.
- */
 export class RealtimeDurableObject {
   private database?: KondisDatabase;
   private social?: SocialRepository;
@@ -67,13 +65,15 @@ export class RealtimeDurableObject {
   }
 
   private async connect(url: URL): Promise<Response> {
-    const kind = url.searchParams.get('scope') === 'job-events' ? 'admin' : 'user';
+    // TODO: is this safe?
+    const role = url.searchParams.get('scope') === 'job-events' ? UserRole.Admin : UserRole.User;
     const sessionId = url.searchParams.get('sessionId');
     const userId = url.searchParams.get('userId');
     const sessionExpiresAt = Number(url.searchParams.get('sessionExpiresAt'));
-    if (!sessionId || !Number.isFinite(sessionExpiresAt) || (kind === 'user' && !userId)) {
+    // TODO: consider validating sessionId format and userId format
+    if (!sessionId || !Number.isFinite(sessionExpiresAt) || (role === UserRole.User && !userId)) {
       console.warn('Realtime Durable Object rejected connection metadata', {
-        kind,
+        role,
         hasSessionId: Boolean(sessionId),
         hasUserId: Boolean(userId),
         hasSessionExpiry: Number.isFinite(sessionExpiresAt),
@@ -86,7 +86,7 @@ export class RealtimeDurableObject {
     const client = pair[0];
     const socket = pair[1];
     socket.serializeAttachment({
-      kind,
+      role,
       sessionId,
       userId: userId ?? null,
       sessionExpiresAt,
@@ -96,7 +96,7 @@ export class RealtimeDurableObject {
     this.state.acceptWebSocket(socket);
     await this.scheduleNextExpiry();
     this.send(socket, { type: 'connected' });
-    console.log('Realtime Durable Object accepted WebSocket', { kind });
+    console.log('Realtime Durable Object accepted WebSocket', { role });
     return new Response(null, { status: 101, webSocket: client } as ResponseInit & { webSocket: WebSocket });
   }
 
@@ -105,7 +105,7 @@ export class RealtimeDurableObject {
       return;
     }
     const attachment = this.attachment(socket);
-    if (!attachment || attachment.kind !== 'user' || !attachment.userId) {
+    if (!attachment || attachment.role !== UserRole.User || !attachment.userId) {
       return;
     }
     let value: unknown;
@@ -201,12 +201,12 @@ export class RealtimeDurableObject {
 
   private shouldReceive(connection: SocketAttachment, event: WebsocketEvent, recipients: Set<string>): boolean {
     if (event.type === 'job.updated') {
-      return connection.kind === 'admin';
+      return connection.role === 'admin';
     }
     if (event.type === 'session.revoked') {
       return connection.sessionId === event.sessionId;
     }
-    if (connection.kind !== 'user' || !connection.userId) {
+    if (connection.role !== 'user' || !connection.userId) {
       return false;
     }
     if (event.type === 'notification.created') {

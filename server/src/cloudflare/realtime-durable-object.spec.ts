@@ -2,11 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { RealtimeDurableObject } from 'src/cloudflare/realtime-durable-object';
 import { DurableObjectRealtimeRepository } from 'src/repositories/cloudflare/durable-object-realtime.repository';
+import { UserRole } from 'src/enum';
 
-const attachment = (kind: 'user' | 'admin', sessionId = 'session-id') => ({
-  kind,
+const attachment = (role: UserRole.User | UserRole.Admin, sessionId = 'session-id') => ({
+  role,
   sessionId,
-  userId: kind === 'user' ? 'user-id' : null,
+  userId: role === UserRole.User ? 'user-id' : null,
   sessionExpiresAt: Date.now() + 60_000,
   activityIds: [],
   authorizationAttempts: 0,
@@ -97,8 +98,8 @@ describe(RealtimeDurableObject.name, () => {
   });
 
   it('routes job events only to admin sockets and rejects malformed publications', async () => {
-    const admin = socket(attachment('admin'));
-    const user = socket(attachment('user'));
+    const admin = socket(attachment(UserRole.Admin));
+    const user = socket(attachment(UserRole.User));
     const state = {
       acceptWebSocket: vi.fn(),
       getWebSockets: () => [admin, user],
@@ -123,8 +124,8 @@ describe(RealtimeDurableObject.name, () => {
   });
 
   it('routes live workout updates only to the workout owner', async () => {
-    const owner = socket(attachment('user'));
-    const otherUser = socket({ ...attachment('user'), userId: 'other-user-id' });
+    const owner = socket(attachment(UserRole.User));
+    const otherUser = socket({ ...attachment(UserRole.User), userId: 'other-user-id' });
     const state = {
       acceptWebSocket: vi.fn(),
       getWebSockets: () => [owner, otherUser],

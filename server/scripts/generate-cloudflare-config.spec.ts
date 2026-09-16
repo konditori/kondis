@@ -35,7 +35,7 @@ type GeneratedConfig = {
 
 const require = createRequire(import.meta.url);
 const { generateCloudflareConfig, generateQueueExecutorConfig, parseJsonc } =
-  require('../../scripts/generate-cloudflare-config.cjs') as {
+  require('./generate-cloudflare-config.cjs') as {
     generateCloudflareConfig(input: {
       baseConfig: Record<string, unknown>;
       environment: string;

@@ -11,9 +11,6 @@ export const toDeliveryBatch = (batch: CloudflareQueueBatch): JobDeliveryBatch =
   })),
 });
 
-/**
- * Apply transport controls only after the service has persisted the outcome.
- */
 export const handleQueueBatch = async (
   service: PostgresJobService,
   batch: JobDeliveryBatch,
