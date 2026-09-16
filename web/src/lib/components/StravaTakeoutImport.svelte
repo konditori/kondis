@@ -30,8 +30,7 @@
     Complete: "complete",
     Error: "error",
   } as const;
-  type WorkerEventType =
-    (typeof WorkerEventType)[keyof typeof WorkerEventType];
+  type WorkerEventType = (typeof WorkerEventType)[keyof typeof WorkerEventType];
 
   type WorkerEvent = {
     type: WorkerEventType;
