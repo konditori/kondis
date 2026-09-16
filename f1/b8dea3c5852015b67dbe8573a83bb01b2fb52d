@@ -1,0 +1,21 @@
+server/src/main.ts
+  s_e1bcf4efea70bd::t_124eea2a649122 109
+server/src/services/auth.service.spec.ts
+  s_e1bcf4efea70bd::t_68bc6b54674a97 206,211,216
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f1b8dea3c5852015b67dbe8573a83bb01b2fb52d",
+  "prompts": {},
+  "sessions": {
+    "s_e1bcf4efea70bd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0aa93-e0b3-76c2-b150-2307fca92aec",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
