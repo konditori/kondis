@@ -25,7 +25,6 @@ describe(AuthService.name, () => {
   const findTicket = vi.fn();
   const consumeTicket = vi.fn();
   const getOrCreateSetupToken = vi.fn();
-  const rotateSetupToken = vi.fn();
   const verifySetupToken = vi.fn();
   const clearSetupToken = vi.fn();
   const consumeSetupBootstrap = vi.fn();
@@ -46,7 +45,6 @@ describe(AuthService.name, () => {
     findTicket,
     consumeTicket,
     getOrCreateSetupToken,
-    rotateSetupToken,
     verifySetupToken,
     clearSetupToken,
     consumeSetupBootstrap,
@@ -87,7 +85,6 @@ describe(AuthService.name, () => {
     findTicket.mockResolvedValue({ userId: null });
     consumeTicket.mockResolvedValue({ userId: null });
     getOrCreateSetupToken.mockResolvedValue(SETUP_TOKEN);
-    rotateSetupToken.mockResolvedValue(SETUP_TOKEN);
     verifySetupToken.mockImplementation((token: string) => Promise.resolve(token === SETUP_TOKEN));
     clearSetupToken.mockResolvedValue(undefined);
     consumeSetupBootstrap.mockResolvedValue(true);
@@ -206,17 +203,17 @@ describe(AuthService.name, () => {
     expect(log.mock.calls[0][0]).toContain('Welcome to Kondis!');
     expect(log.mock.calls[0][0]).toContain(SETUP_TOKEN);
     expect(log.mock.calls[0][0]).toContain('go to the app in a web browser');
-    expect(rotateSetupToken).toHaveBeenCalledWith(undefined);
+    expect(getOrCreateSetupToken).toHaveBeenCalledWith(undefined);
 
     count.mockResolvedValue({ count: 1 });
     await sut.logSetupTokenIfRequired();
     expect(log).toHaveBeenCalledOnce();
-    expect(rotateSetupToken).toHaveBeenCalledOnce();
+    expect(getOrCreateSetupToken).toHaveBeenCalledOnce();
 
     count.mockResolvedValue({ count: 0 });
     await sut.logSetupTokenIfRequired();
     expect(log).toHaveBeenCalledTimes(2);
-    expect(rotateSetupToken).toHaveBeenCalledTimes(2);
+    expect(getOrCreateSetupToken).toHaveBeenCalledTimes(2);
   });
 
   it('revokes the session and disconnects its realtime clients', async () => {

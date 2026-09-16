@@ -106,7 +106,7 @@ export async function bootstrapApi(): Promise<ApiRuntime> {
     createMcpApp({
       database: application.database,
       sessions: application.authCredentialRepository,
-      jobs: application.queueAdapter,
+      jobs: application.jobRepository,
       storage: application.storageRepository,
       publicUrl: application.configRepository.mcpPublicUrl,
       trustProxyHeaders: application.configRepository.trustProxyHeaders,

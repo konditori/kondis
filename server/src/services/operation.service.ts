@@ -1,10 +1,10 @@
 import { sql } from 'kysely';
 import { ACTIVITY_TAG_IDS } from 'src/constants';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import { ActivityType, JobName } from 'src/enum';
 import { BadRequestException, ConflictException, NotFoundException } from 'src/errors';
 import { hash, requireScope, type Principal } from 'src/mcp/context';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import type { KondisDatabase, KondisTransaction } from 'src/types';
 import { z } from 'zod';
@@ -52,8 +52,8 @@ type StagedUpload = {
 export class OperationService {
   constructor(
     private readonly db: KondisDatabase,
-    private readonly jobs: JobProducerPort,
-    private readonly storage?: StoragePort,
+    private readonly jobs: JobRepository,
+    private readonly storage?: StorageRepository,
   ) {}
 
   private async perform(

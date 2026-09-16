@@ -3,6 +3,8 @@ import { Hono } from 'hono';
 import { sql } from 'kysely';
 import type { ApiSessionLookup } from 'src/api/auth';
 import { getAccessToken } from 'src/auth';
+import type { JobRepository } from 'src/contracts/job.repository';
+import type { StorageRepository } from 'src/contracts/storage.repository';
 import {
   BadRequestException,
   ForbiddenException,
@@ -13,8 +15,6 @@ import {
 import { SCOPES, timezoneSchema, type Principal } from 'src/mcp/context';
 import { AuthorizationSchema, McpOAuthService, RegistrationSchema } from 'src/mcp/oauth';
 import { createMcpServer, TOOL_SCOPES } from 'src/mcp/registry';
-import type { JobProducerPort } from 'src/ports/queue.port';
-import type { StoragePort } from 'src/ports/storage.port';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ApiKeyService, CreateKeySchema } from 'src/services/api-key.service';
@@ -25,8 +25,8 @@ import { z } from 'zod';
 export type McpDependencies = {
   database: KondisDatabase;
   sessions: ApiSessionLookup;
-  jobs: JobProducerPort;
-  storage?: StoragePort;
+  jobs: JobRepository;
+  storage?: StorageRepository;
   publicUrl?: string;
   trustProxyHeaders?: boolean;
   mutationsEnabled?: boolean;

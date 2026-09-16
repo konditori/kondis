@@ -1,8 +1,8 @@
 import { sql } from 'kysely';
-import { ActivityType } from 'src/enum';
+import type { JobRepository } from 'src/contracts/job.repository';
+import { ActivityType, StreamType } from 'src/enum';
 import { hash, type Principal } from 'src/mcp/context';
 import { McpOAuthService } from 'src/mcp/oauth';
-import type { JobProducerPort } from 'src/ports/queue.port';
 import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ApiKeyService } from 'src/services/api-key.service';
 import { ManualActivitySchema, OperationService } from 'src/services/operation.service';
@@ -27,7 +27,7 @@ describe('MCP persistence and ownership', () => {
   let other: Principal;
   let queries: ActivityQueryService;
   let operations: OperationService;
-  let jobs: JobProducerPort;
+  let jobs: JobRepository;
   beforeAll(() => {
     db = createMediumTestDatabase();
   });
@@ -49,7 +49,7 @@ describe('MCP persistence and ownership', () => {
       queue: vi.fn().mockResolvedValue(undefined),
       queueAll: vi.fn().mockResolvedValue(undefined),
       discardQueuedDuplicates: vi.fn().mockResolvedValue(undefined),
-    };
+    } as unknown as JobRepository;
     queries = new ActivityQueryService(db);
     operations = new OperationService(db, jobs);
   });
@@ -140,8 +140,12 @@ describe('MCP persistence and ownership', () => {
     await db
       .insertInto('activity_stream')
       .values([
-        { activity_id: activity.activityId!, type: 'time', data: Array.from({ length: 2000 }, (_, i) => i) },
-        { activity_id: activity.activityId!, type: 'heartrate', data: Array.from({ length: 2000 }, (_, i) => 100 + i) },
+        { activity_id: activity.activityId!, type: StreamType.Time, data: Array.from({ length: 2000 }, (_, i) => i) },
+        {
+          activity_id: activity.activityId!,
+          type: StreamType.Heartrate,
+          data: Array.from({ length: 2000 }, (_, i) => 100 + i),
+        },
       ])
       .execute();
     await expect(
