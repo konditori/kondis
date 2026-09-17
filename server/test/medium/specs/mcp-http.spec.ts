@@ -1,5 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import type { JobRepository } from 'src/contracts/job.repository';
 import { createMcpApp } from 'src/mcp/app';
 import { McpOAuthService } from 'src/mcp/oauth';
 import { ActivityRepository } from 'src/repositories/activity.repository';
@@ -50,7 +51,7 @@ describe('MCP HTTP with PostgreSQL', () => {
       queue: vi.fn().mockResolvedValue(undefined),
       queueAll: vi.fn().mockResolvedValue(undefined),
       discardQueuedDuplicates: vi.fn().mockResolvedValue(undefined),
-    };
+    } as unknown as JobRepository;
     const queries = new ActivityQueryService(
       newServiceDeps({
         activityRepository: new ActivityRepository(db),
