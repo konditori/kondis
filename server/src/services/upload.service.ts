@@ -17,6 +17,8 @@ import {
   TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
+import { ActivityUploadService } from 'src/services/activity-upload.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { BaseService } from 'src/services/base.service';
 import type { TakeoutImportItem } from 'src/types';
 import { JobOf } from 'src/types/jobs';
@@ -24,6 +26,13 @@ import { UploadedFileData } from 'src/types/uploads';
 import { stageTakeoutPhoto } from 'src/utils/takeout-photo';
 
 export class UploadService extends BaseService {
+  constructor(
+    deps: BaseServiceDeps,
+    private readonly activityUploads = new ActivityUploadService(deps.uploadRepository, deps.jobRepository),
+  ) {
+    super(deps);
+  }
+
   async uploadActivity(
     file: UploadedFileData | undefined,
     userId: string,
@@ -260,49 +269,34 @@ export class UploadService extends BaseService {
     const permanentStoragePath = this.storageRepository.buildPath(userId, checksum, extension);
     await this.storageRepository.copy(storagePath, permanentStoragePath);
 
-    try {
-      await this.databaseRepository.withTransaction(async (trx) => {
-        const created = await this.uploadRepository.create(
-          {
-            checksum,
-            original_name: originalName,
-            byte_size: byteSize,
-            storage_path: permanentStoragePath,
-            user_id: userId,
-          },
-          trx,
+    const registration = await this.databaseRepository.withTransaction((transaction) =>
+      this.activityUploads.registerInTransaction(
+        {
+          checksum,
+          original_name: originalName,
+          byte_size: byteSize,
+          storage_path: permanentStoragePath,
+          user_id: userId,
+          activityName,
+          activityDescription,
+          activitySport,
+          activityTags,
+          takeoutImportId,
+          takeoutItemKey,
+          images,
+        },
+        transaction,
+      ),
+    );
+    if (!registration.created) {
+      if (takeoutImportId && takeoutItemKey) {
+        await this.takeoutRepository.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemTerminalStatus.Duplicate,
         );
-
-        await this.jobRepository.queue(
-          {
-            name: JobName.ActivityParse,
-            data: {
-              id: created.id,
-              ...(images?.length && { images }),
-              ...(takeoutImportId && { takeoutImportId }),
-              ...(takeoutItemKey && { takeoutItemKey }),
-              ...(activityName && { activityName }),
-              ...(activityDescription && { activityDescription }),
-              ...(activitySport && { activitySport }),
-              ...(activityTags?.length && { activityTags }),
-            },
-          },
-          { transaction: trx },
-        );
-      });
-    } catch (error) {
-      const raced = await this.uploadRepository.getByChecksum(checksum, userId);
-      if (raced) {
-        if (takeoutImportId && takeoutItemKey) {
-          await this.takeoutRepository.completeItem(
-            takeoutImportId,
-            takeoutItemKey,
-            TakeoutImportItemTerminalStatus.Duplicate,
-          );
-        }
-        return JobStatus.Skipped;
       }
-      throw error;
+      return JobStatus.Skipped;
     }
 
     return JobStatus.Success;

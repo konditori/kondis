@@ -174,8 +174,8 @@ export class ActivityRepository {
     return id;
   }
 
-  getById(id: string, userId?: string) {
-    return this.db
+  getById(id: string, userId?: string, executor: KondisExecutor = this.db) {
+    return executor
       .selectFrom('activity')
       .select(ACTIVITY_COLUMNS)
       .select((eb) =>
@@ -188,6 +188,24 @@ export class ActivityRepository {
       )
       .where('activity.id', '=', id)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
+      .executeTakeFirst();
+  }
+
+  getByIdForUpdate(id: string, userId: string | undefined, transaction: KondisTransaction) {
+    return transaction
+      .selectFrom('activity')
+      .select(ACTIVITY_COLUMNS)
+      .select((eb) =>
+        jsonObjectFrom(
+          eb
+            .selectFrom('activity_metric')
+            .select(METRIC_COLUMNS)
+            .whereRef('activity_metric.activity_id', '=', 'activity.id'),
+        ).as('metrics'),
+      )
+      .where('activity.id', '=', id)
+      .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
+      .forUpdate()
       .executeTakeFirst();
   }
 
@@ -876,33 +894,36 @@ export class ActivityRepository {
       .execute();
   }
 
-  async update(id: string, input: UpdateActivityInput, userId?: string) {
-    const updated = await this.db.transaction().execute(async (trx) => {
+  async update(id: string, input: UpdateActivityInput, userId?: string, transaction?: KondisTransaction) {
+    const updateWithTransaction = async (trx: KondisTransaction) => {
       let update = trx.updateTable('activity').set(input).where('id', '=', id);
       if (userId) {
         update = update.where('user_id', '=', userId);
       }
       const row = await update.returning('id').executeTakeFirst();
-      if (
-        !row ||
-        (input.sport === undefined && input.tags === undefined && input.exclude_from_rankings === undefined)
-      ) {
+      if (!row) {
         return row;
       }
 
-      if (input.sport !== undefined || input.exclude_from_rankings !== undefined) {
+      const invalidatesRoutes = input.sport !== undefined || input.exclude_from_rankings !== undefined;
+      const invalidatesBestEfforts =
+        input.sport !== undefined || input.tags !== undefined || input.exclude_from_rankings !== undefined;
+      if (invalidatesRoutes) {
         await trx.deleteFrom('activity_route_match').where('activity_id', '=', id).execute();
         await trx.deleteFrom('activity_route_match').where('matched_activity_id', '=', id).execute();
         await trx.updateTable('activity').set({ route_matches_computed_at: null }).where('id', '=', id).execute();
       }
 
-      if (input.sport !== undefined) {
+      if (invalidatesBestEfforts) {
         await trx.deleteFrom('activity_best_effort').where('activity_id', '=', id).execute();
         await trx.updateTable('activity').set({ best_efforts_computed_at: null }).where('id', '=', id).execute();
       }
       return row;
-    });
-    return updated ? this.getById(updated.id) : undefined;
+    };
+    const updated = transaction
+      ? await updateWithTransaction(transaction)
+      : await this.db.transaction().execute(updateWithTransaction);
+    return updated ? this.getById(updated.id, userId, transaction) : undefined;
   }
 
   async recomputeBestEfforts(activityId: string): Promise<boolean | null> {

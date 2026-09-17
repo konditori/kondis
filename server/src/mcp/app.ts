@@ -1,9 +1,7 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { Hono } from 'hono';
-import { sql } from 'kysely';
 import type { ApiBindings, ApiSessionLookup } from 'src/api/auth';
 import { getAccessToken } from 'src/auth';
-import type { JobRepository } from 'src/contracts/job.repository';
 import type { StorageRepository } from 'src/contracts/storage.repository';
 import {
   BadRequestException,
@@ -12,28 +10,32 @@ import {
   PayloadTooLargeException,
   UnauthorizedException,
 } from 'src/errors';
-import { SCOPES, timezoneSchema, type Principal } from 'src/mcp/context';
-import { AuthorizationSchema, McpOAuthService, RegistrationSchema } from 'src/mcp/oauth';
+import { SCOPES, type Principal } from 'src/mcp/context';
+import type { McpOAuthService } from 'src/mcp/oauth';
+import { AuthorizationSchema, RegistrationSchema } from 'src/mcp/oauth';
 import { createMcpServer, TOOL_SCOPES } from 'src/mcp/registry';
-import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
+import type { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
-import { ApiKeyService, CreateKeySchema } from 'src/services/api-key.service';
-import { OperationService } from 'src/services/operation.service';
-import type { KondisDatabase } from 'src/types';
+import { CreateKeySchema, type ApiKeyService } from 'src/services/api-key.service';
+import type { McpPreferenceService } from 'src/services/mcp-preference.service';
+import type { OperationService } from 'src/services/operation.service';
 import { requestClientId } from 'src/utils/request-client-id';
 import { z } from 'zod';
 
 export type McpDependencies = {
-  database: KondisDatabase;
   queries: ActivityQueryService;
   sessions: ApiSessionLookup;
-  jobs: JobRepository;
+  keys: ApiKeyService;
+  operations: OperationService;
+  oauth: McpOAuthService;
+  preferences: McpPreferenceService;
+  rateLimiting: RateLimitingRepository;
   storage?: StorageRepository;
   publicUrl?: string;
   trustProxyHeaders?: boolean;
   mutationsEnabled?: boolean;
   demoUserId?: string;
-  demo?: boolean;
+  demoMode?: boolean;
 };
 
 export const isMcpPath = (path: string) =>
@@ -86,10 +88,8 @@ export function createMcpApp(deps: McpDependencies) {
     Bindings: ApiBindings;
     Variables: { principal: Principal; sessionUserId: string; body: unknown };
   }>();
-  const keys = new ApiKeyService(deps.database);
-  const rate = new RateLimitingRepository(deps.database);
+  const { keys, operations, oauth, preferences, rateLimiting: rate } = deps;
   const queries = deps.queries;
-  const operations = new OperationService(deps.database, deps.jobs, deps.storage);
   const publicUrl = deps.publicUrl;
   const origin = publicUrl ? new URL(publicUrl).origin : undefined;
   if (publicUrl) {
@@ -106,7 +106,6 @@ export function createMcpApp(deps: McpDependencies) {
       throw new Error('KONDIS_MCP_PUBLIC_URL must be an HTTPS URL ending in /mcp (HTTP is allowed on loopback)');
     }
   }
-  const oauth = publicUrl ? new McpOAuthService(deps.database, publicUrl) : undefined;
   app.use('*', async (c, next) => {
     c.header('Cache-Control', 'private, no-store');
     c.header('X-Content-Type-Options', 'nosniff');
@@ -148,7 +147,8 @@ export function createMcpApp(deps: McpDependencies) {
 
   app.use('/mcp*', async (c, next) => {
     let principal: Principal | undefined;
-    if (deps.demo && deps.demoUserId) {
+    if (deps.demoMode && deps.demoUserId) {
+      // In the case of demo mode, we automatically authenticate the demo user but only allow read-only queries
       principal = {
         userId: deps.demoUserId,
         credentialId: null,
@@ -208,7 +208,7 @@ export function createMcpApp(deps: McpDependencies) {
     }
     const server = createMcpServer(principal, {
       queries,
-      operations: deps.mutationsEnabled && !deps.demo ? operations : undefined,
+      operations: deps.mutationsEnabled && !deps.demoMode ? operations : undefined,
       importEnabled: Boolean(deps.storage),
       consumeAnalysis: () =>
         rate.consume(principal.userId, { label: 'McpAnalysis', maxAttempts: 20, windowMs: 60_000 }),
@@ -231,7 +231,7 @@ export function createMcpApp(deps: McpDependencies) {
     return c.body(null, 405);
   });
   app.post('/mcp/uploads', async (c) => {
-    if (!deps.mutationsEnabled || deps.demo || !deps.storage) {
+    if (!deps.mutationsEnabled || deps.demoMode || !deps.storage) {
       throw new ForbiddenException('Imports are unavailable');
     }
     return c.json(
@@ -244,10 +244,9 @@ export function createMcpApp(deps: McpDependencies) {
     );
   });
 
-  // Management uses existing browser sessions. MCP credentials cannot mint more credentials.
   const management = new Hono<{ Variables: { sessionUserId: string } }>();
   management.use('*', async (c, next) => {
-    if (deps.demo) {
+    if (deps.demoMode) {
       throw new ForbiddenException('Connections are unavailable in the demo');
     }
     const secret = getAccessToken({ authorization: c.req.header('Authorization'), cookie: c.req.header('Cookie') });
@@ -272,21 +271,9 @@ export function createMcpApp(deps: McpDependencies) {
     await keys.revoke(c.get('sessionUserId'), z.string().uuid().parse(c.req.param('id')));
     return c.body(null, 204);
   });
-  management.get('/preferences', async (c) => {
-    const result =
-      await sql`SELECT timezone, units FROM mcp_preference WHERE user_id = ${c.get('sessionUserId')}`.execute(
-        deps.database,
-      );
-    return c.json(result.rows[0] ?? { timezone: 'UTC', units: 'metric' });
-  });
+  management.get('/preferences', async (c) => c.json(await preferences.get(c.get('sessionUserId'))));
   management.put('/preferences', async (c) => {
-    const v = z
-      .object({ timezone: timezoneSchema, units: z.enum(['metric', 'imperial']) })
-      .parse(await json(c.req.raw));
-    await sql`INSERT INTO mcp_preference(user_id, timezone, units) VALUES (${c.get('sessionUserId')}, ${v.timezone}, ${v.units}) ON CONFLICT(user_id) DO UPDATE SET timezone = EXCLUDED.timezone, units = EXCLUDED.units`.execute(
-      deps.database,
-    );
-    return c.json(v);
+    return c.json(await preferences.update(c.get('sessionUserId'), await json(c.req.raw)));
   });
   management.get('/authorize', async (c) => {
     if (!oauth) {
@@ -328,7 +315,7 @@ export function createMcpApp(deps: McpDependencies) {
     }),
   );
   app.use('/oauth/*', async (c, next) => {
-    if (deps.demo) {
+    if (deps.demoMode) {
       throw new ForbiddenException('OAuth is unavailable in the demo');
     }
     const endpoint =

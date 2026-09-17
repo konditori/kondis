@@ -164,16 +164,31 @@ export default {
       const demoMode = composition.config.demoMode;
       const demoUser = demoMode ? await getDemoUser(composition.database) : undefined;
       if (isMcpPath(new URL(request.url).pathname)) {
+        const {
+          authCredentialRepository: sessions,
+          activityQueryService: queries,
+          apiKeyService: keys,
+          mcpOAuthService: oauth,
+          mcpOperationService: operations,
+          mcpPreferenceService: preferences,
+          queueBindingsConfigured: mutationsEnabled,
+          rateLimitingRepository: rateLimiting,
+          storage,
+        } = composition;
+        const publicUrl = env.KONDIS_MCP_PUBLIC_URL;
         const mcp = createMcpApp({
-          database: composition.database,
-          queries: composition.activityQueryService,
-          sessions: composition.authCredentialRepository,
-          jobs: composition.jobProducer,
-          storage: composition.storage,
-          publicUrl: env.KONDIS_MCP_PUBLIC_URL,
+          queries,
+          sessions,
+          keys,
+          operations,
+          oauth,
+          preferences,
+          rateLimiting,
+          storage,
+          publicUrl,
           trustProxyHeaders: true,
-          mutationsEnabled: composition.queueBindingsConfigured,
-          demo: demoMode,
+          mutationsEnabled,
+          demoMode,
           demoUserId: demoUser?.id,
         });
         const response = await mcp.fetch(request);

@@ -12,7 +12,7 @@ import {
   StreamType,
   TakeoutImportItemTerminalStatus,
 } from 'src/enum';
-import { BadRequestException, NotFoundException } from 'src/errors';
+import { BadRequestException, ConflictException, NotFoundException } from 'src/errors';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { Timestamp } from 'src/schema/decorators';
 import { BaseService } from 'src/services/base.service';
@@ -26,6 +26,7 @@ import {
   CreateActivityInput,
   FitMessages,
   FitRecordMesg,
+  KondisTransaction,
   ParsedActivity,
   ParsedActivityStructure,
   UpdateActivityInput,
@@ -70,6 +71,15 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
 );
 
 export class ActivityService extends BaseService {
+  private validateTags(sport: ActivityType, tags: readonly string[]) {
+    if (
+      tags.includes('long_run') &&
+      ![ActivityType.Run, ActivityType.TrailRun, ActivityType.VirtualRun].includes(sport)
+    ) {
+      throw new BadRequestException('Long Run is only available for run activities');
+    }
+  }
+
   async handleActivityParse({
     id,
     force,
@@ -302,75 +312,9 @@ export class ActivityService extends BaseService {
   }
 
   async createDirectActivity(userId: string, input: DirectActivityCreateDto) {
-    const uploadId = crypto.randomUUID();
-    const activityId = await this.databaseRepository.withTransaction(async (trx) => {
-      await this.uploadRepository.create(
-        {
-          id: uploadId,
-          checksum: `direct:${uploadId}`,
-          original_name: 'Direct activity data',
-          byte_size: 0,
-          storage_path: '',
-          user_id: userId,
-          status: 'parsed',
-        },
-        trx,
-      );
-      const id = await this.activityRepository.create(
-        {
-          activity: {
-            id: crypto.randomUUID(),
-            upload_id: uploadId,
-            user_id: userId,
-            sport: input.sport,
-            name: input.name,
-            description: input.description,
-            tags: input.tags,
-            started_at: new Date(input.startedAt),
-            timezone_offset_minutes: input.timezoneOffsetMinutes,
-          },
-          streams: input.streams,
-          laps: input.laps.map((lap) => ({
-            lap_index: lap.lapIndex,
-            started_at: lap.startedAt ? new Date(lap.startedAt) : null,
-            elapsed_time: lap.elapsedTime,
-            moving_time: lap.movingTime,
-            distance: lap.distance,
-            avg_hr: lap.avgHr,
-            max_hr: lap.maxHr,
-            avg_power: lap.avgPower,
-            avg_speed_mps: lap.avgSpeedMps,
-          })),
-        },
-        trx,
-      );
-      await this.activityRepository.setMetrics(
-        id,
-        {
-          elapsed_time: input.metrics.elapsedTime,
-          moving_time: input.metrics.movingTime,
-          distance: input.metrics.distance,
-          elevation_gain: input.metrics.elevationGain,
-          elevation_loss: input.metrics.elevationLoss,
-          avg_speed: input.metrics.avgSpeed,
-          max_speed: input.metrics.maxSpeed,
-          avg_hr: input.metrics.avgHr,
-          max_hr: input.metrics.maxHr,
-          avg_cadence: input.metrics.avgCadence,
-          max_cadence: input.metrics.maxCadence,
-          avg_power: input.metrics.avgPower,
-          max_power: input.metrics.maxPower,
-          normalized_power: input.metrics.normalizedPower,
-          calories: input.metrics.calories,
-        },
-        trx,
-      );
-      await Promise.all([
-        this.jobRepository.queue({ name: JobName.ActivityBestEffortCompute, data: { id } }, { transaction: trx }),
-        this.jobRepository.queue({ name: JobName.ActivityRouteMatchCompute, data: { id } }, { transaction: trx }),
-      ]);
-      return id;
-    });
+    const activityId = await this.databaseRepository.withTransaction((trx) =>
+      this.createDirectActivityInTransaction(userId, input, trx),
+    );
     const activity = await this.activityRepository.getById(activityId);
     if (!activity) {
       throw new Error(`Activity ${activityId} disappeared immediately after it was created`);
@@ -378,6 +322,85 @@ export class ActivityService extends BaseService {
     const dto = this.toActivityDto(activity, 'Direct activity data');
     await this.eventRepository.emit('ActivityCreate', dto);
     return dto;
+  }
+
+  async createDirectActivityInTransaction(
+    userId: string,
+    input: DirectActivityCreateDto,
+    transaction: KondisTransaction,
+    source: { originalName?: string; checksumPrefix?: string } = {},
+  ): Promise<string> {
+    this.validateTags(input.sport, input.tags);
+    const uploadId = crypto.randomUUID();
+    await this.uploadRepository.create(
+      {
+        id: uploadId,
+        checksum: `${source.checksumPrefix ?? 'direct'}:${uploadId}`,
+        original_name: source.originalName ?? 'Direct activity data',
+        byte_size: 0,
+        storage_path: '',
+        user_id: userId,
+        status: 'parsed',
+      },
+      transaction,
+    );
+    const id = await this.activityRepository.create(
+      {
+        activity: {
+          id: crypto.randomUUID(),
+          upload_id: uploadId,
+          user_id: userId,
+          sport: input.sport,
+          name: input.name,
+          description: input.description,
+          tags: input.tags,
+          started_at: new Date(input.startedAt),
+          timezone_offset_minutes: input.timezoneOffsetMinutes,
+        },
+        streams: input.streams,
+        laps: input.laps.map((lap) => ({
+          lap_index: lap.lapIndex,
+          started_at: lap.startedAt ? new Date(lap.startedAt) : null,
+          elapsed_time: lap.elapsedTime,
+          moving_time: lap.movingTime,
+          distance: lap.distance,
+          avg_hr: lap.avgHr,
+          max_hr: lap.maxHr,
+          avg_power: lap.avgPower,
+          avg_speed_mps: lap.avgSpeedMps,
+        })),
+      },
+      transaction,
+    );
+    await this.activityRepository.setMetrics(
+      id,
+      {
+        elapsed_time: input.metrics.elapsedTime,
+        moving_time: input.metrics.movingTime,
+        distance: input.metrics.distance,
+        elevation_gain: input.metrics.elevationGain,
+        elevation_loss: input.metrics.elevationLoss,
+        avg_speed: input.metrics.avgSpeed,
+        max_speed: input.metrics.maxSpeed,
+        avg_hr: input.metrics.avgHr,
+        max_hr: input.metrics.maxHr,
+        avg_cadence: input.metrics.avgCadence,
+        max_cadence: input.metrics.maxCadence,
+        avg_power: input.metrics.avgPower,
+        max_power: input.metrics.maxPower,
+        normalized_power: input.metrics.normalizedPower,
+        calories: input.metrics.calories,
+      },
+      transaction,
+    );
+    await this.jobRepository.queueAll(
+      [
+        { name: JobName.ActivityBestEffortCompute, data: { id } },
+        { name: JobName.ActivityRouteMatchCompute, data: { id } },
+      ],
+      { transaction },
+    );
+    return id;
   }
 
   async handleActivityMetricCompute({ id }: JobOf<JobName.ActivityMetricCompute>): Promise<JobStatus> {
@@ -852,6 +875,39 @@ export class ActivityService extends BaseService {
       tags?: ActivityTag[];
     } = {},
   ) {
+    const updated = await this.databaseRepository.withTransaction((transaction) =>
+      this.updateByIdInTransaction(id, userId, input, transaction),
+    );
+    if (!updated) {
+      return;
+    }
+    const updatedDto = this.toActivityDto(updated);
+    await this.eventRepository.emit('ActivityUpdate', updatedDto);
+    return updatedDto;
+  }
+
+  async updateByIdInTransaction(
+    id: string,
+    userId: string | undefined,
+    input: {
+      name?: string | null;
+      description?: string | null;
+      sport?: ActivityType;
+      startedAt?: Date;
+      excludeFromRankings?: boolean;
+      tags?: ActivityTag[];
+      expectedRevision?: number;
+    },
+    transaction: KondisTransaction,
+  ) {
+    const current = await this.activityRepository.getByIdForUpdate(id, userId, transaction);
+    if (!current) {
+      return;
+    }
+    if (input.expectedRevision !== undefined && current.revision !== input.expectedRevision) {
+      throw new ConflictException('Activity changed. Fetch it again and retry with its current revision');
+    }
+
     const mapped: UpdateActivityInput = {};
 
     if (input.name === undefined) {
@@ -883,26 +939,19 @@ export class ActivityService extends BaseService {
     }
 
     if (input.tags !== undefined) {
-      const current = await this.activityRepository.getById(id, userId);
-      if (!current) {
-        return;
-      }
       const tags = [...new Set(input.tags)];
       if (tags.some((tag) => !ACTIVITY_TAG_IDS.includes(tag))) {
         throw new BadRequestException('Unknown activity tag');
       }
-      const sport = input.sport ?? current.sport;
-      const longRun = tags.includes('long_run');
-      if (longRun && !['run', 'trail_run', 'virtual_run'].includes(sport)) {
-        throw new BadRequestException('Long Run is only available for run activities');
-      }
       mapped.tags = tags;
     }
 
-    const updated = await this.activityRepository.update(id, mapped, userId);
+    this.validateTags(input.sport ?? current.sport, mapped.tags ?? current.tags);
+
+    const updated = await this.activityRepository.update(id, mapped, userId, transaction);
     const needsBestEffortCompute =
       updated !== undefined &&
-      (input.sport !== undefined || input.tags !== undefined || input.excludeFromRankings === true);
+      (input.sport !== undefined || input.tags !== undefined || input.excludeFromRankings !== undefined);
     const needsRouteMatchCompute =
       updated !== undefined && (input.sport !== undefined || input.excludeFromRankings !== undefined);
     const needsRankRefresh =
@@ -918,16 +967,11 @@ export class ActivityService extends BaseService {
       if (needsRankRefresh && !needsBestEffortCompute) {
         jobs.push({ name: JobName.ActivityBestEffortRank, data: {} });
       }
-      await this.jobRepository.queueAll(jobs);
+      await this.jobRepository.queueAll(jobs, { transaction });
     } else if (needsRankRefresh) {
-      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} });
+      await this.jobRepository.queue({ name: JobName.ActivityBestEffortRank, data: {} }, { transaction });
     }
-    if (!updated) {
-      return;
-    }
-    const updatedDto = this.toActivityDto(updated);
-    await this.eventRepository.emit('ActivityUpdate', updatedDto);
-    return updatedDto;
+    return updated;
   }
 
   async deleteById(id: string, userId?: string): Promise<boolean> {

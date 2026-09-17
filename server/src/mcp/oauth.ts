@@ -1,7 +1,8 @@
-import { sql } from 'kysely';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { BadRequestException } from 'src/errors';
 import { hash, ScopeSchema, token, type Scope } from 'src/mcp/context';
-import type { KondisDatabase } from 'src/types';
+import type { McpCredentialRepository } from 'src/repositories/mcp-credential.repository';
+import type { McpOAuthRepository } from 'src/repositories/mcp-oauth.repository';
 import { z } from 'zod';
 
 const redirectSchema = z
@@ -40,16 +41,16 @@ export const RegistrationSchema = z.object({
 
 export class McpOAuthService {
   constructor(
-    private readonly db: KondisDatabase,
+    private readonly oauth: McpOAuthRepository,
+    private readonly credentials: McpCredentialRepository,
+    private readonly transactions: TransactionRepository,
     readonly publicUrl: string,
   ) {}
 
   async register(input: z.infer<typeof RegistrationSchema>) {
     const v = RegistrationSchema.parse(input);
     const id = crypto.randomUUID();
-    await sql`INSERT INTO mcp_oauth_client(id, name, redirect_uris) VALUES (${id}, ${v.client_name}, ${v.redirect_uris})`.execute(
-      this.db,
-    );
+    await this.oauth.createClient(id, v.client_name, v.redirect_uris);
     return { client_id: id, ...v };
   }
 
@@ -59,14 +60,11 @@ export class McpOAuthService {
       throw new BadRequestException('Invalid resource');
     }
     const scopes = z.array(ScopeSchema).min(1).max(5).parse(v.scope.split(' '));
-    const { rows } = await sql<{
-      name: string;
-      redirect_uris: string[];
-    }>`SELECT name, redirect_uris FROM mcp_oauth_client WHERE id = ${v.client_id}`.execute(this.db);
-    if (!rows[0]?.redirect_uris.includes(v.redirect_uri)) {
+    const client = await this.oauth.findClient(v.client_id);
+    if (!client?.redirect_uris.includes(v.redirect_uri)) {
       throw new BadRequestException('Unregistered client or redirect URI');
     }
-    return { request: v, clientName: rows[0].name, scopes };
+    return { request: v, clientName: client.name, scopes };
   }
 
   async authorize(userId: string, input: z.infer<typeof AuthorizationSchema>, allowed: boolean) {
@@ -79,9 +77,16 @@ export class McpOAuthService {
       return url.href;
     }
     const code = token();
-    await sql`INSERT INTO mcp_oauth_code(hash, user_id, client_id, redirect_uri, challenge, audience, scopes, expires_at) VALUES (${await hash(code)}, ${userId}, ${v.client_id}, ${v.redirect_uri}, ${v.code_challenge}, ${this.publicUrl}, ${scopes}, ${new Date(Date.now() + 300_000)})`.execute(
-      this.db,
-    );
+    await this.oauth.createCode({
+      hash: await hash(code),
+      userId,
+      clientId: v.client_id,
+      redirectUri: v.redirect_uri,
+      challenge: v.code_challenge,
+      audience: this.publicUrl,
+      scopes,
+      expiresAt: new Date(Date.now() + 300_000),
+    });
     url.searchParams.set('code', code);
     return url.href;
   }
@@ -112,20 +117,26 @@ export class McpOAuthService {
     const accessHash = await hash(accessToken);
     const refreshHash = await hash(refreshToken);
     const expiresAt = new Date(Date.now() + 3_600_000);
-    const scopes = await this.db.transaction().execute(async (trx) => {
+    const scopes = await this.transactions.withTransaction(async (transaction) => {
       if (v.grant_type === 'refresh_token') {
         if (!v.refresh_token) {
           throw new BadRequestException('invalid_grant');
         }
-        const result = await sql<{
-          scopes: Scope[];
-        }>`UPDATE mcp_credential SET token_hash = ${accessHash}, refresh_hash = ${refreshHash}, expires_at = ${expiresAt} WHERE refresh_hash = ${await hash(v.refresh_token)} AND client_id = ${v.client_id} AND audience = ${this.publicUrl} AND revoked_at IS NULL AND refresh_expires_at > now() RETURNING scopes`.execute(
-          trx,
+        const result = await this.credentials.rotateOAuth(
+          {
+            previousRefreshHash: await hash(v.refresh_token),
+            accessHash,
+            refreshHash,
+            expiresAt,
+            clientId: v.client_id,
+            audience: this.publicUrl,
+          },
+          transaction,
         );
-        if (!result.rows[0]) {
+        if (!result) {
           throw new BadRequestException('invalid_grant');
         }
-        return result.rows[0].scopes;
+        return result.scopes as Scope[];
       }
       if (!v.code || !v.code_verifier || !v.redirect_uri) {
         throw new BadRequestException('invalid_grant');
@@ -137,20 +148,38 @@ export class McpOAuthService {
         .replaceAll('+', '-')
         .replaceAll('/', '_')
         .replace(/=+$/, '');
-      const result = await sql<{
-        user_id: string;
-        scopes: Scope[];
-      }>`DELETE FROM mcp_oauth_code WHERE hash = ${await hash(v.code)} AND client_id = ${v.client_id} AND redirect_uri = ${v.redirect_uri} AND challenge = ${challenge} AND audience = ${this.publicUrl} AND expires_at > now() RETURNING user_id, scopes`.execute(
-        trx,
+      const code = await this.oauth.consumeCode(
+        {
+          hash: await hash(v.code),
+          clientId: v.client_id,
+          redirectUri: v.redirect_uri,
+          challenge,
+          audience: this.publicUrl,
+        },
+        transaction,
       );
-      const code = result.rows[0];
       if (!code) {
         throw new BadRequestException('invalid_grant');
       }
-      await sql`INSERT INTO mcp_credential(user_id, name, kind, token_hash, refresh_hash, client_id, audience, scopes, expires_at, refresh_expires_at) SELECT ${code.user_id}, name, 'oauth', ${accessHash}, ${refreshHash}, id, ${this.publicUrl}, ${code.scopes}, ${expiresAt}, ${new Date(Date.now() + 30 * 86_400_000)} FROM mcp_oauth_client WHERE id = ${v.client_id}`.execute(
-        trx,
+      const client = await this.oauth.findClient(v.client_id, transaction);
+      if (!client) {
+        throw new BadRequestException('invalid_grant');
+      }
+      await this.credentials.createOAuth(
+        {
+          userId: code.user_id,
+          name: client.name,
+          accessHash,
+          refreshHash,
+          clientId: v.client_id,
+          audience: this.publicUrl,
+          scopes: code.scopes,
+          expiresAt,
+          refreshExpiresAt: new Date(Date.now() + 30 * 86_400_000),
+        },
+        transaction,
       );
-      return code.scopes;
+      return code.scopes as Scope[];
     });
     return {
       access_token: accessToken,
@@ -163,8 +192,6 @@ export class McpOAuthService {
 
   async revoke(secret: string, clientId: string) {
     const digest = await hash(secret);
-    await sql`UPDATE mcp_credential SET revoked_at = now(), refresh_hash = NULL WHERE client_id = ${clientId} AND (token_hash = ${digest} OR refresh_hash = ${digest})`.execute(
-      this.db,
-    );
+    await this.credentials.revokeOAuth(clientId, digest);
   }
 }

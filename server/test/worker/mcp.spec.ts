@@ -1,8 +1,12 @@
 /// <reference types="@cloudflare/vitest-plugin/types" />
 
 import { createMcpApp, type McpDependencies } from 'src/mcp/app';
+import { McpOAuthService } from 'src/mcp/oauth';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
+import { ApiKeyService } from 'src/services/api-key.service';
+import { McpPreferenceService } from 'src/services/mcp-preference.service';
+import { OperationService } from 'src/services/operation.service';
 import { newServiceDeps } from 'test/utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,12 +18,15 @@ describe('MCP inside workerd', () => {
       .spyOn(ActivityQueryService.prototype, 'search')
       .mockResolvedValue({ activities: [], nextCursor: null, units: {} as never });
     const app = createMcpApp({
-      database: {},
       queries: new ActivityQueryService(newServiceDeps({})),
       sessions: {},
-      jobs: {},
+      keys: Object.create(ApiKeyService.prototype),
+      operations: Object.create(OperationService.prototype),
+      oauth: Object.create(McpOAuthService.prototype),
+      preferences: Object.create(McpPreferenceService.prototype),
+      rateLimiting: Object.create(RateLimitingRepository.prototype),
       publicUrl: 'https://fitness.example/mcp',
-      demo: true,
+      demoMode: true,
       demoUserId: '00000000-0000-4000-8000-000000000001',
     } as unknown as McpDependencies);
     const headers = { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' };

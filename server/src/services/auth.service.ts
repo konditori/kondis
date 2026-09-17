@@ -1,7 +1,9 @@
 import { JobStatus, UserRole } from 'src/enum';
 import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from 'src/errors';
+import type { McpOAuthRepository } from 'src/repositories/mcp-oauth.repository';
+import type { McpOperationRepository } from 'src/repositories/mcp-operation.repository';
 import type { SessionRecord } from 'src/repositories/session.repository';
-import { BaseService } from 'src/services/base.service';
+import { BaseService, type BaseServiceDeps } from 'src/services/base.service';
 import type { KondisExecutor } from 'src/types';
 import { publicMediaUrl } from 'src/utils/media';
 const BCRYPT_WORK_FACTOR = 12;
@@ -13,7 +15,18 @@ const EVENT_TICKET_RATE_LIMIT = { label: 'Event ticket', maxAttempts: 10, window
 const LOGIN_CLIENT_RATE_LIMIT = { label: 'Login', maxAttempts: 20, windowMs: 60_000 } as const;
 const LOGIN_ACCOUNT_RATE_LIMIT = { label: 'Login account', maxAttempts: 10, windowMs: 5 * 60_000 } as const;
 const REGISTRATION_CLIENT_RATE_LIMIT = { label: 'Registration', maxAttempts: 5, windowMs: 60_000 } as const;
+
+type McpCleanupRepositories = Pick<McpOAuthRepository, 'deleteExpired'> &
+  Pick<McpOperationRepository, 'deleteExpiredUploads'>;
+
 export class AuthService extends BaseService {
+  constructor(
+    deps: BaseServiceDeps,
+    private readonly mcpCleanup?: McpCleanupRepositories,
+  ) {
+    super(deps);
+  }
+
   get registrationEnabled() {
     return this.configRepository.registrationEnabled;
   }
@@ -162,7 +175,11 @@ Do not share this secret token with anyone.
     }
   }
   async handleCredentialCleanup(): Promise<JobStatus> {
-    await this.sessionRepository.deleteExpired();
+    await Promise.all([
+      this.sessionRepository.deleteExpired(),
+      this.mcpCleanup?.deleteExpired(),
+      this.mcpCleanup?.deleteExpiredUploads(),
+    ]);
     return JobStatus.Success;
   }
   async create(email: string, firstName: string, lastName: string, password: string, role: UserRole) {

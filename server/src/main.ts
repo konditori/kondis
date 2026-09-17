@@ -104,15 +104,18 @@ export async function bootstrapApi(): Promise<ApiRuntime> {
   const server = createNodeServer(
     createNodeApiApp(application),
     createMcpApp({
-      database: application.database,
       queries: application.activityQueryService,
       sessions: application.authCredentialRepository,
-      jobs: application.jobRepository,
+      keys: application.apiKeyService,
+      operations: application.mcpOperationService,
+      oauth: application.mcpOAuthService,
+      preferences: application.mcpPreferenceService,
+      rateLimiting: application.rateLimitingRepository,
       storage: application.storageRepository,
       publicUrl: application.configRepository.mcpPublicUrl,
       trustProxyHeaders: application.configRepository.trustProxyHeaders,
       mutationsEnabled: true,
-      demo: application.configRepository.demoMode,
+      demoMode: application.configRepository.demoMode,
     }),
   );
   const runtime = createApiRuntime(application, server);

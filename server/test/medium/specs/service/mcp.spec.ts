@@ -4,9 +4,16 @@ import { ActivityType, BestEffortValueKind, StreamType, UnitSystem } from 'src/e
 import { hash, type Principal } from 'src/mcp/context';
 import { McpOAuthService } from 'src/mcp/oauth';
 import { ActivityRepository } from 'src/repositories/activity.repository';
+import { McpCredentialRepository } from 'src/repositories/mcp-credential.repository';
+import { McpOAuthRepository } from 'src/repositories/mcp-oauth.repository';
+import { McpOperationRepository } from 'src/repositories/mcp-operation.repository';
 import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
+import { PostgresTransactionRepository } from 'src/repositories/postgres-transaction.repository';
+import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
+import { ActivityUploadService } from 'src/services/activity-upload.service';
+import { ActivityService } from 'src/services/activity.service';
 import { ApiKeyService } from 'src/services/api-key.service';
 import { ManualActivitySchema, OperationService } from 'src/services/operation.service';
 import { createMediumFactory } from 'test/medium.factory';
@@ -61,14 +68,27 @@ describe('MCP persistence and ownership', () => {
         mcpPreferenceRepository: new McpPreferenceRepository(db),
       }),
     );
-    operations = new OperationService(db, jobs);
+    const transactions = new PostgresTransactionRepository(db);
+    operations = new OperationService(
+      new McpOperationRepository(db),
+      transactions,
+      new ActivityService(
+        newServiceDeps({
+          activityRepository: new ActivityRepository(db),
+          uploadRepository: new UploadRepository(db),
+          databaseRepository: transactions,
+          jobRepository: jobs,
+        }),
+      ),
+      new ActivityUploadService(new UploadRepository(db), jobs),
+    );
   });
   afterAll(async () => {
     await db?.destroy();
   });
 
   it('stores only key hashes, isolates credentials, expires and revokes immediately', async () => {
-    const keys = new ApiKeyService(db);
+    const keys = new ApiKeyService(new McpCredentialRepository(db), new PostgresTransactionRepository(db));
     const key = await keys.create(owner.userId, { name: 'Test', scopes: ['activities:read'], expiresInDays: 1 });
     const stored = await sql<{
       token_hash: string;
@@ -439,7 +459,14 @@ describe('MCP persistence and ownership', () => {
   });
 
   it('validates PKCE, consumes codes once, binds audience and rotates refresh tokens', async () => {
-    const oauth = new McpOAuthService(db, 'https://fitness.example/mcp');
+    const transactions = new PostgresTransactionRepository(db);
+    const credentialsRepository = new McpCredentialRepository(db);
+    const oauth = new McpOAuthService(
+      new McpOAuthRepository(db),
+      credentialsRepository,
+      transactions,
+      'https://fitness.example/mcp',
+    );
     const client = await oauth.register({
       client_name: 'Test client',
       redirect_uris: ['http://127.0.0.1:1234/callback'],
@@ -476,7 +503,7 @@ describe('MCP persistence and ownership', () => {
     await expect(oauth.exchange({ ...form, code_verifier: 'b'.repeat(64) })).rejects.toThrow();
     const credentials = await oauth.exchange(form);
     await expect(oauth.exchange(form)).rejects.toThrow();
-    const keys = new ApiKeyService(db);
+    const keys = new ApiKeyService(credentialsRepository, transactions);
     expect(await keys.authenticate(credentials.access_token, 'https://wrong.example/mcp')).toBeUndefined();
     expect(await keys.authenticate(credentials.access_token, oauth.publicUrl)).toMatchObject({ userId: owner.userId });
     const refresh = {

@@ -2,12 +2,16 @@ import { createDatabase } from 'src/db/database';
 import { createJobHandlerRegistry } from 'src/job-handler.registry';
 import { createJobHandlers } from 'src/jobs/job-handler';
 import { ConsoleLogger, type LogLevel } from 'src/logger';
+import { McpOAuthService } from 'src/mcp/oauth';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { DatabaseRepository } from 'src/repositories/database.repository';
 import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import { McpCredentialRepository } from 'src/repositories/mcp-credential.repository';
+import { McpOAuthRepository } from 'src/repositories/mcp-oauth.repository';
+import { McpOperationRepository } from 'src/repositories/mcp-operation.repository';
 import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
@@ -23,11 +27,15 @@ import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
 import { ActivityQueryService } from 'src/services/activity-query.service';
+import { ActivityUploadService } from 'src/services/activity-upload.service';
 import { ActivityService } from 'src/services/activity.service';
+import { ApiKeyService } from 'src/services/api-key.service';
 import { AuthService } from 'src/services/auth.service';
 import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
 import { LiveService } from 'src/services/live-activity.service';
+import { McpPreferenceService } from 'src/services/mcp-preference.service';
+import { OperationService } from 'src/services/operation.service';
 import { ServerService } from 'src/services/server.service';
 import { SocialService } from 'src/services/social.service';
 import { StorageService } from 'src/services/storage.service';
@@ -73,6 +81,11 @@ export const createApplicationComposition = ({
     authCredentialRepository,
   );
   const jobRepository = new PgBossJobRepository(configRepository, consumeJobs, newLogger());
+  const activityUploadService = new ActivityUploadService(uploadRepository, jobRepository);
+  const mcpCredentialRepository = new McpCredentialRepository(database);
+  const mcpOAuthRepository = new McpOAuthRepository(database);
+  const mcpOperationRepository = new McpOperationRepository(database);
+  const mcpPreferenceRepository = new McpPreferenceRepository(database);
 
   const importProgressStore = new TakeoutRepository(database);
 
@@ -88,7 +101,7 @@ export const createApplicationComposition = ({
     liveActivityRepository,
     logger: newLogger(),
     mediaRepository,
-    mcpPreferenceRepository: new McpPreferenceRepository(database),
+    mcpPreferenceRepository,
     rateLimitingRepository,
     sessionRepository: authCredentialRepository,
     socialRepository,
@@ -102,12 +115,30 @@ export const createApplicationComposition = ({
   const activityService = new ActivityService(serviceDeps);
   const activityQueryService = new ActivityQueryService(serviceDeps);
   const activityImageService = new ActivityImageService(serviceDeps);
-  const authService = new AuthService(serviceDeps);
+  const authService = new AuthService(serviceDeps, {
+    deleteExpired: mcpOAuthRepository.deleteExpired.bind(mcpOAuthRepository),
+    deleteExpiredUploads: mcpOperationRepository.deleteExpiredUploads.bind(mcpOperationRepository),
+  });
+  const apiKeyService = new ApiKeyService(mcpCredentialRepository, databaseRepository);
+  const mcpOAuthService = new McpOAuthService(
+    mcpOAuthRepository,
+    mcpCredentialRepository,
+    databaseRepository,
+    configRepository.mcpPublicUrl ?? '',
+  );
+  const mcpOperationService = new OperationService(
+    mcpOperationRepository,
+    databaseRepository,
+    activityService,
+    activityUploadService,
+    storageRepository,
+  );
+  const mcpPreferenceService = new McpPreferenceService(mcpPreferenceRepository);
   const liveActivityService = new LiveService(serviceDeps);
   const serverService = new ServerService();
   const socialService = new SocialService(serviceDeps);
   const storageService = new StorageService(serviceDeps);
-  const uploadService = new UploadService(serviceDeps);
+  const uploadService = new UploadService(serviceDeps, activityUploadService);
   const userService = new UserService(serviceDeps);
 
   const jobService = new JobService(
@@ -144,11 +175,20 @@ export const createApplicationComposition = ({
     storageRepository,
     tcxRepository,
     uploadRepository,
+    mcpCredentialRepository,
+    mcpOAuthRepository,
+    mcpOperationRepository,
+    mcpPreferenceRepository,
     userRepository,
     importProgressStore,
     activityService,
+    activityUploadService,
     activityImageService,
     authService,
+    apiKeyService,
+    mcpOAuthService,
+    mcpOperationService,
+    mcpPreferenceService,
     jobService,
     activityQueryService,
     liveActivityService,

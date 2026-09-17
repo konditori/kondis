@@ -33,6 +33,7 @@ describe('ActivityService', () => {
   const readLimited = vi.fn<(relativePath: string, maximumBytes: number) => Promise<Buffer>>();
 
   const getActivityById = vi.fn();
+  const getActivityByIdForUpdate = vi.fn();
   const getByUploadId = vi.fn();
   const createActivity = vi.fn<(input: unknown, executor?: unknown) => Promise<string>>();
   const deleteActivity = vi.fn(async () => {});
@@ -66,6 +67,7 @@ describe('ActivityService', () => {
 
   const activityRepository = {
     getById: getActivityById,
+    getByIdForUpdate: getActivityByIdForUpdate,
     getByUploadId,
     create: createActivity,
     delete: deleteActivity,
@@ -146,6 +148,7 @@ describe('ActivityService', () => {
       ),
     );
     getActivityById.mockResolvedValue(undefined);
+    getActivityByIdForUpdate.mockResolvedValue(undefined);
     getIdsToParse.mockResolvedValue([]);
     createActivity.mockResolvedValue(ACTIVITY_ID);
     setMetrics.mockResolvedValue(true);
@@ -161,10 +164,92 @@ describe('ActivityService', () => {
 
   describe('activity ownership', () => {
     it('passes the authenticated user to the update repository query', async () => {
+      getActivityByIdForUpdate.mockResolvedValue({ sport: ActivityType.Run, tags: [], revision: 1 });
       await expect(makeService().updateById(ACTIVITY_ID, 'another-user', { name: 'changed' })).resolves.toBeUndefined();
 
-      expect(updateActivity).toHaveBeenCalledWith(ACTIVITY_ID, { name: 'changed' }, 'another-user');
+      expect(updateActivity).toHaveBeenCalledWith(ACTIVITY_ID, { name: 'changed' }, 'another-user', 'trx');
       expect(emitEvent).not.toHaveBeenCalled();
+    });
+
+    it('emits browser activity updates only after the mutation transaction succeeds', async () => {
+      const order: string[] = [];
+      getActivityByIdForUpdate.mockResolvedValue({ sport: ActivityType.Run, tags: [], revision: 1 });
+      updateActivity.mockResolvedValue({
+        id: ACTIVITY_ID,
+        upload_id: UPLOAD_ID,
+        sport: ActivityType.Run,
+        name: 'changed',
+        description: null,
+        started_at: new Date('2026-09-17T12:00:00.000Z'),
+        timezone_offset_minutes: null,
+        tags: [],
+        metrics_computed_at: null,
+        best_efforts_computed_at: null,
+        exclude_from_rankings: false,
+        route_matches_computed_at: null,
+        metrics: null,
+        revision: 2,
+        created_at: new Date('2026-09-17T12:00:00.000Z'),
+        updated_at: new Date('2026-09-17T12:00:00.000Z'),
+      });
+      withTransaction.mockImplementationOnce(async (callback) => {
+        const result = await callback('trx');
+        order.push('committed');
+        return result;
+      });
+      emitEvent.mockImplementationOnce(() => {
+        order.push('event');
+        return Promise.resolve();
+      });
+
+      await makeService().updateById(ACTIVITY_ID, 'another-user', { name: 'changed' });
+
+      expect(order).toEqual(['committed', 'event']);
+      expect(emitEvent).toHaveBeenCalledWith(
+        'ActivityUpdate',
+        expect.objectContaining({ id: ACTIVITY_ID, name: 'changed' }),
+      );
+    });
+
+    it.each([
+      ['sport', { sport: ActivityType.Ride }, [JobName.ActivityBestEffortCompute, JobName.ActivityRouteMatchCompute]],
+      ['tags', { tags: ['long_run'] as Array<'long_run'> }, [JobName.ActivityBestEffortCompute]],
+      [
+        'ranking exclusion',
+        { excludeFromRankings: true },
+        [JobName.ActivityBestEffortCompute, JobName.ActivityRouteMatchCompute],
+      ],
+      [
+        'ranking inclusion',
+        { excludeFromRankings: false },
+        [JobName.ActivityBestEffortCompute, JobName.ActivityRouteMatchCompute],
+      ],
+    ])('queues derived-data recomputation for %s changes', async (_change, input, expectedJobs) => {
+      getActivityByIdForUpdate.mockResolvedValue({ sport: ActivityType.Run, tags: [], revision: 1 });
+      updateActivity.mockResolvedValue({ revision: 2 });
+
+      await makeService().updateByIdInTransaction(ACTIVITY_ID, 'another-user', input, 'trx' as never);
+
+      expect(queueAll).toHaveBeenCalledWith(
+        expectedJobs.map((name) => ({ name, data: { id: ACTIVITY_ID } })),
+        { transaction: 'trx' },
+      );
+      expect(queue).not.toHaveBeenCalled();
+    });
+
+    it('queues a ranking refresh for start-date changes', async () => {
+      getActivityByIdForUpdate.mockResolvedValue({ sport: ActivityType.Run, tags: [], revision: 1 });
+      updateActivity.mockResolvedValue({ revision: 2 });
+
+      await makeService().updateByIdInTransaction(
+        ACTIVITY_ID,
+        'another-user',
+        { startedAt: new Date('2026-09-17T12:00:00.000Z') },
+        'trx' as never,
+      );
+
+      expect(queue).toHaveBeenCalledWith({ name: JobName.ActivityBestEffortRank, data: {} }, { transaction: 'trx' });
+      expect(queueAll).not.toHaveBeenCalled();
     });
   });
 

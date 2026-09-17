@@ -11,7 +11,7 @@ Kondis exposes an MCP endpoint at `/mcp` for you to play with.
 
 ### Tools
 
-- `compare_activities` - Compare 2-10 activities and show differences relative to the first.
+- `compare_activities` - Compare activities and show differences relative to the first.
 - `compare_route_efforts` - Retrieve previous efforts on a matched route and their metrics.
 - `create_manual_activity` - Record a completed workout.
 - `get_activity` - Read an activity summary, revision, metrics, and laps.
@@ -24,6 +24,6 @@ Kondis exposes an MCP endpoint at `/mcp` for you to play with.
 - `summarize_training` - Calculate weekly or monthly training volume and intensity.
 - `update_activity` - Edit an activity using its current revision.
 
-## Self-hosting
+## Deployment
 
-Set `KONDIS_MCP_PUBLIC_URL` to the externally reachable HTTPS URL ending in `/mcp`. Loopback HTTP is allowed for local development. Node deployments behind the Kondis proxy must also set `KONDIS_TRUST_PROXY_HEADERS=true`.
+Set `KONDIS_MCP_PUBLIC_URL` in the env file to the externally reachable HTTPS URL ending in `/mcp`. Loopback HTTP is allowed for local development. Local deployments must also set `KONDIS_TRUST_PROXY_HEADERS=true`.

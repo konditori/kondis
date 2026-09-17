@@ -1,7 +1,7 @@
-import { sql } from 'kysely';
+import type { TransactionRepository } from 'src/contracts/transaction.repository';
 import { BadRequestException } from 'src/errors';
 import { hash, ScopeSchema, token, type Principal, type Scope } from 'src/mcp/context';
-import type { KondisDatabase } from 'src/types';
+import type { McpCredentialRepository } from 'src/repositories/mcp-credential.repository';
 import { z } from 'zod';
 
 export const CreateKeySchema = z.object({
@@ -11,44 +11,45 @@ export const CreateKeySchema = z.object({
 });
 
 export class ApiKeyService {
-  constructor(private readonly db: KondisDatabase) {}
+  constructor(
+    private readonly credentials: McpCredentialRepository,
+    private readonly transactions: TransactionRepository,
+  ) {}
 
   async create(userId: string, input: z.infer<typeof CreateKeySchema>) {
     const parsed = CreateKeySchema.parse(input);
     const secret = `kondis_${token()}`;
     const digest = await hash(secret);
     const expiresAt = new Date(Date.now() + parsed.expiresInDays * 86_400_000);
-    return this.db.transaction().execute(async (trx) => {
-      await trx.selectFrom('user').select('id').where('id', '=', userId).forUpdate().executeTakeFirstOrThrow();
-      const count = await sql<{
-        count: number;
-      }>`SELECT count(*)::int AS count FROM mcp_credential WHERE user_id = ${userId} AND revoked_at IS NULL AND expires_at > now()`.execute(
-        trx,
-      );
-      if (count.rows[0].count >= 30) {
+    return this.transactions.withTransaction(async (transaction) => {
+      await this.credentials.lockOwner(userId, transaction);
+      if ((await this.credentials.countActive(userId, transaction)) >= 30) {
         throw new BadRequestException('Revoke an existing connection before creating another');
       }
-      const result = await sql<{
-        id: string;
-      }>`INSERT INTO mcp_credential(user_id, name, kind, token_hash, scopes, expires_at) VALUES (${userId}, ${parsed.name}, 'key', ${digest}, ${[...new Set(parsed.scopes)]}, ${expiresAt}) RETURNING id`.execute(
-        trx,
+      const result = await this.credentials.createKey(
+        { userId, name: parsed.name, tokenHash: digest, scopes: [...new Set(parsed.scopes)], expiresAt },
+        transaction,
       );
-      return { id: result.rows[0].id, secret, expiresAt: expiresAt.toISOString() };
+      return { id: result.id, secret, expiresAt: expiresAt.toISOString() };
     });
   }
 
   async list(userId: string) {
-    const { rows } =
-      await sql`SELECT id, name, kind, scopes, created_at AS "createdAt", last_used_at AS "lastUsedAt", expires_at AS "expiresAt", revoked_at AS "revokedAt" FROM mcp_credential WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 100`.execute(
-        this.db,
-      );
-    return rows;
+    const credentials = await this.credentials.list(userId);
+    return credentials.map((row) => ({
+      id: row.id,
+      name: row.name,
+      kind: row.kind,
+      scopes: row.scopes,
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+      expiresAt: row.expires_at,
+      revokedAt: row.revoked_at,
+    }));
   }
 
   async revoke(userId: string, id: string) {
-    await sql`UPDATE mcp_credential SET revoked_at = now(), refresh_hash = NULL WHERE user_id = ${userId} AND id = ${id}::uuid`.execute(
-      this.db,
-    );
+    await this.credentials.revoke(userId, id);
   }
 
   async authenticate(secret: string, audience: string): Promise<Principal | undefined> {
@@ -56,13 +57,7 @@ export class ApiKeyService {
       return;
     }
     const digest = await hash(secret);
-    const { rows } = await sql<{ id: string; user_id: string; scopes: Scope[] }>`
-      UPDATE mcp_credential SET last_used_at = now()
-      WHERE token_hash = ${digest} AND revoked_at IS NULL AND expires_at > now()
-        AND (kind = 'key' OR audience = ${audience})
-      RETURNING id, user_id, scopes
-    `.execute(this.db);
-    const row = rows[0];
-    return row && { userId: row.user_id, credentialId: row.id, scopes: new Set(row.scopes) };
+    const row = await this.credentials.authenticate(digest, audience);
+    return row && { userId: row.user_id, credentialId: row.id, scopes: new Set(row.scopes as Scope[]) };
   }
 }

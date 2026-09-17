@@ -2,9 +2,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { createMcpApp, readBounded, type McpDependencies } from 'src/mcp/app';
 import { requireScope, type Principal } from 'src/mcp/context';
+import { McpOAuthService } from 'src/mcp/oauth';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ApiKeyService } from 'src/services/api-key.service';
+import { McpPreferenceService } from 'src/services/mcp-preference.service';
 import { OperationService } from 'src/services/operation.service';
 import { newServiceDeps } from 'test/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,10 +18,13 @@ const principal: Principal = {
 };
 const dependencies = () =>
   ({
-    database: {},
     queries: new ActivityQueryService(newServiceDeps({})),
     sessions: { findSession: vi.fn() },
-    jobs: {},
+    keys: Object.create(ApiKeyService.prototype),
+    operations: Object.create(OperationService.prototype),
+    oauth: Object.create(McpOAuthService.prototype),
+    preferences: Object.create(McpPreferenceService.prototype),
+    rateLimiting: Object.create(RateLimitingRepository.prototype),
     publicUrl: 'https://fitness.example/mcp',
     mutationsEnabled: true,
   }) as unknown as McpDependencies;
@@ -161,7 +166,7 @@ describe('MCP HTTP boundary', () => {
   });
 
   it('allows demo reads over POST and hides every mutation', async () => {
-    const app = createMcpApp({ ...dependencies(), demo: true, demoUserId: principal.userId });
+    const app = createMcpApp({ ...dependencies(), demoMode: true, demoUserId: principal.userId });
     const response = await app.request('https://fitness.example/mcp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
