@@ -117,6 +117,26 @@ describe('MCP HTTP boundary', () => {
     expect(await metadata.json()).toMatchObject({ code_challenge_methods_supported: ['S256'] });
   });
 
+  it('isolates public OAuth rate limits by endpoint and trusted client address', async () => {
+    const consume = vi.mocked(RateLimitingRepository.prototype.consume);
+    const app = createMcpApp({ ...dependencies(), trustProxyHeaders: true });
+    const request = (path: string, address: string, method = 'GET') =>
+      app.request(`https://fitness.example${path}`, {
+        method,
+        headers: { 'CF-Connecting-IP': address },
+      });
+
+    await request('/oauth/authorize', '198.51.100.1');
+    await request('/oauth/token', '198.51.100.1', 'POST');
+    await request('/oauth/authorize', '198.51.100.2');
+
+    expect(consume.mock.calls.map(([clientId]) => clientId)).toEqual([
+      'Authorize:198.51.100.1',
+      'Token:198.51.100.1',
+      'Authorize:198.51.100.2',
+    ]);
+  });
+
   it('rejects origins, host rebinding, oversized and batch requests', async () => {
     const app = createMcpApp(dependencies());
     for (const headers of [

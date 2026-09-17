@@ -122,6 +122,52 @@ describe('MCP persistence and ownership', () => {
     expect(updated.revision).toBe(latest.revision + 1);
   });
 
+  it('removes stale route matches and best efforts before queuing recomputation', async () => {
+    const activity = await operations.create(owner, manual());
+    const matched = await operations.create(owner, manual({ name: 'Matched route' }));
+    await db
+      .insertInto('activity_route_match')
+      .values({ activity_id: activity.activityId!, matched_activity_id: matched.activityId! })
+      .execute();
+    await db
+      .insertInto('activity_best_effort')
+      .values({
+        activity_id: activity.activityId!,
+        type: '5k',
+        value: 1800,
+        value_kind: BestEffortValueKind.Duration,
+        elapsed_time: 1800,
+        distance: 5000,
+        start_time: 0,
+        end_time: 1800,
+        avg_hr: null,
+        elevation_change: null,
+      })
+      .execute();
+    const current = await queries.get(owner, activity.activityId!);
+
+    await operations.update(owner, {
+      id: current.id,
+      revision: current.revision,
+      idempotencyKey: 'change-sport',
+      sport: ActivityType.Yoga,
+    });
+
+    await expect(
+      db.selectFrom('activity_route_match').selectAll().where('activity_id', '=', current.id).execute(),
+    ).resolves.toEqual([]);
+    await expect(
+      db.selectFrom('activity_best_effort').selectAll().where('activity_id', '=', current.id).execute(),
+    ).resolves.toEqual([]);
+    expect(jobs.queueAll).toHaveBeenLastCalledWith(
+      [
+        { name: 'ActivityBestEffortCompute', data: { id: current.id } },
+        { name: 'ActivityRouteMatchCompute', data: { id: current.id } },
+      ],
+      expect.objectContaining({ transaction: expect.anything() }),
+    );
+  });
+
   it('calculates SQL summaries at local week boundaries and preserves missing measurements', async () => {
     await operations.create(owner, manual({ startedAt: '2026-03-29T23:30:00Z' })); // Monday in Lisbon after DST.
     await operations.create(owner, manual({ startedAt: '2026-03-29T00:30:00Z', distance: null }));

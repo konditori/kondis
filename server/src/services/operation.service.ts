@@ -217,6 +217,9 @@ export class OperationService {
         trx,
       );
       if (v.sport !== undefined || v.tags !== undefined) {
+        await trx.deleteFrom('activity_best_effort').where('activity_id', '=', v.id).execute();
+        await trx.deleteFrom('activity_route_match').where('activity_id', '=', v.id).execute();
+        await trx.deleteFrom('activity_route_match').where('matched_activity_id', '=', v.id).execute();
         await this.jobs.queueAll(
           [
             { name: JobName.ActivityBestEffortCompute, data: { id: v.id } },

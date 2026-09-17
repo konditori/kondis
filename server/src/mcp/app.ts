@@ -1,7 +1,7 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { Hono } from 'hono';
 import { sql } from 'kysely';
-import type { ApiSessionLookup } from 'src/api/auth';
+import type { ApiBindings, ApiSessionLookup } from 'src/api/auth';
 import { getAccessToken } from 'src/auth';
 import type { JobRepository } from 'src/contracts/job.repository';
 import type { StorageRepository } from 'src/contracts/storage.repository';
@@ -20,6 +20,7 @@ import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ApiKeyService, CreateKeySchema } from 'src/services/api-key.service';
 import { OperationService } from 'src/services/operation.service';
 import type { KondisDatabase } from 'src/types';
+import { requestClientId } from 'src/utils/request-client-id';
 import { z } from 'zod';
 
 export type McpDependencies = {
@@ -81,7 +82,10 @@ export async function readBounded(request: Request, maximum: number): Promise<Ui
 const json = async (request: Request) => JSON.parse(new TextDecoder().decode(await readBounded(request, 16 * 1024)));
 
 export function createMcpApp(deps: McpDependencies) {
-  const app = new Hono<{ Variables: { principal: Principal; sessionUserId: string; body: unknown } }>();
+  const app = new Hono<{
+    Bindings: ApiBindings;
+    Variables: { principal: Principal; sessionUserId: string; body: unknown };
+  }>();
   const keys = new ApiKeyService(deps.database);
   const rate = new RateLimitingRepository(deps.database);
   const queries = deps.queries;
@@ -327,8 +331,14 @@ export function createMcpApp(deps: McpDependencies) {
     if (deps.demo) {
       throw new ForbiddenException('OAuth is unavailable in the demo');
     }
-    // A shared budget also bounds unauthenticated registrations behind untrusted proxies.
-    await rate.consume('public', { label: 'McpOAuth', maxAttempts: 60, windowMs: 60_000 });
+    const endpoint =
+      c.req.path === '/oauth/register' ? 'Register' : c.req.path === '/oauth/token' ? 'Token' : 'Authorize';
+    const clientId = requestClientId(c, deps.trustProxyHeaders ?? false);
+    await rate.consume(`${endpoint}:${clientId}`, {
+      label: `McpOAuth${endpoint}`,
+      maxAttempts: 60,
+      windowMs: 60_000,
+    });
     await next();
   });
   app.get('/oauth/authorize', async (c) => {

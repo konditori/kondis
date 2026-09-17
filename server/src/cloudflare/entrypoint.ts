@@ -171,6 +171,7 @@ export default {
           jobs: composition.jobProducer,
           storage: composition.storage,
           publicUrl: env.KONDIS_MCP_PUBLIC_URL,
+          trustProxyHeaders: true,
           mutationsEnabled: composition.queueBindingsConfigured,
           demo: demoMode,
           demoUserId: demoUser?.id,

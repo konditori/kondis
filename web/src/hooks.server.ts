@@ -20,6 +20,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     // Overwrite client-supplied forwarding headers at the trusted proxy boundary.
     headers.set("x-forwarded-host", event.url.host);
     headers.set("x-forwarded-proto", event.url.protocol.slice(0, -1));
+    headers.set("x-forwarded-for", event.getClientAddress());
     headers.delete("host");
     headers.delete("connection");
     const init: RequestInit & { duplex?: "half" } = {
