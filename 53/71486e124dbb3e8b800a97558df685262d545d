@@ -1,0 +1,65 @@
+server/src/cloudflare/entrypoint.ts
+  s_fc0c449fec0898::t_343c4be02e3a2c 169
+server/src/composition.cloud-node.ts
+  s_fc0c449fec0898::t_0f274e789688d0 13,79
+server/src/composition.node.ts
+  s_fc0c449fec0898::t_2ac0979c62e06e 11,25,91,103,153
+server/src/composition.worker.ts
+  s_fc0c449fec0898::t_c793f690b69957 20,32,115,129,164
+server/src/db/schema.ts
+  s_fc0c449fec0898::t_80908575eccd7d 19,34
+server/src/enum.ts
+  s_fc0c449fec0898::t_bbd9de2e9e44e6 61-65
+server/src/main.ts
+  s_fc0c449fec0898::t_a7ed0da00f62f1 108
+server/src/mcp/app.spec.ts
+  s_fc0c449fec0898::t_0bfa8f645707ac 9,20
+server/src/mcp/app.ts
+  s_fc0c449fec0898::t_2a9ec41fa6cc9f 27,87
+server/src/mcp/registry.ts
+  s_fc0c449fec0898::t_294ffbb78326b1 6,9,177,192
+server/src/repositories/activity.repository.ts
+  s_fc0c449fec0898::t_0824ccb4df4b43 29,352-356,359,369,371-373,401-409,416,418-426,439-441,466-475,480,492-526,530-736,800-805,811,826-828,830
+server/src/repositories/mcp-preference.repository.ts
+  s_fc0c449fec0898::t_2471da4ef4a3fe 1-13
+server/src/schema/tables/activity.table.ts
+  s_fc0c449fec0898::t_3ca62683c74532 43-45
+server/src/schema/tables/mcp-preference.table.ts
+  s_fc0c449fec0898::t_d07b16b327b55f 1-14
+server/src/services/activity-query.service.spec.ts
+  s_fc0c449fec0898::t_20c68c94f45ed9 1-60
+server/src/services/activity-query.service.ts
+  s_fc0c449fec0898::t_072cbf4768487f 1-3,5-6,9-12,24,39-55,74-92,94-99,101,103,106-124,127,130-141,146,153-154,157,162-175,180,183-184,187-188,191,194-199,201,209-211,229-230,232-233,236-239,241-261
+server/src/services/base.service.ts
+  s_fc0c449fec0898::t_529ed07585d28d 12,34,58,80
+server/test/utils.ts
+  s_fc0c449fec0898::t_14948efffafa7e 32
+server/test/worker/mcp.spec.ts
+  s_3de625658c60af::t_a522a9a1880cd5 6,18
+server/vitest.config.worker.ts
+  s_fc0c449fec0898::t_120ecb0deacf93 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5371486e124dbb3e8b800a97558df685262d545d",
+  "prompts": {},
+  "sessions": {
+    "s_3de625658c60af": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ac8a-0f07-7293-8f78-e3df5db20654",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_fc0c449fec0898": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ac63-daa1-76d2-8fd6-b8cf3cc63aae",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
