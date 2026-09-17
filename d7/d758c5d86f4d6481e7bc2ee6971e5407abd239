@@ -1,0 +1,19 @@
+server/test/medium/specs/mcp-http.spec.ts
+  s_282afdb5d9cd7c::t_eb3c2f777a093b 3,54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d7d758c5d86f4d6481e7bc2ee6971e5407abd239",
+  "prompts": {},
+  "sessions": {
+    "s_282afdb5d9cd7c": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2ca847fd-2f51-455d-8841-0df04a227ca4",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
