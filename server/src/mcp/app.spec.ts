@@ -6,6 +6,7 @@ import { RateLimitingRepository } from 'src/repositories/rate-limiting.repositor
 import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ApiKeyService } from 'src/services/api-key.service';
 import { OperationService } from 'src/services/operation.service';
+import { newServiceDeps } from 'test/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const principal: Principal = {
@@ -16,6 +17,7 @@ const principal: Principal = {
 const dependencies = () =>
   ({
     database: {},
+    queries: new ActivityQueryService(newServiceDeps({})),
     sessions: { findSession: vi.fn() },
     jobs: {},
     publicUrl: 'https://fitness.example/mcp',

@@ -3,6 +3,7 @@
 import { createMcpApp, type McpDependencies } from 'src/mcp/app';
 import { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import { ActivityQueryService } from 'src/services/activity-query.service';
+import { newServiceDeps } from 'test/utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('MCP inside workerd', () => {
@@ -14,6 +15,7 @@ describe('MCP inside workerd', () => {
       .mockResolvedValue({ activities: [], nextCursor: null, units: {} as never });
     const app = createMcpApp({
       database: {},
+      queries: new ActivityQueryService(newServiceDeps({})),
       sessions: {},
       jobs: {},
       publicUrl: 'https://fitness.example/mcp',

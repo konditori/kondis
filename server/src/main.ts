@@ -105,6 +105,7 @@ export async function bootstrapApi(): Promise<ApiRuntime> {
     createNodeApiApp(application),
     createMcpApp({
       database: application.database,
+      queries: application.activityQueryService,
       sessions: application.authCredentialRepository,
       jobs: application.jobRepository,
       storage: application.storageRepository,

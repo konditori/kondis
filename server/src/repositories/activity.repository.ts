@@ -26,6 +26,7 @@ import type {
   CreateActivityInput,
   KondisDatabase,
   KondisExecutor,
+  KondisTransaction,
   UpdateActivityInput,
 } from 'src/types';
 import { getActivityTypeSettings } from 'src/utils/activity';
@@ -348,20 +349,14 @@ export class ActivityRepository {
     return true;
   }
 
-  async listMatchedRoutes(activityId: string, userId?: string): Promise<ActivityRecord[]> {
-    const rows = await this.db
-      .selectFrom('activity_route_match')
-      .select('matched_activity_id')
-      .where('activity_id', '=', activityId)
-      .execute();
-
-    const ids = rows.map(({ matched_activity_id }) => matched_activity_id);
-    if (ids.length === 0) {
-      return [];
-    }
-
+  async listMatchedRoutes(
+    activityId: string,
+    userId?: string,
+    options: { limit?: number; order?: 'asc' | 'desc' } = {},
+  ): Promise<ActivityRecord[]> {
     return this.db
       .selectFrom('activity')
+      .innerJoin('activity_route_match', 'activity_route_match.matched_activity_id', 'activity.id')
       .select(ACTIVITY_COLUMNS)
       .select((eb) =>
         jsonObjectFrom(
@@ -371,10 +366,11 @@ export class ActivityRepository {
             .whereRef('activity_metric.activity_id', '=', 'activity.id'),
         ).as('metrics'),
       )
-      .where('activity.id', 'in', ids)
+      .where('activity_route_match.activity_id', '=', activityId)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
-      .orderBy('activity.started_at', 'asc')
-      .orderBy('activity.id', 'asc')
+      .orderBy('activity.started_at', options.order ?? 'asc')
+      .orderBy('activity.id', options.order ?? 'asc')
+      .$if(options.limit !== undefined, (qb) => qb.limit(options.limit!))
       .execute();
   }
 
@@ -402,14 +398,32 @@ export class ActivityRepository {
     feedUserId,
     tags,
     tagMatch = 'any',
+    from,
+    to,
+    sport,
+    minDistance,
+    maxDistance,
+    minDuration,
+    maxDuration,
+    searchFields = 'all',
+    includeTrack = true,
   }: {
     limit: number;
     cursor?: ActivityCursor;
     search?: string;
     userId?: string;
     feedUserId?: string;
-    tags?: ActivityTag[];
+    tags?: string[];
     tagMatch?: 'any' | 'all';
+    from?: Date;
+    to?: Date;
+    sport?: ActivityType;
+    minDistance?: number;
+    maxDistance?: number;
+    minDuration?: number;
+    maxDuration?: number;
+    searchFields?: 'all' | 'name-description';
+    includeTrack?: boolean;
   }) {
     let query = this.db
       .selectFrom('activity')
@@ -422,7 +436,9 @@ export class ActivityRepository {
             .whereRef('activity_metric.activity_id', '=', 'activity.id'),
         ).as('metrics'),
       )
-      .select(sql<string | null>`ST_AsGeoJSON(track)`.as('track_geojson'));
+      .select((eb) =>
+        (includeTrack ? eb.fn<string | null>('ST_AsGeoJSON', ['track']) : eb.val(null)).as('track_geojson'),
+      );
     if (userId) {
       query = query.where('activity.user_id', '=', userId);
     }
@@ -447,21 +463,21 @@ export class ActivityRepository {
     if (search) {
       const pattern = `%${search}%`;
       query = query.where(({ or, eb }) =>
-        or([
-          eb('activity.name', 'ilike', pattern),
-          eb('activity.description', 'ilike', pattern),
-          sql<boolean>`activity.sport ILIKE ${pattern}`,
-          sql<boolean>`activity.tags::text ILIKE ${pattern}`,
-        ]),
+        or(
+          searchFields === 'name-description'
+            ? [eb('activity.name', 'ilike', pattern), eb('activity.description', 'ilike', pattern)]
+            : [
+                eb('activity.name', 'ilike', pattern),
+                eb('activity.description', 'ilike', pattern),
+                sql<boolean>`activity.sport ILIKE ${pattern}`,
+                sql<boolean>`activity.tags::text ILIKE ${pattern}`,
+              ],
+        ),
       );
     }
 
     if (tags?.length) {
-      const expression =
-        tagMatch === 'all'
-          ? sql<boolean>`activity.tags @> ARRAY[${sql.join(tags)}]::text[]`
-          : sql<boolean>`activity.tags && ARRAY[${sql.join(tags)}]::text[]`;
-      query = query.where(expression);
+      query = query.where((eb) => eb('activity.tags', tagMatch === 'all' ? '@>' : '&&', eb.val(tags)));
     }
 
     if (cursor) {
@@ -473,7 +489,249 @@ export class ActivityRepository {
       );
     }
 
+    if (from) {
+      query = query.where('activity.started_at', '>=', from);
+    }
+    if (to) {
+      query = query.where('activity.started_at', '<', to);
+    }
+    if (sport) {
+      query = query.where('activity.sport', '=', sport);
+    }
+    if (
+      minDistance !== undefined ||
+      maxDistance !== undefined ||
+      minDuration !== undefined ||
+      maxDuration !== undefined
+    ) {
+      query = query.where(({ exists, selectFrom }) => {
+        let metrics = selectFrom('activity_metric')
+          .select('activity_id')
+          .whereRef('activity_metric.activity_id', '=', 'activity.id');
+        if (minDistance !== undefined) {
+          metrics = metrics.where('activity_metric.distance', '>=', minDistance);
+        }
+        if (maxDistance !== undefined) {
+          metrics = metrics.where('activity_metric.distance', '<=', maxDistance);
+        }
+        if (minDuration !== undefined) {
+          metrics = metrics.where('activity_metric.elapsed_time', '>=', minDuration);
+        }
+        if (maxDuration !== undefined) {
+          metrics = metrics.where('activity_metric.elapsed_time', '<=', maxDuration);
+        }
+        return exists(metrics);
+      });
+    }
+
     return query.orderBy('activity.started_at', 'desc').orderBy('activity.id', 'desc').limit(limit).execute();
+  }
+
+  private async readWithTimeout<T>(read: (trx: KondisTransaction) => Promise<T>): Promise<T> {
+    return this.db.transaction().execute(async (trx) => {
+      await trx
+        .selectNoFrom((eb) =>
+          eb.fn('set_config', [eb.val('statement_timeout'), eb.val('5s'), eb.val(true)]).as('timeout'),
+        )
+        .execute();
+      return read(trx);
+    });
+  }
+
+  summarize({
+    userId,
+    from,
+    to,
+    sport,
+    timezone,
+    period,
+  }: {
+    userId: string;
+    from: Date;
+    to: Date;
+    sport?: ActivityType;
+    timezone: string;
+    period: 'week' | 'month';
+  }) {
+    return this.readWithTimeout((trx) =>
+      trx
+        .with('period_activities', (db) =>
+          db
+            .selectFrom('activity')
+            .leftJoin('activity_metric', (join) =>
+              join
+                .onRef('activity_metric.activity_id', '=', 'activity.id')
+                .on('activity.metrics_computed_at', 'is not', null),
+            )
+            .select([
+              'activity.id',
+              'activity.started_at',
+              'activity_metric.activity_id as metric_id',
+              'activity_metric.distance',
+              'activity_metric.elapsed_time',
+              'activity_metric.elevation_gain',
+              'activity_metric.avg_hr',
+              'activity_metric.avg_power',
+            ])
+            .select((eb) =>
+              eb
+                .fn<Date>('date_trunc', [
+                  eb.val(period),
+                  eb.fn('timezone', [eb.val(timezone), eb.ref('activity.started_at')]),
+                ])
+                .as('period'),
+            )
+            .where('activity.user_id', '=', userId)
+            .where('activity.started_at', '>=', from)
+            .where('activity.started_at', '<', to)
+            .$if(sport !== undefined, (qb) => qb.where('activity.sport', '=', sport!)),
+        )
+        .with('ranked', (db) =>
+          db
+            .selectFrom('period_activities')
+            .selectAll()
+            .select((eb) =>
+              eb.fn
+                .agg<number>('row_number', [])
+                .over((window) => window.partitionBy('period').orderBy('started_at', 'desc').orderBy('id', 'desc'))
+                .as('position'),
+            ),
+        )
+        .selectFrom('ranked')
+        .select((eb) => [
+          eb.fn<string>('to_char', [eb.ref('period'), eb.val('YYYY-MM-DD HH24:MI:SS')]).as('period'),
+          eb.cast<number>(eb.fn.countAll(), 'integer').as('activityCount'),
+          eb.cast<number>(eb.fn.count('metric_id'), 'integer').as('activitiesWithMetrics'),
+          eb.cast<number>(eb.fn.count('distance'), 'integer').as('activitiesWithDistance'),
+          eb.cast<number>(eb.fn.count('avg_hr'), 'integer').as('activitiesWithHeartRate'),
+          eb.cast<number>(eb.fn.count('avg_power'), 'integer').as('activitiesWithPower'),
+          eb.fn.sum<number | null>('distance').as('distance'),
+          eb.cast<number | null>(eb.fn.sum('elapsed_time'), 'double precision').as('elapsedTime'),
+          eb.fn.sum<number | null>('elevation_gain').as('elevationGain'),
+          eb(
+            eb.fn.sum<number | null>(
+              eb(eb.ref('avg_hr'), '*', eb.cast<number | null>(eb.ref('elapsed_time'), 'double precision')),
+            ),
+            '/',
+            eb.fn<number | null>('nullif', [
+              eb.fn.sum('elapsed_time').filterWhere('avg_hr', 'is not', null),
+              eb.val(0),
+            ]),
+          ).as('weightedHeartRate'),
+          eb(
+            eb.fn.sum<number | null>(
+              eb(eb.ref('avg_power'), '*', eb.cast<number | null>(eb.ref('elapsed_time'), 'double precision')),
+            ),
+            '/',
+            eb.fn<number | null>('nullif', [
+              eb.fn.sum('elapsed_time').filterWhere('avg_power', 'is not', null),
+              eb.val(0),
+            ]),
+          ).as('weightedPower'),
+          eb.fn
+            .agg<string[]>('array_agg', ['id'])
+            .orderBy('started_at', 'desc')
+            .orderBy('id', 'desc')
+            .filterWhere('position', '<=', 20)
+            .as('sampleActivityIds'),
+        ])
+        .groupBy('ranked.period')
+        .orderBy('ranked.period')
+        .execute(),
+    );
+  }
+
+  getSampledStreams({
+    id,
+    userId,
+    types,
+    from,
+    to,
+    maxPoints,
+  }: {
+    id: string;
+    userId: string;
+    types: StreamType[];
+    from: number;
+    to?: number;
+    maxPoints: number;
+  }) {
+    return this.readWithTimeout((trx) =>
+      trx
+        .with('time_indices', (db) =>
+          db
+            .selectFrom('activity_stream')
+            .innerJoin('activity', 'activity.id', 'activity_stream.activity_id')
+            .select('activity_stream.data')
+            .select((eb) => eb.fn<number>('generate_subscripts', [eb.ref('activity_stream.data'), eb.val(1)]).as('i'))
+            .where('activity.id', '=', id)
+            .where('activity.user_id', '=', userId)
+            .where('activity_stream.type', '=', StreamType.Time),
+        )
+        .with('times', (db) =>
+          db
+            .selectFrom('time_indices')
+            .select('i')
+            // Kysely has no PostgreSQL array-subscript builder; only these expressions use SQL.
+            .select(sql<number>`data[i]`.as('value'))
+            .select((eb) => [
+              eb.fn
+                .agg<number>('row_number', [])
+                .over((window) => window.orderBy('i'))
+                .as('n'),
+              eb.fn.countAll<number>().over().as('total'),
+            ])
+            .where(sql<number>`data[i]`, '>=', from)
+            .$if(to !== undefined, (qb) => qb.where(sql<number>`data[i]`, '<=', to!)),
+        )
+        .with('sampled', (db) =>
+          db
+            .selectFrom('times')
+            .selectAll()
+            .where((eb) =>
+              eb(
+                eb(
+                  eb.parens(eb(eb.ref('n'), '-', eb.val(1))),
+                  '%',
+                  eb.fn<number>('greatest', [
+                    eb.val(1),
+                    eb.cast(eb.fn('ceil', [eb(eb.cast(eb.ref('total'), 'numeric'), '/', eb.val(maxPoints))]), 'bigint'),
+                  ]),
+                ),
+                '=',
+                eb.val(0),
+              ),
+            ),
+        )
+        .selectFrom('sampled as t')
+        .innerJoin('activity_stream as s', (join) => join.on('s.activity_id', '=', id))
+        .where('s.type', 'in', types)
+        .select('s.type')
+        .select((eb) => [
+          eb.fn
+            .agg<(number | null)[]>('array_agg', [sql<number | null>`s.data[t.i]`])
+            .orderBy('t.i')
+            .as('values'),
+          eb.fn.agg<number[]>('array_agg', ['t.value']).orderBy('t.i').as('times'),
+          eb.cast<number>(eb.fn.max('t.total'), 'integer').as('originalPointCount'),
+          eb.val('uniform-index').as('downsampling'),
+        ])
+        .groupBy('s.type')
+        .orderBy('s.type')
+        .execute(),
+    );
+  }
+
+  getLaps(activityId: string, userId: string, limit: number) {
+    return this.db
+      .selectFrom('lap')
+      .innerJoin('activity', 'activity.id', 'lap.activity_id')
+      .select(['lap.lap_index', 'lap.started_at', 'lap.elapsed_time', 'lap.distance', 'lap.avg_hr', 'lap.avg_power'])
+      .where('lap.activity_id', '=', activityId)
+      .where('activity.user_id', '=', userId)
+      .orderBy('lap.lap_index')
+      .limit(limit)
+      .execute();
   }
 
   async count(
@@ -539,12 +797,18 @@ export class ActivityRepository {
       .execute();
   }
 
-  listBestEfforts(type: BestEffortType, sports: ActivityType[], userId?: string) {
+  listBestEfforts(
+    type: BestEffortType,
+    sports: ActivityType[],
+    userId?: string,
+    options: { year?: number; limit?: number; order?: 'rank' | 'chronological' } = {},
+  ) {
     return this.db
       .selectFrom('activity_best_effort')
       .innerJoin('activity', 'activity.id', 'activity_best_effort.activity_id')
       .select([
         'activity_best_effort.activity_id',
+        'activity_best_effort.distance',
         'activity_best_effort.elapsed_time',
         'activity_best_effort.value',
         'activity_best_effort.value_kind',
@@ -559,8 +823,11 @@ export class ActivityRepository {
       .where('activity.sport', 'in', sports)
       .$if(!!userId, (qb) => qb.where('activity.user_id', '=', userId!))
       .where('activity.exclude_from_rankings', '=', false)
-      .orderBy('activity.started_at', 'asc')
+      .$if(options.year !== undefined, (qb) => qb.where('activity_best_effort.year', '=', options.year!))
+      .$if(options.order === 'rank', (qb) => qb.orderBy('activity_best_effort.overall_rank', 'asc'))
+      .orderBy('activity.started_at', options.order === 'rank' ? 'desc' : 'asc')
       .orderBy('activity.id', 'asc')
+      .$if(options.limit !== undefined, (qb) => qb.limit(options.limit!))
       .execute();
   }
 

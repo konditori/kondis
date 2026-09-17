@@ -16,6 +16,7 @@ import { FollowRequestTable } from 'src/schema/tables/follow-request.table';
 import { LapTable } from 'src/schema/tables/lap.table';
 import { LiveActivityPointTable } from 'src/schema/tables/live-activity-point.table';
 import { LiveActivityTable } from 'src/schema/tables/live-activity.table';
+import { McpPreferenceTable } from 'src/schema/tables/mcp-preference.table';
 import { NotificationTable } from 'src/schema/tables/notification.table';
 import { TakeoutImportItemTable } from 'src/schema/tables/takeout-import-item.table';
 import { TakeoutImportTable } from 'src/schema/tables/takeout-import.table';
@@ -30,6 +31,7 @@ export interface DB {
   auth_rate_limit: AuthRateLimitTable;
   auth_session: AuthSessionTable;
   auth_ticket: AuthTicketTable;
+  mcp_preference: McpPreferenceTable;
   background_job: BackgroundJobTable;
   upload: UploadTable;
   activity: ActivityTable;

@@ -1,12 +1,12 @@
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { BEST_EFFORT_TYPES } from 'src/constants';
-import { ActivityType } from 'src/enum';
 import { HttpException } from 'src/errors';
 import { requireScope, type Principal, type Scope } from 'src/mcp/context';
 import {
   ActivityQueryService,
+  BestEffortsSchema,
   METRIC_DEFINITIONS,
   SearchSchema,
+  StreamsSchema,
   SummarySchema,
 } from 'src/services/activity-query.service';
 import { ManualActivitySchema, OperationService, UpdateActivitySchema } from 'src/services/operation.service';
@@ -174,29 +174,7 @@ export function createMcpServer(principal: Principal, services: McpServices) {
   register(
     'get_activity_streams',
     'Read aligned sensor samples. Coordinates require location:read. Time is elapsed seconds.',
-    z.object({
-      id,
-      types: z
-        .array(
-          z.enum([
-            'time',
-            'latitude',
-            'longitude',
-            'altitude',
-            'distance',
-            'speed',
-            'heartrate',
-            'cadence',
-            'power',
-            'temperature',
-          ]),
-        )
-        .min(1)
-        .max(10),
-      from: z.number().nonnegative().default(0),
-      to: z.number().nonnegative().optional(),
-      maxPoints: z.number().int().min(2).max(1000).default(250),
-    }),
+    StreamsSchema,
     'activities:read',
     (v) => q.streams(principal, v),
     true,
@@ -211,12 +189,7 @@ export function createMcpServer(principal: Principal, services: McpServices) {
   register(
     'get_best_efforts',
     'Read personal best efforts and rankings for an effort type, sport and year.',
-    z.object({
-      type: z.enum(BEST_EFFORT_TYPES),
-      sport: z.enum(ActivityType).optional(),
-      year: z.number().int().min(1900).max(3000).optional(),
-      limit,
-    }),
+    BestEffortsSchema,
     'activities:read',
     (v) => q.bestEfforts(principal, v),
   );

@@ -8,6 +8,7 @@ import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
@@ -21,6 +22,7 @@ import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
+import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
 import type { BaseServiceDeps } from 'src/services/base.service';
@@ -86,6 +88,7 @@ export const createApplicationComposition = ({
     liveActivityRepository,
     logger: newLogger(),
     mediaRepository,
+    mcpPreferenceRepository: new McpPreferenceRepository(database),
     rateLimitingRepository,
     sessionRepository: authCredentialRepository,
     socialRepository,
@@ -97,6 +100,7 @@ export const createApplicationComposition = ({
   };
 
   const activityService = new ActivityService(serviceDeps);
+  const activityQueryService = new ActivityQueryService(serviceDeps);
   const activityImageService = new ActivityImageService(serviceDeps);
   const authService = new AuthService(serviceDeps);
   const liveActivityService = new LiveService(serviceDeps);
@@ -146,6 +150,7 @@ export const createApplicationComposition = ({
     activityImageService,
     authService,
     jobService,
+    activityQueryService,
     liveActivityService,
     serverService,
     socialService,

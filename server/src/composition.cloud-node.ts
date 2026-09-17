@@ -10,6 +10,7 @@ import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { HttpRealtimeRepository } from 'src/repositories/http-realtime.repository';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
@@ -75,6 +76,7 @@ export const createCloudNodeProcessorComposition = ({
     liveActivityRepository: new LiveActivityRepository(database),
     logger,
     mediaRepository,
+    mcpPreferenceRepository: new McpPreferenceRepository(database),
     rateLimitingRepository,
     sessionRepository,
     socialRepository,

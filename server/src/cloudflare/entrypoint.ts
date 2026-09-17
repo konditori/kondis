@@ -166,6 +166,7 @@ export default {
       if (isMcpPath(new URL(request.url).pathname)) {
         const mcp = createMcpApp({
           database: composition.database,
+          queries: composition.activityQueryService,
           sessions: composition.authCredentialRepository,
           jobs: composition.jobProducer,
           storage: composition.storage,

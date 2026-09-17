@@ -17,6 +17,7 @@ import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { NoopRealtimeRepository } from 'src/repositories/noop-realtime.repository';
 import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
@@ -28,6 +29,7 @@ import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
+import { ActivityQueryService } from 'src/services/activity-query.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
 import type { BaseServiceDeps } from 'src/services/base.service';
@@ -110,6 +112,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     liveActivityRepository: new LiveActivityRepository(database),
     logger: new ConsoleLogger(),
     mediaRepository,
+    mcpPreferenceRepository: new McpPreferenceRepository(database),
     mediaBaseUrl: env.KONDIS_DEMO_MEDIA_BASE_URL,
     rateLimitingRepository,
     sessionRepository: authCredentialRepository,
@@ -123,6 +126,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
 
   const authService = new AuthService(serviceDeps);
   const activityService = new ActivityService(serviceDeps);
+  const activityQueryService = new ActivityQueryService(serviceDeps);
   const workerActivityImageService = storage ? new WorkerActivityImageService(serviceDeps) : undefined;
   const workerUploadService = storage ? new WorkerUploadService(serviceDeps) : undefined;
   const workerUserService = storage ? new WorkerUserService(serviceDeps) : undefined;
@@ -157,6 +161,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     authService,
     activityService,
     activityRepository,
+    activityQueryService,
     uploadRepository,
     fitRepository,
     socialService,

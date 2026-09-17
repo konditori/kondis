@@ -24,6 +24,7 @@ import { z } from 'zod';
 
 export type McpDependencies = {
   database: KondisDatabase;
+  queries: ActivityQueryService;
   sessions: ApiSessionLookup;
   jobs: JobRepository;
   storage?: StorageRepository;
@@ -83,7 +84,7 @@ export function createMcpApp(deps: McpDependencies) {
   const app = new Hono<{ Variables: { principal: Principal; sessionUserId: string; body: unknown } }>();
   const keys = new ApiKeyService(deps.database);
   const rate = new RateLimitingRepository(deps.database);
-  const queries = new ActivityQueryService(deps.database);
+  const queries = deps.queries;
   const operations = new OperationService(deps.database, deps.jobs, deps.storage);
   const publicUrl = deps.publicUrl;
   const origin = publicUrl ? new URL(publicUrl).origin : undefined;
