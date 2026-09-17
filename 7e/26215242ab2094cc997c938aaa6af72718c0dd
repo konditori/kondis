@@ -1,0 +1,81 @@
+server/src/composition.cloud-node.ts
+  s_1c8960e5e1f1d5::t_7eef9831846795 27,63,96
+server/src/composition.node.ts
+  s_1c8960e5e1f1d5::t_21d98543ba6a62 5,12-14,30,32,37-38,84-88,104,118-136,141,178-181,185,188-191
+server/src/composition.worker.ts
+  s_1c8960e5e1f1d5::t_488f978d1d718c 5,21-23,37,39,44-45,108-112,128,140-143,145-159,162,191,194-197,199
+server/src/db/schema.ts
+  s_1c8960e5e1f1d5::t_fa192d8cd0c2f7 19-23,25,41-46
+server/src/mcp/app.ts
+  s_1c8960e5e1f1d5::t_a80f84f0ab8913 13-15,17,19-21,28-32,38,91,150-151,211,234,249,274,276,318
+server/src/repositories/activity.repository.ts
+  s_1c8960e5e1f1d5::t_6d540f8d72f475 177-178,194-211,897-898,904,908-911,917,922-926
+server/src/repositories/mcp-oauth.repository.ts
+  s_1c8960e5e1f1d5::t_9adf853e54ee5f 1-68
+server/src/repositories/mcp-preference.repository.ts
+  s_1c8960e5e1f1d5::t_95f00bab04d0ff 1,14-21
+server/src/repositories/upload.repository.ts
+  s_1c8960e5e1f1d5::t_8f2fc94b138ae4 11-19,24-25
+server/src/services/activity-upload.service.ts
+  s_1c8960e5e1f1d5::t_1c1ad7215ae6fc 1-73
+server/src/services/api-key.service.ts
+  s_1c8960e5e1f1d5::t_46671395509c3c 1,4,14-17,24-26,29-31,33,38-48,52,60-61
+server/src/services/auth.service.ts
+  s_1c8960e5e1f1d5::t_065ed23977d1a5 3-4,6,18-21,23-29,178-182
+server/src/services/operation.service.ts
+  s_1c8960e5e1f1d5::t_26f14b08d22d95 3-4,7-10,45-48,57,60-61,63-66,69,71-81,83,91-92,94-115,121,131-140,143,146,168-176,187,194,196-197,205-207,213-216,218,223-224,227,231,239-240,244
+server/src/services/upload.service.ts
+  s_1c8960e5e1f1d5::t_3c69fbe1f25b53 20-21,29-35,272-296,299
+server/src/services/worker-upload.service.ts
+  s_1c8960e5e1f1d5::t_d4a6f87b46dff2 18-19,32-38,282-306,309-310
+server/test/medium/specs/service/mcp.spec.ts
+  s_1c8960e5e1f1d5::t_5889e49175fada 7-9,11-12,15-16,71-84,91,462-469,506
+server/src/mcp/app.spec.ts
+  s_1c8960e5e1f1d5::t_63a13737b7e7d9 5,9,23-27,169
+server/src/mcp/oauth.ts
+  s_ab4535e6934374::t_a3f8450d4e3542 1,4-5,44-46,53,63-64,67,80-89,120,125-134,136,139,151-159,164-180,182,195
+server/src/repositories/mcp-credential.repository.ts
+  s_ab4535e6934374::t_727baf483f40fc 1-141
+server/src/repositories/mcp-operation.repository.ts
+  s_ab4535e6934374::t_d7c528432a495c 1-143
+server/src/schema/tables/mcp-audit.table.ts
+  s_ab4535e6934374::t_3daa56ceb3d343 1-11
+server/src/schema/tables/mcp-credential.table.ts
+  s_ab4535e6934374::t_04032c0b1b0e91 1-19
+server/src/schema/tables/mcp-oauth-client.table.ts
+  s_ab4535e6934374::t_fbf03ca80e5b28 1-9
+server/src/schema/tables/mcp-oauth-code.table.ts
+  s_ab4535e6934374::t_33679c3c19f200 1-13
+server/src/schema/tables/mcp-operation.table.ts
+  s_ab4535e6934374::t_a5562d812f5e0e 1-13
+server/src/schema/tables/mcp-upload.table.ts
+  s_ab4535e6934374::t_8256920cbdf10e 1-13
+server/src/services/mcp-preference.service.ts
+  s_ab4535e6934374::t_f0e6c39b7c478c 1-23
+server/src/services/worker-upload.service.spec.ts
+  s_ab4535e6934374::t_e62f47d1d00150 37,50,62,123,198-202,211-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7e26215242ab2094cc997c938aaa6af72718c0dd",
+  "prompts": {},
+  "sessions": {
+    "s_1c8960e5e1f1d5": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "775f50f0-d820-492b-b08b-77b959f280cf",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_ab4535e6934374": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ae0b-3300-7d62-a29f-284f041c9ddf",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
