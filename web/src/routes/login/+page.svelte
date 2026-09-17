@@ -60,6 +60,11 @@
   <section>
     <h1>Kondis {t("auth_sign_in")} 😰</h1>
     <form method="POST" action="?/login">
+      {#if data.returnTo}<input
+          type="hidden"
+          name="returnTo"
+          value={data.returnTo}
+        />{/if}
       <label
         >{t("email")}<input
           required

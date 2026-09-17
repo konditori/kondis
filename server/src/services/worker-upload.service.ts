@@ -15,6 +15,8 @@ import {
   TakeoutImportItemTerminalStatus,
 } from 'src/enum';
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from 'src/errors';
+import { ActivityUploadService } from 'src/services/activity-upload.service';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import { BaseService } from 'src/services/base.service';
 import type { TakeoutImportItem } from 'src/types';
 import type { JobOf } from 'src/types/jobs';
@@ -27,6 +29,13 @@ const extensionOf = (name: string): string => {
 };
 
 export class WorkerUploadService extends BaseService {
+  constructor(
+    deps: BaseServiceDeps,
+    private readonly activityUploads = new ActivityUploadService(deps.uploadRepository, deps.jobRepository),
+  ) {
+    super(deps);
+  }
+
   async uploadActivity(
     file: UploadedFileData | undefined,
     userId: string,
@@ -270,49 +279,35 @@ export class WorkerUploadService extends BaseService {
     // second complete R2 read just to copy the temporary object.
     await this.storageRepository.write(permanentStoragePath, buffer);
 
-    try {
-      await this.databaseRepository.withTransaction(async (transaction) => {
-        const created = await this.uploadRepository.create(
-          {
-            checksum,
-            original_name: originalName,
-            byte_size: buffer.length,
-            storage_path: permanentStoragePath,
-            user_id: userId,
-          },
-          transaction,
+    const registration = await this.databaseRepository.withTransaction((transaction) =>
+      this.activityUploads.registerInTransaction(
+        {
+          checksum,
+          original_name: originalName,
+          byte_size: buffer.length,
+          storage_path: permanentStoragePath,
+          user_id: userId,
+          activityName,
+          activityDescription,
+          activitySport,
+          activityTags,
+          takeoutImportId,
+          takeoutItemKey,
+          images,
+        },
+        transaction,
+      ),
+    );
+    if (!registration.created) {
+      if (takeoutImportId && takeoutItemKey) {
+        await this.takeoutRepository.completeItem(
+          takeoutImportId,
+          takeoutItemKey,
+          TakeoutImportItemTerminalStatus.Duplicate,
         );
-        await this.jobRepository.queue(
-          {
-            name: JobName.ActivityParse,
-            data: {
-              id: created.id,
-              ...(images?.length && { images }),
-              ...(takeoutImportId && { takeoutImportId }),
-              ...(takeoutItemKey && { takeoutItemKey }),
-              ...(activityName && { activityName }),
-              ...(activityDescription && { activityDescription }),
-              ...(activitySport && { activitySport }),
-              ...(activityTags?.length && { activityTags }),
-            },
-          },
-          { transaction },
-        );
-      });
-    } catch (error) {
-      const raced = await this.uploadRepository.getByChecksum(checksum, userId);
-      if (raced) {
-        if (takeoutImportId && takeoutItemKey) {
-          await this.takeoutRepository.completeItem(
-            takeoutImportId,
-            takeoutItemKey,
-            TakeoutImportItemTerminalStatus.Duplicate,
-          );
-        }
-        await this.storageRepository.delete(storagePath);
-        return JobStatus.Skipped;
       }
-      throw error;
+      await this.storageRepository.delete(storagePath);
+      return JobStatus.Skipped;
     }
 
     await this.storageRepository.delete(storagePath);

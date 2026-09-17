@@ -29,6 +29,7 @@ import {
 } from 'src/demo/live-entrypoint';
 import { PingResponseSchema } from 'src/dtos/ping.dto';
 import { QueueName } from 'src/enum';
+import { createMcpApp, isMcpPath } from 'src/mcp/app';
 import { isWebsocketEvent } from 'src/realtime/protocol';
 import type { CloudflareQueueBatch } from 'src/repositories/cloudflare/cloudflare-queue.repository';
 import { REALTIME_DURABLE_OBJECT_NAME } from 'src/repositories/cloudflare/durable-object-realtime.repository';
@@ -162,6 +163,40 @@ export default {
       }
       const demoMode = composition.config.demoMode;
       const demoUser = demoMode ? await getDemoUser(composition.database) : undefined;
+      if (isMcpPath(new URL(request.url).pathname)) {
+        const {
+          authCredentialRepository: sessions,
+          activityQueryService: queries,
+          apiKeyService: keys,
+          mcpOAuthService: oauth,
+          mcpOperationService: operations,
+          mcpPreferenceService: preferences,
+          queueBindingsConfigured: mutationsEnabled,
+          rateLimitingRepository: rateLimiting,
+          storage,
+        } = composition;
+        const publicUrl = env.KONDIS_MCP_PUBLIC_URL;
+        const mcp = createMcpApp({
+          queries,
+          sessions,
+          keys,
+          operations,
+          oauth,
+          preferences,
+          rateLimiting,
+          storage,
+          publicUrl,
+          trustProxyHeaders: true,
+          mutationsEnabled,
+          demoMode,
+          demoUserId: demoUser?.id,
+        });
+        const response = await mcp.fetch(request);
+        if (response.ok && request.method === 'POST' && !demoMode && composition.queueBindingsConfigured) {
+          _ctx.waitUntil(dispatchWorkerJobs(env));
+        }
+        return response;
+      }
       if (isDemoLiveTrackerIngestionRequest(request, env)) {
         const ingestion = ingestDemoLiveTrackerPoint(request, composition, demoUser)
           .catch((error) => {

@@ -34,7 +34,7 @@ describe(WorkerUploadService.name, () => {
   const sha256 = vi.fn(() => Promise.resolve(checksum));
   const queue = vi.fn(() => Promise.resolve());
   const getByChecksum = vi.fn();
-  const create = vi.fn(() => Promise.resolve({ id: 'upload-id' }));
+  const createIfAbsent = vi.fn<() => Promise<{ id: string } | undefined>>(() => Promise.resolve({ id: 'upload-id' }));
   const getByUploadId = vi.fn();
   const withTransaction = vi.fn(async (fn: (trx: KondisTransaction) => Promise<unknown>) => fn(transaction));
   const emit = vi.fn(() => Promise.resolve());
@@ -47,7 +47,7 @@ describe(WorkerUploadService.name, () => {
         cryptoRepository: { sha256 } as unknown as CryptoRepository,
         jobRepository: { queue } as unknown as JobRepository,
         takeoutRepository: { completeItem } as unknown as TakeoutRepository,
-        uploadRepository: { getByChecksum, create } as unknown as UploadRepository,
+        uploadRepository: { getByChecksum, createIfAbsent } as unknown as UploadRepository,
         activityRepository: { getByUploadId } as unknown as ActivityRepository,
         databaseRepository: { withTransaction } as TransactionRepository,
         eventRepository: { emit } as RealtimeRepository,
@@ -59,6 +59,7 @@ describe(WorkerUploadService.name, () => {
     readLimited.mockResolvedValue(contents);
     sha256.mockResolvedValue(checksum);
     getByChecksum.mockResolvedValue(undefined);
+    createIfAbsent.mockResolvedValue({ id: 'upload-id' });
     getByUploadId.mockResolvedValue(undefined);
   });
 
@@ -119,7 +120,7 @@ describe(WorkerUploadService.name, () => {
     expect(buildPath).toHaveBeenCalledWith(userId, checksum, '.fit');
     expect(write).toHaveBeenCalledWith('00/00/permanent.fit', contents);
     expect(withTransaction).toHaveBeenCalledOnce();
-    expect(create).toHaveBeenCalledWith(
+    expect(createIfAbsent).toHaveBeenCalledWith(
       {
         checksum,
         original_name: baseJob.originalName,
@@ -194,9 +195,11 @@ describe(WorkerUploadService.name, () => {
 
   it('treats a concurrent insert as a duplicate and advances takeout progress', async () => {
     const service = setup();
-    const insertError = new Error('unique violation');
-    getByChecksum.mockResolvedValueOnce(undefined).mockResolvedValueOnce({ id: 'raced-upload' });
-    withTransaction.mockRejectedValueOnce(insertError);
+    getByChecksum
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ id: 'raced-upload' });
+    createIfAbsent.mockResolvedValueOnce(undefined);
 
     await expect(
       service.handleActivityUpload({
@@ -205,7 +208,8 @@ describe(WorkerUploadService.name, () => {
         takeoutItemKey: 'activity:morning-run.fit',
       }),
     ).resolves.toBe(JobStatus.Skipped);
-    expect(getByChecksum).toHaveBeenCalledTimes(2);
+    expect(getByChecksum).toHaveBeenCalledTimes(3);
+    expect(getByChecksum).toHaveBeenLastCalledWith(checksum, userId, transaction);
     expect(completeItem).toHaveBeenCalledWith('import-id', 'activity:morning-run.fit', 'duplicate');
     expect(deleteFile).toHaveBeenCalledWith(baseJob.storagePath);
   });

@@ -1,4 +1,5 @@
 import type { Handle } from "@sveltejs/kit";
+import { apiUrl } from "$lib/server/api";
 
 export const handle: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get("kondis_session");
@@ -6,6 +7,34 @@ export const handle: Handle = async ({ event, resolve }) => {
     ? undefined
     : event.platform?.env?.KONDIS_API;
   const pathname = new URL(event.request.url).pathname;
+  if (
+    pathname === "/mcp" ||
+    pathname.startsWith("/mcp/") ||
+    pathname.startsWith("/oauth/") ||
+    pathname.startsWith("/.well-known/oauth-")
+  ) {
+    if (service) return service.fetch(event.request);
+    const target = apiUrl(pathname);
+    target.search = event.url.search;
+    const headers = new Headers(event.request.headers);
+    // Overwrite client-supplied forwarding headers at the trusted proxy boundary.
+    headers.set("x-forwarded-host", event.url.host);
+    headers.set("x-forwarded-proto", event.url.protocol.slice(0, -1));
+    headers.set("x-forwarded-for", event.getClientAddress());
+    headers.delete("host");
+    headers.delete("connection");
+    const init: RequestInit & { duplex?: "half" } = {
+      method: event.request.method,
+      headers,
+      body: ["GET", "HEAD"].includes(event.request.method)
+        ? undefined
+        : event.request.body,
+      redirect: "manual",
+      signal: event.request.signal,
+    };
+    if (init.body) init.duplex = "half";
+    return globalThis.fetch(target, init);
+  }
   const isRealtimeUpgrade =
     (pathname === "/events" || pathname === "/api/v1/events") &&
     event.request.headers.get("Upgrade")?.toLowerCase() === "websocket";

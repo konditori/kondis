@@ -32,9 +32,9 @@ Main documentation is available on the [documentation site](https://docs.kondis.
 * Similar route matching
 * Android OIDC redirect for logins
 * Demo app, deployed on Cloudflare
+* MCP server
 
 ## Planned features (subject to change)
-* MCP server
 * iOS and Apple Watch support
 * Scoped API keys
 * Audio coach with TTS during activities

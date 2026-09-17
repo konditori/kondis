@@ -2,6 +2,7 @@ import { createHyperdriveDatabase } from 'src/db/hyperdrive';
 import type { DemoLiveIngestionBinding, DemoLiveTrackerNamespaceBinding } from 'src/demo/live-durable-object';
 import { createWorkerJobHandlers } from 'src/job-handler.registry.worker';
 import { ConsoleLogger } from 'src/logger';
+import { McpOAuthService } from 'src/mcp/oauth';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import {
   CloudflareQueueRepository,
@@ -17,6 +18,10 @@ import { EnvConfigRepository } from 'src/repositories/env-config.repository';
 import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import { McpCredentialRepository } from 'src/repositories/mcp-credential.repository';
+import { McpOAuthRepository } from 'src/repositories/mcp-oauth.repository';
+import { McpOperationRepository } from 'src/repositories/mcp-operation.repository';
+import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { NoopRealtimeRepository } from 'src/repositories/noop-realtime.repository';
 import { PostgresJobRepository } from 'src/repositories/postgres-job.repository';
@@ -28,11 +33,16 @@ import { TakeoutRepository } from 'src/repositories/takeout.repository';
 import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
+import { ActivityQueryService } from 'src/services/activity-query.service';
+import { ActivityUploadService } from 'src/services/activity-upload.service';
 import { ActivityService } from 'src/services/activity.service';
+import { ApiKeyService } from 'src/services/api-key.service';
 import { AuthService } from 'src/services/auth.service';
 import type { BaseServiceDeps } from 'src/services/base.service';
 import { JobService } from 'src/services/job.service';
 import { LiveService } from 'src/services/live-activity.service';
+import { McpPreferenceService } from 'src/services/mcp-preference.service';
+import { OperationService } from 'src/services/operation.service';
 import { PostgresJobService } from 'src/services/postgres-job.service';
 import { SocialService } from 'src/services/social.service';
 import { WorkerActivityImageService } from 'src/services/worker-activity-image.service';
@@ -44,6 +54,7 @@ const workerCrypto = new WorkerCryptoRepository();
 export type WorkerBindings = {
   HYPERDRIVE: { connectionString: string };
   KONDIS_SETUP_TOKEN?: string;
+  KONDIS_MCP_PUBLIC_URL?: string;
   KONDIS_REGISTRATION_ENABLED?: boolean | string;
   KONDIS_CLOUD_NODE_PROCESSOR_ENABLED?: boolean | string;
   KONDIS_DEMO_MODE?: boolean | string;
@@ -94,6 +105,11 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   const fitRepository = new FitRepository(new ConsoleLogger());
   const activityRepository = new ActivityRepository(database);
   const uploadRepository = new UploadRepository(database);
+  const activityUploadService = new ActivityUploadService(uploadRepository, jobRepository);
+  const mcpCredentialRepository = new McpCredentialRepository(database);
+  const mcpOAuthRepository = new McpOAuthRepository(database);
+  const mcpOperationRepository = new McpOperationRepository(database);
+  const mcpPreferenceRepository = new McpPreferenceRepository(database);
   const socialRepository = new SocialRepository(database, env.KONDIS_DEMO_MEDIA_BASE_URL);
   const importProgressStore = new TakeoutRepository(database);
 
@@ -109,6 +125,7 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     liveActivityRepository: new LiveActivityRepository(database),
     logger: new ConsoleLogger(),
     mediaRepository,
+    mcpPreferenceRepository,
     mediaBaseUrl: env.KONDIS_DEMO_MEDIA_BASE_URL,
     rateLimitingRepository,
     sessionRepository: authCredentialRepository,
@@ -120,10 +137,29 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
     userRepository,
   };
 
-  const authService = new AuthService(serviceDeps);
+  const authService = new AuthService(serviceDeps, {
+    deleteExpired: mcpOAuthRepository.deleteExpired.bind(mcpOAuthRepository),
+    deleteExpiredUploads: mcpOperationRepository.deleteExpiredUploads.bind(mcpOperationRepository),
+  });
   const activityService = new ActivityService(serviceDeps);
+  const apiKeyService = new ApiKeyService(mcpCredentialRepository, transactions);
+  const mcpOAuthService = new McpOAuthService(
+    mcpOAuthRepository,
+    mcpCredentialRepository,
+    transactions,
+    env.KONDIS_MCP_PUBLIC_URL ?? '',
+  );
+  const mcpOperationService = new OperationService(
+    mcpOperationRepository,
+    transactions,
+    activityService,
+    activityUploadService,
+    storage,
+  );
+  const mcpPreferenceService = new McpPreferenceService(mcpPreferenceRepository);
+  const activityQueryService = new ActivityQueryService(serviceDeps);
   const workerActivityImageService = storage ? new WorkerActivityImageService(serviceDeps) : undefined;
-  const workerUploadService = storage ? new WorkerUploadService(serviceDeps) : undefined;
+  const workerUploadService = storage ? new WorkerUploadService(serviceDeps, activityUploadService) : undefined;
   const workerUserService = storage ? new WorkerUserService(serviceDeps) : undefined;
   const socialService = new SocialService(serviceDeps);
   const liveActivityService = new LiveService(serviceDeps);
@@ -152,10 +188,17 @@ export const createWorkerInvocationComposition = (env: WorkerBindings) => {
   return {
     close,
     database,
+    rateLimitingRepository,
     authCredentialRepository,
     authService,
+    apiKeyService,
+    mcpOAuthService,
+    mcpOperationService,
+    mcpPreferenceService,
     activityService,
+    activityUploadService,
     activityRepository,
+    activityQueryService,
     uploadRepository,
     fitRepository,
     socialService,

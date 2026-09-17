@@ -58,6 +58,11 @@ export enum ActivityType {
   Other = 'other',
 }
 
+export enum UnitSystem {
+  Metric = 'metric',
+  Imperial = 'imperial',
+}
+
 export enum UploadKind {
   Activity = 'activity',
   TakeoutActivity = 'takeoutActivity',

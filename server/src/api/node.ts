@@ -181,8 +181,14 @@ export const createNodeApiApp = (dependencies: NodeApiDependencies): KondisApiAp
     users: dependencies.userRepository,
   });
 
-export const createNodeServer = (apiApp: KondisApiApp): Server => {
+export const createNodeServer = (
+  apiApp: KondisApiApp,
+  mcpApp?: ReturnType<typeof import('src/mcp/app').createMcpApp>,
+): Server => {
   const runtimeApp = new Hono<ApiEnv>({ strict: false });
   runtimeApp.route(API_PREFIX, apiApp);
+  if (mcpApp) {
+    runtimeApp.route('/', mcpApp);
+  }
   return createAdaptorServer({ fetch: runtimeApp.fetch, overrideGlobalObjects: false }) as Server;
 };

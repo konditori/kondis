@@ -8,12 +8,21 @@ export class UploadRepository {
     return executor.insertInto('upload').values(upload).returningAll().executeTakeFirstOrThrow();
   }
 
+  createIfAbsent(upload: NewUpload, executor: KondisExecutor = this.db): Promise<Upload | undefined> {
+    return executor
+      .insertInto('upload')
+      .values(upload)
+      .onConflict((conflict) => conflict.columns(['user_id', 'checksum']).doNothing())
+      .returningAll()
+      .executeTakeFirst();
+  }
+
   getById(id: string): Promise<Upload | undefined> {
     return this.db.selectFrom('upload').selectAll().where('id', '=', id).executeTakeFirst();
   }
 
-  getByChecksum(checksum: string, userId?: string): Promise<Upload | undefined> {
-    let query = this.db.selectFrom('upload').selectAll().where('checksum', '=', checksum);
+  getByChecksum(checksum: string, userId?: string, executor: KondisExecutor = this.db): Promise<Upload | undefined> {
+    let query = executor.selectFrom('upload').selectAll().where('checksum', '=', checksum);
     if (userId) {
       query = query.where('user_id', '=', userId);
     }

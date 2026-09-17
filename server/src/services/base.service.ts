@@ -9,6 +9,7 @@ import type { ActivityRepository } from 'src/repositories/activity.repository';
 import type { FitRepository } from 'src/repositories/fit.repository';
 import type { GpxRepository } from 'src/repositories/gpx.repository';
 import type { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import type { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import type { MediaRepository } from 'src/repositories/media.repository';
 import type { RateLimitingRepository } from 'src/repositories/rate-limiting.repository';
 import type { SessionRepository } from 'src/repositories/session.repository';
@@ -30,6 +31,7 @@ export type BaseServiceDeps = {
   liveActivityRepository: LiveActivityRepository;
   logger: ConsoleLogger;
   mediaRepository: MediaRepository;
+  mcpPreferenceRepository: McpPreferenceRepository;
   mediaBaseUrl?: string;
   rateLimitingRepository: RateLimitingRepository;
   sessionRepository: SessionRepository;
@@ -41,9 +43,6 @@ export type BaseServiceDeps = {
   userRepository: UserRepository;
 };
 
-// Imports every repository once so concrete services only declare the
-// dependencies they actually use. The injected logger is treated as a
-// template; each service instance logs with its own class name as context.
 export class BaseService {
   protected readonly activityRepository: ActivityRepository;
   protected readonly configRepository: ConfigRepository;
@@ -56,6 +55,7 @@ export class BaseService {
   protected readonly liveActivityRepository: LiveActivityRepository;
   protected readonly logger: ConsoleLogger;
   protected readonly mediaRepository: MediaRepository;
+  protected readonly mcpPreferenceRepository: McpPreferenceRepository;
   protected readonly mediaBaseUrl?: string;
   protected readonly rateLimitingRepository: RateLimitingRepository;
   protected readonly sessionRepository: SessionRepository;
@@ -77,6 +77,7 @@ export class BaseService {
     this.jobRepository = deps.jobRepository;
     this.liveActivityRepository = deps.liveActivityRepository;
     this.mediaRepository = deps.mediaRepository;
+    this.mcpPreferenceRepository = deps.mcpPreferenceRepository;
     this.mediaBaseUrl = deps.mediaBaseUrl;
     this.rateLimitingRepository = deps.rateLimitingRepository;
     this.sessionRepository = deps.sessionRepository;

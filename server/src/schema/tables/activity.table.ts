@@ -40,6 +40,9 @@ export class ActivityTable {
   @Column({ type: 'text[]' })
   tags!: Generated<string[]>;
 
+  @Column({ type: 'integer', default: 1 })
+  revision!: Generated<number>;
+
   @Column({ type: 'timestamp' })
   started_at!: Timestamp;
 

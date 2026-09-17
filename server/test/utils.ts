@@ -29,6 +29,7 @@ export const newServiceDeps = (overrides: Partial<BaseServiceDeps>): BaseService
   liveActivityRepository: {} as never,
   logger: new ConsoleLogger({ logLevels: [] }),
   mediaRepository: {} as never,
+  mcpPreferenceRepository: {} as never,
   rateLimitingRepository: {} as never,
   sessionRepository: {} as never,
   socialRepository: {} as never,

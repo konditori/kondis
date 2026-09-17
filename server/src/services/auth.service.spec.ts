@@ -203,15 +203,17 @@ describe(AuthService.name, () => {
     expect(log.mock.calls[0][0]).toContain('Welcome to Kondis!');
     expect(log.mock.calls[0][0]).toContain(SETUP_TOKEN);
     expect(log.mock.calls[0][0]).toContain('go to the app in a web browser');
+    expect(getOrCreateSetupToken).toHaveBeenCalledWith(undefined);
 
     count.mockResolvedValue({ count: 1 });
     await sut.logSetupTokenIfRequired();
     expect(log).toHaveBeenCalledOnce();
+    expect(getOrCreateSetupToken).toHaveBeenCalledOnce();
 
     count.mockResolvedValue({ count: 0 });
-    getOrCreateSetupToken.mockResolvedValueOnce(undefined);
     await sut.logSetupTokenIfRequired();
-    expect(log).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledTimes(2);
+    expect(getOrCreateSetupToken).toHaveBeenCalledTimes(2);
   });
 
   it('revokes the session and disconnects its realtime clients', async () => {

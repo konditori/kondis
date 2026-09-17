@@ -10,28 +10,34 @@
   import { API_BASE, getSdkRequestOptions } from "$lib/api";
   import { t } from "$lib/i18n";
 
-  enum ImportPhase {
-    Idle = "idle",
-    Scanning = "scanning",
-    Uploading = "uploading",
-    Processing = "processing",
-    Done = "done",
-    Error = "error",
-    Cancelled = "cancelled",
-  }
+  // Svelte's TypeScript transform elides enums used by template expressions.
+  // Runtime value objects keep these names available to both the script and markup.
+  const ImportPhase = {
+    Idle: "idle",
+    Scanning: "scanning",
+    Uploading: "uploading",
+    Processing: "processing",
+    Done: "done",
+    Error: "error",
+    Cancelled: "cancelled",
+  } as const;
+  type ImportPhase = (typeof ImportPhase)[keyof typeof ImportPhase];
 
-  enum WorkerEventType {
-    Phase = "phase",
-    Scanned = "scanned",
-    Uploaded = "uploaded",
-    Complete = "complete",
-    Error = "error",
-  }
+  const WorkerEventType = {
+    Phase: "phase",
+    Scanned: "scanned",
+    Uploaded: "uploaded",
+    Complete: "complete",
+    Error: "error",
+  } as const;
+  type WorkerEventType = (typeof WorkerEventType)[keyof typeof WorkerEventType];
 
   type WorkerEvent = {
     type: WorkerEventType;
     phase?:
-      ImportPhase.Scanning | ImportPhase.Uploading | ImportPhase.Processing;
+      | (typeof ImportPhase)["Scanning"]
+      | (typeof ImportPhase)["Uploading"]
+      | (typeof ImportPhase)["Processing"];
     total?: number;
     uploaded?: number;
     extractionErrors?: number;

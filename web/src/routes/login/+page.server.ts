@@ -2,7 +2,16 @@ import { fail, redirect } from "@sveltejs/kit";
 import { apiUrl } from "$lib/server/api";
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals }) => {
+const connectionReturnTo = (
+  value: FormDataEntryValue | string | null,
+): string | undefined =>
+  typeof value === "string" &&
+  value.startsWith("/settings/connections") &&
+  !value.includes("\\")
+    ? value
+    : undefined;
+
+export const load: PageServerLoad = async ({ locals, url }) => {
   const response = await locals.kondisFetch(apiUrl("api/v1/auth/setup"));
   const status = response.ok
     ? await response.json()
@@ -12,6 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   return {
     setupRequired: false,
     registrationEnabled: status.registrationEnabled,
+    returnTo: connectionReturnTo(url.searchParams.get("returnTo")),
   };
 };
 export const actions: Actions = {
@@ -34,6 +44,6 @@ export const actions: Actions = {
       secure: url.protocol === "https:",
       maxAge: 60 * 60 * 24 * 30,
     });
-    throw redirect(303, "/");
+    throw redirect(303, connectionReturnTo(form.get("returnTo")) ?? "/");
   },
 };

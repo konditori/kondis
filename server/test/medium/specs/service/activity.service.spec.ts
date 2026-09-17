@@ -593,7 +593,7 @@ describe(ActivityService.name, () => {
 
       // The request only updates metadata. Recalculation must happen in the worker.
       const immediatelyHidden = await serviceApi.listRecent({ limit: 50 });
-      expect(immediatelyHidden.activities.find(({ id }) => id === goldId)?.topBestEfforts).toEqual([]);
+      expect(immediatelyHidden.activities.find(({ id }) => id === goldId)?.topBestEfforts).toBeNull();
 
       await jobs.waitForQueueCompletion(
         QueueName.ActivityParsing,

@@ -10,6 +10,7 @@ import { FitRepository } from 'src/repositories/fit.repository';
 import { GpxRepository } from 'src/repositories/gpx.repository';
 import { HttpRealtimeRepository } from 'src/repositories/http-realtime.repository';
 import { LiveActivityRepository } from 'src/repositories/live-activity.repository';
+import { McpPreferenceRepository } from 'src/repositories/mcp-preference.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
 import { FileSystemStorageRepository } from 'src/repositories/node/filesystem-storage.repository';
 import { NodeCryptoRepository } from 'src/repositories/node/node-crypto.repository';
@@ -23,6 +24,7 @@ import { TcxRepository } from 'src/repositories/tcx.repository';
 import { UploadRepository } from 'src/repositories/upload.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { ActivityImageService } from 'src/services/activity-image.service';
+import { ActivityUploadService } from 'src/services/activity-upload.service';
 import { ActivityService } from 'src/services/activity.service';
 import { AuthService } from 'src/services/auth.service';
 import type { BaseServiceDeps } from 'src/services/base.service';
@@ -58,6 +60,7 @@ export const createCloudNodeProcessorComposition = ({
   const storageRepository = new FileSystemStorageRepository(configRepository, cryptoRepository);
   const tcxRepository = new TcxRepository(logger);
   const uploadRepository = new UploadRepository(database);
+  const activityUploadService = new ActivityUploadService(uploadRepository, jobRepository);
   const userRepository = new UserRepository(database);
   const eventRepository =
     realtime ?? createCloudNodeRealtimePublisher(database, configRepository, socialRepository, sessionRepository);
@@ -75,6 +78,7 @@ export const createCloudNodeProcessorComposition = ({
     liveActivityRepository: new LiveActivityRepository(database),
     logger,
     mediaRepository,
+    mcpPreferenceRepository: new McpPreferenceRepository(database),
     rateLimitingRepository,
     sessionRepository,
     socialRepository,
@@ -89,7 +93,7 @@ export const createCloudNodeProcessorComposition = ({
   const activityImageService = new ActivityImageService(serviceDeps);
   const authService = new AuthService(serviceDeps);
   const storageService = new StorageService(serviceDeps);
-  const uploadService = new UploadService(serviceDeps);
+  const uploadService = new UploadService(serviceDeps, activityUploadService);
   const userService = new UserService(serviceDeps);
   const descriptors = createJobHandlerRegistry({
     activityService,
