@@ -1,0 +1,19 @@
+pnpm-lock.yaml
+  s_698b2d19c5e36d::t_e807402c669e01 277-278
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "44f6683e6cfe629a28dd547361d48671f9d13a48",
+  "prompts": {},
+  "sessions": {
+    "s_698b2d19c5e36d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f44c8f9fcffepcuEul08JVj62t",
+        "model": "@cf/moonshotai/kimi-k3"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
