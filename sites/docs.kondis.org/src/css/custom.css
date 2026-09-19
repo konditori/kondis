@@ -227,7 +227,11 @@ body {
 }
 
 .navbar {
-  background: color-mix(in srgb, var(--ifm-navbar-background-color) 94%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--ifm-navbar-background-color) 94%,
+    transparent
+  );
   border-bottom: 1px solid var(--ifm-color-emphasis-200);
   box-shadow: none;
 }
@@ -258,7 +262,11 @@ body {
 }
 
 .theme-doc-sidebar-container {
-  background: color-mix(in srgb, var(--ifm-navbar-background-color) 82%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--ifm-navbar-background-color) 82%,
+    transparent
+  );
   border-right: 1px solid var(--ifm-color-emphasis-200);
 }
 
