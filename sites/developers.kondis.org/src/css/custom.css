@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap");
+
 :root {
   /* Immich-like docs typography: friendly, geometric, and entirely sans-serif. */
   --ifm-color-primary: #4255b8;
@@ -150,4 +152,192 @@ body {
 }
 .hero__title {
   letter-spacing: -0.04em;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cloudflare OS-inspired site theme                                          */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --ifm-font-family-base: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --ifm-heading-font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --ifm-font-family-monospace: "DM Mono", ui-monospace, monospace;
+  --ifm-color-primary: #f6821f;
+  --ifm-color-primary-dark: #d96600;
+  --ifm-color-primary-darker: #c45716;
+  --ifm-color-primary-darkest: #9a4d1c;
+  --ifm-color-primary-light: #ff9b45;
+  --ifm-color-primary-lighter: #ffb16e;
+  --ifm-color-primary-lightest: #ffd0a8;
+  --ifm-background-color: #f7f6f3;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-navbar-background-color: #fbfaf8;
+  --ifm-footer-background-color: #20201f;
+  --ifm-color-content: #292725;
+  --ifm-heading-color: #292725;
+  --ifm-color-emphasis-100: #f0eee9;
+  --ifm-color-emphasis-200: #d8d4ce;
+  --ifm-color-emphasis-300: #c5c0b8;
+  --ifm-code-background: #f0eee9;
+  --ifm-toc-border-color: #d8d4ce;
+  --ifm-hr-border-color: #d8d4ce;
+  --ifm-link-color: #c45716;
+  --ifm-link-hover-color: #9a4d1c;
+  --ifm-navbar-height: 4.5rem;
+  --ifm-global-radius: 0.45rem;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #ffb16e;
+  --ifm-color-primary-dark: #f6821f;
+  --ifm-color-primary-darker: #d96600;
+  --ifm-color-primary-darkest: #c45716;
+  --ifm-color-primary-light: #ffc18b;
+  --ifm-color-primary-lighter: #ffd0a8;
+  --ifm-color-primary-lightest: #ffe3c7;
+  --ifm-background-color: #20201f;
+  --ifm-background-surface-color: #292826;
+  --ifm-navbar-background-color: #242321;
+  --ifm-footer-background-color: #181817;
+  --ifm-color-content: #f5f2ed;
+  --ifm-heading-color: #f5f2ed;
+  --ifm-color-emphasis-100: #2d2b28;
+  --ifm-color-emphasis-200: #46433f;
+  --ifm-color-emphasis-300: #5b5751;
+  --ifm-code-background: #2d2b28;
+  --ifm-toc-border-color: #46433f;
+  --ifm-hr-border-color: #46433f;
+  --ifm-link-color: #ffb16e;
+  --ifm-link-hover-color: #ffd0a8;
+}
+
+html {
+  border-top: 4px solid #f6821f;
+}
+
+body {
+  background-color: var(--ifm-background-color);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in srgb, var(--ifm-color-emphasis-200) 55%, transparent) 1px,
+    transparent 1.2px
+  );
+  background-size: 18px 18px;
+  letter-spacing: -0.01em;
+}
+
+.navbar {
+  background: color-mix(
+    in srgb,
+    var(--ifm-navbar-background-color) 94%,
+    transparent
+  );
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  box-shadow: none;
+}
+
+.navbar__brand,
+.navbar__link,
+.menu__link,
+.table-of-contents {
+  color: var(--ifm-color-content);
+}
+
+.navbar__link:hover,
+.navbar__link--active,
+.menu__link:hover,
+.menu__link--active {
+  color: var(--ifm-color-primary-dark);
+}
+
+.menu__link--active {
+  background: var(--ifm-color-emphasis-100);
+}
+
+.menu__link,
+.theme-doc-breadcrumbs__link,
+.pagination-nav__link,
+.card {
+  border-radius: var(--ifm-global-radius);
+}
+
+.theme-doc-sidebar-container {
+  background: color-mix(
+    in srgb,
+    var(--ifm-navbar-background-color) 82%,
+    transparent
+  );
+  border-right: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.theme-doc-markdown h1,
+.theme-doc-markdown h2,
+.theme-doc-markdown h3,
+.theme-doc-markdown h4 {
+  color: var(--ifm-heading-color);
+}
+
+.theme-doc-markdown h1 {
+  font-size: clamp(2.75rem, 5vw, 4.25rem);
+}
+
+.theme-doc-markdown code,
+:not(pre) > code {
+  background: var(--ifm-code-background);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-primary-darkest);
+}
+
+.theme-code-block,
+pre.prism-code {
+  background: #2d2b28 !important;
+  border: 1px solid #46433f;
+  border-radius: var(--ifm-global-radius);
+  box-shadow: 0 12px 32px #0000001c;
+}
+
+.theme-code-block > div:first-child {
+  background: #242321 !important;
+  border-bottom: 1px solid #46433f;
+}
+
+.theme-code-block code,
+pre.prism-code code {
+  background: transparent;
+  color: #f5f2ed;
+}
+
+.hero {
+  background-color: var(--ifm-background-color);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    #d9d5cf 1px,
+    transparent 1.2px
+  );
+  background-size: 18px 18px;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+[data-theme="dark"] .hero {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    #49443e 1px,
+    transparent 1.2px
+  );
+}
+
+.pagination-nav__link,
+.card {
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.pagination-nav__link:hover,
+.card:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 12px 28px #453a2f1c;
+}
+
+.footer {
+  border-top: 1px solid #46433f;
 }
