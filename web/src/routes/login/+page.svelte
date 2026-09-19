@@ -3,14 +3,14 @@
   import { Moon, Sun } from "@lucide/svelte";
   import { t } from "$lib/i18n";
   let { data, form } = $props();
-  let theme = $state<"dark" | "light">("dark");
+  let theme = $state<"dark" | "light">("light");
 
   function setTheme(nextTheme: "dark" | "light", persist = true) {
     theme = nextTheme;
     document.documentElement.dataset.theme = nextTheme;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", nextTheme === "dark" ? "#08111f" : "#f4f7fb");
+      ?.setAttribute("content", nextTheme === "dark" ? "#20201f" : "#f7f6f3");
     if (!persist) return;
     try {
       localStorage.setItem("kondis-theme", nextTheme);

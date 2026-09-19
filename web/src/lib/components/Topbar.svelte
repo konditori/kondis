@@ -45,7 +45,7 @@
   } = $props();
   let search = $state("");
   let searchOpen = $state(false);
-  let theme = $state<"dark" | "light">("dark");
+  let theme = $state<"dark" | "light">("light");
   let searchInput = $state<HTMLInputElement>();
   let searchForm = $state<HTMLFormElement>();
   let menu: HTMLDetailsElement;
@@ -224,7 +224,7 @@
     document.documentElement.dataset.theme = nextTheme;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", nextTheme === "dark" ? "#08111f" : "#f4f7fb");
+      ?.setAttribute("content", nextTheme === "dark" ? "#20201f" : "#f7f6f3");
     if (!persist) return;
     try {
       localStorage.setItem("kondis-theme", nextTheme);

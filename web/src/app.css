@@ -1,5 +1,5 @@
 @import "leaflet/dist/leaflet.css";
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
   font-family:
@@ -10,23 +10,23 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  color: #edf3ff;
-  background: #08111f;
+  color: #292725;
+  background: #f7f6f3;
   font-synthesis: none;
-  color-scheme: dark;
-  --green: #78a6ff;
-  --green-dark: #b8d0ff;
-  --green-soft: #223a62;
-  --line: #2b3a54;
-  --muted: #8d9bb4;
-  --surface: #151f31;
-  --surface-muted: #101a2a;
-  --text: #edf3ff;
-  --page: #08111f;
-  --shell: #101a2a;
-  --raised: #1a2639;
-  --focus: #78a6ff;
-  --shadow: #02081280;
+  color-scheme: light;
+  --green: #f6821f;
+  --green-dark: #c65d00;
+  --green-soft: #fff0e2;
+  --line: #d8d4ce;
+  --muted: #746e67;
+  --surface: #ffffff;
+  --surface-muted: #f0eee9;
+  --text: #292725;
+  --page: #f7f6f3;
+  --shell: #fbfaf8;
+  --raised: #ffffff;
+  --focus: #f6821f;
+  --shadow: #2927251a;
 }
 
 * {
@@ -5129,4 +5129,521 @@ body,
 :root:not([data-theme="light"]) .mobile-nav .active,
 :root:not([data-theme="light"]) .mobile-nav button {
   color: var(--green);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cloudflare OS-inspired app theme                                           */
+/* -------------------------------------------------------------------------- */
+
+:root:not([data-theme="light"]) {
+  color: #f5f2ed;
+  background: #20201f;
+  color-scheme: dark;
+  --green: #f6821f;
+  --green-dark: #ffb16e;
+  --green-soft: #3a2b20;
+  --line: #46433f;
+  --muted: #aaa39a;
+  --surface: #292826;
+  --surface-muted: #242321;
+  --text: #f5f2ed;
+  --page: #20201f;
+  --shell: #242321;
+  --raised: #2d2b28;
+  --focus: #f6821f;
+  --shadow: #00000066;
+}
+
+:root[data-theme="light"] {
+  color: #292725;
+  background: #f7f6f3;
+  color-scheme: light;
+  --green: #f6821f;
+  --green-dark: #c45716;
+  --green-soft: #fff0df;
+  --line: #d8d4ce;
+  --muted: #746e67;
+  --surface: #ffffff;
+  --surface-muted: #f0eee9;
+  --text: #292725;
+  --page: #f7f6f3;
+  --shell: #fbfaf8;
+  --raised: #ffffff;
+  --focus: #f6821f;
+  --shadow: #453a2f1c;
+}
+
+html,
+body {
+  background: var(--page);
+}
+
+body {
+  border-top: 4px solid #f6821f;
+}
+
+h1,
+h2,
+h3,
+.brand,
+button,
+input,
+select,
+textarea {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+.app-main {
+  background-color: var(--page);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in srgb, var(--line) 42%, transparent) 1px,
+    transparent 1.2px
+  );
+  background-size: 18px 18px;
+}
+
+.sidebar {
+  top: 4px;
+  bottom: 0;
+  background: var(--shell);
+  border-right-color: var(--line);
+}
+
+.brand {
+  color: var(--text);
+}
+
+.brand-mark {
+  color: inherit;
+  background: transparent;
+}
+
+.sidebar nav a,
+.sidebar-bottom > a {
+  color: var(--muted);
+  border-radius: 7px;
+}
+
+.sidebar nav a:hover,
+.sidebar-bottom > a:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--green-soft) 75%, transparent);
+}
+
+.sidebar nav a.active,
+.sidebar-bottom > a.active {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+
+.topbar {
+  top: 4px;
+  background: color-mix(in srgb, var(--shell) 94%, transparent);
+  border-bottom-color: var(--line);
+}
+
+.top-search,
+.search {
+  color: var(--muted);
+  background: var(--surface);
+  border-color: var(--line);
+  border-radius: 7px;
+}
+
+.top-search input,
+.search input,
+.settings-field input,
+.metadata-editor input,
+.metadata-editor select,
+.metadata-editor textarea,
+.comment-edit-form input,
+.distance-picker select {
+  color: var(--text);
+}
+
+.top-search:focus-within,
+.search:focus-within,
+.metadata-editor input:focus,
+.metadata-editor select:focus,
+.metadata-editor textarea:focus,
+.distance-picker select:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px #f6821f2e;
+}
+
+.search-toggle,
+.theme-toggle,
+.notification-menu summary {
+  color: var(--muted);
+  border-radius: 6px;
+}
+
+.search-toggle:hover,
+.search-toggle:focus-visible,
+.theme-toggle:hover,
+.theme-toggle:focus-visible,
+.notification-menu summary:hover,
+.notification-menu[open] summary {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+
+.notification-badge {
+  border-color: var(--shell);
+}
+
+.plus-menu summary {
+  color: #fff;
+  background: var(--green);
+  border-color: var(--green);
+  border-radius: 6px;
+}
+
+.plus-menu[open] summary,
+.plus-menu summary:hover {
+  color: #fff;
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+}
+
+.user-menu summary:hover,
+.user-menu[open] summary {
+  background: var(--green-soft);
+}
+
+.notification-popover,
+.plus-menu-popover,
+.user-menu-popover,
+.comment-menu-popover,
+.detail-likers-popover {
+  color: var(--text);
+  background: var(--raised);
+  border-color: var(--line);
+  box-shadow: 0 18px 42px var(--shadow);
+}
+
+.notification-list strong,
+.notification-row strong,
+.detail-likers-popover a,
+.comment-menu-popover button,
+.comment-edit-form button,
+.plus-menu-popover button,
+.user-menu-popover a,
+.user-menu-popover button {
+  color: var(--text);
+}
+
+.notification-list a:hover,
+.notification-list a.notification-unread,
+.notification-row:hover,
+.plus-menu-popover button:hover,
+.user-menu-popover a:hover,
+.user-menu-popover button:hover,
+.comment-menu-popover button:hover {
+  background: var(--green-soft);
+}
+
+.page-shell {
+  padding-top: 48px;
+}
+
+.eyebrow,
+.activity-athlete,
+.back-link:hover,
+.upload-back:hover,
+.public-live-brand {
+  color: var(--green-dark);
+}
+
+.activity-card,
+.activity-profile,
+.settings-panel,
+.people-list .person-row,
+.notifications-panel,
+.upload-choice,
+.route-match-summary,
+.matched-route-chart,
+.map-panel,
+.splits-section-visual,
+.best-effort-table-wrap,
+.activity-comments,
+.live-activity-view,
+.job-queue-card,
+.job-history-section,
+.effort-chart-wrap,
+.podium-card,
+.effort-history-list,
+.best-efforts-index-section {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 32px var(--shadow);
+}
+
+.activity-card:hover,
+.upload-choice:hover {
+  border-color: color-mix(in srgb, var(--green) 55%, var(--line));
+  box-shadow: 0 16px 35px var(--shadow);
+}
+
+.activity-card-summary,
+.activity-primary,
+.activity-title,
+.activity-stat,
+.person-copy,
+.settings-heading,
+.metric,
+.detail-title,
+.section-heading,
+.page-header,
+.matched-routes-header {
+  color: var(--text);
+}
+
+.activity-card-description,
+.comment-row .person-copy p,
+.metadata-checkbox span,
+.metadata-editor .tag-option,
+.notification-row strong,
+.notification-list strong {
+  color: var(--text) !important;
+}
+
+.comment-form,
+.comment-row,
+.metric,
+.upload-row,
+.metadata-editor input,
+.metadata-editor select,
+.metadata-editor textarea,
+.metadata-editor .tag-option {
+  color: var(--text);
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.activity-social-row,
+.notification-row,
+.user-menu-identity,
+.metric,
+.split-row,
+.best-effort-row {
+  border-color: var(--line);
+}
+
+.activity-card-description-toggle,
+.activity-title svg,
+.activity-feed-stats,
+.activity-athlete {
+  color: var(--green-dark);
+}
+
+.activity-social-button:hover,
+.activity-social-button.liked {
+  color: #ffb3c7;
+  background: #4a2a36;
+}
+
+.activity-pr-banner {
+  background: var(--surface-muted);
+  border-top-color: var(--line);
+}
+
+.activity-pr-banner strong,
+.activity-stat strong,
+.activity-medal-value strong {
+  color: var(--text);
+}
+
+.activity-stat {
+  border-left-color: var(--line);
+}
+
+.activity-card-media-split,
+.activity-card-images {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.activity-card-map,
+.activity-card-image {
+  background: color-mix(in srgb, var(--surface-muted) 84%, var(--line));
+  border-color: var(--line);
+}
+
+.leaflet-container {
+  background: var(--surface-muted);
+}
+
+:root:not([data-theme="light"]) .leaflet-tile-pane {
+  filter: brightness(0.62) saturate(0.58) sepia(0.08);
+}
+
+:root[data-theme="light"] .leaflet-tile-pane {
+  filter: none;
+}
+
+.mobile-nav {
+  background: color-mix(in srgb, var(--shell) 96%, transparent);
+  border-top-color: var(--line);
+}
+
+.mobile-nav a,
+.mobile-nav button {
+  color: var(--muted);
+}
+
+.mobile-nav .active,
+.mobile-nav button {
+  color: var(--green);
+}
+
+.job-dashboard-error,
+.notice,
+.tag-warning {
+  color: #a13b19;
+  background: #fff0df;
+  border-color: #e7a36e;
+}
+
+:root:not([data-theme="light"]) .job-dashboard-error,
+:root:not([data-theme="light"]) .notice,
+:root:not([data-theme="light"]) .tag-warning {
+  color: #ffc18b;
+  background: #412c20;
+  border-color: #85532f;
+}
+
+.job-status,
+.status-succeeded {
+  color: #28704a;
+  background: #e4f4e8;
+}
+
+.status-queued,
+.status-running {
+  color: #a13b19;
+  background: #fff0df;
+}
+
+.status-skipped {
+  color: #735f23;
+  background: #f4edcf;
+}
+
+.status-failed {
+  color: #982f3b;
+  background: #fbe5e8;
+}
+
+:root:not([data-theme="light"]) .job-status,
+:root:not([data-theme="light"]) .status-succeeded {
+  color: #a7e0b8;
+  background: #19382b;
+}
+
+:root:not([data-theme="light"]) .status-queued,
+:root:not([data-theme="light"]) .status-running {
+  color: #ffc18b;
+  background: #412c20;
+}
+
+:root:not([data-theme="light"]) .status-skipped {
+  color: #e1d09c;
+  background: #403721;
+}
+
+:root:not([data-theme="light"]) .status-failed {
+  color: #ffb4b4;
+  background: #512227;
+}
+
+.matched-route-row:not(.matched-route-table-header):hover,
+.effort-history-row:hover,
+.best-effort-row:hover {
+  background: color-mix(in srgb, var(--green-soft) 70%, var(--surface));
+}
+
+.matched-route-row.active {
+  background: color-mix(in srgb, var(--green-soft) 76%, var(--surface));
+  box-shadow: inset 3px 0 var(--green);
+}
+
+.matched-route-table-header,
+.split-header,
+.best-effort-header,
+.job-history-columns {
+  color: var(--muted);
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.effort-sport-tabs {
+  background: var(--surface-muted);
+}
+
+.effort-sport-tabs a.active {
+  color: var(--green-dark);
+  background: var(--surface);
+}
+
+.distance-picker select,
+.job-page-button,
+.job-icon-button,
+.job-page-input input {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.chart-grid {
+  stroke: var(--line);
+}
+
+.chart-line,
+.matched-route-chart .chart-line {
+  stroke: #dfa36e;
+}
+
+.chart-tooltip rect {
+  fill: #2e2924;
+  stroke: #ffffff22;
+}
+
+.chart-tooltip text {
+  fill: #fffaf3;
+}
+
+.medal {
+  background: #fff4da;
+}
+
+.image-lightbox {
+  background: #201f1de6;
+}
+
+.auth-page {
+  background-color: var(--page);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    #d9d5cf 1px,
+    transparent 1.2px
+  );
+  background-size: 18px 18px;
+}
+
+:root:not([data-theme="light"]) .auth-page {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    #49443e 1px,
+    transparent 1.2px
+  );
+}
+
+:root:not([data-theme="light"]) .auth-page input,
+:root[data-theme="light"] .auth-page input {
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  background-color: var(--surface);
 }
