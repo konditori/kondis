@@ -10,7 +10,7 @@
   },
   "routes": [
     {
-      "pattern": "kondis.org",
+      "pattern": "kondis.org", 
       "custom_domain": true,
     },
   ],
