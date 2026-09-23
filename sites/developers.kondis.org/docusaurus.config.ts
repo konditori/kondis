@@ -27,6 +27,11 @@ const config: Config = {
     ],
   ],
   themeConfig: {
+    colorMode: {
+      defaultMode: "light",
+      disableSwitch: false,
+      respectPrefersColorScheme: false,
+    },
     navbar: {
       title: "Kondis Developers",
       logo: { alt: "Kondis", src: "img/favicon.svg" },
@@ -45,13 +50,13 @@ const config: Config = {
     },
     prism: {
       theme: {
-        plain: { color: "#e7e8f0", backgroundColor: "#292a3a" },
+        plain: { color: "#f5f2ed", backgroundColor: "#2d2b28" },
         styles: [
           {
             types: ["comment", "prolog", "doctype", "cdata"],
-            style: { color: "#7180b4" },
+            style: { color: "#aaa39a" },
           },
-          { types: ["punctuation", "operator"], style: { color: "#b7bad0" } },
+          { types: ["punctuation", "operator"], style: { color: "#d8d4ce" } },
           {
             types: [
               "property",
@@ -61,7 +66,7 @@ const config: Config = {
               "constant",
               "symbol",
             ],
-            style: { color: "#c6a0f6" },
+            style: { color: "#ffb16e" },
           },
           {
             types: [
@@ -72,17 +77,17 @@ const config: Config = {
               "builtin",
               "inserted",
             ],
-            style: { color: "#a6da95" },
+            style: { color: "#ffc18b" },
           },
           {
             types: ["atrule", "attr-value", "keyword"],
-            style: { color: "#91b4f2" },
+            style: { color: "#ff9b45" },
           },
-          { types: ["function", "class-name"], style: { color: "#f5c2a7" } },
+          { types: ["function", "class-name"], style: { color: "#f6c28b" } },
         ],
       },
       darkTheme: {
-        plain: { color: "#e7e8f0", backgroundColor: "#292a3a" },
+        plain: { color: "#f5f2ed", backgroundColor: "#2d2b28" },
         styles: [],
       },
     },

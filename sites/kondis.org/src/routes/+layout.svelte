@@ -6,14 +6,14 @@
   const docs = "https://docs.kondis.org";
   type Theme = "dark" | "light";
 
-  let theme = $state<Theme>("dark");
+  let theme = $state<Theme>("light");
 
   function applyTheme(nextTheme: Theme, persist = true) {
     theme = nextTheme;
     document.documentElement.dataset.theme = nextTheme;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", nextTheme === "dark" ? "#09101d" : "#ffffff");
+      ?.setAttribute("content", nextTheme === "dark" ? "#20201f" : "#f7f6f3");
     if (persist) localStorage.setItem("kondis-theme", nextTheme);
   }
 
