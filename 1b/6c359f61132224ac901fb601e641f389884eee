@@ -1,0 +1,19 @@
+sites/kondis.org/scripts/build-cf-output.mjs
+  s_3d67e0b97d42f2::t_dc31a3e7c9a162 27-32,51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1b6c359f61132224ac901fb601e641f389884eee",
+  "prompts": {},
+  "sessions": {
+    "s_3d67e0b97d42f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1036e-d1ec-7dd3-a07a-07865c4cd7e0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
