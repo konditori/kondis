@@ -7,10 +7,11 @@ import { fileURLToPath } from "node:url";
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const outputRoot = join(projectRoot, ".cloudflare/output/v0");
 const workerOutput = join(outputRoot, "workers/default");
+const isPreview = process.argv.includes("--preview");
 const { default: config } = await import("../cloudflare.config.ts");
 const resolvedConfig =
   typeof config === "function"
-    ? await config({ isPreview: false, mode: undefined })
+    ? await config({ isPreview, mode: undefined })
     : config;
 
 if (!resolvedConfig.worker) {
@@ -32,7 +33,7 @@ await writeFile(
       ...(resolvedConfig.complianceRegion && {
         complianceRegion: resolvedConfig.complianceRegion,
       }),
-      buildContext: { isPreview: false },
+      buildContext: { isPreview },
     },
     null,
     2,

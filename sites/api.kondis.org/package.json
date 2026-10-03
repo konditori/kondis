@@ -9,6 +9,7 @@
     "clear": "rm -rf build",
     "deploy:dry-run": "pnpm build && cf deploy --dry-run",
     "deploy": "pnpm build && cf deploy",
+    "deploy:preview": "pnpm build && cf previews deploy",
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },

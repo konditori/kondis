@@ -13,7 +13,9 @@
     "format:fix": "prettier --write .",
     "build:cf-output": "node ./scripts/build-cf-output.mjs",
     "deploy:dry-run": "pnpm build && pnpm build:cf-output && cf deploy --prebuilt --dry-run",
-    "deploy": "pnpm build && pnpm build:cf-output && cf deploy --prebuilt"
+    "deploy": "pnpm build && pnpm build:cf-output && cf deploy --prebuilt",
+    "build:cf-preview-output": "node ./scripts/build-cf-output.mjs --preview",
+    "deploy:preview": "pnpm build && pnpm build:cf-preview-output && cf previews deploy --prebuilt"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
