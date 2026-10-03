@@ -1,0 +1,69 @@
+pnpm-lock.yaml
+  s_3d67e0b97d42f2::t_24d614ddf0d8d2 224-225,227-229,270-272,283-284,319-321,332-333,346-348,368-369,1128-1137,1142-1144,1167-1180,1191-1204,1215-1228,1239-1252,1263-1276,4559-4563,6776-6785,6856-6858,8711-8714,9110-9121,9139-9140,9144,10209-10218,10221-10229,10236,10240,10261-10267,10273-10279,10285-10291,10297-10303,10309-10315,14532-14545,17150,17153,17163,17168,17176,17180-17194,17241-17242,19366-19367,19802-19810,19812-19824,19866,19869,19872,19875
+sites/api.kondis.org/.gitignore
+  s_3d67e0b97d42f2::t_a7b0dd692005ae 2
+sites/api.kondis.org/cloudflare.config.ts
+  s_3d67e0b97d42f2::t_db18010d2c2e10 1,3-23,25-26,28,30
+sites/api.kondis.org/mise.toml
+  s_3d67e0b97d42f2::t_55a3b450e65e49 6,13
+sites/api.kondis.org/package.json
+  s_3d67e0b97d42f2::t_fc21beb1e06775 6,8,10-11,17,20
+sites/api.kondis.org/wrangler.config.ts
+  s_3d67e0b97d42f2::t_850bdcd47a2f97 1-5
+sites/developers.kondis.org/.gitignore
+  s_3d67e0b97d42f2::t_88017e925f173f 2
+sites/developers.kondis.org/cloudflare.config.ts
+  s_3d67e0b97d42f2::t_0f10ec254e0811 1-23,25-26,28,30
+sites/developers.kondis.org/package.json
+  s_3d67e0b97d42f2::t_ae22fd06c30e11 10-11,28,32
+sites/developers.kondis.org/src/css/custom.css
+  s_3d67e0b97d42f2::t_ee336d12533c22 21,190
+sites/developers.kondis.org/wrangler.config.ts
+  s_3d67e0b97d42f2::t_0e02b8182f540b 1-5
+sites/docs.kondis.org/.gitignore
+  s_3d67e0b97d42f2::t_eaa08aaf4e2b79 2
+sites/docs.kondis.org/cloudflare.config.ts
+  s_3d67e0b97d42f2::t_6ff62048dafaa0 1-23,25-26,28,30
+sites/docs.kondis.org/package.json
+  s_3d67e0b97d42f2::t_6f2a7e99c37add 10-11,28,32
+sites/docs.kondis.org/src/css/custom.css
+  s_43ecadc9a6955a::t_9355f53ab44c26 21,190
+sites/docs.kondis.org/wrangler.config.ts
+  s_3d67e0b97d42f2::t_1b545f10e40b89 1-5
+sites/kondis.org/.gitignore
+  s_3d67e0b97d42f2::t_55c4b6acfe8046 3
+sites/kondis.org/cloudflare.config.ts
+  s_3d67e0b97d42f2::t_14e319e3bbd44e 1-23,25-26,28,30
+sites/kondis.org/package.json
+  s_3d67e0b97d42f2::t_bc52961d2099b9 14-16,22,29
+sites/kondis.org/scripts/build-cf-output.mjs
+  s_3d67e0b97d42f2::t_ca70386bb8d92b 1-47
+sites/kondis.org/src/app.css
+  s_3d67e0b97d42f2::t_4e793c5a56e8bf 33,35-36,39-40,1272
+sites/kondis.org/wrangler.config.ts
+  s_3d67e0b97d42f2::t_77d0ce5dcf5c20 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a2728cca13505ed2ea12ea145d3782910ea4cd57",
+  "prompts": {},
+  "sessions": {
+    "s_3d67e0b97d42f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1036e-d1ec-7dd3-a07a-07865c4cd7e0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_43ecadc9a6955a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1038c-4faf-7fb1-86e9-c538b6382a3a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
