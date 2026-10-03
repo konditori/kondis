@@ -24,6 +24,12 @@ if (resolvedConfig.worker.entrypoint) {
   );
 }
 
+const workerConfig = { ...resolvedConfig.worker };
+if (isPreview) {
+  // Previews use their own URL and cannot attach production custom domains.
+  delete workerConfig.domains;
+}
+
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(workerOutput, { recursive: true });
 await writeFile(
@@ -42,7 +48,7 @@ await writeFile(
 );
 await writeFile(
   join(workerOutput, "worker.config.json"),
-  JSON.stringify(resolvedConfig.worker, null, 2),
+  JSON.stringify(workerConfig, null, 2),
 );
 await cp(join(projectRoot, "build"), join(workerOutput, "assets"), {
   recursive: true,
