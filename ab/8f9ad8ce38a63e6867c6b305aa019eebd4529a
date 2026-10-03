@@ -1,0 +1,27 @@
+sites/api.kondis.org/package.json
+  s_3d67e0b97d42f2::t_3cc372335ae3af 12
+sites/developers.kondis.org/package.json
+  s_3d67e0b97d42f2::t_aafe2faceb95e6 12
+sites/docs.kondis.org/package.json
+  s_3d67e0b97d42f2::t_023bbb7e995b81 12
+sites/kondis.org/package.json
+  s_3d67e0b97d42f2::t_ce865f5f10a103 16-18
+sites/kondis.org/scripts/build-cf-output.mjs
+  s_3d67e0b97d42f2::t_2db706811f92f0 10,14,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ab8f9ad8ce38a63e6867c6b305aa019eebd4529a",
+  "prompts": {},
+  "sessions": {
+    "s_3d67e0b97d42f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1036e-d1ec-7dd3-a07a-07865c4cd7e0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
