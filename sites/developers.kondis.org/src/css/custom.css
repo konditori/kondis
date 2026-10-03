@@ -18,7 +18,7 @@
   --ifm-navbar-height: 5.75rem;
   --ifm-code-font-size: 90%;
 }
-[data-theme="dark"] {
+html[data-theme="dark"] {
   --ifm-color-primary: #91a0ef;
   --ifm-background-color: #080808;
   --ifm-background-surface-color: #101010;
@@ -187,7 +187,7 @@ body {
   --ifm-global-radius: 0.45rem;
 }
 
-[data-theme="dark"] {
+html[data-theme="dark"] {
   --ifm-color-primary: #ffb16e;
   --ifm-color-primary-dark: #f6821f;
   --ifm-color-primary-darker: #d96600;
@@ -209,10 +209,6 @@ body {
   --ifm-hr-border-color: #46433f;
   --ifm-link-color: #ffb16e;
   --ifm-link-hover-color: #ffd0a8;
-}
-
-html {
-  border-top: 4px solid #f6821f;
 }
 
 body {

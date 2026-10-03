@@ -7,7 +7,8 @@
     "build": "docusaurus build",
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
-    "deploy": "pnpm build && wrangler deploy",
+    "deploy:dry-run": "pnpm build && cf deploy --dry-run",
+    "deploy": "pnpm build && cf deploy",
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
@@ -24,9 +25,10 @@
     "@docusaurus/module-type-aliases": "^3.10.2",
     "@docusaurus/tsconfig": "^3.10.2",
     "@docusaurus/types": "^3.10.2",
+    "cf": "1.0.0-beta.12",
     "prettier": "^3.9.6",
     "raw-loader": "^4.0.2",
     "typescript": "~6.0.3",
-    "wrangler": "4.135.0"
+    "wrangler": "4.136.0"
   }
 }

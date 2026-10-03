@@ -3,19 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "wrangler dev --port 3000 --inspector-port 9230",
+    "start": "cf dev --port 3000 --inspector-port 9230",
     "build": "rm -rf build && mkdir -p build && cp static/index.html build/index.html && cp static/theme.css build/theme.css && cp ../../open-api/kondis-openapi-specs.json build/openapi.json && cp node_modules/@scalar/api-reference/dist/browser/standalone.js build/scalar.js",
-    "serve": "wrangler dev --port 3000 --inspector-port 9230",
+    "serve": "cf dev --port 3000 --inspector-port 9230",
     "clear": "rm -rf build",
-    "deploy": "pnpm build && wrangler deploy",
+    "deploy:dry-run": "pnpm build && cf deploy --dry-run",
+    "deploy": "pnpm build && cf deploy",
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
   "dependencies": {
     "@scalar/api-reference": "^1.67.0",
-    "wrangler": "4.131.1"
+    "wrangler": "4.136.0"
   },
   "devDependencies": {
+    "cf": "1.0.0-beta.12",
     "prettier": "^3.9.6",
     "typescript": "~6.0.3"
   }
