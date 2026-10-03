@@ -1,14 +1,15 @@
 import { cp, mkdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
-// SvelteKit's static adapter produces `build/`, but cf's SvelteKit detection
-// does not emit Build Output yet. Package those assets for `cf deploy`.
-const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+// Package a site's static `build/` directory as Build Output. This also lets
+// preview deploys carry the preview build context through to `cf previews deploy`.
+const projectRoot = process.cwd();
 const outputRoot = join(projectRoot, ".cloudflare/output/v0");
 const workerOutput = join(outputRoot, "workers/default");
 const isPreview = process.argv.includes("--preview");
-const { default: config } = await import("../cloudflare.config.ts");
+const configUrl = pathToFileURL(join(projectRoot, "cloudflare.config.ts"));
+const { default: config } = await import(configUrl.href);
 const resolvedConfig =
   typeof config === "function"
     ? await config({ isPreview, mode: undefined })
