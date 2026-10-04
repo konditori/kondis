@@ -3,15 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#08111f" />
+    <meta name="theme-color" content="#f7f6f3" />
     <link rel="icon" href="/favicon.svg" />
     <script>
-      try {
-        const theme = localStorage.getItem("kondis-theme");
-        if (theme === "light" || theme === "dark") {
-          document.documentElement.dataset.theme = theme;
-        }
-      } catch {}
+      (() => {
+        let saved;
+        try {
+          saved = localStorage.getItem("kondis-theme");
+        } catch {}
+        document.documentElement.dataset.theme =
+          saved === "light" || saved === "dark"
+            ? saved
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+      })();
     </script>
     %sveltekit.head%
   </head>

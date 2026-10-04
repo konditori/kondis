@@ -18,12 +18,14 @@ describe("unit preference settings", () => {
     const event = () => ({ cookies: { get }, locals: { kondisFetch } });
 
     expect(await load(event() as never)).toEqual({
+      locale: "en",
       user: undefined,
       authenticated: true,
       unitSystem: "metric",
       activityTypes: [],
     });
     expect(await load(event() as never)).toEqual({
+      locale: "en",
       user: undefined,
       authenticated: true,
       unitSystem: "imperial",

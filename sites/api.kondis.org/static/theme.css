@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap");
+@import "/tokens.css";
+
+:root,
+.scalar-app {
+  --scalar-font: var(--font-body);
+  --scalar-font-code: var(--font-code);
+  --scalar-color-1: var(--text);
+  --scalar-color-2: var(--text-muted);
+  --scalar-color-3: var(--text-muted);
+  --scalar-color-accent: var(--accent-text);
+  --scalar-background-1: var(--page);
+  --scalar-background-2: var(--surface);
+  --scalar-background-3: var(--surface-muted);
+  --scalar-background-accent: var(--accent-soft);
+  --scalar-border-color: var(--border);
+  --scalar-color-green: var(--success);
+  --scalar-color-orange: var(--warning);
+  --scalar-color-red: var(--danger);
+  --scalar-button-1: var(--accent);
+  --scalar-button-1-color: var(--on-accent);
+  --scalar-button-1-hover: var(--accent-hover);
+  --scalar-sidebar-background-1: var(--shell);
+  --scalar-sidebar-color-1: var(--text);
+  --scalar-sidebar-color-2: var(--text-muted);
+  --scalar-sidebar-color-active: var(--accent-text);
+  --scalar-sidebar-background-active: var(--accent-soft);
+  --scalar-sidebar-border-color: var(--border);
+  --scalar-radius: var(--radius);
+}
+/* Scalar also uses .scalar-app for portals. Only the reference owns page layout. */
+.scalar-api-reference {
+  min-height: 100vh;
+  background: var(--page);
+}
+.scalar-app .scalar-card,
+.scalar-app .scalar-card-header,
+.scalar-app .scalar-card-body {
+  border-color: var(--border);
+  border-radius: var(--radius);
+}
+.scalar-app .scalar-card {
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.scalar-app input,
+.scalar-app textarea,
+.scalar-app select {
+  border-color: var(--border);
+  border-radius: var(--radius);
+}
+body {
+  margin: 0;
+  background: var(--page);
+}
+.api-appearance {
+  position: fixed;
+  right: 16px;
+  top: 12px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--surface);
+  font: 12px var(--font-body);
+}
+.api-appearance select {
+  padding: 4px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}

@@ -17,7 +17,7 @@ This is the greenfield foundation, not yet a feature-complete Strava replacement
 
 - Android Studio with JDK 17 or newer (JDK 21 is recommended)
 - Android SDK 37
-- Gradle 9.7 / Android Gradle Plugin 9.3
+- Gradle 9.8 / Android Gradle Plugin 9.4
 - Kotlin 2.4 with the Compose compiler plugin
 - Minimum Android version: Android 8.0 (API 26)
 
@@ -60,7 +60,8 @@ Use `./gradlew ktlintFormat` to automatically fix most Kotlin formatting failure
 
 The Android GitHub Actions workflow runs ktlint, Android lint, unit tests, an emulator end-to-end sync
 test, and both debug and minified release builds. Kotlin compiler warnings and Android lint warnings fail
-the build. Successful builds on `main` publish a downloadable debug APK in the workflow run.
+the build. Gradle deprecation warnings are logged without failing CI because AGP and KSP still use APIs
+deprecated by Gradle 9.8. Successful builds on `main` publish a downloadable debug APK in the workflow run.
 
 In GitHub branch protection, require the `Android / Lint, Test & Build` status check before merging.
 Dependabot checks the Gradle and GitHub Actions dependencies weekly and opens grouped update pull requests.

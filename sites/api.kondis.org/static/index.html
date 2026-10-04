@@ -3,21 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/theme.css" />
     <title>Kondis API reference</title>
-    <style>
-      body {
-        margin: 0;
-      }
-    </style>
   </head>
   <body>
+    <label class="api-appearance"
+      >Appearance
+      <select id="appearance">
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select></label
+    >
     <div id="app"></div>
     <script src="/scalar.js"></script>
-    <script>
-      Scalar.createApiReference("#app", {
+    <script type="module">
+      import { observeTheme } from "/preference.js";
+      const configuration = {
         url: "/openapi.json",
         pageTitle: "Kondis API reference",
+        hideDarkModeToggle: true,
+        theme: "none",
+      };
+      const select = document.querySelector("#appearance");
+      let reference;
+      const preference = observeTheme((value) => {
+        select.value = value;
+        const darkMode = document.documentElement.dataset.theme === "dark";
+        if (reference)
+          reference.updateConfiguration({ ...configuration, darkMode });
       });
+      reference = Scalar.createApiReference("#app", {
+        ...configuration,
+        darkMode: document.documentElement.dataset.theme === "dark",
+      });
+      select.addEventListener("change", () => preference.set(select.value));
     </script>
   </body>
 </html>

@@ -1,6 +1,4 @@
-import { UPLOAD_LIMITS } from 'src/config/upload-limits';
 import { ACTIVITY_TAG_IDS, ACTIVITY_TYPES, CYCLING_BEST_EFFORTS, RUNNING_BEST_EFFORTS } from 'src/constants';
-import { FileSizeLimitError } from 'src/contracts/storage.repository';
 import { ActivityImage } from 'src/db/schema';
 import { ActivitySchema, type ActivityDetailDto, type DirectActivityCreateDto } from 'src/dtos/activity.dto';
 import type { SocialUser } from 'src/dtos/social.dto';
@@ -15,7 +13,8 @@ import {
 import { BadRequestException, ConflictException, NotFoundException } from 'src/errors';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { Timestamp } from 'src/schema/decorators';
-import { BaseService } from 'src/services/base.service';
+import { ActivityFileReader } from 'src/services/activity-file-reader';
+import type { BaseServiceDeps } from 'src/services/base.service';
 import {
   ActivityListRecord,
   ActivityMetrics,
@@ -37,7 +36,6 @@ import { parseFitMessages, parseFitStructure } from 'src/utils/fit';
 import { publicMediaUrl } from 'src/utils/media';
 
 const QUEUE_ALL_PAGE_SIZE = 1000;
-const extname = (path: string): string => path.slice(path.lastIndexOf('.'));
 const encodeCursor = (value: string): string =>
   btoa(value).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 const decodeCursor = (value: string): string => atob(value.replaceAll('-', '+').replaceAll('_', '/'));
@@ -70,7 +68,47 @@ const DETAIL_BEST_EFFORT_DEFINITIONS = [...BEST_EFFORT_DEFINITIONS.values()].fil
     definition.type.startsWith('power_'),
 );
 
-export class ActivityService extends BaseService {
+export type ActivityServiceDeps = Pick<
+  BaseServiceDeps,
+  | 'activityRepository'
+  | 'databaseRepository'
+  | 'eventRepository'
+  | 'jobRepository'
+  | 'logger'
+  | 'mediaBaseUrl'
+  | 'mediaRepository'
+  | 'socialRepository'
+  | 'takeoutRepository'
+  | 'uploadRepository'
+>;
+
+export class ActivityService {
+  protected readonly activityRepository: BaseServiceDeps['activityRepository'];
+  protected readonly databaseRepository: BaseServiceDeps['databaseRepository'];
+  protected readonly eventRepository: BaseServiceDeps['eventRepository'];
+  protected readonly jobRepository: BaseServiceDeps['jobRepository'];
+  protected readonly logger: BaseServiceDeps['logger'];
+  protected readonly mediaBaseUrl?: BaseServiceDeps['mediaBaseUrl'];
+  protected readonly mediaRepository: BaseServiceDeps['mediaRepository'];
+  protected readonly socialRepository: BaseServiceDeps['socialRepository'];
+  protected readonly takeoutRepository: BaseServiceDeps['takeoutRepository'];
+  protected readonly uploadRepository: BaseServiceDeps['uploadRepository'];
+  private readonly activityFiles: ActivityFileReader;
+
+  constructor(deps: ActivityServiceDeps & ConstructorParameters<typeof ActivityFileReader>[0]) {
+    this.activityRepository = deps.activityRepository;
+    this.databaseRepository = deps.databaseRepository;
+    this.eventRepository = deps.eventRepository;
+    this.jobRepository = deps.jobRepository;
+    this.logger = deps.logger.withContext(this.constructor.name);
+    this.mediaBaseUrl = deps.mediaBaseUrl;
+    this.mediaRepository = deps.mediaRepository;
+    this.socialRepository = deps.socialRepository;
+    this.takeoutRepository = deps.takeoutRepository;
+    this.uploadRepository = deps.uploadRepository;
+    this.activityFiles = new ActivityFileReader(deps);
+  }
+
   private validateTags(sport: ActivityType, tags: readonly string[]) {
     if (
       tags.includes('long_run') &&
@@ -131,8 +169,8 @@ export class ActivityService extends BaseService {
     }
 
     try {
-      const contents = await this.readActivityFile(upload.storage_path);
-      const messages = this.decodeActivityFile(upload.storage_path, contents);
+      const contents = await this.activityFiles.read(upload.storage_path);
+      const messages = this.activityFiles.decode(upload.storage_path, contents);
       const parsed = parseFitStructure(messages);
       const metrics = parseFitMessages(messages);
       const activityId = await this.databaseRepository.withTransaction(async (trx) => {
@@ -417,7 +455,7 @@ export class ActivityService extends BaseService {
     }
 
     const parsed = upload.storage_path
-      ? this.computeActivityFile(upload.storage_path, await this.readActivityFile(upload.storage_path))
+      ? this.activityFiles.compute(upload.storage_path, await this.activityFiles.read(upload.storage_path))
       : await this.computeStoredActivity(id, activity.started_at);
     const found = await this.databaseRepository.withTransaction(async (trx) => {
       const activityFound = await this.activityRepository.setMetrics(id, this.toMetrics(parsed), trx);
@@ -464,59 +502,6 @@ export class ActivityService extends BaseService {
     }));
     const messages: FitMessages = { recordMesgs: records };
     return parseFitMessages(messages);
-  }
-
-  private decodeActivityFile(path: string, contents: Buffer): FitMessages {
-    const extension = extname(path).toLowerCase();
-    let messages: FitMessages;
-
-    switch (extension) {
-      case '.fit': {
-        messages = this.fitRepository.decode(contents);
-        break;
-      }
-      case '.gpx': {
-        messages = this.gpxRepository.decode(contents);
-        break;
-      }
-      case '.tcx': {
-        messages = this.tcxRepository.decode(contents);
-        break;
-      }
-      default: {
-        throw new Error(`Unsupported activity format: ${extension || 'unknown extension'}`);
-      }
-    }
-
-    this.assertActivityMessageLimits(messages);
-    return messages;
-  }
-
-  private async readActivityFile(path: string): Promise<Buffer> {
-    try {
-      return await this.storageRepository.readLimited(path, UPLOAD_LIMITS.activityFileBytes);
-    } catch (error) {
-      if (error instanceof FileSizeLimitError) {
-        throw new Error(`Activity file exceeds ${UPLOAD_LIMITS.activityFileBytes} bytes`, { cause: error });
-      }
-      throw error;
-    }
-  }
-
-  private computeActivityFile(path: string, contents: Buffer): ParsedActivity {
-    return parseFitMessages(this.decodeActivityFile(path, contents));
-  }
-
-  private assertActivityMessageLimits(messages: FitMessages): void {
-    const recordCount = messages.recordMesgs?.length ?? 0;
-    if (recordCount > UPLOAD_LIMITS.activityRecords) {
-      throw new Error(`Activity contains too many records (maximum ${UPLOAD_LIMITS.activityRecords})`);
-    }
-
-    const lapCount = messages.lapMesgs?.length ?? 0;
-    if (lapCount > UPLOAD_LIMITS.activityLaps) {
-      throw new Error(`Activity contains too many laps (maximum ${UPLOAD_LIMITS.activityLaps})`);
-    }
   }
 
   async handleActivityParseQueueAll({ force = false }: JobOf<JobName.ActivityParseQueueAll>): Promise<JobStatus> {

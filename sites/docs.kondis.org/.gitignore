@@ -1,4 +1,5 @@
 .docusaurus/
+.cloudflare/
 .wrangler/
 build/
 build-api/

@@ -2,21 +2,13 @@
   import {
     ArrowLeft,
     Check,
-    ChevronLeft,
     ChevronRight,
-    Clock3,
-    Flame,
-    Gauge,
     Heart,
-    HeartPulse,
     MapPinned,
     Medal,
-    Mountain,
     Pencil,
-    Timer,
     Trash2,
     X,
-    Zap,
   } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
@@ -30,7 +22,6 @@
   } from "$lib/api";
   import {
     ActivityMapStyle,
-    AverageMetric,
     activityTypeLabel,
     activityTypeOptions,
     activityTypeSettings,
@@ -39,7 +30,8 @@
   import { bestEffortLabel, bestEffortRecordName } from "$lib/best-efforts";
   import ActivityProfile from "$lib/components/ActivityProfile.svelte";
   import ActivityComments from "$lib/components/ActivityComments.svelte";
-  import ImageLightbox from "$lib/components/ImageLightbox.svelte";
+  import ActivityImageGallery from "$lib/components/ActivityImageGallery.svelte";
+  import ActivityMetrics from "$lib/components/ActivityMetrics.svelte";
   import RouteMap from "$lib/components/RouteMap.svelte";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
   import { userDisplayName } from "$lib/user-name";
@@ -54,6 +46,7 @@
     localDate,
     localTime,
     pace,
+    ordinal,
     speed,
   } from "$lib/format";
   import type { Activity, ActivityDetail } from "$lib/types";
@@ -96,15 +89,15 @@
     canEditActivity(activity.userId, data.user?.id),
   );
   const tagLabels: Record<Activity["tags"][number], string> = {
-    race: "Race",
-    long_run: "Long Run",
-    commute: "Commute",
-    workout: "Workout",
-    competition: "Competition",
-    recovery: "Recovery",
-    with_pet: "With Pet",
-    with_kid: "With Kid",
-    for_a_cause: "For a Cause",
+    race: t("race"),
+    long_run: t("long_run"),
+    commute: t("commute"),
+    workout: t("workout"),
+    competition: t("competition"),
+    recovery: t("recovery"),
+    with_pet: t("with_pet"),
+    with_kid: t("with_kid"),
+    for_a_cause: t("for_a_cause"),
   };
   const availableTags = $derived(
     (Object.keys(tagLabels) as Activity["tags"][number][]).filter(
@@ -122,7 +115,6 @@
   const activitySettings = $derived(
     activityTypeSettings(data.activityTypes, activity.sport),
   );
-  const averageMetric = $derived(activitySettings.averageMetric);
   const mapStyle = $derived(activitySettings.mapStyle);
   const isCyclingEffort = $derived(
     [
@@ -140,11 +132,6 @@
         (effort) => bestEffortAchievement(effort) !== null,
       ) ??
         false),
-  );
-  const hasHeartRate = $derived(activity.metrics?.avgHr != null);
-  const hasElevation = $derived(
-    activity.metrics?.elevationGain != null ||
-      activity.metrics?.elevationLoss != null,
   );
   const hasGpsRoute = $derived((activity.track?.coordinates.length ?? 0) > 0);
   const hasBestEffortHeartRate = $derived(
@@ -183,14 +170,15 @@
                       effort.type === "longest_ride"
                         ? bestEffortLabel(effort.type)
                         : effort.type.startsWith("power_")
-                          ? `Best power - ${bestEffortLabel(effort.type).replace(" power", "")}`
-                          : `${
-                              effort.overallRank === 1
-                                ? "Fastest"
-                                : effort.overallRank === 2
-                                  ? "2nd fastest"
-                                  : "3rd fastest"
-                            } ${bestEffortLabel(effort.type)}`,
+                          ? t("best_power_effort", {
+                              effort: bestEffortLabel(effort.type),
+                            })
+                          : effort.overallRank === 1
+                            ? `${t("fastest")} ${bestEffortLabel(effort.type)}`
+                            : t("ranked_fastest_effort", {
+                                rank: ordinal(effort.overallRank),
+                                effort: bestEffortLabel(effort.type),
+                              }),
                   },
                 ]
               : [];
@@ -208,110 +196,6 @@
   };
   let highlightedRange = $state<HighlightRange | null>(null);
   let graphPointTime = $state<number | null>(null);
-  let imageCarousel = $state<HTMLDivElement>();
-  let imagePage = $state(0);
-  const viewableImages = $derived(
-    activity.images.filter(
-      (image) => image.preview || image.original || image.thumbnail,
-    ),
-  );
-  let selectedImageIndex = $state<number | null>(null);
-  const imagePageCount = $derived(viewableImages.length);
-  $effect(() => {
-    if (imagePage >= imagePageCount) {
-      imagePage = Math.max(0, imagePageCount - 1);
-    }
-  });
-  const averageMetricStats = $derived(
-    averageMetric === AverageMetric.None
-      ? []
-      : averageMetric === AverageMetric.Speed
-        ? [
-            {
-              label: t("average_speed"),
-              value: speed(activity.metrics?.avgSpeed ?? null, data.unitSystem),
-              icon: Gauge,
-            },
-          ]
-        : [
-            {
-              label: t("pace"),
-              value: pace(
-                activity.metrics?.avgSpeed ??
-                  (activity.metrics?.distance != null
-                    ? activity.metrics.distance /
-                      (activity.metrics.movingTime ??
-                        activity.metrics.elapsedTime)
-                    : null),
-                data.unitSystem,
-                averageMetric === AverageMetric.SwimPace,
-              ),
-              icon: Gauge,
-            },
-          ],
-  );
-  const stats = $derived([
-    {
-      label: t("distance"),
-      value: distance(activity.metrics?.distance ?? null, data.unitSystem),
-      icon: Gauge,
-    },
-    {
-      label: "Moving time",
-      value: activity.metrics
-        ? duration(activity.metrics.movingTime ?? activity.metrics.elapsedTime)
-        : "—",
-      icon: Timer,
-    },
-    {
-      label: "Elapsed time",
-      value: activity.metrics ? duration(activity.metrics.elapsedTime) : "—",
-      icon: Clock3,
-    },
-    ...(hasElevation
-      ? [
-          {
-            label: t("elevation_gain"),
-            value: elevation(
-              activity.metrics?.elevationGain ?? null,
-              data.unitSystem,
-            ),
-            icon: Mountain,
-          },
-        ]
-      : []),
-    ...averageMetricStats,
-    ...(hasHeartRate
-      ? [
-          {
-            label: t("average_heart_rate"),
-            value: `${activity.metrics?.avgHr} bpm`,
-            icon: HeartPulse,
-          },
-        ]
-      : []),
-    ...(activitySettings.showAveragePower
-      ? [
-          {
-            label: t("average_power"),
-            value:
-              activity.metrics?.avgPower == null
-                ? "—"
-                : `${activity.metrics.avgPower} W`,
-            icon: Zap,
-          },
-        ]
-      : []),
-    {
-      label: t("energy"),
-      value:
-        activity.metrics?.calories == null
-          ? "—"
-          : `${activity.metrics.calories} kcal`,
-      icon: Flame,
-    },
-  ]);
-
   async function refreshActivityDetail() {
     try {
       const detail = (await activityControllerGetById(
@@ -393,10 +277,6 @@
     if (likersOpen) await loadLikers();
   }
 
-  function rankOrdinal(rank: number): string {
-    return rank === 2 ? "2nd" : "3rd";
-  }
-
   function bestEffortAchievement(
     effort: NonNullable<ActivityDetail["bestEfforts"]>[number],
   ): { rank: number; text: string } | null {
@@ -408,7 +288,7 @@
       return {
         rank: effort.overallRank,
         text: t("new_ranked_best_all_time", {
-          rank: rankOrdinal(effort.overallRank),
+          rank: ordinal(effort.overallRank),
         }),
       };
     }
@@ -419,7 +299,7 @@
       return {
         rank: effort.yearRank,
         text: t("new_ranked_best_year", {
-          rank: rankOrdinal(effort.yearRank),
+          rank: ordinal(effort.yearRank),
           year: effort.year,
         }),
       };
@@ -525,33 +405,6 @@
       deleting = false;
     }
   }
-
-  function updateImagePage() {
-    if (!imageCarousel) return;
-    const slides = [...imageCarousel.children] as HTMLElement[];
-    const nearest = slides.reduce(
-      (best, slide, index) =>
-        Math.abs(slide.offsetLeft - imageCarousel!.scrollLeft) <
-        Math.abs(slides[best]!.offsetLeft - imageCarousel!.scrollLeft)
-          ? index
-          : best,
-      0,
-    );
-    imagePage = nearest;
-  }
-
-  function scrollImages(direction: -1 | 1) {
-    if (!imageCarousel) return;
-    const slides = [...imageCarousel.children] as HTMLElement[];
-    const next = Math.max(
-      0,
-      Math.min(imagePage + direction, slides.length - 1),
-    );
-    const slide = slides[next];
-    if (!slide) return;
-    imageCarousel.scrollTo({ left: slide.offsetLeft, behavior: "smooth" });
-    imagePage = next;
-  }
 </script>
 
 <svelte:head><title>{activityName(activity)} · Kondis</title></svelte:head>
@@ -567,7 +420,7 @@
     >
     <div class="detail-heading">
       <UserAvatar
-        name={activity.athlete ? userDisplayName(activity.athlete) : "You"}
+        name={activity.athlete ? userDisplayName(activity.athlete) : t("you")}
         src={activity.athlete?.avatarUrl}
         size={54}
       />
@@ -577,6 +430,7 @@
           {localDate(activity.startedAt)} · {localTime(activity.startedAt)}
           <span
             class="activity-sport-inline"
+            role="img"
             class:running-sport={["run", "trail_run", "virtual_run"].includes(
               activity.sport,
             )}
@@ -733,62 +587,7 @@
       </p>{/if}
   </header>
 
-  {#if viewableImages.length > 0}
-    <section
-      class="activity-image-carousel"
-      class:activity-image-carousel-locked={selectedImageIndex !== null}
-      inert={selectedImageIndex !== null}
-      aria-label={t("activity_photos")}
-    >
-      <div
-        class="activity-visual-carousel-track"
-        role="region"
-        aria-label={t("swipeable_activity_photos")}
-        bind:this={imageCarousel}
-        onscroll={updateImagePage}
-      >
-        {#each viewableImages as image, imageIndex (image.id)}
-          <div class="activity-visual-slide activity-photo-slide">
-            <figure>
-              <button
-                type="button"
-                class="activity-photo-open"
-                aria-label={image.caption ?? t("open_activity_photos")}
-                onclick={() => (selectedImageIndex = imageIndex)}
-              >
-                <img
-                  src={image.preview ?? image.thumbnail ?? image.original}
-                  alt={image.caption ?? t("activity_photo")}
-                />
-              </button>
-              {#if image.caption}<figcaption>{image.caption}</figcaption>{/if}
-            </figure>
-          </div>
-        {/each}
-      </div>
-      {#if imagePageCount > 1}
-        <div
-          class="activity-visual-controls"
-          aria-label={t("photo_carousel_controls")}
-        >
-          <button
-            type="button"
-            aria-label={t("previous_image")}
-            onclick={() => scrollImages(-1)}
-            disabled={imagePage === 0}><ChevronLeft size={17} /></button
-          >
-          <span aria-live="polite">{imagePage + 1} / {imagePageCount}</span>
-          <button
-            type="button"
-            aria-label={t("next_image")}
-            onclick={() => scrollImages(1)}
-            disabled={imagePage === imagePageCount - 1}
-            ><ChevronRight size={17} /></button
-          >
-        </div>
-      {/if}
-    </section>
-  {/if}
+  <ActivityImageGallery images={activity.images} />
 
   {#if hasGpsRoute}
     <div
@@ -986,16 +785,11 @@
     </section>
   {/if}
 
-  <section class="metrics-section">
-    <div class="metric-grid">
-      {#each stats as stat}
-        <article class="metric">
-          <span><stat.icon size={19} /></span>
-          <div><small>{stat.label}</small><strong>{stat.value}</strong></div>
-        </article>
-      {/each}
-    </div>
-  </section>
+  <ActivityMetrics
+    {activity}
+    settings={activitySettings}
+    unitSystem={data.unitSystem}
+  />
 
   {#if activity.bestEfforts && activity.bestEfforts.length > 0}
     <section class="best-efforts-section">
@@ -1157,17 +951,10 @@
     </section>
   {/if}
 </div>
-{#if selectedImageIndex !== null}
-  <ImageLightbox
-    images={viewableImages}
-    initialIndex={selectedImageIndex}
-    onClose={() => (selectedImageIndex = null)}
-  />
-{/if}
 <ActivityComments
   {activity}
   eventsUrl={data.eventsUrl}
   viewerId={data.user?.id}
-  viewerName={data.user ? userDisplayName(data.user) : "You"}
+  viewerName={data.user ? userDisplayName(data.user) : t("you")}
   viewerAvatarUrl={data.user?.avatarUrl}
 />

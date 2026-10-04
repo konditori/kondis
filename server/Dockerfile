@@ -23,9 +23,8 @@ FROM builder AS server-build
 WORKDIR /usr/src/app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches/
 COPY server/package.json ./server/package.json
-COPY web/package.json ./web/package.json
-COPY e2e/package.json ./e2e/package.json
 RUN pnpm install --frozen-lockfile
 
 COPY ./server ./server/

@@ -14,6 +14,7 @@ import {
   type ActivityTypeSettingsOutput,
   type ActivityType_Output,
 } from "$lib/api";
+import { t } from "$lib/i18n";
 import type { ActivityType } from "$lib/types";
 
 export { AverageMetric };
@@ -24,87 +25,77 @@ export enum ActivityMapStyle {
 }
 
 type ActivityTypePresentation = {
-  label: string;
   icon: Component;
   mapStyle: ActivityMapStyle;
 };
 
 const presentation = (
-  label: string,
   icon: Component,
   mapStyle = ActivityMapStyle.Route,
-): ActivityTypePresentation => ({ label, icon, mapStyle });
+): ActivityTypePresentation => ({ icon, mapStyle });
 
 export const ACTIVITY_TYPE_PRESENTATION = {
-  alpine_ski: presentation("Alpine skiing", Snowflake),
-  backcountry_ski: presentation("Backcountry skiing", Snowflake),
-  badminton: presentation("Badminton", HeartPulse),
-  basketball: presentation("Basketball", HeartPulse),
-  canoeing: presentation("Canoeing", WavesHorizontal),
-  cricket: presentation("Cricket", HeartPulse),
-  cross_country_ski: presentation("Cross-country skiing", Snowflake),
-  crossfit: presentation("CrossFit", Dumbbell),
-  dance: presentation("Dance", HeartPulse),
-  e_bike_ride: presentation("E-bike ride", Bike),
-  elliptical: presentation("Elliptical", HeartPulse),
-  e_mountain_bike_ride: presentation("E-mountain bike ride", Bike),
-  golf: presentation("Golf", HeartPulse, ActivityMapStyle.Heatmap),
-  gravel_ride: presentation("Gravel ride", Bike),
-  handcycle: presentation("Handcycle", Bike),
-  high_intensity_interval_training: presentation("HIIT", Dumbbell),
-  hike: presentation("Hike", Footprints),
-  ice_skate: presentation("Ice skating", Snowflake),
-  inline_skate: presentation("Inline skating", SportShoe),
-  kayaking: presentation("Kayaking", WavesHorizontal),
-  kitesurf: presentation("Kitesurfing", WavesHorizontal),
-  mountain_bike_ride: presentation("Mountain bike ride", Bike),
-  padel: presentation("Padel", HeartPulse),
-  physical_therapy: presentation("Physical therapy", HeartPulse),
-  pickleball: presentation("Pickleball", HeartPulse),
-  pilates: presentation("Pilates", HeartPulse),
-  racquetball: presentation("Racquetball", HeartPulse),
-  ride: presentation("Ride", Bike),
-  rock_climbing: presentation("Rock climbing", Mountain),
-  roller_ski: presentation("Roller skiing", Mountain),
-  rowing: presentation("Rowing", WavesHorizontal),
-  run: presentation("Run", SportShoe),
-  sail: presentation("Sailing", WavesHorizontal, ActivityMapStyle.Heatmap),
-  skateboard: presentation(
-    "Skateboarding",
-    SportShoe,
-    ActivityMapStyle.Heatmap,
-  ),
-  snowboard: presentation("Snowboarding", Snowflake),
-  snowshoe: presentation("Snowshoeing", Snowflake),
-  soccer: presentation(
-    "Football (soccer)",
-    HeartPulse,
-    ActivityMapStyle.Heatmap,
-  ),
-  squash: presentation("Squash", HeartPulse),
-  stair_stepper: presentation("Stair stepper", HeartPulse),
-  stand_up_paddling: presentation("Stand-up paddling", WavesHorizontal),
-  surfing: presentation("Surfing", WavesHorizontal, ActivityMapStyle.Heatmap),
-  swim: presentation("Swim", WavesHorizontal),
-  table_tennis: presentation("Table tennis", HeartPulse),
-  tennis: presentation("Tennis", HeartPulse),
-  trail_run: presentation("Trail run", SportShoe),
-  velomobile: presentation("Velomobile", Bike),
-  virtual_ride: presentation("Virtual ride", Bike),
-  virtual_row: presentation("Virtual row", WavesHorizontal),
-  virtual_run: presentation("Virtual run", SportShoe),
-  volleyball: presentation("Volleyball", HeartPulse),
-  walk: presentation("Walk", Footprints),
-  weight_training: presentation("Weight training", Dumbbell),
-  wheelchair: presentation("Wheelchair", Footprints),
-  windsurf: presentation("Windsurfing", WavesHorizontal),
-  workout: presentation("Workout", HeartPulse),
-  yoga: presentation("Yoga", HeartPulse),
-  other: presentation("Other", HeartPulse),
+  alpine_ski: presentation(Snowflake),
+  backcountry_ski: presentation(Snowflake),
+  badminton: presentation(HeartPulse),
+  basketball: presentation(HeartPulse),
+  canoeing: presentation(WavesHorizontal),
+  cricket: presentation(HeartPulse),
+  cross_country_ski: presentation(Snowflake),
+  crossfit: presentation(Dumbbell),
+  dance: presentation(HeartPulse),
+  e_bike_ride: presentation(Bike),
+  elliptical: presentation(HeartPulse),
+  e_mountain_bike_ride: presentation(Bike),
+  golf: presentation(HeartPulse, ActivityMapStyle.Heatmap),
+  gravel_ride: presentation(Bike),
+  handcycle: presentation(Bike),
+  high_intensity_interval_training: presentation(Dumbbell),
+  hike: presentation(Footprints),
+  ice_skate: presentation(Snowflake),
+  inline_skate: presentation(SportShoe),
+  kayaking: presentation(WavesHorizontal),
+  kitesurf: presentation(WavesHorizontal),
+  mountain_bike_ride: presentation(Bike),
+  padel: presentation(HeartPulse),
+  physical_therapy: presentation(HeartPulse),
+  pickleball: presentation(HeartPulse),
+  pilates: presentation(HeartPulse),
+  racquetball: presentation(HeartPulse),
+  ride: presentation(Bike),
+  rock_climbing: presentation(Mountain),
+  roller_ski: presentation(Mountain),
+  rowing: presentation(WavesHorizontal),
+  run: presentation(SportShoe),
+  sail: presentation(WavesHorizontal, ActivityMapStyle.Heatmap),
+  skateboard: presentation(SportShoe, ActivityMapStyle.Heatmap),
+  snowboard: presentation(Snowflake),
+  snowshoe: presentation(Snowflake),
+  soccer: presentation(HeartPulse, ActivityMapStyle.Heatmap),
+  squash: presentation(HeartPulse),
+  stair_stepper: presentation(HeartPulse),
+  stand_up_paddling: presentation(WavesHorizontal),
+  surfing: presentation(WavesHorizontal, ActivityMapStyle.Heatmap),
+  swim: presentation(WavesHorizontal),
+  table_tennis: presentation(HeartPulse),
+  tennis: presentation(HeartPulse),
+  trail_run: presentation(SportShoe),
+  velomobile: presentation(Bike),
+  virtual_ride: presentation(Bike),
+  virtual_row: presentation(WavesHorizontal),
+  virtual_run: presentation(SportShoe),
+  volleyball: presentation(HeartPulse),
+  walk: presentation(Footprints),
+  weight_training: presentation(Dumbbell),
+  wheelchair: presentation(Footprints),
+  windsurf: presentation(WavesHorizontal),
+  workout: presentation(HeartPulse),
+  yoga: presentation(HeartPulse),
+  other: presentation(HeartPulse),
 } satisfies Record<ActivityType, ActivityTypePresentation>;
 
 export type ActivityTypeSettings = ActivityTypeSettingsOutput &
-  ActivityTypePresentation;
+  ActivityTypePresentation & { label: string };
 
 export const activityTypeSettings = (
   types: ActivityTypeSettingsOutput[],
@@ -112,7 +103,7 @@ export const activityTypeSettings = (
 ): ActivityTypeSettings => {
   const settings = types.find((candidate) => candidate.type === type);
   if (!settings) throw new Error(`Missing backend settings for ${type}`);
-  return { ...settings, ...ACTIVITY_TYPE_PRESENTATION[type] };
+  return { ...settings, ...ACTIVITY_TYPE_PRESENTATION[type], label: t(type) };
 };
 
 export const activityTypeOptions = (
@@ -120,7 +111,7 @@ export const activityTypeOptions = (
 ): { value: ActivityType_Output; label: string }[] =>
   types.map(({ type }) => ({
     value: type,
-    label: ACTIVITY_TYPE_PRESENTATION[type].label,
+    label: t(type),
   }));
 
 export const activityTypeLabel = (

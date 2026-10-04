@@ -4,8 +4,11 @@
   import Sidebar from "$lib/components/Sidebar.svelte";
   import Topbar from "$lib/components/Topbar.svelte";
   import { t } from "$lib/i18n";
+  import { setContext } from "svelte";
+  import { localeContext } from "$lib/locale";
 
   let { children, data } = $props();
+  setContext(localeContext, () => data.locale);
 </script>
 
 <svelte:head

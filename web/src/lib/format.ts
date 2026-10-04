@@ -1,3 +1,4 @@
+import { t, preferredLocale } from "$lib/i18n";
 import type { ActivityType } from "$lib/types";
 import type { BestEffortValueKind } from "$lib/types";
 import type { UnitSystem } from "$lib/units";
@@ -14,9 +15,7 @@ export function activityName(activity: {
   sport: ActivityType;
 }): string {
   if (activity.name) return activity.name;
-  return activity.sport
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return t(activity.sport);
 }
 
 export function distance(value: number | null, unitSystem: UnitSystem): string {
@@ -46,6 +45,8 @@ export function duration(seconds: number | null): string {
 }
 
 export function ordinal(value: number): string {
+  if (preferredLocale() === "sv")
+    return `${value}:${value % 100 === 11 || value % 100 === 12 ? "e" : value % 10 === 1 || value % 10 === 2 ? "a" : "e"}`;
   const lastTwoDigits = value % 100;
   const suffix =
     lastTwoDigits >= 11 && lastTwoDigits <= 13
@@ -133,11 +134,11 @@ export function localDate(value: string): string {
     (dayStart(today) - dayStart(date)) / 86_400_000,
   );
 
-  if (dayDifference === 0) return "Today";
-  if (dayDifference === 1) return "Yesterday";
-  if (dayDifference === -1) return "Tomorrow";
+  if (dayDifference === 0) return t("today");
+  if (dayDifference === 1) return t("yesterday");
+  if (dayDifference === -1) return t("tomorrow");
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(preferredLocale(), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -146,7 +147,7 @@ export function localDate(value: string): string {
 }
 
 export function localTime(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(preferredLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
@@ -203,7 +204,7 @@ export function relativeOrDateTime(
     return relativeTime(timestamp, now, options);
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(preferredLocale(), {
     dateStyle: "medium",
     timeStyle: "medium",
   }).format(timestamp);

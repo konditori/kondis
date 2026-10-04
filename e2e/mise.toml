@@ -57,3 +57,8 @@ run = [
   { task = ":lint" },
   { task = ":check" },
 ]
+
+[tasks."test-visual"]
+description = "Check themes, layout, accessibility and feed screenshots"
+env._.path = "./node_modules/.bin"
+run = "playwright test -c playwright.visual.config.ts"

@@ -405,22 +405,22 @@
               >
             </div>
             <div class="activity-feed-stats">
-              <div class="activity-stat">
+              <div class="activity-stat stat-distance">
                 <strong
                   >{distance(activity.distanceMeters, data.unitSystem)}</strong
                 ><small>{t("distance")}</small>
               </div>
-              <div class="activity-stat">
+              <div class="activity-stat stat-average">
                 <strong>{pace(averageSpeed, data.unitSystem)}</strong><small
                   >{t("pace")}</small
                 >
               </div>
-              <div class="activity-stat">
+              <div class="activity-stat stat-time">
                 <strong>{duration(activity.elapsedSeconds)}</strong><small
                   >{t("moving_time")}</small
                 >
               </div>
-              <div class="activity-stat">
+              <div class="activity-stat stat-elevation">
                 <strong>{elevation(null, data.unitSystem)}</strong><small
                   >{t("elevation")}</small
                 >

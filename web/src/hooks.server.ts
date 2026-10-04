@@ -1,7 +1,12 @@
 import type { Handle } from "@sveltejs/kit";
 import { apiUrl } from "$lib/server/api";
+import { resolveLocale } from "$lib/locale";
 
 export const handle: Handle = async ({ event, resolve }) => {
+  event.locals.locale = resolveLocale(
+    event.request.headers.get("accept-language"),
+    event.cookies.get("kondis_locale"),
+  );
   const token = event.cookies.get("kondis_session");
   const service = import.meta.env.DEV
     ? undefined
@@ -79,7 +84,12 @@ export const handle: Handle = async ({ event, resolve }) => {
     pathname.startsWith("/login/") ||
     pathname === "/register" ||
     pathname.startsWith("/register/");
-  if (isAuthenticationPage) {
+  const translatedPage =
+    event.locals.locale !== "en" || Boolean(event.cookies.get("kondis_locale"));
+  if (!pathname.startsWith("/api/")) {
+    event.setHeaders({ vary: "Accept-Language, Cookie" });
+  }
+  if (isAuthenticationPage || (isDemoPage && translatedPage)) {
     // Let's not cache auth pages
     event.setHeaders({
       "cache-control": "no-store, no-cache, max-age=0, must-revalidate",
@@ -92,7 +102,10 @@ export const handle: Handle = async ({ event, resolve }) => {
         "public, max-age=86400, stale-while-revalidate=604800",
     });
   }
-  const response = await resolve(event);
+  const response = await resolve(event, {
+    transformPageChunk: ({ html }) =>
+      html.replace('<html lang="en">', `<html lang="${event.locals.locale}">`),
+  });
   if (response.headers.get("x-kondis-cache-bypass") !== "1") {
     return response;
   }

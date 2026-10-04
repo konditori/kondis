@@ -17,18 +17,15 @@
     <div class="hero-glow glow-one"></div>
     <div class="hero-glow glow-two"></div>
     <div class="hero-copy">
-      <h1>Open Source<br /><em>Fitness</em></h1>
+      <h1>Your training.<br /><em>Your data.</em></h1>
       <p class="hero-description">
-        Run, ride, train with full control over your data. Self-host your
-        workouts with full multi-user support, letting you share your activities
-        with family and friends. Log your exercises directly from your phone or
-        import your history from other platforms.
-        <br /><br />
-        Kondis is currently under development, feel free to join the effort.
+        Record your workouts, bring your history, and see your progress.
+        A free, open-source fitness tracker you can host yourself and share
+        with family and friends.
       </p>
       <div class="hero-actions">
         <a class="button" href="#get-started"
-          >Get Started <span aria-hidden="true">→</span></a
+          >Self-host Kondis <span aria-hidden="true">→</span></a
         >
         <a class="button button-ghost" href={github}>
           <svg viewBox="0 0 24 24" aria-hidden="true"
@@ -43,17 +40,17 @@
     </div>
 
     <div class="product-previews">
-      <div class="product-showcase" aria-label="Kondis landing page screenshot">
+      <div class="product-showcase" aria-label="Kondis web app preview">
         <img
           class="product-screenshot"
           src="/kondis-dashboard-preview.png"
           alt="Kondis app home feed"
         />
       </div>
-      <aside class="mobile-showcase" aria-label="Kondis mobile app preview">
+      <aside class="mobile-showcase" aria-label="Kondis web app on a phone">
         <img
           src="/kondis-mobile-preview.png"
-          alt="Kondis mobile app with fictional running and cycling activities"
+          alt="Kondis web app on a phone with fictional running and cycling activities"
         />
       </aside>
     </div>
@@ -68,7 +65,7 @@
 
   <section id="features" class="features intro-section">
     <div class="section-heading">
-      <h2>Forget about becoming<br />a local legend</h2>
+      <h2>Understand your progress.</h2>
       <p>
         Track your training progress, personal bests, and do full workout
         analysis. We are adding new features all the time and hope to give you
@@ -81,9 +78,8 @@
         <div class="feature-copy">
           <h3>Track from your mobile phone.</h3>
           <p>
-            Log workouts directly from your phone. Currently only Android is
-            supported, but iOS and Apple Watch support is coming soon. You can
-            also import activities from other platforms.
+            Record routes and workout stats with the Android app. Explore
+            every activity from your desktop or phone.
           </p>
         </div>
         <div class="feature-map-art">
@@ -178,5 +174,9 @@
         >Read the installation guide <span>→</span></a
       >
     </div>
+    <p class="development-note">
+      Kondis is under active development. Android recording is available;
+      iOS and Apple Watch support are planned. <a href={github}>Follow the project on GitHub ↗</a>
+    </p>
   </section>
 </main>

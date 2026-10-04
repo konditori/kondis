@@ -89,9 +89,8 @@ jobs:
         if: ${{ !cancelled() }}
 
   server-audit:
-    name: Audit Server Dependencies
+    name: Audit Dependencies
     needs: pre-job
-    continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -437,3 +436,39 @@ jobs:
           echo "Diff:"
           git --no-pager diff -- android/app/src/main/res
           exit 1
+
+  visual-regression:
+    name: Theme and Accessibility
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Mise
+        uses: immich-app/devtools/actions/use-mise@3bca63ca3c15020293b36b51737a3ee2c773340b # use-mise-action-v3.1.0
+      - name: Install dependencies and browser
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir e2e exec playwright install chromium
+      - name: Check shared theme formatting
+        run: pnpm --dir web exec prettier --check ../packages/theme --plugin=prettier-plugin-svelte
+      - name: Build the app and public sites
+        run: |
+          pnpm --dir packages/sdk build
+          pnpm install --offline --frozen-lockfile
+          pnpm --dir web build
+          pnpm --dir sites/kondis.org build
+          pnpm --dir sites/docs.kondis.org build
+          pnpm --dir sites/developers.kondis.org build
+          pnpm --dir sites/api.kondis.org build
+      - name: Check themes, screenshots and accessibility
+        run: pnpm --dir e2e test:visual
+      - name: Archive browser artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: theme-regression-artifacts
+          path: |
+            e2e/test-results/visual
+            e2e/playwright-report/visual

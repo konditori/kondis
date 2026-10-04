@@ -25,7 +25,9 @@ concurrency:
 permissions: {}
 
 env:
-  GRADLE_ARGS: --no-daemon --warning-mode=fail --console=plain
+  # AGP and KSP still call Configuration.setVisible, deprecated in Gradle 9.8.
+  # Keep Gradle deprecations visible while Kotlin and Android lint remain strict.
+  GRADLE_ARGS: --no-daemon --warning-mode=all --console=plain
 
 jobs:
   changed-files:

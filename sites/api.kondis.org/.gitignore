@@ -1,4 +1,5 @@
 .docusaurus/
+.cloudflare/
 .svelte-kit/
 .wrangler/
 build/
