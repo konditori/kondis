@@ -17,7 +17,7 @@ This is the greenfield foundation, not yet a feature-complete Strava replacement
 
 - Android Studio with JDK 17 or newer (JDK 21 is recommended)
 - Android SDK 37
-- Gradle 9.7 / Android Gradle Plugin 9.3
+- Gradle 9.8 / Android Gradle Plugin 9.4
 - Kotlin 2.4 with the Compose compiler plugin
 - Minimum Android version: Android 8.0 (API 26)
 
