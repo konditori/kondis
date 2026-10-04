@@ -1,0 +1,21 @@
+.github/workflows/android.yml
+  s_88923884154486::t_9800b050bc5472 28-30
+android/README.md
+  s_88923884154486::t_1eb551e58564c8 63-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e8ec09814a18f1d0b4ae641ea8c4c721a04fc8a1",
+  "prompts": {},
+  "sessions": {
+    "s_88923884154486": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10940-7400-7e70-8422-dc7fac41f9e8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
