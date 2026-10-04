@@ -13,6 +13,7 @@ declare global {
     }
 
     interface Locals {
+      locale: "en" | "sv";
       /** Native runtime fetch captured before SvelteKit's development SSR wrapper. */
       kondisFetch: typeof fetch;
     }

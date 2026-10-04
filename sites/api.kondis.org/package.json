@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "cf dev --port 3000 --inspector-port 9230",
-    "build": "rm -rf build && mkdir -p build && cp static/index.html build/index.html && cp static/theme.css build/theme.css && cp ../../open-api/kondis-openapi-specs.json build/openapi.json && cp node_modules/@scalar/api-reference/dist/browser/standalone.js build/scalar.js",
-    "serve": "cf dev --port 3000 --inspector-port 9230",
+    "start": "cf dev --port 3000",
+    "build": "node scripts/build.mjs",
+    "serve": "cf dev --port 3000",
     "clear": "rm -rf build",
     "build:cf-output": "node ../kondis.org/scripts/build-cf-output.mjs",
     "build:cf-preview-output": "node ../kondis.org/scripts/build-cf-output.mjs --preview",
@@ -16,12 +16,12 @@
     "format:fix": "prettier --write ."
   },
   "dependencies": {
-    "@scalar/api-reference": "^1.67.0",
-    "wrangler": "4.136.0"
+    "@scalar/api-reference": "^1.67.0"
   },
   "devDependencies": {
     "cf": "1.0.0-beta.12",
     "prettier": "^3.9.6",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "wrangler": "4.136.0"
   }
 }

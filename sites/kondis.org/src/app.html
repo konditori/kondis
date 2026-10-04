@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f6f3" />
     <script>
-      const savedTheme = localStorage.getItem("kondis-theme");
-      const theme =
-        savedTheme === "light" || savedTheme === "dark"
-          ? savedTheme
-          : window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
-      document.documentElement.dataset.theme = theme;
-      document
-        .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", theme === "dark" ? "#20201f" : "#f7f6f3");
+      (() => {
+        let saved;
+        try {
+          saved = localStorage.getItem("kondis-theme");
+        } catch {}
+        document.documentElement.dataset.theme =
+          saved === "light" || saved === "dark"
+            ? saved
+            : window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+      })();
     </script>
     %sveltekit.head%
   </head>

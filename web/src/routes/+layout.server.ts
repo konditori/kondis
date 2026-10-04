@@ -68,6 +68,7 @@ export const load: LayoutServerLoad = async ({
     // Activity pages already surface API availability; keep settings usable.
   }
   const result = {
+    locale: locals.locale ?? "en",
     user,
     authenticated: !url || (!publicAuthPage && !publicLiveView),
     unitSystem:

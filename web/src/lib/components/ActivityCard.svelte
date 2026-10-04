@@ -67,13 +67,15 @@
   const average = $derived(
     settings.averageMetric === AverageMetric.Speed
       ? {
-          label: "Avg speed",
+          key: "average",
+          label: t("average_speed"),
           value: speed(activity.metrics?.avgSpeed ?? null, unitSystem),
         }
       : settings.averageMetric === AverageMetric.None
         ? null
         : {
-            label: "Pace",
+            key: "average",
+            label: t("pace"),
             value: pace(
               activity.metrics?.avgSpeed ?? null,
               unitSystem,
@@ -83,18 +85,21 @@
   );
   const stats = $derived([
     {
-      label: "Distance",
+      key: "distance",
+      label: t("distance"),
       value: distance(activity.metrics?.distance ?? null, unitSystem),
     },
     ...(average ? [average] : []),
     {
-      label: "Moving time",
+      key: "time",
+      label: t("moving_time"),
       value: activity.metrics
         ? duration(activity.metrics.movingTime ?? activity.metrics.elapsedTime)
         : "—",
     },
     {
-      label: "Elevation",
+      key: "elevation",
+      label: t("elevation"),
       value: elevation(activity.metrics?.elevationGain ?? null, unitSystem),
     },
   ]);
@@ -124,10 +129,10 @@
   const activityOwner = $derived(
     viewerId &&
       (activity.userId === viewerId || activity.athlete?.id === viewerId)
-      ? "Your"
+      ? t("achievement_owner_you")
       : activity.athlete
         ? userPossessiveName(activity.athlete)
-        : "This athlete's",
+        : t("achievement_owner_athlete"),
   );
 
   function achievementText(
@@ -138,15 +143,33 @@
     const rank = personalRecord?.overallRank ?? 1;
     const rankLabel = rank === 1 ? "" : `${ordinal(rank)} `;
     if (type === "longest_ride")
-      return `${activityOwner} ${rankLabel}longest ride!`;
+      return t("achievement_longest_ride", {
+        owner: activityOwner,
+        rank: rankLabel,
+      });
     if (type === "biggest_climb")
-      return `${activityOwner} ${rankLabel}biggest climb!`;
+      return t("achievement_biggest_climb", {
+        owner: activityOwner,
+        rank: rankLabel,
+      });
     if (type.startsWith("power_")) {
-      return `${activityOwner} ${rankLabel}highest power output for ${powerDurationLabel(type)} ever!`;
+      return t("achievement_highest_power", {
+        owner: activityOwner,
+        rank: rankLabel,
+        duration: powerDurationLabel(type),
+      });
     }
     return type.includes("power") || type === "elevation_gain"
-      ? `${activityOwner} ${rankLabel}best ${label}!`
-      : `${activityOwner} ${rankLabel}fastest ${label}!`;
+      ? t("achievement_best", {
+          owner: activityOwner,
+          rank: rankLabel,
+          effort: label,
+        })
+      : t("achievement_fastest", {
+          owner: activityOwner,
+          rank: rankLabel,
+          effort: label,
+        });
   }
 
   function powerDuration(type: string): number {
@@ -160,8 +183,14 @@
     const match = /^power_(\d+)(s|m|h)$/.exec(type);
     if (!match) return bestEffortLabel(type).replace(" power", "");
     const [, amount, unit] = match;
-    const label = unit === "h" ? "hour" : unit === "m" ? "minute" : "second";
-    return `${amount} ${label}${amount === "1" ? "" : "s"}`;
+    return t(
+      unit === "h"
+        ? "power_duration_hours"
+        : unit === "m"
+          ? "power_duration_minutes"
+          : "power_duration_seconds",
+      { amount },
+    );
   }
 
   function openActivity(event: MouseEvent) {
@@ -236,6 +265,7 @@
           )}</span
         ><span
           class="activity-sport-inline"
+          role="img"
           class:running-sport={["run", "trail_run", "virtual_run"].includes(
             activity.sport,
           )}
@@ -247,8 +277,7 @@
           class="activity-tags"
           aria-label={t("activity_tags")}
         >
-          {#each activity.tags as tag}<span class="activity-tag"
-              >{tag.replaceAll("_", " ")}</span
+          {#each activity.tags as tag}<span class="activity-tag">{t(tag)}</span
             >{/each}
         </div>{/if}
     </div>
@@ -258,26 +287,28 @@
       </p>
     {/if}
     <div class="activity-feed-stats">
-      <div
-        class="activity-stat activity-medal-stat"
-        aria-label={t("medals_count", { count: achievementCount })}
-      >
-        <div class="activity-medal-value">
-          {#if shouldShowAchievementCount(achievementCount, activity.topBestEfforts ?? [])}<strong
-              >{achievementCount}</strong
-            >{/if}
-          {#each distinctAchievementEfforts(activity.topBestEfforts ?? []) as effort}
-            <span
-              class={`activity-achievement rank-${achievementRank(effort)}`}
-              title={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
-              aria-label={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
-              ><Medal size={20} /></span
-            >
-          {/each}
+      {#if achievementCount > 0 || activity.topBestEfforts?.length}
+        <div
+          class="activity-stat activity-medal-stat"
+          aria-label={t("medals_count", { count: achievementCount })}
+        >
+          <div class="activity-medal-value">
+            {#if shouldShowAchievementCount(achievementCount, activity.topBestEfforts ?? [])}<strong
+                >{achievementCount}</strong
+              >{/if}
+            {#each distinctAchievementEfforts(activity.topBestEfforts ?? []) as effort}
+              <span
+                class={`activity-achievement rank-${achievementRank(effort)}`}
+                title={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
+                aria-label={`${achievementMedalLabel(achievementRank(effort))}: ${bestEffortLabel(effort.type)}`}
+                ><Medal size={20} /></span
+              >
+            {/each}
+          </div>
         </div>
-      </div>
+      {/if}
       {#each stats as stat}
-        <div class="activity-stat">
+        <div class={`activity-stat stat-${stat.key}`}>
           <strong>{stat.value}</strong><small>{stat.label}</small>
         </div>
       {/each}
@@ -289,13 +320,16 @@
       type="button"
       aria-expanded={descriptionExpanded}
       onclick={() => (descriptionExpanded = !descriptionExpanded)}
-      >{descriptionExpanded ? "Show less" : "Show more"}</button
+      >{descriptionExpanded ? t("show_less") : t("show_more")}</button
     >
   {/if}
   {#if personalRecord}
     <div
       class="activity-pr-banner"
-      aria-label={`Overall rank ${personalRecord.overallRank}: ${achievementText(personalRecord)}`}
+      aria-label={t("activity_rank_description", {
+        rank: personalRecord.overallRank,
+        achievement: achievementText(personalRecord),
+      })}
     >
       <span
         class={`activity-pr-badge rank-${personalRecord.overallRank}`}
@@ -335,7 +369,9 @@
             class:activity-card-images-with-map={Boolean(activity.track)}
             class:activity-card-images-two={activity.images.length === 2}
             class="activity-card-images"
-            aria-label={`${activity.images.length} activity ${activity.images.length === 1 ? "image" : "images"}`}
+            aria-label={t("activity_image_count", {
+              count: activity.images.length,
+            })}
           >
             {#each activity.images.slice(0, 6) as image}
               {@const imageUrl =
@@ -365,12 +401,13 @@
         class="activity-social-button"
         onclick={toggleLike}
         disabled={likeBusy}
-        aria-label={liked ? "Unlike activity" : "Like activity"}
+        aria-label={liked ? t("unlike_activity") : t("like_activity")}
         ><Heart size={17} fill={liked ? "currentColor" : "none"} />
         {likeCount}</button
       >
       <a
         class="activity-social-button"
+        aria-label={t("comments_count", { count: activity.commentCount ?? 0 })}
         href={`/activities/${activity.id}#comments`}
         onclick={openActivity}
         ><MessageCircle size={17} /> {activity.commentCount ?? 0}</a

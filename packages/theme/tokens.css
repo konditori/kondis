@@ -1,0 +1,88 @@
+/* Shared product colors. Component styles describe roles, not palette values. */
+:root {
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-code: "DM Mono", ui-monospace, monospace;
+  --accent: #f6821f;
+  --accent-hover: #e87515;
+  --on-accent: #292725;
+  --accent-text: #a9430e;
+  --accent-soft: #fff0df;
+  --text: #292725;
+  --text-muted: #6b655e;
+  --page: #f7f6f3;
+  --shell: #fbfaf8;
+  --surface: #ffffff;
+  --surface-muted: #f0eee9;
+  --raised: #ffffff;
+  --border: #d8d4ce;
+  --border-strong: #aaa39a;
+  --focus: #a9430e;
+  --shadow: #2927250d;
+  --success: #28704a;
+  --success-soft: #e4f4e8;
+  --warning: #914314;
+  --warning-soft: #fff0df;
+  --warning-border: #d79461;
+  --danger: #982f3b;
+  --danger-soft: #fbe5e8;
+  --danger-border: #d98e98;
+  --like: #982f56;
+  --like-soft: #fbe5ed;
+  --chart-route: #a9430e;
+  --chart-fastest: #8a6300;
+  --chart-slowest: #76634b;
+  --code-surface: #2d2b28;
+  --code-text: #f5f2ed;
+  --medal-gold: #8a6300;
+  --medal-gold-soft: #fff2d5;
+  --medal-silver: #5d6866;
+  --medal-bronze: #88502d;
+  --chart-heart: #b52238;
+  --chart-power: #376a95;
+  --danger-solid: #b52238;
+  --on-danger: #ffffff;
+  --radius: 7px;
+}
+
+:root[data-theme="dark"],
+.dark-mode {
+  color-scheme: dark;
+  --accent-hover: #ff9b45;
+  --accent-text: #ffb16e;
+  --accent-soft: #3a2b20;
+  --text: #f5f2ed;
+  --text-muted: #aaa39a;
+  --page: #20201f;
+  --shell: #242321;
+  --surface: #292826;
+  --surface-muted: #242321;
+  --raised: #2d2b28;
+  --border: #46433f;
+  --border-strong: #81796f;
+  --focus: #ffb16e;
+  --shadow: #00000026;
+  --success: #a7e0b8;
+  --success-soft: #19382b;
+  --warning: #ffc18b;
+  --warning-soft: #412c20;
+  --warning-border: #85532f;
+  --danger: #ffb4b4;
+  --danger-soft: #512227;
+  --danger-border: #85515a;
+  --like: #ffb3c7;
+  --like-soft: #4a2a36;
+  --medal-gold: #ffd978;
+  --medal-gold-soft: #413721;
+  --medal-silver: #c2cbc8;
+  --medal-bronze: #edb383;
+  --chart-heart: #ff9eac;
+  --chart-power: #8ac5ef;
+  --chart-route: #ffb16e;
+  --chart-fastest: #ffd978;
+  --chart-slowest: #d6b27a;
+}
+
+:root[data-theme="light"],
+.light-mode {
+  color-scheme: light;
+}

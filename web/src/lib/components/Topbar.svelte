@@ -7,13 +7,12 @@
     Plus,
     Search,
     Settings,
-    Sun,
-    Moon,
     X,
   } from "@lucide/svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { onMount } from "svelte";
+  import ThemePicker from "../../../../packages/theme/ThemePicker.svelte";
   import UserAvatar from "$lib/components/UserAvatar.svelte";
   import {
     getSdkRequestOptions,
@@ -45,7 +44,6 @@
   } = $props();
   let search = $state("");
   let searchOpen = $state(false);
-  let theme = $state<"dark" | "light">("light");
   let searchInput = $state<HTMLInputElement>();
   let searchForm = $state<HTMLFormElement>();
   let menu: HTMLDetailsElement;
@@ -104,14 +102,17 @@
   });
 
   function closeMenu() {
+    if (menu) menu.open = false;
     menuOpen = false;
   }
 
   function closePlusMenu() {
+    if (plusMenu) plusMenu.open = false;
     plusMenuOpen = false;
   }
 
   function closeNotifications() {
+    if (notificationMenu) notificationMenu.open = false;
     notificationsOpen = false;
   }
 
@@ -164,14 +165,6 @@
   }
 
   onMount(() => {
-    try {
-      const savedTheme = localStorage.getItem("kondis-theme");
-      if (savedTheme === "dark" || savedTheme === "light") {
-        setTheme(savedTheme, false);
-      }
-    } catch {
-      // Dark mode remains the default when storage is unavailable.
-    }
     void loadNotifications();
     const unsubscribe = subscribeToActivityEvents(
       eventsUrl,
@@ -191,24 +184,27 @@
       !target.closest(".search-toggle")
     )
       searchOpen = false;
-    if (menuOpen && !menu.contains(event.target as Node)) closeMenu();
-    if (plusMenuOpen && !plusMenu.contains(event.target as Node))
+    if (menu?.open && !menu.contains(event.target as Node)) closeMenu();
+    if (plusMenu?.open && !plusMenu.contains(event.target as Node))
       closePlusMenu();
-    if (notificationsOpen && !notificationMenu.contains(event.target as Node))
+    if (
+      notificationMenu?.open &&
+      !notificationMenu.contains(event.target as Node)
+    )
       closeNotifications();
   }
 
   function handleWindowKeydown(event: KeyboardEvent) {
     if (event.key !== "Escape") return;
-    if (menuOpen) {
+    if (menu?.open) {
       closeMenu();
       menu.querySelector("summary")?.focus();
     }
-    if (plusMenuOpen) {
+    if (plusMenu?.open) {
       closePlusMenu();
       plusMenu.querySelector("summary")?.focus();
     }
-    if (notificationsOpen) {
+    if (notificationMenu?.open) {
       closeNotifications();
       notificationMenu.querySelector("summary")?.focus();
     }
@@ -217,24 +213,6 @@
   function openSearch() {
     searchOpen = true;
     requestAnimationFrame(() => searchInput?.focus());
-  }
-
-  function setTheme(nextTheme: "dark" | "light", persist = true) {
-    theme = nextTheme;
-    document.documentElement.dataset.theme = nextTheme;
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", nextTheme === "dark" ? "#20201f" : "#f7f6f3");
-    if (!persist) return;
-    try {
-      localStorage.setItem("kondis-theme", nextTheme);
-    } catch {
-      // The interface still works when storage is unavailable.
-    }
-  }
-
-  function toggleTheme() {
-    setTheme(theme === "dark" ? "light" : "dark");
   }
 
   function updateSearch() {
@@ -302,23 +280,13 @@
     </button>
   {/if}
 
-  <button
-    class="theme-toggle"
-    type="button"
-    aria-label={theme === "dark"
-      ? t("switch_to_light_mode")
-      : t("switch_to_dark_mode")}
-    title={theme === "dark"
-      ? t("switch_to_light_mode")
-      : t("switch_to_dark_mode")}
-    onclick={toggleTheme}
-  >
-    {#if theme === "dark"}
-      <Sun size={19} />
-    {:else}
-      <Moon size={19} />
-    {/if}
-  </button>
+  <ThemePicker
+    class="top-appearance"
+    label={t("appearance")}
+    system={t("theme_system")}
+    light={t("theme_light")}
+    dark={t("theme_dark")}
+  />
 
   <details
     bind:this={notificationMenu}

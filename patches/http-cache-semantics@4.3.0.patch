@@ -1,0 +1,45 @@
+diff --git a/index.js b/index.js
+index 56c26025074cbcf218e3ec4d810662da93f8024e..b625f6f26d9315583e3800aeceb6464f35ddd3e1 100644
+--- a/index.js
++++ b/index.js
+@@ -396,7 +396,7 @@ module.exports = class CachePolicy {
+         this._assertRequestHasHeaders(req);
+ 
+         // In all circumstances, a cache MUST NOT ignore the must-revalidate directive
+-        if (this._rescc['must-revalidate']) {
++        if (this._rescc['must-revalidate'] || this._requiresRevalidation()) {
+             return this._evaluateRequestMissResult(req);
+         }
+ 
+@@ -610,6 +610,15 @@ module.exports = class CachePolicy {
+         return toNumberOrZero(this._resHeaders.age);
+     }
+ 
++    // max-stale and stale extensions must not bypass security-zeroed lifetimes.
++    _requiresRevalidation() {
++        return !this.storable() || this._rescc['no-cache'] || this._resHeaders.vary === '*' ||
++            (this._isShared && (
++                this._rescc['proxy-revalidate'] ||
++                (this._resHeaders['set-cookie'] && !this._rescc.public && !this._rescc.immutable)
++            ));
++    }
++
+     /**
+      * Possibly outdated value of applicable max-age (or heuristic equivalent) in seconds.
+      * This counts since response's `Date`.
+@@ -706,6 +715,7 @@ module.exports = class CachePolicy {
+      * @returns {boolean} `true` if `stale-if-error` condition allows use of a stale response.
+      */
+     _useStaleIfError() {
++        if (this._requiresRevalidation()) return false;
+         return this.maxAge() + toNumberOrZero(this._rescc['stale-if-error']) > this.age();
+     }
+ 
+@@ -713,6 +723,7 @@ module.exports = class CachePolicy {
+      * @returns {boolean} `true` if `stale-while-revalidate` is currently allowed.
+      */
+     useStaleWhileRevalidate() {
++        if (this._requiresRevalidation()) return false;
+         const swr = toNumberOrZero(this._rescc['stale-while-revalidate']);
+         return swr > 0 && this.maxAge() + swr > this.age();
+     }

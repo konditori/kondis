@@ -1,19 +1,22 @@
 import { browser } from "$app/environment";
+import { getContext } from "svelte";
+import { localeContext, type Locale } from "$lib/locale";
 import source from "$i18n/en.json";
 import swedish from "$i18n/sv.json";
 
-type TranslationKey = keyof typeof source;
+export type TranslationKey = keyof typeof source;
 type Catalog = typeof source;
 
 const catalogs: Record<string, Catalog> = { en: source, sv: swedish };
 
-const preferredLocale = () => {
-  if (!browser) return "en";
-  return (
-    navigator.languages
-      .map((locale) => locale.toLowerCase().split("-", 1)[0])
-      .find((locale) => locale in catalogs) ?? "en"
-  );
+export const preferredLocale = (): Locale => {
+  if (browser) return document.documentElement.lang === "sv" ? "sv" : "en";
+  try {
+    return getContext<(() => Locale) | undefined>(localeContext)?.() ?? "en";
+  } catch {
+    // Pure helpers and tests can run outside a Svelte component.
+    return "en";
+  }
 };
 
 export function t(

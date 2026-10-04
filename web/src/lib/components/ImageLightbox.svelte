@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight, X } from "@lucide/svelte";
+  import { onDestroy } from "svelte";
   import type { ActivityImage } from "$lib/types";
   import { t } from "$lib/i18n";
 
@@ -21,20 +22,26 @@
     image?.original ?? image?.preview ?? image?.thumbnail,
   );
 
+  let dialog = $state<HTMLDialogElement>();
   $effect(() => {
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (!["Escape", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (event.key === "Escape") onClose();
-      if (event.key === "ArrowLeft")
-        currentIndex = (currentIndex - 1 + images.length) % images.length;
-      if (event.key === "ArrowRight")
-        currentIndex = (currentIndex + 1) % images.length;
-    };
-    document.addEventListener("keydown", handleKeydown);
-    return () => document.removeEventListener("keydown", handleKeydown);
+    if (dialog && imageUrl && !dialog.open) dialog.showModal();
   });
+  onDestroy(() => dialog?.close());
+
+  function close() {
+    dialog?.close();
+    onClose();
+  }
+  function handleKeydown(event: KeyboardEvent) {
+    if (!["Escape", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Escape") close();
+    if (event.key === "ArrowLeft")
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+    if (event.key === "ArrowRight")
+      currentIndex = (currentIndex + 1) % images.length;
+  }
 
   $effect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -46,18 +53,18 @@
 </script>
 
 {#if imageUrl}
-  <div
+  <dialog
+    bind:this={dialog}
     class="image-lightbox"
-    role="dialog"
-    aria-modal="true"
     tabindex="-1"
     aria-label={image?.caption ?? t("activity_image")}
     onclick={(event) => {
-      if (event.target === event.currentTarget) onClose();
+      if (event.target === event.currentTarget) close();
     }}
-    onkeydown={(event) => {
-      event.stopPropagation();
-      if (event.key === "Escape") onClose();
+    onkeydown={handleKeydown}
+    oncancel={(event) => {
+      event.preventDefault();
+      close();
     }}
   >
     <div class="image-lightbox-content">
@@ -76,7 +83,7 @@
         class="image-lightbox-close"
         type="button"
         aria-label={t("close_image_viewer")}
-        onclick={onClose}
+        onclick={close}
       >
         <X size={22} />
       </button>
@@ -101,5 +108,5 @@
         >{/if}
       {#if image?.caption}<p>{image.caption}</p>{/if}
     </div>
-  </div>
+  </dialog>
 {/if}

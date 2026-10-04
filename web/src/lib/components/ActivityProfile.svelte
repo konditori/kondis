@@ -171,8 +171,16 @@
     >
       <defs>
         <linearGradient id="profile-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stop-color="#8bae94" stop-opacity="0.48" />
-          <stop offset="1" stop-color="#e5f2e8" stop-opacity="0.1" />
+          <stop
+            offset="0"
+            stop-color="var(--chart-route)"
+            stop-opacity="0.48"
+          />
+          <stop
+            offset="1"
+            stop-color="var(--surface-muted)"
+            stop-opacity="0.1"
+          />
         </linearGradient>
       </defs>
       {#each ticks as tick}

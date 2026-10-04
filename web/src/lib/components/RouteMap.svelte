@@ -85,7 +85,12 @@
   }
 
   function medalIcon(L: typeof import("leaflet"), rank: number, label: string) {
-    const color = rank === 1 ? "#efaa00" : rank === 2 ? "#7b8583" : "#be6739";
+    const color =
+      rank === 1
+        ? "var(--medal-gold)"
+        : rank === 2
+          ? "var(--medal-silver)"
+          : "var(--medal-bronze)";
     return L.divIcon({
       className: "route-medal-marker",
       html: `<span style="--medal-color:${color}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.21 15 2.66 7.14A2 2 0 0 1 4.3 4h15.4a2 2 0 0 1 1.64 3.14L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><circle cx="12" cy="16" r="6"/><path d="M12 18v-4"/><path d="m9.5 16 2.5-2 2.5 2"/></svg><strong>${escapeHtml(label)}</strong><em>${t("lifetime")}</em></span>`,
@@ -200,192 +205,247 @@
     const mapContainer = container;
     let disposed = false;
     let observer: ResizeObserver | undefined;
+    let visibilityObserver: IntersectionObserver | undefined;
+    let themeObserver: MutationObserver | undefined;
 
-    void import("leaflet").then((L) => {
-      if (disposed) return;
-      leaflet = L;
-      map = L.map(mapContainer, {
-        zoomControl: false,
-        attributionControl: true,
-        preferCanvas: true,
-        dragging: !compact,
-        scrollWheelZoom: !compact,
-        doubleClickZoom: !compact,
-        touchZoom: !compact,
-        keyboard: !compact,
-      });
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: t("map_attribution"),
-      }).addTo(map);
-      if (!compact) L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      const points = coordinates.map(([longitude, latitude]) =>
-        L.latLng(latitude, longitude),
-      );
-      const boundsLayer = L.polyline(points);
-
-      if (mode === ActivityMapStyle.Heatmap) {
-        const renderer = L.canvas({ padding: 0.5 });
-        L.polyline(points, {
-          color: "#f97316",
-          weight: 4,
-          opacity: 0.28,
-          lineCap: "round",
-          renderer,
+    const initialize = () => {
+      void import("leaflet").then((L) => {
+        if (disposed) return;
+        leaflet = L;
+        map = L.map(mapContainer, {
+          zoomControl: false,
+          attributionControl: true,
+          preferCanvas: true,
+          dragging: !compact,
+          scrollWheelZoom: !compact,
+          doubleClickZoom: !compact,
+          touchZoom: !compact,
+          keyboard: !compact,
+        });
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: t("map_attribution"),
         }).addTo(map);
+        if (!compact) L.control.zoom({ position: "bottomright" }).addTo(map);
 
-        // Aggregate samples into a bounded grid before drawing. This preserves
-        // dwell density without creating a Leaflet layer for every GPS record.
-        const bounds = boundsLayer.getBounds();
-        const cellSize =
-          Math.max(
-            bounds.getNorth() - bounds.getSouth(),
-            bounds.getEast() - bounds.getWest(),
-          ) / 80 || 0.00001;
-        const cells = new Map<
-          string,
-          { point: (typeof points)[number]; count: number }
-        >();
-        for (const point of points) {
-          const key = `${Math.floor(point.lat / cellSize)}:${Math.floor(point.lng / cellSize)}`;
-          const cell = cells.get(key);
-          if (cell) {
-            cell.count++;
-          } else {
-            cells.set(key, { point, count: 1 });
+        const points = coordinates.map(([longitude, latitude]) =>
+          L.latLng(latitude, longitude),
+        );
+        const boundsLayer = L.polyline(points);
+
+        if (mode === ActivityMapStyle.Heatmap) {
+          const renderer = L.canvas({ padding: 0.5 });
+          L.polyline(points, {
+            color: "var(--chart-route)",
+            weight: 4,
+            opacity: 0.28,
+            lineCap: "round",
+            renderer,
+          }).addTo(map);
+
+          // Aggregate samples into a bounded grid before drawing. This preserves
+          // dwell density without creating a Leaflet layer for every GPS record.
+          const bounds = boundsLayer.getBounds();
+          const cellSize =
+            Math.max(
+              bounds.getNorth() - bounds.getSouth(),
+              bounds.getEast() - bounds.getWest(),
+            ) / 80 || 0.00001;
+          const cells = new Map<
+            string,
+            { point: (typeof points)[number]; count: number }
+          >();
+          for (const point of points) {
+            const key = `${Math.floor(point.lat / cellSize)}:${Math.floor(point.lng / cellSize)}`;
+            const cell = cells.get(key);
+            if (cell) {
+              cell.count++;
+            } else {
+              cells.set(key, { point, count: 1 });
+            }
+          }
+          const maxDensity = Math.max(
+            ...Array.from(cells.values(), ({ count }) => count),
+          );
+          for (const { point, count } of cells.values()) {
+            const intensity = Math.sqrt(count / maxDensity);
+            L.circleMarker(point, {
+              renderer,
+              radius: 5 + intensity * 16,
+              stroke: false,
+              fillColor:
+                intensity > 0.65
+                  ? "#fde047"
+                  : intensity > 0.3
+                    ? "#fb923c"
+                    : "#f97316",
+              fillOpacity: 0.06 + intensity * 0.46,
+              interactive: false,
+            }).addTo(map);
+          }
+        } else {
+          const outline = L.polyline(points, {
+            color: "#ffffff",
+            weight: compact ? 7 : 9,
+            opacity: 0.9,
+            lineCap: "round",
+          }).addTo(map);
+          const routeLine = L.polyline(points, {
+            color: "var(--chart-route)",
+            weight: compact ? 4 : 5,
+            opacity: 1,
+            lineCap: "round",
+          }).addTo(map);
+          routeLines = [
+            { line: outline, opacity: 0.9 },
+            { line: routeLine, opacity: 1 },
+          ];
+          const hitArea = L.polyline(points, {
+            color: "#000",
+            weight: 24,
+            opacity: 0,
+            interactive: true,
+          }).addTo(map);
+          const updatePoint = (event: import("leaflet").LeafletMouseEvent) => {
+            const nearest = route.reduce(
+              (closest, candidate) => {
+                const candidatePoint = L.latLng(
+                  candidate.coordinate[1],
+                  candidate.coordinate[0],
+                );
+                const candidateDistance = candidatePoint.distanceTo(
+                  event.latlng,
+                );
+                return candidateDistance < closest.distance
+                  ? { point: candidate, distance: candidateDistance }
+                  : closest;
+              },
+              { point: route[0], distance: Number.POSITIVE_INFINITY } as {
+                point: (typeof route)[number];
+                distance: number;
+              },
+            );
+            onPointHover?.(nearest.point);
+          };
+          hitArea.on("mousemove mouseover", (event) =>
+            updatePoint(event as import("leaflet").LeafletMouseEvent),
+          );
+          hitArea.on("mouseout", () => onPointHover?.(null));
+          if (showEndpoints) {
+            L.circleMarker(points[0], {
+              radius: 7,
+              color: "#fff",
+              weight: 3,
+              fillColor: "var(--chart-route)",
+              fillOpacity: 1,
+              interactive: false,
+            }).addTo(map);
+            L.circleMarker(points.at(-1)!, {
+              radius: 7,
+              color: "#fff",
+              weight: 3,
+              fillColor: "var(--chart-slowest)",
+              fillOpacity: 1,
+              interactive: false,
+            }).addTo(map);
           }
         }
-        const maxDensity = Math.max(
-          ...Array.from(cells.values(), ({ count }) => count),
-        );
-        for (const { point, count } of cells.values()) {
-          const intensity = Math.sqrt(count / maxDensity);
-          L.circleMarker(point, {
-            renderer,
-            radius: 5 + intensity * 16,
-            stroke: false,
-            fillColor:
-              intensity > 0.65
-                ? "#fde047"
-                : intensity > 0.3
-                  ? "#fb923c"
-                  : "#f97316",
-            fillOpacity: 0.06 + intensity * 0.46,
-            interactive: false,
-          }).addTo(map);
-        }
-      } else {
-        const outline = L.polyline(points, {
-          color: "#ffffff",
-          weight: compact ? 7 : 9,
-          opacity: 0.9,
-          lineCap: "round",
-        }).addTo(map);
-        const routeLine = L.polyline(points, {
-          color: "#166534",
-          weight: compact ? 4 : 5,
+
+        // Keep these layers alive and only replace their coordinates on hover.
+        // Recreating layers and moving the tiled map made rapid split selection visibly stall.
+        highlightLine = L.polyline([], {
+          color: "var(--chart-route)",
+          weight: compact ? 6 : 7,
           opacity: 1,
           lineCap: "round",
+          interactive: false,
         }).addTo(map);
-        routeLines = [
-          { line: outline, opacity: 0.9 },
-          { line: routeLine, opacity: 1 },
-        ];
-        const hitArea = L.polyline(points, {
-          color: "#000",
-          weight: 24,
+        highlightStart = L.circleMarker([0, 0], {
+          radius: 6,
+          color: "#fff",
+          weight: 2,
           opacity: 0,
-          interactive: true,
+          fillColor: "var(--chart-route)",
+          fillOpacity: 0,
+          interactive: false,
         }).addTo(map);
-        const updatePoint = (event: import("leaflet").LeafletMouseEvent) => {
-          const nearest = route.reduce(
-            (closest, candidate) => {
-              const candidatePoint = L.latLng(
-                candidate.coordinate[1],
-                candidate.coordinate[0],
-              );
-              const candidateDistance = candidatePoint.distanceTo(event.latlng);
-              return candidateDistance < closest.distance
-                ? { point: candidate, distance: candidateDistance }
-                : closest;
-            },
-            { point: route[0], distance: Number.POSITIVE_INFINITY } as {
-              point: (typeof route)[number];
-              distance: number;
-            },
-          );
-          onPointHover?.(nearest.point);
+        highlightEnd = L.circleMarker([0, 0], {
+          radius: 6,
+          color: "#fff",
+          weight: 2,
+          opacity: 0,
+          fillColor: "var(--chart-route)",
+          fillOpacity: 0,
+          interactive: false,
+        }).addTo(map);
+        highlightPoint = L.circleMarker([0, 0], {
+          radius: 8,
+          color: "#fff",
+          weight: 3,
+          opacity: 0,
+          fillColor: "var(--chart-power)",
+          fillOpacity: 0,
+          interactive: false,
+        }).addTo(map);
+
+        map.fitBounds(boundsLayer.getBounds(), { padding: [36, 36] });
+
+        // Leaflet uses Canvas here, whose paint styles cannot resolve CSS variables.
+        const sourceColors = new WeakMap<
+          import("leaflet").Path,
+          { color?: string; fillColor?: string }
+        >();
+        const applyColors = () => {
+          const palette = getComputedStyle(mapContainer);
+          map?.eachLayer((layer) => {
+            if (!(layer instanceof L.Path)) return;
+            const colors = sourceColors.get(layer) ?? {
+              color: layer.options.color,
+              fillColor: layer.options.fillColor,
+            };
+            sourceColors.set(layer, colors);
+            const resolveColor = (value: string | undefined) =>
+              value?.startsWith("var(")
+                ? palette.getPropertyValue(value.slice(4, -1)).trim()
+                : value;
+            layer.setStyle({
+              color: resolveColor(colors.color),
+              fillColor: resolveColor(colors.fillColor),
+            });
+          });
         };
-        hitArea.on("mousemove mouseover", (event) =>
-          updatePoint(event as import("leaflet").LeafletMouseEvent),
-        );
-        hitArea.on("mouseout", () => onPointHover?.(null));
-        if (showEndpoints) {
-          L.circleMarker(points[0], {
-            radius: 7,
-            color: "#fff",
-            weight: 3,
-            fillColor: "#166534",
-            fillOpacity: 1,
-            interactive: false,
-          }).addTo(map);
-          L.circleMarker(points.at(-1)!, {
-            radius: 7,
-            color: "#fff",
-            weight: 3,
-            fillColor: "#d97706",
-            fillOpacity: 1,
-            interactive: false,
-          }).addTo(map);
-        }
-      }
+        applyColors();
+        themeObserver = new MutationObserver(applyColors);
+        themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["data-theme"],
+        });
 
-      // Keep these layers alive and only replace their coordinates on hover.
-      // Recreating layers and moving the tiled map made rapid split selection visibly stall.
-      highlightLine = L.polyline([], {
-        color: "#f97316",
-        weight: compact ? 6 : 7,
-        opacity: 1,
-        lineCap: "round",
-        interactive: false,
-      }).addTo(map);
-      highlightStart = L.circleMarker([0, 0], {
-        radius: 6,
-        color: "#fff",
-        weight: 2,
-        opacity: 0,
-        fillColor: "#f97316",
-        fillOpacity: 0,
-        interactive: false,
-      }).addTo(map);
-      highlightEnd = L.circleMarker([0, 0], {
-        radius: 6,
-        color: "#fff",
-        weight: 2,
-        opacity: 0,
-        fillColor: "#f97316",
-        fillOpacity: 0,
-        interactive: false,
-      }).addTo(map);
-      highlightPoint = L.circleMarker([0, 0], {
-        radius: 8,
-        color: "#fff",
-        weight: 3,
-        opacity: 0,
-        fillColor: "#0ea5e9",
-        fillOpacity: 0,
-        interactive: false,
-      }).addTo(map);
+        observer = new ResizeObserver(() => map?.invalidateSize());
+        observer.observe(mapContainer);
+      });
+    };
 
-      map.fitBounds(boundsLayer.getBounds(), { padding: [36, 36] });
-
-      observer = new ResizeObserver(() => map?.invalidateSize());
-      observer.observe(mapContainer);
-    });
+    if (compact && "IntersectionObserver" in window) {
+      visibilityObserver = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            visibilityObserver?.disconnect();
+            themeObserver?.disconnect();
+            initialize();
+          }
+        },
+        { rootMargin: "300px 0px" },
+      );
+      visibilityObserver.observe(mapContainer);
+    } else {
+      initialize();
+    }
 
     return () => {
       disposed = true;
+      visibilityObserver?.disconnect();
+      themeObserver?.disconnect();
       observer?.disconnect();
       map?.remove();
       map = undefined;
@@ -405,6 +465,7 @@
     class:route-map-compact={compact}
     class="route-map"
     bind:this={container}
+    role="region"
     aria-label={mode === ActivityMapStyle.Heatmap
       ? t("activity_density_map")
       : t("activity_route_map")}

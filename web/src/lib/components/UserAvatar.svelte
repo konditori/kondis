@@ -10,6 +10,7 @@
 
 <span
   class="user-avatar"
+  role="img"
   style={`--avatar-size: ${size}px`}
   aria-label={name}
   title={name}
