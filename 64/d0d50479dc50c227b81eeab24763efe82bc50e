@@ -1,0 +1,201 @@
+.github/workflows/sites.yml
+  s_7e34d35998efff::t_f3a708767e0a3c 9-15,43-46,50-53,57-60,65,68,102-106,145-149,188-192,231-235
+.github/workflows/test.yml
+  s_eadd825e33543a::t_cb523d916a3251 92,439-474
+android/app/src/main/java/app/kondis/ui/theme/Theme.kt
+  s_7e34d35998efff::t_7355958001e3b0 10-12,16-20,22-23,25-26,31-41
+android/app/src/main/res/values-b+sv/strings.xml
+  s_7e34d35998efff::t_37a539d8f4aefb 306-307,525-644
+android/app/src/main/res/values/strings.xml
+  s_7e34d35998efff::t_7efad527a87e7f 525-644
+e2e/mise.toml
+  s_eadd825e33543a::t_59828d5aa134a0 60-64
+e2e/package.json
+  s_eadd825e33543a::t_fcff4106b96305 15-16,32-33
+e2e/playwright.visual.config.ts
+  s_7e34d35998efff::t_7b61bbcc2ee5a8 1-28
+e2e/src/visual/README.md
+  s_7e34d35998efff::t_d0fe85b0211b97 1-30
+e2e/src/visual/capture.mjs
+  s_7e34d35998efff::t_74bdceb6732b0a 1-31
+e2e/src/visual/serve.ts
+  s_7e34d35998efff::t_ed370295ef528c 1-204
+e2e/src/visual/theme.spec.ts
+  s_7e34d35998efff::t_5628737e72bf80 1-236
+e2e/tsconfig.json
+  s_eadd825e33543a::t_1ff48316dc8c62 24
+i18n/en.json
+  s_7e34d35998efff::t_4a2a0c4e92f175 522-642
+i18n/sv.json
+  s_7e34d35998efff::t_0463b202f7e8a0 304-305,522-642
+packages/theme/README.md
+  s_7e34d35998efff::t_31f5d14b1cbb5e 1-21
+packages/theme/ThemePicker.svelte
+  s_7e34d35998efff::t_d2deafd44bcf39 1-106
+packages/theme/docs.css
+  s_7e34d35998efff::t_dada2552674186 1-177
+packages/theme/preference.ts
+  s_7e34d35998efff::t_ee7b9b41dea49d 1-61
+packages/theme/tokens.css
+  s_7e34d35998efff::t_e3cf691fda4d1b 1-88
+patches/braces@3.0.3.patch
+  s_7e34d35998efff::t_36cd07588d2fd7 1-236
+patches/http-cache-semantics@4.3.0.patch
+  s_56c4a54f0570d6::t_737a798ee1622c 1-45
+pnpm-lock.yaml
+  s_7e34d35998efff::t_2aa3a8c45d9593 20-27,30-33,40-42,103,106,126-127,132-133,247-249,567-571,2136,2142,2148,4324-4327,4474-4475,5104-5105,5519-5520,5857-5862,5912-5913,6028-6029,6231-6232,6904-6905,9465-9469,11571,11622,11904-11908,11910,11912,11915-11916,11920,11922,12334,12344,13226,14157,14275-14276,14448,14461,14514,14616,15060,15505,15602,16061-16063,16126,16228,16389,17137,17176,17189,17232,17277,19113
+pnpm-workspace.yaml
+  s_56c4a54f0570d6::t_7264aa0945ed71 28-35,55-61
+scripts/security/README.md
+  s_7e34d35998efff::t_710f189aced8c2 1-53
+scripts/security/audit.mjs
+  s_7e34d35998efff::t_1e213d7880fa14 1-46
+scripts/security/patched-packages.json
+  s_56c4a54f0570d6::t_b9c1c5fa40ec86 1-20
+scripts/security/regressions.mjs
+  s_7e34d35998efff::t_186474c8c7f58a 1-169
+scripts/security/verify-patches.mjs
+  s_7e34d35998efff::t_da1f637e34ddc7 1-90
+server/mise.toml
+  s_6a750d156153c8::t_418eda5ea8f12f 48
+server/package.json
+  s_eadd825e33543a::t_bcde7007cf0739 43,45
+server/src/services/activity-file-reader.ts
+  s_7e34d35998efff::t_731391afc59a39 1-68
+server/src/services/activity.service.ts
+  s_7e34d35998efff::t_a63325401a7794 16-17,71-111,172-173,458
+sites/api.kondis.org/.prettierignore
+  s_7e34d35998efff::t_65c28fd29c2a38 1-2
+sites/api.kondis.org/mise.toml
+  s_43ecadc9a6955a::t_123db297071a5e 6,13
+sites/api.kondis.org/package.json
+  s_7e34d35998efff::t_ac26e23c52c98f 6-8,19,24-25
+sites/api.kondis.org/scripts/build.mjs
+  s_3d67e0b97d42f2::t_a5b0e0d247cc8b 1-18
+sites/api.kondis.org/static/index.html
+  s_3d67e0b97d42f2::t_759cf740495644 10-17,20-22,25-34,36-40
+sites/api.kondis.org/static/theme.css
+  s_3d67e0b97d42f2::t_50b3cc71a1abc2 2,6-29,31-32,34,39-40,43,48-79
+sites/api.kondis.org/worker-configuration.d.ts
+  s_3d67e0b97d42f2::t_0b6d4e2a028c70 1-15752
+sites/developers.kondis.org/docusaurus.config.ts
+  s_3d67e0b97d42f2::t_440b5445311746 33
+sites/developers.kondis.org/src/css/custom.css
+  s_3d67e0b97d42f2::t_54cdbc4541036f 1
+sites/docs.kondis.org/docusaurus.config.ts
+  s_3d67e0b97d42f2::t_4c3b3f541f3c78 34
+sites/docs.kondis.org/src/css/custom.css
+  s_3d67e0b97d42f2::t_9a53ec29df5276 1
+sites/kondis.org/src/app.css
+  s_7e34d35998efff::t_b218e638105000 1,5-7,27-36,46-47,55,64,66-67,69-70,73-74,80,87,89-90,92-95,98,101,106-108,111,120,123-124,126-132,136-137,139-141,161,163,168,173,188-192,198,204,206,208-209,211-212,218-219,225-228,230,234,241-244,246-248,251,254-255,260-262,265-267,272-273,278-281,284-287,292,295-297,300-301,304-306,309,311,315-316,320,324-327,330-332,336-343,346-347,352,359-364,367-370,374,376,379,385-387,389-392,395-396,399-400,403-404,407-408,414-421,426-429,435,437-440,445-446,448-451,454-456,459,462-466,472-479,483-488,491,498,500,502-503,505-507,509-510,512-515,517-522,524-529,531-539,541-542,544-546,548-550,552-557,559,562-563,566,569,573-574,580,588-589,591-593,596-597,599-600,605-606,608-610,612-614,617,619-620,622-623,625-626,628-629,632-633,635-636,639-641,643-644
+sites/kondis.org/src/app.html
+  s_3d67e0b97d42f2::t_cf1e62939cc447 8-19
+sites/kondis.org/src/routes/+layout.svelte
+  s_3d67e0b97d42f2::t_4c4d2e909b0921 2,22
+sites/kondis.org/src/routes/+page.svelte
+  s_7e34d35998efff::t_3ca12351669880 20,22-24,28,43,50,53,68,81-82,177-180
+web/src/app.css
+  s_7e34d35998efff::t_0b6d9dce172c90 1-2,4,8-10,25,49,52-60,73-79,84,87,89-90,104-106,110-111,119,129-130,145,147-151,160,163,171,179-180,184-185,193,205,211-212,223,231,248-249,254,261-262,271,273,283,299,302,305,312,319,328,337,343,350,355,363,366-369,375,385,387,398,405-406,427-428,437,446,448,456,461,476,484-485,489-490,496,502,517,531,540,543,546-547,555,565,573-574,583-585,596,608,615,617,639,650,662,666,678,684-685,692,708-709,718,739-740,768,782,787,800,808-809,820,822,830,840,843,854,858-859,862,866-873,886,896-897,921,927-928,931,940,943,958-959,969,974,1000,1006-1007,1025,1032-1033,1037,1050,1067-1068,1074,1078,1083,1098,1116,1122,1129,1134-1136,1150-1151,1159,1180-1181,1199,1209,1214,1222,1230,1232,1268-1269,1286,1327,1335,1353,1361,1369,1392-1394,1397,1408,1411,1414,1429-1430,1433,1440,1457,1460,1463,1467,1481,1485-1486,1501-1502,1519,1551,1667-1668,1677,1693,1695,1715,1717,1723-1724,1737,1740,1747,1752,1782,1790-1791,1800-1801,1813,1819,1830,1837,1851,1862,1866,1869,1897-1898,1915,1922-1923,1934,1943,1951,1955,1959,1965,1973,1979,1982,1987,2008,2013,2023,2045,2047,2062,2064,2071-2072,2082,2084,2093,2100,2106,2109-2110,2120,2128,2139-2141,2148-2149,2168,2179-2180,2186-2188,2199,2223,2226-2228,2231-2232,2235-2237,2241,2253,2264,2275-2276,2278,2302,2311,2316,2330-2331,2333,2346-2347,2350,2353-2354,2391-2392,2406-2407,2416,2418,2438-2439,2451,2455,2460-2461,2466-2467,2471,2478,2483,2488,2493,2498,2503-2504,2508,2512,2515,2522,2539,2547-2548,2557,2565-2566,2572,2578-2579,2590-2591,2599-2600,2609,2613,2626,2639,2641,2683,2702,2710-2711,2717,2730,2752,2766,2770-2771,2776,2779,2782,2785,2790,2795,2799,2804-2805,2815,2822,2829,2840,2844-2845,2849,2853-2854,2858-2859,2863,2868,2872,2877-2878,2886,2895,2899,2909,2913,2922,2937,2940,2943-2944,2947,2950,2954-2955,2963,2970-2971,2976,2980,2991,2997,3018-3020,3035,3041-3042,3045,3070-3072,3085,3088,3091,3113-3114,3130,3133,3136,3155,3161,3174-3175,3182,3186,3190-3191,3200,3205,3212-3214,3222,3229,3231,3238-3239,3255,3263,3265,3274,3277-3278,3283,3289,3307,3310,3313,3316,3323,3327-3328,3352-3353,3361,3364,3367,3370,3380,3382,3385-3386,3389-3390,3403,3414,3418,3424,3436,3443,3446,3452,3465,3477,3480,3485,3504-3505,3508-3509,3512-3513,3516,3600-3601,3611,3618,3622,3630-3631,3633,3866,3930,3937,3939,3966,3979,3991-3993,4002-4003,4007,4011,4062,4102,4113,4120-4122,4145-4147,4174-4175,4178-4180,4188,4206,4211,4213-4214,4234,4248-4249,4263-4264,4269-4271,4281-4282,4300,4307,4325-4326,4331-4332,4364,4366,4375,4384,4389,4414-4416,4429,4431,4451,4476-4477,4488,4497-4498,4505-4506,4513,4520,4526,4536,4548,4560,4576,4584,4600,4605-4606,4609-4610,4615,4627,4635,4648-4649,4665,4679-4680,4699,4759,4775,4793-4794,4796-4798,4809,4830,4849,4873-4874,4890,4902,4907-4908,4914-4916,4921-4922,4928,4935,4937,4946,4951,4954-4955,4958-4961,4964-4965,4968-4979,4982-4991,4994-4996,4999-5009
+web/src/app.d.ts
+  s_7e34d35998efff::t_1d1ab59c7db1a3 16
+web/src/app.html
+  s_7e34d35998efff::t_8ad1409a43c046 9-20
+web/src/hooks.server.ts
+  s_7e34d35998efff::t_e84ec1f50bb497 3,6-9,87-92,105-108
+web/src/lib/activity-types.ts
+  s_7e34d35998efff::t_83631d28872e71 17,35,38-94,98,106,114
+web/src/lib/best-efforts.ts
+  s_7e34d35998efff::t_eb52cdd1d8d083 1-43,47-48,52
+web/src/lib/components/ActivityCard.svelte
+  s_7e34d35998efff::t_6f46c38fc1d232 70-71,77-78,88-89,94-95,101-102,132,135,146-149,151-154,156-160,163-172,186-193,268,280,290-307,309,311,323,329-332,372-374,404,410
+web/src/lib/components/ActivityDetailPage.svelte
+  s_7e34d35998efff::t_81fbba407f89ad 33-34,49,92-100,173-181,291,302,423,433,590,788-792,958
+web/src/lib/components/ActivityImageGallery.svelte
+  s_7e34d35998efff::t_6b7a3648ff0ebe 1-111
+web/src/lib/components/ActivityMetrics.svelte
+  s_7e34d35998efff::t_7529e3839a4c26 1-134
+web/src/lib/components/ActivityProfile.svelte
+  s_eadd825e33543a::t_e8dc2ffc269f7e 174-183
+web/src/lib/components/ImageLightbox.svelte
+  s_7e34d35998efff::t_66fddf0d931461 3,25,27,29-44,56-57,62,64-67,86,111
+web/src/lib/components/RouteMap.svelte
+  s_7e34d35998efff::t_5f90fc19ffca6b 88-93,208-209,211-227,229,231-232,234-242,245-351,353-358,361,363-366,368-388,391,393-422,424-443,447-448,468
+web/src/lib/components/Topbar.svelte
+  s_7e34d35998efff::t_f7b4dc8c1c4c3b 15,105,110,115,187-188,190-193,199,203,207,283-289
+web/src/lib/components/UserAvatar.svelte
+  s_7e34d35998efff::t_1e0e5e9cb074da 13
+web/src/lib/format.ts
+  s_7e34d35998efff::t_a8db3d740522ec 1,18,48-49,137-139,141,150,207
+web/src/lib/i18n.ts
+  s_7e34d35998efff::t_4e20c190861dcd 2-3,7,12-19
+web/src/lib/locale.spec.ts
+  s_7e34d35998efff::t_9b1bd3de7b60cb 1-20
+web/src/lib/locale.ts
+  s_7e34d35998efff::t_a29cd5579a811d 1-27
+web/src/routes/+layout.server.ts
+  s_7e34d35998efff::t_85223433255402 71
+web/src/routes/+layout.svelte
+  s_eadd825e33543a::t_cd341d45f08262 7-8,11
+web/src/routes/+page.svelte
+  s_7e34d35998efff::t_3508bbbc870e9d 408,413,418,423
+web/src/routes/login/+page.svelte
+  s_7e34d35998efff::t_c649d96388ae4b 2,9-16
+web/src/routes/settings/settings.spec.ts
+  s_7e34d35998efff::t_0fae55a18d2448 21,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "64d0d50479dc50c227b81eeab24763efe82bc50e",
+  "prompts": {},
+  "sessions": {
+    "s_3d67e0b97d42f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1036e-d1ec-7dd3-a07a-07865c4cd7e0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_43ecadc9a6955a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1038c-4faf-7fb1-86e9-c538b6382a3a",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_56c4a54f0570d6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a105ab-ec45-74a2-b5cc-63f45091ba85",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_6a750d156153c8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a103c1-fb8b-7351-9505-a38d6c59531d",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_7e34d35998efff": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a103b0-b51b-7943-9a79-b85c5f46b94e",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_eadd825e33543a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a103d5-1204-78b3-a30a-406bc82e50e0",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
