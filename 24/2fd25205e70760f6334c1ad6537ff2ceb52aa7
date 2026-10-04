@@ -1,0 +1,41 @@
+android/README.md
+  s_88923884154486::t_2aec185286c605 20
+android/app/src/main/res/values-b+sv/strings.xml
+  s_88923884154486::t_9ee5bebbcbd43a 604
+android/app/src/main/res/values/strings.xml
+  s_88923884154486::t_5c4449458604cc 604
+android/gradle/libs.versions.toml
+  s_88923884154486::t_c10813576b3c40 2,8,10,13
+android/gradle/wrapper/gradle-wrapper.properties
+  s_88923884154486::t_fe08c20280c646 3
+i18n/en.json
+  s_88923884154486::t_624423b4377526 602
+i18n/sv.json
+  s_88923884154486::t_049a6101b2b52e 602
+server/Dockerfile
+  s_b88e57ce661f72::t_44cf5936b0eb6f 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "242fd25205e70760f6334c1ad6537ff2ceb52aa7",
+  "prompts": {},
+  "sessions": {
+    "s_88923884154486": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10940-7400-7e70-8422-dc7fac41f9e8",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    },
+    "s_b88e57ce661f72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1093e-9937-77e1-9d3c-9f0028611118",
+        "model": "unknown"
+      },
+      "human_author": "Jonathan Jogenfors <jonathan@jogenfors.se>"
+    }
+  }
+}
